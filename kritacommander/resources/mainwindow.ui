@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1180</width>
-    <height>837</height>
+    <width>1745</width>
+    <height>1150</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -151,13 +151,6 @@
      <addaction name="menuTools"/>
      <addaction name="menuSettings"/>
      <addaction name="menuHelp"/>
-    </widget>
-   </item>
-   <item>
-    <widget class="QPushButton" name="pushButton">
-     <property name="text">
-      <string>PushButton</string>
-     </property>
     </widget>
    </item>
    <item>
@@ -535,13 +528,16 @@
   </action>
   <action name="actionHelpAboutKC">
    <property name="text">
-    <string>&amp;About kritaCommander...</string>
+    <string>&amp;About Krita Commander...</string>
+   </property>
+   <property name="iconText">
+    <string>About KritaCommander...</string>
    </property>
    <property name="toolTip">
-    <string>Open About kritaCommander window</string>
+    <string>Open About Krita Commander window</string>
    </property>
    <property name="statusTip">
-    <string>Open About kritaCommander window</string>
+    <string>Open About Krita Commander window</string>
    </property>
   </action>
   <action name="actionSelectRegEx">

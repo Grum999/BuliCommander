@@ -58,9 +58,7 @@ class KCMainWindow(QMainWindow):
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'mainwindow.ui')
         PyQt5.uic.loadUi(uiFileName, self)
 
-        print('init menu a1')
         self.__initMenu()
-        print('init menu a2')
 
     def showEvent(self, event):
         """Event trigerred when dialog is shown
@@ -121,7 +119,6 @@ class KCMainWindow(QMainWindow):
 
     # region: initialisation methods -------------------------------------------
     def __initMenu(self):
-        print('init menu b1')
         """Initialise actions for menu defaukt menu"""
         # Menu FILE
         self.actionFolderNew.triggered.connect(self.__actionNotYetImplemented)
@@ -133,7 +130,6 @@ class KCMainWindow(QMainWindow):
         self.actionFileRename.triggered.connect(self.__actionNotYetImplemented)
         self.actionFileToArchive.triggered.connect(self.__actionNotYetImplemented)
         self.actionQuit.triggered.connect(self.__actionQuit)
-        print('self.actionQuit', self.actionQuit)
 
         # Menu EDIT
         self.actionSelectAll.triggered.connect(self.__actionNotYetImplemented)
@@ -170,7 +166,6 @@ class KCMainWindow(QMainWindow):
 
         # Menu HELP
         self.actionHelpAboutKC.triggered.connect(self.__actionHelpAboutKC)
-        print('init menu b2')
 
     # endregion: initialisation methods ----------------------------------------
 
@@ -187,7 +182,6 @@ class KCMainWindow(QMainWindow):
 
     def __actionQuit(self):
         """Close KritaCommander"""
-        print('quit', self.__uiController)
         self.__uiController.commandCloseKc()
 
     def __actionHelpAboutKC(self):
