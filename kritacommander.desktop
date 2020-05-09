@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=kritacommander
+X-Python-2-Compatible=false
+X-Krita-Manual=Manual.html
+Name=Krita Commander
+Comment=A document manager for Krita

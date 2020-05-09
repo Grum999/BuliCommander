@@ -1,0 +1,584 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="KCMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1180</width>
+    <height>837</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>KritaCommander</string>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QMenuBar" name="mainMenuBar">
+     <widget class="QMenu" name="menuFile">
+      <property name="title">
+       <string>&amp;File</string>
+      </property>
+      <addaction name="actionFolderNew"/>
+      <addaction name="separator"/>
+      <addaction name="actionFileOpen"/>
+      <addaction name="actionFileOpenCloseKC"/>
+      <addaction name="separator"/>
+      <addaction name="actionFileCopyToOtherPanel"/>
+      <addaction name="actionFileMoveToOtherPanel"/>
+      <addaction name="separator"/>
+      <addaction name="actionFileDelete"/>
+      <addaction name="actionFileRename"/>
+      <addaction name="separator"/>
+      <addaction name="actionFileToArchive"/>
+      <addaction name="separator"/>
+      <addaction name="actionQuit"/>
+     </widget>
+     <widget class="QMenu" name="menuEdit">
+      <property name="title">
+       <string>&amp;Edit</string>
+      </property>
+      <addaction name="actionSelectAll"/>
+      <addaction name="actionSelectNone"/>
+      <addaction name="actionSelectInvert"/>
+      <addaction name="separator"/>
+      <addaction name="actionSelectRegEx"/>
+     </widget>
+     <widget class="QMenu" name="menuGo">
+      <property name="title">
+       <string>&amp;Go</string>
+      </property>
+      <widget class="QMenu" name="menuGoFavorites">
+       <property name="toolTip">
+        <string>Favorites places</string>
+       </property>
+       <property name="statusTip">
+        <string>Favorites places</string>
+       </property>
+       <property name="title">
+        <string>&amp;Favorites</string>
+       </property>
+       <property name="toolTipsVisible">
+        <bool>true</bool>
+       </property>
+       <addaction name="actionGoFavorites_NoFavoritesYetDefined"/>
+      </widget>
+      <widget class="QMenu" name="menuGoSavedViews">
+       <property name="toolTip">
+        <string>Saved views</string>
+       </property>
+       <property name="statusTip">
+        <string>Saved views</string>
+       </property>
+       <property name="title">
+        <string>&amp;Saved views</string>
+       </property>
+       <addaction name="actionGoSavedViews_NoSavedViewsYet"/>
+      </widget>
+      <widget class="QMenu" name="menuGoHistory">
+       <property name="title">
+        <string>&amp;History</string>
+       </property>
+       <property name="toolTipsVisible">
+        <bool>true</bool>
+       </property>
+       <addaction name="actionGoHistory_isEmpty"/>
+      </widget>
+      <addaction name="actionGoUp"/>
+      <addaction name="actionGoBack"/>
+      <addaction name="menuGoHistory"/>
+      <addaction name="separator"/>
+      <addaction name="menuGoFavorites"/>
+      <addaction name="menuGoSavedViews"/>
+     </widget>
+     <widget class="QMenu" name="menuView">
+      <property name="title">
+       <string>&amp;View</string>
+      </property>
+      <addaction name="actionViewDetailled"/>
+      <addaction name="actionViewSmallIcon"/>
+      <addaction name="actionViewMediumIcon"/>
+      <addaction name="actionViewLargeIcon"/>
+      <addaction name="separator"/>
+      <addaction name="actionViewShowImageFileOnly"/>
+      <addaction name="actionViewShowBackupFiles"/>
+      <addaction name="actionViewShowHiddenFiles"/>
+      <addaction name="separator"/>
+      <addaction name="actionViewDisplayLeftSidebar"/>
+      <addaction name="actionViewDisplayRightSidebar"/>
+      <addaction name="separator"/>
+      <addaction name="actionViewSwapPanels"/>
+     </widget>
+     <widget class="QMenu" name="menuTools">
+      <property name="title">
+       <string>&amp;Tools</string>
+      </property>
+      <widget class="QMenu" name="menuKritaCommanderScripts">
+       <property name="title">
+        <string>K&amp;ritaCommander scripts</string>
+       </property>
+       <addaction name="actionKCSManageScripts"/>
+       <addaction name="separator"/>
+       <addaction name="actionKCS_NoScriptYetDefined"/>
+      </widget>
+      <addaction name="actionToolsSearch"/>
+      <addaction name="actionToolsStatistics"/>
+      <addaction name="actionToolsSynchronizePanels"/>
+      <addaction name="separator"/>
+      <addaction name="actionConsole"/>
+      <addaction name="menuKritaCommanderScripts"/>
+     </widget>
+     <widget class="QMenu" name="menuSettings">
+      <property name="title">
+       <string>&amp;Settings</string>
+      </property>
+      <addaction name="actionSettingsPreferences"/>
+     </widget>
+     <widget class="QMenu" name="menuHelp">
+      <property name="title">
+       <string>&amp;Help</string>
+      </property>
+      <addaction name="actionHelpAboutKC"/>
+     </widget>
+     <addaction name="menuFile"/>
+     <addaction name="menuEdit"/>
+     <addaction name="menuGo"/>
+     <addaction name="menuView"/>
+     <addaction name="menuTools"/>
+     <addaction name="menuSettings"/>
+     <addaction name="menuHelp"/>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pushButton">
+     <property name="text">
+      <string>PushButton</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QStatusBar" name="mainStatusBar">
+     <property name="sizeGripEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+  <action name="actionFolderNew">
+   <property name="text">
+    <string>&amp;New folder...</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a new folder in current directory</string>
+   </property>
+   <property name="statusTip">
+    <string>Create a new folder in current directory</string>
+   </property>
+  </action>
+  <action name="actionFileOpen">
+   <property name="text">
+    <string>&amp;Open selected file</string>
+   </property>
+   <property name="toolTip">
+    <string>Open the selected file in Krita and keep KritaCommander opened</string>
+   </property>
+   <property name="statusTip">
+    <string>Open the selected file in Krita and keep KritaCommander opened</string>
+   </property>
+  </action>
+  <action name="actionFileCopyToOtherPanel">
+   <property name="text">
+    <string>&amp;Copy to other panel</string>
+   </property>
+   <property name="toolTip">
+    <string>Copy selected files to other panel location</string>
+   </property>
+   <property name="statusTip">
+    <string>Copy selected files to other panel location</string>
+   </property>
+  </action>
+  <action name="actionFileMoveToOtherPanel">
+   <property name="text">
+    <string>&amp;Move to other panel</string>
+   </property>
+   <property name="toolTip">
+    <string>Move selected files to other panel location</string>
+   </property>
+   <property name="statusTip">
+    <string>Move selected files to other panel location</string>
+   </property>
+  </action>
+  <action name="actionFileDelete">
+   <property name="text">
+    <string>&amp;Delete...</string>
+   </property>
+   <property name="toolTip">
+    <string>Delete selected files</string>
+   </property>
+   <property name="statusTip">
+    <string>Delete selected files</string>
+   </property>
+  </action>
+  <action name="actionFileRename">
+   <property name="text">
+    <string>&amp;Rename...</string>
+   </property>
+   <property name="toolTip">
+    <string>Rename selected files</string>
+   </property>
+   <property name="statusTip">
+    <string>Rename selected files</string>
+   </property>
+  </action>
+  <action name="actionFileToArchive">
+   <property name="text">
+    <string>&amp;Archive...</string>
+   </property>
+   <property name="toolTip">
+    <string>Pack selected selected files in an archive (tar.gz, zip)</string>
+   </property>
+   <property name="statusTip">
+    <string>Pack selected selected files in an archive (tar.gz, zip)</string>
+   </property>
+   <property name="whatsThis">
+    <string>Archive selected files (tar.gz, zip)</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+   <property name="toolTip">
+    <string>Quit KritaCommander</string>
+   </property>
+   <property name="statusTip">
+    <string>Quit KritaCommander</string>
+   </property>
+  </action>
+  <action name="actionFileOpenCloseKC">
+   <property name="text">
+    <string>Open selected &amp;file and close KritaCommander</string>
+   </property>
+   <property name="toolTip">
+    <string>Open selected file in Krita and close KritaCommander</string>
+   </property>
+   <property name="statusTip">
+    <string>Open selected file in Krita and close KritaCommander</string>
+   </property>
+  </action>
+  <action name="actionSelectAll">
+   <property name="text">
+    <string>&amp;Select all</string>
+   </property>
+   <property name="toolTip">
+    <string>Select all files</string>
+   </property>
+   <property name="statusTip">
+    <string>Select all files</string>
+   </property>
+  </action>
+  <action name="actionSelectNone">
+   <property name="text">
+    <string>Select &amp;none</string>
+   </property>
+   <property name="toolTip">
+    <string>Unselect all files</string>
+   </property>
+   <property name="statusTip">
+    <string>Unselect all files</string>
+   </property>
+  </action>
+  <action name="actionSelectInvert">
+   <property name="text">
+    <string>&amp;Invert selection</string>
+   </property>
+   <property name="toolTip">
+    <string>Invert selected files</string>
+   </property>
+   <property name="statusTip">
+    <string>Invert selected files</string>
+   </property>
+  </action>
+  <action name="actionGoUp">
+   <property name="text">
+    <string>&amp;Up</string>
+   </property>
+   <property name="toolTip">
+    <string>Climb up the folder tree</string>
+   </property>
+   <property name="statusTip">
+    <string>Climb up the folder tree</string>
+   </property>
+  </action>
+  <action name="actionGoBack">
+   <property name="text">
+    <string>&amp;Back</string>
+   </property>
+   <property name="toolTip">
+    <string>Go back to previous folder</string>
+   </property>
+   <property name="statusTip">
+    <string>Go back to previous folder</string>
+   </property>
+  </action>
+  <action name="actionGoFavorites_NoFavoritesYetDefined">
+   <property name="text">
+    <string>(&amp;no favorites yet defined)</string>
+   </property>
+  </action>
+  <action name="actionGoSavedViews_NoSavedViewsYet">
+   <property name="text">
+    <string>(&amp;no saved views yet)</string>
+   </property>
+  </action>
+  <action name="actionViewDetailled">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Detailled view</string>
+   </property>
+   <property name="toolTip">
+    <string>A view with detailled file informations</string>
+   </property>
+   <property name="statusTip">
+    <string>A view with detailled file informations</string>
+   </property>
+  </action>
+  <action name="actionViewSmallIcon">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Small icon view</string>
+   </property>
+   <property name="toolTip">
+    <string>A small icon view with minimum informations</string>
+   </property>
+   <property name="statusTip">
+    <string>A small icon view with minimum informations</string>
+   </property>
+  </action>
+  <action name="actionViewMediumIcon">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Medium icon view</string>
+   </property>
+   <property name="toolTip">
+    <string>A medium icon view with minimum informations</string>
+   </property>
+   <property name="statusTip">
+    <string>A medium icon view with minimum informations</string>
+   </property>
+  </action>
+  <action name="actionViewLargeIcon">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Large icon view</string>
+   </property>
+   <property name="toolTip">
+    <string>A large icon view with minimum informations</string>
+   </property>
+   <property name="statusTip">
+    <string>A large icon view with minimum informations</string>
+   </property>
+  </action>
+  <action name="actionViewShowImageFileOnly">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show &amp;Krita managed image files only</string>
+   </property>
+   <property name="toolTip">
+    <string>Only image files recognized by Krita will be shown in list</string>
+   </property>
+   <property name="statusTip">
+    <string>Only image files recognized by Krita will be shown in list</string>
+   </property>
+  </action>
+  <action name="actionViewShowHiddenFiles">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show &amp;hidden files</string>
+   </property>
+   <property name="toolTip">
+    <string>Show hidden files in list</string>
+   </property>
+   <property name="statusTip">
+    <string>Show hidden files in list</string>
+   </property>
+  </action>
+  <action name="actionViewDisplayLeftSidebar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>D&amp;isplay left sidebar</string>
+   </property>
+   <property name="toolTip">
+    <string>Display sidebar from left panel</string>
+   </property>
+   <property name="statusTip">
+    <string>Display sidebar from left panel</string>
+   </property>
+  </action>
+  <action name="actionViewDisplayRightSidebar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Display &amp;right sidebar</string>
+   </property>
+   <property name="toolTip">
+    <string>Display sidebar from right panel</string>
+   </property>
+   <property name="statusTip">
+    <string>Display sidebar from right panel</string>
+   </property>
+  </action>
+  <action name="actionViewSwapPanels">
+   <property name="text">
+    <string>Swap &amp;panels</string>
+   </property>
+   <property name="toolTip">
+    <string>Swap left and right panels</string>
+   </property>
+   <property name="statusTip">
+    <string>Swap left and right panels</string>
+   </property>
+  </action>
+  <action name="actionViewShowBackupFiles">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show &amp;backup files</string>
+   </property>
+   <property name="toolTip">
+    <string>Show backup files in list</string>
+   </property>
+   <property name="statusTip">
+    <string>Show backup files in list</string>
+   </property>
+  </action>
+  <action name="actionToolsSearch">
+   <property name="text">
+    <string>&amp;Search...</string>
+   </property>
+   <property name="toolTip">
+    <string>Open advanced search window</string>
+   </property>
+   <property name="statusTip">
+    <string>Open advanced search window</string>
+   </property>
+  </action>
+  <action name="actionToolsStatistics">
+   <property name="text">
+    <string>Stat&amp;istics...</string>
+   </property>
+   <property name="toolTip">
+    <string>Calculate statistics for current directory</string>
+   </property>
+   <property name="statusTip">
+    <string>Calculate statistics for current directory</string>
+   </property>
+  </action>
+  <action name="actionToolsSynchronizePanels">
+   <property name="text">
+    <string>Synchronize &amp;panels...</string>
+   </property>
+   <property name="toolTip">
+    <string>Synchronize files between panels</string>
+   </property>
+   <property name="statusTip">
+    <string>Synchronize files between panels</string>
+   </property>
+  </action>
+  <action name="actionConsole">
+   <property name="text">
+    <string>&amp;KritaCommander terminal</string>
+   </property>
+   <property name="toolTip">
+    <string>Open KritaCommander terminal</string>
+   </property>
+   <property name="statusTip">
+    <string>Open KritaCommander terminal</string>
+   </property>
+  </action>
+  <action name="actionSettingsPreferences">
+   <property name="text">
+    <string>&amp;Preferences...</string>
+   </property>
+   <property name="toolTip">
+    <string>Open KritaCommander settings window</string>
+   </property>
+   <property name="statusTip">
+    <string>Open KritaCommander settings window</string>
+   </property>
+  </action>
+  <action name="actionHelpAboutKC">
+   <property name="text">
+    <string>&amp;About kritaCommander...</string>
+   </property>
+   <property name="toolTip">
+    <string>Open About kritaCommander window</string>
+   </property>
+   <property name="statusTip">
+    <string>Open About kritaCommander window</string>
+   </property>
+  </action>
+  <action name="actionSelectRegEx">
+   <property name="text">
+    <string>&amp;RegEx select...</string>
+   </property>
+   <property name="toolTip">
+    <string>Select files matching given regular expression</string>
+   </property>
+   <property name="statusTip">
+    <string>Select files matching given regular expression</string>
+   </property>
+  </action>
+  <action name="actionGoHistory_isEmpty">
+   <property name="text">
+    <string>(&amp;history is empty)</string>
+   </property>
+  </action>
+  <action name="actionKCSManageScripts">
+   <property name="text">
+    <string>&amp;Manage scripts...</string>
+   </property>
+  </action>
+  <action name="actionKCS_NoScriptYetDefined">
+   <property name="text">
+    <string>(&amp;no script yet defined)</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KCMainWindow</class>
+   <extends>QDialog</extends>
+   <header>kritacommander.kcmainwindow</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
