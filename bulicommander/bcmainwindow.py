@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# Krita Commander
+# Buli Commander
 # Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
 # This program is free software: you can redistribute it and/or modify
@@ -42,22 +42,32 @@ from PyQt5.QtWidgets import (
         QMainWindow
     )
 
+from bulicommander.bcmainviewtab import BCMainViewTab
+
 
 # -----------------------------------------------------------------------------
-class KCMainWindow(QMainWindow):
-    """KritaCommander main window"""
+class BCMainWindow(QMainWindow):
+    """Buli Commander main window"""
+
+    __LEFT = 'L'
+    __RIGHT = 'R'
 
     dialogShown = pyqtSignal()
 
     def __init__(self, uiController, parent=None):
-        super(KCMainWindow, self).__init__(parent)
+        super(BCMainWindow, self).__init__(parent)
 
         self.__uiController = uiController
+        self.__panels = {
+                BCMainWindow.__LEFT: None,
+                BCMainWindow.__RIGHT: None
+            }
         self.__eventCallBack = {}
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'mainwindow.ui')
         PyQt5.uic.loadUi(uiFileName, self)
 
+        self.__initMainView()
         self.__initMenu()
 
     def showEvent(self, event):
@@ -70,15 +80,15 @@ class KCMainWindow(QMainWindow):
            =======
                 # define callback function
                 def my_callback_function():
-                    print("KCMainWindow shown!")
+                    print("BCMainWindow shown!")
 
                 # initialise a dialog from an xml .ui file
-                dlgMain = KCMainWindow.loadUi(uiFileName)
+                dlgMain = BCMainWindow.loadUi(uiFileName)
 
                 # execute my_callback_function() when dialog became visible
                 dlgMain.dialogShown.connect(my_callback_function)
         """
-        super(KCMainWindow, self).showEvent(event)
+        super(BCMainWindow, self).showEvent(event)
         self.dialogShown.emit()
 
     def eventFilter(self, object, event):
@@ -86,7 +96,7 @@ class KCMainWindow(QMainWindow):
         if object in self.__eventCallBack.keys():
             return self.__eventCallBack[object](event)
 
-        return super(KCMainWindow, self).eventFilter(object, event)
+        return super(BCMainWindow, self).eventFilter(object, event)
 
     def setEventCallback(self, object, method):
         """Add an event callback method for given object
@@ -102,7 +112,7 @@ class KCMainWindow(QMainWindow):
 
 
                 # initialise a dialog from an xml .ui file
-                dlgMain = KCMainWindow.loadUi(uiFileName)
+                dlgMain = BCMainWindow.loadUi(uiFileName)
 
                 # define callback for widget from ui
                 dlgMain.setEventCallback(dlgMain.my_widget, my_callback_function)
@@ -118,12 +128,23 @@ class KCMainWindow(QMainWindow):
 
 
     # region: initialisation methods -------------------------------------------
+
+    def __initMainView(self):
+        """Initialise main veiw content"""
+
+        self.__panels[BCMainWindow.__LEFT] = BCMainViewTab(self)
+        self.__panels[BCMainWindow.__RIGHT] = BCMainViewTab(self)
+
+        self.verticalLayoutContainerLeft.addWidget(self.__panels[BCMainWindow.__LEFT])
+        self.verticalLayoutContainerRight.addWidget(self.__panels[BCMainWindow.__RIGHT])
+
+
     def __initMenu(self):
         """Initialise actions for menu defaukt menu"""
         # Menu FILE
         self.actionFolderNew.triggered.connect(self.__actionNotYetImplemented)
         self.actionFileOpen.triggered.connect(self.__actionNotYetImplemented)
-        self.actionFileOpenCloseKC.triggered.connect(self.__actionNotYetImplemented)
+        self.actionFileOpenCloseBC.triggered.connect(self.__actionNotYetImplemented)
         self.actionFileCopyToOtherPanel.triggered.connect(self.__actionNotYetImplemented)
         self.actionFileMoveToOtherPanel.triggered.connect(self.__actionNotYetImplemented)
         self.actionFileDelete.triggered.connect(self.__actionNotYetImplemented)
@@ -159,13 +180,13 @@ class KCMainWindow(QMainWindow):
         self.actionToolsSynchronizePanels.triggered.connect(self.__actionNotYetImplemented)
         self.actionConsole.triggered.connect(self.__actionNotYetImplemented)
 
-        self.actionKCSManageScripts.triggered.connect(self.__actionNotYetImplemented)
+        self.actionBCSManageScripts.triggered.connect(self.__actionNotYetImplemented)
 
         # Menu SETTINGS
         self.actionSettingsPreferences.triggered.connect(self.__actionNotYetImplemented)
 
         # Menu HELP
-        self.actionHelpAboutKC.triggered.connect(self.__actionHelpAboutKC)
+        self.actionHelpAboutBC.triggered.connect(self.__actionHelpAboutBC)
 
     # endregion: initialisation methods ----------------------------------------
 
@@ -176,17 +197,17 @@ class KCMainWindow(QMainWindow):
         """"Method called when an action not yet implemented is triggered"""
         QMessageBox.warning(
                 QWidget(),
-                self.__kcName,
+                self.__uiController.name(),
                 i18n("Sorry! Action has not yet been implemented")
             )
 
     def __actionQuit(self):
-        """Close KritaCommander"""
-        self.__uiController.commandCloseKc()
+        """Close Buli Commander"""
+        self.__uiController.commandCloseBc()
 
-    def __actionHelpAboutKC(self):
-        """Display 'About Krita Commander' dialog box"""
-        self.__uiController.commandAboutKc()
+    def __actionHelpAboutBC(self):
+        """Display 'About Buli Commander' dialog box"""
+        self.__uiController.commandAboutBc()
 
     # endregion: define actions method -----------------------------------------
 

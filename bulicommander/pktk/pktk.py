@@ -29,6 +29,10 @@ class EInvalidValue(Exception):
     """An invalid value has been provided"""
     pass
 
+class EInvalidStatus(Exception):
+    """An invalid status has been detected"""
+    pass
+
 
 
 class PkTk:

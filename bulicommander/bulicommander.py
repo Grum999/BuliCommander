@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# Krita Commander
+# Buli Commander
 # Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
 # This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,6 @@ import sys
 import time
 
 import PyQt5.uic
-
 
 from krita import (
         Extension,
@@ -70,8 +69,8 @@ from PyQt5.QtWidgets import (
 
 if __name__ != '__main__':
     # script is executed from Krita, loaded as a module
-    from .kcuicontroller import (
-            KCUIController
+    from .bcuicontroller import (
+            BCUIController
         )
 
     from .pktk.edialog import (
@@ -87,47 +86,47 @@ else:
     # Execution from 'Scripter' plugin?
 
     # Reload or Import
-    if 'kritacommander.pktk.edialog' in sys.modules:
+    if 'bulicommander.pktk.edialog' in sys.modules:
         from importlib import reload
-        reload(sys.modules['kritacommander.pktk.edialog'])
+        reload(sys.modules['bulicommander.pktk.edialog'])
     else:
-        import kritacommander.pktk.edialog
+        import bulicommander.pktk.edialog
 
-    from kritacommander.pktk.edialog import (
+    from bulicommander.pktk.edialog import (
             EDialog
         )
 
-    if 'kritacommander.pktk.ekrita' in sys.modules:
+    if 'bulicommander.pktk.ekrita' in sys.modules:
         from importlib import reload
-        reload(sys.modules['kritacommander.pktk.ekrita'])
+        reload(sys.modules['bulicommander.pktk.ekrita'])
     else:
-        import kritacommander.pktk.ekrita
+        import bulicommander.pktk.ekrita
 
-    from kritacommander.pktk.ekrita import (
+    from bulicommander.pktk.ekrita import (
             EKritaDocument,
             EKritaNode
         )
 
-    if 'kritacommander.kcuicontroller' in sys.modules:
+    if 'bulicommander.bcuicontroller' in sys.modules:
         from importlib import reload
-        reload(sys.modules['kritacommander.kcuicontroller'])
+        reload(sys.modules['bulicommander.bcuicontroller'])
     else:
-        import kritacommander.kcuicontroller
+        import bulicommander.bcuicontroller
 
-    from kritacommander.kcuicontroller import (
-            KCUIController
+    from bulicommander.bcuicontroller import (
+            BCUIController
         )
 
     PLUGIN_EXEC_FROM = 'SCRIPTER_PLUGIN'
 
 
-EXTENSION_ID = 'pykrita_kritacommander'
+EXTENSION_ID = 'pykrita_bulicommander'
 PLUGIN_VERSION = '0.1.0a'
-PLUGIN_MENU_ENTRY = 'Krita Commander'
+PLUGIN_MENU_ENTRY = 'Buli Commander'
 
 
 
-class KritaCommander(Extension):
+class BuliCommander(Extension):
 
     def __init__(self, parent):
         # Default options
@@ -150,13 +149,13 @@ class KritaCommander(Extension):
 
 
     def start(self):
-        """Execute KritaCommander controller"""
+        """Execute Buli Commander controller"""
         # ----------------------------------------------------------------------
         # Create dialog box
-        uiController = KCUIController(PLUGIN_MENU_ENTRY, PLUGIN_VERSION)
+        uiController = BCUIController(PLUGIN_MENU_ENTRY, PLUGIN_VERSION)
         uiController.start()
 
 
 
 if PLUGIN_EXEC_FROM == 'SCRIPTER_PLUGIN':
-    KritaCommander(Krita.instance()).start()
+    BuliCommander(Krita.instance()).start()

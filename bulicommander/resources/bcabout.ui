@@ -26,7 +26,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>About Krita Commander</string>
+   <string>About Buli Commander</string>
   </property>
   <property name="modal">
    <bool>true</bool>
@@ -89,7 +89,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Krita Commander</string>
+        <string>Buli Commander</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -123,8 +123,8 @@
         </font>
        </property>
        <property name="text">
-        <string>&lt;p&gt;Krita Commander is released under the &lt;a href=&quot;https://www.gnu.org/licenses/gpl-3.0.html&quot;&gt;GNU General Public License (version 3 or any later version)&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;Get source code on &lt;a href=&quot;https://github.com/Grum999/KritaCommander&quot;&gt;github/KritaCommander&lt;/a&gt;&lt;/p&gt;</string>
+        <string>&lt;p&gt;Buli Commander is released under the &lt;a href=&quot;https://www.gnu.org/licenses/gpl-3.0.html&quot;&gt;GNU General Public License (version 3 or any later version)&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Get source code on &lt;a href=&quot;https://github.com/Grum999/BuliCommander&quot;&gt;github/BuliCommander&lt;/a&gt;&lt;/p&gt;</string>
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>

@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# Krita Commander
+# Buli Commander
 # Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
 # This program is free software: you can redistribute it and/or modify
@@ -20,11 +20,11 @@
 # -----------------------------------------------------------------------------
 
 
-from kritacommander.kcmainwindow import (
-        KCMainWindow
+from bulicommander.bcmainwindow import (
+        BCMainWindow
     )
-from kritacommander.kcabout import (
-        KCAboutWindow
+from bulicommander.bcabout import (
+        BCAboutWindow
     )
 
 
@@ -35,40 +35,50 @@ from PyQt5.QtWidgets import (
 
 
 # ------------------------------------------------------------------------------
-class KCUIController(object):
+class BCUIController(object):
 
-    def __init__(self, kcName="Krita Commander", kcVersion="testing"):
-        self.__window = KCMainWindow(self)
-        self.__kcName = kcName
-        self.__kcVersion = kcVersion
-        self.__kcTitle = "{0} - {1}".format(kcName, kcVersion)
+    def __init__(self, bcName="Buli Commander", bcVersion="testing"):
+        self.__window = BCMainWindow(self)
+        self.__bcName = bcName
+        self.__bcVersion = bcVersion
+        self.__bcTitle = "{0} - {1}".format(bcName, bcVersion)
 
 
     def start(self):
         self.__initSettings()
 
-        self.__window.setWindowTitle(self.__kcTitle)
+        self.__window.setWindowTitle(self.__bcTitle)
         self.__window.show()
         self.__window.activateWindow()
 
 
     # region: initialisation methods -------------------------------------------
+
     def __initSettings(self):
         """Initialise settings"""
         pass
 
     # endregion: initialisation methods ----------------------------------------
 
+    # region: getter/setters ---------------------------------------------------
+
+    def name(self):
+        """Return name"""
+        return self.__bcName
+
+
+    # endregion: getter/setters ------------------------------------------------
+
 
     # region: define commands --------------------------------------------------
 
-    def commandCloseKc(self):
-        """Close Krita Commander"""
+    def commandCloseBc(self):
+        """Close Buli Commander"""
         self.__window.close()
 
-    def commandAboutKc(self):
-        """Display 'About Krita Commander' dialog box"""
-        KCAboutWindow(self.__kcName, self.__kcVersion)
+    def commandAboutBc(self):
+        """Display 'About Buli Commander' dialog box"""
+        BCAboutWindow(self.__bcName, self.__bcVersion)
 
 
 

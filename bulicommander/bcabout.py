@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# Krita Commander
+# Buli Commander
 # Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
 # This program is free software: you can redistribute it and/or modify
@@ -33,20 +33,20 @@ from PyQt5.QtWidgets import (
 
 
 # -----------------------------------------------------------------------------
-class KCAboutWindow(QDialog):
-    """About Krita Commander window"""
+class BCAboutWindow(QDialog):
+    """About Buli Commander window"""
 
-    def __init__(self, kcName="Krita Commander", kcVersion="testing"):
-        super(KCAboutWindow, self).__init__()
+    def __init__(self, bcName="Buli Commander", bcVersion="testing"):
+        super(BCAboutWindow, self).__init__()
 
-        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'kcabout.ui')
+        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcabout.ui')
         PyQt5.uic.loadUi(uiFileName, self)
 
-        self.setWindowTitle(i18n(f'About {kcName}'))
+        self.setWindowTitle(i18n(f'About {bcName}'))
         self.setWindowFlags(Qt.Dialog|Qt.WindowTitleHint)
         self.setWindowFlags(self.windowFlags()&~Qt.WindowMinMaxButtonsHint)
-        self.lblKcName.setText(kcName)
-        self.lblKcVersion.setText(f'v{kcVersion}')
+        self.lblKcName.setText(bcName)
+        self.lblKcVersion.setText(f'v{bcVersion}')
 
         self.dbbxOk.accepted.connect(self.close)
 

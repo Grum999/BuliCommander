@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
- <widget class="KCMainWindow" name="MainWindow">
+ <widget class="BCMainWindow" name="MainWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>KritaCommander</string>
+   <string>Buli Commander</string>
   </property>
   <property name="autoFillBackground">
    <bool>false</bool>
@@ -26,7 +26,7 @@
       <addaction name="actionFolderNew"/>
       <addaction name="separator"/>
       <addaction name="actionFileOpen"/>
-      <addaction name="actionFileOpenCloseKC"/>
+      <addaction name="actionFileOpenCloseBC"/>
       <addaction name="separator"/>
       <addaction name="actionFileCopyToOtherPanel"/>
       <addaction name="actionFileMoveToOtherPanel"/>
@@ -117,20 +117,20 @@
       <property name="title">
        <string>&amp;Tools</string>
       </property>
-      <widget class="QMenu" name="menuKritaCommanderScripts">
+      <widget class="QMenu" name="menuBuliCommanderScripts">
        <property name="title">
         <string>K&amp;ritaCommander scripts</string>
        </property>
-       <addaction name="actionKCSManageScripts"/>
+       <addaction name="actionBCSManageScripts"/>
        <addaction name="separator"/>
-       <addaction name="actionKCS_NoScriptYetDefined"/>
+       <addaction name="actionBCS_NoScriptYetDefined"/>
       </widget>
       <addaction name="actionToolsSearch"/>
       <addaction name="actionToolsStatistics"/>
       <addaction name="actionToolsSynchronizePanels"/>
       <addaction name="separator"/>
       <addaction name="actionConsole"/>
-      <addaction name="menuKritaCommanderScripts"/>
+      <addaction name="menuBuliCommanderScripts"/>
      </widget>
      <widget class="QMenu" name="menuSettings">
       <property name="title">
@@ -142,7 +142,7 @@
       <property name="title">
        <string>&amp;Help</string>
       </property>
-      <addaction name="actionHelpAboutKC"/>
+      <addaction name="actionHelpAboutBC"/>
      </widget>
      <addaction name="menuFile"/>
      <addaction name="menuEdit"/>
@@ -154,7 +154,58 @@
     </widget>
    </item>
    <item>
+    <widget class="QWidget" name="widgetMainView" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
+       <widget class="QSplitter" name="splitterMainView">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <widget class="QFrame" name="framemainViewLeft">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="0">
+           <layout class="QVBoxLayout" name="verticalLayoutContainerLeft"/>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QFrame" name="framemainViewRight">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="0" column="0">
+           <layout class="QVBoxLayout" name="verticalLayoutContainerRight"/>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QStatusBar" name="mainStatusBar">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="sizeGripEnabled">
       <bool>true</bool>
      </property>
@@ -177,10 +228,10 @@
     <string>&amp;Open selected file</string>
    </property>
    <property name="toolTip">
-    <string>Open the selected file in Krita and keep KritaCommander opened</string>
+    <string>Open the selected file in Krita and keep Buli Commander opened</string>
    </property>
    <property name="statusTip">
-    <string>Open the selected file in Krita and keep KritaCommander opened</string>
+    <string>Open the selected file in Krita and keep Buli Commander opened</string>
    </property>
   </action>
   <action name="actionFileCopyToOtherPanel">
@@ -246,21 +297,21 @@
     <string>&amp;Quit</string>
    </property>
    <property name="toolTip">
-    <string>Quit KritaCommander</string>
+    <string>Quit Buli Commander</string>
    </property>
    <property name="statusTip">
-    <string>Quit KritaCommander</string>
+    <string>Quit Buli Commander</string>
    </property>
   </action>
-  <action name="actionFileOpenCloseKC">
+  <action name="actionFileOpenCloseBC">
    <property name="text">
-    <string>Open selected &amp;file and close KritaCommander</string>
+    <string>Open selected &amp;file and close Buli Commander</string>
    </property>
    <property name="toolTip">
-    <string>Open selected file in Krita and close KritaCommander</string>
+    <string>Open selected file in Krita and close Buli Commander</string>
    </property>
    <property name="statusTip">
-    <string>Open selected file in Krita and close KritaCommander</string>
+    <string>Open selected file in Krita and close Buli Commander</string>
    </property>
   </action>
   <action name="actionSelectAll">
@@ -506,13 +557,13 @@
   </action>
   <action name="actionConsole">
    <property name="text">
-    <string>&amp;KritaCommander terminal</string>
+    <string>&amp;Buli Commander terminal</string>
    </property>
    <property name="toolTip">
-    <string>Open KritaCommander terminal</string>
+    <string>Open Buli Commander terminal</string>
    </property>
    <property name="statusTip">
-    <string>Open KritaCommander terminal</string>
+    <string>Open Buli Commander terminal</string>
    </property>
   </action>
   <action name="actionSettingsPreferences">
@@ -520,24 +571,24 @@
     <string>&amp;Preferences...</string>
    </property>
    <property name="toolTip">
-    <string>Open KritaCommander settings window</string>
+    <string>Open Buli Commander settings window</string>
    </property>
    <property name="statusTip">
-    <string>Open KritaCommander settings window</string>
+    <string>Open Buli Commander settings window</string>
    </property>
   </action>
-  <action name="actionHelpAboutKC">
+  <action name="actionHelpAboutBC">
    <property name="text">
-    <string>&amp;About Krita Commander...</string>
+    <string>&amp;About Buli Commander...</string>
    </property>
    <property name="iconText">
-    <string>About KritaCommander...</string>
+    <string>About Buli Commander...</string>
    </property>
    <property name="toolTip">
-    <string>Open About Krita Commander window</string>
+    <string>Open About Buli Commander window</string>
    </property>
    <property name="statusTip">
-    <string>Open About Krita Commander window</string>
+    <string>Open About Buli Commander window</string>
    </property>
   </action>
   <action name="actionSelectRegEx">
@@ -556,12 +607,12 @@
     <string>(&amp;history is empty)</string>
    </property>
   </action>
-  <action name="actionKCSManageScripts">
+  <action name="actionBCSManageScripts">
    <property name="text">
     <string>&amp;Manage scripts...</string>
    </property>
   </action>
-  <action name="actionKCS_NoScriptYetDefined">
+  <action name="actionBCS_NoScriptYetDefined">
    <property name="text">
     <string>(&amp;no script yet defined)</string>
    </property>
@@ -569,9 +620,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>KCMainWindow</class>
+   <class>BCMainWindow</class>
    <extends>QDialog</extends>
-   <header>kritacommander.kcmainwindow</header>
+   <header>bulicommander.bcmainwindow</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
