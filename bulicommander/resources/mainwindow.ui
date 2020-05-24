@@ -17,6 +17,18 @@
    <bool>false</bool>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>4</number>
+   </property>
+   <property name="topMargin">
+    <number>4</number>
+   </property>
+   <property name="rightMargin">
+    <number>4</number>
+   </property>
+   <property name="bottomMargin">
+    <number>4</number>
+   </property>
    <item>
     <widget class="QMenuBar" name="mainMenuBar">
      <widget class="QMenu" name="menuFile">
@@ -27,14 +39,14 @@
       <addaction name="separator"/>
       <addaction name="actionFileOpen"/>
       <addaction name="actionFileOpenCloseBC"/>
+      <addaction name="actionFileOpenAsNewDocument"/>
+      <addaction name="actionFileOpenAsNewDocumentCloseBC"/>
       <addaction name="separator"/>
       <addaction name="actionFileCopyToOtherPanel"/>
       <addaction name="actionFileMoveToOtherPanel"/>
       <addaction name="separator"/>
       <addaction name="actionFileDelete"/>
       <addaction name="actionFileRename"/>
-      <addaction name="separator"/>
-      <addaction name="actionFileToArchive"/>
       <addaction name="separator"/>
       <addaction name="actionQuit"/>
      </widget>
@@ -108,8 +120,7 @@
       <addaction name="actionViewShowBackupFiles"/>
       <addaction name="actionViewShowHiddenFiles"/>
       <addaction name="separator"/>
-      <addaction name="actionViewDisplayLeftSidebar"/>
-      <addaction name="actionViewDisplayRightSidebar"/>
+      <addaction name="actionViewDisplaySecondaryPanel"/>
       <addaction name="separator"/>
       <addaction name="actionViewSwapPanels"/>
      </widget>
@@ -119,7 +130,7 @@
       </property>
       <widget class="QMenu" name="menuBuliCommanderScripts">
        <property name="title">
-        <string>K&amp;ritaCommander scripts</string>
+        <string>Buli &amp;Commander scripts</string>
        </property>
        <addaction name="actionBCSManageScripts"/>
        <addaction name="separator"/>
@@ -137,6 +148,8 @@
        <string>&amp;Settings</string>
       </property>
       <addaction name="actionSettingsPreferences"/>
+      <addaction name="separator"/>
+      <addaction name="actionSettingsResetLayoutToDefault"/>
      </widget>
      <widget class="QMenu" name="menuHelp">
       <property name="title">
@@ -162,35 +175,62 @@
       </sizepolicy>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
+      <property name="leftMargin">
+       <number>4</number>
+      </property>
+      <property name="topMargin">
+       <number>4</number>
+      </property>
+      <property name="rightMargin">
+       <number>4</number>
+      </property>
+      <property name="bottomMargin">
+       <number>4</number>
+      </property>
+      <item row="1" column="0">
        <widget class="QSplitter" name="splitterMainView">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
-        <widget class="QFrame" name="framemainViewLeft">
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
+        <property name="childrenCollapsible">
+         <bool>false</bool>
+        </property>
+        <widget class="BCMainViewTab" name="mainViewTab0">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
-          <item row="0" column="0">
-           <layout class="QVBoxLayout" name="verticalLayoutContainerLeft"/>
-          </item>
+          <property name="leftMargin">
+           <number>4</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>4</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
          </layout>
         </widget>
-        <widget class="QFrame" name="framemainViewRight">
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
+        <widget class="BCMainViewTab" name="mainViewTab1">
          <layout class="QGridLayout" name="gridLayout_3">
-          <item row="0" column="0">
-           <layout class="QVBoxLayout" name="verticalLayoutContainerRight"/>
-          </item>
+          <property name="leftMargin">
+           <number>4</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>4</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
          </layout>
         </widget>
        </widget>
@@ -225,13 +265,16 @@
   </action>
   <action name="actionFileOpen">
    <property name="text">
-    <string>&amp;Open selected file</string>
+    <string>&amp;Open file</string>
    </property>
    <property name="toolTip">
     <string>Open the selected file in Krita and keep Buli Commander opened</string>
    </property>
    <property name="statusTip">
     <string>Open the selected file in Krita and keep Buli Commander opened</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="actionFileCopyToOtherPanel">
@@ -244,6 +287,9 @@
    <property name="statusTip">
     <string>Copy selected files to other panel location</string>
    </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
   </action>
   <action name="actionFileMoveToOtherPanel">
    <property name="text">
@@ -254,6 +300,9 @@
    </property>
    <property name="statusTip">
     <string>Move selected files to other panel location</string>
+   </property>
+   <property name="shortcut">
+    <string>F6</string>
    </property>
   </action>
   <action name="actionFileDelete">
@@ -266,6 +315,9 @@
    <property name="statusTip">
     <string>Delete selected files</string>
    </property>
+   <property name="shortcut">
+    <string>F8</string>
+   </property>
   </action>
   <action name="actionFileRename">
    <property name="text">
@@ -276,6 +328,9 @@
    </property>
    <property name="statusTip">
     <string>Rename selected files</string>
+   </property>
+   <property name="shortcut">
+    <string>F2</string>
    </property>
   </action>
   <action name="actionFileToArchive">
@@ -302,16 +357,22 @@
    <property name="statusTip">
     <string>Quit Buli Commander</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
   </action>
   <action name="actionFileOpenCloseBC">
    <property name="text">
-    <string>Open selected &amp;file and close Buli Commander</string>
+    <string>Open &amp;file and close Buli Commander</string>
    </property>
    <property name="toolTip">
     <string>Open selected file in Krita and close Buli Commander</string>
    </property>
    <property name="statusTip">
     <string>Open selected file in Krita and close Buli Commander</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+O</string>
    </property>
   </action>
   <action name="actionSelectAll">
@@ -324,6 +385,9 @@
    <property name="statusTip">
     <string>Select all files</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+A</string>
+   </property>
   </action>
   <action name="actionSelectNone">
    <property name="text">
@@ -334,6 +398,9 @@
    </property>
    <property name="statusTip">
     <string>Unselect all files</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+A</string>
    </property>
   </action>
   <action name="actionSelectInvert">
@@ -346,6 +413,9 @@
    <property name="statusTip">
     <string>Invert selected files</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+I</string>
+   </property>
   </action>
   <action name="actionGoUp">
    <property name="text">
@@ -356,6 +426,9 @@
    </property>
    <property name="statusTip">
     <string>Climb up the folder tree</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+Up</string>
    </property>
   </action>
   <action name="actionGoBack">
@@ -469,18 +542,24 @@
     <string>Show hidden files in list</string>
    </property>
   </action>
-  <action name="actionViewDisplayLeftSidebar">
+  <action name="actionViewDisplaySecondaryPanel">
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>D&amp;isplay left sidebar</string>
+    <string>Display secondary panel (&amp;right side)</string>
    </property>
    <property name="toolTip">
-    <string>Display sidebar from left panel</string>
+    <string>Display secondary panel (right side)</string>
    </property>
    <property name="statusTip">
-    <string>Display sidebar from left panel</string>
+    <string>Display secondary panel (right side)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
    </property>
   </action>
   <action name="actionViewDisplayRightSidebar">
@@ -507,6 +586,9 @@
    <property name="statusTip">
     <string>Swap left and right panels</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+U</string>
+   </property>
   </action>
   <action name="actionViewShowBackupFiles">
    <property name="checkable">
@@ -531,6 +613,9 @@
    </property>
    <property name="statusTip">
     <string>Open advanced search window</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F</string>
    </property>
   </action>
   <action name="actionToolsStatistics">
@@ -601,6 +686,9 @@
    <property name="statusTip">
     <string>Select files matching given regular expression</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+R</string>
+   </property>
   </action>
   <action name="actionGoHistory_isEmpty">
    <property name="text">
@@ -617,12 +705,51 @@
     <string>(&amp;no script yet defined)</string>
    </property>
   </action>
+  <action name="actionFileOpenAsNewDocument">
+   <property name="text">
+    <string>O&amp;pen file as new document</string>
+   </property>
+   <property name="toolTip">
+    <string>Open the selected file in Krita as a new document and keep Buli Commander opened</string>
+   </property>
+   <property name="statusTip">
+    <string>Open the selected file in Krita as a new document and keep Buli Commander opened</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionFileOpenAsNewDocumentCloseBC">
+   <property name="text">
+    <string>Open file as new document and close &amp;Buli Commander</string>
+   </property>
+   <property name="toolTip">
+    <string>Open selected file in Krita as new document and close Buli Commander</string>
+   </property>
+   <property name="statusTip">
+    <string>Open selected file in Krita as new document and close Buli Commander</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+N</string>
+   </property>
+  </action>
+  <action name="actionSettingsResetLayoutToDefault">
+   <property name="text">
+    <string>Reset layout to default</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
    <class>BCMainWindow</class>
    <extends>QDialog</extends>
    <header>bulicommander.bcmainwindow</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>BCMainViewTab</class>
+   <extends>QFrame</extends>
+   <header>bulicommander.bcmainviewtab</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

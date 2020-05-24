@@ -67,23 +67,28 @@ from PyQt5.QtWidgets import (
         QWidget
     )
 
+
 if __name__ != '__main__':
     # script is executed from Krita, loaded as a module
-    from .bcuicontroller import (
-            BCUIController
-        )
+    __PLUGIN_EXEC_FROM__ = 'KRITA'
+    try:
+        from .bcuicontroller import (
+                BCUIController
+            )
 
-    from .pktk.edialog import (
-            EDialog
-        )
+        from .pktk.edialog import (
+                EDialog
+            )
 
-    from .pktk.ekrita import (
-            EKritaNode
-        )
+        from .pktk.ekrita import (
+                EKritaNode
+            )
+    except:
+        pass
 
-    PLUGIN_EXEC_FROM = 'KRITA'
 else:
     # Execution from 'Scripter' plugin?
+    __PLUGIN_EXEC_FROM__ = 'SCRIPTER_PLUGIN'
 
     # Reload or Import
     if 'bulicommander.pktk.edialog' in sys.modules:
@@ -116,8 +121,6 @@ else:
     from bulicommander.bcuicontroller import (
             BCUIController
         )
-
-    PLUGIN_EXEC_FROM = 'SCRIPTER_PLUGIN'
 
 
 EXTENSION_ID = 'pykrita_bulicommander'
@@ -157,5 +160,5 @@ class BuliCommander(Extension):
 
 
 
-if PLUGIN_EXEC_FROM == 'SCRIPTER_PLUGIN':
+if __PLUGIN_EXEC_FROM__ == 'SCRIPTER_PLUGIN':
     BuliCommander(Krita.instance()).start()
