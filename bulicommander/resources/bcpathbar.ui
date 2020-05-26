@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1497</width>
-    <height>98</height>
+    <width>805</width>
+    <height>101</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+   <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -38,12 +38,15 @@
    <item>
     <widget class="QWidget" name="widgetPath" native="true">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <property name="spacing">
+       <number>0</number>
+      </property>
       <property name="leftMargin">
        <number>2</number>
       </property>
@@ -83,7 +86,7 @@
          </size>
         </property>
         <property name="cursor">
-         <cursorShape>PointingHandCursor</cursorShape>
+         <cursorShape>ArrowCursor</cursorShape>
         </property>
         <property name="toolTip">
          <string>Bookmark</string>
@@ -96,6 +99,39 @@
         </property>
         <property name="text">
          <string>b</string>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btHistory">
+        <property name="text">
+         <string>h</string>
+        </property>
+        <property name="popupMode">
+         <enum>QToolButton::InstantPopup</enum>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btBack">
+        <property name="text">
+         <string>&lt;</string>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btUp">
+        <property name="text">
+         <string>^</string>
         </property>
         <property name="autoRaise">
          <bool>true</bool>
@@ -119,7 +155,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="btSearch">
+       <widget class="QToolButton" name="btFilter">
         <property name="maximumSize">
          <size>
           <width>32</width>
@@ -127,19 +163,25 @@
          </size>
         </property>
         <property name="cursor">
-         <cursorShape>PointingHandCursor</cursorShape>
+         <cursorShape>ArrowCursor</cursorShape>
         </property>
         <property name="toolTip">
-         <string>Search for files</string>
+         <string>Filter files</string>
         </property>
         <property name="statusTip">
-         <string>Search for files</string>
+         <string>Filter files</string>
         </property>
         <property name="whatsThis">
-         <string>Search for files</string>
+         <string>Filter files</string>
         </property>
         <property name="text">
-         <string>s</string>
+         <string>f</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
         </property>
         <property name="autoRaise">
          <bool>true</bool>
@@ -171,17 +213,7 @@
        <number>2</number>
       </property>
       <item>
-       <widget class="QLabel" name="label">
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
-        <property name="midLineWidth">
-         <number>0</number>
-        </property>
-        <property name="text">
-         <string>TextLabel</string>
-        </property>
-       </widget>
+       <widget class="QLineEdit" name="leFilterQuery"/>
       </item>
      </layout>
     </widget>

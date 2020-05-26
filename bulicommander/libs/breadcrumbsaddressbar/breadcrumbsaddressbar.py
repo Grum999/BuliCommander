@@ -13,6 +13,7 @@ Andrey Makarov, 2019
 # - Fix empty path bug
 # - Add signal 'clicked' (if any of item has been clicked)
 # - add method to set widget Highlighted
+# - for last directory: button without menu, click edit path manually in editline
 # ------------------------------------------------------------------------------
 
 from pathlib import Path
@@ -35,7 +36,7 @@ else:
     from models_views import FilenameModel, MenuListView
     from layouts import LeftHBoxLayout
 
-TRANSP_ICON_SIZE = 40, 40  # px, size of generated semi-transparent icons
+TRANSP_ICON_SIZE = 24, 24  # px, size of generated semi-transparent icons
 
 
 class BreadcrumbsAddressBar(QFrame):
@@ -59,6 +60,7 @@ class BreadcrumbsAddressBar(QFrame):
         self.__paletteHighlighted.setColor(QPalette.Window, self.__paletteHighlighted.color(QPalette.Highlight))
 
         self.__isHighlighted = False
+        self.__hiddenPath = False
 
         self.setPalette(self.__paletteBase)
         self.setAutoFillBackground(True)
@@ -158,19 +160,20 @@ class BreadcrumbsAddressBar(QFrame):
         popup.setUniformItemSizes(True)
         popup.setLayoutMode(QtWidgets.QListView.Batched)
         edit_widget.setCompleter(completer)
-        edit_widget.textEdited.connect(model.setPathPrefix)
+        edit_widget.textEdited.connect(model.setPathPrefixTextEdited)
         return completer
 
     def get_icon(self, path: (str, Path)):
         "Path -> QIcon"
         fileinfo = QtCore.QFileInfo(str(path))
         dat = self.file_ico_prov.icon(fileinfo)
+        currentSize = dat.actualSize(QSize(*TRANSP_ICON_SIZE), QIcon.Normal, QIcon.Off)
         if fileinfo.isHidden():
-            pmap = QtGui.QPixmap(*TRANSP_ICON_SIZE)
+            pmap = QtGui.QPixmap(currentSize)
             pmap.fill(Qt.transparent)
             painter = QtGui.QPainter(pmap)
             painter.setOpacity(0.5)
-            dat.paint(painter, 0, 0, *TRANSP_ICON_SIZE)
+            dat.paint(painter, 0, 0, currentSize.width(), currentSize.height())
             painter.end()
             dat = QtGui.QIcon(pmap)
         return dat
@@ -226,7 +229,13 @@ class BreadcrumbsAddressBar(QFrame):
     def _insert_crumb(self, path):
         btn = QtWidgets.QToolButton(self.crumbs_panel)
         btn.setAutoRaise(True)
-        btn.setPopupMode(btn.MenuButtonPopup)
+
+        # last directory?
+        hasSubDir = False
+        for item in os.listdir(path):
+             if os.path.isdir(os.path.join(path, item)):
+                 hasSubDir = True
+                 break
 
         # FIXME: C:\ has no name. Use rstrip on Windows only?
         # Grum999: for linux, return '/' for root directory
@@ -238,15 +247,20 @@ class BreadcrumbsAddressBar(QFrame):
         btn.setText(crumb_text)
         btn.setFont(self.font)
         btn.path = path
-        btn.clicked.connect(self.crumb_clicked)
-        btn.clicked.connect(self.__clicked)
-        menu = MenuListView(btn)
-        menu.aboutToShow.connect(self.crumb_menu_show)
-        menu.setModel(self.fs_model)
-        menu.clicked.connect(self.crumb_menuitem_clicked)
-        menu.activated.connect(self.crumb_menuitem_clicked)
-        menu.setFont(self.font)
-        btn.setMenu(menu)
+        if hasSubDir:
+            btn.clicked.connect(self.crumb_clicked)
+            btn.clicked.connect(self.__clicked)
+            btn.setPopupMode(btn.MenuButtonPopup)
+            menu = MenuListView(btn)
+            menu.setModel(self.fs_model)
+            menu.setFont(self.font)
+            menu.aboutToShow.connect(self.crumb_menu_show)
+            menu.clicked.connect(self.crumb_menuitem_clicked)
+            menu.activated.connect(self.crumb_menuitem_clicked)
+            btn.setMenu(menu)
+        else:
+            btn.clicked.connect(self._edit_path)
+
         self.crumbs_panel.layout().insertWidget(0, btn)
         btn.setMinimumSize(btn.minimumSizeHint())  # fixed size breadcrumbs
 
@@ -317,6 +331,10 @@ class BreadcrumbsAddressBar(QFrame):
         "EVENT: switch_space mouse clicked"
         if event.button() != Qt.LeftButton:  # left click only
             return
+        self._edit_path()
+
+    def _edit_path(self):
+        """Activate the edit path mode"""
         self._show_address_field(True)
         self.__clicked()
 
@@ -361,6 +379,18 @@ class BreadcrumbsAddressBar(QFrame):
                 self.setPalette(self.__paletteHighlighted)
             else:
                 self.setPalette(self.__paletteBase)
+
+    def hiddenPath(self):
+        """Return if hidden path are displayed or not"""
+        return self.__hiddenPath
+
+    def setHiddenPath(self, value=False):
+        """Set if hidden path are displayed or not"""
+        if not isinstance(value, bool):
+            raise EInvalidType("Given `value` must be a <bool>")
+
+        self.__hiddenPath = value
+        self.fs_model.setHiddenPath(value)
 
 
 if __name__ == '__main__':

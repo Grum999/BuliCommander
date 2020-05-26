@@ -73,8 +73,8 @@ class BCSettingsFmt(object):
         if checkType is None:
             checkType = self.__type
 
-        if not isinstance(value, self.__type):
-            raise EInvalidType('Given `value` is not from expected type')
+        if not isinstance(value, checkType):
+            raise EInvalidType(f'Given `value` ({value}) is not from expected type ({checkType})')
 
         if not self.__values is None:
             if isinstance(value, list) or isinstance(value, tuple):
@@ -98,6 +98,11 @@ class BCSettingsFmt(object):
 class BCSettingsKey(Enum):
     CONFIG_HISTORY_MAXITEMS =                                'config.history.maximumItems'
     CONFIG_SESSION_SAVE =                                    'config.session.save'
+    CONFIG_DSESSION_PANELS_VIEW_MODE =                       'config.defaultSession.panels.view.mode'
+    CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY =          'config.defaultSession.panels.view.filesManagedOnly'
+    CONFIG_DSESSION_PANELS_VIEW_FILES_BACKUP =               'config.defaultSession.panels.view.filesBackup'
+    CONFIG_DSESSION_PANELS_VIEW_FILES_HIDDEN =               'config.defaultSession.panels.view.filesHidden'
+    CONFIG_DSESSION_PANELS_VIEW_LAYOUT =                     'config.defaultSession.panels.view.layout'
 
 
     SESSION_MAINWINDOW_SPLITTER_POSITION =                   'session.mainwindow.splitter.position'
@@ -112,6 +117,9 @@ class BCSettingsKey(Enum):
     SESSION_PANELS_VIEW_FILES_HIDDEN =                       'session.panels.view.filesHidden'
 
     SESSION_PANEL_VIEW_LAYOUT =                              'session.panels.panel-{panelId}.view.layout'
+    SESSION_PANEL_VIEW_CURRENTPATH =                         'session.panels.panel-{panelId}.view.currentPath'
+    SESSION_PANEL_VIEW_FILTERVISIBLE =                       'session.panels.panel-{panelId}.view.filterVisible'
+    SESSION_PANEL_VIEW_FILTERVALUE =                         'session.panels.panel-{panelId}.view.filterValue'
     SESSION_PANEL_ACTIVETAB_MAIN =                           'session.panels.panel-{panelId}.activeTab.main'
     SESSION_PANEL_ACTIVETAB_FILES =                          'session.panels.panel-{panelId}.activeTab.files'
     SESSION_PANEL_ACTIVETAB_FILES_NFO =                      'session.panels.panel-{panelId}.activeTab.filesNfo'
@@ -150,6 +158,14 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_HISTORY_MAXITEMS.id():                         (25,                       BCSettingsFmt(int)),
             BCSettingsKey.CONFIG_SESSION_SAVE.id():                             (True,                     BCSettingsFmt(bool)),
 
+            BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_MODE.id():                ('detailled',              BCSettingsFmt(str, ['detailled','small','medium','large'])),
+            BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY.id():   (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_BACKUP.id():        (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_HIDDEN.id():        (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_LAYOUT.id():              ('top',                    BCSettingsFmt(str, ['full','top','left','right','bottom'])),
+
+
+
             BCSettingsKey.SESSION_MAINWINDOW_SPLITTER_POSITION.id():            ([1000, 1000],             BCSettingsFmt(int), BCSettingsFmt(int)),
             BCSettingsKey.SESSION_MAINWINDOW_PANEL_SECONDARYVISIBLE.id():       (True,                     BCSettingsFmt(bool)),
             BCSettingsKey.SESSION_MAINWINDOW_PANEL_HIGHLIGHTED.id():            (0,                        BCSettingsFmt(int, [0, 1])),
@@ -166,6 +182,9 @@ class BCSettings(object):
 
         for panelId in panelIds:
             self.__rules[BCSettingsKey.SESSION_PANEL_VIEW_LAYOUT.id(panelId=panelId)] =       ('top',                    BCSettingsFmt(str, ['full','top','left','right','bottom']))
+            self.__rules[BCSettingsKey.SESSION_PANEL_VIEW_CURRENTPATH.id(panelId=panelId)] =  ('@home',                  BCSettingsFmt(str))
+            self.__rules[BCSettingsKey.SESSION_PANEL_VIEW_FILTERVISIBLE.id(panelId=panelId)] =(True,                     BCSettingsFmt(bool))
+            self.__rules[BCSettingsKey.SESSION_PANEL_VIEW_FILTERVALUE.id(panelId=panelId)] =  ('*',                      BCSettingsFmt(str))
             self.__rules[BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId)] =    ('files',                  BCSettingsFmt(str, ['files','documents']))
             self.__rules[BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId)] =   ('info',                   BCSettingsFmt(str, ['info','dirtree']))
             self.__rules[BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId)]=('generic',                BCSettingsFmt(str, ['generic','kra']))

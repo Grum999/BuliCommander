@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1745</width>
-    <height>1150</height>
+    <width>699</width>
+    <height>595</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -64,21 +64,6 @@
       <property name="title">
        <string>&amp;Go</string>
       </property>
-      <widget class="QMenu" name="menuGoFavorites">
-       <property name="toolTip">
-        <string>Favorites places</string>
-       </property>
-       <property name="statusTip">
-        <string>Favorites places</string>
-       </property>
-       <property name="title">
-        <string>&amp;Favorites</string>
-       </property>
-       <property name="toolTipsVisible">
-        <bool>true</bool>
-       </property>
-       <addaction name="actionGoFavorites_NoFavoritesYetDefined"/>
-      </widget>
       <widget class="QMenu" name="menuGoSavedViews">
        <property name="toolTip">
         <string>Saved views</string>
@@ -98,7 +83,22 @@
        <property name="toolTipsVisible">
         <bool>true</bool>
        </property>
-       <addaction name="actionGoHistory_isEmpty"/>
+       <addaction name="actionGoHistory_clearHistory"/>
+      </widget>
+      <widget class="QMenu" name="menuGoFavorites">
+       <property name="toolTip">
+        <string>Favorites places</string>
+       </property>
+       <property name="statusTip">
+        <string>Favorites places</string>
+       </property>
+       <property name="title">
+        <string>&amp;Favorites</string>
+       </property>
+       <property name="toolTipsVisible">
+        <bool>true</bool>
+       </property>
+       <addaction name="actionGoFavorites_NoFavoritesYetDefined"/>
       </widget>
       <addaction name="actionGoUp"/>
       <addaction name="actionGoBack"/>
@@ -149,7 +149,8 @@
       </property>
       <addaction name="actionSettingsPreferences"/>
       <addaction name="separator"/>
-      <addaction name="actionSettingsResetLayoutToDefault"/>
+      <addaction name="actionSettingsSaveSessionOnExit"/>
+      <addaction name="actionSettingsResetSessionToDefault"/>
      </widget>
      <widget class="QMenu" name="menuHelp">
       <property name="title">
@@ -690,9 +691,12 @@
     <string>Ctrl+Shift+R</string>
    </property>
   </action>
-  <action name="actionGoHistory_isEmpty">
+  <action name="actionGoHistory_clearHistory">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
-    <string>(&amp;history is empty)</string>
+    <string>Clear history</string>
    </property>
   </action>
   <action name="actionBCSManageScripts">
@@ -733,9 +737,23 @@
     <string>Ctrl+Shift+N</string>
    </property>
   </action>
-  <action name="actionSettingsResetLayoutToDefault">
+  <action name="actionSettingsResetSessionToDefault">
    <property name="text">
-    <string>Reset layout to default</string>
+    <string>&amp;Reset session to default</string>
+   </property>
+   <property name="statusTip">
+    <string>Reset session to default</string>
+   </property>
+  </action>
+  <action name="actionSettingsSaveSessionOnExit">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Save session on exit</string>
    </property>
   </action>
  </widget>

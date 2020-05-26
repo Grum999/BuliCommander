@@ -99,6 +99,11 @@ class BCMainWindow(QMainWindow):
                 1: self.mainViewTab1
             }
 
+        self.__fontMono = QFont()
+        self.__fontMono.setPointSize(9)
+        self.__fontMono.setFamily('DejaVu Sans Mono')
+
+
 
     def initMainView(self):
         """Initialise main view content"""
@@ -107,6 +112,10 @@ class BCMainWindow(QMainWindow):
             for panelIndex in self.panels:
                 if self.panels[panelIndex] == signalPanel:
                     self.__uiController.commandViewHighlightPanel(panelIndex)
+
+        @pyqtSlot('QString')
+        def panel_pathChanged(newPath):
+            self.__uiController.commandGoHistoryAdd(newPath)
 
         #@pyqtSlot('QString')
         #def panel_TabFilesLayoutChanged(signalPanel):
@@ -121,6 +130,8 @@ class BCMainWindow(QMainWindow):
 
         self.mainViewTab0.highlightedStatusChanged.connect(panel_HighlightStatusChanged)
         self.mainViewTab1.highlightedStatusChanged.connect(panel_HighlightStatusChanged)
+        self.mainViewTab0.pathChanged.connect(panel_pathChanged)
+        self.mainViewTab1.pathChanged.connect(panel_pathChanged)
         #self.mainViewTab0.tabFilesLayoutChanged.connect(panel_TabFilesLayoutChanged)
         #self.mainViewTab1.tabFilesLayoutChanged.connect(panel_TabFilesLayoutChanged)
         #self.splitterMainView.splitterMoved.connect(splitterMainView_Moved)
@@ -146,8 +157,11 @@ class BCMainWindow(QMainWindow):
         self.actionSelectRegEx.triggered.connect(self.__actionNotYetImplemented)
 
         # Menu GO
+        self.menuGoHistory.aboutToShow.connect(self.__menuHistoryShow)
+        self.menuGoHistory.triggered.connect(self.__menuHistory_Clicked)
         self.actionGoUp.triggered.connect(self.__actionNotYetImplemented)
         self.actionGoBack.triggered.connect(self.__actionNotYetImplemented)
+        self.actionGoHistory_clearHistory.triggered.connect(self.__uiController.commandGoHistoryClear)
 
         # Menu VIEW
         self.actionViewDetailled.triggered.connect(self.__uiController.commandViewModeDetailled)
@@ -170,10 +184,35 @@ class BCMainWindow(QMainWindow):
 
         # Menu SETTINGS
         self.actionSettingsPreferences.triggered.connect(self.__actionNotYetImplemented)
-        self.actionSettingsResetLayoutToDefault.triggered.connect(self.__uiController.commandSettingsResetLayoutToDefault)
+        self.actionSettingsSaveSessionOnExit.triggered.connect(self.__uiController.commandSettingsSaveSessionOnExit)
+        self.actionSettingsResetSessionToDefault.triggered.connect(self.__uiController.commandSettingsResetSessionToDefault)
 
         # Menu HELP
         self.actionHelpAboutBC.triggered.connect(self.__uiController.commandAboutBc)
+
+
+    def __menuHistoryShow(self):
+        """Build menu history"""
+
+        self.menuGoHistory.clear()
+        self.menuGoHistory.addAction(self.actionGoHistory_clearHistory)
+        if not self.__uiController.history() is None and len(self.__uiController.history()) > 0:
+            self.actionGoHistory_clearHistory.setEnabled(True)
+            self.actionGoHistory_clearHistory.setText(i18n(f'Clear history ({len(self.__uiController.history())})'))
+            self.menuGoHistory.addSeparator()
+
+            for path in reversed(self.__uiController.history()):
+                action = QAction(path.replace('&', '&&'), self)
+                action.setFont(self.__fontMono)
+                action.setProperty('path', path)
+
+                self.menuGoHistory.addAction(action)
+        else:
+            self.actionGoHistory_clearHistory.setEnabled(False)
+            self.actionGoHistory_clearHistory.setText(i18n('(History is empty)'))
+
+
+
 
     # endregion: initialisation methods ----------------------------------------
 
@@ -186,6 +225,14 @@ class BCMainWindow(QMainWindow):
                 self.__uiController.name(),
                 i18n("Sorry! Action has not yet been implemented")
             )
+
+    def __menuHistory_Clicked(self, action):
+        """Go to defined directory for current highlighted panel"""
+        if not action.property('path') is None:
+            # change directory
+            self.__uiController.commandPanelPath(self.__highlightedPanel, action.property('path'))
+
+
 
     # endregion: define actions method -----------------------------------------
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1761</width>
-    <height>1356</height>
+    <width>1194</width>
+    <height>752</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -47,7 +47,7 @@
          <item>
           <widget class="QWidget" name="wTop" native="true">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -55,7 +55,7 @@
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>88</height>
+             <height>20</height>
             </size>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -283,8 +283,8 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>834</width>
-                         <height>528</height>
+                         <width>536</width>
+                         <height>237</height>
                         </rect>
                        </property>
                        <attribute name="label">
@@ -296,8 +296,8 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>834</width>
-                         <height>528</height>
+                         <width>536</width>
+                         <height>199</height>
                         </rect>
                        </property>
                        <attribute name="label">

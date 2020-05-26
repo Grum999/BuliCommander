@@ -1,7 +1,10 @@
 import os.path
 from pathlib import Path
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import (
+        QDir,
+        Qt
+    )
 
 class FilenameModel(QtCore.QStringListModel):
     """
@@ -14,9 +17,10 @@ class FilenameModel(QtCore.QStringListModel):
     """
     def __init__(self, filter_=None, fs_engine='qt', icon_provider='internal'):
         super().__init__()
-        self.current_path = None
+        self.current_path = ''
         self.fs_engine = fs_engine
         self.filter = filter_
+        self.__hiddenPath = 0
         if icon_provider == 'internal':
             self.icons = QtWidgets.QFileIconProvider()
             self.icon_provider = self.get_icon
@@ -45,8 +49,9 @@ class FilenameModel(QtCore.QStringListModel):
                                    if self.filter != 'dirs' or i.is_dir()])
         elif self.fs_engine == 'qt':
             qdir = QtCore.QDir(str(path))
-            qdir.setFilter(qdir.NoDotAndDotDot | qdir.Hidden |
+            qdir.setFilter(qdir.NoDotAndDotDot | self.__hiddenPath |
                 (qdir.Dirs if self.filter == 'dirs' else qdir.AllEntries))
+
             names = qdir.entryList(sort=QtCore.QDir.DirsFirst |
                                    QtCore.QDir.LocaleAware)
             lst = [str(path / i) for i in names]
@@ -63,16 +68,42 @@ class FilenameModel(QtCore.QStringListModel):
                 files.append(str(i))
         return sorted(dirs, key=str.lower) + sorted(files, key=str.lower)
 
-    def setPathPrefix(self, prefix):
+    def setPathPrefix(self, prefix, bname=''):
         path = Path(prefix)
-        if not prefix.endswith(os.path.sep):
+
+        if not (prefix.endswith(os.path.sep) or bname == '.'):
             path = path.parent
-        if path == self.current_path:
+
+        if os.path.join(str(path), bname) == self.current_path:
             return  # already listed
+
         if not path.exists():
             return  # wrong path
         self.setStringList(self.get_file_list(path))
-        self.current_path = path
+        self.current_path = os.path.join(str(path), bname)
+
+    def setPathPrefixTextEdited(self, prefix):
+        bname=os.path.basename(prefix)
+        if len(bname)>0 and bname[0] == '.':
+            lHiddenPath = self.__hiddenPath
+            self.__hiddenPath = QDir.Hidden
+            self.setPathPrefix(prefix, '.')
+            self.__hiddenPath = lHiddenPath
+        else:
+            self.setPathPrefix(prefix)
+
+    def hiddenPath(self):
+        """Return if hidden path are returned or not"""
+        return (self.__hiddenPath == QDir.Hidden)
+
+    def setHiddenPath(self, value):
+        """Define if hidden path are returned or not"""
+        if value != self.hiddenPath():
+            self.current_path = ''
+            if value == True:
+                self.__hiddenPath = QDir.Hidden
+            else:
+                self.__hiddenPath = 0
 
 
 class MenuListView(QtWidgets.QMenu):

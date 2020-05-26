@@ -64,6 +64,12 @@ if 'bulicommander.bcsettings' in sys.modules:
 else:
     import bulicommander.bcsettings
 
+if 'bulicommander.bchistory' in sys.modules:
+    from importlib import reload
+    reload(sys.modules['bulicommander.bchistory'])
+else:
+    import bulicommander.bchistory
+
 
 from bulicommander.bcmainwindow import (
         BCMainWindow
@@ -79,6 +85,10 @@ from bulicommander.bcmainviewtab import (
 
 from bulicommander.bcabout import (
         BCAboutWindow
+    )
+
+from bulicommander.bchistory import (
+        BCHistory
     )
 
 from bulicommander.bcsettings import (
@@ -105,6 +115,9 @@ class BCUIController(object):
         self.__bcVersion = bcVersion
         self.__bcTitle = "{0} - {1}".format(bcName, bcVersion)
 
+        self.__history = BCHistory()
+        print('BCUIController.__init__', type(self.__history), self.__history)
+
         self.__window.dialogShown.connect(self.__initSettings)
         self.__inInit = False
 
@@ -125,6 +138,11 @@ class BCUIController(object):
         """
         self.__window.initMainView()
 
+
+
+        self.commandSettingsHistoryMaxSize(self.__settings.option(BCSettingsKey.CONFIG_HISTORY_MAXITEMS.id()))
+        self.commandSettingsSaveSessionOnExit(self.__settings.option(BCSettingsKey.CONFIG_SESSION_SAVE.id()))
+
         self.commandViewMainWindowGeometry(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY.id()))
         self.commandViewMainWindowMaximized(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED.id()))
         self.commandViewMainSplitterPosition(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_SPLITTER_POSITION.id()))
@@ -136,6 +154,9 @@ class BCUIController(object):
         self.commandViewShowHiddenFiles(self.__settings.option(BCSettingsKey.SESSION_PANELS_VIEW_FILES_HIDDEN.id()))
 
         for panelId in self.__window.panels:
+            print('BCUIController.__initSettings',type(self.__history), self.__history)
+            self.__window.panels[panelId].setHistory(self.__history)
+
             self.commandPanelTabActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId)))
             self.commandPanelTabPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId)))
 
@@ -146,8 +167,16 @@ class BCUIController(object):
             self.commandPanelTabFilesNfoActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId)))
             self.commandPanelTabFilesSplitterPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_SPLITTER_POSITION.id(panelId=panelId)))
 
-        self.__window.initMenu()
+            self.commandPanelPath(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_CURRENTPATH.id(panelId=panelId)))
 
+            self.commandPanelFilterVisible(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVISIBLE.id(panelId=panelId)))
+            self.commandPanelFilterValue(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVALUE.id(panelId=panelId)))
+
+
+        # load history
+        self.commandGoHistorySet(self.__settings.option(BCSettingsKey.SESSION_HISTORY_ITEMS.id()))
+
+        self.__window.initMenu()
 
     # endregion: initialisation methods ----------------------------------------
 
@@ -157,6 +186,10 @@ class BCUIController(object):
         """Return name"""
         return self.__bcName
 
+    def history(self):
+        """Return history manager"""
+        return self.__history
+
     # endregion: getter/setters ------------------------------------------------
 
 
@@ -164,40 +197,52 @@ class BCUIController(object):
 
     def saveSettings(self):
         """Save the current settings"""
-        if self.__window.actionViewDisplaySecondaryPanel.isChecked():
-            # if not checked, hidden panel size is 0 so, do not save it (splitter position is already properly defined)
-            self.__settings.setOption(BCSettingsKey.SESSION_MAINWINDOW_SPLITTER_POSITION, self.__window.splitterMainView.sizes())
 
-        self.__settings.setOption(BCSettingsKey.SESSION_MAINWINDOW_PANEL_SECONDARYVISIBLE, self.__window.actionViewDisplaySecondaryPanel.isChecked())
-        self.__settings.setOption(BCSettingsKey.SESSION_MAINWINDOW_PANEL_HIGHLIGHTED, self.__window.highlightedPanel())
+        self.__settings.setOption(BCSettingsKey.CONFIG_SESSION_SAVE, self.__window.actionSettingsSaveSessionOnExit.isChecked())
 
-        self.__settings.setOption(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED, self.__window.isMaximized())
-        if not self.__window.isMaximized():
-            # when maximized geometry is full screen geomtry, then do it only if no in maximized
-            self.__settings.setOption(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY, [self.__window.geometry().x(), self.__window.geometry().y(), self.__window.geometry().width(), self.__window.geometry().height()])
+        if self.__settings.option(BCSettingsKey.CONFIG_SESSION_SAVE.id()):
+            # save current session properties only if allowed
+            if self.__window.actionViewDisplaySecondaryPanel.isChecked():
+                # if not checked, hidden panel size is 0 so, do not save it (splitter position is already properly defined)
+                self.__settings.setOption(BCSettingsKey.SESSION_MAINWINDOW_SPLITTER_POSITION, self.__window.splitterMainView.sizes())
 
-        if self.__window.actionViewSmallIcon.isChecked():
-            self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'small')
-        elif self.__window.actionViewMediumIcon.isChecked():
-            self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'medium')
-        elif self.__window.actionViewLargeIcon.isChecked():
-            self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'large')
-        else:
-            self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'detailled')
+            self.__settings.setOption(BCSettingsKey.SESSION_MAINWINDOW_PANEL_SECONDARYVISIBLE, self.__window.actionViewDisplaySecondaryPanel.isChecked())
+            self.__settings.setOption(BCSettingsKey.SESSION_MAINWINDOW_PANEL_HIGHLIGHTED, self.__window.highlightedPanel())
+
+            self.__settings.setOption(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED, self.__window.isMaximized())
+            if not self.__window.isMaximized():
+                # when maximized geometry is full screen geomtry, then do it only if no in maximized
+                self.__settings.setOption(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY, [self.__window.geometry().x(), self.__window.geometry().y(), self.__window.geometry().width(), self.__window.geometry().height()])
+
+            if self.__window.actionViewSmallIcon.isChecked():
+                self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'small')
+            elif self.__window.actionViewMediumIcon.isChecked():
+                self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'medium')
+            elif self.__window.actionViewLargeIcon.isChecked():
+                self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'large')
+            else:
+                self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'detailled')
 
 
-        self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY, self.__window.actionViewShowImageFileOnly.isChecked())
-        self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_FILES_BACKUP, self.__window.actionViewShowBackupFiles.isChecked())
-        self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_FILES_HIDDEN, self.__window.actionViewShowHiddenFiles.isChecked())
+            self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY, self.__window.actionViewShowImageFileOnly.isChecked())
+            self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_FILES_BACKUP, self.__window.actionViewShowBackupFiles.isChecked())
+            self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_FILES_HIDDEN, self.__window.actionViewShowHiddenFiles.isChecked())
 
-        for panelId in self.__window.panels:
-            self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].tabFilesLayout().value)
-            self.__settings.setOption(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId), [tab.value for tab in self.__window.panels[panelId].tabOrder()])
-            self.__settings.setOption(BCSettingsKey.SESSION_PANEL_POSITIONTAB_FILES.id(panelId=panelId), [tab.value for tab in self.__window.panels[panelId].tabFilesOrder()])
-            self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId), self.__window.panels[panelId].tabActive().value)
-            self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId), self.__window.panels[panelId].tabFilesActive().value)
-            self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId), self.__window.panels[panelId].tabFilesNfoActive().value)
-            self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_POSITION.id(panelId=panelId), self.__window.panels[panelId].tabFilesSplitterPosition())
+            for panelId in self.__window.panels:
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].tabFilesLayout().value)
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CURRENTPATH.id(panelId=panelId), self.__window.panels[panelId].currentPath())
+
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVISIBLE.id(panelId=panelId), self.__window.panels[panelId].filterVisible())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVALUE.id(panelId=panelId), self.__window.panels[panelId].filter())
+
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId), [tab.value for tab in self.__window.panels[panelId].tabOrder()])
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_POSITIONTAB_FILES.id(panelId=panelId), [tab.value for tab in self.__window.panels[panelId].tabFilesOrder()])
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId), self.__window.panels[panelId].tabActive().value)
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId), self.__window.panels[panelId].tabFilesActive().value)
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId), self.__window.panels[panelId].tabFilesNfoActive().value)
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_POSITION.id(panelId=panelId), self.__window.panels[panelId].tabFilesSplitterPosition())
+
+            self.__settings.setOption(BCSettingsKey.SESSION_HISTORY_ITEMS, list(self.__history))
 
         return self.__settings.saveConfig()
 
@@ -409,6 +454,9 @@ class BCUIController(object):
             self.__window.actionViewShowHiddenFiles.setChecked(value)
 
         print('TODO: commandViewShowHiddenFiles Need to implement changed view')
+        for panel in self.__window.panels:
+            self.__window.panels[panel].setHiddenPath(value)
+
 
         return value
 
@@ -489,19 +537,71 @@ class BCUIController(object):
 
         return self.__window.panels[panel].setTabFilesSplitterPosition(positions)
 
+    def commandPanelPath(self, panel, path=None):
+        """Define path for given panel"""
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
 
-    def commandSettingsResetLayoutToDefault(self):
+        return self.__window.panels[panel].setCurrentPath(path)
+
+    def commandPanelFilterVisible(self, panel, visible=None):
+        """Display the filter
+
+        If visible is None, invert current status
+        If True, display filter
+        If False, hide
+        """
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].setFilterVisible(visible)
+
+    def commandPanelFilterValue(self, panel, value=None):
+        """Set current filter value"""
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].setFilter(value)
+
+    def commandGoHistoryClear(self):
+        """Clear history content"""
+        self.__history.clear()
+
+    def commandGoHistorySet(self, value=[]):
+        """Set history content"""
+        self.__history.clear()
+        self.__history.extend(value)
+
+    def commandGoHistoryAdd(self, value):
+        """Set history content"""
+        self.__history.append(value)
+
+    def commandSettingsHistoryMaxSize(self, value=25):
+        """Set maximum size history for history content"""
+        self.__history.setMaxItems(value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_HISTORY_MAXITEMS, self.__history.maxItems())
+
+    def commandSettingsSaveSessionOnExit(self, saveSession=None):
+        """Define if current session properties have to be save or not"""
+        if saveSession is None:
+            saveSession = self.__window.actionSettingsSaveSessionOnExit.isChecked()
+        else:
+            self.__window.actionSettingsSaveSessionOnExit.setChecked(saveSession)
+
+        return saveSession
+
+    def commandSettingsResetSessionToDefault(self):
         """Reset session configuration to default"""
         self.commandViewDisplaySecondaryPanel(True)
         self.commandViewHighlightPanel(0)
         self.commandViewMainSplitterPosition()
-        self.commandViewModeDetailled()
-        self.commandViewShowImageFileOnly(True)
-        self.commandViewShowBackupFiles(False)
-        self.commandViewShowHiddenFiles(False)
+        self.commandViewMode(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_MODE.id()))
+        self.commandViewShowImageFileOnly(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY.id()))
+        self.commandViewShowBackupFiles(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_BACKUP.id()))
+        self.commandViewShowHiddenFiles(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_HIDDEN.id()))
 
         for panelId in self.__window.panels:
-            self.commandPanelTabFilesLayout(panelId, BCMainViewTabFilesLayout.TOP)
+            self.commandPanelTabFilesLayout(panelId, self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_LAYOUT.id()))
             self.commandPanelTabFilesActive(panelId, BCMainViewTabFilesTabs.INFORMATIONS)
             self.commandPanelTabFilesPosition(panelId, [BCMainViewTabFilesTabs.INFORMATIONS, BCMainViewTabFilesTabs.DIRECTORIES_TREE])
 
@@ -511,10 +611,6 @@ class BCUIController(object):
             self.commandPanelTabFilesNfoActive(panelId, BCMainViewTabFilesNfoTabs.GENERIC)
 
             self.commandPanelTabFilesSplitterPosition(panelId)
-
-
-
-
 
 
     def commandAboutBc(self):

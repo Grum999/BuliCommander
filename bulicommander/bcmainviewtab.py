@@ -115,6 +115,7 @@ class BCMainViewTab(QFrame):
 
     highlightedStatusChanged = Signal(QTabWidget)
     tabFilesLayoutChanged = Signal(QTabWidget)
+    pathChanged = Signal(str)
 
     def __init__(self, parent=None):
         super(BCMainViewTab, self).__init__(parent)
@@ -150,9 +151,9 @@ class BCMainViewTab(QFrame):
 
 
     def __initialise(self):
-        @pyqtSlot('QString')
-        def splitterFiles_Moved(pos, index):
-            print('splitter:', pos, index, '-', self.splitterFiles.sizes())
+        #@pyqtSlot('QString')
+        #def splitterFiles_Moved(pos, index):
+        #    print('splitter:', pos, index, '-', self.splitterFiles.sizes())
 
         @pyqtSlot('QString')
         def tabFilesLayoutModel_Clicked(value):
@@ -160,11 +161,15 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot('QString')
         def tabFilesLayoutReset_Clicked(value):
-            self.setTabFilesLayout(BCMainViewTabFilesLayout.FULL)
+            self.setTabFilesLayout(BCMainViewTabFilesLayout.TOP)
 
         @pyqtSlot('QString')
         def children_Clicked(value):
             self.setHighlighted(True)
+
+        @pyqtSlot('QString')
+        def path_Changed(value):
+            self.pathChanged.emit(value)
 
         self.__actionApplyTabFilesLayoutFull.triggered.connect(children_Clicked)
         self.__actionApplyTabFilesLayoutTop.triggered.connect(children_Clicked)
@@ -185,7 +190,7 @@ class BCMainViewTab(QFrame):
         self.btTabFilesLayoutModel.clicked.connect(tabFilesLayoutReset_Clicked)
 
         self.splitterFiles.setSizes([1000, 1000]);
-        self.splitterFiles.splitterMoved.connect(splitterFiles_Moved)
+        #self.splitterFiles.splitterMoved.connect(splitterFiles_Moved)
 
         self.tabMain.tabBarClicked.connect(children_Clicked)
         self.tabFilesDetails.tabBarClicked.connect(children_Clicked)
@@ -194,6 +199,7 @@ class BCMainViewTab(QFrame):
         self.toolBoxInfo.currentChanged.connect(children_Clicked)
         self.btTabFilesLayoutModel.clicked.connect(children_Clicked)
         self.framePathBar.clicked.connect(children_Clicked)
+        self.framePathBar.pathChanged.connect(path_Changed)
 
         self.__refreshTabFilesLayout()
 
@@ -441,6 +447,7 @@ class BCMainViewTab(QFrame):
         if index > -1:
             self.toolBoxInfo.setCurrentIndex(index)
 
+
     def tabFilesSplitterPosition(self):
         """Return splitter position for tab files"""
         return self.splitterFiles.sizes()
@@ -459,3 +466,56 @@ class BCMainViewTab(QFrame):
         return self.splitterFiles.sizes()
 
 
+    def currentPath(self):
+        """Return current path"""
+        return self.framePathBar.path()
+
+
+    def setCurrentPath(self, path=None):
+        """Set current path"""
+        return self.framePathBar.setPath(path)
+
+
+    def setHistory(self, value):
+        """Set history object"""
+        self.framePathBar.setHistory(value)
+
+
+    def history(self, value):
+        """return history object"""
+        self.framePathBar.history()
+
+
+    def filterVisible(self):
+        """Return if filter is visible or not"""
+        return self.framePathBar.filterVisible()
+
+
+    def setFilterVisible(self, visible=None):
+        """Display the filter
+
+        If visible is None, invert current status
+        If True, display filter
+        If False, hide
+        """
+        self.framePathBar.setFilterVisible(visible)
+
+
+    def filter(self):
+        """Return current filter value"""
+        return self.framePathBar.filter()
+
+
+    def setFilter(self, value=None):
+        """Set current filter value"""
+        self.framePathBar.setFilter(value)
+
+
+    def hiddenPath(self):
+        """Return if hidden path are displayed or not"""
+        return self.framePathBar.hiddenPath()
+
+
+    def setHiddenPath(self, value=False):
+        """Set if hidden path are displayed or not"""
+        self.framePathBar.setHiddenPath(value)
