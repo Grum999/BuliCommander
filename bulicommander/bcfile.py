@@ -35,15 +35,9 @@
 #       Also provide the possibilty to retrieve thumbnails
 #       Results can be exported into different format
 
-from bcutils import (
-        Debug,
-        Stopwatch,
 
-        strToBytesSize,
-        bytesSizeToStr,
-        strToTs,
-        tsToStr
-    )
+
+
 
 from enum import Enum
 from functools import cmp_to_key
@@ -53,11 +47,35 @@ import hashlib
 import json
 import os
 import re
+import sys
 import textwrap
 import xml.etree.ElementTree as xmlElement
 import zipfile
 
 
+# Reload or Import
+if 'bulicommander.bcutils' in sys.modules:
+    from importlib import reload
+    reload(sys.modules['bulicommander.bcutils'])
+else:
+    import bulicommander.bcutils
+
+if 'bulicommander.pktk.pktk' in sys.modules:
+    from importlib import reload
+    reload(sys.modules['bulicommander.pktk.pktk'])
+else:
+    import bulicommander.pktk.pktk
+
+
+from bulicommander.bcutils import (
+        Debug,
+        Stopwatch,
+
+        strToBytesSize,
+        bytesSizeToStr,
+        strToTs,
+        tsToStr
+    )
 
 from bulicommander.pktk.pktk import (
         EInvalidType,
@@ -74,6 +92,8 @@ from PyQt5.QtGui import (
         QImage,
         QImageReader
     )
+
+# ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
 class EInvalidRuleParameter(Exception):
@@ -2156,10 +2176,10 @@ class BCFileList(object):
         if clearResults:
             # reset current list if asked
             self.clearResults()
+            Stopwatch.start('BCFileList.execute.search')
 
         # stopwatches are just used to measure execution time performances
         Stopwatch.start('BCFileList.execute.global')
-        Stopwatch.start('BCFileList.execute.search')
 
         # to reduce execution times on filtering, test if file name is matching
         # rule is applied in directory scan
@@ -2186,17 +2206,18 @@ class BCFileList(object):
                 for path, subdirs, files in os.walk(pathName):
                     if self.__includeDirectories:
                         for dir in subdirs:
-                            if self.__includeHidden or dir[0]!='.':
+                            fullPathName = os.path.join(path, dir)
+
+                            if self.__includeHidden or not QFileInfo(dir).isHidden():
                                 nbTotal+=1
-                                fullPathName = os.path.join(path, dir)
 
                                 if not fullPathName in self.__currentFilesName and not fullPathName in foundDirectories:
                                     foundDirectories.add(fullPathName)
 
                     for name in files:
-                        if self.__includeHidden or name[0]!='.':
+                        fullPathName = os.path.join(path, name)
+                        if self.__includeHidden or not QFileInfo(name).isHidden():
                             nbTotal+=1
-                            fullPathName = os.path.join(path, name)
 
                             # check if file name match given pattern (if pattern) and is not already in file list
                             if (namePattern is None or namePattern.search(name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
@@ -2205,10 +2226,10 @@ class BCFileList(object):
                 # return current directory content
                 with os.scandir(pathName) as files:
                     for file in files:
-                        if self.__includeHidden or file.name[0]!='.':
+                        fullPathName = os.path.join(pathName, file.name)
+                        if self.__includeHidden or QFileInfo(file.name).isHidden():
                             if file.is_file():
                                 nbTotal+=1
-                                fullPathName = os.path.join(pathName, file.name)
 
                                 # check if file name match given pattern (if pattern) and is not already in file list
                                 if (namePattern is None or namePattern.search(name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
@@ -2216,7 +2237,6 @@ class BCFileList(object):
                             elif self.__includeDirectories and file.is_dir():
                                 # if directories are asked and file is a directory, add it
                                 nbTotal+=1
-                                fullPathName = os.path.join(pathName, file.name)
 
                                 if not fullPathName in self.__currentFilesName and not fullPathName in foundDirectories:
                                     foundDirectories.add(fullPathName)
