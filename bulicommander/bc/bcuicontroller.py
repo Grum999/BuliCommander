@@ -19,6 +19,9 @@
 # A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
+
+from pathlib import Path
+
 import sys
 
 from PyQt5.Qt import *
@@ -31,74 +34,23 @@ from PyQt5.QtWidgets import (
         QWidget
     )
 
-# Reload or Import
-if 'bulicommander.pktk.pktk' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.pktk.pktk'])
-else:
-    import bulicommander.pktk.pktk
 
-# Reload or Import
-if 'bulicommander.bcmainwindow' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.bcmainwindow'])
-else:
-    import bulicommander.bcmainwindow
-
-# Reload or Import
-if 'bulicommander.bcmainviewtab' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.bcmainviewtab'])
-else:
-    import bulicommander.bcmainviewtab
-
-if 'bulicommander.bcabout' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.bcabout'])
-else:
-    import bulicommander.bcabout
-
-if 'bulicommander.bcsettings' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.bcsettings'])
-else:
-    import bulicommander.bcsettings
-
-if 'bulicommander.bchistory' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.bchistory'])
-else:
-    import bulicommander.bchistory
-
-
-from bulicommander.bcmainwindow import (
-        BCMainWindow
-    )
-
-from bulicommander.bcmainviewtab import (
+from .bcabout import BCAboutWindow
+from .bcbookmark import BCBookmark
+from .bchistory import BCHistory
+from .bcmainviewtab import (
         BCMainViewTab,
         BCMainViewTabFilesLayout,
         BCMainViewTabFilesNfoTabs,
         BCMainViewTabFilesTabs,
-        BCMainViewTabTabs,
+        BCMainViewTabTabs
     )
-
-from bulicommander.bcabout import (
-        BCAboutWindow
-    )
-
-from bulicommander.bchistory import (
-        BCHistory
-    )
-
-from bulicommander.bcsettings import (
+from .bcmainwindow import BCMainWindow
+from .bcsettings import (
         BCSettings,
         BCSettingsKey
     )
 
-from bulicommander.pktk.pktk import (
-        EInvalidValue
-    )
 
 
 
@@ -116,7 +68,9 @@ class BCUIController(object):
         self.__bcTitle = "{0} - {1}".format(bcName, bcVersion)
 
         self.__history = BCHistory()
-        print('BCUIController.__init__', type(self.__history), self.__history)
+        self.__bookmark = BCBookmark()
+
+        self.__confirmAction = True
 
         self.__window.dialogShown.connect(self.__initSettings)
         self.__inInit = False
@@ -154,8 +108,8 @@ class BCUIController(object):
         self.commandViewShowHiddenFiles(self.__settings.option(BCSettingsKey.SESSION_PANELS_VIEW_FILES_HIDDEN.id()))
 
         for panelId in self.__window.panels:
-            print('BCUIController.__initSettings',type(self.__history), self.__history)
             self.__window.panels[panelId].setHistory(self.__history)
+            self.__window.panels[panelId].setBookmark(self.__bookmark)
 
             self.commandPanelTabActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId)))
             self.commandPanelTabPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId)))
@@ -175,6 +129,7 @@ class BCUIController(object):
 
         # load history
         self.commandGoHistorySet(self.__settings.option(BCSettingsKey.SESSION_HISTORY_ITEMS.id()))
+        self.commandGoBookmarkSet(self.__settings.option(BCSettingsKey.SESSION_BOOKMARK_ITEMS.id()))
 
         self.__window.initMenu()
 
@@ -189,6 +144,10 @@ class BCUIController(object):
     def history(self):
         """Return history manager"""
         return self.__history
+
+    def bookmark(self):
+        """Return bookmark manager"""
+        return self.__bookmark
 
     # endregion: getter/setters ------------------------------------------------
 
@@ -242,7 +201,8 @@ class BCUIController(object):
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId), self.__window.panels[panelId].tabFilesNfoActive().value)
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_POSITION.id(panelId=panelId), self.__window.panels[panelId].tabFilesSplitterPosition())
 
-            self.__settings.setOption(BCSettingsKey.SESSION_HISTORY_ITEMS, list(self.__history))
+            self.__settings.setOption(BCSettingsKey.SESSION_HISTORY_ITEMS, self.__history.list())
+            self.__settings.setOption(BCSettingsKey.SESSION_BOOKMARK_ITEMS, self.__bookmark.list())
 
         return self.__settings.saveConfig()
 
@@ -457,7 +417,6 @@ class BCUIController(object):
         for panel in self.__window.panels:
             self.__window.panels[panel].setHiddenPath(value)
 
-
         return value
 
     def commandPanelTabFilesLayout(self, panel, value):
@@ -563,14 +522,50 @@ class BCUIController(object):
 
         return self.__window.panels[panel].setFilter(value)
 
+    def commandGoBack(self, panel):
+        """Go back to previous directory"""
+        if isinstance(panel, BCMainViewTab):
+            for panelId in self.__window.panels:
+                if self.__window.panels[panelId] == panel:
+                    panel = panelId
+                    break
+
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        self.__window.panels[panel].goToBackPath()
+
+    def commandGoUp(self, panel):
+        """Go to parent directory"""
+        if isinstance(panel, BCMainViewTab):
+            for panelId in self.__window.panels:
+                if self.__window.panels[panelId] == panel:
+                    panel = panelId
+                    break
+
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        self.__window.panels[panel].goToUpPath()
+
     def commandGoHistoryClear(self):
         """Clear history content"""
         self.__history.clear()
 
+    def commandGoHistoryClearUI(self):
+        """Clear history content"""
+        if self.__confirmAction:
+            if QMessageBox.question(QWidget(),
+                                          self.__bcName,
+                                          "Are you sure you want to clear history?"
+                                        ) == QMessageBox.No:
+                return
+        self.commandGoHistoryClear()
+
     def commandGoHistorySet(self, value=[]):
         """Set history content"""
         self.__history.clear()
-        self.__history.extend(value)
+        self.__history.setItems(value)
 
     def commandGoHistoryAdd(self, value):
         """Set history content"""
@@ -580,6 +575,49 @@ class BCUIController(object):
         """Set maximum size history for history content"""
         self.__history.setMaxItems(value)
         self.__settings.setOption(BCSettingsKey.CONFIG_HISTORY_MAXITEMS, self.__history.maxItems())
+
+    def commandGoBookmarkSet(self, values=[]):
+        """Set bookmark content"""
+        self.__bookmark.clear()
+        self.__bookmark.set(values)
+
+    def commandGoBookmarkClear(self):
+        """Clear bookmark content"""
+        self.__bookmark.clear()
+
+    def commandGoBookmarkClearUI(self):
+        """Clear bookmark content"""
+        if self.__confirmAction:
+            if QMessageBox.question(QWidget(),
+                                          self.__bcName,
+                                          "Are you sure you want to clear all bookmarks?"
+                                        ) == QMessageBox.No:
+                return
+        self.commandGoBookmarkClear()
+
+    def commandGoBookmarkAppend(self, name, path):
+        """append bookmark content"""
+        self.__bookmark.append(name, path)
+
+    def commandGoBookmarkAppendUI(self, path):
+        """append bookmark content"""
+        self.__bookmark.uiAppend(path)
+
+    def commandGoBookmarkRemove(self, name):
+        """remove bookmark content"""
+        self.__bookmark.remove(name, path)
+
+    def commandGoBookmarkRemoveUI(self, name):
+        """remove bookmark content"""
+        self.__bookmark.uiRemove(name)
+
+    def commandGoBookmarkRename(self, name, newName):
+        """rename bookmark content"""
+        self.__bookmark.rename(name, newName)
+
+    def commandGoBookmarkRenameUI(self, name):
+        """rename bookmark content"""
+        self.__bookmark.uiRename(name)
 
     def commandSettingsSaveSessionOnExit(self, saveSession=None):
         """Define if current session properties have to be save or not"""

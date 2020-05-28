@@ -491,7 +491,7 @@
   <customwidget>
    <class>BCPathBar</class>
    <extends>QFrame</extends>
-   <header>bulicommander.bcpathbar</header>
+   <header>bulicommander.bc.bcpathbar</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

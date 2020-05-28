@@ -36,9 +36,6 @@ else:
     from models_views import FilenameModel, MenuListView
     from layouts import LeftHBoxLayout
 
-TRANSP_ICON_SIZE = 24, 24  # px, size of generated semi-transparent icons
-
-
 class BreadcrumbsAddressBar(QFrame):
     "Windows Explorer-like address bar"
     listdir_error = Signal(Path)  # failed to list a directory
@@ -61,6 +58,8 @@ class BreadcrumbsAddressBar(QFrame):
 
         self.__isHighlighted = False
         self.__hiddenPath = False
+
+        self.__iconSize = QtCore.QSize(32, 32)  # px, size of generated semi-transparent icons
 
         self.setPalette(self.__paletteBase)
         self.setAutoFillBackground(True)
@@ -167,7 +166,7 @@ class BreadcrumbsAddressBar(QFrame):
         "Path -> QIcon"
         fileinfo = QtCore.QFileInfo(str(path))
         dat = self.file_ico_prov.icon(fileinfo)
-        currentSize = dat.actualSize(QSize(*TRANSP_ICON_SIZE), QIcon.Normal, QIcon.Off)
+        currentSize = dat.actualSize(self.__iconSize, QIcon.Normal, QIcon.Off)
         if fileinfo.isHidden():
             pmap = QtGui.QPixmap(currentSize)
             pmap.fill(Qt.transparent)

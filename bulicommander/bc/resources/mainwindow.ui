@@ -85,7 +85,7 @@
        </property>
        <addaction name="actionGoHistory_clearHistory"/>
       </widget>
-      <widget class="QMenu" name="menuGoFavorites">
+      <widget class="QMenu" name="menuGoBookmark">
        <property name="toolTip">
         <string>Favorites places</string>
        </property>
@@ -93,18 +93,21 @@
         <string>Favorites places</string>
        </property>
        <property name="title">
-        <string>&amp;Favorites</string>
+        <string>Bookmark</string>
        </property>
        <property name="toolTipsVisible">
         <bool>true</bool>
        </property>
-       <addaction name="actionGoFavorites_NoFavoritesYetDefined"/>
+       <addaction name="actionGoBookmark_clearBookmark"/>
+       <addaction name="actionGoBookmark_addBookmark"/>
+       <addaction name="actionGoBookmark_removeBookmark"/>
+       <addaction name="actionGoBookmark_renameBookmark"/>
       </widget>
       <addaction name="actionGoUp"/>
       <addaction name="actionGoBack"/>
       <addaction name="menuGoHistory"/>
       <addaction name="separator"/>
-      <addaction name="menuGoFavorites"/>
+      <addaction name="menuGoBookmark"/>
       <addaction name="menuGoSavedViews"/>
      </widget>
      <widget class="QMenu" name="menuView">
@@ -442,10 +445,19 @@
    <property name="statusTip">
     <string>Go back to previous folder</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
   </action>
-  <action name="actionGoFavorites_NoFavoritesYetDefined">
+  <action name="actionGoBookmark_clearBookmark">
    <property name="text">
-    <string>(&amp;no favorites yet defined)</string>
+    <string>Clear bookmark</string>
+   </property>
+   <property name="toolTip">
+    <string>Clear bookmark</string>
+   </property>
+   <property name="statusTip">
+    <string>Clear bookmark</string>
    </property>
   </action>
   <action name="actionGoSavedViews_NoSavedViewsYet">
@@ -696,7 +708,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Clear history</string>
+    <string>&amp;Clear history</string>
    </property>
   </action>
   <action name="actionBCSManageScripts">
@@ -756,18 +768,51 @@
     <string>&amp;Save session on exit</string>
    </property>
   </action>
+  <action name="actionGoBookmark_addBookmark">
+   <property name="text">
+    <string>Add to bookmark...</string>
+   </property>
+   <property name="toolTip">
+    <string>Add current path to bookmark</string>
+   </property>
+   <property name="statusTip">
+    <string>Add current path to bookmark</string>
+   </property>
+  </action>
+  <action name="actionGoBookmark_removeBookmark">
+   <property name="text">
+    <string>Remove from bookmark...</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove current path from bookmark</string>
+   </property>
+   <property name="statusTip">
+    <string>Remove current path from bookmark</string>
+   </property>
+  </action>
+  <action name="actionGoBookmark_renameBookmark">
+   <property name="text">
+    <string>Rename bookmark...</string>
+   </property>
+   <property name="toolTip">
+    <string>Rename current bookmark</string>
+   </property>
+   <property name="statusTip">
+    <string>Rename current bookmark</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
    <class>BCMainWindow</class>
    <extends>QDialog</extends>
-   <header>bulicommander.bcmainwindow</header>
+   <header>bulicommander.bc.bcmainwindow</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>BCMainViewTab</class>
    <extends>QFrame</extends>
-   <header>bulicommander.bcmainviewtab</header>
+   <header>bulicommander.bc.bcmainviewtab</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

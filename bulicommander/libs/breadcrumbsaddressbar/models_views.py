@@ -130,6 +130,8 @@ class MenuListView(QtWidgets.QMenu):
         self.clicked = lv.clicked
         self.setModel = lv.setModel
 
+        lv.setIconSize(QtCore.QSize(32, 32))
+
         lv.sizeHint = self.size_hint
         lv.minimumSizeHint = self.size_hint
         lv.mousePressEvent = lambda event: None  # skip

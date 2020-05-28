@@ -46,27 +46,9 @@ from PyQt5.QtWidgets import (
         QWidget
     )
 
-
-if 'bulicommander.pktk.pktk' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.pktk.pktk'])
-else:
-    import bulicommander.pktk.pktk
-
-if 'bulicommander.bcpathbar' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.bcpathbar'])
-else:
-    import bulicommander.bcpathbar
-
-
-from bulicommander.bcpathbar import (
-        BCPathBar
-    )
-
-from bulicommander.pktk.pktk import (
-        EInvalidType
-    )
+from .bcbookmark import BCBookmark
+from .bchistory import BCHistory
+from .bcpathbar import BCPathBar
 
 
 # -----------------------------------------------------------------------------
@@ -103,7 +85,6 @@ class BCMainViewTabFilesNfoTabs(Enum):
     GENERIC = 'generic'
     KRA = 'kra'
 
-
 class BCMainViewTabTabs(Enum):
     FILES = 'files'
     DOCUMENTS = 'documents'
@@ -122,6 +103,8 @@ class BCMainViewTab(QFrame):
 
         self.__tabFilesLayout = BCMainViewTabFilesLayout.TOP
         self.__isHighlighted = False
+        self.__uiController = None
+
 
         self.__actionApplyTabFilesLayoutFull = QAction(i18n('Full mode'), self)
         self.__actionApplyTabFilesLayoutFull.setCheckable(True)
@@ -200,6 +183,7 @@ class BCMainViewTab(QFrame):
         self.btTabFilesLayoutModel.clicked.connect(children_Clicked)
         self.framePathBar.clicked.connect(children_Clicked)
         self.framePathBar.pathChanged.connect(path_Changed)
+        self.framePathBar.setPanel(self)
 
         self.__refreshTabFilesLayout()
 
@@ -265,6 +249,19 @@ class BCMainViewTab(QFrame):
         self.framePathBar.setHighlighted(self.__isHighlighted)
         if self.__isHighlighted:
             self.highlightedStatusChanged.emit(self)
+
+
+    def uiController(self):
+        """Return uiController"""
+        return self.__uiController
+
+
+    def setUiController(self, uiController):
+        """Set uiController"""
+        #if not (uiController is None or isinstance(uiController, BCUIController)):
+        #    raise EInvalidType('Given `uiController` must be a <BCUIController>')
+        self.__uiController = uiController
+        self.framePathBar.setUiController(uiController)
 
 
     def tabFilesLayout(self):
@@ -475,15 +472,33 @@ class BCMainViewTab(QFrame):
         """Set current path"""
         return self.framePathBar.setPath(path)
 
+    def goToBackPath(self):
+        """Go to previous path"""
+        return self.framePathBar.goToBackPath()
+
+    def goToUpPath(self):
+        """Go to previous path"""
+        return self.framePathBar.goToUpPath()
+
+
+    def history(self, value):
+        """return history object"""
+        self.framePathBar.history()
+
 
     def setHistory(self, value):
         """Set history object"""
         self.framePathBar.setHistory(value)
 
 
-    def history(self, value):
-        """return history object"""
-        self.framePathBar.history()
+    def bookmark(self):
+        """return bookmark object"""
+        self.framePathBar.bookmark()
+
+
+    def setBookmark(self, value):
+        """Set bookmark object"""
+        self.framePathBar.setBookmark(value)
 
 
     def filterVisible(self):

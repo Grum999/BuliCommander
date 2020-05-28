@@ -52,22 +52,13 @@ import textwrap
 import xml.etree.ElementTree as xmlElement
 import zipfile
 
+from ..pktk.pktk import (
+        EInvalidType,
+        EInvalidValue,
+        EInvalidStatus
+    )
 
-# Reload or Import
-if 'bulicommander.bcutils' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.bcutils'])
-else:
-    import bulicommander.bcutils
-
-if 'bulicommander.pktk.pktk' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.pktk.pktk'])
-else:
-    import bulicommander.pktk.pktk
-
-
-from bulicommander.bcutils import (
+from .bcutils import (
         Debug,
         Stopwatch,
 
@@ -75,12 +66,6 @@ from bulicommander.bcutils import (
         bytesSizeToStr,
         strToTs,
         tsToStr
-    )
-
-from bulicommander.pktk.pktk import (
-        EInvalidType,
-        EInvalidValue,
-        EInvalidStatus
     )
 
 from PyQt5.Qt import *

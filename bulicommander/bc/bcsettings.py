@@ -34,25 +34,9 @@ import re
 import sys
 
 
-# Reload or Import
-if 'bulicommander.bcutils' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.bcutils'])
-else:
-    import bulicommander.bcutils
+from .bcutils import Debug
 
-if 'bulicommander.pktk.pktk' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.pktk.pktk'])
-else:
-    import bulicommander.pktk.pktk
-
-
-from bulicommander.bcutils import (
-        Debug
-    )
-
-from bulicommander.pktk.pktk import (
+from ..pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
@@ -128,6 +112,7 @@ class BCSettingsKey(Enum):
     SESSION_PANEL_SPLITTER_POSITION =                        'session.panels.panel-{panelId}.splitter.position'
 
     SESSION_HISTORY_ITEMS =                                  'session.history.items'
+    SESSION_BOOKMARK_ITEMS =                                 'session.bookmark.items'
 
     def id(self, **param):
         if isinstance(param, dict):
@@ -177,7 +162,8 @@ class BCSettings(object):
             BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY.id():           (True,                     BCSettingsFmt(bool)),
             BCSettingsKey.SESSION_PANELS_VIEW_FILES_BACKUP.id():                (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.SESSION_PANELS_VIEW_FILES_HIDDEN.id():                (False,                    BCSettingsFmt(bool)),
-            BCSettingsKey.SESSION_HISTORY_ITEMS.id():                           ([],                       BCSettingsFmt(list, str))
+            BCSettingsKey.SESSION_HISTORY_ITEMS.id():                           ([],                       BCSettingsFmt(list, str)),
+            BCSettingsKey.SESSION_BOOKMARK_ITEMS.id():                          ([],                       BCSettingsFmt(list))
         }
 
         for panelId in panelIds:

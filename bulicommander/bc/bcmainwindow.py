@@ -38,44 +38,18 @@ from PyQt5.QtCore import (
         pyqtSignal
     )
 from PyQt5.QtWidgets import (
-        QDialog,
         QMainWindow
     )
 
-# Reload or Import
-if 'bulicommander.pktk.pktk' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.pktk.pktk'])
-else:
-    import bulicommander.pktk.pktk
 
-if 'bulicommander.bcmainviewtab' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.bcmainviewtab'])
-else:
-    import bulicommander.bcmainviewtab
+from .bcbookmark import BCBookmark
+from .bchistory import BCHistory
+from .bcpathbar import BCPathBar
+from .bcmainviewtab import BCMainViewTab
 
-if 'bulicommander.bcpathbar' in sys.modules:
-    from importlib import reload
-    reload(sys.modules['bulicommander.bcpathbar'])
-else:
-    import bulicommander.bcpathbar
-
-
-
-
-from bulicommander.bcpathbar import (
-        BCPathBar
-    )
-
-from bulicommander.bcmainviewtab import (
-        BCMainViewTab
-    )
-
-from bulicommander.pktk.pktk import (
-        EInvalidValue
-    )
-
+from ..pktk.pktk import EInvalidType
+from ..pktk.pktk import EInvalidValue
+    
 
 # -----------------------------------------------------------------------------
 class BCMainWindow(QMainWindow):
@@ -103,8 +77,6 @@ class BCMainWindow(QMainWindow):
         self.__fontMono.setPointSize(9)
         self.__fontMono.setFamily('DejaVu Sans Mono')
 
-
-
     def initMainView(self):
         """Initialise main view content"""
         @pyqtSlot('QString')
@@ -127,6 +99,7 @@ class BCMainWindow(QMainWindow):
 
         for panel in self.panels:
             self.splitterMainView.insertWidget(panel, self.panels[panel])
+            self.panels[panel].setUiController(self.__uiController)
 
         self.mainViewTab0.highlightedStatusChanged.connect(panel_HighlightStatusChanged)
         self.mainViewTab1.highlightedStatusChanged.connect(panel_HighlightStatusChanged)
@@ -159,9 +132,16 @@ class BCMainWindow(QMainWindow):
         # Menu GO
         self.menuGoHistory.aboutToShow.connect(self.__menuHistoryShow)
         self.menuGoHistory.triggered.connect(self.__menuHistory_Clicked)
-        self.actionGoUp.triggered.connect(self.__actionNotYetImplemented)
-        self.actionGoBack.triggered.connect(self.__actionNotYetImplemented)
+        self.menuGoBookmark.aboutToShow.connect(self.__menuBookmarkShow)
+        self.menuGoBookmark.triggered.connect(self.__menuBookmark_Clicked)
+
+        self.actionGoUp.triggered.connect(self.__menuGoUp_clicked)
+        self.actionGoBack.triggered.connect(self.__menuGoBack_clicked)
         self.actionGoHistory_clearHistory.triggered.connect(self.__uiController.commandGoHistoryClear)
+        self.actionGoBookmark_clearBookmark.triggered.connect(self.__uiController.commandGoBookmarkClearUI)
+        self.actionGoBookmark_addBookmark.triggered.connect(self.__menuBookmarkAppend_clicked)
+        self.actionGoBookmark_removeBookmark.triggered.connect(self.__menuBookmarkRemove_clicked)
+        self.actionGoBookmark_renameBookmark.triggered.connect(self.__menuBookmarkRename_clicked)
 
         # Menu VIEW
         self.actionViewDetailled.triggered.connect(self.__uiController.commandViewModeDetailled)
@@ -196,12 +176,12 @@ class BCMainWindow(QMainWindow):
 
         self.menuGoHistory.clear()
         self.menuGoHistory.addAction(self.actionGoHistory_clearHistory)
-        if not self.__uiController.history() is None and len(self.__uiController.history()) > 0:
+        if not self.__uiController.history() is None and self.__uiController.history().length() > 0:
             self.actionGoHistory_clearHistory.setEnabled(True)
-            self.actionGoHistory_clearHistory.setText(i18n(f'Clear history ({len(self.__uiController.history())})'))
+            self.actionGoHistory_clearHistory.setText(i18n(f'Clear history ({self.__uiController.history().length()})'))
             self.menuGoHistory.addSeparator()
 
-            for path in reversed(self.__uiController.history()):
+            for path in reversed(self.__uiController.history().list()):
                 action = QAction(path.replace('&', '&&'), self)
                 action.setFont(self.__fontMono)
                 action.setProperty('path', path)
@@ -209,9 +189,54 @@ class BCMainWindow(QMainWindow):
                 self.menuGoHistory.addAction(action)
         else:
             self.actionGoHistory_clearHistory.setEnabled(False)
-            self.actionGoHistory_clearHistory.setText(i18n('(History is empty)'))
+            self.actionGoHistory_clearHistory.setText(i18n('Clear history'))
 
+    def __menuBookmarkShow(self):
+        """Build menu history"""
+        self.menuGoBookmark.clear()
+        self.menuGoBookmark.addAction(self.actionGoBookmark_clearBookmark)
+        self.menuGoBookmark.addAction(self.actionGoBookmark_addBookmark)
+        self.menuGoBookmark.addAction(self.actionGoBookmark_removeBookmark)
+        self.menuGoBookmark.addAction(self.actionGoBookmark_renameBookmark)
 
+        if not self.__uiController.bookmark() is None and self.__uiController.bookmark().length() > 0:
+            self.actionGoBookmark_clearBookmark.setEnabled(True)
+            self.actionGoBookmark_clearBookmark.setText(i18n('Clear bookmark')+f' ({self.__uiController.bookmark().length()})')
+
+            self.menuGoBookmark.addSeparator()
+
+            currentPath = self.panels[self.__highlightedPanel].currentPath()
+            isInBookmark = False
+
+            for bookmark in self.__uiController.bookmark().list():
+                action = QAction(bookmark[BCBookmark.NAME].replace('&', '&&'), self)
+                action.setFont(self.__fontMono)
+                action.setProperty('path', bookmark[BCBookmark.VALUE])
+                action.setCheckable(True)
+                action.setStatusTip(bookmark[BCBookmark.VALUE])
+
+                if currentPath == bookmark[BCBookmark.VALUE]:
+                    action.setChecked(True)
+                    isInBookmark = True
+                else:
+                    action.setChecked(False)
+
+                self.menuGoBookmark.addAction(action)
+
+            if isInBookmark:
+                self.actionGoBookmark_addBookmark.setEnabled(False)
+                self.actionGoBookmark_removeBookmark.setEnabled(True)
+                self.actionGoBookmark_renameBookmark.setEnabled(True)
+            else:
+                self.actionGoBookmark_addBookmark.setEnabled(True)
+                self.actionGoBookmark_removeBookmark.setEnabled(False)
+                self.actionGoBookmark_renameBookmark.setEnabled(False)
+        else:
+            self.actionGoBookmark_clearBookmark.setEnabled(False)
+            self.actionGoBookmark_clearBookmark.setText(i18n('Clear bookmark'))
+            self.actionGoBookmark_addBookmark.setEnabled(True)
+            self.actionGoBookmark_removeBookmark.setEnabled(False)
+            self.actionGoBookmark_renameBookmark.setEnabled(False)
 
 
     # endregion: initialisation methods ----------------------------------------
@@ -232,7 +257,33 @@ class BCMainWindow(QMainWindow):
             # change directory
             self.__uiController.commandPanelPath(self.__highlightedPanel, action.property('path'))
 
+    def __menuBookmark_Clicked(self, action):
+        """Go to defined directory for current highlighted panel"""
+        if not action.property('path') is None:
+            # change directory
+            self.__uiController.commandPanelPath(self.__highlightedPanel, action.property('path'))
 
+    def __menuBookmarkAppend_clicked(self, action):
+        """Append current path to bookmark"""
+        self.__uiController.commandGoBookmarkAppendUI(self.panels[self.__highlightedPanel].currentPath())
+
+    def __menuBookmarkRemove_clicked(self, action):
+        """Remove bookmark"""
+        name = self.__uiController.bookmark().nameFromValue(self.panels[self.__highlightedPanel].currentPath())
+        self.__uiController.commandGoBookmarkRemoveUI(name)
+
+    def __menuBookmarkRename_clicked(self, action):
+        """Rename bookmark"""
+        name = self.__uiController.bookmark().nameFromValue(self.panels[self.__highlightedPanel].currentPath())
+        self.__uiController.commandGoBookmarkRenameUI(name)
+
+    def __menuGoUp_clicked(self, action):
+        """Go to parent directory"""
+        self.__uiController.commandGoUp(self.__highlightedPanel)
+
+    def __menuGoBack_clicked(self, action):
+        """Go to previous directory"""
+        self.__uiController.commandGoBack(self.__highlightedPanel)
 
     # endregion: define actions method -----------------------------------------
 

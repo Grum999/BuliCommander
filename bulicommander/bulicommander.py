@@ -69,58 +69,38 @@ from PyQt5.QtWidgets import (
 
 
 if __name__ != '__main__':
-    # script is executed from Krita, loaded as a module
+     # script is executed from Krita, loaded as a module
     __PLUGIN_EXEC_FROM__ = 'KRITA'
-    try:
-        from .bcuicontroller import (
-                BCUIController
-            )
 
-        from .pktk.edialog import (
-                EDialog
-            )
-
-        from .pktk.ekrita import (
-                EKritaNode
-            )
-    except:
-        pass
-
+    from .pktk.pktk import (
+            EInvalidStatus,
+            EInvalidType,
+            EInvalidValue,
+            PkTk
+        )
+    from .bc.bcuicontroller import BCUIController
 else:
     # Execution from 'Scripter' plugin?
     __PLUGIN_EXEC_FROM__ = 'SCRIPTER_PLUGIN'
 
-    # Reload or Import
-    if 'bulicommander.pktk.edialog' in sys.modules:
-        from importlib import reload
-        reload(sys.modules['bulicommander.pktk.edialog'])
-    else:
-        import bulicommander.pktk.edialog
+    from importlib import reload
 
-    from bulicommander.pktk.edialog import (
-            EDialog
+    print("======================================")
+    print(f'Execution from {__PLUGIN_EXEC_FROM__}')
+
+    for module in list(sys.modules.keys()):
+        if not re.match(r'^bulicommander\.', module) is None:
+            print('Reload module: ', module, sys.modules[module])
+            reload(sys.modules[module])
+
+    from bulicommander.pktk.pktk import (
+            EInvalidStatus,
+            EInvalidType,
+            EInvalidValue,
+            PkTk
         )
-
-    if 'bulicommander.pktk.ekrita' in sys.modules:
-        from importlib import reload
-        reload(sys.modules['bulicommander.pktk.ekrita'])
-    else:
-        import bulicommander.pktk.ekrita
-
-    from bulicommander.pktk.ekrita import (
-            EKritaDocument,
-            EKritaNode
-        )
-
-    if 'bulicommander.bcuicontroller' in sys.modules:
-        from importlib import reload
-        reload(sys.modules['bulicommander.bcuicontroller'])
-    else:
-        import bulicommander.bcuicontroller
-
-    from bulicommander.bcuicontroller import (
-            BCUIController
-        )
+    from bulicommander.bc.bcuicontroller import BCUIController
+    print("======================================")
 
 
 EXTENSION_ID = 'pykrita_bulicommander'
@@ -162,3 +142,4 @@ class BuliCommander(Extension):
 
 if __PLUGIN_EXEC_FROM__ == 'SCRIPTER_PLUGIN':
     BuliCommander(Krita.instance()).start()
+
