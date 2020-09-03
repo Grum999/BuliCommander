@@ -19,9 +19,38 @@
 # A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
-
+import locale
 import re
 import time
+import sys
+
+
+from PyQt5.Qt import *
+from PyQt5.QtGui import (
+        QBrush,
+        QPainter,
+        QPixmap
+    )
+from PyQt5.QtCore import (
+        pyqtSignal as Signal,
+        QRect
+    )
+
+
+try:
+    locale.setlocale(locale.LC_ALL, '')
+except:
+    pass
+
+# don't really like to use global variable... create a class with static methods instead?
+__bytesSizeToStrUnit = 'autobin'
+def setBytesSizeToStrUnit(unit):
+    global __bytesSizeToStrUnit
+    if unit.lower() in ['auto', 'autobin']:
+        __bytesSizeToStrUnit = unit
+def getBytesSizeToStrUnit():
+    global __bytesSizeToStrUnit
+    return __bytesSizeToStrUnit
 
 
 def strToBytesSize(value):
@@ -75,15 +104,41 @@ def strToBytesSize(value):
     else:
         raise Exception(f"Given value '{value}' can't be parsed!")
 
-def bytesSizeToStr(value, unit='AutoBin', decimals=2):
+def strDefault(value, default=''):
+    """Return value as str
+
+    If value is empty or None, return default value
+    """
+    if value is None or value == '':
+        return default
+    return str(value)
+
+def intDefault(value, default=0):
+    """Return value as int
+
+    If value is empty or None or not a valid integer, return default value
+    """
+    if value is None:
+        return default
+
+    try:
+        return int(value)
+    except:
+        return default
+
+def bytesSizeToStr(value, unit=None, decimals=2):
     """Convert a size (given in Bytes) to given unit
 
     Given unit can be:
-    - 'Auto'
-    - 'AutoBin' (binary Bytes)
+    - 'auto'
+    - 'autobin' (binary Bytes)
     - 'GiB', 'MiB', 'KiB' (binary Bytes)
     - 'GB', 'MB', 'KB', 'B'
     """
+    global __bytesSizeToStrUnit
+    if unit is None:
+        unit = __bytesSizeToStrUnit
+
     if not isinstance(unit, str):
         raise Exception('Given `unit` must be a valid <str> value')
 
@@ -134,7 +189,9 @@ def bytesSizeToStr(value, unit='AutoBin', decimals=2):
         return f'{value}B'
 
 
-def tsToStr(value, pattern=None):
+
+
+def tsToStr(value, pattern=None, valueNone=''):
     """Convert a timestamp to localtime string
 
     If no pattern is provided or if pattern = 'dt' or 'full', return full date/time (YYYY-MM-DD HH:MI:SS)
@@ -142,6 +199,8 @@ def tsToStr(value, pattern=None):
     If pattern = 't', return time (HH:MI:SS)
     Otherwise try to use pattern literally (strftime)
     """
+    if value is None:
+        return valueNone
     if pattern is None or pattern.lower() in ['dt', 'full']:
         return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(value))
     elif pattern.lower() == 'd':
@@ -163,6 +222,8 @@ def strToTs(value):
 
     otherwise return 0
     """
+    if value is None or value == '':
+        return None
     if isinstance(value, float) or isinstance(value, int):
         return value
 
@@ -176,6 +237,183 @@ def strToTs(value):
         return time.mktime(time.strptime(value, '%Y-%m-%d %H:%M:%S'))
 
     return 0
+
+def frToStrTime(nbFrames, frameRate):
+    """Convert a number of frame to duration"""
+    returned_ss=int(nbFrames/frameRate)
+    returned_ff=nbFrames - returned_ss * frameRate
+    returned_mn=int(returned_ss/60)
+    returned_ss=returned_ss - returned_mn * 60
+
+    return f"{returned_mn:02d}:{returned_ss:02d}.{returned_ff:02d}"
+
+
+
+def getLangValue(dictionary, lang=None, default=''):
+    """Return value from a dictionary for which key is lang code (like en-US)
+
+    if `dictionary` is empty:
+        return `default` value
+    if `dictionary` contains one entry only:
+        return it
+
+    if `lang` is None:
+        use current locale
+
+    if `lang` exist in dictionary:
+        return it
+    else if language exist (with different country code):
+        return it
+    else if 'en-XX' exists:
+        return it
+    else:
+        return first entry
+    """
+    if not isinstance(dictionary, dict):
+        raise Exception('Given `dictionary` must be a valid <dict> value')
+
+    if len(dictionary) == 0:
+        return default
+    elif len(dictionary) == 1:
+        return dictionary[list(dictionary.keys())[0]]
+
+    if lang is None:
+        lang = locale.getlocale()[0].replace('_','-')
+
+    if lang in dictionary:
+        return dictionary[lang]
+    else:
+        language = lang.split('-')[0]
+        for key in dictionary.keys():
+            keyLang = key.split('-')[0]
+
+            if keyLang == language:
+                return dictionary[key]
+
+        # not found, try "en"
+        language = 'en'
+        for key in dictionary.keys():
+            keyLang = key.split('-')[0]
+
+            if keyLang == language:
+                return dictionary[key]
+
+        # not found, return first entry
+        return dictionary[list(dictionary.keys())[0]]
+
+def checkerBoardBrush(self, size=32):
+    """Return a checker board brush"""
+    tmpPixmap = QPixmap(size,size)
+    tmpPixmap.fill(QColor(255,255,255))
+    brush = QBrush(QColor(220,220,220))
+
+    canvas = QPainter()
+    canvas.begin(tmpPixmap)
+    canvas.setPen(Qt.NoPen)
+
+    s1 = size>>1
+    s2 = size - s1
+
+    canvas.setRenderHint(QPainter.Antialiasing, False)
+    canvas.fillRect(QRect(0, 0, s1, s1), brush)
+    canvas.fillRect(QRect(s1, s1, s2, s2), brush)
+    canvas.end()
+
+    return QBrush(tmpPixmap)
+
+def checkerBoardImage(size, checkerSize=32):
+    """Return a checker board image"""
+    if isinstance(size, int):
+        size = QSize(size, size)
+
+    if not isinstance(size, QSize):
+        return None
+
+    pixmap = QPixmap(size)
+    painter = QPainter(pixmap)
+    painter.begin()
+    painter.fillRect(pixmap.rect(), checkerBoardBrush(checkerSize))
+    painter.end()
+
+    return pixmap
+
+def buildIcon(icons):
+    """Return a QIcon from given icons"""
+    if isinstance(icons, QIcon):
+        return icons
+    elif isinstance(icons, list) and len(icons)>0:
+        returned = QIcon()
+        for icon in icons:
+            returned.addPixmap(icon[0], icon[1])
+        return returned
+    else:
+        raise EInvalidType("Given `icons` must be a list of tuples")
+
+
+def kritaVersion():
+    """Return a dictionary with following values:
+
+    {
+        'major': 0,
+        'minor': 0,
+        'revision': 0,
+        'devRev': '',
+        'git': '',
+        'rawString': ''
+    }
+
+    Example:
+        "5.0.0-prealpha (git 8f2fe10)"
+        will return
+
+        {
+            'major': 5,
+            'minor': 0,
+            'revision', 0,
+            'devFlag': 'prealpha',
+            'git': '8f2fe10',
+            'rawString': '5.0.0-prealpha (git 8f2fe10)'
+        }
+    """
+    returned={
+            'major': 0,
+            'minor': 0,
+            'revision': 0,
+            'devFlag': '',
+            'git': '',
+            'rawString': Krita.instance().version()
+        }
+    nfo=re.match("(\d+)\.(\d+)\.(\d+)(?:-([^\s]+)\s\(git\s([^\)]+)\))?", returned['rawString'])
+    if not nfo is None:
+        returned['major']=int(nfo.groups()[0])
+        returned['minor']=int(nfo.groups()[1])
+        returned['revision']=int(nfo.groups()[2])
+        returned['devFlag']=nfo.groups()[3]
+        returned['git']=nfo.groups()[4]
+
+    return returned
+
+def checkKritaVersion(major, minor, revision):
+    """Return True if current version is greater or equal to asked version"""
+    nfo = kritaVersion()
+
+    if major is None:
+        return True
+    elif nfo['major']==major:
+        if minor is None:
+            return True
+        elif nfo['minor']==minor:
+            if revision is None or nfo['revision']>=revision:
+                return True
+        elif nfo['minor']>minor:
+            return True
+    elif nfo['major']>major:
+        return True
+    return False
+
+
+
+
 
 
 class Stopwatch(object):
@@ -228,6 +466,7 @@ class Debug(object):
     def print(value, *argv):
         """Print value to console, using argv for formatting"""
         if Debug.__enabled and isinstance(value, str):
+            sys.stdout = sys.__stdout__
             print('DEBUG:', value.format(*argv))
 
     def enabled():
@@ -237,36 +476,3 @@ class Debug(object):
     def setEnabled(value):
         """set Debug enabled or not"""
         Debug.__enabled=value
-
-
-
-if __name__ == '__main__':
-    import os.path
-
-    for unit in ['GB', 'GiB', 'MB', 'MiB', 'KB', 'KiB', 'B', '']:
-        v1 = '2.35' + unit
-        v2 = '.78' + unit
-        v3 = '1' + unit
-        print("To BS", v1, '=', strToBytesSize(v1), '/', v2,  '=', strToBytesSize(v2),  '/', v3, '=',  strToBytesSize(v3))
-        print("From BS (auto)", v1, '=', bytesSizeToStr(strToBytesSize(v1), 'auto'), '/', v2,  '=', bytesSizeToStr(strToBytesSize(v2), 'auto'),  '/', v3, '=', bytesSizeToStr(strToBytesSize(v3), 'auto'))
-        print("From BS (autobin)", v1, '=', bytesSizeToStr(strToBytesSize(v1)), '/', v2,  '=', bytesSizeToStr(strToBytesSize(v2)),  '/', v3, '=', bytesSizeToStr(strToBytesSize(v3)))
-        print("From BS (GiB)", v1, '=', bytesSizeToStr(strToBytesSize(v1), 'GiB'), '/', v2,  '=', bytesSizeToStr(strToBytesSize(v2), 'GiB'),  '/', v3, '=', bytesSizeToStr(strToBytesSize(v3), 'GiB'))
-        print("From BS (MiB)", v1, '=', bytesSizeToStr(strToBytesSize(v1), 'MiB'), '/', v2,  '=', bytesSizeToStr(strToBytesSize(v2), 'MiB'),  '/', v3, '=', bytesSizeToStr(strToBytesSize(v3), 'MiB'))
-        print("From BS (KiB)", v1, '=', bytesSizeToStr(strToBytesSize(v1), 'KiB'), '/', v2,  '=', bytesSizeToStr(strToBytesSize(v2), 'KiB'),  '/', v3, '=', bytesSizeToStr(strToBytesSize(v3), 'KiB'))
-
-    fn="/home/grum/Temporaire/Temp/3615ygal.xcf"
-    print(tsToStr(os.path.getmtime(fn)))
-    print(tsToStr(os.path.getmtime(fn), 'd'))
-    print(tsToStr(os.path.getmtime(fn), 't'))
-
-    print(os.path.getmtime(fn))
-    print(strToTs('2016-12-20 00:34:20'))
-    print(strToTs('2016-12-20'))
-    print(strToTs('12:30:30'))
-
-    print(tsToStr(strToTs('2016-12-20 00:34:20')))
-    print(tsToStr(strToTs('2016-12-20')))
-    print(tsToStr(strToTs('00:34:20')))
-
-
-

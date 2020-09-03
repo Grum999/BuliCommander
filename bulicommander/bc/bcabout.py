@@ -42,7 +42,7 @@ class BCAboutWindow(QDialog):
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcabout.ui')
         PyQt5.uic.loadUi(uiFileName, self)
 
-        self.setWindowTitle(i18n(f'About {bcName}'))
+        self.setWindowTitle(i18n(f'{bcName}::About'))
         self.setWindowFlags(Qt.Dialog|Qt.WindowTitleHint)
         self.setWindowFlags(self.windowFlags()&~Qt.WindowMinMaxButtonsHint)
         self.lblKcName.setText(bcName)

@@ -32,6 +32,12 @@
    <item>
     <widget class="QMenuBar" name="mainMenuBar">
      <widget class="QMenu" name="menuFile">
+      <property name="baseSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
       <property name="title">
        <string>&amp;File</string>
       </property>
@@ -72,18 +78,25 @@
         <string>Saved views</string>
        </property>
        <property name="title">
-        <string>&amp;Saved views</string>
+        <string>&amp;Views</string>
        </property>
-       <addaction name="actionGoSavedViews_NoSavedViewsYet"/>
+       <property name="icon">
+        <iconset resource="dark_icons.qrc">
+         <normaloff>:/images/saved_view</normaloff>:/images/saved_view</iconset>
+       </property>
+       <addaction name="separator"/>
       </widget>
       <widget class="QMenu" name="menuGoHistory">
        <property name="title">
         <string>&amp;History</string>
        </property>
+       <property name="icon">
+        <iconset resource="dark_icons.qrc">
+         <normaloff>:/images/history</normaloff>:/images/history</iconset>
+       </property>
        <property name="toolTipsVisible">
         <bool>true</bool>
        </property>
-       <addaction name="actionGoHistory_clearHistory"/>
       </widget>
       <widget class="QMenu" name="menuGoBookmark">
        <property name="toolTip">
@@ -93,31 +106,40 @@
         <string>Favorites places</string>
        </property>
        <property name="title">
-        <string>Bookmark</string>
+        <string>B&amp;ookmark</string>
+       </property>
+       <property name="icon">
+        <iconset resource="dark_icons.qrc">
+         <normaloff>:/images/bookmarks</normaloff>:/images/bookmarks</iconset>
        </property>
        <property name="toolTipsVisible">
         <bool>true</bool>
        </property>
-       <addaction name="actionGoBookmark_clearBookmark"/>
-       <addaction name="actionGoBookmark_addBookmark"/>
-       <addaction name="actionGoBookmark_removeBookmark"/>
-       <addaction name="actionGoBookmark_renameBookmark"/>
+       <addaction name="separator"/>
       </widget>
+      <widget class="QMenu" name="menuGoLastDocuments">
+       <property name="title">
+        <string>Last documents</string>
+       </property>
+       <property name="icon">
+        <iconset resource="dark_icons.qrc">
+         <normaloff>:/images/saved_view_last</normaloff>:/images/saved_view_last</iconset>
+       </property>
+      </widget>
+      <addaction name="actionGoHome"/>
       <addaction name="actionGoUp"/>
       <addaction name="actionGoBack"/>
       <addaction name="menuGoHistory"/>
       <addaction name="separator"/>
       <addaction name="menuGoBookmark"/>
       <addaction name="menuGoSavedViews"/>
+      <addaction name="menuGoLastDocuments"/>
      </widget>
      <widget class="QMenu" name="menuView">
       <property name="title">
        <string>&amp;View</string>
       </property>
-      <addaction name="actionViewDetailled"/>
-      <addaction name="actionViewSmallIcon"/>
-      <addaction name="actionViewMediumIcon"/>
-      <addaction name="actionViewLargeIcon"/>
+      <addaction name="actionViewThumbnail"/>
       <addaction name="separator"/>
       <addaction name="actionViewShowImageFileOnly"/>
       <addaction name="actionViewShowBackupFiles"/>
@@ -131,20 +153,9 @@
       <property name="title">
        <string>&amp;Tools</string>
       </property>
-      <widget class="QMenu" name="menuBuliCommanderScripts">
-       <property name="title">
-        <string>Buli &amp;Commander scripts</string>
-       </property>
-       <addaction name="actionBCSManageScripts"/>
-       <addaction name="separator"/>
-       <addaction name="actionBCS_NoScriptYetDefined"/>
-      </widget>
       <addaction name="actionToolsSearch"/>
       <addaction name="actionToolsStatistics"/>
-      <addaction name="actionToolsSynchronizePanels"/>
-      <addaction name="separator"/>
       <addaction name="actionConsole"/>
-      <addaction name="menuBuliCommanderScripts"/>
      </widget>
      <widget class="QMenu" name="menuSettings">
       <property name="title">
@@ -257,6 +268,10 @@
    </item>
   </layout>
   <action name="actionFolderNew">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/create_folder</normaloff>:/images/create_folder</iconset>
+   </property>
    <property name="text">
     <string>&amp;New folder...</string>
    </property>
@@ -266,8 +281,17 @@
    <property name="statusTip">
     <string>Create a new folder in current directory</string>
    </property>
+   <property name="shortcut">
+    <string>F7</string>
+   </property>
   </action>
   <action name="actionFileOpen">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/folder_open</normaloff>
+     <disabledoff>:/images_d/folder_open</disabledoff>
+     <disabledon>:/images_d/folder_open</disabledon>:/images/folder_open</iconset>
+   </property>
    <property name="text">
     <string>&amp;Open file</string>
    </property>
@@ -282,6 +306,12 @@
    </property>
   </action>
   <action name="actionFileCopyToOtherPanel">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/file_copy</normaloff>
+     <disabledoff>:/images_d/file_copy</disabledoff>
+     <disabledon>:/images_d/file_copy</disabledon>:/images/file_copy</iconset>
+   </property>
    <property name="text">
     <string>&amp;Copy to other panel</string>
    </property>
@@ -296,6 +326,12 @@
    </property>
   </action>
   <action name="actionFileMoveToOtherPanel">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/file_move</normaloff>
+     <disabledoff>:/images_d/file_move</disabledoff>
+     <disabledon>:/images_d/file_move</disabledon>:/images/file_move</iconset>
+   </property>
    <property name="text">
     <string>&amp;Move to other panel</string>
    </property>
@@ -310,6 +346,12 @@
    </property>
   </action>
   <action name="actionFileDelete">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/delete</normaloff>
+     <disabledoff>:/images_d/delete</disabledoff>
+     <disabledon>:/images_d/delete</disabledon>:/images/delete</iconset>
+   </property>
    <property name="text">
     <string>&amp;Delete...</string>
    </property>
@@ -324,6 +366,12 @@
    </property>
   </action>
   <action name="actionFileRename">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/file_rename</normaloff>
+     <disabledoff>:/images_d/file_rename</disabledoff>
+     <disabledon>:/images_d/file_rename</disabledon>:/images/file_rename</iconset>
+   </property>
    <property name="text">
     <string>&amp;Rename...</string>
    </property>
@@ -352,6 +400,10 @@
    </property>
   </action>
   <action name="actionQuit">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/exit</normaloff>:/images/exit</iconset>
+   </property>
    <property name="text">
     <string>&amp;Quit</string>
    </property>
@@ -366,6 +418,12 @@
    </property>
   </action>
   <action name="actionFileOpenCloseBC">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/folder_open</normaloff>
+     <disabledoff>:/images_d/folder_open</disabledoff>
+     <disabledon>:/images_d/folder_open</disabledon>:/images/folder_open</iconset>
+   </property>
    <property name="text">
     <string>Open &amp;file and close Buli Commander</string>
    </property>
@@ -380,6 +438,10 @@
    </property>
   </action>
   <action name="actionSelectAll">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/select_all</normaloff>:/images/select_all</iconset>
+   </property>
    <property name="text">
     <string>&amp;Select all</string>
    </property>
@@ -394,6 +456,10 @@
    </property>
   </action>
   <action name="actionSelectNone">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/select_none</normaloff>:/images/select_none</iconset>
+   </property>
    <property name="text">
     <string>Select &amp;none</string>
    </property>
@@ -408,6 +474,10 @@
    </property>
   </action>
   <action name="actionSelectInvert">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/select_invert</normaloff>:/images/select_invert</iconset>
+   </property>
    <property name="text">
     <string>&amp;Invert selection</string>
    </property>
@@ -422,6 +492,12 @@
    </property>
   </action>
   <action name="actionGoUp">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/goup</normaloff>
+     <disabledoff>:/images_d/goup</disabledoff>
+     <disabledon>:/images_d/goup</disabledon>:/images/goup</iconset>
+   </property>
    <property name="text">
     <string>&amp;Up</string>
    </property>
@@ -436,6 +512,12 @@
    </property>
   </action>
   <action name="actionGoBack">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/goback</normaloff>
+     <disabledoff>:/images_d/goback</disabledoff>
+     <disabledon>:/images_d/goback</disabledon>:/images/goback</iconset>
+   </property>
    <property name="text">
     <string>&amp;Back</string>
    </property>
@@ -446,45 +528,71 @@
     <string>Go back to previous folder</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+S</string>
+    <string>Alt+Left</string>
    </property>
   </action>
   <action name="actionGoBookmark_clearBookmark">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/bookmark_clear</normaloff>
+     <disabledoff>:/images_d/bookmark_clear</disabledoff>
+     <disabledon>:/images_d/bookmark_clear</disabledon>:/images/bookmark_clear</iconset>
+   </property>
    <property name="text">
-    <string>Clear bookmark</string>
+    <string>&amp;Clear bookmarks</string>
    </property>
    <property name="toolTip">
-    <string>Clear bookmark</string>
+    <string>Remove all bookmarked paths</string>
    </property>
    <property name="statusTip">
-    <string>Clear bookmark</string>
+    <string>Remove all bookmarked paths</string>
    </property>
   </action>
-  <action name="actionGoSavedViews_NoSavedViewsYet">
+  <action name="actionGoSavedViews_clearView">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/saved_view_clear</normaloff>
+     <disabledoff>:/images_d/saved_view_clear</disabledoff>
+     <disabledon>:/images_d/saved_view_clear</disabledon>:/images/saved_view_clear</iconset>
+   </property>
    <property name="text">
-    <string>(&amp;no saved views yet)</string>
+    <string>&amp;Clear view content</string>
+   </property>
+   <property name="toolTip">
+    <string>Clear current view content</string>
+   </property>
+   <property name="statusTip">
+    <string>Clear current view content</string>
    </property>
   </action>
-  <action name="actionViewDetailled">
+  <action name="actionViewList">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="checked">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>:/images/list</normaloff>:/images/list</iconset>
+   </property>
    <property name="text">
-    <string>&amp;Detailled view</string>
+    <string>List view</string>
    </property>
    <property name="toolTip">
-    <string>A view with detailled file informations</string>
+    <string>Detailled list file informations</string>
    </property>
    <property name="statusTip">
-    <string>A view with detailled file informations</string>
+    <string>Detailled list file informations</string>
    </property>
   </action>
   <action name="actionViewSmallIcon">
    <property name="checkable">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>:/images/small_view</normaloff>:/images/small_view</iconset>
    </property>
    <property name="text">
     <string>&amp;Small icon view</string>
@@ -500,6 +608,10 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>:/images/medium_view</normaloff>:/images/medium_view</iconset>
+   </property>
    <property name="text">
     <string>&amp;Medium icon view</string>
    </property>
@@ -510,18 +622,25 @@
     <string>A medium icon view with minimum informations</string>
    </property>
   </action>
-  <action name="actionViewLargeIcon">
+  <action name="actionViewThumbnail">
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/large_view</normaloff>:/images/large_view</iconset>
+   </property>
    <property name="text">
-    <string>&amp;Large icon view</string>
+    <string>&amp;Thumbnail view</string>
    </property>
    <property name="toolTip">
-    <string>A large icon view with minimum informations</string>
+    <string>View thumbnail instead of icon</string>
    </property>
    <property name="statusTip">
-    <string>A large icon view with minimum informations</string>
+    <string>View thumbnail instead of icon</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
    </property>
   </action>
   <action name="actionViewShowImageFileOnly">
@@ -540,10 +659,17 @@
    <property name="statusTip">
     <string>Only image files recognized by Krita will be shown in list</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+K</string>
+   </property>
   </action>
   <action name="actionViewShowHiddenFiles">
    <property name="checkable">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/visibility_off</normaloff>:/images/visibility_off</iconset>
    </property>
    <property name="text">
     <string>Show &amp;hidden files</string>
@@ -554,6 +680,9 @@
    <property name="statusTip">
     <string>Show hidden files in list</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+H</string>
+   </property>
   </action>
   <action name="actionViewDisplaySecondaryPanel">
    <property name="checkable">
@@ -561,6 +690,10 @@
    </property>
    <property name="checked">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/second_panel</normaloff>:/images/second_panel</iconset>
    </property>
    <property name="text">
     <string>Display secondary panel (&amp;right side)</string>
@@ -590,6 +723,12 @@
    </property>
   </action>
   <action name="actionViewSwapPanels">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/swap</normaloff>
+     <disabledoff>:/images_d/swap</disabledoff>
+     <disabledon>:/images_d/swap</disabledon>:/images/swap</iconset>
+   </property>
    <property name="text">
     <string>Swap &amp;panels</string>
    </property>
@@ -616,8 +755,15 @@
    <property name="statusTip">
     <string>Show backup files in list</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
+   </property>
   </action>
   <action name="actionToolsSearch">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/search</normaloff>:/images/search</iconset>
+   </property>
    <property name="text">
     <string>&amp;Search...</string>
    </property>
@@ -632,6 +778,10 @@
    </property>
   </action>
   <action name="actionToolsStatistics">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/images/pie_chart</normaloff>:/images/pie_chart</iconset>
+   </property>
    <property name="text">
     <string>Stat&amp;istics...</string>
    </property>
@@ -641,8 +791,15 @@
    <property name="statusTip">
     <string>Calculate statistics for current directory</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="actionToolsSynchronizePanels">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/images/synchronize</normaloff>:/images/synchronize</iconset>
+   </property>
    <property name="text">
     <string>Synchronize &amp;panels...</string>
    </property>
@@ -651,6 +808,9 @@
    </property>
    <property name="statusTip">
     <string>Synchronize files between panels</string>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
    </property>
   </action>
   <action name="actionConsole">
@@ -663,8 +823,15 @@
    <property name="statusTip">
     <string>Open Buli Commander terminal</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="actionSettingsPreferences">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/tune</normaloff>:/images/tune</iconset>
+   </property>
    <property name="text">
     <string>&amp;Preferences...</string>
    </property>
@@ -676,6 +843,10 @@
    </property>
   </action>
   <action name="actionHelpAboutBC">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/info</normaloff>:/images/info</iconset>
+   </property>
    <property name="text">
     <string>&amp;About Buli Commander...</string>
    </property>
@@ -688,8 +859,15 @@
    <property name="statusTip">
     <string>Open About Buli Commander window</string>
    </property>
+   <property name="shortcut">
+    <string>Shift+F1</string>
+   </property>
   </action>
   <action name="actionSelectRegEx">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/images/select_regex</normaloff>:/images/select_regex</iconset>
+   </property>
    <property name="text">
     <string>&amp;RegEx select...</string>
    </property>
@@ -702,13 +880,28 @@
    <property name="shortcut">
     <string>Ctrl+Shift+R</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="actionGoHistory_clearHistory">
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/history_clear</normaloff>
+     <disabledoff>:/images_d/history_clear</disabledoff>
+     <disabledon>:/images_d/history_clear</disabledon>:/images/history_clear</iconset>
+   </property>
    <property name="text">
     <string>&amp;Clear history</string>
+   </property>
+   <property name="toolTip">
+    <string>Clear all paths from history</string>
+   </property>
+   <property name="statusTip">
+    <string>Clear all paths from history</string>
    </property>
   </action>
   <action name="actionBCSManageScripts">
@@ -722,6 +915,12 @@
    </property>
   </action>
   <action name="actionFileOpenAsNewDocument">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/open_new</normaloff>
+     <disabledoff>:/images_d/open_new</disabledoff>
+     <disabledon>:/images_d/open_new</disabledon>:/images/open_new</iconset>
+   </property>
    <property name="text">
     <string>O&amp;pen file as new document</string>
    </property>
@@ -736,6 +935,12 @@
    </property>
   </action>
   <action name="actionFileOpenAsNewDocumentCloseBC">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/open_new</normaloff>
+     <disabledoff>:/images_d/open_new</disabledoff>
+     <disabledon>:/images_d/open_new</disabledon>:/images/open_new</iconset>
+   </property>
    <property name="text">
     <string>Open file as new document and close &amp;Buli Commander</string>
    </property>
@@ -769,36 +974,142 @@
    </property>
   </action>
   <action name="actionGoBookmark_addBookmark">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/bookmark_add</normaloff>
+     <disabledoff>:/images_d/bookmark_add</disabledoff>
+     <disabledon>:/images_d/bookmark_add</disabledon>:/images/bookmark_add</iconset>
+   </property>
    <property name="text">
-    <string>Add to bookmark...</string>
+    <string>&amp;Add to bookmarks...</string>
    </property>
    <property name="toolTip">
-    <string>Add current path to bookmark</string>
+    <string>Add current path to bookmarks</string>
    </property>
    <property name="statusTip">
-    <string>Add current path to bookmark</string>
+    <string>Add current path to bookmarks</string>
    </property>
   </action>
   <action name="actionGoBookmark_removeBookmark">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/bookmark_remove</normaloff>
+     <disabledoff>:/images_d/bookmark_remove</disabledoff>
+     <disabledon>:/images_d/bookmark_remove</disabledon>:/images/bookmark_remove</iconset>
+   </property>
    <property name="text">
-    <string>Remove from bookmark...</string>
+    <string>&amp;Remove from bookmarks...</string>
+   </property>
+   <property name="iconText">
+    <string>Remove from bookmarks...</string>
    </property>
    <property name="toolTip">
-    <string>Remove current path from bookmark</string>
+    <string>Remove current path from bookmarks</string>
    </property>
    <property name="statusTip">
-    <string>Remove current path from bookmark</string>
+    <string>Remove current path from bookmarks</string>
    </property>
   </action>
   <action name="actionGoBookmark_renameBookmark">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/bookmark_rename</normaloff>
+     <disabledoff>:/images_d/bookmark_rename</disabledoff>
+     <disabledon>:/images_d/bookmark_rename</disabledon>:/images/bookmark_rename</iconset>
+   </property>
    <property name="text">
-    <string>Rename bookmark...</string>
+    <string>Rename &amp;bookmark...</string>
    </property>
    <property name="toolTip">
     <string>Rename current bookmark</string>
    </property>
    <property name="statusTip">
     <string>Rename current bookmark</string>
+   </property>
+  </action>
+  <action name="actionGoSavedViews_removeFromView">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/saved_view_remove</normaloff>
+     <disabledoff>:/images_d/saved_view_remove</disabledoff>
+     <disabledon>:/images_d/saved_view_remove</disabledon>:/images/saved_view_remove</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Remove from view...</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove selected files from view</string>
+   </property>
+   <property name="statusTip">
+    <string>Remove selected files from view</string>
+   </property>
+  </action>
+  <action name="actionGoSavedViews_renameView">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/saved_view_rename</normaloff>
+     <disabledoff>:/images_d/saved_view_rename</disabledoff>
+     <disabledon>:/images_d/saved_view_rename</disabledon>:/images/saved_view_rename</iconset>
+   </property>
+   <property name="text">
+    <string>Rename &amp;view...</string>
+   </property>
+   <property name="toolTip">
+    <string>Rename current view</string>
+   </property>
+   <property name="statusTip">
+    <string>Rename current view</string>
+   </property>
+  </action>
+  <action name="actionGoSavedViews_newView">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/saved_view_new</normaloff>
+     <disabledoff>:/images_d/saved_view_new</disabledoff>
+     <disabledon>:/images_d/saved_view_new</disabledon>:/images/saved_view_new</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;New view</string>
+   </property>
+   <property name="toolTip">
+    <string>Add selected files to a new view</string>
+   </property>
+   <property name="statusTip">
+    <string>Add selected files to a new view</string>
+   </property>
+  </action>
+  <action name="actionDelete_view">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/saved_view_delete</normaloff>
+     <disabledoff>:/images_d/saved_view_delete</disabledoff>
+     <disabledon>:/images_d/saved_view_delete</disabledon>:/images/saved_view_delete</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Delete view...</string>
+   </property>
+   <property name="statusTip">
+    <string>Delete current view</string>
+   </property>
+   <property name="whatsThis">
+    <string>Delete current view</string>
+   </property>
+  </action>
+  <action name="actionGoHome">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/home</normaloff>:/images/home</iconset>
+   </property>
+   <property name="text">
+    <string>Ho&amp;me</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+Home</string>
+   </property>
+  </action>
+  <action name="actiontest">
+   <property name="text">
+    <string>test</string>
    </property>
   </action>
  </widget>
@@ -816,6 +1127,9 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="dark_icons.qrc"/>
+  <include location="light_icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

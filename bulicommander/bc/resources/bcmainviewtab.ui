@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1194</width>
-    <height>752</height>
+    <width>1706</width>
+    <height>1270</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,12 +22,16 @@
         <enum>QTabWidget::West</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <property name="movable">
         <bool>true</bool>
        </property>
        <widget class="QWidget" name="tabFiles">
+        <attribute name="icon">
+         <iconset resource="dark_icons.qrc">
+          <normaloff>:/images/folder_open</normaloff>:/images/folder_open</iconset>
+        </attribute>
         <attribute name="title">
          <string>Files</string>
         </attribute>
@@ -47,7 +51,7 @@
          <item>
           <widget class="QWidget" name="wTop" native="true">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -55,7 +59,7 @@
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>20</height>
+             <height>0</height>
             </size>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -74,10 +78,16 @@
             <item>
              <widget class="BCPathBar" name="framePathBar">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>40</height>
+               </size>
               </property>
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>
@@ -93,7 +103,7 @@
          <item>
           <widget class="QWidget" name="wMiddle" native="true">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -138,37 +148,70 @@
                   <number>4</number>
                  </property>
                  <item>
-                  <widget class="QTreeView" name="treeViewFiles">
+                  <widget class="BCMainViewFiles" name="treeViewFiles">
+                   <property name="font">
+                    <font>
+                     <family>DejaVu Sans Mono</family>
+                    </font>
+                   </property>
+                   <property name="editTriggers">
+                    <set>QAbstractItemView::NoEditTriggers</set>
+                   </property>
+                   <property name="showDropIndicator" stdset="0">
+                    <bool>false</bool>
+                   </property>
                    <property name="alternatingRowColors">
                     <bool>true</bool>
                    </property>
                    <property name="selectionMode">
-                    <enum>QAbstractItemView::MultiSelection</enum>
+                    <enum>QAbstractItemView::ExtendedSelection</enum>
+                   </property>
+                   <property name="rootIsDecorated">
+                    <bool>false</bool>
                    </property>
                    <property name="uniformRowHeights">
                     <bool>true</bool>
                    </property>
+                   <property name="itemsExpandable">
+                    <bool>false</bool>
+                   </property>
                    <property name="sortingEnabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="allColumnsShowFocus">
                     <bool>true</bool>
                    </property>
+                   <property name="expandsOnDoubleClick">
+                    <bool>false</bool>
+                   </property>
+                   <attribute name="headerHighlightSections">
+                    <bool>false</bool>
+                   </attribute>
+                   <attribute name="headerShowSortIndicator" stdset="0">
+                    <bool>true</bool>
+                   </attribute>
+                   <attribute name="headerStretchLastSection">
+                    <bool>false</bool>
+                   </attribute>
                   </widget>
                  </item>
                 </layout>
                </widget>
                <widget class="QWidget" name="pageLvThumbnails">
-                <widget class="QLabel" name="label_5">
-                 <property name="geometry">
-                  <rect>
-                   <x>40</x>
-                   <y>50</y>
-                   <width>89</width>
-                   <height>24</height>
-                  </rect>
+                <layout class="QHBoxLayout" name="horizontalLayout_3b">
+                 <property name="leftMargin">
+                  <number>0</number>
                  </property>
-                 <property name="text">
-                  <string>Test thumb list</string>
+                 <property name="topMargin">
+                  <number>0</number>
                  </property>
-                </widget>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>4</number>
+                 </property>
+                </layout>
                </widget>
               </widget>
               <widget class="QTabWidget" name="tabFilesDetails">
@@ -185,73 +228,35 @@
                 <bool>true</bool>
                </property>
                <widget class="QWidget" name="tabFilesDetailsInformations">
+                <attribute name="icon">
+                 <iconset resource="dark_icons.qrc">
+                  <normaloff>:/images/info</normaloff>:/images/info</iconset>
+                </attribute>
                 <attribute name="title">
                  <string>Informations</string>
                 </attribute>
                 <layout class="QHBoxLayout" name="horizontalLayout_5">
+                 <property name="spacing">
+                  <number>0</number>
+                 </property>
                  <property name="leftMargin">
-                  <number>6</number>
+                  <number>0</number>
                  </property>
                  <property name="topMargin">
-                  <number>6</number>
+                  <number>0</number>
                  </property>
                  <property name="rightMargin">
-                  <number>6</number>
+                  <number>0</number>
                  </property>
                  <property name="bottomMargin">
-                  <number>6</number>
+                  <number>0</number>
                  </property>
                  <item>
-                  <widget class="QFrame" name="frameFileInformation">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="frameShape">
-                    <enum>QFrame::NoFrame</enum>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <widget class="QLabel" name="label_3">
-                    <property name="geometry">
-                     <rect>
-                      <x>40</x>
-                      <y>40</y>
-                      <width>191</width>
-                      <height>24</height>
-                     </rect>
+                  <widget class="QWidget" name="widget" native="true">
+                   <layout class="QHBoxLayout" name="horizontalLayout_6">
+                    <property name="spacing">
+                     <number>0</number>
                     </property>
-                    <property name="text">
-                     <string>Test preview</string>
-                    </property>
-                   </widget>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="Line" name="line_3">
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <property name="lineWidth">
-                    <number>1</number>
-                   </property>
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QWidget" name="widgetFilePreview" native="true">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <layout class="QVBoxLayout" name="verticalLayout_5">
                     <property name="leftMargin">
                      <number>0</number>
                     </property>
@@ -261,48 +266,1290 @@
                     <property name="rightMargin">
                      <number>0</number>
                     </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
                     <item>
-                     <widget class="QToolBox" name="toolBoxInfo">
+                     <widget class="QSplitter" name="splitterPreview">
                       <property name="frameShape">
                        <enum>QFrame::NoFrame</enum>
                       </property>
                       <property name="frameShadow">
                        <enum>QFrame::Plain</enum>
                       </property>
-                      <property name="lineWidth">
-                       <number>1</number>
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
                       </property>
-                      <property name="midLineWidth">
-                       <number>0</number>
-                      </property>
-                      <property name="currentIndex">
-                       <number>0</number>
-                      </property>
-                      <widget class="QWidget" name="pageFileNfoGeneric">
-                       <property name="geometry">
-                        <rect>
-                         <x>0</x>
-                         <y>0</y>
-                         <width>536</width>
-                         <height>237</height>
-                        </rect>
+                      <widget class="QFrame" name="frameFileInformation">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
                        </property>
-                       <attribute name="label">
-                        <string>Information</string>
-                       </attribute>
+                       <property name="frameShape">
+                        <enum>QFrame::NoFrame</enum>
+                       </property>
+                       <property name="frameShadow">
+                        <enum>QFrame::Raised</enum>
+                       </property>
+                       <layout class="QHBoxLayout" name="horizontalLayout_8">
+                        <item>
+                         <widget class="QStackedWidget" name="swPreview">
+                          <property name="styleSheet">
+                           <string notr="true"/>
+                          </property>
+                          <property name="currentIndex">
+                           <number>1</number>
+                          </property>
+                          <widget class="QWidget" name="pgPreviewImg">
+                           <layout class="QVBoxLayout" name="verticalLayout_6">
+                            <property name="spacing">
+                             <number>0</number>
+                            </property>
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <item>
+                             <widget class="BCImagePreview" name="gvPreview">
+                              <property name="statusTip">
+                               <string>Double-click: zoom to fit/scale 1:1 | Drag: pan | Ctrl+Drag: select and zoom</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QWidget" name="widget_3" native="true">
+                              <layout class="QHBoxLayout" name="horizontalLayout_9">
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>3</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>3</number>
+                               </property>
+                               <item>
+                                <widget class="QLabel" name="lblZoom">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                                   <horstretch>1</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="minimumSize">
+                                  <size>
+                                   <width>0</width>
+                                   <height>18</height>
+                                  </size>
+                                 </property>
+                                 <property name="baseSize">
+                                  <size>
+                                   <width>0</width>
+                                   <height>0</height>
+                                  </size>
+                                 </property>
+                                 <property name="font">
+                                  <font>
+                                   <pointsize>8</pointsize>
+                                  </font>
+                                 </property>
+                                 <property name="text">
+                                  <string>100.00%</string>
+                                 </property>
+                                 <property name="alignment">
+                                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QWidget" name="wAnimated" native="true">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                                   <horstretch>3</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="baseSize">
+                                  <size>
+                                   <width>0</width>
+                                   <height>0</height>
+                                  </size>
+                                 </property>
+                                 <layout class="QHBoxLayout" name="horizontalLayout_10">
+                                  <property name="spacing">
+                                   <number>0</number>
+                                  </property>
+                                  <property name="leftMargin">
+                                   <number>0</number>
+                                  </property>
+                                  <property name="topMargin">
+                                   <number>0</number>
+                                  </property>
+                                  <property name="rightMargin">
+                                   <number>0</number>
+                                  </property>
+                                  <property name="bottomMargin">
+                                   <number>0</number>
+                                  </property>
+                                  <item>
+                                   <widget class="QLabel" name="lblAnimatedFrameNumber">
+                                    <property name="minimumSize">
+                                     <size>
+                                      <width>0</width>
+                                      <height>18</height>
+                                     </size>
+                                    </property>
+                                    <property name="font">
+                                     <font>
+                                      <pointsize>8</pointsize>
+                                     </font>
+                                    </property>
+                                    <property name="text">
+                                     <string>Frame 0/000  </string>
+                                    </property>
+                                    <property name="alignment">
+                                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                  <item>
+                                   <widget class="QSlider" name="hsAnimatedFrameNumber">
+                                    <property name="minimumSize">
+                                     <size>
+                                      <width>0</width>
+                                      <height>0</height>
+                                     </size>
+                                    </property>
+                                    <property name="maximumSize">
+                                     <size>
+                                      <width>16777215</width>
+                                      <height>18</height>
+                                     </size>
+                                    </property>
+                                    <property name="styleSheet">
+                                     <string notr="true">QSlider::groove:horizontal {
+    height: 8px;
+    margin: 0px;
+    }
+QSlider::handle:horizontal {
+    height: 40px;
+    width: 40px;
+    margin: -15px 0px;
+    }</string>
+                                    </property>
+                                    <property name="minimum">
+                                     <number>1</number>
+                                    </property>
+                                    <property name="pageStep">
+                                     <number>10</number>
+                                    </property>
+                                    <property name="orientation">
+                                     <enum>Qt::Horizontal</enum>
+                                    </property>
+                                    <property name="invertedAppearance">
+                                     <bool>false</bool>
+                                    </property>
+                                    <property name="invertedControls">
+                                     <bool>false</bool>
+                                    </property>
+                                    <property name="tickPosition">
+                                     <enum>QSlider::NoTicks</enum>
+                                    </property>
+                                    <property name="tickInterval">
+                                     <number>5</number>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                  <item>
+                                   <widget class="QToolButton" name="tbPlayPause">
+                                    <property name="maximumSize">
+                                     <size>
+                                      <width>18</width>
+                                      <height>18</height>
+                                     </size>
+                                    </property>
+                                    <property name="text">
+                                     <string/>
+                                    </property>
+                                    <property name="icon">
+                                     <iconset resource="dark_icons.qrc">
+                                      <normaloff>:/images/play</normaloff>:/images/play</iconset>
+                                    </property>
+                                    <property name="autoRaise">
+                                     <bool>true</bool>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                 </layout>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                          <widget class="QWidget" name="pgPreviewNone">
+                           <layout class="QVBoxLayout" name="verticalLayout_7">
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <item>
+                             <widget class="QLabel" name="lblNoPreview">
+                              <property name="font">
+                               <font>
+                                <pointsize>12</pointsize>
+                                <weight>75</weight>
+                                <bold>true</bold>
+                               </font>
+                              </property>
+                              <property name="autoFillBackground">
+                               <bool>false</bool>
+                              </property>
+                              <property name="text">
+                               <string>No image selected</string>
+                              </property>
+                              <property name="alignment">
+                               <set>Qt::AlignCenter</set>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </widget>
+                        </item>
+                       </layout>
                       </widget>
-                      <widget class="QWidget" name="pageFileNfoKra">
-                       <property name="geometry">
-                        <rect>
-                         <x>0</x>
-                         <y>0</y>
-                         <width>536</width>
-                         <height>199</height>
-                        </rect>
-                       </property>
-                       <attribute name="label">
-                        <string>Krita file information</string>
-                       </attribute>
+                      <widget class="QWidget" name="widget_2" native="true">
+                       <layout class="QHBoxLayout" name="horizontalLayout_7">
+                        <property name="spacing">
+                         <number>0</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>9</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QWidget" name="widgetFilePreview" native="true">
+                          <property name="sizePolicy">
+                           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                           </sizepolicy>
+                          </property>
+                          <layout class="QVBoxLayout" name="verticalLayout_5">
+                           <property name="spacing">
+                            <number>0</number>
+                           </property>
+                           <property name="leftMargin">
+                            <number>0</number>
+                           </property>
+                           <property name="topMargin">
+                            <number>0</number>
+                           </property>
+                           <property name="rightMargin">
+                            <number>0</number>
+                           </property>
+                           <property name="bottomMargin">
+                            <number>16</number>
+                           </property>
+                           <item>
+                            <widget class="QTabWidget" name="twInfo">
+                             <property name="currentIndex">
+                              <number>0</number>
+                             </property>
+                             <property name="tabBarAutoHide">
+                              <bool>false</bool>
+                             </property>
+                             <widget class="QWidget" name="pageFileNfoGeneric">
+                              <attribute name="icon">
+                               <iconset resource="dark_icons.qrc">
+                                <normaloff>:/images/file</normaloff>:/images/file</iconset>
+                              </attribute>
+                              <attribute name="title">
+                               <string>File</string>
+                              </attribute>
+                              <attribute name="toolTip">
+                               <string>Image file information</string>
+                              </attribute>
+                              <layout class="QHBoxLayout" name="horizontalLayout_fng">
+                               <property name="spacing">
+                                <number>6</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>6</number>
+                               </property>
+                               <item>
+                                <widget class="QScrollArea" name="scrollArea">
+                                 <property name="frameShape">
+                                  <enum>QFrame::NoFrame</enum>
+                                 </property>
+                                 <property name="widgetResizable">
+                                  <bool>true</bool>
+                                 </property>
+                                 <widget class="QWidget" name="scrollAreaWidgetContentsNfoGeneric">
+                                  <property name="geometry">
+                                   <rect>
+                                    <x>0</x>
+                                    <y>0</y>
+                                    <width>773</width>
+                                    <height>640</height>
+                                   </rect>
+                                  </property>
+                                  <layout class="QFormLayout" name="formLayout">
+                                   <item row="0" column="0">
+                                    <widget class="QLabel" name="labelPath">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Path</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="0" column="1">
+                                    <widget class="QLabel" name="lblPath">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                       <italic>false</italic>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="1" column="0">
+                                    <widget class="QLabel" name="labelName">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Name</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="1" column="1">
+                                    <widget class="QLabel" name="lblName">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="2" column="0">
+                                    <widget class="QLabel" name="labelModified">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Modified</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="2" column="1">
+                                    <widget class="QLabel" name="lblModified">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="3" column="0">
+                                    <widget class="QLabel" name="labelSize">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Size</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="3" column="1">
+                                    <widget class="QLabel" name="lblSize">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="4" column="0" colspan="2">
+                                    <widget class="Line" name="linePerm">
+                                     <property name="orientation">
+                                      <enum>Qt::Horizontal</enum>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="0">
+                                    <widget class="QLabel" name="labelPerm">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Permissions</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="1">
+                                    <widget class="QLabel" name="lblPerm">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="6" column="0">
+                                    <widget class="QLabel" name="labelOwner">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Owner/Group</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="6" column="1">
+                                    <widget class="QLabel" name="lblOwner">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                  </layout>
+                                 </widget>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                             <widget class="QWidget" name="pageFileNfoImage">
+                              <attribute name="icon">
+                               <iconset resource="dark_icons.qrc">
+                                <normaloff>:/images/large_view</normaloff>:/images/large_view</iconset>
+                              </attribute>
+                              <attribute name="title">
+                               <string>Image</string>
+                              </attribute>
+                              <attribute name="toolTip">
+                               <string>Image information</string>
+                              </attribute>
+                              <layout class="QHBoxLayout" name="horizontalLayout_fni">
+                               <property name="spacing">
+                                <number>6</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>6</number>
+                               </property>
+                               <item>
+                                <widget class="QScrollArea" name="scrollArea">
+                                 <property name="autoFillBackground">
+                                  <bool>false</bool>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true"/>
+                                 </property>
+                                 <property name="frameShape">
+                                  <enum>QFrame::NoFrame</enum>
+                                 </property>
+                                 <property name="widgetResizable">
+                                  <bool>true</bool>
+                                 </property>
+                                 <widget class="QWidget" name="scrollAreaWidgetContentsNfoImage">
+                                  <property name="geometry">
+                                   <rect>
+                                    <x>0</x>
+                                    <y>0</y>
+                                    <width>773</width>
+                                    <height>640</height>
+                                   </rect>
+                                  </property>
+                                  <layout class="QFormLayout" name="formLayout">
+                                   <property name="verticalSpacing">
+                                    <number>6</number>
+                                   </property>
+                                   <item row="0" column="0">
+                                    <widget class="QLabel" name="label">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Format</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="0" column="1">
+                                    <widget class="QLabel" name="lblImgFormat">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="1" column="0" colspan="2">
+                                    <widget class="Line" name="line_3">
+                                     <property name="orientation">
+                                      <enum>Qt::Horizontal</enum>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="2" column="0">
+                                    <widget class="QLabel" name="label_2">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Size</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="2" column="1">
+                                    <widget class="QLabel" name="lblImgSize">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="3" column="0">
+                                    <widget class="QLabel" name="label_9">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Resolution</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="3" column="1">
+                                    <widget class="QLabel" name="lblImgResolution">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="4" column="0" colspan="2">
+                                    <widget class="Line" name="line_4">
+                                     <property name="orientation">
+                                      <enum>Qt::Horizontal</enum>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="0">
+                                    <widget class="QLabel" name="label_8">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Mode</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="1">
+                                    <widget class="QLabel" name="lblImgMode">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="6" column="0">
+                                    <widget class="QLabel" name="label_6">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Depth</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="6" column="1">
+                                    <widget class="QLabel" name="lblImgDepth">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="7" column="0">
+                                    <widget class="QLabel" name="label_12">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Profile</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="7" column="1">
+                                    <widget class="QLabel" name="lblImgProfile">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="8" column="0" colspan="2">
+                                    <widget class="Line" name="lineImgExtraNfo">
+                                     <property name="orientation">
+                                      <enum>Qt::Horizontal</enum>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                  </layout>
+                                 </widget>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                             <widget class="QWidget" name="pageFileNfoKraAbout">
+                              <attribute name="icon">
+                               <iconset resource="dark_icons.qrc">
+                                <normaloff>:/images/info</normaloff>:/images/info</iconset>
+                              </attribute>
+                              <attribute name="title">
+                               <string>About</string>
+                              </attribute>
+                              <attribute name="toolTip">
+                               <string>Krita image: About information</string>
+                              </attribute>
+                              <layout class="QHBoxLayout" name="horizontalLayout_fnik">
+                               <property name="spacing">
+                                <number>6</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>6</number>
+                               </property>
+                               <item>
+                                <widget class="QScrollArea" name="scrollArea">
+                                 <property name="frameShape">
+                                  <enum>QFrame::NoFrame</enum>
+                                 </property>
+                                 <property name="widgetResizable">
+                                  <bool>true</bool>
+                                 </property>
+                                 <property name="alignment">
+                                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                                 </property>
+                                 <widget class="QWidget" name="scrollAreaWidgetContentsNfoKraAbout">
+                                  <property name="geometry">
+                                   <rect>
+                                    <x>0</x>
+                                    <y>0</y>
+                                    <width>773</width>
+                                    <height>640</height>
+                                   </rect>
+                                  </property>
+                                  <layout class="QFormLayout" name="formLayout">
+                                   <item row="0" column="0">
+                                    <widget class="QLabel" name="label_4">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Title</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="0" column="1">
+                                    <widget class="QLabel" name="lblKraAboutTitle">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="2" column="0">
+                                    <widget class="QLabel" name="label_5">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Description</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="2" column="1">
+                                    <widget class="QLabel" name="lblKraAboutDesc">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="3" column="0">
+                                    <widget class="QLabel" name="label_7">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Keywords</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="3" column="1">
+                                    <widget class="QLabel" name="lblKraAboutKeywords">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="4" column="0">
+                                    <widget class="QLabel" name="label_10">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Initial creator</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="4" column="1">
+                                    <widget class="QLabel" name="lblKraAboutInitCreator">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="0">
+                                    <widget class="QLabel" name="label_11">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Creation date</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="1">
+                                    <widget class="QLabel" name="lblKraAboutCreationDate">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="6" column="0">
+                                    <widget class="QLabel" name="label_13">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Editing time</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="6" column="1">
+                                    <widget class="QLabel" name="lblKraAboutEditingTime">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="1" column="0">
+                                    <widget class="QLabel" name="label_15">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Subject</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="1" column="1">
+                                    <widget class="QLabel" name="lblKraAboutSubject">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="7" column="0">
+                                    <widget class="QLabel" name="label_17">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Editing cycles</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="7" column="1">
+                                    <widget class="QLabel" name="lblKraAboutEditingCycles">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                  </layout>
+                                 </widget>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                             <widget class="QWidget" name="pageFileNfoKraAuthor">
+                              <attribute name="icon">
+                               <iconset resource="dark_icons.qrc">
+                                <normaloff>:/images/author</normaloff>:/images/author</iconset>
+                              </attribute>
+                              <attribute name="title">
+                               <string>Author</string>
+                              </attribute>
+                              <attribute name="toolTip">
+                               <string>Krita image: Author information</string>
+                              </attribute>
+                              <layout class="QHBoxLayout" name="horizontalLayout_fnkab">
+                               <property name="spacing">
+                                <number>6</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>6</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>6</number>
+                               </property>
+                               <item>
+                                <widget class="QScrollArea" name="scrollArea">
+                                 <property name="autoFillBackground">
+                                  <bool>false</bool>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true"/>
+                                 </property>
+                                 <property name="frameShape">
+                                  <enum>QFrame::NoFrame</enum>
+                                 </property>
+                                 <property name="widgetResizable">
+                                  <bool>true</bool>
+                                 </property>
+                                 <widget class="QWidget" name="scrollAreaWidgetContentsNfoKraAuthor">
+                                  <property name="geometry">
+                                   <rect>
+                                    <x>0</x>
+                                    <y>0</y>
+                                    <width>773</width>
+                                    <height>640</height>
+                                   </rect>
+                                  </property>
+                                  <layout class="QFormLayout" name="formLayout">
+                                   <property name="verticalSpacing">
+                                    <number>6</number>
+                                   </property>
+                                   <item row="0" column="0">
+                                    <widget class="QLabel" name="label_14">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Nickname</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="0" column="1">
+                                    <widget class="QLabel" name="lblKraAuthorNickname">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="1" column="0">
+                                    <widget class="QLabel" name="label_16">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>First name</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="1" column="1">
+                                    <widget class="QLabel" name="lblKraAuthorFName">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="2" column="0">
+                                    <widget class="QLabel" name="label_18">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Last name</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="2" column="1">
+                                    <widget class="QLabel" name="lblKraAuthorLName">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="3" column="0">
+                                    <widget class="QLabel" name="label_20">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Initials</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="4" column="0">
+                                    <widget class="QLabel" name="label_21">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Title</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="3" column="1">
+                                    <widget class="QLabel" name="lblKraAuthorInitials">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="4" column="1">
+                                    <widget class="QLabel" name="lblKraAuthorTitle">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="0">
+                                    <widget class="QLabel" name="label_24">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Position</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="1">
+                                    <widget class="QLabel" name="lblKraAuthorPosition">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="6" column="0">
+                                    <widget class="QLabel" name="label_26">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Compagny</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="6" column="1">
+                                    <widget class="QLabel" name="lblKraAuthorCompagny">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="7" column="0">
+                                    <widget class="QLabel" name="label_28">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Contact</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="7" column="1">
+                                    <widget class="QLabel" name="lblKraAuthorContact">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono</family>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                  </layout>
+                                 </widget>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                            </widget>
+                           </item>
+                          </layout>
+                         </widget>
+                        </item>
+                       </layout>
                       </widget>
                      </widget>
                     </item>
@@ -312,17 +1559,36 @@
                 </layout>
                </widget>
                <widget class="QWidget" name="tabFilesDetailsDirTree">
+                <attribute name="icon">
+                 <iconset resource="dark_icons.qrc">
+                  <normaloff>:/images/tree_list</normaloff>:/images/tree_list</iconset>
+                </attribute>
                 <attribute name="title">
                  <string>Directory tree</string>
                 </attribute>
                 <layout class="QHBoxLayout" name="horizontalLayout_4">
                  <item>
-                  <widget class="QTreeWidget" name="treewDirectoryTree">
-                   <column>
-                    <property name="text">
-                     <string notr="true">1</string>
-                    </property>
-                   </column>
+                  <widget class="QTreeView" name="tvDirectoryTree">
+                   <property name="font">
+                    <font>
+                     <family>DejaVu Sans Mono</family>
+                    </font>
+                   </property>
+                   <property name="editTriggers">
+                    <set>QAbstractItemView::NoEditTriggers</set>
+                   </property>
+                   <property name="showDropIndicator" stdset="0">
+                    <bool>false</bool>
+                   </property>
+                   <property name="textElideMode">
+                    <enum>Qt::ElideMiddle</enum>
+                   </property>
+                   <property name="uniformRowHeights">
+                    <bool>true</bool>
+                   </property>
+                   <property name="sortingEnabled">
+                    <bool>false</bool>
+                   </property>
                   </widget>
                  </item>
                 </layout>
@@ -356,6 +1622,12 @@
             </property>
             <item>
              <widget class="QLabel" name="lblFileNfo">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="font">
                <font>
                 <family>DejaVu Sans Mono</family>
@@ -364,13 +1636,16 @@
                </font>
               </property>
               <property name="toolTip">
-               <string>Number of [selected] files, Size of [selected] files</string>
+               <string>Number of files, size of files</string>
+              </property>
+              <property name="toolTipDuration">
+               <number>2500</number>
               </property>
               <property name="statusTip">
-               <string>Number of [selected] files, Size of [selected] files</string>
+               <string>Number of files, size of files</string>
               </property>
               <property name="whatsThis">
-               <string>Number of [selected] files, Size of [selected] files</string>
+               <string>Number of files, size of files</string>
               </property>
               <property name="text">
                <string>0 Files, 0.00KiB</string>
@@ -400,6 +1675,9 @@
               </property>
               <property name="toolTip">
                <string>Free space available on disk</string>
+              </property>
+              <property name="toolTipDuration">
+               <number>2500</number>
               </property>
               <property name="statusTip">
                <string>Free space available on disk</string>
@@ -455,7 +1733,11 @@
                <string>Reset default layout</string>
               </property>
               <property name="text">
-               <string>l</string>
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset resource="dark_icons.qrc">
+                <normaloff>:/images/dashboard</normaloff>:/images/dashboard</iconset>
               </property>
               <property name="popupMode">
                <enum>QToolButton::MenuButtonPopup</enum>
@@ -477,9 +1759,60 @@
         </layout>
        </widget>
        <widget class="QWidget" name="tabDocuments">
+        <attribute name="icon">
+         <iconset resource="dark_icons.qrc">
+          <normaloff>:/images/large_view</normaloff>:/images/large_view</iconset>
+        </attribute>
         <attribute name="title">
          <string>Documents</string>
         </attribute>
+        <widget class="QLabel" name="label_3">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>261</width>
+           <height>24</height>
+          </rect>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Not yet implemented...</string>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="tabClipboard">
+        <attribute name="icon">
+         <iconset resource="dark_icons.qrc">
+          <normaloff>:/images/clipboard</normaloff>:/images/clipboard</iconset>
+        </attribute>
+        <attribute name="title">
+         <string>Clipboard</string>
+        </attribute>
+        <widget class="QLabel" name="label_19">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>261</width>
+           <height>24</height>
+          </rect>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Not yet implemented...</string>
+         </property>
+        </widget>
        </widget>
       </widget>
      </item>
@@ -494,7 +1827,20 @@
    <header>bulicommander.bc.bcpathbar</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>BCMainViewFiles</class>
+   <extends>QTreeView</extends>
+   <header>bulicommander.bc.bcmainviewtab</header>
+  </customwidget>
+  <customwidget>
+   <class>BCImagePreview</class>
+   <extends>QGraphicsView</extends>
+   <header>bulicommander.bc.bcimagepreview</header>
+  </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="dark_icons.qrc"/>
+  <include location="light_icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

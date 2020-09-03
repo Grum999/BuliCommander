@@ -5,19 +5,14 @@ Andrey Makarov, 2019
 # ------------------------------------------------------------------------------
 # Grum999 - Bulicommander
 #
-# Following modification has been made to get widget a little bit more comfortable
-# to use with BuliCommander
-# - Use PyQt5 instead of QtPy
-# - Remove maximum height for widge (let size policy decide it)
-# - Add the '/' for linux root dfirectory
-# - Fix empty path bug
-# - Add signal 'clicked' (if any of item has been clicked)
-# - add method to set widget Highlighted
-# - for last directory: button without menu, click edit path manually in editline
+# Original widget has been heavily modified for BuliCommander ^_^'
+# Not possible to list all changes, do a DIFF with original source code if
+# interested in modification
 # ------------------------------------------------------------------------------
 
 from pathlib import Path
 import os
+import re
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QFrame
 from PyQt5.QtGui import QFont
@@ -41,6 +36,7 @@ class BreadcrumbsAddressBar(QFrame):
     listdir_error = Signal(Path)  # failed to list a directory
     path_error = Signal(Path)  # entered path does not exist
     path_selected = Signal(Path)
+    view_selected = Signal(str)
     clicked = Signal(bool)
 
     def __init__(self, parent=None):
@@ -48,7 +44,7 @@ class BreadcrumbsAddressBar(QFrame):
         layout = QtWidgets.QHBoxLayout(self)
 
         self.file_ico_prov = QtWidgets.QFileIconProvider()
-        self.fs_model = FilenameModel('dirs', icon_provider=self.get_icon)
+        self.fs_model = FilenameModel('dirs', icon_provider=self.get_icon, breadcrumbs=self)
 
         self.__paletteBase = self.palette()
         self.__paletteBase.setColor(QtGui.QPalette.Window, self.__paletteBase.color(QtGui.QPalette.Base))
@@ -58,6 +54,8 @@ class BreadcrumbsAddressBar(QFrame):
 
         self.__isHighlighted = False
         self.__hiddenPath = False
+
+        self.__quickRef = None
 
         self.__iconSize = QtCore.QSize(32, 32)  # px, size of generated semi-transparent icons
 
@@ -72,6 +70,13 @@ class BreadcrumbsAddressBar(QFrame):
         self.font.setPointSize(9)
         self.font.setFamily('DejaVu Sans Mono')
 
+        # A label used to display view name (when view reference is used)
+        self.viewName = QtWidgets.QLabel(self)
+        self.viewName.setFont(self.font)
+        self.viewName.hide()
+        self.viewName.mousePressEvent = self.viewName_mousePressEvent
+
+
         # Edit presented path textually
         self.line_address = QtWidgets.QLineEdit(self)
         self.line_address.setFrame(False)
@@ -84,6 +89,7 @@ class BreadcrumbsAddressBar(QFrame):
         self.line_address.hide()
 
 
+        layout.addWidget(self.viewName)
         layout.addWidget(self.line_address)
         # Add QCompleter to address line
         completer = self.init_completer(self.line_address, self.fs_model)
@@ -102,8 +108,7 @@ class BreadcrumbsAddressBar(QFrame):
         self.btn_crumbs_hidden.setAutoRaise(True)
         self.btn_crumbs_hidden.setPopupMode(QtWidgets.QToolButton.InstantPopup)
         self.btn_crumbs_hidden.setArrowType(Qt.LeftArrow)
-        self.btn_crumbs_hidden.setStyleSheet("QToolButton::menu-indicator {"
-                                             "image: none;}")
+        self.btn_crumbs_hidden.setStyleSheet("QToolButton::menu-indicator {image: none;}")
         self.btn_crumbs_hidden.setMinimumSize(self.btn_crumbs_hidden.minimumSizeHint())
         self.btn_crumbs_hidden.hide()
 
@@ -146,6 +151,7 @@ class BreadcrumbsAddressBar(QFrame):
 
         self.ignore_resize = False
         self.path_ = None
+        print('[BreadcrumbsAddressBar.__init__]')
         self.set_path(Path())
 
     @staticmethod
@@ -164,17 +170,29 @@ class BreadcrumbsAddressBar(QFrame):
 
     def get_icon(self, path: (str, Path)):
         "Path -> QIcon"
-        fileinfo = QtCore.QFileInfo(str(path))
-        dat = self.file_ico_prov.icon(fileinfo)
-        currentSize = dat.actualSize(self.__iconSize, QIcon.Normal, QIcon.Off)
-        if fileinfo.isHidden():
-            pmap = QtGui.QPixmap(currentSize)
-            pmap.fill(Qt.transparent)
-            painter = QtGui.QPainter(pmap)
-            painter.setOpacity(0.5)
-            dat.paint(painter, 0, 0, currentSize.width(), currentSize.height())
-            painter.end()
-            dat = QtGui.QIcon(pmap)
+        print('get_icon', path)
+        if isinstance(path, str) and not re.match('^@', path) is None:
+            # maybe a saved view or a bookmark
+            path=path.lower()
+            refDict=self.quickRefDict()
+
+            if not path in refDict:
+                # unable to find icon reference, return none
+                dat = QIcon()
+            else:
+                dat = refDict[path][1]
+        else:
+            fileinfo = QtCore.QFileInfo(str(path))
+            dat = self.file_ico_prov.icon(fileinfo)
+            currentSize = dat.actualSize(self.__iconSize, QIcon.Normal, QIcon.Off)
+            if fileinfo.isHidden():
+                pmap = QtGui.QPixmap(currentSize)
+                pmap.fill(Qt.transparent)
+                painter = QtGui.QPainter(pmap)
+                painter.setOpacity(0.5)
+                dat.paint(painter, 0, 0, currentSize.width(), currentSize.height())
+                painter.end()
+                dat = QtGui.QIcon(pmap)
         return dat
 
     def line_address_contextMenuEvent(self, event):
@@ -201,7 +219,12 @@ class BreadcrumbsAddressBar(QFrame):
         path = QtWidgets.QFileDialog.getExistingDirectory(
             self, "Choose folder", str(self.path()))
         if path:
+            print('[BreadcrumbsAddressBar._browse_for_folder]')
             self.set_path(path)
+
+    def viewName_mousePressEvent(self, event):
+        """Mouse pressed viewName label: go to edit mode"""
+        self._edit_path()
 
     def line_address_keyPressEvent(self, event):
         "Actions to take after a key press in text address field"
@@ -223,11 +246,14 @@ class BreadcrumbsAddressBar(QFrame):
         while layout.count():
             child = layout.takeAt(0)
             if child.widget():
+                layout.removeWidget(child.widget())
                 child.widget().deleteLater()
+                child.widget().setParent(None)
 
     def _insert_crumb(self, path):
         btn = QtWidgets.QToolButton(self.crumbs_panel)
         btn.setAutoRaise(True)
+        btn.setStyleSheet("QToolButton {padding: 0;}")
 
         # last directory?
         hasSubDir = False
@@ -289,33 +315,70 @@ class BreadcrumbsAddressBar(QFrame):
         Returns `False` if path does not exist or permission error.
         Can be used as a SLOT: `sender().path` is used if `path` is `None`)
         """
-        # Grum999: fix empty path bug
+        print('[BreadcrumbsAddressBar.set_path] path:', path, 'current path: ', self.path_)
         if path is None or path == '':
             try:
-                path = self.sender().path
+                path = str(self.sender().path)
             except:
                 path = '.'
 
-        path, emit_err = Path(path), None
-        try:  # C: -> C:\, folder\..\folder -> folder
-            path = path.resolve()
-        except PermissionError:
-            emit_err = self.listdir_error
-        if not path.exists():
-            emit_err = self.path_error
-        self._cancel_edit()  # exit edit mode
-        if emit_err:  # permission error or path does not exist
-            emit_err.emit(path)
-            return False
-        self._clear_crumbs()
-        self.path_ = path
-        self.line_address.setText(str(path))
-        self._insert_crumb(path)
-        while path.parent != path:
-            path = path.parent
+        if isinstance(path, str) and not re.match('^@', path) is None:
+            # maybe a saved view or a bookmark
+            if self.path_ != path:
+                path=path.lower()
+                refDict=self.quickRefDict()
+
+                if not path in refDict:
+                    emit_err = self.path_error
+                    self._cancel_edit()
+                    return False
+
+                self.__quickRef=refDict[path]
+
+                print('set_path', path, self.__quickRef)
+
+                # BCPathBar.QUICKREF_RESERVED_HOME, BCPathBar.QUICKREF_BOOKMARK
+                if self.__quickRef[0] in (0, 1):
+                    # bookmark
+                    path=self.getQuickRefPath(path)
+                    if path is None:
+                        emit_err = self.path_error
+                        self._cancel_edit()
+                        return False
+
+                    return self.set_path(path)
+
+                self.path_ = path
+                self.line_address.setText(path)
+                self._show_address_field(False)
+                self.view_selected.emit(path)
+                return True
+
+        elif str(path) != str(self.path_):
+            self.__quickRef=None
+            path, emit_err = Path(path), None
+            try:  # C: -> C:\, folder\..\folder -> folder
+                path = path.resolve()
+            except PermissionError:
+                emit_err = self.listdir_error
+            if not path.exists():
+                emit_err = self.path_error
+            self._cancel_edit()  # exit edit mode
+            if emit_err:  # permission error or path does not exist
+                emit_err.emit(path)
+                return False
+            self._clear_crumbs()
+            self.path_ = path
+            self.line_address.setText(str(path))
             self._insert_crumb(path)
-        self.path_selected.emit(path)
-        return True
+            while path.parent != path:
+                path = path.parent
+                self._insert_crumb(path)
+            self._show_address_field(False)
+            self.path_selected.emit(path)
+            return True
+        return False
+
 
     def _cancel_edit(self):
         "Set edit line text back to current path and switch to view mode"
@@ -339,14 +402,31 @@ class BreadcrumbsAddressBar(QFrame):
 
     def _show_address_field(self, b_show):
         "Show text address field"
+        print("_show_address_field", b_show, self.__quickRef)
         if b_show:
+            # show bread crumbs
             self.crumbs_container.hide()
+            self.viewName.hide()
+
             self.line_address.show()
             self.line_address.setFocus()
             self.line_address.selectAll()
         else:
+            # show reference
             self.line_address.hide()
-            self.crumbs_container.show()
+            if isinstance(self.path_, str) and self.path_ != '' and self.path_[0] == '@' and not self.__quickRef is None:
+                if self.__quickRef[0] == 0:
+                    # reserved
+                    self.viewName.setText(f"List view <b><i>{self.__quickRef[2]}</i></b>")
+                else:
+                    # list view
+                    self.viewName.setText(f"View <b><i>{self.__quickRef[2]}</i></b>")
+
+                self.crumbs_container.hide()
+                self.viewName.show()
+            else:
+                self.viewName.hide()
+                self.crumbs_container.show()
 
     def crumb_hide_show(self, widget, state:bool):
         "SLOT: a breadcrumb is hidden/removed or shown"
@@ -369,12 +449,15 @@ class BreadcrumbsAddressBar(QFrame):
 
     def setHighlighted(self, value):
         """Set current highlighted status"""
+        print('[BreadcrumbsAddressBar.setHighlighted] current: ', self.__isHighlighted, ' / value: ', value, '//', self.path_)
+
         if not isinstance(value, bool):
             raise EInvalidType("Given `value` must be a <bool>")
-        elif self.__isHighlighted != value:
+        else: #if self.__isHighlighted != value:
             self.__isHighlighted = value
 
             if self.__isHighlighted:
+                print('[BreadcrumbsAddressBar.setHighlighted] current: ', self.__isHighlighted, ' / value: ', value, '//', self.path_)
                 self.setPalette(self.__paletteHighlighted)
             else:
                 self.setPalette(self.__paletteBase)
@@ -390,6 +473,21 @@ class BreadcrumbsAddressBar(QFrame):
 
         self.__hiddenPath = value
         self.fs_model.setHiddenPath(value)
+
+    def quickRefDict(self):
+        """Return a dictionnary of quick reference
+
+        key = @xxxx (view Id or Bookmark Id)
+        value =(type of reference, Icon, Reference)
+        """
+        return {}
+
+    def getQuickRefPath(self, refId):
+        """Return path from reserved value or bookmark reference
+
+        Return None if not found
+        """
+        return None
 
 
 if __name__ == '__main__':

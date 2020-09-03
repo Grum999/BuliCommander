@@ -19,13 +19,14 @@
 # A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
-
+import os.path
 from pathlib import Path
 
 import sys
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
+        QDir,
         QRect
     )
 
@@ -37,6 +38,16 @@ from PyQt5.QtWidgets import (
 
 from .bcabout import BCAboutWindow
 from .bcbookmark import BCBookmark
+from .bcfile import (
+        BCBaseFile,
+        BCDirectory,
+        BCFile,
+        BCFileManagedFormat
+    )
+from .bcfileoperation import (
+        BCFileOperationUi,
+        BCFileOperation
+    )
 from .bchistory import BCHistory
 from .bcmainviewtab import (
         BCMainViewTab,
@@ -46,43 +57,85 @@ from .bcmainviewtab import (
         BCMainViewTabTabs
     )
 from .bcmainwindow import BCMainWindow
+from .bcpathbar import BCPathBar
 from .bcsettings import (
         BCSettings,
-        BCSettingsKey
+        BCSettingsDialogBox,
+        BCSettingsKey,
+        BCSettingsValues,
+    )
+from .bctheme import BCTheme
+
+from .bcimportanimated import (
+        BCImportDialogBox,
+        BCImportAnimated
+    )
+from .bcimagepreview import (
+        BCImagePreview
+    )
+from .bcsavedview import BCSavedView
+from .bcutils import (
+        buildIcon,
+        getBytesSizeToStrUnit,
+        setBytesSizeToStrUnit,
+        Debug
+    )
+from ..pktk.pktk import (
+        EInvalidType,
+        EInvalidValue,
+        EInvalidStatus
     )
 
+from ..pktk.ekrita import (
+        EKritaNode
+    )
 
 
 
 # ------------------------------------------------------------------------------
 class BCUIController(object):
     """The controller provide an access to all BuliCommander functions
-
-
     """
+    __EXTENDED_OPEN_OK = 1
+    __EXTENDED_OPEN_KO = -1
+    __EXTENDED_OPEN_CANCEL = 0
 
     def __init__(self, bcName="Buli Commander", bcVersion="testing"):
-        self.__window = BCMainWindow(self)
+        self.__theme = BCTheme()
+        self.__window = None
         self.__bcName = bcName
         self.__bcVersion = bcVersion
         self.__bcTitle = "{0} - {1}".format(bcName, bcVersion)
 
         self.__history = BCHistory()
         self.__bookmark = BCBookmark()
+        self.__savedView = BCSavedView()
+        self.__lastDocumentsOpened = BCHistory()
+        self.__lastDocumentsSaved = BCHistory()
 
         self.__confirmAction = True
 
-        self.__window.dialogShown.connect(self.__initSettings)
-        self.__inInit = False
+        self.__settings = BCSettings('bulicommander')
 
+        self.__initialised = False
 
+        # load last documents
+        self.commandGoLastDocsOpenedSet(self.__settings.option(BCSettingsKey.SESSION_LASTDOC_O_ITEMS.id()))
+        self.commandGoLastDocsSavedSet(self.__settings.option(BCSettingsKey.SESSION_LASTDOC_S_ITEMS.id()))
+
+        BCFile.initialiseCache()
 
     def start(self):
-        self.__settings = BCSettings('bulicommander')
+        if not self.__theme is None:
+            self.__theme.loadResources()
+
+        self.__initialised = False
+        self.__window = BCMainWindow(self)
+        self.__window.dialogShown.connect(self.__initSettings)
+
         self.__window.setWindowTitle(self.__bcTitle)
         self.__window.show()
         self.__window.activateWindow()
-
 
     # region: initialisation methods -------------------------------------------
 
@@ -90,11 +143,21 @@ class BCUIController(object):
         """There's some visual settings that need to have the window visible
         (ie: the widget size are known) to be applied
         """
+        if self.__initialised:
+            # already initialised, do nothing
+            return
+
         self.__window.initMainView()
 
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(False)
 
-
+        self.commandSettingsFileDefaultActionKra(self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_KRA.id()))
+        self.commandSettingsFileDefaultActionOther(self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER.id()))
+        self.commandSettingsFileUnit(self.__settings.option(BCSettingsKey.CONFIG_FILE_UNIT.id()))
         self.commandSettingsHistoryMaxSize(self.__settings.option(BCSettingsKey.CONFIG_HISTORY_MAXITEMS.id()))
+        self.commandSettingsHistoryKeepOnExit(self.__settings.option(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT.id()))
+        self.commandSettingsLastDocsMaxSize(self.__settings.option(BCSettingsKey.CONFIG_LASTDOC_MAXITEMS.id()))
         self.commandSettingsSaveSessionOnExit(self.__settings.option(BCSettingsKey.CONFIG_SESSION_SAVE.id()))
 
         self.commandViewMainWindowGeometry(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY.id()))
@@ -102,14 +165,32 @@ class BCUIController(object):
         self.commandViewMainSplitterPosition(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_SPLITTER_POSITION.id()))
         self.commandViewDisplaySecondaryPanel(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_PANEL_SECONDARYVISIBLE.id()))
         self.commandViewHighlightPanel(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_PANEL_HIGHLIGHTED.id()))
-        self.commandViewMode(self.__settings.option(BCSettingsKey.SESSION_PANELS_VIEW_MODE.id()))
         self.commandViewShowImageFileOnly(self.__settings.option(BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY.id()))
         self.commandViewShowBackupFiles(self.__settings.option(BCSettingsKey.SESSION_PANELS_VIEW_FILES_BACKUP.id()))
         self.commandViewShowHiddenFiles(self.__settings.option(BCSettingsKey.SESSION_PANELS_VIEW_FILES_HIDDEN.id()))
 
+        # load history
+        self.commandGoHistorySet(self.__settings.option(BCSettingsKey.SESSION_HISTORY_ITEMS.id()))
+        # load bookmarks
+        self.commandGoBookmarkSet(self.__settings.option(BCSettingsKey.SESSION_BOOKMARK_ITEMS.id()))
+        # load saved views
+        self.commandGoSavedViewSet(self.__settings.option(BCSettingsKey.SESSION_SAVEDVIEWS_ITEMS.id()))
+
+        self.commandSettingsNavBarBtnHome(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HOME.id()))
+        self.commandSettingsNavBarBtnViews(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_VIEWS.id()))
+        self.commandSettingsNavBarBtnBookmarks(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BOOKMARKS.id()))
+        self.commandSettingsNavBarBtnHistory(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HISTORY.id()))
+        self.commandSettingsNavBarBtnLastDocuments(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_LASTDOCUMENTS.id()))
+        self.commandSettingsNavBarBtnGoBack(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BACK.id()))
+        self.commandSettingsNavBarBtnGoUp(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_UP.id()))
+        self.commandSettingsNavBarBtnQuickFilter(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_QUICKFILTER.id()))
+
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setHistory(self.__history)
             self.__window.panels[panelId].setBookmark(self.__bookmark)
+            self.__window.panels[panelId].setSavedView(self.__savedView)
+            self.__window.panels[panelId].setLastDocumentsOpened(self.__lastDocumentsOpened)
+            self.__window.panels[panelId].setLastDocumentsSaved(self.__lastDocumentsSaved)
 
             self.commandPanelTabActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId)))
             self.commandPanelTabPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId)))
@@ -119,19 +200,55 @@ class BCUIController(object):
             self.commandPanelTabFilesPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_FILES.id(panelId=panelId)))
 
             self.commandPanelTabFilesNfoActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId)))
-            self.commandPanelTabFilesSplitterPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_SPLITTER_POSITION.id(panelId=panelId)))
+            self.commandPanelTabFilesSplitterFilesPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId)))
+            self.commandPanelTabFilesSplitterPreviewPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId)))
 
             self.commandPanelPath(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_CURRENTPATH.id(panelId=panelId)))
 
-            self.commandPanelFilterVisible(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVISIBLE.id(panelId=panelId)))
             self.commandPanelFilterValue(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVALUE.id(panelId=panelId)))
+            self.commandPanelFilterVisible(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVISIBLE.id(panelId=panelId)))
 
+            self.commandViewThumbnail(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_THUMBNAIL.id(panelId=panelId)))
 
-        # load history
-        self.commandGoHistorySet(self.__settings.option(BCSettingsKey.SESSION_HISTORY_ITEMS.id()))
-        self.commandGoBookmarkSet(self.__settings.option(BCSettingsKey.SESSION_BOOKMARK_ITEMS.id()))
+            self.commandPanelPreviewBackground(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_PREVIEW_BACKGROUND.id(panelId=panelId)))
+
+            self.__window.panels[panelId].setColumnSort(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSORT.id(panelId=panelId)))
+            self.__window.panels[panelId].setColumnOrder(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNORDER.id(panelId=panelId)))
+            self.__window.panels[panelId].setColumnSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSIZE.id(panelId=panelId)))
+            self.__window.panels[panelId].setIconSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_ICONSIZE.id(panelId=panelId)))
 
         self.__window.initMenu()
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(True)
+
+        self.__initialised = True
+
+
+    def __extendedOpen(self, file):
+        bcfile = BCFile(file)
+        if bcfile.format() in BCImportAnimated.SUPPORTED_FORMAT:
+            imgNfo = bcfile.getMetaInformation()
+            if imgNfo['imageCount'] > 1:
+                userChoice = BCImportDialogBox.open(f'{self.__bcName}::Import {bcfile.format()} file', bcfile, self.panel())
+
+                if userChoice[0]:
+                    if userChoice[1] == BCImportDialogBox.IMPORT_AS_FRAMELAYER:
+                        if BCImportAnimated.importAsFrames(bcfile, userChoice[2]):
+                            return BCUIController.__EXTENDED_OPEN_OK
+                    elif userChoice[1] == BCImportDialogBox.IMPORT_AS_STACKLAYER:
+                        if BCImportAnimated.importAsLayers(bcfile):
+                            return BCUIController.__EXTENDED_OPEN_OK
+                    elif userChoice[1] == BCImportDialogBox.IMPORT_AS_FRAME:
+                        if BCImportAnimated.importInOneLayer(bcfile, userChoice[2]):
+                            return BCUIController.__EXTENDED_OPEN_OK
+                    #else:
+                    #   krita's import mode
+                else:
+                    # cancel
+                    return BCUIController.__EXTENDED_OPEN_CANCEL
+        return BCUIController.__EXTENDED_OPEN_KO
+
 
     # endregion: initialisation methods ----------------------------------------
 
@@ -148,6 +265,99 @@ class BCUIController(object):
     def bookmark(self):
         """Return bookmark manager"""
         return self.__bookmark
+
+    def savedViews(self):
+        """Return saved views manager"""
+        return self.__savedView
+
+    def lastDocumentsOpened(self):
+        """Return last opened doc views manager"""
+        return self.__lastDocumentsOpened
+
+    def lastDocumentsSaved(self):
+        """Return last saved doc views manager"""
+        return self.__lastDocumentsSaved
+
+    def settings(self):
+        """return settoing manager"""
+        return self.__settings
+
+    def panelId(self):
+        """Return current highlighted panelId"""
+        return self.__window.highlightedPanel()
+
+    def panel(self, current=True):
+        """Return current highlighted panel"""
+        if current:
+            return self.__window.panels[self.__window.highlightedPanel()]
+        else:
+            return self.__window.panels[1 - self.__window.highlightedPanel()]
+
+    def theme(self):
+        """Return theme object"""
+        return self.__window.theme()
+
+    def quickRefDict(self):
+        """Return a dictionnary of quick references
+
+        key = reference (a saved view Id @xxxx or a bpookmark id @xxxx)
+        value = (Type, Icon, Case sensitive)
+        """
+        iconSavedView = buildIcon([(QPixmap(":/images/saved_view_file"), QIcon.Normal)])
+        iconBookmark = buildIcon([(QPixmap(":/images/bookmark"), QIcon.Normal)])
+
+        returned = {'@home': (BCPathBar.QUICKREF_RESERVED_HOME, buildIcon([(QPixmap(":/images/home"), QIcon.Normal)]), 'Home'),
+                    '@last': (BCPathBar.QUICKREF_RESERVED_LAST_ALL, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened/saved documents'),
+                    '@last opened': (BCPathBar.QUICKREF_RESERVED_LAST_OPENED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened documents'),
+                    '@last saved': (BCPathBar.QUICKREF_RESERVED_LAST_SAVED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last saved documents'),
+                    '@history': (BCPathBar.QUICKREF_RESERVED_HISTORY, buildIcon([(QPixmap(":/images/history"), QIcon.Normal)]), 'History directories')
+                    }
+
+        if not self.__bookmark is None and self.__bookmark.length() > 0:
+            for bookmark in self.__bookmark.list():
+                returned[f'@{bookmark[0].lower()}']=(BCPathBar.QUICKREF_BOOKMARK, iconBookmark, bookmark[0])
+
+        if not self.__savedView is None and self.__savedView.length() > 0:
+            for savedView in self.__savedView.list():
+                returned[f'@{savedView[0].lower()}']=(BCPathBar.QUICKREF_SAVEDVIEW_LIST, iconSavedView, savedView[0])
+
+        return returned
+
+    def quickRefPath(self, refId):
+        """Return path from reserved value or bookmark reference
+
+        Return None if not found
+        """
+        refId=refId.lstrip('@').lower()
+
+        if refId == 'home':
+            path = ''
+            if self.__settings.option(BCSettingsKey.CONFIG_HOME_DIR_MODE.id()) == BCSettingsValues.HOME_DIR_UD:
+                path = self.__settings.option(BCSettingsKey.CONFIG_HOME_DIR_UD.id())
+
+            if path == '' or not os.path.isdir(path):
+                path = QDir.homePath()
+
+            return path
+        else:
+            return self.__bookmark.valueFromName(refId)
+
+    def quickRefType(self, refId):
+        """Return current type """
+        refDict = self.quickRefDict()
+
+        if refId in refDict:
+            return refDict[refId][0]
+        return None
+
+    def quickRefName(self, refId):
+        """Return current type """
+        refDict = self.quickRefDict()
+
+        if refId in refDict:
+            return refDict[refId][2]
+        return None
+
 
     # endregion: getter/setters ------------------------------------------------
 
@@ -173,42 +383,334 @@ class BCUIController(object):
                 # when maximized geometry is full screen geomtry, then do it only if no in maximized
                 self.__settings.setOption(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY, [self.__window.geometry().x(), self.__window.geometry().y(), self.__window.geometry().width(), self.__window.geometry().height()])
 
-            if self.__window.actionViewSmallIcon.isChecked():
-                self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'small')
-            elif self.__window.actionViewMediumIcon.isChecked():
-                self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'medium')
-            elif self.__window.actionViewLargeIcon.isChecked():
-                self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'large')
-            else:
-                self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_MODE, 'detailled')
-
-
             self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY, self.__window.actionViewShowImageFileOnly.isChecked())
             self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_FILES_BACKUP, self.__window.actionViewShowBackupFiles.isChecked())
             self.__settings.setOption(BCSettingsKey.SESSION_PANELS_VIEW_FILES_HIDDEN, self.__window.actionViewShowHiddenFiles.isChecked())
 
+            # normally shouldn't be necessary
+            if getBytesSizeToStrUnit() == 'auto':
+                self.__settings.setOption(BCSettingsKey.CONFIG_FILE_UNIT, BCSettingsValues.FILE_UNIT_KB)
+            else:
+                self.__settings.setOption(BCSettingsKey.CONFIG_FILE_UNIT, BCSettingsValues.FILE_UNIT_KIB)
+
             for panelId in self.__window.panels:
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].tabFilesLayout().value)
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CURRENTPATH.id(panelId=panelId), self.__window.panels[panelId].currentPath())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CURRENTPATH.id(panelId=panelId), self.__window.panels[panelId].path())
+
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_THUMBNAIL.id(panelId=panelId), self.__window.panels[panelId].viewThumbnail())
 
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVISIBLE.id(panelId=panelId), self.__window.panels[panelId].filterVisible())
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVALUE.id(panelId=panelId), self.__window.panels[panelId].filter())
+
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSORT.id(panelId=panelId), self.__window.panels[panelId].columnSort())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].columnOrder())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSIZE.id(panelId=panelId), self.__window.panels[panelId].columnSize())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_ICONSIZE.id(panelId=panelId), self.__window.panels[panelId].iconSize())
+
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_PREVIEW_BACKGROUND.id(panelId=panelId), self.__window.panels[panelId].previewBackground())
 
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId), [tab.value for tab in self.__window.panels[panelId].tabOrder()])
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_POSITIONTAB_FILES.id(panelId=panelId), [tab.value for tab in self.__window.panels[panelId].tabFilesOrder()])
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId), self.__window.panels[panelId].tabActive().value)
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId), self.__window.panels[panelId].tabFilesActive().value)
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId), self.__window.panels[panelId].tabFilesNfoActive().value)
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_POSITION.id(panelId=panelId), self.__window.panels[panelId].tabFilesSplitterPosition())
 
-            self.__settings.setOption(BCSettingsKey.SESSION_HISTORY_ITEMS, self.__history.list())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId), self.__window.panels[panelId].tabFilesSplitterFilesPosition())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId), self.__window.panels[panelId].tabFilesSplitterPreviewPosition())
+
+            if self.__settings.option(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT.id()):
+                self.__settings.setOption(BCSettingsKey.SESSION_HISTORY_ITEMS, self.__history.list())
+            else:
+                self.__settings.setOption(BCSettingsKey.SESSION_HISTORY_ITEMS, [])
+
             self.__settings.setOption(BCSettingsKey.SESSION_BOOKMARK_ITEMS, self.__bookmark.list())
+            self.__settings.setOption(BCSettingsKey.SESSION_SAVEDVIEWS_ITEMS, self.__savedView.list())
+            self.__settings.setOption(BCSettingsKey.SESSION_LASTDOC_O_ITEMS, self.__lastDocumentsOpened.list())
+            self.__settings.setOption(BCSettingsKey.SESSION_LASTDOC_S_ITEMS, self.__lastDocumentsSaved.list())
 
         return self.__settings.saveConfig()
+
+    def updateMenuForPanel(self):
+        """Update menu (enabled/disabled/checked/unchecked) according to current panel"""
+        self.__window.actionViewThumbnail.setChecked(self.panel().viewThumbnail())
+
+        selectionInfo = self.panel().selectedFiles()
+
+        self.__window.actionFileOpen.setEnabled(selectionInfo[4]>0)
+        self.__window.actionFileOpenCloseBC.setEnabled(selectionInfo[4]>0)
+        self.__window.actionFileOpenAsNewDocument.setEnabled(selectionInfo[4]>0)
+        self.__window.actionFileOpenAsNewDocumentCloseBC.setEnabled(selectionInfo[4]>0)
+        self.__window.actionFileCopyToOtherPanel.setEnabled(selectionInfo[3]>0)
+        self.__window.actionFileMoveToOtherPanel.setEnabled(selectionInfo[3]>0)
+        self.__window.actionFileDelete.setEnabled(selectionInfo[3]>0)
+        self.__window.actionFileRename.setEnabled(selectionInfo[3]==1)
+
+        self.__window.actionFileCopyToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
+        self.__window.actionFileMoveToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
+        self.__window.actionFileDeleteNoConfirm.setEnabled(selectionInfo[3]>0)
+
+        self.__window.actionViewShowBackupFiles.setEnabled(self.optionViewFileManagedOnly())
+
+        self.__window.actionGoBack.setEnabled(self.panel().goBackEnabled())
+        self.__window.actionGoUp.setEnabled(self.panel().goUpEnabled())
+
+    def close(self):
+        """When window is about to be closed, execute some cleanup/backup/stuff before exiting BuliCommander"""
+        # save current settings
+        self.saveSettings()
+
+        # stop all async processes (thumbnail generating)
+        for panelRef in self.__window.panels:
+            self.__window.panels[panelRef].close()
+
+    def optionViewDisplaySecondaryPanel(self):
+        """Return current option value"""
+        return self.__window.actionViewDisplaySecondaryPanel.isChecked()
+
+    def optionHighlightedPanel(self):
+        """Return current option value"""
+        return self.__window.highlightedPanel()
+
+    def optionIsMaximized(self):
+        """Return current option value"""
+        return self.__window.isMaximized()
+
+    def optionViewFileManagedOnly(self):
+        """Return current option value"""
+        return self.__window.actionViewShowImageFileOnly.isChecked()
+
+    def optionViewFileBackup(self):
+        """Return current option value"""
+        return self.__window.actionViewShowBackupFiles.isChecked()
+
+    def optionViewFileHidden(self):
+        """Return current option value"""
+        return self.__window.actionViewShowHiddenFiles.isChecked()
+
+    def optionFileDefaultActionKra(self):
+        """Return current option value"""
+        return self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_KRA.id())
+
+    def optionFileDefaultActionOther(self):
+        """Return current option value"""
+        return self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER.id())
+
+    def optionHistoryMaxSize(self):
+        """Return current option value"""
+        return self.__settings.option(BCSettingsKey.CONFIG_HISTORY_MAXITEMS.id())
 
     def commandQuit(self):
         """Close Buli Commander"""
         self.__window.close()
+
+    def commandFileOpen(self, file=None):
+        """Open file"""
+        if file is None:
+            selectionInfo = self.panel().selectedFiles()
+            if selectionInfo[4] > 0:
+                nbOpened = 0
+                for file in selectionInfo[0]:
+                    if isinstance(file, BCFile) and file.readable():
+                        if self.commandFileOpen(file.fullPathName()):
+                            nbOpened+=1
+                if nbOpened!=selectionInfo[4]:
+                    return False
+                else:
+                    return True
+        elif isinstance(file, BCFile) and file.readable():
+            return self.commandFileOpen(file.fullPathName())
+        elif isinstance(file, str):
+            opened = self.__extendedOpen(file)
+            if opened == BCUIController.__EXTENDED_OPEN_CANCEL:
+                return False
+            elif opened == BCUIController.__EXTENDED_OPEN_OK:
+                return True
+
+            try:
+                document = Krita.instance().openDocument(file)
+                view = Krita.instance().activeWindow().addView(document)
+                Krita.instance().activeWindow().showView(view)
+            except Exception as e:
+                Debug.print('[BCUIController.commandFileOpen] unable to open file {0}: {1}', file, str(e))
+                return False
+            return True
+        else:
+            raise EInvalidType('Given `file` is not valid')
+
+    def commandFileOpenCloseBC(self, file=None):
+        """Open file and close BuliCommander"""
+        if self.commandFileOpen(file):
+            self.commandQuit()
+            return True
+        return False
+
+    def commandFileOpenAsNew(self, file=None):
+        """Open file as new document"""
+        if file is None:
+            selectionInfo = self.panel().selectedFiles()
+            if selectionInfo[4] > 0:
+                nbOpened = 0
+                for file in selectionInfo[0]:
+                    if isinstance(file, BCFile) and file.readable():
+                        if self.commandFileOpenAsNew(file.fullPathName()):
+                            nbOpened+=1
+                if nbOpened!=selectionInfo[4]:
+                    return False
+                else:
+                    return True
+        elif isinstance(file, BCFile) and file.readable():
+            return self.commandFileOpenAsNew(file.fullPathName())
+        elif isinstance(file, str):
+            opened = self.__extendedOpen(file)
+            if opened == BCUIController.__EXTENDED_OPEN_CANCEL:
+                return False
+            elif opened == BCUIController.__EXTENDED_OPEN_OK:
+                return True
+
+            try:
+                document = Krita.instance().openDocument(file)
+                document.setFileName(None)
+                view = Krita.instance().activeWindow().addView(document)
+                Krita.instance().activeWindow().showView(view)
+            except Exception as e:
+                Debug.print('[BCUIController.commandFileOpenAsNew] unable to open file {0}: {1}', file, str(e))
+                return False
+            return True
+        else:
+            raise EInvalidType('Given `file` is not valid')
+
+    def commandFileOpenAsNewCloseBC(self, file=None):
+        """Open file and close BuliCommander"""
+        if self.commandFileOpenAsNew(file):
+            self.commandQuit()
+            return True
+        return False
+
+    def commandFileDefaultAction(self, file):
+        """Execute default action to item
+
+        - Directory: go to directory
+        - Image: open it
+        - Other files: does nothing
+        """
+        #if not isinstance(file, BCBaseFile):
+        #    raise EInvalidType('Given `file` must be a <BCBaseFile>')
+
+        closeBC = False
+
+        print('commandFileDefaultAction', file)
+
+        if file is None:
+            return
+
+        print('commandFileDefaultAction', file.name(), file.format())
+
+
+        if file.format() == BCFileManagedFormat.DIRECTORY:
+            if file.name() == '..':
+                self.commandGoUp(self.__window.highlightedPanel())
+            else:
+                self.commandPanelPath(self.__window.highlightedPanel(), file.fullPathName())
+        else:
+            if file.readable():
+                if file.format() == BCFileManagedFormat.KRA:
+                    if self.optionFileDefaultActionKra() in [BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE, BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE]:
+                        closeBC = True
+
+                    if self.optionFileDefaultActionKra() == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE:
+                        closeBC = self.commandFileOpen(file)
+                    elif self.optionFileDefaultActionKra() == BCSettingsValues.FILE_DEFAULTACTION_OPEN:
+                        self.commandFileOpen(file)
+                    elif self.optionFileDefaultActionKra() == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE:
+                        closeBC = self.commandFileOpenAsNew(file)
+                    elif self.optionFileDefaultActionKra() == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW:
+                        self.commandFileOpenAsNew(file)
+                else:
+                    if self.optionFileDefaultActionOther() in [BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE, BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE]:
+                        closeBC = True
+
+                    if self.optionFileDefaultActionOther() == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE:
+                        closeBC = self.commandFileOpen(file)
+                    elif self.optionFileDefaultActionOther() == BCSettingsValues.FILE_DEFAULTACTION_OPEN:
+                        self.commandFileOpen(file)
+                    elif self.optionFileDefaultActionOther() == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE:
+                        closeBC = self.commandFileOpenAsNew(file)
+                    elif self.optionFileDefaultActionOther() == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW:
+                        self.commandFileOpenAsNew(file)
+            else:
+                Debug.print('[BCUIController.commandFileDefaultAction] File not readable: {0}', file)
+
+        return closeBC
+
+    def commandFileCreateDir(self, targetPath=None):
+        """Create directory for given path"""
+        if targetPath is None:
+            targetPath = self.panel().path()
+
+        newPath = BCFileOperationUi.createDir(self.__bcName, targetPath)
+        if not newPath is None:
+            if not BCFileOperation.createDir(newPath):
+                QMessageBox.warning(
+                        QWidget(),
+                        f"{self.__bcName}::Create directory",
+                        f"Unable to create directory:\n{newPath}"
+                    )
+
+    def commandFileDelete(self, confirm=True):
+        """Delete file(s)"""
+
+        selectedFiles = self.panel().selectedFiles()
+        if confirm:
+            fileList = "\n".join([file.fullPathName() for file in selectedFiles[5]])
+            choice = BCFileOperationUi.delete(self.__bcName, selectedFiles[2], selectedFiles[1], fileList)
+            if not choice:
+                return
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(False)
+
+        BCFileOperation.delete(self.__bcName, selectedFiles[5])
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(True)
+
+    def commandFileCopy(self, confirm=True):
+        """Copy file(s)"""
+        targetPath = self.panel(False).path()
+        selectedFiles = self.panel().selectedFiles()
+        if confirm:
+            fileList = "\n".join([file.fullPathName() for file in selectedFiles[5]])
+            choice = BCFileOperationUi.copy(self.__bcName, selectedFiles[2], selectedFiles[1], fileList, targetPath)
+            if not choice:
+                return
+            targetPath = BCFileOperationUi.path()
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(False)
+
+        BCFileOperation.copy(self.__bcName, selectedFiles[5], targetPath)
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(True)
+
+    def commandFileMove(self, confirm=True):
+        """Move file(s)"""
+        targetPath = self.panel(False).path()
+        selectedFiles = self.panel().selectedFiles()
+        if confirm:
+            fileList = "\n".join([file.fullPathName() for file in selectedFiles[5]])
+            choice = BCFileOperationUi.move(self.__bcName, selectedFiles[2], selectedFiles[1], fileList, targetPath)
+            if not choice:
+                return
+            targetPath = BCFileOperationUi.path()
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(False)
+
+        BCFileOperation.move(self.__bcName, selectedFiles[5], targetPath)
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(True)
 
     def commandViewSwapPanels(self):
         """Swap panels positions"""
@@ -318,57 +820,34 @@ class BCUIController(object):
 
         return [self.__window.geometry().x(), self.__window.geometry().y(), self.__window.geometry().width(), self.__window.geometry().height()]
 
-    def commandViewModeDetailled(self):
-        """Set current view in detailled mode"""
-        self.__window.actionViewDetailled.setChecked(True)
-        self.__window.actionViewSmallIcon.setChecked(False)
-        self.__window.actionViewMediumIcon.setChecked(False)
-        self.__window.actionViewLargeIcon.setChecked(False)
-
-        print('TODO: commandViewDetailled Need to implement changed view')
-
-    def commandViewModeSmallIcon(self):
-        """Set current view in small icon mode"""
-        self.__window.actionViewDetailled.setChecked(False)
-        self.__window.actionViewSmallIcon.setChecked(True)
-        self.__window.actionViewMediumIcon.setChecked(False)
-        self.__window.actionViewLargeIcon.setChecked(False)
-
-        print('TODO: commandViewSmallIcon Need to implement changed view')
-
-    def commandViewModeMediumIcon(self):
-        """Set current view in medium icon mode"""
-        self.__window.actionViewDetailled.setChecked(False)
-        self.__window.actionViewSmallIcon.setChecked(False)
-        self.__window.actionViewMediumIcon.setChecked(True)
-        self.__window.actionViewLargeIcon.setChecked(False)
-
-        print('TODO: commandViewMediumIcon Need to implement changed view')
-
-    def commandViewModeLargeIcon(self, value=None):
-        """Set current view in large icon mode"""
-        self.__window.actionViewDetailled.setChecked(False)
-        self.__window.actionViewSmallIcon.setChecked(False)
-        self.__window.actionViewMediumIcon.setChecked(False)
-        self.__window.actionViewLargeIcon.setChecked(True)
-
-        print('TODO: commandViewLargeIcon Need to implement changed view')
-
-    def commandViewMode(self, mode=None):
+    def commandViewThumbnail(self, panel=None, mode=None):
         """Set current view mode"""
-        if mode is None:
-            mode = 'detailled'
+        if panel is None:
+            panel = self.panelId()
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
 
-        if mode == 'detailled':
-            self.commandViewModeDetailled()
-        elif mode == 'small':
-            self.commandViewModeSmallIcon()
-        elif mode == 'medium':
-            self.commandViewModeMediumIcon()
-        elif mode == 'large':
-            self.commandViewModeLargeIcon()
-        else:
-            raise EInvalidValue('Given `mode` must be "detailled", "small", "medium" or "large"')
+        if mode is None or not isinstance(mode, bool):
+            mode = False
+
+        self.__window.actionViewThumbnail.setChecked(mode)
+        self.__window.panels[panel].setViewThumbnail(mode)
+
+        self.updateMenuForPanel()
+
+        return mode
+
+    def commandPanelPreviewBackground(self, panel=None, mode=None):
+        """Set current preview view mode"""
+        if panel is None:
+            panel = self.panelId()
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        if not mode in BCImagePreview.backgroundList():
+            mode = BCImagePreview.BG_CHECKER_BOARD
+
+        self.__window.panels[panel].setPreviewBackground(mode)
 
         return mode
 
@@ -380,10 +859,16 @@ class BCUIController(object):
         """
         if value is None:
             value = self.__window.actionViewShowImageFileOnly.isChecked()
+        elif self.__window.actionViewShowImageFileOnly.isChecked() == value:
+            # already set, do nothing
+            return
         else:
             self.__window.actionViewShowImageFileOnly.setChecked(value)
 
-        print('TODO: commandViewShowImageFileOnly Need to implement changed view')
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].refresh()
+
+        self.updateMenuForPanel()
 
         return value
 
@@ -395,10 +880,14 @@ class BCUIController(object):
         """
         if value is None:
             value = self.__window.actionViewShowBackupFiles.isChecked()
+        elif self.__window.actionViewShowBackupFiles.isChecked() == value:
+            # already set, do nothing
+            return
         else:
             self.__window.actionViewShowBackupFiles.setChecked(value)
 
-        print('TODO: commandViewShowBackupFiles Need to implement changed view')
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].refresh()
 
         return value
 
@@ -410,12 +899,14 @@ class BCUIController(object):
         """
         if value is None:
             value = self.__window.actionViewShowHiddenFiles.isChecked()
+        elif self.__window.actionViewShowHiddenFiles.isChecked() == value:
+            # already set, do nothing
+            return
         else:
             self.__window.actionViewShowHiddenFiles.setChecked(value)
 
-        print('TODO: commandViewShowHiddenFiles Need to implement changed view')
-        for panel in self.__window.panels:
-            self.__window.panels[panel].setHiddenPath(value)
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setHiddenPath(value)
 
         return value
 
@@ -485,7 +976,7 @@ class BCUIController(object):
 
         return value
 
-    def commandPanelTabFilesSplitterPosition(self, panel, positions=None):
+    def commandPanelTabFilesSplitterFilesPosition(self, panel, positions=None):
         """Set splitter position for tab files for given panel
 
         Given `positions` is a list [<panel0 size>,<panel1 size>]
@@ -494,14 +985,48 @@ class BCUIController(object):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].setTabFilesSplitterPosition(positions)
+        return self.__window.panels[panel].setTabFilesSplitterFilesPosition(positions)
+
+    def commandPanelTabFilesSplitterPreviewPosition(self, panel, positions=None):
+        """Set splitter position for tab preview for given panel
+
+        Given `positions` is a list [<panel0 size>,<panel1 size>]
+        If value is None, will define a default 50%-50%
+        """
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].setTabFilesSplitterPreviewPosition(positions)
 
     def commandPanelPath(self, panel, path=None):
         """Define path for given panel"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].setCurrentPath(path)
+        returned = self.__window.panels[panel].setPath(path)
+        self.updateMenuForPanel()
+        return returned
+
+    def commandPanelSelectAll(self, panel):
+        """Select all item"""
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].selectAll()
+
+    def commandPanelSelectNone(self, panel):
+        """Clear selection"""
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].selectNone()
+
+    def commandPanelSelectInvert(self, panel):
+        """Clear selection"""
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].selectInvert()
 
     def commandPanelFilterVisible(self, panel, visible=None):
         """Display the filter
@@ -522,6 +1047,19 @@ class BCUIController(object):
 
         return self.__window.panels[panel].setFilter(value)
 
+    def commandGoTo(self, panel, path=None):
+        """Go back to given path/bookmark/saved view"""
+        if isinstance(panel, BCMainViewTab):
+            for panelId in self.__window.panels:
+                if self.__window.panels[panelId] == panel:
+                    panel = panelId
+                    break
+
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].setPath(path)
+
     def commandGoBack(self, panel):
         """Go back to previous directory"""
         if isinstance(panel, BCMainViewTab):
@@ -533,7 +1071,7 @@ class BCUIController(object):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        self.__window.panels[panel].goToBackPath()
+        return self.__window.panels[panel].goToBackPath()
 
     def commandGoUp(self, panel):
         """Go to parent directory"""
@@ -546,7 +1084,20 @@ class BCUIController(object):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        self.__window.panels[panel].goToUpPath()
+        return self.__window.panels[panel].goToUpPath()
+
+    def commandGoHome(self, panel):
+        """Go to parent directory"""
+        if isinstance(panel, BCMainViewTab):
+            for panelId in self.__window.panels:
+                if self.__window.panels[panelId] == panel:
+                    panel = panelId
+                    break
+
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.commandGoTo(panel, '@home')
 
     def commandGoHistoryClear(self):
         """Clear history content"""
@@ -559,8 +1110,9 @@ class BCUIController(object):
                                           self.__bcName,
                                           "Are you sure you want to clear history?"
                                         ) == QMessageBox.No:
-                return
+                return False
         self.commandGoHistoryClear()
+        return True
 
     def commandGoHistorySet(self, value=[]):
         """Set history content"""
@@ -570,11 +1122,6 @@ class BCUIController(object):
     def commandGoHistoryAdd(self, value):
         """Set history content"""
         self.__history.append(value)
-
-    def commandSettingsHistoryMaxSize(self, value=25):
-        """Set maximum size history for history content"""
-        self.__history.setMaxItems(value)
-        self.__settings.setOption(BCSettingsKey.CONFIG_HISTORY_MAXITEMS, self.__history.maxItems())
 
     def commandGoBookmarkSet(self, values=[]):
         """Set bookmark content"""
@@ -601,7 +1148,7 @@ class BCUIController(object):
 
     def commandGoBookmarkAppendUI(self, path):
         """append bookmark content"""
-        self.__bookmark.uiAppend(path)
+        self.__bookmark.uiAppend(path, self.quickRefDict())
 
     def commandGoBookmarkRemove(self, name):
         """remove bookmark content"""
@@ -617,7 +1164,174 @@ class BCUIController(object):
 
     def commandGoBookmarkRenameUI(self, name):
         """rename bookmark content"""
-        self.__bookmark.uiRename(name)
+        self.__bookmark.uiRename(name, self.quickRefDict())
+
+    def commandGoSavedViewSet(self, values):
+        """Set saved views content"""
+        self.__savedView.clear()
+
+        if isinstance(values, dict):
+            # assume key = name, value = list of files/directories
+            self.__savedView.set(values)
+        elif isinstance(values, list):
+            # assume item in list are tuple (or list) (name, list of files/directories)
+            dictValues = {}
+            for item in values:
+                dictValues[item[0]]=item[1]
+            self.__savedView.set(dictValues)
+        else:
+            raise EInvalidType('Given `values` must be a <dict> or a <list>')
+
+    def commandGoSavedViewClear(self, name):
+        """Clear content for view `name`"""
+        self.__savedView.viewClear(name)
+
+    def commandGoSavedViewClearUI(self, name):
+        """Clear saved views content"""
+        cleared, name = self.__savedView.uiClearContent(name)
+        if cleared:
+            self.panel().refresh(False)
+
+    def commandGoSavedViewAppend(self, name, files):
+        """append files to saved view"""
+        return self.__savedView.viewAppend(name, files)
+
+    def commandGoSavedViewRemove(self, name, files):
+        """remove files from saved view"""
+        return self.__savedView.viewRemove(name, files)
+
+    def commandGoSavedViewRemoveUI(self, name, files):
+        """remove files from saved view"""
+        removed, name = self.__savedView.uiRemoveContent(name, files)
+        if removed:
+            self.panel().refresh(False)
+        return removed
+
+    def commandGoSavedViewCreate(self, name, files):
+        """rename saved view"""
+        return self.__savedView.create(name, newName)
+
+    def commandGoSavedViewCreateUI(self, files):
+        """rename saved views content"""
+        self.__savedView.uiCreate(files, self.quickRefDict())
+
+    def commandGoSavedViewRename(self, name, newName):
+        """rename saved view"""
+        return self.__savedView.rename(name, newName)
+
+    def commandGoSavedViewRenameUI(self, name):
+        """rename saved views content"""
+        renamed, newName = self.__savedView.uiRename(name, self.quickRefDict())
+        if renamed:
+            self.commandGoTo(self.panel(), f'@{newName}')
+        return renamed
+
+    def commandGoSavedViewDelete(self, name):
+        """delete saved view"""
+        return self.__savedView.delete(name)
+
+    def commandGoSavedViewDeleteUI(self, name):
+        """delete saved view"""
+        deleted, deletedName = self.__savedView.uiDelete(name)
+        if deleted:
+            if not self.commandGoBack(self.panel()):
+                # go to user directory if no previous path in history
+                self.commandGoTo(self.panel(), self.quickRefPath('@home'))
+
+    def commandGoLastDocsOpenedSet(self, value=[]):
+        """Set last opened documents content"""
+        print("=====BC: commandGoLastDocsOpenedSet", value)
+        self.__lastDocumentsOpened.clear()
+        self.__lastDocumentsOpened.setItems(value)
+
+    def commandGoLastDocsOpenedAdd(self, value):
+        """Set last opened documents content"""
+        print("=====BC: commandGoLastDocsOpenedAdd", value)
+        self.__lastDocumentsOpened.append(value)
+
+    def commandGoLastDocsSavedSet(self, value=[]):
+        """Set last saved documents content"""
+        self.__lastDocumentsSaved.clear()
+        self.__lastDocumentsSaved.setItems(value)
+
+    def commandGoLastDocsSavedAdd(self, value):
+        """Set last saved documents content"""
+        self.__lastDocumentsSaved.append(value)
+
+    def commandGoLastDocsClear(self):
+        """Clear last doc content"""
+        self.__lastDocumentsOpened.clear()
+        self.__lastDocumentsSaved.clear()
+
+    def commandGoLastDocsClearUI(self):
+        """Clear history content"""
+        if self.__confirmAction:
+            if QMessageBox.question(QWidget(),
+                                          self.__bcName,
+                                          "Are you sure you want to clear last opened/saved list?"
+                                        ) == QMessageBox.No:
+                return False
+        self.commandGoLastDocsClear()
+        return True
+
+    def commandGoLastDocsReset(self):
+        """Reset last doc content from Krita last documents list"""
+        self.__lastDocumentsOpened.clear()
+        self.__lastDocumentsSaved.clear()
+
+        for fileName in Krita.instance().recentDocuments():
+            if not fileName is None and fileName != '':
+                self.__lastDocumentsOpened.append(fileName)
+
+    def commandGoLastDocsResetUI(self):
+        """Reset last doc content from Krita last documents list"""
+        if self.__confirmAction:
+            if QMessageBox.question(QWidget(),
+                                          self.__bcName,
+                                          "Are you sure you want to reset last opened/saved list?"
+                                        ) == QMessageBox.No:
+                return False
+        self.commandGoLastDocsReset()
+        return True
+
+    def commandSettingsHistoryMaxSize(self, value=25):
+        """Set maximum size history for history content"""
+        self.__history.setMaxItems(value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_HISTORY_MAXITEMS, self.__history.maxItems())
+
+    def commandSettingsHistoryKeepOnExit(self, value=True):
+        """When True, current history is saved when BuliCommander is exited"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT, value)
+
+    def commandSettingsLastDocsMaxSize(self, value=25):
+        """Set maximum size for last documents list"""
+        self.__lastDocumentsOpened.setMaxItems(value)
+        self.__lastDocumentsSaved.setMaxItems(value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_LASTDOC_MAXITEMS, self.__lastDocumentsOpened.maxItems())
+
+    def commandSettingsFileDefaultActionKra(self, value=BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE):
+        """Set default action for kra file"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_KRA, value)
+
+    def commandSettingsFileDefaultActionOther(self, value=BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE):
+        """Set default action for kra file"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER, value)
+
+    def commandSettingsFileUnit(self, value=BCSettingsValues.FILE_UNIT_KIB):
+        """Set used file unit"""
+        setBytesSizeToStrUnit(value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_UNIT, getBytesSizeToStrUnit())
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].updateFileSizeUnit()
+
+    def commandSettingsHomeDirMode(self, value=BCSettingsValues.HOME_DIR_SYS):
+        """Set mode for home directory"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_HOME_DIR_MODE, value)
+
+    def commandSettingsHomeDirUserDefined(self, value=''):
+        """Set user defined directory for home"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_HOME_DIR_UD, value)
 
     def commandSettingsSaveSessionOnExit(self, saveSession=None):
         """Define if current session properties have to be save or not"""
@@ -630,15 +1344,19 @@ class BCUIController(object):
 
     def commandSettingsResetSessionToDefault(self):
         """Reset session configuration to default"""
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(False)
+
         self.commandViewDisplaySecondaryPanel(True)
         self.commandViewHighlightPanel(0)
         self.commandViewMainSplitterPosition()
-        self.commandViewMode(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_MODE.id()))
         self.commandViewShowImageFileOnly(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY.id()))
         self.commandViewShowBackupFiles(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_BACKUP.id()))
         self.commandViewShowHiddenFiles(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_HIDDEN.id()))
 
         for panelId in self.__window.panels:
+            self.commandViewThumbnail(panelId, self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_THUMBNAIL.id()))
+
             self.commandPanelTabFilesLayout(panelId, self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_LAYOUT.id()))
             self.commandPanelTabFilesActive(panelId, BCMainViewTabFilesTabs.INFORMATIONS)
             self.commandPanelTabFilesPosition(panelId, [BCMainViewTabFilesTabs.INFORMATIONS, BCMainViewTabFilesTabs.DIRECTORIES_TREE])
@@ -648,13 +1366,73 @@ class BCUIController(object):
 
             self.commandPanelTabFilesNfoActive(panelId, BCMainViewTabFilesNfoTabs.GENERIC)
 
-            self.commandPanelTabFilesSplitterPosition(panelId)
+            self.commandPanelTabFilesSplitterFilesPosition(panelId)
+            self.commandPanelTabFilesSplitterPreviewPosition(panelId)
 
+            self.__window.panels[panelId].setAllowRefresh(True)
+
+            self.__window.panels[panelId].setColumnSort([1, True])
+            self.__window.panels[panelId].setColumnOrder([0,1,2,3,4,5,6,7,8])
+            self.__window.panels[panelId].setColumnSize([0,0,0,0,0,0,0,0,0])
+            self.__window.panels[panelId].setIconSize(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_ICONSIZE.id()))
+
+    def commandSettingsNavBarBtnHome(self, visible=True):
+        """Set button home visible/hidden"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HOME, visible)
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].showHome(visible)
+
+    def commandSettingsNavBarBtnViews(self, visible=True):
+        """Set button views visible/hidden"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_VIEWS, visible)
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].showSavedView(visible)
+
+    def commandSettingsNavBarBtnBookmarks(self, visible=True):
+        """Set button bookmarks visible/hidden"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BOOKMARKS, visible)
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].showBookmark(visible)
+
+    def commandSettingsNavBarBtnHistory(self, visible=True):
+        """Set button history visible/hidden"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HISTORY, visible)
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].showHistory(visible)
+
+    def commandSettingsNavBarBtnLastDocuments(self, visible=True):
+        """Set button history visible/hidden"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_LASTDOCUMENTS, visible)
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].showLastDocuments(visible)
+
+    def commandSettingsNavBarBtnGoBack(self, visible=True):
+        """Set button go back visible/hidden"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BACK, visible)
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].showGoBack(visible)
+
+    def commandSettingsNavBarBtnGoUp(self, visible=True):
+        """Set button go up visible/hidden"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_UP, visible)
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].showGoUp(visible)
+
+    def commandSettingsNavBarBtnQuickFilter(self, visible=True):
+        """Set button quick filter visible/hidden"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_QUICKFILTER, visible)
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].showQuickFilter(visible)
+
+
+
+    def commandSettingsOpen(self):
+        """Open dialog box settings"""
+        if BCSettingsDialogBox.open(f'{self.__bcName}::Settings', self):
+            self.saveSettings()
 
     def commandAboutBc(self):
         """Display 'About Buli Commander' dialog box"""
         BCAboutWindow(self.__bcName, self.__bcVersion)
-
-
 
     # endregion: define commands -----------------------------------------------

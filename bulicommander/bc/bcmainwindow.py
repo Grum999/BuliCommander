@@ -41,19 +41,23 @@ from PyQt5.QtWidgets import (
         QMainWindow
     )
 
-
 from .bcbookmark import BCBookmark
 from .bchistory import BCHistory
 from .bcpathbar import BCPathBar
 from .bcmainviewtab import BCMainViewTab
+from .bctheme import BCTheme
 
 from ..pktk.pktk import EInvalidType
 from ..pktk.pktk import EInvalidValue
-    
+
+
 
 # -----------------------------------------------------------------------------
 class BCMainWindow(QMainWindow):
     """Buli Commander main window"""
+
+    DARK_THEME = 'dark'
+    LIGHT_THEME = 'light'
 
     dialogShown = pyqtSignal()
 
@@ -76,6 +80,20 @@ class BCMainWindow(QMainWindow):
         self.__fontMono = QFont()
         self.__fontMono.setPointSize(9)
         self.__fontMono.setFamily('DejaVu Sans Mono')
+
+        self.__theme = BCTheme()
+
+        for panelId in self.panels:
+            self.panels[panelId].setAllowRefresh(False)
+
+
+    #def event(self, event):
+    #    if event.type() == QEvent.ApplicationPaletteChange:
+    #        # ...works...
+    #        # or not :)
+    #        # event if triggerred nbut icons are not reloaded
+    #        self.__loadResources()
+    #    return super(BCMainWindow, self).event(event)
 
     def initMainView(self):
         """Initialise main view content"""
@@ -108,62 +126,58 @@ class BCMainWindow(QMainWindow):
         #self.mainViewTab0.tabFilesLayoutChanged.connect(panel_TabFilesLayoutChanged)
         #self.mainViewTab1.tabFilesLayoutChanged.connect(panel_TabFilesLayoutChanged)
         #self.splitterMainView.splitterMoved.connect(splitterMainView_Moved)
+        self.actionFileCopyToOtherPanelNoConfirm = QShortcut(QKeySequence("Shift+F5"), self)
+        self.actionFileMoveToOtherPanelNoConfirm = QShortcut(QKeySequence("Shift+F6"), self)
+        self.actionFileDeleteNoConfirm = QShortcut(QKeySequence("Shift+F8"), self)
 
     def initMenu(self):
         """Initialise actions for menu defaukt menu"""
         # Menu FILE
-        self.actionFolderNew.triggered.connect(self.__actionNotYetImplemented)
-        self.actionFileOpen.triggered.connect(self.__actionNotYetImplemented)
-        self.actionFileOpenCloseBC.triggered.connect(self.__actionNotYetImplemented)
-        self.actionFileOpenAsNewDocument.triggered.connect(self.__actionNotYetImplemented)
-        self.actionFileOpenAsNewDocumentCloseBC.triggered.connect(self.__actionNotYetImplemented)
-        self.actionFileCopyToOtherPanel.triggered.connect(self.__actionNotYetImplemented)
-        self.actionFileMoveToOtherPanel.triggered.connect(self.__actionNotYetImplemented)
-        self.actionFileDelete.triggered.connect(self.__actionNotYetImplemented)
+        self.actionFolderNew.triggered.connect(self.__menuFileCreateDirectory)
+        self.actionFileOpen.triggered.connect(self.__menuFileOpen)
+        self.actionFileOpenCloseBC.triggered.connect(self.__menuFileOpenCloseBC)
+        self.actionFileOpenAsNewDocument.triggered.connect(self.__menuFileOpenAsNewDocument)
+        self.actionFileOpenAsNewDocumentCloseBC.triggered.connect(self.__menuFileOpenAsNewDocumentCloseBC)
+        self.actionFileCopyToOtherPanel.triggered.connect(self.__menuFileCopyConfirm)
+        self.actionFileMoveToOtherPanel.triggered.connect(self.__menuFileMoveConfirm)
+        self.actionFileDelete.triggered.connect(self.__menuFileDeleteConfirm)
         self.actionFileRename.triggered.connect(self.__actionNotYetImplemented)
         self.actionQuit.triggered.connect(self.__uiController.commandQuit)
 
         # Menu EDIT
-        self.actionSelectAll.triggered.connect(self.__actionNotYetImplemented)
-        self.actionSelectNone.triggered.connect(self.__actionNotYetImplemented)
-        self.actionSelectInvert.triggered.connect(self.__actionNotYetImplemented)
-        self.actionSelectRegEx.triggered.connect(self.__actionNotYetImplemented)
+        self.actionSelectAll.triggered.connect(self.__menuSelectAll_clicked)
+        self.actionSelectNone.triggered.connect(self.__menuSelectNone_clicked)
+        self.actionSelectInvert.triggered.connect(self.__menuSelectInvert_clicked)
+        #self.actionSelectRegEx.triggered.connect(self.__actionNotYetImplemented)
 
         # Menu GO
         self.menuGoHistory.aboutToShow.connect(self.__menuHistoryShow)
-        self.menuGoHistory.triggered.connect(self.__menuHistory_Clicked)
         self.menuGoBookmark.aboutToShow.connect(self.__menuBookmarkShow)
-        self.menuGoBookmark.triggered.connect(self.__menuBookmark_Clicked)
+        self.menuGoSavedViews.aboutToShow.connect(self.__menuSavedViewsShow)
+        self.menuGoLastDocuments.aboutToShow.connect(self.__menuLastDocumentsShow)
 
+        self.actionGoHome.triggered.connect(self.__menuGoHome_clicked)
         self.actionGoUp.triggered.connect(self.__menuGoUp_clicked)
         self.actionGoBack.triggered.connect(self.__menuGoBack_clicked)
-        self.actionGoHistory_clearHistory.triggered.connect(self.__uiController.commandGoHistoryClear)
-        self.actionGoBookmark_clearBookmark.triggered.connect(self.__uiController.commandGoBookmarkClearUI)
-        self.actionGoBookmark_addBookmark.triggered.connect(self.__menuBookmarkAppend_clicked)
-        self.actionGoBookmark_removeBookmark.triggered.connect(self.__menuBookmarkRemove_clicked)
-        self.actionGoBookmark_renameBookmark.triggered.connect(self.__menuBookmarkRename_clicked)
 
         # Menu VIEW
-        self.actionViewDetailled.triggered.connect(self.__uiController.commandViewModeDetailled)
-        self.actionViewSmallIcon.triggered.connect(self.__uiController.commandViewModeSmallIcon)
-        self.actionViewMediumIcon.triggered.connect(self.__uiController.commandViewModeMediumIcon)
-        self.actionViewLargeIcon.triggered.connect(self.__uiController.commandViewModeLargeIcon)
-        self.actionViewShowImageFileOnly.triggered.connect(self.__uiController.commandViewShowImageFileOnly)
-        self.actionViewShowBackupFiles.triggered.connect(self.__uiController.commandViewShowBackupFiles)
-        self.actionViewShowHiddenFiles.triggered.connect(self.__uiController.commandViewShowHiddenFiles)
+        self.actionViewThumbnail.triggered.connect(self.__menuViewThumbnail_clicked)
+        self.actionViewShowImageFileOnly.triggered.connect(self.__menuViewShowImageFileOnly_clicked)
+        self.actionViewShowBackupFiles.triggered.connect(self.__menuViewShowBackupFiles_clicked)
+        self.actionViewShowHiddenFiles.triggered.connect(self.__menuViewShowHiddenFiles_clicked)
         self.actionViewDisplaySecondaryPanel.triggered.connect(self.__uiController.commandViewDisplaySecondaryPanel)
         self.actionViewSwapPanels.triggered.connect(self.__uiController.commandViewSwapPanels)
 
         # Menu TOOLS
         self.actionToolsSearch.triggered.connect(self.__actionNotYetImplemented)
         self.actionToolsStatistics.triggered.connect(self.__actionNotYetImplemented)
-        self.actionToolsSynchronizePanels.triggered.connect(self.__actionNotYetImplemented)
-        self.actionConsole.triggered.connect(self.__actionNotYetImplemented)
+        #self.actionToolsSynchronizePanels.triggered.connect(self.__actionNotYetImplemented)
+        #self.actionConsole.triggered.connect(self.__actionNotYetImplemented)
 
-        self.actionBCSManageScripts.triggered.connect(self.__actionNotYetImplemented)
+        #self.actionBCSManageScripts.triggered.connect(self.__actionNotYetImplemented)
 
         # Menu SETTINGS
-        self.actionSettingsPreferences.triggered.connect(self.__actionNotYetImplemented)
+        self.actionSettingsPreferences.triggered.connect(self.__uiController.commandSettingsOpen)
         self.actionSettingsSaveSessionOnExit.triggered.connect(self.__uiController.commandSettingsSaveSessionOnExit)
         self.actionSettingsResetSessionToDefault.triggered.connect(self.__uiController.commandSettingsResetSessionToDefault)
 
@@ -171,111 +185,100 @@ class BCMainWindow(QMainWindow):
         self.actionHelpAboutBC.triggered.connect(self.__uiController.commandAboutBc)
 
 
+        self.actionFileCopyToOtherPanelNoConfirm.activated.connect(self.__menuFileCopyNoConfirm)
+        self.actionFileMoveToOtherPanelNoConfirm.activated.connect(self.__menuFileMoveNoConfirm)
+        self.actionFileDeleteNoConfirm.activated.connect(self.__menuFileDeleteNoConfirm)
+
+
     def __menuHistoryShow(self):
         """Build menu history"""
+        self.__uiController.panel().showMenuHistory(self.menuGoHistory)
 
-        self.menuGoHistory.clear()
-        self.menuGoHistory.addAction(self.actionGoHistory_clearHistory)
-        if not self.__uiController.history() is None and self.__uiController.history().length() > 0:
-            self.actionGoHistory_clearHistory.setEnabled(True)
-            self.actionGoHistory_clearHistory.setText(i18n(f'Clear history ({self.__uiController.history().length()})'))
-            self.menuGoHistory.addSeparator()
-
-            for path in reversed(self.__uiController.history().list()):
-                action = QAction(path.replace('&', '&&'), self)
-                action.setFont(self.__fontMono)
-                action.setProperty('path', path)
-
-                self.menuGoHistory.addAction(action)
-        else:
-            self.actionGoHistory_clearHistory.setEnabled(False)
-            self.actionGoHistory_clearHistory.setText(i18n('Clear history'))
+    def __menuLastDocumentsShow(self):
+        """Build menu last documents"""
+        self.__uiController.panel().showMenuLastDocuments(self.menuGoLastDocuments)
 
     def __menuBookmarkShow(self):
         """Build menu history"""
-        self.menuGoBookmark.clear()
-        self.menuGoBookmark.addAction(self.actionGoBookmark_clearBookmark)
-        self.menuGoBookmark.addAction(self.actionGoBookmark_addBookmark)
-        self.menuGoBookmark.addAction(self.actionGoBookmark_removeBookmark)
-        self.menuGoBookmark.addAction(self.actionGoBookmark_renameBookmark)
+        self.__uiController.panel().showMenuBookmarks(self.menuGoBookmark)
 
-        if not self.__uiController.bookmark() is None and self.__uiController.bookmark().length() > 0:
-            self.actionGoBookmark_clearBookmark.setEnabled(True)
-            self.actionGoBookmark_clearBookmark.setText(i18n('Clear bookmark')+f' ({self.__uiController.bookmark().length()})')
+    def __menuSavedViewsShow(self):
+        """Build menu history"""
+        self.__uiController.panel().showMenuSavedViews(self.menuGoSavedViews)
 
-            self.menuGoBookmark.addSeparator()
-
-            currentPath = self.panels[self.__highlightedPanel].currentPath()
-            isInBookmark = False
-
-            for bookmark in self.__uiController.bookmark().list():
-                action = QAction(bookmark[BCBookmark.NAME].replace('&', '&&'), self)
-                action.setFont(self.__fontMono)
-                action.setProperty('path', bookmark[BCBookmark.VALUE])
-                action.setCheckable(True)
-                action.setStatusTip(bookmark[BCBookmark.VALUE])
-
-                if currentPath == bookmark[BCBookmark.VALUE]:
-                    action.setChecked(True)
-                    isInBookmark = True
-                else:
-                    action.setChecked(False)
-
-                self.menuGoBookmark.addAction(action)
-
-            if isInBookmark:
-                self.actionGoBookmark_addBookmark.setEnabled(False)
-                self.actionGoBookmark_removeBookmark.setEnabled(True)
-                self.actionGoBookmark_renameBookmark.setEnabled(True)
-            else:
-                self.actionGoBookmark_addBookmark.setEnabled(True)
-                self.actionGoBookmark_removeBookmark.setEnabled(False)
-                self.actionGoBookmark_renameBookmark.setEnabled(False)
-        else:
-            self.actionGoBookmark_clearBookmark.setEnabled(False)
-            self.actionGoBookmark_clearBookmark.setText(i18n('Clear bookmark'))
-            self.actionGoBookmark_addBookmark.setEnabled(True)
-            self.actionGoBookmark_removeBookmark.setEnabled(False)
-            self.actionGoBookmark_renameBookmark.setEnabled(False)
 
 
     # endregion: initialisation methods ----------------------------------------
 
 
     # region: define actions method --------------------------------------------
-    def __actionNotYetImplemented(self):
+    def __actionNotYetImplemented(self, v=None):
         """"Method called when an action not yet implemented is triggered"""
         QMessageBox.warning(
                 QWidget(),
                 self.__uiController.name(),
-                i18n("Sorry! Action has not yet been implemented")
+                i18n(f"Sorry! Action has not yet been implemented ({v})")
             )
 
-    def __menuHistory_Clicked(self, action):
-        """Go to defined directory for current highlighted panel"""
-        if not action.property('path') is None:
-            # change directory
-            self.__uiController.commandPanelPath(self.__highlightedPanel, action.property('path'))
+    def __menuFileOpen(self, action):
+        """Open selected file(s)"""
+        self.__uiController.commandFileOpen()
 
-    def __menuBookmark_Clicked(self, action):
-        """Go to defined directory for current highlighted panel"""
-        if not action.property('path') is None:
-            # change directory
-            self.__uiController.commandPanelPath(self.__highlightedPanel, action.property('path'))
+    def __menuFileCreateDirectory(self, action):
+        """Create a new directory"""
+        self.__uiController.commandFileCreateDir()
 
-    def __menuBookmarkAppend_clicked(self, action):
-        """Append current path to bookmark"""
-        self.__uiController.commandGoBookmarkAppendUI(self.panels[self.__highlightedPanel].currentPath())
+    def __menuFileOpenCloseBC(self, action):
+        """Open selected file(s) and close BC"""
+        self.__uiController.commandFileOpenCloseBC()
 
-    def __menuBookmarkRemove_clicked(self, action):
-        """Remove bookmark"""
-        name = self.__uiController.bookmark().nameFromValue(self.panels[self.__highlightedPanel].currentPath())
-        self.__uiController.commandGoBookmarkRemoveUI(name)
+    def __menuFileOpenAsNewDocument(self, action):
+        """Open selected file(s) as new document"""
+        self.__uiController.commandFileOpenAsNew()
 
-    def __menuBookmarkRename_clicked(self, action):
-        """Rename bookmark"""
-        name = self.__uiController.bookmark().nameFromValue(self.panels[self.__highlightedPanel].currentPath())
-        self.__uiController.commandGoBookmarkRenameUI(name)
+    def __menuFileOpenAsNewDocumentCloseBC(self, action):
+        """Open selected file(s) as new document and close"""
+        self.__uiController.commandFileOpenAsNewCloseBC()
+
+    def __menuFileDeleteConfirm(self, action):
+        """Delete file after confirmation"""
+        self.__uiController.commandFileDelete(True)
+
+    def __menuFileDeleteNoConfirm(self):
+        """Delete file without confirmation"""
+        self.__uiController.commandFileDelete(False)
+
+    def __menuFileCopyConfirm(self, action):
+        """Copy file after confirmation"""
+        self.__uiController.commandFileCopy(True)
+
+    def __menuFileCopyNoConfirm(self):
+        """Copy file without confirmation"""
+        self.__uiController.commandFileCopy(False)
+
+    def __menuFileMoveConfirm(self, action):
+        """Move file after confirmation"""
+        self.__uiController.commandFileMove(True)
+
+    def __menuFileMoveNoConfirm(self):
+        """Move file without confirmation"""
+        self.__uiController.commandFileMove(False)
+
+    def __menuSelectAll_clicked(self, action):
+        """Select all files"""
+        self.__uiController.commandPanelSelectAll(self.__highlightedPanel)
+
+    def __menuSelectNone_clicked(self, action):
+        """Select no files"""
+        self.__uiController.commandPanelSelectNone(self.__highlightedPanel)
+
+    def __menuSelectInvert_clicked(self, action):
+        """Select inverted"""
+        self.__uiController.commandPanelSelectInvert(self.__highlightedPanel)
+
+    def __menuGoHome_clicked(self, action):
+        """Go to home directory"""
+        self.__uiController.commandGoHome(self.__highlightedPanel)
 
     def __menuGoUp_clicked(self, action):
         """Go to parent directory"""
@@ -284,6 +287,22 @@ class BCMainWindow(QMainWindow):
     def __menuGoBack_clicked(self, action):
         """Go to previous directory"""
         self.__uiController.commandGoBack(self.__highlightedPanel)
+
+    def __menuViewThumbnail_clicked(self, action):
+        """Set view mode as icon"""
+        self.__uiController.commandViewThumbnail(self.__highlightedPanel, action)
+
+    def __menuViewShowImageFileOnly_clicked(self, action):
+        """Display readable file only"""
+        self.__uiController.commandViewShowImageFileOnly()
+
+    def __menuViewShowBackupFiles_clicked(self, action):
+        """Display backup files"""
+        self.__uiController.commandViewShowBackupFiles()
+
+    def __menuViewShowHiddenFiles_clicked(self, action):
+        """Display hidden files"""
+        self.__uiController.commandViewShowHiddenFiles()
 
     # endregion: define actions method -----------------------------------------
 
@@ -309,12 +328,16 @@ class BCMainWindow(QMainWindow):
                 dlgMain.dialogShown.connect(my_callback_function)
         """
         super(BCMainWindow, self).showEvent(event)
+
+        for panelId in self.panels:
+            self.panels[panelId].setAllowRefresh(True)
+
         self.dialogShown.emit()
 
     def closeEvent(self, event):
         """Event executed when window is about to be closed"""
         #event.ignore()
-        self.__uiController.saveSettings()
+        self.__uiController.close()
         event.accept()
 
     def eventFilter(self, object, event):
@@ -363,6 +386,12 @@ class BCMainWindow(QMainWindow):
             raise EInvalidValue('Given `highlightedPanel` must be 0 or 1')
 
         self.__highlightedPanel = highlightedPanel
+        self.__uiController.updateMenuForPanel()
+
+    def theme(self):
+        """Return current theme DARK/LIGHT"""
+        return self.__theme
+
 
     # endregion: methods -------------------------------------------------------
 

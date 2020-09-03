@@ -32,6 +32,7 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal,
         QObject
     )
+from ..pktk.pktk import EInvalidType
 
 
 class BCBookmarkEdit(QDialog):
@@ -42,7 +43,7 @@ class BCBookmarkEdit(QDialog):
     UPDATE = 2
     RENAME = 3
 
-    def __init__(self, mode, bookmark, name='', value='', valueName='path', parent=None):
+    def __init__(self, mode, bookmark, key='', value='', valueName='path', refList=None, parent=None):
         super(BCBookmarkEdit, self).__init__(parent)
 
         if not mode in [BCBookmarkEdit.APPEND,
@@ -53,14 +54,25 @@ class BCBookmarkEdit(QDialog):
 
         if not isinstance(bookmark, BCBookmark):
             raise EInvalidType('Given `bookmark` must be a <BCBookmark>')
-        if not isinstance(name, str):
-            raise EInvalidType('Given `name` must be a <str>')
+        if not isinstance(key, str):
+            raise EInvalidType('Given `key` must be a <str>')
         if not isinstance(value, str):
             raise EInvalidType('Given `value` must be a <str>')
+
+        key = key.lstrip('@').lower()
+        name = bookmark.nameFromId(key)
 
         self.__bookmark = bookmark
         self.__mode = mode
         self.__valueName = valueName
+
+        self.__refList = []
+
+        if isinstance(refList, list):
+            self.__refList = [v.lstrip('@').lower() for v in refList]
+        elif isinstance(refList, dict):
+            # in this case, key = id
+            self.__refList = [key.lstrip('@').lower() for key in refList]
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcbookmark_edit.ui')
         PyQt5.uic.loadUi(uiFileName, self)
@@ -86,31 +98,37 @@ class BCBookmarkEdit(QDialog):
         self.ledName.textEdited.connect(self.__checkButton)
         self.ledValue.textEdited.connect(self.__checkButton)
         self.lblMsg.setText('')
+        self.lblMsg.setVisible(False)
 
     def __checkButton(self):
         enabled = True
         if self.ledName.isEnabled():
-            if self.ledName.text() == '':
+            bookmarkName=self.ledName.text().strip()
+
+            if bookmarkName == '':
                 enabled = False
                 self.lblMsg.setText(i18n('A bookmark name is mandatory'))
-            elif not self.__bookmark.valueFromName(self.ledName.text()) is None:
+            elif not self.__bookmark.valueFromName(bookmarkName) is None or bookmarkName.lower() in self.__refList:
                 enabled = False
-                self.lblMsg.setText(i18n('A bookmark already exists for given name'))
+                self.lblMsg.setText(i18n('Given name is already used'))
         elif self.ledValue.isEnabled():
-            if self.ledValue.text() == '':
+            if self.ledValue.text().strip() == '':
                 enabled = False
                 self.lblMsg.setText(i18n(f'A bookmark {self.__valueName} is mandatory'))
-            elif not self.__bookmark.nameFromValue(self.ledValue.text()) is None:
+            elif not self.__bookmark.nameFromValue(self.ledValue.text().strip()) is None:
                 enabled = False
                 self.lblMsg.setText(i18n(f'A bookmark already exists for given {self.__valueName}'))
 
         if enabled:
             self.lblMsg.setText('')
+            self.lblMsg.setVisible(False)
+        else:
+            self.lblMsg.setVisible(True)
 
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(enabled)
 
     @staticmethod
-    def append(bookmark, value):
+    def append(bookmark, value, refList=None):
         """Open editor to append a bookmark
 
         If value already exist, do nothing
@@ -126,7 +144,7 @@ class BCBookmarkEdit(QDialog):
         if not bookmark.nameFromValue(value) is None:
             return (False, None, None)
 
-        dlg = BCBookmarkEdit(BCBookmarkEdit.APPEND, bookmark, value=value)
+        dlg = BCBookmarkEdit(BCBookmarkEdit.APPEND, bookmark, value=value, refList=refList)
         returned = dlg.exec_()
 
         if returned and bookmark.append(dlg.ledName.text(), dlg.ledValue.text()):
@@ -152,7 +170,7 @@ class BCBookmarkEdit(QDialog):
         if value is None:
             return (False, None, None)
 
-        dlg = BCBookmarkEdit(BCBookmarkEdit.REMOVE, bookmark, name=name, value=value)
+        dlg = BCBookmarkEdit(BCBookmarkEdit.REMOVE, bookmark, key=name, value=value)
         returned = dlg.exec_()
 
         if returned and bookmark.remove(dlg.ledName.text()):
@@ -183,16 +201,16 @@ class BCBookmarkEdit(QDialog):
         if not newValue is None:
             value = newValue
 
-        dlg = BCBookmarkEdit(BCBookmarkEdit.UPDATE, bookmark, name=name, value=value)
+        dlg = BCBookmarkEdit(BCBookmarkEdit.UPDATE, bookmark, key=name, value=value)
         returned = dlg.exec_()
 
         if returned and bookmark.update(dlg.ledName.text(), dlg.ledValue.text()):
-            return (True, dlg.ledName.text(), dlg.ledValue.text())
+            return (True, dlg.ledName.text().strip(), dlg.ledValue.text().strip())
         else:
             return (False, None, None)
 
     @staticmethod
-    def rename(bookmark, name):
+    def rename(bookmark, name, refList=None):
         """Open editor to rename a bookmark
 
         If name doesn't exist, do nothing
@@ -209,7 +227,7 @@ class BCBookmarkEdit(QDialog):
         if value is None:
             return (False, None, None)
 
-        dlg = BCBookmarkEdit(BCBookmarkEdit.RENAME, bookmark, name=name, value=value)
+        dlg = BCBookmarkEdit(BCBookmarkEdit.RENAME, bookmark, key=name, value=value, refList=refList)
         returned = dlg.exec_()
 
         if returned and bookmark.rename(name, dlg.ledName.text()):
@@ -238,6 +256,12 @@ class BCBookmark(QObject):
         self.__bookmark={}
         self.set(items)
 
+    def __toKey(self, name):
+        """Convert given name to a key"""
+        if isinstance(name, str):
+            return name.lstrip('@').lower()
+        return None
+
     def set(self, values):
         """Set bookmark
 
@@ -247,13 +271,13 @@ class BCBookmark(QObject):
             raise EInvalidType("Given `values` must be a list")
 
         if len(values) > 0:
+            print(values)
             for value in values:
                 if not isinstance(value, list) or len(value)!=2:
                     raise EInvalidType("Given `value` must be a list[name, path]")
                 self.append(value[BCBookmark.NAME], value[BCBookmark.VALUE])
 
             self.changed.emit()
-
 
     def clear(self):
         """Clear bookmark content"""
@@ -268,9 +292,24 @@ class BCBookmark(QObject):
         if value is None:
             return None
 
-        for name in self.__bookmark:
-            if self.__bookmark[name] == value:
-                return name
+        for key in self.__bookmark:
+            if self.__bookmark[key]['value'] == value:
+                return self.__bookmark[key]['name']
+        return None
+
+    def nameFromId(self, id):
+        """return bookmark name for given id
+
+        Return None is not found
+        """
+        if id is None:
+            return None
+
+        key=self.__toKey(id)
+
+        if key in self.__bookmark:
+            return self.__bookmark[key]['name']
+
         return None
 
     def valueFromName(self, name):
@@ -281,12 +320,14 @@ class BCBookmark(QObject):
         if name is None:
             return None
 
-        if name in self.__bookmark:
-            return self.__bookmark[name]
+        key=self.__toKey(name)
+
+        if key in self.__bookmark:
+            return self.__bookmark[key]['value']
 
         return None
 
-    def append(self, name, value):
+    def append(self, name, value, refList=None):
         """Add a value to bookmark
 
         Return True if added, otherwise False
@@ -299,15 +340,22 @@ class BCBookmark(QObject):
         if not isinstance(value, str):
             raise EInvalidType("Given `value` must be a string")
 
-        if not self.valueFromName(name) is None:
-            # bookmark already exist for given name
-            return False
-
         if not self.nameFromValue(value) is None:
             # bookmark already exist for given value
             return False
 
-        self.__bookmark[name]=value
+        additionalList=[]
+        if isinstance(refList, list) or isinstance(refList, dict):
+            additionalList = [self.__toKey(name) for name in refList]
+
+        key=self.__toKey(name)
+
+        if key in self.__bookmark or key in additionalList:
+            # bookmark already exist for given name
+            return False
+
+        self.__bookmark[key]={'name':  name,
+                              'value': value}
         self.changed.emit()
 
         return True
@@ -321,16 +369,18 @@ class BCBookmark(QObject):
         if not isinstance(name, str):
             raise EInvalidType("Given `name` must be a string")
 
-        if self.valueFromName(name) is None:
+        key=self.__toKey(name)
+
+        if not key in self.__bookmark:
             # bookmark doesn't exist for given name
             return False
 
-        self.__bookmark.pop(name)
+        self.__bookmark.pop(key)
         self.changed.emit()
 
         return True
 
-    def rename(self, name, newName):
+    def rename(self, name, newName, refList=None):
         """Rename bookmark for given name to newName
 
         if name not found, does nothing
@@ -344,11 +394,20 @@ class BCBookmark(QObject):
         if not isinstance(newName, str):
             raise EInvalidType("Given `newName` must be a string")
 
-        if self.valueFromName(name) is None or not self.valueFromName(newName) is None :
-            # bookmark doesn't exist for given name
+
+        additionalList=[]
+        if isinstance(refList, list) or isinstance(refList, dict):
+            additionalList = [self.__toKey(name) for name in refList]
+
+        key=self.__toKey(name)
+        newKey=self.__toKey(newName)
+
+        if not key in self.__bookmark or newName in self.__bookmark or newName in additionalList:
+            # bookmark doesn't exist for given name or alreayd exist for new name
             return False
 
-        self.__bookmark[newName] = self.__bookmark.pop(name)
+        self.__bookmark[newKey] = self.__bookmark.pop(key)
+        self.__bookmark[newKey]['name'] = newName
         self.changed.emit()
 
         return True
@@ -366,10 +425,12 @@ class BCBookmark(QObject):
         if not isinstance(value, str):
             raise EInvalidType("Given `value` must be a string")
 
-        if self.valueFromName(name) is None or not self.nameFromValue(value) is None:
+        key=self.__toKey(name)
+
+        if not key in self.__bookmark or not self.nameFromValue(value) is None:
             return False
 
-        self.__bookmark[name]=value
+        self.__bookmark[key]['value']=value
         self.changed.emit()
 
         return True
@@ -384,22 +445,22 @@ class BCBookmark(QObject):
         list items are list [name, value]
         """
         returned = []
-        for name in sorted(self.__bookmark):
-            returned.append([name, self.__bookmark[name]])
+        for key in sorted(self.__bookmark):
+            returned.append([self.__bookmark[key]['name'], self.__bookmark[key]['value']])
 
         return returned
 
-    def uiAppend(self, value):
+    def uiAppend(self, value, refList=None):
         """Open editor to add a bookmark"""
-        return BCBookmarkEdit.append(self, value)
+        return BCBookmarkEdit.append(self, value, refList)
 
     def uiRemove(self, name):
         """Open editor to remove a bookmark"""
         return BCBookmarkEdit.remove(self, name)
 
-    def uiRename(self, name):
+    def uiRename(self, name, refList=None):
         """Open editor to rename a bookmark"""
-        return BCBookmarkEdit.rename(self, name)
+        return BCBookmarkEdit.rename(self, name, refList)
 
     def uiUpdate(self, name, value):
         """Open editor to update a bookmark"""

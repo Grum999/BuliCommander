@@ -30,7 +30,8 @@ from krita import (
         Extension,
         InfoObject,
         Node,
-        Selection
+        Selection,
+        Krita
     )
 
 from PyQt5.Qt import *
@@ -68,6 +69,7 @@ from PyQt5.QtWidgets import (
     )
 
 
+
 if __name__ != '__main__':
      # script is executed from Krita, loaded as a module
     __PLUGIN_EXEC_FROM__ = 'KRITA'
@@ -79,6 +81,7 @@ if __name__ != '__main__':
             PkTk
         )
     from .bc.bcuicontroller import BCUIController
+    from .bc.bcutils import checkKritaVersion
 else:
     # Execution from 'Scripter' plugin?
     __PLUGIN_EXEC_FROM__ = 'SCRIPTER_PLUGIN'
@@ -89,8 +92,8 @@ else:
     print(f'Execution from {__PLUGIN_EXEC_FROM__}')
 
     for module in list(sys.modules.keys()):
-        if not re.match(r'^bulicommander\.', module) is None:
-            print('Reload module: ', module, sys.modules[module])
+        if not re.search(r'^bulicommander\.', module) is None:
+            print('Reload module {0}: {1}', module, sys.modules[module])
             reload(sys.modules[module])
 
     from bulicommander.pktk.pktk import (
@@ -100,6 +103,8 @@ else:
             PkTk
         )
     from bulicommander.bc.bcuicontroller import BCUIController
+    from bulicommander.bc.bcutils import checkKritaVersion
+
     print("======================================")
 
 
@@ -107,6 +112,7 @@ EXTENSION_ID = 'pykrita_bulicommander'
 PLUGIN_VERSION = '0.1.0a'
 PLUGIN_MENU_ENTRY = 'Buli Commander'
 
+REQUIRED_KRITA_VERSION = (4, 3, 0)
 
 
 class BuliCommander(Extension):
@@ -118,11 +124,62 @@ class BuliCommander(Extension):
         # This is necessary to create the underlying C++ object
         super().__init__(parent)
         self.parent = parent
+        self.__uiController = None
+        self.__isKritaVersionOk = checkKritaVersion(*REQUIRED_KRITA_VERSION)
+
+
+    def __initUiController(self):
+        """Initialise UI controller"""
+        @pyqtSlot('QString')
+        def opened(document):
+            # a document has been created: if filename is set, document has been opened
+            if document.fileName() != '':
+                self.__uiController.commandGoLastDocsOpenedAdd(document.fileName())
+        @pyqtSlot('QString')
+        def saved(fileName):
+            # a document has been saved
+            if fileName != '':
+                self.__uiController.commandGoLastDocsSavedAdd(fileName)
+        @pyqtSlot()
+        def closing():
+            # Krita is closing, save BuliCommander configuration
+            self.__uiController.saveSettings()
+
+        try:
+            Krita.instance().notifier().imageCreated.disconnect()
+        except Exception as e:
+            pass
+
+        try:
+            Krita.instance().notifier().imageSaved.disconnect()
+        except Exception as e:
+            pass
+
+        try:
+            Krita.instance().notifier().applicationClosing.disconnect()
+        except Exception as e:
+            pass
+
+        Krita.instance().notifier().imageCreated.connect(opened)
+        Krita.instance().notifier().imageSaved.connect(saved)
+        Krita.instance().notifier().applicationClosing.connect(closing)
+
+        self.__uiController = BCUIController(PLUGIN_MENU_ENTRY, PLUGIN_VERSION)
 
 
     def setup(self):
         """Is executed at Krita's startup"""
-        pass
+        @pyqtSlot()
+        def windowCreated():
+            # the best place to initialise controller (just after main window is created)
+            self.__initUiController()
+
+        if not self.__isKritaVersionOk:
+            return
+
+        if checkKritaVersion(5,0,0):
+            # windowCreated signal has been implemented with krita 5.0.0
+            Krita.instance().notifier().windowCreated.connect(windowCreated)
 
 
     def createActions(self, window):
@@ -130,16 +187,28 @@ class BuliCommander(Extension):
         action.triggered.connect(self.start)
 
 
-
     def start(self):
         """Execute Buli Commander controller"""
         # ----------------------------------------------------------------------
         # Create dialog box
-        uiController = BCUIController(PLUGIN_MENU_ENTRY, PLUGIN_VERSION)
-        uiController.start()
+        if not self.__isKritaVersionOk:
+            QMessageBox.information(QWidget(),
+                                      PLUGIN_MENU_ENTRY,
+                                      "At least, Krita version {0} is required to use plugin...".format('.'.join([str(v) for v in REQUIRED_KRITA_VERSION]))
+                                    )
+            return
 
+        if self.__uiController is None:
+            # with krita 5.0.0, might be created at krita startup
+            self.__initUiController()
+        self.__uiController.start()
 
 
 if __PLUGIN_EXEC_FROM__ == 'SCRIPTER_PLUGIN':
-    BuliCommander(Krita.instance()).start()
+    sys.stdout = sys.__stdout__
 
+    # Disconnect signals if any before assigning new signals
+
+    bc=BuliCommander(Krita.instance())
+    bc.setup()
+    bc.start()

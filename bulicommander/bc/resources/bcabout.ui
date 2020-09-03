@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>934</width>
-    <height>854</height>
+    <height>806</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -105,6 +105,12 @@
        <property name="currentIndex">
         <number>0</number>
        </property>
+       <property name="documentMode">
+        <bool>false</bool>
+       </property>
+       <property name="tabBarAutoHide">
+        <bool>true</bool>
+       </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
          <string>Buli!</string>
@@ -141,32 +147,6 @@
            </property>
            <property name="margin">
             <number>0</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QWidget" name="tab_2">
-        <attribute name="title">
-         <string>Third-party libraries</string>
-        </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <item>
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
-&lt;h2&gt;Third-party libraries used by Buli Commander&lt;/h2&gt;
-&lt;ul&gt;
-    &lt;li&gt;&lt;b&gt;&lt;a href=&quot;https://github.com/Winand/breadcrumbsaddressbar&quot;&gt;breadcrumbsaddressbar&lt;/a&gt;&lt;/b&gt;: MIT&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-           </property>
-           <property name="openExternalLinks">
-            <bool>true</bool>
            </property>
           </widget>
          </item>

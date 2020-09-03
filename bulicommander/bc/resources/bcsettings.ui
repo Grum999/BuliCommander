@@ -1,0 +1,1092 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>980</width>
+    <height>837</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>980</width>
+    <height>655</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QListWidget" name="lvCategory">
+       <property name="maximumSize">
+        <size>
+         <width>225</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAlwaysOff</enum>
+       </property>
+       <property name="selectionBehavior">
+        <enum>QAbstractItemView::SelectRows</enum>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>64</width>
+         <height>64</height>
+        </size>
+       </property>
+       <property name="verticalScrollMode">
+        <enum>QAbstractItemView::ScrollPerPixel</enum>
+       </property>
+       <property name="movement">
+        <enum>QListView::Static</enum>
+       </property>
+       <property name="isWrapping" stdset="0">
+        <bool>true</bool>
+       </property>
+       <property name="spacing">
+        <number>12</number>
+       </property>
+       <property name="gridSize">
+        <size>
+         <width>225</width>
+         <height>64</height>
+        </size>
+       </property>
+       <property name="viewMode">
+        <enum>QListView::ListMode</enum>
+       </property>
+       <property name="uniformItemSizes">
+        <bool>true</bool>
+       </property>
+       <property name="selectionRectVisible">
+        <bool>false</bool>
+       </property>
+       <property name="currentRow">
+        <number>-1</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QStackedWidget" name="swCatPages">
+       <property name="currentIndex">
+        <number>1</number>
+       </property>
+       <widget class="QWidget" name="pageCatGeneral">
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QScrollArea" name="scrollArea_2">
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOff</enum>
+           </property>
+           <property name="widgetResizable">
+            <bool>true</bool>
+           </property>
+           <widget class="QWidget" name="scrollAreaWidgetContents_2">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>723</width>
+              <height>879</height>
+             </rect>
+            </property>
+            <layout class="QFormLayout" name="formLayout_2">
+             <item row="2" column="0" colspan="2">
+              <widget class="QCheckBox" name="cbCGLaunchOpenBC">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>If checked, open automatically Buli Commander interface when Krita is started</string>
+               </property>
+               <property name="statusTip">
+                <string>If checked, open automatically Buli Commander interface when Krita is started</string>
+               </property>
+               <property name="text">
+                <string>Open BuliCommander at Krita startup</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0" colspan="2">
+              <widget class="QLabel" name="label_7">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: palette(light);padding: 6;</string>
+               </property>
+               <property name="text">
+                <string>Files</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="label_8">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>Size unit</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QRadioButton" name="rbCGFileUnitBinary">
+               <property name="toolTip">
+                <string>Display files size with binary unit</string>
+               </property>
+               <property name="statusTip">
+                <string>Display files size with binary unit</string>
+               </property>
+               <property name="text">
+                <string>Binary (&amp;1.00 KiB = 1024 bytes)</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="1">
+              <widget class="QRadioButton" name="rbCGFileUnitDecimal">
+               <property name="toolTip">
+                <string>Display files size with decimal unit</string>
+               </property>
+               <property name="statusTip">
+                <string>Display files size with decimal unit</string>
+               </property>
+               <property name="text">
+                <string>Decimal (1.&amp;00 KB = 1000 bytes)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0" colspan="2">
+              <widget class="QCheckBox" name="cbCGLaunchReplaceOpenDb">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>If checked, Krita's Open dialog box is replaced by BuliCommanded</string>
+               </property>
+               <property name="statusTip">
+                <string>If checked, Krita's Open dialog box is replaced by BuliCommanded</string>
+               </property>
+               <property name="text">
+                <string>Overrides Krita 'Open' function</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0" colspan="2">
+              <widget class="QLabel" name="label_14">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: palette(light);padding: 6;</string>
+               </property>
+               <property name="text">
+                <string>Launch BuliCommander</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="pageCatNavigation">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QScrollArea" name="scrollArea">
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOff</enum>
+           </property>
+           <property name="widgetResizable">
+            <bool>true</bool>
+           </property>
+           <widget class="QWidget" name="scrollAreaWidgetContents">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>723</width>
+              <height>772</height>
+             </rect>
+            </property>
+            <layout class="QFormLayout" name="formLayout_4">
+             <property name="labelAlignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+             <item row="1" column="0" colspan="2">
+              <widget class="QLabel" name="label_11">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: palette(light);padding: 6;</string>
+               </property>
+               <property name="text">
+                <string>Navigation bar buttons</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QCheckBox" name="cbCNNavBarBtnHome">
+               <property name="text">
+                <string>Home</string>
+               </property>
+               <property name="icon">
+                <iconset resource="dark_icons.qrc">
+                 <normaloff>:/images/home</normaloff>:/images/home</iconset>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QCheckBox" name="cbCNNavBarBtnViews">
+               <property name="text">
+                <string>Views</string>
+               </property>
+               <property name="icon">
+                <iconset resource="dark_icons.qrc">
+                 <normaloff>:/images/saved_view</normaloff>:/images/saved_view</iconset>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QCheckBox" name="cbCNNavBarBtnBookmarks">
+               <property name="text">
+                <string>Bookmarks</string>
+               </property>
+               <property name="icon">
+                <iconset resource="dark_icons.qrc">
+                 <normaloff>:/images/bookmarks</normaloff>:/images/bookmarks</iconset>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QCheckBox" name="cbCNNavBarBtnLastDocuments">
+               <property name="text">
+                <string>Last documents</string>
+               </property>
+               <property name="icon">
+                <iconset resource="dark_icons.qrc">
+                 <normaloff>:/images/saved_view_last</normaloff>:/images/saved_view_last</iconset>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="0">
+              <widget class="QCheckBox" name="cbCNNavBarBtnHistory">
+               <property name="text">
+                <string>History</string>
+               </property>
+               <property name="icon">
+                <iconset resource="dark_icons.qrc">
+                 <normaloff>:/images/history</normaloff>:/images/history</iconset>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="0">
+              <widget class="QCheckBox" name="cbCNNavBarBtnGoUp">
+               <property name="text">
+                <string>Go up</string>
+               </property>
+               <property name="icon">
+                <iconset resource="dark_icons.qrc">
+                 <normaloff>:/images/goup</normaloff>:/images/goup</iconset>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="0">
+              <widget class="QCheckBox" name="cbCNNavBarBtnGoBack">
+               <property name="text">
+                <string>Go back</string>
+               </property>
+               <property name="icon">
+                <iconset resource="dark_icons.qrc">
+                 <normaloff>:/images/goback</normaloff>:/images/goback</iconset>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="0">
+              <widget class="QCheckBox" name="cbCNNavBarBtnQuickFilter">
+               <property name="text">
+                <string>Quick filter</string>
+               </property>
+               <property name="icon">
+                <iconset resource="dark_icons.qrc">
+                 <normaloff>:/images/filter</normaloff>:/images/filter</iconset>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="0" colspan="2">
+              <widget class="QLabel" name="label_3">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: palette(light);padding: 6;</string>
+               </property>
+               <property name="text">
+                <string>Navigation directories history</string>
+               </property>
+               <property name="margin">
+                <number>0</number>
+               </property>
+              </widget>
+             </item>
+             <item row="14" column="0">
+              <widget class="QLabel" name="label_4">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="toolTip">
+                <string>Define maximum number of directories kept in history</string>
+               </property>
+               <property name="text">
+                <string>Maximum</string>
+               </property>
+              </widget>
+             </item>
+             <item row="14" column="1">
+              <widget class="QWidget" name="widget" native="true">
+               <layout class="QHBoxLayout" name="horizontalLayout_6">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QSlider" name="hsCNHistoryMax">
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                  <property name="value">
+                   <number>25</number>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="sbCNHistoryMax">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                  <property name="value">
+                   <number>25</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="19" column="0" colspan="2">
+              <widget class="QLabel" name="label_12">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: palette(light);padding: 6;</string>
+               </property>
+               <property name="text">
+                <string>Last documents history</string>
+               </property>
+              </widget>
+             </item>
+             <item row="22" column="0">
+              <widget class="QLabel" name="label_13">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>Maximum</string>
+               </property>
+              </widget>
+             </item>
+             <item row="22" column="1">
+              <layout class="QHBoxLayout" name="horizontalLayout_5">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QSlider" name="hsCNLastDocsMax">
+                 <property name="minimum">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <number>100</number>
+                 </property>
+                 <property name="value">
+                  <number>25</number>
+                 </property>
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="sbCNLastDocsMax">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimum">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <number>100</number>
+                 </property>
+                 <property name="value">
+                  <number>25</number>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="26" column="0" colspan="2">
+              <widget class="QLabel" name="label_10">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: palette(light);padding: 6;</string>
+               </property>
+               <property name="text">
+                <string>Home directory</string>
+               </property>
+              </widget>
+             </item>
+             <item row="27" column="0" colspan="2">
+              <widget class="QRadioButton" name="rbCNHomeDirSys">
+               <property name="toolTip">
+                <string>The @home directory refers to user directory defined by system</string>
+               </property>
+               <property name="statusTip">
+                <string>The @home directory refers to user directory defined by system</string>
+               </property>
+               <property name="text">
+                <string>&amp;User directory defined by system</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupGenHomeDir</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="15" column="1">
+              <layout class="QHBoxLayout" name="horizontalLayout_8">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QCheckBox" name="cbCNHistoryKeepWhenQuit">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Keep directories history when Buli Commander is closed</string>
+                 </property>
+                 <property name="text">
+                  <string>Keep history when quit</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pbCNHistoryClear">
+                 <property name="toolTip">
+                  <string>Clear current navigation history</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>Clear current navigation history</string>
+                 </property>
+                 <property name="text">
+                  <string>Clear</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="23" column="1">
+              <layout class="QHBoxLayout" name="horizontalLayout_9">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <spacer name="horizontalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pbCNLastDocumentsReset">
+                 <property name="toolTip">
+                  <string>Reset list of last opened/saved documents (set list from Krita's internal list)</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>Reset list of last opened/saved documents (set list from Krita's internal list)</string>
+                 </property>
+                 <property name="text">
+                  <string>Reset</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pbCNLastDocumentsClear">
+                 <property name="toolTip">
+                  <string>Clear list of last opened/saved documents</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>Clear list of last opened/saved documents</string>
+                 </property>
+                 <property name="text">
+                  <string>Clear</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="28" column="0">
+              <widget class="QRadioButton" name="rbCNHomeDirUD">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>The @home directory refers to user defined directory</string>
+               </property>
+               <property name="statusTip">
+                <string>The @home directory refers to user defined directory</string>
+               </property>
+               <property name="text">
+                <string>U&amp;ser defined</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupGenHomeDir</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="28" column="1">
+              <widget class="BCPathBar" name="bcpbCNUserDefined">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::NoFrame</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_7">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="pageCatImageFiles">
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <layout class="QFormLayout" name="formLayout">
+           <item row="0" column="0" colspan="2">
+            <widget class="QLabel" name="label">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="toolTip">
+              <string>Default action is applied on &quot;Double-click&quot; or when &quot;Enter&quot; key is pressed</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: palette(light);padding: 6;</string>
+             </property>
+             <property name="text">
+              <string>Default action on Krita image file</string>
+             </property>
+             <property name="margin">
+              <number>4</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QRadioButton" name="rbCIFKraOpenDoc">
+             <property name="toolTip">
+              <string>Open document in Krita and let Buli Commander opened</string>
+             </property>
+             <property name="text">
+              <string>Open doc&amp;ument</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroupImgDefaultKrita</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QRadioButton" name="rbCIFKraOpenDocAndClose">
+             <property name="toolTip">
+              <string>Open document in Krita and close Buli Commander</string>
+             </property>
+             <property name="text">
+              <string>Open document and clo&amp;se Buli Commander</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroupImgDefaultKrita</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="3" column="0" colspan="2">
+            <widget class="QRadioButton" name="rbCIFKraCreateDoc">
+             <property name="toolTip">
+              <string>Open as a new Krita document and let Buli Commander opened</string>
+             </property>
+             <property name="text">
+              <string>Crea&amp;te a new document</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroupImgDefaultKrita</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="4" column="0" colspan="2">
+            <widget class="QRadioButton" name="rbCIFKraCreateDocAndClose">
+             <property name="toolTip">
+              <string>Open as a new Krita document and close Buli Commander</string>
+             </property>
+             <property name="text">
+              <string>Create a new document and close Buli Commander</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroupImgDefaultKrita</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="9" column="0" colspan="2">
+            <widget class="QRadioButton" name="rbCIFOthCreateDocAndClose">
+             <property name="toolTip">
+              <string>Open as a new Krita document and close Buli Commander</string>
+             </property>
+             <property name="text">
+              <string>Create a new krita document and close Buli Commander</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroupImgDefaultOther</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="8" column="0" colspan="2">
+            <widget class="QRadioButton" name="rbCIFOthCreateDoc">
+             <property name="toolTip">
+              <string>Open as a new Krita document and let Buli Commander opened</string>
+             </property>
+             <property name="text">
+              <string>Create a new Krita document</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroupImgDefaultOther</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="7" column="0" colspan="2">
+            <widget class="QRadioButton" name="rbCIFOthOpenDocAndClose">
+             <property name="toolTip">
+              <string>Open document in Krita and close Buli Commander</string>
+             </property>
+             <property name="text">
+              <string>Open document and close Buli Commander</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroupImgDefaultOther</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="6" column="0" colspan="2">
+            <widget class="QRadioButton" name="rbCIFOthOpenDoc">
+             <property name="toolTip">
+              <string>Open document in Krita and let Buli Commander opened</string>
+             </property>
+             <property name="text">
+              <string>Open document</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroupImgDefaultOther</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="5" column="0" colspan="2">
+            <widget class="QLabel" name="label_2">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="toolTip">
+              <string>Default action is applied on &quot;Double-click&quot; or when &quot;Enter&quot; key is pressed</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: palette(light);padding: 6;</string>
+             </property>
+             <property name="text">
+              <string>Default action on other image file</string>
+             </property>
+             <property name="margin">
+              <number>4</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="pageCatCachedImages">
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <layout class="QFormLayout" name="formLayout_3">
+           <item row="0" column="0" colspan="2">
+            <widget class="QLabel" name="label_5">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="toolTip">
+              <string>Cache is used to speedup thumbnail loading</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: palette(light);padding: 6;</string>
+             </property>
+             <property name="text">
+              <string>Cached content</string>
+             </property>
+             <property name="margin">
+              <number>0</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_6">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Files in cache</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLabel" name="lblCCINbFileAndSize">
+             <property name="toolTip">
+              <string>Number of files in cache and total used size</string>
+             </property>
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QPushButton" name="pbCCIClearCache">
+             <property name="text">
+              <string>Clear cache content</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QLabel" name="label_9">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Once produced, thumbnails are stored in a cache to avoid to generate them each time an image is listed and improve performances&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="bbOkCancel">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>BCPathBar</class>
+   <extends>QFrame</extends>
+   <header>bulicommander.bc.bcpathbar</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="dark_icons.qrc"/>
+  <include location="light_icons.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>bbOkCancel</sender>
+   <signal>accepted()</signal>
+   <receiver>Dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>263</x>
+     <y>735</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bbOkCancel</sender>
+   <signal>rejected()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>331</x>
+     <y>735</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>hsCNHistoryMax</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>sbCNHistoryMax</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>891</x>
+     <y>188</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>951</x>
+     <y>182</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sbCNHistoryMax</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>hsCNHistoryMax</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>951</x>
+     <y>182</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>867</x>
+     <y>188</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>hsCNLastDocsMax</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>sbCNLastDocsMax</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>852</x>
+     <y>304</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>924</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sbCNLastDocsMax</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>hsCNLastDocsMax</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>916</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>667</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <buttongroups>
+  <buttongroup name="buttonGroupImgDefaultKrita"/>
+  <buttongroup name="buttonGroupGenHomeDir"/>
+  <buttongroup name="buttonGroupImgDefaultOther"/>
+ </buttongroups>
+</ui>

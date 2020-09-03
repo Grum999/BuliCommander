@@ -47,10 +47,13 @@ import hashlib
 import json
 import os
 import re
+import struct
 import sys
 import textwrap
+import time
 import xml.etree.ElementTree as xmlElement
 import zipfile
+import zlib
 
 from ..pktk.pktk import (
         EInvalidType,
@@ -65,11 +68,17 @@ from .bcutils import (
         strToBytesSize,
         bytesSizeToStr,
         strToTs,
-        tsToStr
+        tsToStr,
+        strDefault,
+        intDefault
+    )
+from .bcworkers import (
+        BCWorkerPool
     )
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
+        QFileInfo,
         QSize,
         QStandardPaths
     )
@@ -77,6 +86,14 @@ from PyQt5.QtGui import (
         QImage,
         QImageReader
     )
+from PyQt5.QtWidgets import (
+        QFileIconProvider
+    )
+
+if sys.platform == 'linux':
+    import pwd
+    import grp
+
 
 # ------------------------------------------------------------------------------
 
@@ -93,27 +110,136 @@ class BCFileManagedFormat(object):
     """Managed files format """
     KRA = 'kra'
     PNG = 'png'
-    JPG = 'jpeg'
+    JPG = 'jpg'
     JPEG = 'jpeg'
     ORA = 'ora'
     SVG = 'svg'
+    GIF = 'gif'
+    PSD = 'psd'
+    XCF = 'xcf'
+    WEBP = 'webp'
 
     UNKNOWN = 'unknown'
+    MISSING = 'missing'
     DIRECTORY = 'directory'
+
+    __TRANSLATIONS = {
+            'KRA': ('Krita image', 'Krita native image'),
+            'JPG': ('JPEG image', 'JPEG Interchange Format'),
+            'JPEG': ('JPEG image', 'JPEG Interchange Format'),
+            'PNG': ('PNG image', 'Portable Network Graphic'),
+            'ORA': ('OpenRaster image', 'Open raster'),
+            'SVG': ('SVG image', 'Scalable Vector Graphic'),
+            'GIF': ('GIF image', 'Graphics Interchange Format'),
+
+            'PSD': ('PSD image', 'PhotoShop Document'),
+            'TIF': ('TIFF image', 'Tagged Image File Format'),
+            'TIFF': ('TIFF image', 'Tagged Image File Format'),
+            'TGA': ('TGA image', 'Truevision TGA'),
+            'XCF': ('Gimp image', 'eXperimental Computing Facility'),
+            'WEBP': ('WebP', 'WebP'),
+
+            'ZIP': 'ZIP archive',
+            '7Z': '7Zip archive',
+            'GZ': 'GZ archive',
+            'TAR': 'TAR archive',
+
+            'PY': 'Python file',
+            'PYC': 'Compiled Python file',
+
+            'BIN': 'Binary file',
+            'DAT': 'Data file',
+            'TMP': 'Temporary file',
+            'BAK': 'Backup file',
+
+            'TXT': 'Text document',
+            'MD': 'Markdown document',
+            'PDF': 'PDF document',
+
+            'DIRECTORY': 'Directory',
+            'MISSING': 'Missing file'
+        }
 
     @staticmethod
     def format(value):
         if isinstance(value, str):
             lvalue=value.lower()
-            if lvalue in [BCFileManagedFormat.KRA,
-                          BCFileManagedFormat.PNG,
-                          BCFileManagedFormat.JPEG,
-                          BCFileManagedFormat.ORA,
-                          BCFileManagedFormat.SVG]:
+            if lvalue in BCFileManagedFormat.list():
                 return lvalue
             elif lvalue == 'jpg':
                 return BCFileManagedFormat.JPEG
         raise EInvalidType("Invalid given format")
+
+    @staticmethod
+    def translate(value, short=True):
+        backupFile=False
+
+        if value == '' or value == '~':
+            return 'Unknown file'
+
+        if value[0] == '.':
+            value = value[1:]
+
+        if value[-1] == '~':
+            backupFile = True
+            value=value[:-1]
+        elif value[0] == '~':
+            backupFile = True
+            value=value[1:]
+
+        value = value.upper()
+
+        if value in BCFileManagedFormat.__TRANSLATIONS:
+            if isinstance(BCFileManagedFormat.__TRANSLATIONS[value], str):
+                returned = BCFileManagedFormat.__TRANSLATIONS[value]
+            elif short:
+                returned = BCFileManagedFormat.__TRANSLATIONS[value][0]
+            else:
+                returned = BCFileManagedFormat.__TRANSLATIONS[value][1]
+        else:
+            returned = f'{value} file'
+
+        if backupFile:
+            returned+=' (backup)'
+
+        return returned
+
+    @staticmethod
+    def list(full=True):
+        if full:
+            return [BCFileManagedFormat.KRA,
+                    BCFileManagedFormat.PNG,
+                    BCFileManagedFormat.JPG,
+                    BCFileManagedFormat.JPEG,
+                    BCFileManagedFormat.ORA,
+                    BCFileManagedFormat.SVG,
+                    BCFileManagedFormat.GIF,
+                    BCFileManagedFormat.PSD,
+                    BCFileManagedFormat.XCF,
+                    BCFileManagedFormat.WEBP]
+        else:
+            # remove KRA/ORA/PSD/XCF (use dedicated code from plugin to retrieve basic information)
+            return [BCFileManagedFormat.PNG,
+                    BCFileManagedFormat.JPG,
+                    BCFileManagedFormat.JPEG,
+                    BCFileManagedFormat.SVG,
+                    BCFileManagedFormat.GIF,
+                    BCFileManagedFormat.WEBP]
+
+
+    @staticmethod
+    def extensions(withBackup=False):
+        returned = [f'.{value}' for value in BCFileManagedFormat.list()]
+        if withBackup:
+            returned+=[f'.{value}~' for value in BCFileManagedFormat.list()]
+        return returned
+
+    @staticmethod
+    def extension(value, withBackup=False):
+        returned = [f'.{value}']
+        if withBackup:
+            returned+=[f'.{value}~']
+        return returned
 
 class BCFileThumbnailSize(Enum):
     """Possible sizes for a thumbnail file"""
@@ -141,6 +267,29 @@ class BCFileThumbnailSize(Enum):
             return None
         return members[index]
 
+    def size(self, type=int):
+        """return the size as int or QSize"""
+        if type==int:
+            return self.value
+        elif type==QSize:
+            return QSize(self.value, self.value)
+        else:
+            raise EInvalidType("Given `type` must be int or QSize")
+
+    @staticmethod
+    def fromValue(value):
+        """Return a BCFileThumbnailSize according to given value"""
+        if not isinstance(value, int):
+            return BCFile.thumbnailCacheDefaultSize()
+        elif value <= 64:
+            return BCFileThumbnailSize.SMALL
+        elif value <= 128:
+            return BCFileThumbnailSize.MEDIUM
+        elif value <= 256:
+            return BCFileThumbnailSize.LARGE
+        else:
+            return BCFileThumbnailSize.HUGE
+
 class BCFileThumbnailFormat(Enum):
     """Possible format for a thumbnail file"""
     PNG = 'png'
@@ -153,6 +302,7 @@ class BCFileProperty(Enum):
     FILE_FORMAT = 'fileFormat'
     FILE_SIZE = 'fileSize'
     FILE_DATE = 'fileDate'
+    FILE_EXTENSION = 'fileExtension'
     IMAGE_WIDTH = 'imageWidth'
     IMAGE_HEIGHT = 'imageHeight'
 
@@ -167,6 +317,8 @@ class BCFileProperty(Enum):
             return 'file format'
         elif self == BCFileProperty.FILE_SIZE:
             return 'file size'
+        elif self == BCFileProperty.FILE_EXTENSION:
+            return 'file extension'
         elif self == BCFileProperty.FILE_DATE:
             return 'file date'
         elif self == BCFileProperty.IMAGE_WIDTH:
@@ -179,12 +331,18 @@ class BCFileProperty(Enum):
 class BCBaseFile(object):
     """Base class for directories and files"""
 
+    THUMBTYPE_ICON = 'qicon'
+    THUMBTYPE_IMAGE = 'qimage'
+
     def __init__(self, fileName):
         """Initialise BCFile"""
         self._fullPathName = os.path.expanduser(fileName)
         self._name = os.path.basename(self._fullPathName)
         self._path = os.path.dirname(self._fullPathName)
-        self._mdatetime = os.path.getmtime(self._fullPathName)
+        if os.path.isdir(self._fullPathName):
+            self._mdatetime = os.path.getmtime(self._fullPathName)
+        else:
+            self._mdatetime = None
         self._format = BCFileManagedFormat.UNKNOWN
 
     def path(self):
@@ -226,6 +384,44 @@ class BCBaseFile(object):
         else:
             raise EInvalidType('Given `property` must be a valid <BCFileProperty>')
 
+    def icon(self):
+        """return system icon for file"""
+        return BCFileIcon.get(self._fullPathName)
+
+    def thumbnail(self, size=None, thumbType=None):
+        """return system icon for file"""
+        if size is None or not isinstance(size, BCFileThumbnailSize):
+            size = BCFile.thumbnailCacheDefaultSize()
+
+        if thumbType is None or thumbType==BCBaseFile.THUMBTYPE_IMAGE:
+            return BCFileIcon.get(self._fullPathName).pixmap(size.size(QSize)).toImage()
+        else:
+            return BCFileIcon.get(self._fullPathName)
+
+    def permissions(self):
+        """Return permission as rwx------ string"""
+        if sys.platform == 'linux':
+            octalPerm = oct(os.stat(self._fullPathName)[0])[-3:]
+            # https://stackoverflow.com/a/59925828
+            returned = ""
+            letters = [(4, "r"), (2, "w"), (1, "x")]
+            for permission in [int(n) for n in str(octalPerm)]:
+                for value, letter in letters:
+                    if permission >= value:
+                        returned += letter
+                        permission -= value
+                    else:
+                        returned += "-"
+            return returned
+        return ''
+
+    def ownerGroup(self):
+        """return a tuple (owner, group) names (if linux) otherwise ('', '') """
+        if sys.platform == 'linux':
+            fs = os.stat(self._fullPathName)
+            return (pwd.getpwuid(fs.st_uid).pw_name, grp.getgrgid(fs.st_uid).gr_name)
+        return ('', '')
+
 class BCDirectory(BCBaseFile):
     """Provides common properties with BCFile to normalize way directory & file
     informations are managed
@@ -243,6 +439,59 @@ class BCDirectory(BCBaseFile):
         """Format internal representation"""
         return f'<BCDirectory({self._path}, {self._name})>'
 
+class BCMissingFile(BCBaseFile):
+    """A missing file"""
+
+    def __init__(self, fileName):
+        """Initialise BCFile"""
+        super(BCMissingFile, self).__init__(fileName)
+        self._fullPathName = os.path.expanduser(fileName)
+        self._name = os.path.basename(self._fullPathName)
+        self._path = os.path.dirname(self._fullPathName)
+        self._mdatetime = None
+        self._format = BCFileManagedFormat.MISSING
+
+    def lastModificationDateTime(self, onlyDate=False):
+        """Return file last modification time stamp"""
+        return None
+
+    def icon(self):
+        """return system icon for file"""
+        return QIcon(':/images/warning')
+
+    def thumbnail(self, size=None, thumbType=None):
+        """return system icon for file"""
+        return QIcon(':/images/warning')
+
+    def permissions(self):
+        """Return permission as rwx------ string"""
+        return '-'
+
+    def ownerGroup(self):
+        """return a tuple (owner, group) names (if linux) otherwise ('', '') """
+        return ('', '')
+
+    def size(self):
+        """Return file size"""
+        return 0
+
+    def extension(self, dot=True):
+        """Return file extension"""
+        return ''
+
+    def imageSize(self):
+        """Return file image size"""
+        return QSize(-1, -1)
+
+    def qHash(self):
+        """Return file quick hash"""
+        return ''
+
+    def readable(self):
+        """Return True if file is readable"""
+        return False
+
+
 class BCFile(BCBaseFile):
     """Provide an easy way to work with images files:
     - File properties (name, path, siz, date)
@@ -258,33 +507,33 @@ class BCFile(BCBaseFile):
 
     __CHUNK_SIZE = 8192
 
-    __THUMBNAIL_CACHE_PATH = ''
-    __THUMBNAIL_CACHE_FMT = BCFileThumbnailFormat.JPEG
+    __BC_CACHE_PATH = ''
+    __THUMBNAIL_CACHE_FMT = BCFileThumbnailFormat.PNG
     __THUMBNAIL_CACHE_DEFAULTSIZE = BCFileThumbnailSize.MEDIUM
     __THUMBNAIL_CACHE_COMPRESSION = 100
 
     __INITIALISED = False
 
-    __EXTENSIONS = ['.png', '.jpeg', '.jpg', '.ora', '.svg', '.kra', '.kra~', '']
+    __EXTENSIONS = BCFileManagedFormat.extensions(True) + ['']
 
     @staticmethod
-    def initialiseCache(thumbnailCachePath=None, thumbnailCacheFormat=None, thumbnailCacheDefaultSize=None):
+    def initialiseCache(bcCachePath=None, thumbnailCacheFormat=None, thumbnailCacheDefaultSize=None):
         """Initialise thumbnails cache properties
 
 
         By default, cache will be defined into user cache directory
-        If `thumbnailCachePath` is provided, it will define the thumbnail cache directory to use
+        If `bcCachePath` is provided, it will define the thumbnail cache directory to use
 
         If directory doesn't exist, it will be created
         """
 
-        BCFile.setThumbnailCacheDirectory(thumbnailCachePath)
+        BCFile.setCacheDirectory(bcCachePath)
         BCFile.setThumbnailCacheFormat(thumbnailCacheFormat)
         BCFile.setThumbnailCacheDefaultSize(thumbnailCacheDefaultSize)
 
         BCFile.__INITIALISED = True
 
-    def __init__(self, fileName, strict=True):
+    def __init__(self, fileName, strict=False):
         """Initialise BCFile"""
         super(BCFile, self).__init__(fileName)
         self._format = BCFileManagedFormat.UNKNOWN
@@ -292,6 +541,7 @@ class BCFile(BCBaseFile):
         self.__imgSize = QSize(-1, -1)
         self.__qHash = ''
         self.__readable = False
+        self.__extension = ''
 
         if not BCFile.__INITIALISED:
             raise EInvalidStatus('BCFile class is not initialised')
@@ -322,16 +572,15 @@ class BCFile(BCBaseFile):
         #if os.path.isfile(fileName):
         self.__readable = True
 
-        dummy, fileExtension = os.path.splitext(fileName)
-        fileExtension=fileExtension.lower()
+        dummy, self.__extension = os.path.splitext(fileName)
+        self.__extension=self.__extension.lower()
 
         self.__size = os.path.getsize(self._fullPathName)
 
-        if strict and fileExtension == '':
+        if strict and not self.__extension in self.__EXTENSIONS:
             self.__readable = True
             return
-
-        if fileExtension in self.__EXTENSIONS:
+        elif self.__extension in self.__EXTENSIONS:
             imageReader = QImageReader(self._fullPathName)
 
             if imageReader.canRead():
@@ -340,12 +589,21 @@ class BCFile(BCBaseFile):
                     # harmonize file type
                     self._format = BCFileManagedFormat.JPEG
             else:
-                self._format = fileExtension[1:]    # remove '.'
+                self._format = self.__extension[1:]    # remove '.'
 
-            if self._format in [BCFileManagedFormat.JPEG, BCFileManagedFormat.PNG, BCFileManagedFormat.SVG]:
+
+            if self._format in BCFileManagedFormat.list(False):
                 # Use image reader
                 self.__imgSize = imageReader.size()
-            elif self._format == BCFileManagedFormat.KRA or fileExtension in ['.kra', '.kra~']:
+            elif self._format == BCFileManagedFormat.PSD:
+                tmpNfo = self.__readMetaDataPsd(True)
+                if 'width' in tmpNfo and 'height' in tmpNfo:
+                    self.__imgSize = QSize(tmpNfo['width'], tmpNfo['height'])
+            elif self._format == BCFileManagedFormat.XCF:
+                tmpNfo = self.__readMetaDataXcf(True)
+                if 'width' in tmpNfo and 'height' in tmpNfo:
+                    self.__imgSize = QSize(tmpNfo['width'], tmpNfo['height'])
+            elif self._format == BCFileManagedFormat.KRA or self.__extension in BCFileManagedFormat.extension(BCFileManagedFormat.KRA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
                 # by qimagereader
@@ -353,7 +611,7 @@ class BCFile(BCBaseFile):
                 if not size is None:
                     self.__imgSize = size
                     self._format = BCFileManagedFormat.KRA
-            elif self._format == BCFileManagedFormat.ORA or fileExtension == '.ora':
+            elif self._format == BCFileManagedFormat.ORA or self.__extension in BCFileManagedFormat.extension(BCFileManagedFormat.ORA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
                 # by qimagereader
@@ -361,7 +619,7 @@ class BCFile(BCBaseFile):
                 if not size is None:
                     self.__imgSize = size
                     self._format = BCFileManagedFormat.ORA
-            elif fileExtension == '':
+            elif self.__extension == '':
                 # don't know file format by ImageReader or extension...
                 # and there's no extension
                 # try Kra..
@@ -389,6 +647,194 @@ class BCFile(BCBaseFile):
 
 
     # region: utils ------------------------------------------------------------
+
+    def __readICCData(self, iccData):
+        """Read an ICC byte array and return ICC profile information
+
+        ICC specifications: http://www.color.org/specification/ICC1v43_2010-12.pdf
+                            http://www.color.org/specification/ICC.2-2018.pdf
+                            http://www.littlecms.com/LittleCMS2.10%20API.pdf
+                            http://www.color.org/ICC_Minor_Revision_for_Web.pdf
+        """
+        def decode_mluc(data):
+            """Decode MLUC (multiLocalizedUnicodeType) tag type
+
+                Byte position           Field length    Content                                                     Encoded
+                0 to 3                  4               ‘mluc’ (0x6D6C7563) type signature
+                4 to 7                  4               Reserved, shall be set to 0
+                8 to 11                 4               Number of records (n)                                       uInt32Number
+                12 to 15                4               Record size: the length in bytes of every record.           0000000Ch
+                                                        The value is 12.
+                16 to 17                2               First record language code: in accordance with the          uInt16Number
+                                                        language code specified in ISO 639-1
+                18 to 19                2               First record country code: in accordance with the           uInt16Number
+                                                        country code specified in ISO 3166-1
+                20 to 23                4               First record string length: the length in bytes of          uInt32Number
+                                                        the string
+                24 to 27                4               First record string offset: the offset from the start       uInt32Number
+                                                        of the tag to the start of the string, in bytes
+                28 to 28+[12(n−1)]−1    12(n−1)         Additional records as needed
+                (or 15+12n)
+
+                28+[12(n−1)]            Variable        Storage area of strings of Unicode characters
+                (or 16+12n) to end
+
+                return a dict (key=lang, value=text)
+            """
+            returned = {}
+            if data[0:4] != b'mluc':
+                return returned
+
+            nbRecords = struct.unpack('!I', data[8:12])[0]
+            if nbRecords == 0:
+                return returned
+
+            szRecords = struct.unpack('!I', data[12:16])[0]
+            if szRecords != 12:
+                # if records size is not 12, it's not normal??
+                return returned
+
+            for index in range(nbRecords):
+                offset = 16 + index * szRecords
+                try:
+                    langCode = data[offset:offset+2].decode()
+                    countryCode = data[offset+2:offset+4].decode()
+
+                    txtSize = struct.unpack('!I', data[offset+4:offset+8])[0]
+                    txtOffset = struct.unpack('!I', data[offset+8:offset+12])[0]
+
+                    text = data[txtOffset:txtOffset+txtSize].decode('utf-16be')
+
+                    returned[f'{langCode}-{countryCode}'] = text.rstrip('\x00')
+                except Exception as a:
+                    Debug.print('[BCFile...decode_mluc] Unable to decode MLUC: {0}', str(e))
+                    continue
+            return returned
+
+        def decode_text(data):
+            """Decode TEXT (multiLocalizedUnicodeType) tag type
+
+                Byte position           Field length    Content                                                     Encoded
+                0 to 3                  4               ‘text’ (74657874h) type signature
+                4 to 7                  4               Reserved, shall be set to 0
+                8 to end                Variable        A string of (element size 8) 7-bit ASCII characters
+
+                return a dict (key='en-US', value=text)
+            """
+            returned = {}
+            if data[0:4] != b'text':
+                return returned
+
+            try:
+                returned['en-US'] = data[8:].decode().rstrip('\x00')
+            except Exception as a:
+                Debug.print('[BCFile...decode_mluc] Unable to decode TEXT: {0}', str(e))
+
+            return returned
+
+        def decode_desc(data):
+            """Decode DESC (textDescriptionType) tag type [deprecated]
+
+                Byte position           Field length    Content                                                     Encoded
+                0..3                    4               ‘desc’ (64657363h) type signature
+                4..7                    4               reserved, must be set to 0
+                8..11                   4               ASCII invariant description count, including terminating    uInt32Number
+                                                        null (description length)
+                12..n-1                                 ASCII invariant description                                 7-bit ASCII
+
+                ignore other data
+
+                return a dict (key='en-US', value=text)
+            """
+            returned = {}
+            if data[0:4] != b'desc':
+                return returned
+
+            try:
+                txtLen = struct.unpack('!I', data[8:12])[0]
+                returned['en-US'] = data[12:11+txtLen].decode().rstrip('\x00')
+            except Exception as e:
+                Debug.print('[BCFile...decode_mluc] Unable to decode DESC: {0}', str(e))
+
+            return returned
+
+        returned = {
+            'iccProfileName': {},
+            'iccProfileCopyright': {},
+        }
+
+        nbTags=struct.unpack('!I', iccData[128:132])[0]
+
+        for i in range(nbTags):
+            tData = iccData[132+i * 12:132+(i+1)*12]
+
+            tagId = tData[0:4]
+            offset = struct.unpack('!I', tData[4:8])[0]
+            size = struct.unpack('!I', tData[8:12])[0]
+
+            data = iccData[offset:offset+size]
+
+            if tagId == b'desc':
+                # description (color profile name)
+                if data[0:4] == b'mluc':
+                    returned['iccProfileName']=decode_mluc(data)
+                elif data[0:4] == b'text':
+                    returned['iccProfileName']=decode_text(data)
+                elif data[0:4] == b'desc':
+                    returned['iccProfileName']=decode_desc(data)
+            elif tagId == b'cprt':
+                # copyright
+                if data[0:4] == b'mluc':
+                    returned['iccProfileCopyright']=decode_mluc(data)
+                elif data[0:4] == b'text':
+                    returned['iccProfileCopyright']=decode_text(data)
+                elif data[0:4] == b'desc':
+                    returned['iccProfileCopyright']=decode_desc(data)
+        return returned
+
+
+    def __readArchiveDataFile(self, file):
+        """Read an archive file (.kra, .ora) file and return data from archive
+
+        The function will unzip the given `file` and return it
+
+        return None if not able to read Krita file
+        """
+        if not self.__readable:
+            # file must exist
+            return None
+
+        try:
+            archive = zipfile.ZipFile(self._fullPathName, 'r')
+        except Exception as e:
+            # can't be read (not exist, not a zip file?)
+            self.__readable = False
+            Debug.print('[BCFile.__readArchiveDataFile] Unable to open file {0}: {1}', self._fullPathName, str(e))
+            return None
+
+        try:
+            imgfile = archive.open(file)
+        except Exception as e:
+            # can't be read (not exist, not a Kra file?)
+            self.__readable = False
+            archive.close()
+            Debug.print('[BCFile.__readArchiveDataFile] Unable to find "{2}" in file {0}: {1}', self._fullPathName, str(e), file)
+            return None
+
+        try:
+            data = imgfile.read()
+        except Exception as e:
+            # can't be read (not exist, not a Kra file?)
+            self.__readable = False
+            imgfile.close()
+            archive.close()
+            Debug.print('[BCFile.__readArchiveDataFile] Unable to read "{2}}" in file {0}: {1}', self._fullPathName, str(e), file)
+            return None
+
+        imgfile.close()
+        archive.close()
+
+        return data
 
 
     def __calculateQuickHash(self):
@@ -418,7 +864,7 @@ class BCFile(BCBaseFile):
 
                     self.__qHash = fileHash.hexdigest()
             except Exception as e:
-                Debug.print('[BCFile.__readKraImageSize] Unable to calculate hash file {0}: {1}', self._fullPathName, str(e))
+                Debug.print('[BCFile.__calculateQuickHash] Unable to calculate hash file {0}: {1}', self._fullPathName, str(e))
                 self.__qHash = ''
         else:
             self.__qHash = ''
@@ -432,34 +878,11 @@ class BCFile(BCBaseFile):
         return None if not able to read Krita file
         return a QSize() otherwise
         """
-        if not self.__readable:
-            # file must exist
-            return None
+        maindoc = self.__readArchiveDataFile("maindoc.xml")
 
-        try:
-            archive = zipfile.ZipFile(self._fullPathName, 'r')
-        except Exception as e:
-            # can't be read (not exist, not a zip file?)
-            self.__readable = False
-            Debug.print('[BCFile.__readKraImageSize] Unable to open file {0}: {1}', self._fullPathName, str(e))
+        if maindoc is None:
+            # unable to process file
             return None
-
-        try:
-            imgfile = archive.open('maindoc.xml')
-        except Exception as e:
-            # can't be read (not exist, not a Kra file?)
-            self.__readable = False
-            Debug.print('[BCFile.__readKraImageSize] Unable to find "maindoc.xml" in file {0}: {1}', self._fullPathName, str(e))
-            return None
-
-        try:
-            maindoc = imgfile.read()
-        except Exception as e:
-            # can't be read (not exist, not a Kra file?)
-            self.__readable = False
-            Debug.print('[BCFile.__readKraImageSize] Unable to read "maindoc.xml" in file {0}: {1}', self._fullPathName, str(e))
-            return None
-
 
         try:
             xmlDoc = xmlElement.fromstring(maindoc.decode())
@@ -494,34 +917,11 @@ class BCFile(BCBaseFile):
         return None if not able to read OpenRaster file
         return a QSize() otherwise
         """
+        maindoc = self.__readArchiveDataFile("stack.xml")
+
         if not self.__readable:
             # file must exist
             return None
-
-        try:
-            archive = zipfile.ZipFile(self._fullPathName, 'r')
-        except Exception as e:
-            # can't be read (not exist, not a zip file?)
-            self.__readable = False
-            Debug.print('[BCFile.__readOraImageSize] Unable to open file {0}: {1}', self._fullPathName, str(e))
-            return None
-
-        try:
-            imgfile = archive.open('stack.xml')
-        except Exception as e:
-            # can't be read (not exist, not a Kra file?)
-            self.__readable = False
-            Debug.print('[BCFile.__readOraImageSize] Unable to find "stack.xml" in file {0}: {1}', self._fullPathName, str(e))
-            return None
-
-        try:
-            maindoc = imgfile.read()
-        except Exception as e:
-            # can't be read (not exist, not a Kra file?)
-            self.__readable = False
-            Debug.print('[BCFile.__readOraImageSize] Unable to read "stack.xml" in file {0}: {1}', self._fullPathName, str(e))
-            return None
-
 
         try:
             xmlDoc = xmlElement.fromstring(maindoc.decode())
@@ -544,7 +944,6 @@ class BCFile(BCBaseFile):
         except Exception as e:
             Debug.print('[BCFile.__readOraImageSize] Unable to retrieve image height in file {0}: {1}', self._fullPathName, str(e))
             return None
-
 
         return returned
 
@@ -588,6 +987,7 @@ class BCFile(BCBaseFile):
         if not pngFound:
             # can't be read (not exist, not a Kra file?)
             self.__readable = False
+            archive.close()
             Debug.print('[BCFile.__readKraImage] Unable to find "mergedimage.png" in file {0}', self._fullPathName)
             return None
 
@@ -596,9 +996,13 @@ class BCFile(BCBaseFile):
         except Exception as e:
             # can't be read (not exist, not a Kra file?)
             self.__readable = False
+            imgfile.close()
+            archive.close()
             Debug.print('[BCFile.__readKraImage] Unable to read "mergedimage.png" in file {0}: {1}', self._fullPathName, str(e))
             return None
 
+        imgfile.close()
+        archive.close()
 
         try:
             returned = QImage()
@@ -634,10 +1038,11 @@ class BCFile(BCBaseFile):
             return None
 
         try:
-            imgfile = archive.open('/Thumbnail/thumbnail.png')
+            imgfile = archive.open('Thumbnails/thumbnail.png')
         except Exception as e:
             # can't be read (not exist, not a Kra file?)
             self.__readable = False
+            archive.close()
             Debug.print('[BCFile.__readOraImage] Unable to find "thumbnail.png" in file {0}: {1}', self._fullPathName, str(e))
             return None
 
@@ -646,8 +1051,13 @@ class BCFile(BCBaseFile):
         except Exception as e:
             # can't be read (not exist, not a Kra file?)
             self.__readable = False
+            imgfile.close()
+            archive.close()
             Debug.print('[BCFile.__readOraImage] Unable to read "thumbnail.png" in file {0}: {1}', self._fullPathName, str(e))
             return None
+
+        imgfile.close()
+        archive.close()
 
         try:
             returned = QImage()
@@ -661,6 +1071,1469 @@ class BCFile(BCBaseFile):
         return returned
 
 
+    def __readMetaDataJpeg(self):
+        """
+        Read metadata from JPEG file
+
+        https://exiftool.org/TagNames/JPEG.html
+        """
+        def readMarkerSegment(fHandle):
+            """Read a marker segment and return it
+            {
+                'valid': <bool>,
+                'size': <int>,
+                'id': <int>,
+                'data': bytes
+            }
+            If marker segment can't be read, size = 0 and data is None
+            """
+            returned = {
+                    'valid': True,
+                    'size': 0,
+                    'id': '',
+                    'data': None
+                }
+            try:
+                returned['id'] = fHandle.read(2)
+                returned['size'] = struct.unpack('!H', fHandle.read(2))[0]
+                returned['data'] = fHandle.read(returned['size'] - 2)
+            except:
+                returned['valid']=False
+
+            if returned['id'][0] != 0xFF:
+                returned['valid']=False
+
+            return returned
+
+        def decodeChunk_APP0(markerSegment):
+            """Decode APP0 marker:
+
+            {
+                'resolutionX': (<float>, <str>),
+                'resolutionY': (<float>, <str>),
+                'resolution': <str>
+            }
+            """
+            returned = {
+                'resolutionX': (0, 'Unknown'),
+                'resolutionY': (0, 'Unknown'),
+                'resolution': ''
+            }
+
+            if not markerSegment['data'][0:5] in [b'JFIF\x00', b'JFXX\x00']:
+                # not a valid segment
+                return returned
+
+            if markerSegment['data'][0:5] == b'JFIF\x00':
+                # 0: no unit
+                # 1: pixels per inch
+                # 2: pixels per centimer
+                unit = markerSegment['data'][7]
+
+                ppX = float(struct.unpack('!H', markerSegment['data'][8:10])[0])
+                ppY = float(struct.unpack('!H', markerSegment['data'][10:12])[0])
+
+
+                if unit > 0:
+                    # unit = 1: ppi
+                    if unit == 2:
+                        # unit in meter
+                        # convert in pixels per inches
+                        ppX*=2.54
+                        ppY*=2.54
+
+                    returned['resolutionX'] = (ppX, f'{ppX:.2f}ppi')
+                    returned['resolutionY'] = (ppY, f'{ppY:.2f}ppi')
+
+                    if ppX == ppY:
+                        returned['resolution'] = f'{ppX:.2f}ppi'
+                    else:
+                        returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+                else:
+                    returned['resolutionX'] = (ppX, f'{ppX:.2f}')
+                    returned['resolutionY'] = (ppY, f'{ppY:.2f}')
+
+                    if ppX == ppY:
+                        returned['resolution'] = f'{ppX:.2f}'
+                    else:
+                        returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}'
+
+            return returned
+
+        def decodeChunk_APP2(markerSegment, returned):
+            """Decode APP2 marker:
+
+            {
+                'iccProfileName': <str>,
+                'iccProfileCopyright': <str>
+                'iccProfile': <byte str>
+            }
+            """
+            if markerSegment['data'][0:12] == b'ICC_PROFILE\x00':
+                # is an ICC profile
+                if not 'iccProfile' in returned:
+                    # not yet initialised (first chunk): create empty value
+                    returned['iccProfile'] = b''
+
+                chunkNum = int(markerSegment['data'][12])
+                chunkTotal = int(markerSegment['data'][13])
+
+                returned['iccProfile']+=markerSegment['data'][14:]
+
+                if chunkNum == chunkTotal:
+                    tmp = self.__readICCData(returned['iccProfile'])
+                    returned.update(tmp)
+            return returned
+
+        def decodeChunk_APP14(markerSegment):
+            """Decode APP14 marker:
+
+            {
+                'bitDepth': (<int>, <str>),
+                'colorType': (<int>, <str>)
+            }
+            """
+            returned = {}
+
+            if markerSegment['data'][0:6] == b'Adobe\x00':
+                # is a colour encoding
+                pass
+
+            return returned
+
+        def decodeChunk_SOFx(markerSegment):
+            """Decode SOF0, SOF2 markers:
+
+            {
+                'colorType': (<int>, <str>)
+            }
+            """
+            __COLOR_TYPE = {
+                    1: 'Grayscale',
+                    3: 'RGB',
+                    4: 'CMYK'
+                }
+
+            returned={}
+
+            cType = int(markerSegment['data'][5])
+            if cType in __COLOR_TYPE:
+                returned['colorType']=(cType, __COLOR_TYPE[cType])
+            else:
+                returned['colorType']=(cType, 'Unknown')
+
+            return returned
+
+
+        # by default
+        # - a JPEG is always 8bit
+        # - is RGB, unless other encoding is defined
+        returned = {
+                'bitDepth': (8, '8-bit integer/channel'),
+                'colorType': ('RGB', 'RGB')
+            }
+
+        with open(self._fullPathName , 'rb') as fHandler:
+            # check signature (2 bytes)
+            bytes = fHandler.read(2)
+
+            # SOI
+            if bytes != b'\xFF\xD8':
+                Debug.print('[BCFile.__readMetaDataJpeg] Invalid header: {0}', bytes)
+                return returned
+
+            markerSegment = readMarkerSegment(fHandler)
+            while markerSegment['valid']:
+                if markerSegment['id'] == b'\xFF\xE0':
+                    returned.update(decodeChunk_APP0(markerSegment))
+                elif markerSegment['id'] == b'\xFF\xE2':
+                    returned.update(decodeChunk_APP2(markerSegment, returned))
+                elif markerSegment['id'] in [b'\xFF\xC0', b'\xFF\xC2']:
+                    returned.update(decodeChunk_SOFx(markerSegment))
+                #else:
+                #    print(markerSegment['id'], markerSegment['size'], markerSegment['data'][0:25])
+
+                markerSegment = readMarkerSegment(fHandler)
+
+        return returned
+
+
+    def __readMetaDataPng(self):
+        """Read metadata from PNG file
+
+        PNG specifications: http://www.libpng.org/pub/png/spec/1.2/png-1.2-pdg.html
+                            http://www.libpng.org/pub/png/pngsuite.html
+        """
+        def readChunk(fHandle):
+            """Read a chunk and return it as a dictionary
+            {
+                'size': <int>,
+                'id': <str>,
+                'data': bytes,
+                'crc': <int>
+            }
+            If chunk can't be read, size = 0 and data is None
+            """
+            returned = {
+                    'valid': True,
+                    'size': 0,
+                    'id': '',
+                    'data': None
+                }
+            try:
+                bytes = fHandle.read(4)
+                returned['size'] = struct.unpack('!I', bytes)[0]
+                returned['id'] = fHandle.read(4).decode()
+                returned['data'] = fHandle.read(returned['size'])
+                fHandle.read(4)
+            except:
+                returned['valid']=False
+            return returned
+
+        def decodeChunk_IHDR(chunk):
+            """Decode IHDR chunk and return a dictionary with:
+
+            {
+                'width': <int>,
+                'height': <int>,
+                'bitDepth': (<int>, <str),
+                'colorType': (<int>, <str>)
+                'compressionMethod': <int>,
+                'filterMethod': <int>,
+                'interlaceMethod': (<int>, <str>)
+            }
+
+            width (4 bytes)
+            height (4 bytes)
+            bit depth (1 byte)
+            color type (1 byte)
+            compression method (1 byte)
+            filter method (1 byte)
+            interlace method (1 byte)
+            """
+            __COLOR_TYPE = {
+                    0: 'Grayscale',
+                    2: 'RGB',
+                    3: 'Indexed palette',
+                    4: 'Grayscale with Alpha',
+                    6: 'RGB with Alpha'
+                }
+            __INTERLACE_METHOD = {
+                    0: 'No interlace',
+                    1: 'Adam7 interlace'
+                }
+
+            returned = {
+                'width': struct.unpack('!I', chunk['data'][0:4])[0],
+                'height': struct.unpack('!I', chunk['data'][4:8])[0],
+                'bitDepth': (int(chunk['data'][8]), f"{int(chunk['data'][8])}-bit integer/channel"),
+                'colorType': int(chunk['data'][9]),
+                'compressionMethod': int(chunk['data'][10]),
+                'filterMethod': int(chunk['data'][11]),
+                'interlaceMethod': int(chunk['data'][12])
+            }
+            if returned['colorType'] in __COLOR_TYPE:
+                returned['colorType'] = (returned['colorType'], __COLOR_TYPE[returned['colorType']])
+            else:
+                returned['colorType'] = (returned['colorType'], 'Unknown type')
+
+            if returned['interlaceMethod'] in __INTERLACE_METHOD:
+                returned['interlaceMethod'] = (returned['interlaceMethod'], __INTERLACE_METHOD[returned['interlaceMethod']])
+            else:
+                returned['interlaceMethod'] = (returned['interlaceMethod'], 'Unknown method')
+            return returned
+
+        def decodeChunk_PLTE(chunk):
+            """Decode PLTE chunk and return a dictionary with:
+
+            {
+                'paletteSize': <int>
+            }
+
+            Palette size is chunk size divied by 3
+            Palette entries (R, B, G) are not returned
+            """
+            returned = {
+                'paletteSize': int(chunk['size']/3)
+            }
+
+            return returned
+
+        def decodeChunk_pHYs(chunk):
+            """Decode pHYs chunk and return a dictionary with:
+
+            {
+                'resolutionX': (<float>, <str>),
+                'resolutionY': (<float>, <str>),
+                'resolution': <str>
+            }
+
+            note: if resolutionX = resolutionY, resolution is defined
+
+            Pixels per unit, X axis: 4 bytes (unsigned integer)
+            Pixels per unit, Y axis: 4 bytes (unsigned integer)
+            Unit specifier:          1 byte
+
+
+            """
+            returned = {
+                'resolutionX': (0, 'Unknown'),
+                'resolutionY': (0, 'Unknown'),
+                'resolution': ''
+            }
+
+            ppX = struct.unpack('!I', chunk['data'][0:4])[0]
+            ppY = struct.unpack('!I', chunk['data'][4:8])[0]
+            unit = int(chunk['data'][8])
+
+            if unit == 1:
+                # unit in meter
+                # convert in pixels per inches
+                ppX*=0.0254
+                ppY*=0.0254
+
+                returned['resolutionX'] = (ppX, f'{ppX:.2f}ppi')
+                returned['resolutionY'] = (ppY, f'{ppY:.2f}ppi')
+
+                if ppX == ppY:
+                    returned['resolution'] = f'{ppX:.2f}ppi'
+                else:
+                    returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+            else:
+                returned['resolutionX'] = (ppX, f'{ppX:.2f}')
+                returned['resolutionY'] = (ppY, f'{ppY:.2f}')
+
+                if ppX == ppY:
+                    returned['resolution'] = f'{ppX:.2f}'
+                else:
+                    returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}'
+
+
+            return returned
+
+        def decodeChunk_IDAT(chunk):
+            """Decode IDAT chunk and return a dictionary with:
+
+            {
+                'compressionLevel': (<int>, <str>)
+            }
+
+            Decode only header of PNG chunk => assume that compression method is 0 (zlib)
+
+            ZLib header: https://stackoverflow.com/questions/9050260/what-does-a-zlib-header-look-like
+                         https://tools.ietf.org/html/rfc1950
+            """
+            __COMPRESSION_LEVEL = {
+                    0: 'Lowest compression (level: 1)',
+                    1: 'Low compression (level:2 to 5)',
+                    2: 'Default compression (level: 6)',
+                    3: 'Highest compression (level: 7 to 9)'
+                }
+
+            returned = {
+                'compressionLevel': (None, '')
+            }
+
+            if len(chunk['data'])>=2:
+                try:
+                    level = (chunk['data'][1] & 0b11000000) >> 6
+                    returned['compressionLevel'] = (level, __COMPRESSION_LEVEL[level])
+                except Exception as e:
+                    Debug.print('[BCFile..decodeChunk_IDAT] Unable to decode compression level: {0}', str(e))
+
+            return returned
+
+        def decodeChunk_gAMA(chunk):
+            """Decode gAMA chunk and return a dictionary with:
+
+            {
+                'gamma': <float>
+            }
+
+            The value is encoded as a 4-byte unsigned integer, representing gamma times 100000.
+            For example, a gamma of 1/2.2 would be stored as 45455.
+            """
+            returned = {
+                'gamma': 1/(struct.unpack('!I', chunk['data'][0:4])[0]/100000)
+            }
+
+            return returned
+
+        def decodeChunk_sRGB(chunk):
+            """Decode sRGB chunk and return a dictionary with:
+
+            {
+                'sRGBRendering': (<int>, <str>)
+            }
+
+            """
+            __RENDERING_INTENT = {
+                   0: 'Perceptual',
+                   1: 'Relative colorimetric',
+                   2: 'Saturation',
+                   3: 'Absolute colorimetric'
+                }
+
+            returned = {
+                'sRGBRendering': int(chunk['data'][0])
+            }
+
+            if returned['sRGBRendering'] in __RENDERING_INTENT:
+                returned['sRGBRendering'] = (returned['sRGBRendering'], __RENDERING_INTENT[returned['sRGBRendering']])
+            else:
+                returned['sRGBRendering'] = (returned['sRGBRendering'], 'Unknown')
+
+            return returned
+
+        def decodeChunk_iCCP(chunk):
+            """Decode iCCP chunk and return a dictionary with:
+
+            {
+                'iccProfileName': <str>,
+                'iccProfileCopyright': <str>
+                'iccProfile': <byte str>
+            }
+
+            """
+            returned = {
+                'iccProfileName': {},
+                'iccProfileCopyright': {},
+                'iccProfile': b''
+            }
+
+            for index, character in enumerate(chunk['data'][0:80]):
+                if character==0:
+                    break
+
+            index+=2
+
+            zData = chunk['data'][index:]
+
+            iccData = zlib.decompress(zData)
+            returned['iccProfile']=iccData
+
+            returned.update(self.__readICCData(iccData))
+
+            return returned
+
+
+        idat1Processed = False
+        returned = {}
+
+        with open(self._fullPathName , 'rb') as fHandler:
+            # check signature (8 bytes)
+            bytes = fHandler.read(8)
+            if bytes != b'\x89PNG\r\n\x1a\n':
+                Debug.print('[BCFile.__readMetaDataPng] Invalid header: {0}', bytes)
+                return returned
+
+            chunk = readChunk(fHandler)
+            while chunk['valid']:
+                if chunk['id']=='IHDR':
+                    returned.update(decodeChunk_IHDR(chunk))
+                elif chunk['id']=='pHYs':
+                    returned.update(decodeChunk_pHYs(chunk))
+                elif chunk['id']=='PLTE':
+                    returned.update(decodeChunk_PLTE(chunk))
+                elif chunk['id']=='gAMA':
+                    returned.update(decodeChunk_gAMA(chunk))
+                elif chunk['id']=='sRGB':
+                    returned.update(decodeChunk_sRGB(chunk))
+                    returned.pop('gamma')
+                elif chunk['id']=='iCCP':
+                    returned.update(decodeChunk_iCCP(chunk))
+                    # if icc profile, ignore gamme and sRGB
+                    returned.pop('gamma', None)
+                    returned.pop('sRGBRendering', None)
+                elif chunk['id']=='IDAT' and not idat1Processed:
+                    returned.update(decodeChunk_IDAT(chunk))
+                    idat1Processed = True
+                elif chunk['id']=='IEND':
+                    break
+                #elif chunk['id']!='IDAT':
+                #    print(chunk)
+                chunk = readChunk(fHandler)
+
+        return returned
+
+
+    def __readMetaDataGif(self):
+        """Read metadata from GIF file
+
+        GIF specifications: https://www.w3.org/Graphics/GIF/spec-gif89a.txt
+        """
+        def skip_subBlock(fHandler, skipFirstByte=False):
+            # skip a sub-block
+            if skipFirstByte:
+                fByte = fHandler.read(1)
+                if fByte == b'\0':
+                    return
+
+            bufSize = struct.unpack('B', fHandler.read(1))[0]
+            while bufSize > 0:
+                fHandler.seek(bufSize, 1)
+                bufSize = struct.unpack('B', fHandler.read(1))[0]
+
+        def read_ID(fHandler):
+            # read image descriptor
+            returned={
+                # -1 = no local palette
+                'paletteSize': -1
+            }
+
+            data = fHandler.read(9)
+            if data[8] & 0b10000000 == 0b10000000:
+                # bit set to 1: there's a local table
+                # calculate local color table size
+                lctSize =  pow(2, (data[8] & 0b00000111) + 1 )
+                returned['paletteSize']=lctSize
+                lctSize*=3
+                # skip color table
+                fHandler.seek(lctSize, 1)
+
+            # skip image data content
+            skip_subBlock(fHandler, True)
+
+            return returned
+
+        def read_GCE(fHandler):
+            # read Graphic Control Extension
+            # return only delay in milliseconds
+            data = fHandler.read(6)
+            returned=10 * int(struct.unpack('<H', data[2:4])[0])
+            return returned
+
+        def read_CE(fHandler):
+            # read Comment Extension
+            # return nothing, only skip block
+            skip_subBlock(fHandler)
+
+        def read_PTE(fHandler):
+            # read Plain Text Extension
+            # return nothing, only skip block
+            fHandler.seek(13, 1)
+            skip_subBlock(fHandler)
+
+        def read_AE(fHandler):
+            # read Application Extension
+            # return nothing, only skip block
+            fHandler.seek(12, 1)
+            skip_subBlock(fHandler)
+
+        returned = {
+                'colorType': (3, 'Indexed palette'),
+                'imageCount': 0,
+                'imageDelay': [],
+                'imageDelayMin': 0,
+                'imageDelayMax': 0,
+                'paletteMin': 0,
+                'paletteMax': 0,
+                'paletteCount': 0,
+                'paletteSize': [],
+                'loopDuration': 0
+            }
+
+        with open(self._fullPathName, 'rb') as fHandler:
+            # check signature (8 bytes)
+            bytes = fHandler.read(6)
+            if not bytes in [b'GIF87a', b'GIF89a']:
+                Debug.print('[BCFile.__readMetaDataPng] Invalid header: {0}', bytes)
+
+            logicalScreenDescriptor = fHandler.read(7)
+
+            if logicalScreenDescriptor[4] & 0b10000000 == 0b10000000:
+                # a global color table follows the logical screen descriptor
+                gctSize = pow(2, (logicalScreenDescriptor[4] & 0b00000111) + 1 )
+                returned['paletteSize'].append(gctSize)
+                gctSize*=3
+                # skip gct
+                fHandler.seek(gctSize, 1)
+
+            gceAllowed=True
+            while True:
+                blockType=fHandler.read(1)
+
+                if blockType == b'\x21':
+                    blockType=fHandler.read(1)
+                    if blockType==b'\xF9':
+                        # Graphic Control Extension
+                        returned['imageDelay'].append(read_GCE(fHandler))
+                        gceAllowed=False
+                    elif blockType==b'\xFE':
+                        # Comment Extension
+                        read_CE(fHandler)
+                    elif blockType==b'\x01':
+                        # Plain Text Extension
+                        read_PTE(fHandler)
+                    elif blockType==b'\xFF':
+                        # Application Extension
+                        read_AE(fHandler)
+                elif blockType == b'\x2C':
+                    # Image Descriptor
+                    idContent=read_ID(fHandler)
+                    if idContent['paletteSize'] > 0:
+                        returned['paletteSize'].append(idContent['paletteSize'])
+                    returned['imageCount']+=1
+                    gceAllowed=True
+                else:
+                    break
+
+            returned['paletteCount'] = len(returned['paletteSize'])
+            if returned['paletteCount']>0:
+                returned['paletteMin'] = min(returned['paletteSize'])
+                returned['paletteMax'] = max(returned['paletteSize'])
+
+            if len(returned['imageDelay'])>0:
+                returned['imageDelayMin'] = min(returned['imageDelay'])
+                returned['imageDelayMax'] = max(returned['imageDelay'])
+                returned['loopDuration'] = sum(returned['imageDelay'])
+
+            if returned['imageCount'] > 1 and (len(returned['imageDelay']) ==0 or max(returned['imageDelay']) == 0):
+                # need to apply default [arbitrary] delay of 1/10s (100ms)
+                returned['imageDelay'] = [100] * returned['imageCount']
+                returned['imageDelayMin'] = 100
+                returned['imageDelayMax'] = 100
+                returned['loopDuration'] = sum(returned['imageDelay'])
+
+        return returned
+
+
+    def __readMetaDataWebP(self):
+        """Read metadata from GIF file
+
+        """
+        returned = {
+                'imageCount': 0
+            }
+        ir = QImageReader(self._fullPathName)
+        returned['imageCount']=ir.imageCount()
+        return returned
+
+
+    def __readMetaDataPsd(self, onlySize=False):
+        """Read metadata from PSD file
+
+        PSD specifications: https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_pgfId-1030196
+                            https://www.fileformat.info/format/psd/egff.htm
+                            https://wiki.fileformat.com/image/psd/
+
+        """
+        def read_header(fHandle):
+            """Decode header return a dictionary with:
+
+            {
+                'width': <int>,
+                'height': <int>,
+                'bitDepth': (<int>, <str),
+                'colorMode': (<int>, <str>),
+                'colorChannels': (<int>, <str>),
+            }
+
+            """
+            bytes =fHandle.read(22)
+
+            __COLOR_TYPE = {
+                    0: 'Bitmap',
+                    1: 'Grayscale',
+                    2: 'Indexed palette',
+                    3: 'RGB',
+                    4: 'CMYK',
+                    7: 'Multichannel',
+                    8: 'Duotone',
+                    9: 'L*a*b*',
+                }
+
+            returned = {
+                'width': struct.unpack('!I', bytes[14:18])[0],
+                'height': struct.unpack('!I', bytes[10:14])[0],
+                'colorChannels': struct.unpack('!H', bytes[8:10])[0],
+                'bitDepth': (struct.unpack('!H', bytes[18:20])[0], f"{struct.unpack('!H', bytes[18:20])[0]}-bit integer/channel"),
+                'colorType': struct.unpack('!H', bytes[20:22])[0]
+            }
+
+            if returned['colorType'] in __COLOR_TYPE:
+                withAlpha = ''
+                if returned['colorType'] == 3 and returned['colorChannels'] == 4 or returned['colorType'] == 4 and returned['colorChannels'] == 5:
+                    withAlpha = ' with Alpha'
+
+                returned['colorType']=(returned['colorType'], __COLOR_TYPE[returned['colorType']] + withAlpha)
+            else:
+                returned['colorType']=(returned['colorType'], 'Unknown')
+
+            return returned
+
+        def read_CMD(fHandle):
+            """Decode Color Mode Data section
+
+            return nothing
+            """
+            # color mode data section
+            length = struct.unpack('!L', fHandle.read(4))[0]
+            if length > 0:
+                # skip color table content
+                fHandle.seek(length)
+
+        def read_IRB(fHandle):
+            """Decode Image Resources Block section
+
+            return nothing
+            """
+            # ==> commented, used for debug and psd file format analysis
+            #__IRB_ID = {
+            #    0x03E8: "(Obsolete--Photoshop 2.0 only ) Contains five 2-byte values: number of channels, rows, columns, depth, and mode",
+            #    0x03E9: "Macintosh print manager print info record",
+            #    0x03EA: "Macintosh page format information. No longer read by Photoshop. (Obsolete)",
+            #    0x03EB: "(Obsolete--Photoshop 2.0 only ) Indexed color table",
+            #    0x03ED: "ResolutionInfo structure. See Appendix A in Photoshop API Guide.pdf.",
+            #    0x03EE: "Names of the alpha channels as a series of Pascal strings.",
+            #    0x03EF: "(Obsolete) See ID 1077DisplayInfo structure. See Appendix A in Photoshop API Guide.pdf.",
+            #    0x03F0: "The caption as a Pascal string.",
+            #    0x03F1: "Border information. Contains a fixed number (2 bytes real, 2 bytes fraction) for the border width, and 2 bytes for border units (1 = inches, 2 = cm, 3 = points, 4 = picas, 5 = columns).",
+            #    0x03F2: "Background color. See See Color structure.",
+            #    0x03F3: "Print flags. A series of one-byte boolean values (see Page Setup dialog): labels, crop marks, color bars, registration marks, negative, flip, interpolate, caption, print flags.",
+            #    0x03F4: "Grayscale and multichannel halftoning information",
+            #    0x03F5: "Color halftoning information",
+            #    0x03F6: "Duotone halftoning information",
+            #    0x03F7: "Grayscale and multichannel transfer function",
+            #    0x03F8: "Color transfer functions",
+            #    0x03F9: "Duotone transfer functions",
+            #    0x03FA: "Duotone image information",
+            #    0x03FB: "Two bytes for the effective black and white values for the dot range",
+            #    0x03FC: "(Obsolete)",
+            #    0x03FD: "EPS options",
+            #    0x03FE: "Quick Mask information. 2 bytes containing Quick Mask channel ID; 1- byte boolean indicating whether the mask was initially empty.",
+            #    0x03FF: "(Obsolete)",
+            #    0x0400: "Layer state information. 2 bytes containing the index of target layer (0 = bottom layer).",
+            #    0x0401: "Working path (not saved). See See Path resource format.",
+            #    0x0402: "Layers group information. 2 bytes per layer containing a group ID for the dragging groups. Layers in a group have the same group ID.",
+            #    0x0403: "(Obsolete)",
+            #    0x0404: "IPTC-NAA record. Contains the File Info... information. See the documentation in the IPTC folder of the Documentation folder. ",
+            #    0x0405: "Image mode for raw format files",
+            #    0x0406: "JPEG quality. Private.",
+            #    0x0408: "(Photoshop 4.0) Grid and guides information. See See Grid and guides resource format.",
+            #    0x0409: "(Photoshop 4.0) Thumbnail resource for Photoshop 4.0 only. See See Thumbnail resource format.",
+            #    0x040A: "(Photoshop 4.0) Copyright flag. Boolean indicating whether image is copyrighted. Can be set via Property suite or by user in File Info...",
+            #    0x040B: "(Photoshop 4.0) URL. Handle of a text string with uniform resource locator. Can be set via Property suite or by user in File Info...",
+            #    0x040C: "(Photoshop 5.0) Thumbnail resource (supersedes resource 1033). See See Thumbnail resource format. ",
+            #    0x040D: "(Photoshop 5.0) Global Angle. 4 bytes that contain an integer between 0 and 359, which is the global lighting angle for effects layer. If not present, assumed to be 30.",
+            #    0x040E: "(Obsolete) See ID 1073 below. (Photoshop 5.0) Color samplers resource. See See Color samplers resource format.",
+            #    0x040F: "(Photoshop 5.0) ICC Profile. The raw bytes of an ICC (International Color Consortium) format profile. See ICC1v42_2006-05.pdf in the Documentation folder and icProfileHeader.h in Sample Code\Common\Includes . ",
+            #    0x0410: "(Photoshop 5.0) Watermark. One byte. ",
+            #    0x0411: "(Photoshop 5.0) ICC Untagged Profile. 1 byte that disables any assumed profile handling when opening the file. 1 = intentionally untagged.",
+            #    0x0412: "(Photoshop 5.0) Effects visible. 1-byte global flag to show/hide all the effects layer. Only present when they are hidden.",
+            #    0x0413: "(Photoshop 5.0) Spot Halftone. 4 bytes for version, 4 bytes for length, and the variable length data.",
+            #    0x0414: "(Photoshop 5.0) Document-specific IDs seed number. 4 bytes: Base value, starting at which layer IDs will be generated (or a greater value if existing IDs already exceed it). Its purpose is to avoid the case where we add layers, flatten, save, open, and then add more layers that end up with the same IDs as the first set.",
+            #    0x0415: "(Photoshop 5.0) Unicode Alpha Names. Unicode string",
+            #    0x0416: "(Photoshop 6.0) Indexed Color Table Count. 2 bytes for the number of colors in table that are actually defined",
+            #    0x0417: "(Photoshop 6.0) Transparency Index. 2 bytes for the index of transparent color, if any.",
+            #    0x0419: "(Photoshop 6.0) Global Altitude. 4 byte entry for altitude",
+            #    0x041A: "(Photoshop 6.0) Slices. See See Slices resource format.",
+            #    0x041B: "(Photoshop 6.0) Workflow URL. Unicode string",
+            #    0x041C: "(Photoshop 6.0) Jump To XPEP. 2 bytes major version, 2 bytes minor version, 4 bytes count. Following is repeated for count: 4 bytes block size, 4 bytes key, if key = 'jtDd' , then next is a Boolean for the dirty flag; otherwise it's a 4 byte entry for the mod date.",
+            #    0x041D: "(Photoshop 6.0) Alpha Identifiers. 4 bytes of length, followed by 4 bytes each for every alpha identifier.",
+            #    0x041E: "(Photoshop 6.0) URL List. 4 byte count of URLs, followed by 4 byte long, 4 byte ID, and Unicode string for each count.",
+            #    0x0421: "(Photoshop 6.0) Version Info. 4 bytes version, 1 byte hasRealMergedData , Unicode string: writer name, Unicode string: reader name, 4 bytes file version.",
+            #    0x0422: "(Photoshop 7.0) EXIF data 1. See http://www.kodak.com/global/plugins/acrobat/en/service/digCam/exifStandard2.pdf",
+            #    0x0423: "(Photoshop 7.0) EXIF data 3. See http://www.kodak.com/global/plugins/acrobat/en/service/digCam/exifStandard2.pdf",
+            #    0x0424: "(Photoshop 7.0) XMP metadata. File info as XML description. See http://www.adobe.com/devnet/xmp/",
+            #    0x0425: "(Photoshop 7.0) Caption digest. 16 bytes: RSA Data Security, MD5 message-digest algorithm",
+            #    0x0426: "(Photoshop 7.0) Print scale. 2 bytes style (0 = centered, 1 = size to fit, 2 = user defined). 4 bytes x location (floating point). 4 bytes y location (floating point). 4 bytes scale (floating point)",
+            #    0x0428: "(Photoshop CS) Pixel Aspect Ratio. 4 bytes (version = 1 or 2), 8 bytes double, x / y of a pixel. Version 2, attempting to correct values for NTSC and PAL, previously off by a factor of approx. 5%.",
+            #    0x0429: "(Photoshop CS) Layer Comps. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)",
+            #    0x042A: "(Photoshop CS) Alternate Duotone Colors. 2 bytes (version = 1), 2 bytes count, following is repeated for each count: [ Color: 2 bytes for space followed by 4 * 2 byte color component ], following this is another 2 byte count, usually 256, followed by Lab colors one byte each for L, a, b. This resource is not read or used by Photoshop.",
+            #    0x042B: "(Photoshop CS)Alternate Spot Colors. 2 bytes (version = 1), 2 bytes channel count, following is repeated for each count: 4 bytes channel ID, Color: 2 bytes for space followed by 4 * 2 byte color component. This resource is not read or used by Photoshop.",
+            #    0x042D: "(Photoshop CS2) Layer Selection ID(s). 2 bytes count, following is repeated for each count: 4 bytes layer ID",
+            #    0x042E: "(Photoshop CS2) HDR Toning information",
+            #    0x042F: "(Photoshop CS2) Print info",
+            #    0x0430: "(Photoshop CS2) Layer Group(s) Enabled ID. 1 byte for each layer in the document, repeated by length of the resource. NOTE: Layer groups have start and end markers",
+            #    0x0431: "(Photoshop CS3) Color samplers resource. Also see ID 1038 for old format. See See Color samplers resource format.",
+            #    0x0432: "(Photoshop CS3) Measurement Scale. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)",
+            #    0x0433: "(Photoshop CS3) Timeline Information. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)",
+            #    0x0434: "(Photoshop CS3) Sheet Disclosure. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)",
+            #    0x0435: "(Photoshop CS3) DisplayInfo structure to support floating point clors. Also see ID 1007. See Appendix A in Photoshop API Guide.pdf .",
+            #    0x0436: "(Photoshop CS3) Onion Skins. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)",
+            #    0x0438: "(Photoshop CS4) Count Information. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the count in the document. See the Count Tool.",
+            #    0x043A: "(Photoshop CS5) Print Information. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current print settings in the document. The color management options.",
+            #    0x043B: "(Photoshop CS5) Print Style. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current print style in the document. The printing marks, labels, ornaments, etc.",
+            #    0x043C: "(Photoshop CS5) Macintosh NSPrintInfo. Variable OS specific info for Macintosh. NSPrintInfo. It is recommened that you do not interpret or use this data.",
+            #    0x043D: "(Photoshop CS5) Windows DEVMODE. Variable OS specific info for Windows. DEVMODE. It is recommened that you do not interpret or use this data.",
+            #    0x043E: "(Photoshop CS6) Auto Save File Path. Unicode string. It is recommened that you do not interpret or use this data.",
+            #    0x043F: "(Photoshop CS6) Auto Save Format. Unicode string. It is recommened that you do not interpret or use this data.",
+            #    0x0440: "(Photoshop CC) Path Selection State. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current path selection state.",
+            #    0x0BB7: "Name of clipping path. See See Path resource format.",
+            #    0x0BB8: "(Photoshop CC) Origin Path Info. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the origin path data.",
+            #    0x1B58: "Image Ready variables. XML representation of variables definition",
+            #    0x1B59: "Image Ready data sets",
+            #    0x1B5A: "Image Ready default selected state",
+            #    0x1B5B: "Image Ready 7 rollover expanded state",
+            #    0x1B5C: "Image Ready rollover expanded state",
+            #    0x1B5D: "Image Ready save layer settings",
+            #    0x1B5E: "Image Ready version",
+            #    0x1F40: "(Photoshop CS3) Lightroom workflow, if present the document is in the middle of a Lightroom workflow.",
+            #    0x2710: "Print flags information. 2 bytes version ( = 1), 1 byte center crop marks, 1 byte ( = 0), 4 bytes bleed width value, 2 bytes bleed width scale."
+            #}
+
+            returned = {}
+
+            # color mode data section
+            length = struct.unpack('!I', fHandle.read(4))[0]
+            if length == 0:
+                return returned
+
+            maxPos = fHandle.tell() + length
+
+            while fHandle.tell() < maxPos:
+                irbSignature = fHandle.read(4)
+                if irbSignature != b'8BIM':
+                    Debug.print('invalid irb signature', irbSignature)
+                    fHandle.seek(-4, 1)
+                    break
+
+                resId = struct.unpack('!H', fHandle.read(2))[0]
+                # ==> commented, used for debug and psd file format analysis
+                #if resId in __IRB_ID:
+                #    print(hex(resId), __IRB_ID[resId])
+                #elif resId >= 0x0FA0 and resId <= 0x1387:
+                #    print(hex(resId), "Plug-In resource(s). Resources added by a plug-in. See the plug-in API found in the SDK documentation")
+                #elif resId >= 0x07D0 and resId <= 0x0BB6:
+                #    print(hex(resId), "Path Information (saved paths). See See Path resource format.")
+
+
+                pStringSize = struct.unpack('B', fHandler.read(1))[0]
+                if pStringSize%2 == 0:
+                    # odd value
+                    pStringSize+=1
+                # skip name
+                fHandle.seek(pStringSize, 1)
+
+                length = struct.unpack('!I', fHandle.read(4))[0]
+                if length%2 != 0:
+                    # odd value
+                    length+=1
+
+                if resId in [0x03ED, 0x040F]:
+                    data = fHandle.read(length)
+                    if resId == 0x03ED:
+                        returned.update(decode_IRB_03ED(data))
+                    elif resId == 0x040F:
+                        returned.update(decode_IRB_040F(data))
+                else:
+                    # skip data
+                    fHandle.seek(length, 1)
+
+            return returned
+
+        def decode_IRB_03ED(data):
+            # 0x03ED = resolution
+            ppX = round(struct.unpack('!I', data[0:4])[0] / 0xFFFF, 2)
+            unit = struct.unpack('!H', data[4:6])[0]
+            if unit == 2:
+                # pcm / convert to ppi
+                ppX*=0.0254
+
+            ppY = round(struct.unpack('!I', data[8:12])[0] / 0xFFFF, 2)
+            unit = struct.unpack('!H', data[12:14])[0]
+            if unit == 2:
+                # pcm / convert to ppi
+                ppY*=0.0254
+
+            returned = {
+                'resolutionX': (ppX, f'{ppX:.2f}ppi'),
+                'resolutionY': (ppY, f'{ppY:.2f}ppi'),
+                'resolution': ''
+            }
+
+            if ppX == ppY:
+                returned['resolution'] = f'{ppX:.2f}ppi'
+            else:
+                returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+
+            return returned
+
+        def decode_IRB_040F(data):
+            # 0x040F = ICC profile
+
+            returned = {
+                'iccProfileName': {},
+                'iccProfileCopyright': {},
+                'iccProfile': b''
+            }
+            returned['iccProfile']=data
+            returned.update(self.__readICCData(data))
+
+            return returned
+
+        def read_LMI(fHandle):
+            """Decode Layer and Mask Information section"""
+            # Layer and Mask Information
+            #print(hex(fHandle.tell()))
+            length = struct.unpack('!L', fHandle.read(4))[0]
+            #print('lmi length', length)
+            if length > 0:
+                # skip color table content
+                fHandle.seek(length)
+
+            return {}
+
+
+        returned = {}
+
+        with open(self._fullPathName , 'rb') as fHandler:
+            # check signature (4 bytes)
+            bytes = fHandler.read(4)
+            if bytes != b'8BPS':
+                Debug.print('[BCFile.__readMetaDataPsd] Invalid header: {0}', bytes)
+                return returned
+
+            returned.update(read_header(fHandler))
+            if onlySize:
+                return returned
+            read_CMD(fHandler)
+            returned.update(read_IRB(fHandler))
+            #returned.update(read_LMI(fHandler))
+
+        return returned
+
+
+    def __readMetaDataXcf(self, onlySize=False):
+        """Read metadata from XCF file
+
+        XCF specifications: http://henning.makholm.net/xcftools/xcfspec-saved
+                            https://gitlab.gnome.org/GNOME/gimp/-/blob/master/devel-docs/xcf.txt
+        """
+        def read_header(fHandle):
+            # read xcf header
+            __COLOR_TYPE = {
+                    0: 'RGB',
+                    1: 'Grayscale',
+                    2: 'Indexed palette'
+                }
+
+            __BIT_DEPTH = {
+                      0: "8-bit integer/channel [gamma]",
+                      1: "16-bit integer/channel [gamma]",
+                      2: "32-bit integer/channel [linear]",
+                      3: "16-bit float/channel [linear]",
+                      4: "32-bit float/channel [linear]",
+
+                    100: "8-bit integer/channel [linear]",
+                    150: "8-bit integer/channel [gamma]",
+                    200: "16-bit integer/channel [linear]",
+                    250: "16-bit integer/channel [gamma]",
+                    300: "32-bit integer/channel [linear]",
+                    350: "32-bit integer/channel [gamma]",
+                    500: "16-bit float/channel [linear]",
+                    550: "16-bit float/channel [gamma]",
+                    600: "32-bit float/channel [linear]",
+                    650: "32-bit float/channel [gamma]",
+                    700: "64-bit float/channel [linear]",
+                    750: "64-bit float/channel [gamma]"
+                }
+
+            returned = {
+                'width': 0,
+                'height': 0,
+                'colorType': 0,
+                'bitDepth': (8, "8-bit integer/channel"),
+                'iccProfileName': {'en-US': '- [<i>Default GIMP: sRGB</i>]'},
+                'iccProfileCopyright': {'en-US': ''}
+            }
+
+            # skip file version
+            version = fHandle.read(5)
+
+            returned['width'] = int(struct.unpack('!I', fHandle.read(4) )[0])
+            returned['height'] = int(struct.unpack('!I', fHandle.read(4) )[0])
+            returned['colorType'] = int(struct.unpack('!I', fHandle.read(4) )[0])
+
+            if returned['colorType'] in __COLOR_TYPE:
+                returned['colorType'] = (returned['colorType'], __COLOR_TYPE[returned['colorType']])
+            else:
+                returned['colorType'] = (returned['colorType'], 'Unknown')
+
+            if returned['colorType'][0] == 1:
+                # in gray scale, default GIMP color profile is D65 Linear Grayscale
+                returned['iccProfileName']={'en-US': '- [<i>Default GIMP: D65 Linear Grayscale</i>]'}
+
+            if version in [b'file\0', b'v001\0', b'v002\0', b'v003\0']:
+                return returned
+
+            bitDepth = int(struct.unpack('!I', fHandle.read(4) )[0])
+            if bitDepth in __BIT_DEPTH:
+                returned['bitDepth'] = (bitDepth, __BIT_DEPTH[bitDepth])
+            else:
+                returned['bitDepth'] = (bitDepth, 'Unknown')
+
+
+
+            return returned
+
+        def read_imageProperties(fHandle):
+            # read xcf image properties
+            returned = {}
+
+            while True:
+                id = int(struct.unpack('!I', fHandle.read(4) )[0])
+
+                if id == 0:
+                    break
+
+                length = int(struct.unpack('!I', fHandle.read(4) )[0])
+
+                if id in [0x01, 0x13, 0x15]:
+                    bytes = fHandle.read(length)
+
+                    if id == 0x01:
+                        # color table
+                        returned.update(read_imageProperties_01(bytes))
+                    elif id == 0x13:
+                        # resolution
+                        returned.update(read_imageProperties_13(bytes))
+                    elif id == 0x15:
+                        # parasite
+                        returned.update(read_imageProperties_15(bytes))
+                else:
+                    # ignore properties and skip data
+                    fHandle.seek(length, 1)
+
+            return returned
+
+        def read_imageProperties_01(data):
+            # read color map table (#01)
+            returned = {
+                'paletteSize': int(struct.unpack('!I', data[0:4] )[0])
+            }
+            return returned
+
+        def read_imageProperties_13(data):
+            # read a resolution (#19)
+            ppX = struct.unpack('!f', data[0:4])[0]
+            ppY = struct.unpack('!f', data[4:8])[0]
+
+            returned = {
+                'resolutionX': (ppX, f'{ppX:.2f}ppi'),
+                'resolutionY': (ppY, f'{ppY:.2f}ppi'),
+                'resolution': ''
+            }
+
+            if ppX == ppY:
+                returned['resolution'] = f'{ppX:.2f}ppi'
+            else:
+                returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+
+            return returned
+
+        def read_imageProperties_15(data):
+            # read a parasite (#21)
+            # can contains N parasites...
+
+            position = 0
+            while position<len(data):
+                lName = int(struct.unpack('!I', data[position:position+4])[0])
+                if lName == 0:
+                    break
+
+                position+=4
+                name = data[position:position+lName - 1]   # remove trailing 0x00 character
+
+                position+=lName+4 #+4 => ignore flags
+                parasiteSize=int(struct.unpack('!I', data[position:position+4])[0])
+                position+=4
+
+
+                if name == b'icc-profile':
+                    returned['iccProfile']=data[position:position+parasiteSize]
+                    returned.update(self.__readICCData(returned['iccProfile']))
+                else:
+                    pass
+                    #print(name, 'skip')
+
+
+                position+=parasiteSize
+
+            return {}
+
+
+        returned = {}
+
+        with open(self._fullPathName , 'rb') as fHandler:
+            # check signature (8 bytes)
+            bytes = fHandler.read(9)
+            if bytes != b'gimp xcf ':
+                Debug.print('[BCFile.__readMetaDataXcf] Invalid header: {0}', bytes)
+                return returned
+
+            returned.update(read_header(fHandler))
+            if onlySize:
+                return returned
+
+            returned.update(read_imageProperties(fHandler))
+
+
+
+        return returned
+
+
+    def __readMetaDataKra(self):
+        """Read metadata from Krita file"""
+        returned = {
+            'resolutionX': (0, 'Unknown'),
+            'resolutionY': (0, 'Unknown'),
+            'resolution': '',
+            'colorType': (None, ''),
+            'bitDepth': (None, ''),
+            'iccProfileName': {},
+            'imageCount': 0,
+            'imageDelay': 0,
+
+            'document.layerCount': 0,
+            'document.fileLayers': [],
+
+
+            'about.title': '',
+            'about.subject': '',
+            'about.description': '',
+            'about.keywords': '',
+            'about.creator': '',
+            'about.creationDate': '',
+            'about.editingTime': 0,
+            'about.editingCycles': 0,
+
+            'author.nickName': '',
+            'author.firstName': '',
+            'author.lastName': '',
+            'author.initials': '',
+            'author.title': '',
+            'author.position': '',
+            'author.company': '',
+            'author.contact': [],
+        }
+
+        maindoc = self.__readArchiveDataFile("maindoc.xml")
+        if not maindoc is None:
+            # process file
+
+            parsed = False
+            try:
+                xmlDoc = xmlElement.fromstring(maindoc.decode())
+                parsed = True
+            except Exception as e:
+                # can't be read (not xml?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataKra] Unable to parse "maindoc.xml" in file {0}: {1}', self._fullPathName, str(e))
+
+            if parsed:
+                try:
+                    ppX = 0
+                    ppX = float(xmlDoc[0].attrib['x-res'])
+                    returned['resolutionX'] = (ppX, f'{ppX:.2f}ppi')
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, str(e))
+
+                try:
+                    ppY = 0
+                    ppY = float(xmlDoc[0].attrib['y-res'])
+                    returned['resolutionY'] = (ppY, f'{ppX:.2f}ppi')
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-y in file {0}: {1}', self._fullPathName, str(e))
+
+                if ppX == ppY:
+                    returned['resolution'] = f'{ppX:.2f}ppi'
+                else:
+                    returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+
+                # Color model id comparison through the ages (from kis_kra_loader.cpp)
+                #
+                #   2.4        2.5          2.6         ideal
+                #
+                #   ALPHA      ALPHA        ALPHA       ALPHAU8
+                #
+                #   CMYK       CMYK         CMYK        CMYKAU8
+                #              CMYKAF32     CMYKAF32
+                #   CMYKA16    CMYKAU16     CMYKAU16
+                #
+                #   GRAYA      GRAYA        GRAYA       GRAYAU8
+                #   GrayF32    GRAYAF32     GRAYAF32
+                #   GRAYA16    GRAYAU16     GRAYAU16
+                #
+                #   LABA       LABA         LABA        LABAU16
+                #              LABAF32      LABAF32
+                #              LABAU8       LABAU8
+                #
+                #   RGBA       RGBA         RGBA        RGBAU8
+                #   RGBA16     RGBA16       RGBA16      RGBAU16
+                #   RgbAF32    RGBAF32      RGBAF32
+                #   RgbAF16    RgbAF16      RGBAF16
+                #
+                #   XYZA16     XYZA16       XYZA16      XYZAU16
+                #              XYZA8        XYZA8       XYZAU8
+                #   XyzAF16    XyzAF16      XYZAF16
+                #   XyzAF32    XYZAF32      XYZAF32
+                #
+                #   YCbCrA     YCBCRA8      YCBCRA8     YCBCRAU8
+                #   YCbCrAU16  YCBCRAU16    YCBCRAU16
+                #              YCBCRF32     YCBCRF32
+                try:
+                    csn = xmlDoc[0].attrib['colorspacename']
+
+                    # RGB
+                    if csn in ['RGBA', 'RGBAU8']:
+                        returned['colorType'] = ('RGBA', 'RGB with Alpha')
+                        returned['bitDepth'] = (8, '8-bit integer/channel')
+                    elif csn in ['RGBA16', 'RGBAU16']:
+                        returned['colorType'] = ('RGBA', 'RGB with Alpha')
+                        returned['bitDepth'] = (16, '16-bit integer/channel')
+                    elif csn in ['RgbAF16', 'RGBAF16']:
+                        returned['colorType'] = ('RGBA', 'RGB with Alpha')
+                        returned['bitDepth'] = (16.0, '16-bit float/channel')
+                    elif csn in ['RgbAF32', 'RGBAF32']:
+                        returned['colorType'] = ('RGBA', 'RGB with Alpha')
+                        returned['bitDepth'] = (32.0, '32-bit float/channel')
+
+                    # CYMK
+                    elif csn in ['CMYK', 'CMYKAU8']:
+                        returned['colorType'] = ('CMYKA', 'CMYK with Alpha')
+                        returned['bitDepth'] = (8, '8-bit integer/channel')
+                    elif csn in ['CMYKA16', 'CMYKAU16']:
+                        returned['colorType'] = ('CMYKA', 'CMYK with Alpha')
+                        returned['bitDepth'] = (16, '16-bit integer/channel')
+                    elif csn in ['CMYKAF32', 'CMYKAF32']:
+                        returned['colorType'] = ('CMYKA', 'CMYK with Alpha')
+                        returned['bitDepth'] = (32.0, '32-bit float/channel')
+
+                    # GRAYSCALE
+                    elif csn in ['GRAYA', 'GRAYAU8']:
+                        returned['colorType'] = ('GRAYA', 'Grayscale with Alpha')
+                        returned['bitDepth'] = (8, '8-bit integer/channel')
+                    elif csn in ['GRAYA16', 'GRAYAU16']:
+                        returned['colorType'] = ('GRAYA', 'Grayscale with Alpha')
+                        returned['bitDepth'] = (16, '16-bit integer/channel')
+                    elif csn == 'GRAYAF16':
+                        returned['colorType'] = ('GRAYA', 'Grayscale with Alpha')
+                        returned['bitDepth'] = (16, '16-bit float/channel')
+                    elif csn in ['GrayF32', 'GRAYAF32']:
+                        returned['colorType'] = ('GRAYA', 'Grayscale with Alpha')
+                        returned['bitDepth'] = (32.0, '32-bit float/channel')
+
+                    # L*A*B*
+                    elif csn == 'LABAU8':
+                        returned['colorType'] = ('LABA', 'L*a*b* with Alpha')
+                        returned['bitDepth'] = (8, '8-bit integer/channel')
+                    elif csn in ['LABA', 'LABAU16']:
+                        returned['colorType'] = ('LABA', 'L*a*b* with Alpha')
+                        returned['bitDepth'] = (16, '16-bit integer/channel')
+                    elif csn == 'LABAF32':
+                        returned['colorType'] = ('LABA', 'L*a*b* with Alpha')
+                        returned['bitDepth'] = (32.0, '32-bit float/channel')
+
+                    # XYZ
+                    elif csn in ['XYZAU8', 'XYZA8']:
+                        returned['colorType'] = ('XYZA', 'XYZ with Alpha')
+                        returned['bitDepth'] = (8, '8-bit integer/channel')
+                    elif csn in ['XYZA16', 'XYZAU16']:
+                        returned['colorType'] = ('XYZA', 'XYZ with Alpha')
+                        returned['bitDepth'] = (16, '16-bit integer/channel')
+                    elif csn in ['XyzAF16', 'XYZAF16']:
+                        returned['colorType'] = ('XYZA', 'XYZ with Alpha')
+                        returned['bitDepth'] = (16.0, '16-bit float/channel')
+                    elif csn in ['XyzAF32', 'XYZAF32']:
+                        returned['colorType'] = ('XYZA', 'XYZ with Alpha')
+                        returned['bitDepth'] = (32.0, '32-bit float/channel')
+
+                    # YCbCr
+                    elif csn in ['YCbCrA', 'YCBCRA8', 'YCBCRAU8']:
+                        returned['colorType'] = ('YCbCr', 'YCbCr with Alpha')
+                        returned['bitDepth'] = (8, '8-bit integer/channel')
+                    elif csn in ['YCbCrAU16', 'YCBCRAU16']:
+                        returned['colorType'] = ('YCbCr', 'YCbCr with Alpha')
+                        returned['bitDepth'] = (16, '16-bit integer/channel')
+                    elif csn == 'YCBCRF32':
+                        returned['colorType'] = ('YCbCr', 'YCbCr with Alpha')
+                        returned['bitDepth'] = (32.0, '32-bit float/channel')
+
+
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image colorspacename in file {0}: {1}', self._fullPathName, str(e))
+
+                try:
+                    returned['iccProfileName'] = {'en-US': xmlDoc[0].attrib['profile']}
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, str(e))
+
+
+                try:
+                    node=xmlDoc.find(".//{*}animation/{*}currentTime")
+                    if not node is None:
+                        returned['imageCount'] = int(node.attrib['value'])
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve currentTime in file {0}: {1}', self._fullPathName, str(e))
+
+                try:
+                    node=xmlDoc.find(".//{*}animation/{*}framerate")
+                    if not node is None:
+                        returned['imageDelay'] = int(node.attrib['value'])
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve framerate in file {0}: {1}', self._fullPathName, str(e))
+
+
+
+                try:
+                    returned['document.fileLayers']=[node.attrib['source'] for node in xmlDoc.findall(".//{*}layer[@nodetype='filelayer']")]
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers "filelayer" in file {0}: {1}', self._fullPathName, str(e))
+
+                try:
+                    returned['document.layerCount']=len(xmlDoc.findall(".//{*}layer"))
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers in file {0}: {1}', self._fullPathName, str(e))
+
+
+        infoDoc = self.__readArchiveDataFile("documentinfo.xml")
+        if not infoDoc is None:
+            parsed = False
+            try:
+                xmlDoc = xmlElement.fromstring(infoDoc.decode())
+                parsed = True
+            except Exception as e:
+                # can't be read (not xml?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataKra] Unable to parse "documentinfo.xml" in file {0}: {1}', self._fullPathName, str(e))
+
+            if parsed:
+                node = xmlDoc.find('{*}about/{*}title')
+                if not node is None:
+                    returned['about.title'] = strDefault(node.text)
+
+                node = xmlDoc.find('{*}about/{*}subject')
+                if not node is None:
+                    returned['about.subject'] = strDefault(node.text)
+
+                node = xmlDoc.find('{*}about/{*}description')
+                if not node is None:
+                    if strDefault(node.text) != '':
+                        returned['about.description'] = strDefault(node.text)
+                    else:
+                        # seems to get description ins abstract node?
+                        node = xmlDoc.find('{*}about/{*}abstract')
+                        if not node is None:
+                            if strDefault(node.text) != '':
+                                returned['about.description'] = strDefault(node.text)
+
+                node = xmlDoc.find('{*}about/{*}keyword')
+                if not node is None:
+                    returned['about.keywords'] = strDefault(node.text)
+
+                node = xmlDoc.find('{*}about/{*}initial-creator')
+                if not node is None:
+                    returned['about.creator'] = strDefault(node.text)
+
+                node = xmlDoc.find('{*}about/{*}creation-date')
+                if not node is None:
+                    returned['about.creationDate'] = strDefault(node.text).replace('T', ' ')
+
+                node = xmlDoc.find('{*}about/{*}editing-cycles')
+                if not node is None:
+                    returned['about.editingCycles'] = intDefault(node.text, 1)
+
+                node = xmlDoc.find('{*}about/{*}editing-time')
+                if not node is None:
+                    # in seconds
+                    returned['about.editingTime'] = intDefault(node.text)
+
+                node = xmlDoc.find('{*}author/{*}full-name')
+                if not node is None:
+                    returned['author.nickName'] = strDefault(node.text)
+
+                node = xmlDoc.find('{*}author/{*}creator-first-name')
+                if not node is None:
+                    returned['author.firstName'] = strDefault(node.text)
+
+                node = xmlDoc.find('{*}author/{*}creator-last-name')
+                if not node is None:
+                    returned['author.lastName'] = strDefault(node.text)
+
+                node = xmlDoc.find('{*}author/{*}initial')
+                if not node is None:
+                    returned['author.initials'] = strDefault(node.text)
+
+                node = xmlDoc.find('{*}author/{*}author-title')
+                if not node is None:
+                    returned['author.title'] = strDefault(node.text)
+
+                node = xmlDoc.find('{*}author/{*}position')
+                if not node is None:
+                    returned['author.position'] = strDefault(node.text)
+
+                node = xmlDoc.find('{*}author/{*}company')
+                if not node is None:
+                    returned['author.company'] = strDefault(node.text)
+
+                nodeList = xmlDoc.findall('{*}author/{*}contact')
+                if not nodeList is None:
+                    for node in nodeList:
+                        if strDefault(node.text) != '':
+                            returned['author.contact'].append({node.attrib['type']: strDefault(node.text)})
+
+
+        return returned
+
+
+    def __readMetaDataOra(self):
+        """Read metadata from Krita file"""
+        returned = {
+            'resolutionX': (0, 'Unknown'),
+            'resolutionY': (0, 'Unknown'),
+            'resolution': '',
+
+            'document.layerCount': 0
+        }
+
+        maindoc = self.__readArchiveDataFile("stack.xml")
+        if not maindoc is None:
+            # process file
+
+            parsed = False
+            try:
+                xmlDoc = xmlElement.fromstring(maindoc.decode())
+                parsed = True
+            except Exception as e:
+                # can't be read (not xml?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataOra] Unable to parse "stack.xml" in file {0}: {1}', self._fullPathName, str(e))
+
+            if parsed:
+                try:
+                    ppX = 0
+                    ppX = float(xmlDoc.attrib['xres'])
+                    returned['resolutionX'] = (ppX, f'{ppX:.2f}ppi')
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, str(e))
+
+                try:
+                    ppY = 0
+                    ppY = float(xmlDoc.attrib['yres'])
+                    returned['resolutionY'] = (ppY, f'{ppX:.2f}ppi')
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image resolution-y in file {0}: {1}', self._fullPathName, str(e))
+
+                if ppX == 0 and ppY ==0:
+                    # no resolution information
+                    returned.pop('resolutionX')
+                    returned.pop('resolutionY')
+                    returned.pop('resolution')
+                elif ppX == ppY:
+                    returned['resolution'] = f'{ppX:.2f}ppi'
+                else:
+                    returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+
+                try:
+                    returned['document.layerCount']=len(xmlDoc.findall(".//{*}layer"))
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve layers in file {0}: {1}', self._fullPathName, str(e))
+
+
+        return returned
+
     # endregion: utils ---------------------------------------------------------
 
 
@@ -673,31 +2546,38 @@ class BCFile(BCBaseFile):
         if not isinstance(size, BCFileThumbnailSize):
             # size is not a BCFileThumbnailSize (none or invalid value)
             # return root path
-            return BCFile.__THUMBNAIL_CACHE_PATH
+            return BCFile.__BC_CACHE_PATH
         else:
-            return os.path.join(BCFile.__THUMBNAIL_CACHE_PATH, str(size.value))
+            return os.path.join(BCFile.__BC_CACHE_PATH, str(size.value))
 
     @staticmethod
-    def setThumbnailCacheDirectory(thumbnailCachePath=None):
-        """Set current thumbnail cache directory
+    def metaCacheDirectory():
+        """Return current metadata cache directory"""
+        return os.path.join(BCFile.__BC_CACHE_PATH, 'meta')
+
+    @staticmethod
+    def setCacheDirectory(bcCachePath=None):
+        """Set current cache directory
 
         If no value provided, reset to default value
         """
-        if thumbnailCachePath is None or thumbnailCachePath == '':
-            thumbnailCachePath = os.path.join(QStandardPaths.writableLocation(QStandardPaths.CacheLocation), "bulicommander")
+        if bcCachePath is None or bcCachePath == '':
+            bcCachePath = os.path.join(QStandardPaths.writableLocation(QStandardPaths.CacheLocation), "bulicommander")
         else:
-            thumbnailCachePath = os.path.expanduser(thumbnailCachePath)
+            bcCachePath = os.path.expanduser(bcCachePath)
 
-        if not isinstance(thumbnailCachePath, str):
-            raise EInvalidType("Given `thumbnailCachePath` must be a valid <str> ")
+        if not isinstance(bcCachePath, str):
+            raise EInvalidType("Given `bcCachePath` must be a valid <str> ")
 
         try:
-            BCFile.__THUMBNAIL_CACHE_PATH = thumbnailCachePath
-            os.makedirs(thumbnailCachePath, exist_ok=True)
+            BCFile.__BC_CACHE_PATH = bcCachePath
+
+            os.makedirs(bcCachePath, exist_ok=True)
             for size in BCFileThumbnailSize:
                 os.makedirs(BCFile.thumbnailCacheDirectory(size), exist_ok=True)
+            os.makedirs(BCFile.metaCacheDirectory(), exist_ok=True)
         except Exception as e:
-            Debug.print('[BCFile.setThumbnailCacheDirectory] Unable to create directory {0}: {1}', thumbnailCachePath, str(e))
+            Debug.print('[BCFile.setCacheDirectory] Unable to create directory {0}: {1}', bcCachePath, str(e))
             return
 
     @staticmethod
@@ -712,7 +2592,7 @@ class BCFile(BCBaseFile):
         If no file format is provided or if invalid, set default format JPEG
         """
         if not isinstance(thumbnailCacheFormat, BCFileThumbnailFormat):
-            BCFile.__THUMBNAIL_CACHE_FMT = BCFileThumbnailFormat.JPEG
+            BCFile.__THUMBNAIL_CACHE_FMT = BCFileThumbnailFormat.PNG
         else:
             BCFile.__THUMBNAIL_CACHE_FMT = thumbnailCacheFormat
 
@@ -754,6 +2634,13 @@ class BCFile(BCBaseFile):
         """Return file size"""
         return self.__size
 
+    def extension(self, dot=True):
+        """Return file extension"""
+        if dot:
+            return self.__extension
+        else:
+            return self.__extension[1:]
+
     def imageSize(self):
         """Return file image size"""
         return self.__imgSize
@@ -789,7 +2676,7 @@ class BCFile(BCBaseFile):
             except:
                 return None
 
-    def thumbnail(self, cache=True):
+    def thumbnail(self, size=None, thumbType=BCBaseFile.THUMBTYPE_IMAGE, cache=True):
         """Return file thumbnail according to current BCFile default cache size
 
         If `cache` is True:
@@ -808,11 +2695,17 @@ class BCFile(BCBaseFile):
         If not possible to return image, return None
         Otherwise, return a QImage
         """
+        if not self.readable():
+            return super(BCFile, self).thumbnail(size, thumbType)
+
         imageSrc = None
+
+        if size is None or not isinstance(size, BCFileThumbnailSize):
+            size = BCFile.__THUMBNAIL_CACHE_DEFAULTSIZE
 
         if cache:
             # check if thumbnail is cached
-            sourceSize = BCFile.__THUMBNAIL_CACHE_DEFAULTSIZE
+            sourceSize = size
 
             while not sourceSize is None:
                 thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(sourceSize), f'{self.__qHash}.{BCFile.__THUMBNAIL_CACHE_FMT.value}')
@@ -821,47 +2714,115 @@ class BCFile(BCBaseFile):
                     # thumbnail found!
                     imageSrc = QImage(thumbnailFile)
 
-                    if sourceSize == BCFile.__THUMBNAIL_CACHE_DEFAULTSIZE:
+                    if sourceSize == size:
                         # the found thumbnail is already to expected size, return it
-                        return imageSrc
+                        if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
+                            return imageSrc
+                        else:
+                            return QIcon(QPixmap.fromImage(imageSrc))
                     break
 
                 # use larger thumbnail size as source
                 sourceSize = sourceSize.next()
 
-
+        thumbnailImg = None
         if not cache or imageSrc is None:
+            # no image cache found
             # load full image size from file
             imageSrc = self.image()
             if imageSrc is None:
                 return None
 
-        # make thumbnail
-        thumbnailImg = imageSrc.scaled(QSize(BCFile.__THUMBNAIL_CACHE_DEFAULTSIZE.value, BCFile.__THUMBNAIL_CACHE_DEFAULTSIZE.value), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            if cache:
+                # build all image size in cache, from the biggest to smallest
+                buildSize = BCFileThumbnailSize.HUGE
+                while not buildSize is None:
+                    if imageSrc.width() <= buildSize.value or imageSrc.height() <= buildSize.value:
+                        # when image is smaller than thumbnail
+                        # create a thumbnail bigger than thumbnail o_O'
+                        # without antialiasing
+                        imageSrc = imageSrc.scaled(QSize(buildSize.value, buildSize.value), Qt.KeepAspectRatio, Qt.FastTransformation)
+                    else:
+                        imageSrc = imageSrc.scaled(QSize(buildSize.value, buildSize.value), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+                    thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(buildSize), f'{self.__qHash}.{BCFile.__THUMBNAIL_CACHE_FMT.value}')
+                    try:
+                        imageSrc.save(thumbnailFile, quality=BCFile.__THUMBNAIL_CACHE_COMPRESSION)
+                    except Exception as e:
+                        Debug.print('[BCFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, str(e))
+
+                    if size == buildSize:
+                        thumbnailImg = QImage(imageSrc)
+
+                    buildSize = buildSize.prev()
+
+                if not thumbnailImg is None:
+                    if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
+                        return thumbnailImg
+                    else:
+                        return QIcon(QPixmap.fromImage(thumbnailImg))
+
+        if thumbnailImg is None:
+            # make thumbnail
+            thumbnailImg = imageSrc.scaled(QSize(size.value, size.value), Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         if not cache:
             # no need to save thumbnail
-            return thumbnailImg
+            if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
+                return thumbnailImg
+            else:
+                return QIcon(QPixmap.fromImage(thumbnailImg))
 
-        thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(BCFile.__THUMBNAIL_CACHE_DEFAULTSIZE), f'{self.__qHash}.{BCFile.__THUMBNAIL_CACHE_FMT.value}')
+        thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(size), f'{self.__qHash}.{BCFile.__THUMBNAIL_CACHE_FMT.value}')
         try:
             thumbnailImg.save(thumbnailFile, quality=BCFile.__THUMBNAIL_CACHE_COMPRESSION)
         except Exception as e:
             Debug.print('[BCFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, str(e))
 
         # finally, return thumbnail
-        return thumbnailImg
+        if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
+            return thumbnailImg
+        else:
+            return QIcon(QPixmap.fromImage(thumbnailImg))
 
     def getProperty(self, property):
         """return property value"""
         if property == BCFileProperty.FILE_SIZE:
             return self.__size
+        elif property == BCFileProperty.FILE_EXTENSION:
+            return self.__extension
         elif property == BCFileProperty.IMAGE_WIDTH:
             return self.__imgSize.width()
         elif property == BCFileProperty.IMAGE_HEIGHT:
             return self.__imgSize.height()
         else:
             return super(BCFile, self).getProperty(property)
+
+    def getInformation(self):
+        if self._format in [BCFileManagedFormat.JPEG, BCFileManagedFormat.PNG, BCFileManagedFormat.SVG]:
+            imageReader = QImage(self._fullPathName)
+            keys = imageReader.textKeys()
+
+    def getMetaInformation(self):
+        """Return metadata informations"""
+        if self._format == BCFileManagedFormat.KRA:
+            return self.__readMetaDataKra()
+        elif self._format == BCFileManagedFormat.ORA:
+            return self.__readMetaDataOra()
+        elif self._format == BCFileManagedFormat.PNG:
+            return self.__readMetaDataPng()
+        elif self._format == BCFileManagedFormat.JPEG:
+            return self.__readMetaDataJpeg()
+        elif self._format == BCFileManagedFormat.GIF:
+            return self.__readMetaDataGif()
+        elif self._format == BCFileManagedFormat.WEBP:
+            return self.__readMetaDataWebP()
+        elif self._format == BCFileManagedFormat.PSD:
+            return self.__readMetaDataPsd()
+        elif self._format == BCFileManagedFormat.XCF:
+            return self.__readMetaDataXcf()
+        else:
+            return {}
 
     # endregion: getter/setters ------------------------------------------------
 
@@ -1548,33 +3509,37 @@ class BCFileList(object):
     __MTASKS_RULES = []
 
     @staticmethod
-    def getBcFile(fileName):
+    def getBcFile(itemIndex, fileName):
         """Return a BCFile from given fileName
 
         > Used for multiprocessing taks
         """
+        if isinstance(fileName, BCFile) or isinstance(fileName, BCMissingFile):
+            return fileName
+
         try:
-            returned = BCFile(fileName)
-            return returned
+            return BCFile(fileName, False)
         except Exception as e:
-            print(e)
+            Debug.print('[BCFileList.getBcFile] Unable to analyse file {0}: {1}', fileName, e)
             return None
 
     @staticmethod
-    def getBcDirectory(fileName):
+    def getBcDirectory(itemIndex, fileName):
         """Return a BCDirectory from given fileName
 
         > Used for multiprocessing taks
         """
+        if isinstance(fileName, BCDirectory):
+            return fileName
+
         try:
-            returned = BCDirectory(fileName)
-            return returned
+            return BCDirectory(fileName)
         except Exception as e:
-            print(e)
+            Debug.print('[BCFileList.getBcDirectory] Unable to analyse directory {0}: {1}', fileName, e)
             return None
 
     @staticmethod
-    def checkBcFile(file):
+    def checkBcFile(itemIndex, file):
         """Return file if matching query rules, otherwise return None
 
         > Used for multiprocessing taks
@@ -1601,9 +3566,6 @@ class BCFileList(object):
         self.__includeHidden = False
 
         self.__invalidated = True
-
-        #if isinstance(currentList, BCFileList):
-        #    self.__initList(currentList)
 
     def __invalidate(self):
         self.__invalidated = True
@@ -1668,6 +3630,11 @@ class BCFileList(object):
     def clearRules(self):
         """Clear rules definitions"""
         self.__ruleList = []
+        self.__invalidate()
+
+    def clearSortRules(self):
+        """Clear rules definitions"""
+        self.__sortList = []
         self.__invalidate()
 
     def clearResults(self):
@@ -2210,14 +4177,15 @@ class BCFileList(object):
             else:
                 # return current directory content
                 with os.scandir(pathName) as files:
+
                     for file in files:
                         fullPathName = os.path.join(pathName, file.name)
-                        if self.__includeHidden or QFileInfo(file.name).isHidden():
+                        if self.__includeHidden or not QFileInfo(fullPathName).isHidden():
                             if file.is_file():
                                 nbTotal+=1
 
                                 # check if file name match given pattern (if pattern) and is not already in file list
-                                if (namePattern is None or namePattern.search(name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
+                                if (namePattern is None or namePattern.search(file.name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
                                     foundFiles.add(fullPathName)
                             elif self.__includeDirectories and file.is_dir():
                                 # if directories are asked and file is a directory, add it
@@ -2228,22 +4196,24 @@ class BCFileList(object):
 
         totalMatch = len(foundFiles) + len(foundDirectories)
 
+        Debug.print("Search in paths: {0}", self.__pathList)
         Debug.print('Found {0} of {1} files in {2}s', totalMatch, nbTotal, Stopwatch.duration("BCFileList.execute.search"))
 
         if totalMatch == 0:
+            self.__invalidated = False
             return totalMatch
 
         # ----
         Stopwatch.start('BCFileList.execute.scan')
         # list file is built, now scan files to retrieve all file/image properties
-        # the returned filesList is an array of BCFile if file is readbale, otherwise it contain a None value
+        # the returned filesList is an array of BCFile if file is readable, otherwise it contain a None value
         filesList = set()
         directoriesList = set()
 
-        with Pool() as pool:
-            # use all processors to parallelize files analysis
-            filesList = pool.map(BCFileList.getBcFile, foundFiles, os.cpu_count() * 10)
-            directoriesList = pool.map(BCFileList.getBcDirectory, foundDirectories, os.cpu_count() * 10)
+
+        pool = BCWorkerPool()
+        filesList = pool.map(foundFiles, BCFileList.getBcFile)
+        directoriesList = pool.map(foundDirectories, BCFileList.getBcDirectory)
 
         Debug.print('Scan {0} files in {1}s', totalMatch, Stopwatch.duration("BCFileList.execute.scan"))
 
@@ -2258,10 +4228,11 @@ class BCFileList(object):
         # so pass current object rules to static class...
         if len(self.__ruleList) > 0:
             BCFileList.__MTASKS_RULES = self.__ruleList
-            with Pool() as pool:
-                # use all processors to parallelize files analysis
-                filesList = pool.map(BCFileList.checkBcFile, filesList, os.cpu_count() * 10)
-                directoriesList = pool.map(BCFileList.checkBcFile, directoriesList, os.cpu_count() * 10)
+            # use all processors to parallelize files analysis
+            filesList = pool.map(filesList, BCFileList.checkBcFile)
+            directoriesList = pool.map(directoriesList, BCFileList.checkBcFile)
+        else:
+            BCFileList.__MTASKS_RULES = []
 
         Debug.print('Filter {0} files in {1}s', len(filesList), Stopwatch.duration("BCFileList.execute.filter"))
 
@@ -2285,18 +4256,20 @@ class BCFileList(object):
 
 
         # ----
-        Stopwatch.start('BCFileList.execute.sort')
-        if len(self.__sortList) > 0:
-            self.__currentFiles = sorted(self.__currentFiles, key=cmp_to_key(self.__sort))
-
-        Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.sort"))
-
+        Stopwatch.start('BCFileList.sort')
+        self.sort()
+        Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.sort"))
 
         Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.global"))
 
         self.__invalidated = False
 
         return len(self.__currentFiles)
+
+    def sort(self):
+        """Sort current result using current sort rules"""
+        if len(self.__sortList) > 0:
+            self.__currentFiles = sorted(self.__currentFiles, key=cmp_to_key(self.__sort))
 
     def nbFiles(self):
         """Return number of found image files"""
@@ -2306,13 +4279,83 @@ class BCFileList(object):
         """Return found image files"""
         return self.__currentFiles
 
-    def thumbnails(self):
-        """return thumbails for files"""
-        raise EInvalidStatus("Not yet implemented!")
+    def setResult(self, files):
+        """Allows to build result from a predefined list of files (fullpath name string and/or BCFile and/or BCDirectory)
+
+        Note: when result is set:
+        - current paths are cleared
+        - current rules are cleared
+        - current results are cleared
+        """
+        if not isinstance(files, list):
+            raise EInvalidType("Given `files` must be a <list> of <str>, <BCFile> or <BCDirectory> items")
+
+        self.clearPaths()
+        self.clearRules()
+        self.clearResults()
+
+        foundFiles = set()
+        foundDirectories = set()
+
+        filesList = set()
+        directoriesList = set()
+
+        for file in files:
+            if isinstance(file, str):
+                if os.path.isfile(file):
+                    foundFiles.add(file)
+                elif os.path.isdir(file):
+                    foundDirectories.add(file)
+                else:
+                    foundFiles.add(BCMissingFile(file))
+            elif isinstance(file, BCFile) or isinstance(file, BCMissingFile):
+                filesList.add(file)
+            elif isinstance(file, BCDirectory):
+                directoriesList.add(file)
+
+        Debug.print('[BCFileList.setResult] FoundFile: {0}', foundFiles)
+        pool = BCWorkerPool()
+        if len(foundFiles)>0:
+            filesList = filesList.union( pool.map(foundFiles, BCFileList.getBcFile) )
+        if len(foundDirectories)>0:
+            directoriesList = directoriesList.union( pool.map(foundDirectories, BCFileList.getBcDirectory) )
+
+        for file in filesList:
+            if not file is None:
+                self.__currentFiles.append(file)
+                self.__currentFilesName.add(file.fullPathName())
+        for file in directoriesList:
+            if not file is None:
+                self.__currentFiles.append(file)
+                self.__currentFilesName.add(file.fullPathName())
+
+        self.__invalidated = False
+
+        return len(self.__currentFiles)
 
 
+class BCFileIcon(object):
+    """Provide icon for a BCBaseFile"""
+
+    __IconProvider = QFileIconProvider()
+
+    @staticmethod
+    def get(file):
+        """Return icon for given file"""
+        if isinstance(file, str):
+            fileInfo = QFileInfo(file)
+        elif isinstance(file, BCBaseFile):
+            fileInfo = QFileInfo(file.fullPathName())
+        else:
+            raise EInvalidType("Given `file` must be a <str> or <BCBaseFile>")
+
+        if fileInfo.fileName() == '..':
+            return QIcon(':/images/goup')
 
 
+        return BCFileIcon.__IconProvider.icon(fileInfo)
 
+
+Debug.setEnabled(True)
 
 

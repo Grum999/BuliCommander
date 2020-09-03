@@ -19,6 +19,7 @@
 # A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
+import os
 import sys
 
 from PyQt5.QtCore import (
@@ -61,10 +62,6 @@ class BCHistory(QObject):
             raise EInvalidType('Given `value` must be an <bool>')
         self.__uniqueItems = value
 
-    def maxItems(self):
-        """Return current maximum items in a list"""
-        return self.__maxItems
-
     def setMaxItems(self, value):
         """Define maximum items that can be stored by history
 
@@ -106,7 +103,10 @@ class BCHistory(QObject):
         if not position is None:
             self.__list.pop(position)
         if len(self.__list)>=self.__maxItems:
-            self.__list = self.__list[-self.__maxItems+1:]
+            if self.__maxItems>1:
+                self.__list = self.__list[-self.__maxItems+1:]
+            else:
+                self.__list = []
         self.__list.append(value)
         if notifyChange:
             self.changed.emit()
@@ -121,17 +121,18 @@ class BCHistory(QObject):
         return returned
 
 
-    def last(self, notifyChange=True):
+    def last(self):
         """Return last value added"""
         if len(self.__list) > 0:
             return self.__list[-1]
         else:
             return None
 
-    def clear(self):
+    def clear(self, notifyChange=True):
         """Clear history"""
         self.__list.clear()
-        self.changed.emit()
+        if notifyChange:
+            self.changed.emit()
 
     def length(self):
         """return number of items in History"""
@@ -140,4 +141,22 @@ class BCHistory(QObject):
     def list(self):
         """return items in History"""
         return self.__list
+
+    def removeMissing(self, notifyChange=True, refList=None):
+        """Remove missing directories from history"""
+        modified=False
+        tmpList=[]
+        for path in self.__list:
+            if not path.startswith('@'):
+                if os.path.isdir(path):
+                    tmpList.append(path)
+                else:
+                    modified=True
+            elif not refList is None:
+                if path in refList:
+                    tmpList.append(path)
+        self.__list = tmpList
+        if notifyChange and modified:
+            self.changed.emit()
+
 

@@ -15,12 +15,13 @@ class FilenameModel(QtCore.QStringListModel):
     `icon_provider` (func, 'internal', None) - a function which gets path
                                                and returns QIcon
     """
-    def __init__(self, filter_=None, fs_engine='qt', icon_provider='internal'):
+    def __init__(self, filter_=None, fs_engine='qt', icon_provider='internal', breadcrumbs=None):
         super().__init__()
         self.current_path = ''
         self.fs_engine = fs_engine
         self.filter = filter_
         self.__hiddenPath = 0
+        self.__breadcrumbs = breadcrumbs
         if icon_provider == 'internal':
             self.icons = QtWidgets.QFileIconProvider()
             self.icon_provider = self.get_icon
@@ -29,12 +30,14 @@ class FilenameModel(QtCore.QStringListModel):
 
     def data(self, index, role):
         "Get names/icons of files"
+
         default = super().data(index, role)
         if role == Qt.DecorationRole and self.icon_provider:
             # self.setData(index, dat, role)
             return self.icon_provider(super().data(index, Qt.DisplayRole))
-        if role == Qt.DisplayRole:
+        elif role == Qt.DisplayRole:
             return Path(default).name
+
         return default
 
     def get_icon(self, path):
@@ -69,21 +72,40 @@ class FilenameModel(QtCore.QStringListModel):
         return sorted(dirs, key=str.lower) + sorted(files, key=str.lower)
 
     def setPathPrefix(self, prefix, bname=''):
-        path = Path(prefix)
+        print('setPathPrefix', 'prefix:', prefix, 'bname:',bname)
 
-        if not (prefix.endswith(os.path.sep) or bname == '.'):
-            path = path.parent
+        if len(prefix)>0 and prefix[0]=='@':
+            # return a list of quick references
+            if self.__breadcrumbs is None:
+                quickRefDict=[]
+            else:
+                quickRefDict=self.__breadcrumbs.quickRefDict()
 
-        if os.path.join(str(path), bname) == self.current_path:
-            return  # already listed
+            print([quickRefDict[key][2] for key in quickRefDict])
 
-        if not path.exists():
-            return  # wrong path
-        self.setStringList(self.get_file_list(path))
-        self.current_path = os.path.join(str(path), bname)
+            self.setStringList([key for key in quickRefDict])
+
+            self.current_path = prefix
+        else:
+            path = Path(prefix)
+
+            if not (prefix.endswith(os.path.sep) or bname == '.'):
+                path = path.parent
+
+            if os.path.join(str(path), bname) == self.current_path:
+                return  # already listed
+
+            if not path.exists():
+                return  # wrong path
+            self.setStringList(self.get_file_list(path))
+            self.current_path = os.path.join(str(path), bname)
 
     def setPathPrefixTextEdited(self, prefix):
-        bname=os.path.basename(prefix)
+        if len(prefix)>0 and prefix[0]=='@':
+            bname=''
+        else:
+            bname=os.path.basename(prefix)
+
         if len(bname)>0 and bname[0] == '.':
             lHiddenPath = self.__hiddenPath
             self.__hiddenPath = QDir.Hidden
@@ -179,7 +201,10 @@ class MenuListView(QtWidgets.QMenu):
         if event.button() == Qt.LeftButton:
             if self.last_index.isValid():
                 self.clicked.emit(self.last_index)
-            self.close()
+            try:
+                self.close()
+            except Exception as e:
+                pass
 
     def size_hint(self):
         lv = self.listview

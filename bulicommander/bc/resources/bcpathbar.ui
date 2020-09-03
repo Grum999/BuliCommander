@@ -6,15 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>805</width>
-    <height>101</height>
+    <width>926</width>
+    <height>109</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Frame</string>
@@ -23,6 +29,9 @@
    <enum>QFrame::NoFrame</enum>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <property name="sizeConstraint">
+    <enum>QLayout::SetDefaultConstraint</enum>
+   </property>
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -38,10 +47,16 @@
    <item>
     <widget class="QWidget" name="widgetPath" native="true">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <property name="spacing">
@@ -59,6 +74,51 @@
       <property name="bottomMargin">
        <number>2</number>
       </property>
+      <item>
+       <widget class="QToolButton" name="btHome">
+        <property name="toolTip">
+         <string>Go to user home directory</string>
+        </property>
+        <property name="statusTip">
+         <string>Go to user home directory</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="dark_icons.qrc">
+          <normaloff>:/images/home</normaloff>:/images/home</iconset>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btSavedViews">
+        <property name="toolTip">
+         <string>Views</string>
+        </property>
+        <property name="statusTip">
+         <string>Saved views list</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="dark_icons.qrc">
+          <normaloff>:/images/saved_view</normaloff>
+          <disabledoff>:/images_d/saved_view</disabledoff>
+          <disabledon>:/images_d/saved_view</disabledon>:/images/saved_view</iconset>
+        </property>
+        <property name="popupMode">
+         <enum>QToolButton::InstantPopup</enum>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QToolButton" name="btBookmark">
         <property name="sizePolicy">
@@ -92,13 +152,39 @@
          <string>Bookmark</string>
         </property>
         <property name="statusTip">
-         <string>Bookmark</string>
+         <string>Bookmark list</string>
         </property>
         <property name="whatsThis">
          <string>Bookmark</string>
         </property>
         <property name="text">
-         <string>b</string>
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="dark_icons.qrc">
+          <normaloff>:/images/bookmarks</normaloff>
+          <disabledoff>:/images_d/bookmarks</disabledoff>
+          <disabledon>:/images_d/bookmarks</disabledon>:/images/bookmarks</iconset>
+        </property>
+        <property name="popupMode">
+         <enum>QToolButton::InstantPopup</enum>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btLastDocuments">
+        <property name="toolTip">
+         <string>Last documents</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="dark_icons.qrc">
+          <normaloff>:/images/saved_view_last</normaloff>:/images/saved_view_last</iconset>
         </property>
         <property name="popupMode">
          <enum>QToolButton::InstantPopup</enum>
@@ -110,8 +196,20 @@
       </item>
       <item>
        <widget class="QToolButton" name="btHistory">
+        <property name="toolTip">
+         <string>History</string>
+        </property>
+        <property name="statusTip">
+         <string>Last documents list</string>
+        </property>
         <property name="text">
          <string>h</string>
+        </property>
+        <property name="icon">
+         <iconset resource="dark_icons.qrc">
+          <normaloff>:/images/history</normaloff>
+          <disabledoff>:/images_d/history</disabledoff>
+          <disabledon>:/images_d/history</disabledon>:/images/history</iconset>
         </property>
         <property name="popupMode">
          <enum>QToolButton::InstantPopup</enum>
@@ -122,39 +220,162 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="btBack">
-        <property name="text">
-         <string>&lt;</string>
-        </property>
-        <property name="autoRaise">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QToolButton" name="btUp">
-        <property name="text">
-         <string>^</string>
-        </property>
-        <property name="autoRaise">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="BreadcrumbsAddressBar" name="frameBreacrumbPath">
+       <widget class="QStackedWidget" name="swBarMode">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
+        <property name="currentIndex">
+         <number>0</number>
         </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
+        <widget class="QWidget" name="pagePath">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <property name="spacing">
+           <number>6</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QToolButton" name="btBack">
+            <property name="toolTip">
+             <string>Back</string>
+            </property>
+            <property name="statusTip">
+             <string>Go to previous directory</string>
+            </property>
+            <property name="text">
+             <string>&lt;</string>
+            </property>
+            <property name="icon">
+             <iconset resource="dark_icons.qrc">
+              <normaloff>:/images/goback</normaloff>
+              <disabledoff>:/images_d/goback</disabledoff>
+              <disabledon>:/images_d/goback</disabledon>:/images/goback</iconset>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="btUp">
+            <property name="toolTip">
+             <string>Up</string>
+            </property>
+            <property name="statusTip">
+             <string>Go to parent directory</string>
+            </property>
+            <property name="text">
+             <string>^</string>
+            </property>
+            <property name="icon">
+             <iconset resource="dark_icons.qrc">
+              <normaloff>:/images/goup</normaloff>
+              <disabledoff>:/images_d/goup</disabledoff>
+              <disabledon>:/images_d/goup</disabledon>:/images/goup</iconset>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="BreadcrumbsAddressBar" name="frameBreacrumbPath">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::NoFrame</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="pageQuery">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QToolButton" name="btBack2">
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset resource="dark_icons.qrc">
+              <normaloff>:/images/goback</normaloff>
+              <disabledoff>:/images_d/goback</disabledoff>
+              <disabledon>:/images_d/goback</disabledon>:/images/goback</iconset>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="btUp2">
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset resource="dark_icons.qrc">
+              <normaloff>:/images/goup</normaloff>
+              <disabledoff>:/images_d/goup</disabledoff>
+              <disabledon>:/images_d/goup</disabledon>:/images/goup</iconset>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblViewName">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </item>
       <item>
@@ -169,16 +390,20 @@
          <cursorShape>ArrowCursor</cursorShape>
         </property>
         <property name="toolTip">
-         <string>Filter files</string>
+         <string>Quick filter</string>
         </property>
         <property name="statusTip">
-         <string>Filter files</string>
+         <string>Apply a quick filter on current files list</string>
         </property>
         <property name="whatsThis">
          <string>Filter files</string>
         </property>
         <property name="text">
          <string>f</string>
+        </property>
+        <property name="icon">
+         <iconset resource="dark_icons.qrc">
+          <normaloff>:/images/filter</normaloff>:/images/filter</iconset>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -195,9 +420,9 @@
     </widget>
    </item>
    <item>
-    <widget class="QWidget" name="widgetQuery" native="true">
+    <widget class="QWidget" name="widgetFilter" native="true">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -216,7 +441,47 @@
        <number>2</number>
       </property>
       <item>
-       <widget class="QLineEdit" name="leFilterQuery"/>
+       <widget class="QFrame" name="frameFilter">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="leFilterQuery">
+           <property name="statusTip">
+            <string>Quick filter: use wildcard * to filter files | To use regular expression, prefix filter with &quot;re:&quot;</string>
+           </property>
+           <property name="clearButtonEnabled">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -231,6 +496,9 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="dark_icons.qrc"/>
+  <include location="light_icons.qrc"/>
+ </resources>
  <connections/>
 </ui>
