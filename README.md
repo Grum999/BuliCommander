@@ -76,7 +76,7 @@ Here a list of some functionnalities:
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.1.0a](https://github.com/Grum999/BuliCommander/releases/download/V0.1.0a/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.1.0a](https://github.com/Grum999/BuliCommander/releases/download/0.1.0a/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
