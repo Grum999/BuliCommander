@@ -22,8 +22,8 @@ As I'm used to work with orthodox file managers like [Midnight Commander](https:
 While *Buli Commander* version is not published under version 1.0.0, please take in consideration the following points:
 - There's bugs, some of them are known, some are not (yet?) known
 - Implementation can be rewritten, so a bug can disappear naturally on next version... or not :-)
-- All functionnalities are not yet implemented or not yet fully implemented
-- Current user interface and current functionnalities are not definitive and can be changed on next version
+- All functionalities are not yet implemented or not yet fully implemented
+- Current user interface and current functionalities are not definitive and can be changed on next version
 
 >Please also note that, as plugin is not yet finished and **not yet fully tested**, it's not recommended to use it on a
 >[Krita](https://krita.org) installation used for a production workflow: test it/use it on a testing installation
@@ -49,9 +49,9 @@ _Settings interface: images default action_
 
 
 
-## Functionnalities
+## Functionalities
 
-Here a list of some functionnalities:
+Here a list of some functionalities:
 - Dual panel interface, with different possible layouts
 - Intuitive navigation bar:
  - Home directory
@@ -113,7 +113,7 @@ Yes, we have.
 
 
 ### What’s next?
-Not able to define precisely in which order functionnalities will be implemented, neither when, but here a list of what is currently expected for final 1.0.0 version:
+Not able to define precisely in which order functionalities will be implemented, neither when, but here a list of what is currently expected for final 1.0.0 version:
 - File(s) rename
 - Shortcut to launch *Buli Commander*
 - Possibility (as an option) to replace current Open dialog box with *Buli Commander*
