@@ -76,7 +76,7 @@ Here a list of some functionalities:
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.1.0a](https://github.com/Grum999/BuliCommander/releases/download/0.1.0a/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.1.1a](https://github.com/Grum999/BuliCommander/releases/download/0.1.1a/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
@@ -103,6 +103,9 @@ I think it should be Ok, because of use of python and PyQt high level and multi 
 ## Plugin's life
 
 ### What's new?
+_[2020-09-05] Version 0.1.1a_
+- Fix a dependency to unexisting library
+
 _[2020-09-05] Version 0.1.0a_
 - First public version
 
