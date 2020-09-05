@@ -89,6 +89,8 @@ Plugin installation in [Krita](https://krita.org) is not intuitive and needs som
 When you want to execute *Buli Commander*, simply go to **Tools** -> **Scripts** and select **Buli Commander**.
 
 
+## Plugin's life
+
 ### What's new?
 _[2020-09-05] Version 0.1.0a_
 - First public version
