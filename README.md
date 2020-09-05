@@ -30,9 +30,13 @@ While *Buli Commander* version is not published under version 1.0.0, please take
 
 
 ## Screenshots
-_Main user interface_
+_Main user interface: dual panel mode_
 
-![Main interface](https://github.com/Grum999/BuliCommander/raw/master/screenshots/main_interface.png)
+![Main interface-dual panel mode](https://github.com/Grum999/BuliCommander/raw/master/screenshots/main_interface.png)
+
+_Main user interface: single panel mode_
+
+![Main interface-single panel mode](https://github.com/Grum999/BuliCommander/raw/master/screenshots/main_interface_singlepanel.png)
 
 _Settings interface: navigation_
 
