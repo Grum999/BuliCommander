@@ -41,7 +41,7 @@ _Settings interface: navigation_
 
 _Settings interface: images default action_
 
-![Settings interface-Images](https://github.com/Grum999/BuliCommander/raw/master/screenshots/settings_imagefile.png)
+![Settings interface-Images](https://github.com/Grum999/BuliCommander/raw/master/screenshots/settings_imagefiles.png)
 
 
 ## Functionnalities
