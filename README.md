@@ -93,6 +93,13 @@ Plugin installation in [Krita](https://krita.org) is not intuitive and needs som
 When you want to execute *Buli Commander*, simply go to **Tools** -> **Scripts** and select **Buli Commander**.
 
 
+### Tested platforms
+Plugin has been tested with Krita 4.3.0 (appimage) on Linux Debian 10
+
+Currently don't kwow if plugin works on Windows and MacOs.
+I think it should be Ok, because of use of python and PyQt high level and multi OS file system functions, but...
+
+
 ## Plugin's life
 
 ### What's new?
