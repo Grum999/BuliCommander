@@ -44,7 +44,9 @@ _Settings interface: images default action_
 ![Settings interface-Images](https://github.com/Grum999/BuliCommander/raw/master/screenshots/settings_imagefiles.png)
 
 
-## Functionnalities
+
+## Functionnalities
+
 Here a list of some functionnalities:
 - Dual panel interface, with different possible layouts
 - Intuitive navigation bar:
@@ -65,10 +67,6 @@ Here a list of some functionnalities:
   - Krita image properties (About + Author)
 - File manipulation (copy, move, delete)
 - Miscellaneous opening modes
-
-
-
-
 
 
 ## Download, Install & Execute
