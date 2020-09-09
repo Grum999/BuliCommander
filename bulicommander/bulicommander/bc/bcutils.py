@@ -301,7 +301,7 @@ def getLangValue(dictionary, lang=None, default=''):
         # not found, return first entry
         return dictionary[list(dictionary.keys())[0]]
 
-def checkerBoardBrush(self, size=32):
+def checkerBoardBrush(size=32):
     """Return a checker board brush"""
     tmpPixmap = QPixmap(size,size)
     tmpPixmap.fill(QColor(255,255,255))
