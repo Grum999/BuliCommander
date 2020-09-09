@@ -1038,13 +1038,25 @@ class BCFile(BCBaseFile):
             return None
 
         try:
-            imgfile = archive.open('Thumbnails/thumbnail.png')
+            # try to read merged image preview
+            imgfile = archive.open('mergedimage.png')
         except Exception as e:
             # can't be read (not exist, not a Kra file?)
-            self.__readable = False
-            archive.close()
-            Debug.print('[BCFile.__readOraImage] Unable to find "thumbnail.png" in file {0}: {1}', self._fullPathName, str(e))
-            return None
+            imgfile = None 
+
+
+        if imgfile is None:
+            # ora file is an old ora file without mergedimage.png
+            # try to read thumbnail file
+            try:
+                imgfile = archive.open('Thumbnails/thumbnail.png')
+            except Exception as e:
+                # can't be read (not exist, not a Kra file?)
+                self.__readable = False
+                archive.close()
+                Debug.print('[BCFile.__readOraImage] Unable to find "thumbnail.png" in file {0}: {1}', self._fullPathName, str(e))
+                return None
+
 
         try:
             image = imgfile.read()
