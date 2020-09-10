@@ -228,18 +228,25 @@ class BCFileManagedFormat(object):
 
 
     @staticmethod
-    def extensions(withBackup=False):
-        returned = [f'.{value}' for value in BCFileManagedFormat.list()]
-        if withBackup:
-            returned+=[f'.{value}~' for value in BCFileManagedFormat.list()]
-        return returned
+    def backupSuffixRe():
+        """return backup suffix as regular expression"""
+        return '(?:\.\d+)?'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.')
 
     @staticmethod
-    def extension(value, withBackup=False):
-        returned = [f'.{value}']
-        if withBackup:
-            returned+=[f'.{value}~']
-        return returned
+    def inExtensions(value, withBackup=False, noExtIsOk=False):
+        if value == '':
+            return noExtIsOk
+
+        for extension in BCFileManagedFormat.list():
+            if BCFileManagedFormat.isExtension(value, extension, withBackup):
+                return True
+        return False
+
+    @staticmethod
+    def isExtension(value, extReference, withBackup=False):
+        if value.lower() == f'.{extReference}' or (withBackup and re.match(f"\.{extReference}{BCFileManagedFormat.backupSuffixRe()}$", value)):
+            return True
+        return False
 
 class BCFileThumbnailSize(Enum):
     """Possible sizes for a thumbnail file"""
@@ -514,8 +521,6 @@ class BCFile(BCBaseFile):
 
     __INITIALISED = False
 
-    __EXTENSIONS = BCFileManagedFormat.extensions(True) + ['']
-
     @staticmethod
     def initialiseCache(bcCachePath=None, thumbnailCacheFormat=None, thumbnailCacheDefaultSize=None):
         """Initialise thumbnails cache properties
@@ -577,10 +582,10 @@ class BCFile(BCBaseFile):
 
         self.__size = os.path.getsize(self._fullPathName)
 
-        if strict and not self.__extension in self.__EXTENSIONS:
+        if strict and not BCFileManagedFormat.inExtensions(self.__extension, True, False):
             self.__readable = True
             return
-        elif self.__extension in self.__EXTENSIONS:
+        elif BCFileManagedFormat.inExtensions(self.__extension, True, True):
             imageReader = QImageReader(self._fullPathName)
 
             if imageReader.canRead():
@@ -603,7 +608,7 @@ class BCFile(BCBaseFile):
                 tmpNfo = self.__readMetaDataXcf(True)
                 if 'width' in tmpNfo and 'height' in tmpNfo:
                     self.__imgSize = QSize(tmpNfo['width'], tmpNfo['height'])
-            elif self._format == BCFileManagedFormat.KRA or self.__extension in BCFileManagedFormat.extension(BCFileManagedFormat.KRA, True):
+            elif self._format == BCFileManagedFormat.KRA or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.KRA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
                 # by qimagereader
@@ -611,7 +616,7 @@ class BCFile(BCBaseFile):
                 if not size is None:
                     self.__imgSize = size
                     self._format = BCFileManagedFormat.KRA
-            elif self._format == BCFileManagedFormat.ORA or self.__extension in BCFileManagedFormat.extension(BCFileManagedFormat.ORA, True):
+            elif self._format == BCFileManagedFormat.ORA or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.ORA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
                 # by qimagereader
@@ -1042,7 +1047,7 @@ class BCFile(BCBaseFile):
             imgfile = archive.open('mergedimage.png')
         except Exception as e:
             # can't be read (not exist, not a Kra file?)
-            imgfile = None 
+            imgfile = None
 
 
         if imgfile is None:
