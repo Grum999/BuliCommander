@@ -96,10 +96,11 @@ from .bcworkers import (
 from .bcutils import (
         Debug,
         bytesSizeToStr,
+        frToStrTime,
         getLangValue,
+        secToStrTime,
         strDefault,
-        tsToStr,
-        frToStrTime
+        tsToStr
     )
 
 from ..pktk.pktk import (
@@ -1074,8 +1075,6 @@ class BCMainViewTab(QFrame):
             if self.__fileQuery is None:
                 self.__fileQuery = BCFileList()
 
-            Debug.print('[BCMainViewTab.__refreshFiles] files for view {0}: {1}', self.savedView().current(), self.savedView().get())
-
             refType = self.__uiController.quickRefType(self.path())
 
 
@@ -1089,6 +1088,8 @@ class BCMainViewTab(QFrame):
                 self.__fileQuery.setResult([directory for directory in self.history().list() if not directory.startswith('@')])
             elif refType == BCPathBar.QUICKREF_SAVEDVIEW_LIST:
                 self.__fileQuery.setResult(self.savedView().get())
+            elif refType == BCPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW:
+                self.__fileQuery.setResult(self.backupFilterDView().list())
 
         else:
             # MODE_PATH
@@ -1097,7 +1098,12 @@ class BCMainViewTab(QFrame):
                     filter = BCFileListRule()
 
                     if self.__uiController.optionViewFileManagedOnly():
-                        filter.setName((r're:({0})$'.format('|'.join( [fr'\{extension}' for extension in BCFileManagedFormat.extensions(self.__uiController.optionViewFileBackup())])), 'match'))
+                        reBase = [fr'\.{extension}' for extension in BCFileManagedFormat.list()]
+                        if self.__uiController.optionViewFileBackup():
+                            bckSufRe=BCFileManagedFormat.backupSuffixRe()
+                            reBase+=[fr'\.{extension}{bckSufRe}' for extension in BCFileManagedFormat.list()]
+
+                        filter.setName((r're:({0})$'.format('|'.join(reBase)), 'match'))
                     else:
                         filter.setName((r're:.*', 'match'))
 
@@ -1239,26 +1245,72 @@ class BCMainViewTab(QFrame):
             while self.scrollAreaWidgetContentsNfoImage.layout().rowCount() > separatorRow+1:
                 self.scrollAreaWidgetContentsNfoImage.layout().removeRow(self.scrollAreaWidgetContentsNfoImage.layout().rowCount() - 1)
 
-        def addNfoImageRow(label, value, tooltip=None, style=None):
+        def cleanupNfoFileRows():
+            """remove rows"""
+            separatorRow, dummy = self.scrollAreaWidgetContentsNfoGeneric.layout().getWidgetPosition(self.labelOwner)
+
+            while self.scrollAreaWidgetContentsNfoGeneric.layout().rowCount() > separatorRow+1:
+                self.scrollAreaWidgetContentsNfoGeneric.layout().removeRow(self.scrollAreaWidgetContentsNfoGeneric.layout().rowCount() - 1)
+
+        def addNfoBtnRow(form, label, value, button, tooltip=None):
+            fntValue = QFont()
+            fntValue.setFamily('DejaVu Sans Mono')
+
+            wContainer=QWidget()
+            wContainerLayout=QHBoxLayout(wContainer)
+            wContainerLayout.setContentsMargins(0,0,0,0)
+
+            wValue = QLabel(value)
+            wValue.setFont(fntValue)
+            wValue.sizePolicy().setHorizontalPolicy(QSizePolicy.MinimumExpanding)
+            if not tooltip is None:
+                wValue.setToolTip(tooltip)
+
+            button.sizePolicy().setHorizontalPolicy(QSizePolicy.Preferred)
+
+            wContainerLayout.addWidget(wValue)
+            wContainerLayout.addWidget(button)
+
+            addNfoRow(form, label, wContainer)
+
+        def addNfoRow(form, label, value, tooltip=None, style=None):
             """add a row"""
             fntLabel = QFont()
             fntLabel.setBold(True)
 
             wLabel = QLabel(label)
             wLabel.setFont(fntLabel)
+            wLabel.sizePolicy().setVerticalPolicy(QSizePolicy.Expanding)
 
             fntValue = QFont()
             fntValue.setFamily('DejaVu Sans Mono')
 
-            wValue = QLabel(value)
-            wValue.setFont(fntValue)
-            if not tooltip is None:
-                wValue.setToolTip(tooltip)
+            if isinstance(value, str):
+                wLabel.setAlignment(Qt.AlignLeft|Qt.AlignTop)
+                wValue = QLabel(value)
+                wValue.setFont(fntValue)
+                if not tooltip is None:
+                    wValue.setToolTip(tooltip)
+            elif isinstance(value, QWidget):
+                wValue=value
 
             if not style is None:
                 wValue.setStyleSheet(self.__uiController.theme().style(style))
 
-            self.scrollAreaWidgetContentsNfoImage.layout().addRow(wLabel, wValue)
+            form.layout().addRow(wLabel, wValue)
+
+        def addSeparator(form):
+            line = QFrame()
+            line.setFrameShape(QFrame.HLine)
+            line.setFrameShadow(QFrame.Sunken)
+            form.layout().addRow(line)
+
+        def applyBackupFilter(action):
+            """Display opposite panel, go to given path, activate backup files, and apply filter"""
+            oppositePanelId=self.__uiController.oppositePanelId(self)
+            self.__uiController.commandGoBackupFilterDViewSet(backupList.files())
+            self.__uiController.commandGoTo(oppositePanelId, '@backup filter')
+            self.__uiController.commandViewDisplaySecondaryPanel(True)
 
 
         self.__currentStats['nbSelectedFiles'] = 0
@@ -1292,6 +1344,7 @@ class BCMainViewTab(QFrame):
             self.__uiController.updateMenuForPanel()
 
         cleanupNfoImageRows()
+        cleanupNfoFileRows()
         # reset animation values
         self.wAnimated.setVisible(False)
         self.__currentAnimatedFrame=0
@@ -1301,7 +1354,7 @@ class BCMainViewTab(QFrame):
             self.__imgReaderAnimated = None
 
         if self.__selectedNbTotal == 1:
-            # file
+            # ------------------------------ File ------------------------------
             file = self.__selectedFiles[0]
 
             self.lblPath.setText(file.path())
@@ -1310,7 +1363,12 @@ class BCMainViewTab(QFrame):
             self.lblName.setText(file.name())
             self.lblName.setToolTip(self.lblName.text())
 
-            self.lblModified.setText(tsToStr(file.lastModificationDateTime(), valueNone='-'))
+            deltaTimeStr=''
+            if not file.lastModificationDateTime() is None:
+                deltaTime = round(time.time() - file.lastModificationDateTime(), 0)
+                deltaTimeStr = i18n(f'<br><i>{secToStrTime(deltaTime)} ago<sup>(from current time)</sup></i>')
+
+            self.lblModified.setText(tsToStr(file.lastModificationDateTime(), valueNone='-')+deltaTimeStr)
             self.lblModified.setToolTip(self.lblModified.text())
 
             if file.format() == BCFileManagedFormat.DIRECTORY:
@@ -1349,7 +1407,64 @@ class BCMainViewTab(QFrame):
                     self.lblOwner.setText(f'{og[0]}/{og[1]}')
                     self.lblOwner.setToolTip(self.lblOwner.text())
 
-            # image
+            # Search for backup files...
+            backupSuffix = Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.')
+            filePattern = file.name().replace('.', r'\.')
+            rePattern = f"re:{filePattern}(?:\.\d+)?{backupSuffix}$"
+            searchBackupRule = BCFileListRule()
+            searchBackupRule.setName((rePattern, 'match'))
+
+
+            backupList = BCFileList()
+            backupList.addPath(file.path())
+            backupList.addRule(searchBackupRule)
+            backupList.addSortRule(BCFileListSortRule(BCFileProperty.FILE_DATE, False))
+
+            backupList.execute()
+
+            if backupList.nbFiles()>0:
+                backupList.sort()
+
+
+                filterButton = QPushButton(i18n("Show"))
+                filterButton.setToolTip(i18n("Show in opposite panel"))
+                filterButton.setStatusTip(i18n("Show backup files list in opposite panel"))
+                filterButton.clicked.connect(applyBackupFilter)
+
+                addSeparator(self.scrollAreaWidgetContentsNfoGeneric)
+                if backupList.nbFiles() == 1:
+                    addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n("1 backup file found"), filterButton)
+                else:
+                    addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n(f"{backupList.nbFiles()} backup files found"), filterButton)
+
+                for fileBackup in backupList.files():
+                    addSeparator(self.scrollAreaWidgetContentsNfoGeneric)
+                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup file"), fileBackup.name())
+
+                    lastModifiedDiffStr=""
+                    lastModifiedDiffTooltip=''
+                    lastModifiedDiff=round(file.lastModificationDateTime() - fileBackup.lastModificationDateTime(),0)
+                    if lastModifiedDiff>0:
+                        lastModifiedDiffStr=i18n(f'<br><i>{secToStrTime(lastModifiedDiff)} ago<sup>(from current file)</sup></i>')
+                        lastModifiedDiffTooltip=''
+
+                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Modified"), tsToStr(fileBackup.lastModificationDateTime(), valueNone='-')+lastModifiedDiffStr, lastModifiedDiffTooltip)
+
+
+                    backupSizeDiffTooltip=''
+                    backupSizeDiffStr=""
+                    backupSizeDiff=fileBackup.size() - file.size()
+                    if backupSizeDiff>0:
+                        backupSizeDiffStr=f'<br><i>+{bytesSizeToStr(backupSizeDiff)} (+{backupSizeDiff:n})</i>'
+                        backupSizeDiffTooltip=''
+                    elif backupSizeDiff<0:
+                        backupSizeDiffStr=f'<br><i>-{bytesSizeToStr(abs(backupSizeDiff))} ({backupSizeDiff:n})</i>'
+                        backupSizeDiffTooltip=''
+                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Size"), f'{bytesSizeToStr(fileBackup.size())} ({fileBackup.size():n}){backupSizeDiffStr}', backupSizeDiffTooltip)
+
+
+
+            # ------------------------------ Image ------------------------------
             if file.format() != BCFileManagedFormat.UNKNOWN:
                 self.lblImgFormat.setText(BCFileManagedFormat.translate(file.format(), False))
             elif file.extension() != '':
@@ -1419,19 +1534,19 @@ class BCMainViewTab(QFrame):
 
                 if file.format() == BCFileManagedFormat.PNG:
                     if 'compressionLevel' in imgNfo:
-                        addNfoImageRow('Compression level', imgNfo['compressionLevel'][1])
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Compression level', imgNfo['compressionLevel'][1])
                     else:
-                        addNfoImageRow('Compression level', '-')
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Compression level', '-')
 
                     if 'interlaceMethod' in imgNfo:
-                        addNfoImageRow('Interlace mode', imgNfo['interlaceMethod'][1])
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Interlace mode', imgNfo['interlaceMethod'][1])
                     else:
-                        addNfoImageRow('Interlace mode', '-')
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Interlace mode', '-')
                 elif file.format() == BCFileManagedFormat.ORA:
                     if imgNfo['document.layerCount'] > 0:
-                        addNfoImageRow('Layers', str(imgNfo['document.layerCount']))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', str(imgNfo['document.layerCount']))
                     else:
-                        addNfoImageRow('Layers', '-')
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
                 elif file.format() in [BCFileManagedFormat.GIF,
                                        BCFileManagedFormat.WEBP]:
                     if imgNfo['imageCount'] > 1:
@@ -1450,54 +1565,54 @@ class BCMainViewTab(QFrame):
                             Debug.print('[BCMainViewTab.__selectionChanged] Unable to read animated GIF {0}: {1}', file.fullPathName(), e)
                             self.__imgReaderAnimated = None
 
-                        addNfoImageRow('Animated', 'Yes')
-                        addNfoImageRow('',     f"<i>Frames:&nbsp;&nbsp;&nbsp;{imgNfo['imageCount']}</i>")
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'Yes')
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Frames:&nbsp;&nbsp;&nbsp;{imgNfo['imageCount']}</i>")
 
                         if 'imageDelayMin' in imgNfo:
                             if imgNfo['imageDelayMin'] == imgNfo['imageDelayMax']:
-                                addNfoImageRow('', f"<i>Delay:&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageDelayMin']}ms</i>")
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f"<i>Delay:&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageDelayMin']}ms</i>")
                             else:
-                                addNfoImageRow('', f"<i>Delay:&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageDelayMin']} to {imgNfo['imageDelayMax']}ms</i>")
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f"<i>Delay:&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageDelayMin']} to {imgNfo['imageDelayMax']}ms</i>")
                         if 'loopDuration' in imgNfo:
-                            addNfoImageRow('',     f"<i>Duration:&nbsp;{imgNfo['loopDuration']/1000:.2f}s</i>")
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Duration:&nbsp;{imgNfo['loopDuration']/1000:.2f}s</i>")
 
                         if 'paletteCount' in imgNfo and 'paletteMin' in imgNfo and 'paletteMax' in imgNfo:
                             if imgNfo['paletteCount'] > 1 and imgNfo['paletteMin'] != imgNfo['paletteMax']:
-                                addNfoImageRow('',     f"<i>Palettes: {imgNfo['paletteCount']} (Sizes: {imgNfo['paletteMin']} to {imgNfo['paletteMax']})</i>")
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Palettes: {imgNfo['paletteCount']} (Sizes: {imgNfo['paletteMin']} to {imgNfo['paletteMax']})</i>")
                     else:
-                        addNfoImageRow('Animated', 'No')
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'No')
 
 
                 if file.format() == BCFileManagedFormat.KRA:
                     if imgNfo['document.layerCount'] > 0:
-                        addNfoImageRow('Layers', str(imgNfo['document.layerCount']))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', str(imgNfo['document.layerCount']))
                     else:
-                        addNfoImageRow('Layers', '-')
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
 
                     if len(imgNfo['document.fileLayers']) > 0:
-                        addNfoImageRow('File layers', str(len(imgNfo['document.fileLayers'])))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'File layers', str(len(imgNfo['document.fileLayers'])))
                         for fileName in imgNfo['document.fileLayers']:
                             fullFileName = os.path.join(file.path(), fileName)
 
                             if os.path.isfile(fullFileName):
-                                addNfoImageRow('', fileName)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', fileName)
                             else:
-                                addNfoImageRow('', f'<i>{fileName}</i>', 'File is missing!', 'warning-label')
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fileName}</i>', 'File is missing!', 'warning-label')
                     else:
-                        addNfoImageRow('File layers', '-')
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'File layers', '-')
 
 
                     if imgNfo['imageCount'] > 1:
-                        addNfoImageRow('Animated', 'Yes')
-                        addNfoImageRow('',     f"<i>Frames:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageCount']}</i>")
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'Yes')
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Frames:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageCount']}</i>")
 
 
                         if imgNfo['imageDelay'] > 0:
-                            addNfoImageRow('',     f"<i>Frame rate:&nbsp;{imgNfo['imageDelay']}fps</i>")
-                            addNfoImageRow('',     f"<i>Duration:&nbsp;&nbsp;&nbsp;{frToStrTime(imgNfo['imageCount'],imgNfo['imageDelay'])}</i>")
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Frame rate:&nbsp;{imgNfo['imageDelay']}fps</i>")
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Duration:&nbsp;&nbsp;&nbsp;{frToStrTime(imgNfo['imageCount'],imgNfo['imageDelay'])}</i>")
 
                     else:
-                        addNfoImageRow('Animated', 'No')
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'No')
 
 
 
@@ -1682,7 +1797,6 @@ class BCMainViewTab(QFrame):
             self.lblDiskNfo.setText(f"View <b><i>{self.__uiController.quickRefName(self.path())}</i><b>")
             self.lblDiskNfo.setToolTip('')
             self.lblDiskNfo.setStatusTip(i18n("You're currently into a view: there's no disk information available as listed files can be from different disks"))
-
 
 
     def __applyFilter(self, filter):
@@ -2171,6 +2285,16 @@ class BCMainViewTab(QFrame):
     def setLastDocumentsSaved(self, value):
         """Set last saved documents view object"""
         self.framePathBar.setLastDocumentsSaved(value)
+
+
+    def backupFilterDView(self):
+        """set last backup dynamic view object"""
+        return self.framePathBar.backupFilterDView()
+
+
+    def setBackupFilterDView(self, value):
+        """Set last backup dynamic view object"""
+        self.framePathBar.setBackupFilterDView(value)
 
 
     def filterVisible(self):
