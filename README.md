@@ -71,12 +71,13 @@ Here a list of some functionalities:
   - Krita image properties (About + Author)
 - File manipulation (copy, move, delete)
 - Miscellaneous opening modes
+  - Improved GIF/WEBP import file
 
 
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.1.1a](https://github.com/Grum999/BuliCommander/releases/download/0.1.1a/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.2.0a](https://github.com/Grum999/BuliCommander/releases/download/0.2.0a/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
@@ -103,6 +104,12 @@ I think it should be Ok, because of use of python and PyQt high level and multi 
 ## Plugin's life
 
 ### What's new?
+_[2020-09-11] Version 0.2.0a_
+- ORA file preview use (if exists) merged image preview instead of thumbnail
+- Add BACKUP files list linked to a file
+- Add FILE LAYERS files list linked to a KRA image
+- Improve backup extension file management (take in account suffix from Krita setting + numbered backup files)
+
 _[2020-09-05] Version 0.1.1a_
 - Fix a dependency to unexisting library
 
@@ -123,8 +130,6 @@ Not able to define precisely in which order functionalities will be implemented,
 - Improve thumbnail generation (add a progress bar when thumbnail generation take times)
 - Generate and display thumbnails with ICC profile taken in account
 - Add a gridview mode
-- Improve image information for KRA files
-- Improve file information
 - Implement *Search* tool
 - Implement batch tool conversion
 - Implement *Documents* tab
