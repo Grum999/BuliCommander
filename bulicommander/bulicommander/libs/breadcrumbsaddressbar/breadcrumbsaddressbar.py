@@ -320,33 +320,37 @@ class BreadcrumbsAddressBar(QFrame):
 
         if isinstance(path, str) and not re.match('^@', path) is None:
             # maybe a saved view or a bookmark
-            if self.path_ != path:
-                path=path.lower()
-                refDict=self.quickRefDict()
 
-                if not path in refDict:
+            # if self.path_ != path:
+            # => accept path if already the same, because target link (@home, @bookmark)
+            #    or target content (@view, @history) may have changed
+
+            path=path.lower()
+            refDict=self.quickRefDict()
+
+            if not path in refDict:
+                emit_err = self.path_error
+                self._cancel_edit()
+                return False
+
+            self.__quickRef=refDict[path]
+
+            # BCPathBar.QUICKREF_RESERVED_HOME, BCPathBar.QUICKREF_BOOKMARK
+            if self.__quickRef[0] in (0, 1):
+                # bookmark
+                path=self.getQuickRefPath(path)
+                if path is None:
                     emit_err = self.path_error
                     self._cancel_edit()
                     return False
 
-                self.__quickRef=refDict[path]
+                return self.set_path(path)
 
-                # BCPathBar.QUICKREF_RESERVED_HOME, BCPathBar.QUICKREF_BOOKMARK
-                if self.__quickRef[0] in (0, 1):
-                    # bookmark
-                    path=self.getQuickRefPath(path)
-                    if path is None:
-                        emit_err = self.path_error
-                        self._cancel_edit()
-                        return False
-
-                    return self.set_path(path)
-
-                self.path_ = path
-                self.line_address.setText(path)
-                self._show_address_field(False)
-                self.view_selected.emit(path)
-                return True
+            self.path_ = path
+            self.line_address.setText(path)
+            self._show_address_field(False)
+            self.view_selected.emit(path)
+            return True
 
         elif str(path) != str(self.path_):
             self.__quickRef=None
