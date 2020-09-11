@@ -151,7 +151,6 @@ class BreadcrumbsAddressBar(QFrame):
 
         self.ignore_resize = False
         self.path_ = None
-        print('[BreadcrumbsAddressBar.__init__]')
         self.set_path(Path())
 
     @staticmethod
@@ -170,7 +169,6 @@ class BreadcrumbsAddressBar(QFrame):
 
     def get_icon(self, path: (str, Path)):
         "Path -> QIcon"
-        print('get_icon', path)
         if isinstance(path, str) and not re.match('^@', path) is None:
             # maybe a saved view or a bookmark
             path=path.lower()
@@ -219,7 +217,6 @@ class BreadcrumbsAddressBar(QFrame):
         path = QtWidgets.QFileDialog.getExistingDirectory(
             self, "Choose folder", str(self.path()))
         if path:
-            print('[BreadcrumbsAddressBar._browse_for_folder]')
             self.set_path(path)
 
     def viewName_mousePressEvent(self, event):
@@ -315,7 +312,6 @@ class BreadcrumbsAddressBar(QFrame):
         Returns `False` if path does not exist or permission error.
         Can be used as a SLOT: `sender().path` is used if `path` is `None`)
         """
-        print('[BreadcrumbsAddressBar.set_path] path:', path, 'current path: ', self.path_)
         if path is None or path == '':
             try:
                 path = str(self.sender().path)
@@ -334,8 +330,6 @@ class BreadcrumbsAddressBar(QFrame):
                     return False
 
                 self.__quickRef=refDict[path]
-
-                print('set_path', path, self.__quickRef)
 
                 # BCPathBar.QUICKREF_RESERVED_HOME, BCPathBar.QUICKREF_BOOKMARK
                 if self.__quickRef[0] in (0, 1):
@@ -402,7 +396,6 @@ class BreadcrumbsAddressBar(QFrame):
 
     def _show_address_field(self, b_show):
         "Show text address field"
-        print("_show_address_field", b_show, self.__quickRef)
         if b_show:
             # show bread crumbs
             self.crumbs_container.hide()
@@ -449,15 +442,12 @@ class BreadcrumbsAddressBar(QFrame):
 
     def setHighlighted(self, value):
         """Set current highlighted status"""
-        print('[BreadcrumbsAddressBar.setHighlighted] current: ', self.__isHighlighted, ' / value: ', value, '//', self.path_)
-
         if not isinstance(value, bool):
             raise EInvalidType("Given `value` must be a <bool>")
         else: #if self.__isHighlighted != value:
             self.__isHighlighted = value
 
             if self.__isHighlighted:
-                print('[BreadcrumbsAddressBar.setHighlighted] current: ', self.__isHighlighted, ' / value: ', value, '//', self.path_)
                 self.setPalette(self.__paletteHighlighted)
             else:
                 self.setPalette(self.__paletteBase)

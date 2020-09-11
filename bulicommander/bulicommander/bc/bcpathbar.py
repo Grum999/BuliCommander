@@ -236,18 +236,13 @@ class BCPathBar(QFrame):
 
         @pyqtSlot('QString')
         def view_Selected(value):
-            print('view_Selected_a', value, self.path())
-
             self.__savedView.setCurrent(value)
-
-            print('view_Selected_b', self.__savedView.current())
 
             self.__backList.append(self.path())
             self.__updateUpBtn()
             self.__updateBackBtn()
 
             self.setMode(BCPathBar.MODE_SAVEDVIEW)
-            print('view_Selected_c', self.__mode)
 
             if not self.__uiController is None:
                 self.__uiController.updateMenuForPanel()

@@ -319,7 +319,8 @@ class BCMainWindow(QMainWindow):
            =======
                 # define callback function
                 def my_callback_function():
-                    print("BCMainWindow shown!")
+                    # BCMainWindow shown!
+                    pass
 
                 # initialise a dialog from an xml .ui file
                 dlgMain = BCMainWindow.loadUi(uiFileName)
@@ -355,7 +356,7 @@ class BCMainWindow(QMainWindow):
                 # define callback function
                 def my_callback_function(event):
                     if event.type() == QEvent.xxxx:
-                        print("Event!")
+                        # Event! 
                         return True
                     return False
 

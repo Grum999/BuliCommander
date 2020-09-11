@@ -761,10 +761,6 @@ class BCMainViewTab(QFrame):
 
 
     def __initialise(self):
-        #@pyqtSlot('QString')
-        #def splitterFiles_Moved(pos, index):
-        #    print('splitter:', pos, index, '-', self.splitterFiles.sizes())
-
         @pyqtSlot('QString')
         def tabFilesLayoutModel_Clicked(value):
             self.setTabFilesLayout(value.property('layout'))
@@ -2058,7 +2054,6 @@ class BCMainViewTab(QFrame):
                 returned.append(BCMainViewTabTabs.DOCUMENTS)
             elif self.tabMain.widget(index).objectName() == 'tabClipboard':
                 returned.append(BCMainViewTabTabs.CLIPBOARD)
-        print('*----------Tab order', returned)
         return returned
 
 
@@ -2069,7 +2064,6 @@ class BCMainViewTab(QFrame):
         if len(tabs) != self.tabMain.count():
             raise EInvalidType('Given `tabs` list must have the same number of item than panel tab')
 
-        print('*----------Set Tab order', tabs)
         for tabIndex in range(len(tabs)):
             index, name = self.tabIndex(tabs[tabIndex])
             if index != tabIndex:

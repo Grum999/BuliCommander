@@ -433,8 +433,6 @@ class BCFileOperation(object):
                 pathsList[file.fullPathName()]=file.name()
             index+=1
 
-        print("copy-0", pathsList)
-
         if len(pathsList)>0:
             fileList=BCFileList()
             fileList.addPath([BCFileListPath(path, True) for path in list(pathsList.keys())])
@@ -442,7 +440,6 @@ class BCFileOperation(object):
             files+=fileList.files()
             for file in fileList.files():
                 totalSize+=file.size()
-                print(file.fullPathName())
 
         BCFileOperation.__showProgressBar(f"{title}::Copy files", len(files), totalSize)
 
@@ -460,8 +457,6 @@ class BCFileOperation(object):
             else:
                 targetFile = os.path.join(targetPath, file.name())
 
-            print("copy-1", file.path(), file.name(), isDir, targetFile)
-
             actionToApply = BCFileOperationUi.FILEEXISTS_OVERWRITE
 
             while os.path.exists(targetFile):
@@ -475,9 +470,7 @@ class BCFileOperation(object):
                     elif action[0] == BCFileOperationUi.FILEEXISTS_RENAME:
                         if isDir and os.path.join(file.path(), file.name()) in pathsList:
                             pathsList[os.path.join(file.path(), file.name())] = action[1]
-                            print("copy-r1", pathsList)
                         targetFile = os.path.join(targetPath, action[1])
-                        print("copy-r2", targetFile)
                         actionToApply = BCFileOperationUi.FILEEXISTS_RENAME
                     else:
                         # apply to all
@@ -494,8 +487,6 @@ class BCFileOperation(object):
                     else:
                         actionToApply = actionOnFileExist
                     break
-
-            print("copy-2", targetFile, actionToApply)
 
             if actionToApply == BCFileOperationUi.FILEEXISTS_ABORT:
                 cancelled=BCFileOperation.__value()
@@ -540,6 +531,7 @@ class BCFileOperation(object):
 
         Given `files` is a list of BCBaseFile
         """
+        # TODO: to implement
         print('move to', targetPath)
 
     @staticmethod

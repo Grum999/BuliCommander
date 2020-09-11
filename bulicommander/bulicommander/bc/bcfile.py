@@ -1268,7 +1268,7 @@ class BCFile(BCBaseFile):
                 elif markerSegment['id'] in [b'\xFF\xC0', b'\xFF\xC2']:
                     returned.update(decodeChunk_SOFx(markerSegment))
                 #else:
-                #    print(markerSegment['id'], markerSegment['size'], markerSegment['data'][0:25])
+                #    Debug.print('[BCFile.__readMetaDataJpeg] markerSegment({0}) size: {1} / data: {2}', markerSegment['id'], markerSegment['size'], markerSegment['data'][0:25])
 
                 markerSegment = readMarkerSegment(fHandler)
 
@@ -1568,7 +1568,7 @@ class BCFile(BCBaseFile):
                 elif chunk['id']=='IEND':
                     break
                 #elif chunk['id']!='IDAT':
-                #    print(chunk)
+                #    Debug.print('[BCFile.__readMetaDataPng] Chunk: {0}', chunk)
                 chunk = readChunk(fHandler)
 
         return returned
@@ -1909,11 +1909,11 @@ class BCFile(BCBaseFile):
                 resId = struct.unpack('!H', fHandle.read(2))[0]
                 # ==> commented, used for debug and psd file format analysis
                 #if resId in __IRB_ID:
-                #    print(hex(resId), __IRB_ID[resId])
+                #    Debug.print('[BCFile.__readMetaDataPsd] IRB({0}): {1}', hex(resId), __IRB_ID[resId])
                 #elif resId >= 0x0FA0 and resId <= 0x1387:
-                #    print(hex(resId), "Plug-In resource(s). Resources added by a plug-in. See the plug-in API found in the SDK documentation")
+                #    Debug.print('[BCFile.__readMetaDataPsd] IRB({0}): "Plug-In resource(s). Resources added by a plug-in. See the plug-in API found in the SDK documentation"', hex(resId))
                 #elif resId >= 0x07D0 and resId <= 0x0BB6:
-                #    print(hex(resId), "Path Information (saved paths). See See Path resource format.")
+                #    Debug.print('[BCFile.__readMetaDataPsd] IRB({0}): "Path Information (saved paths). See See Path resource format."', hex(resId))
 
 
                 pStringSize = struct.unpack('B', fHandler.read(1))[0]

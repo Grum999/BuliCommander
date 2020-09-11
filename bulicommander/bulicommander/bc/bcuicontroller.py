@@ -631,13 +631,8 @@ class BCUIController(object):
 
         closeBC = False
 
-        print('commandFileDefaultAction', file)
-
         if file is None:
             return
-
-        print('commandFileDefaultAction', file.name(), file.format())
-
 
         if file.format() == BCFileManagedFormat.DIRECTORY:
             if file.name() == '..':
@@ -1273,13 +1268,11 @@ class BCUIController(object):
 
     def commandGoLastDocsOpenedSet(self, value=[]):
         """Set last opened documents content"""
-        print("=====BC: commandGoLastDocsOpenedSet", value)
         self.__lastDocumentsOpened.clear()
         self.__lastDocumentsOpened.setItems(value)
 
     def commandGoLastDocsOpenedAdd(self, value):
         """Set last opened documents content"""
-        print("=====BC: commandGoLastDocsOpenedAdd", value)
         self.__lastDocumentsOpened.append(value)
 
     def commandGoLastDocsSavedSet(self, value=[]):
