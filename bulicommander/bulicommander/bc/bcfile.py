@@ -575,13 +575,13 @@ class BCFile(BCBaseFile):
         self.__readable = True
 
         baseName, self.__extension = os.path.splitext(fileName)
-        self.__extension=self.__extension.lower()
 
         if reResult:=re.match('^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
             # seems to be an extension for a backup file with number
             baseName, originalExtension = os.path.splitext(baseName)
             self.__extension=f'{originalExtension}{self.__extension}'
 
+        self.__extension=self.__extension.lower()
         self.__size = os.path.getsize(self._fullPathName)
 
         if strict and not BCFileManagedFormat.inExtensions(self.__extension, True, False):
