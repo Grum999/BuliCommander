@@ -113,6 +113,7 @@ class BCUIController(object):
         self.__lastDocumentsOpened = BCHistory()
         self.__lastDocumentsSaved = BCHistory()
         self.__backupFilterDView = BCHistory()
+        self.__fileLayerFilterDView = BCHistory()
 
         self.__confirmAction = True
 
@@ -193,6 +194,7 @@ class BCUIController(object):
             self.__window.panels[panelId].setLastDocumentsOpened(self.__lastDocumentsOpened)
             self.__window.panels[panelId].setLastDocumentsSaved(self.__lastDocumentsSaved)
             self.__window.panels[panelId].setBackupFilterDView(self.__backupFilterDView)
+            self.__window.panels[panelId].setFileLayerFilterDView(self.__fileLayerFilterDView)
 
             self.commandPanelTabActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId)))
             self.commandPanelTabPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId)))
@@ -284,6 +286,10 @@ class BCUIController(object):
         """Return dynamic view for backup filter"""
         return self.__backupFilterDView
 
+    def fileLayerFilterDView(self):
+        """Return dynamic view for file layer filter"""
+        return self.__fileLayerFilterDView
+
     def settings(self):
         """return settoing manager"""
         return self.__settings
@@ -343,7 +349,8 @@ class BCUIController(object):
                     '@last opened': (BCPathBar.QUICKREF_RESERVED_LAST_OPENED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened documents'),
                     '@last saved': (BCPathBar.QUICKREF_RESERVED_LAST_SAVED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last saved documents'),
                     '@history': (BCPathBar.QUICKREF_RESERVED_HISTORY, buildIcon([(QPixmap(":/images/history"), QIcon.Normal)]), 'History directories'),
-                    '@backup filter': (BCPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW, buildIcon([(QPixmap(":/images/filter"), QIcon.Normal)]), 'Temporary backup files list')
+                    '@backup filter': (BCPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW, buildIcon([(QPixmap(":/images/filter"), QIcon.Normal)]), 'Backup files list'),
+                    '@file layer filter': (BCPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW, buildIcon([(QPixmap(":/images/large_view"), QIcon.Normal)]), 'Layer files list')
                     }
 
         if not self.__bookmark is None and self.__bookmark.length() > 0:
@@ -1324,6 +1331,11 @@ class BCUIController(object):
         """Set backup filter dynamic view content"""
         self.__backupFilterDView.clear()
         self.__backupFilterDView.setItems(value)
+
+    def commandGoFileLayerFilterDViewSet(self, value=[]):
+        """Set file layer filter dynamic view content"""
+        self.__fileLayerFilterDView.clear()
+        self.__fileLayerFilterDView.setItems(value)
 
     def commandSettingsHistoryMaxSize(self, value=25):
         """Set maximum size history for history content"""

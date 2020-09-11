@@ -79,6 +79,7 @@ class BCPathBar(QFrame):
     QUICKREF_RESERVED_LAST_SAVED = 6
     QUICKREF_RESERVED_HISTORY = 7
     QUICKREF_RESERVED_BACKUPFILTERDVIEW = 8
+    QUICKREF_RESERVED_FLAYERFILTERDVIEW = 9 # file layer
 
     OPTION_SHOW_NONE        =       0b0000000000000000
     OPTION_SHOW_ALL         =       0b0000000111111111
@@ -120,6 +121,7 @@ class BCPathBar(QFrame):
         self.__lastDocumentsSaved = None
         self.__lastDocumentsOpened = None
         self.__backupFilterDView = None
+        self.__fileLayerFilterDView = None
 
         self.__mode = BCPathBar.MODE_PATH
 
@@ -621,6 +623,10 @@ class BCPathBar(QFrame):
         """backup filtered dynamic view content has been modified"""
         pass
 
+    def __fileLayerFilterDViewChanged(self):
+        """file layer filtered dynamic view content has been modified"""
+        pass
+
     def __updateUpBtn(self):
         """Update up button status"""
         if str(self.frameBreacrumbPath.path()) != '' and str(self.frameBreacrumbPath.path())[0] != '@':
@@ -792,6 +798,17 @@ class BCPathBar(QFrame):
             self.frameBreacrumbPath.quickRefDict=self.__uiController.quickRefDict
             self.frameBreacrumbPath.getQuickRefPath=self.__uiController.quickRefPath
 
+    def fileLayerFilterDView(self):
+        """Return file layer dynamic view object"""
+        return self.__fileLayerFilterDView
+
+    def setFileLayerFilterDView(self, value):
+        """Set file layer dynamic view object"""
+        if not value is None:
+            self.__fileLayerFilterDView = value
+            self.__fileLayerFilterDView.changed.connect(self.__fileLayerFilterDViewChanged)
+            self.frameBreacrumbPath.quickRefDict=self.__uiController.quickRefDict
+            self.frameBreacrumbPath.getQuickRefPath=self.__uiController.quickRefPath
 
     def filterVisible(self):
         """Return if filter is visible or not"""

@@ -76,6 +76,7 @@ from .bcbookmark import BCBookmark
 from .bcfile import (
         BCBaseFile,
         BCDirectory,
+        BCFile,
         BCFileList,
         BCFileListRule,
         BCFileListSortRule,
@@ -1086,6 +1087,8 @@ class BCMainViewTab(QFrame):
                 self.__fileQuery.setResult(self.savedView().get())
             elif refType == BCPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW:
                 self.__fileQuery.setResult(self.backupFilterDView().list())
+            elif refType == BCPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW:
+                self.__fileQuery.setResult(self.fileLayerFilterDView().list())
 
         else:
             # MODE_PATH
@@ -1308,6 +1311,13 @@ class BCMainViewTab(QFrame):
             self.__uiController.commandGoTo(oppositePanelId, '@backup filter')
             self.__uiController.commandViewDisplaySecondaryPanel(True)
 
+        def applyLayerFileFilter(action):
+            """Display opposite panel, go to given path, activate backup files, and apply filter"""
+            oppositePanelId=self.__uiController.oppositePanelId(self)
+            self.__uiController.commandGoFileLayerFilterDViewSet(fileLayerList)
+            self.__uiController.commandGoTo(oppositePanelId, '@file layer filter')
+            self.__uiController.commandViewDisplaySecondaryPanel(True)
+
 
         self.__currentStats['nbSelectedFiles'] = 0
         self.__currentStats['nbSelectedDir'] = 0
@@ -1349,6 +1359,7 @@ class BCMainViewTab(QFrame):
             self.__imgReaderAnimated.stop()
             self.__imgReaderAnimated = None
 
+        # ------------------- !!!!! Here start the noodel spaghetti !!!!! -------------------
         if self.__selectedNbTotal == 1:
             # ------------------------------ File ------------------------------
             file = self.__selectedFiles[0]
@@ -1420,7 +1431,6 @@ class BCMainViewTab(QFrame):
 
             if backupList.nbFiles()>0:
                 backupList.sort()
-
 
                 filterButton = QPushButton(i18n("Show"))
                 filterButton.setToolTip(i18n("Show in opposite panel"))
@@ -1579,25 +1589,8 @@ class BCMainViewTab(QFrame):
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'No')
 
 
+                # ------------------------------ Image: KRA ------------------------------
                 if file.format() == BCFileManagedFormat.KRA:
-                    if imgNfo['document.layerCount'] > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', str(imgNfo['document.layerCount']))
-                    else:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
-
-                    if len(imgNfo['document.fileLayers']) > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'File layers', str(len(imgNfo['document.fileLayers'])))
-                        for fileName in imgNfo['document.fileLayers']:
-                            fullFileName = os.path.join(file.path(), fileName)
-
-                            if os.path.isfile(fullFileName):
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', fileName)
-                            else:
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fileName}</i>', 'File is missing!', 'warning-label')
-                    else:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'File layers', '-')
-
-
                     if imgNfo['imageCount'] > 1:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'Yes')
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Frames:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageCount']}</i>")
@@ -1610,12 +1603,53 @@ class BCMainViewTab(QFrame):
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'No')
 
+                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                    if imgNfo['document.layerCount'] > 0:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', str(imgNfo['document.layerCount']))
+                    else:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
 
+                    nbFileLayer = len(imgNfo['document.fileLayers'])
+                    if nbFileLayer > 0:
+                        filterButton = QPushButton(i18n("Show"))
+                        filterButton.setToolTip(i18n("Show in opposite panel"))
+                        filterButton.setStatusTip(i18n("Show layers files list in opposite panel"))
+                        filterButton.clicked.connect(applyLayerFileFilter)
+
+                        fileLayerList=[]
+
+                        addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                        if nbFileLayer == 1:
+                            addNfoBtnRow(self.scrollAreaWidgetContentsNfoImage, i18n("File layers"), i18n("1 file layer found"), filterButton)
+                        else:
+                            addNfoBtnRow(self.scrollAreaWidgetContentsNfoImage, i18n("File layers"), i18n(f"{nbFileLayer} file layers found"), filterButton)
+
+
+                        for fileName in imgNfo['document.fileLayers']:
+                            fullFileName = os.path.join(file.path(), fileName)
+                            fileLayerList.append(fullFileName)
+
+                            addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                            if os.path.isfile(fullFileName):
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), fileName)
+
+                                fileLayer = BCFile(fullFileName)
+
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), tsToStr(fileLayer.lastModificationDateTime(), valueNone='-'))
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), f'{bytesSizeToStr(fileLayer.size())} ({fileLayer.size():n})')
+
+                                if fileLayer.imageSize().width() == -1 or fileLayer.imageSize().height() == -1:
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-')
+                                else:
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), f'{fileLayer.imageSize().width()}x{fileLayer.imageSize().height()}')
+                            else:
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), f'<i>{fileName}</i>', 'File is missing!', 'warning-label')
 
                     self.twInfo.setTabEnabled(2, True)
                     self.twInfo.setTabEnabled(3, True)
                     self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
 
+                    # ------------------------------ Image: KRA <ABOUT> ------------------------------
                     self.lblKraAboutTitle.setText(strDefault(imgNfo['about.title'], '-'))
                     self.lblKraAboutSubject.setText(strDefault(imgNfo['about.subject'], '-'))
                     self.lblKraAboutDesc.setText(strDefault(imgNfo['about.description'], '-'))
@@ -1634,6 +1668,7 @@ class BCMainViewTab(QFrame):
                         value+= f' +{nbDay}d'
                     self.lblKraAboutEditingTime.setText(value)
 
+                    # ------------------------------ Image: KRA <AUTHOR> ------------------------------
                     self.lblKraAuthorNickname.setText(strDefault(imgNfo['author.nickName'], '-'))
                     self.lblKraAuthorFName.setText(strDefault(imgNfo['author.firstName'], '-'))
                     self.lblKraAuthorLName.setText(strDefault(imgNfo['author.lastName'], '-'))
@@ -2289,6 +2324,16 @@ class BCMainViewTab(QFrame):
     def setBackupFilterDView(self, value):
         """Set last backup dynamic view object"""
         self.framePathBar.setBackupFilterDView(value)
+
+
+    def fileLayerFilterDView(self):
+        """set file layer dynamic view object"""
+        return self.framePathBar.fileLayerFilterDView()
+
+
+    def setFileLayerFilterDView(self, value):
+        """Set file layer dynamic view object"""
+        self.framePathBar.setFileLayerFilterDView(value)
 
 
     def filterVisible(self):
