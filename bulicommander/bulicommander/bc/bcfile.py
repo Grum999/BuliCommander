@@ -180,12 +180,9 @@ class BCFileManagedFormat(object):
         if value[0] == '.':
             value = value[1:]
 
-        if value[-1] == '~':
+        if reResult:=re.search(f'([^\.]+)({BCFileManagedFormat.backupSuffixRe()})$', value):
             backupFile = True
-            value=value[:-1]
-        elif value[0] == '~':
-            backupFile = True
-            value=value[1:]
+            value=reResult.groups()[0]
 
         value = value.upper()
 
@@ -577,8 +574,13 @@ class BCFile(BCBaseFile):
         #if os.path.isfile(fileName):
         self.__readable = True
 
-        dummy, self.__extension = os.path.splitext(fileName)
+        baseName, self.__extension = os.path.splitext(fileName)
         self.__extension=self.__extension.lower()
+
+        if reResult:=re.match('^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
+            # seems to be an extension for a backup file with number
+            baseName, originalExtension = os.path.splitext(baseName)
+            self.__extension=f'{originalExtension}{self.__extension}'
 
         self.__size = os.path.getsize(self._fullPathName)
 
