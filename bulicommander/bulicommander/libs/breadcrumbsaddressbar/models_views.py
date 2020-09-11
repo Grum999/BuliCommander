@@ -72,16 +72,12 @@ class FilenameModel(QtCore.QStringListModel):
         return sorted(dirs, key=str.lower) + sorted(files, key=str.lower)
 
     def setPathPrefix(self, prefix, bname=''):
-        print('setPathPrefix', 'prefix:', prefix, 'bname:',bname)
-
         if len(prefix)>0 and prefix[0]=='@':
             # return a list of quick references
             if self.__breadcrumbs is None:
                 quickRefDict=[]
             else:
                 quickRefDict=self.__breadcrumbs.quickRefDict()
-
-            print([quickRefDict[key][2] for key in quickRefDict])
 
             self.setStringList([key for key in quickRefDict])
 

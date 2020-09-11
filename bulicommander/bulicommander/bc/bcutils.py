@@ -19,6 +19,7 @@
 # A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
+from math import floor
 import locale
 import re
 import time
@@ -247,6 +248,17 @@ def frToStrTime(nbFrames, frameRate):
 
     return f"{returned_mn:02d}:{returned_ss:02d}.{returned_ff:02d}"
 
+def secToStrTime(nbSeconds):
+    """Convert a number of seconds to duration"""
+    returned = ''
+    nbDays = floor(nbSeconds / 86400)
+    if nbDays > 0:
+        nbSeconds = nbSeconds - nbDays * 86400
+        returned = f'{nbDays}D, '
+
+    returned+=time.strftime('%H:%M:%S', time.gmtime(nbSeconds))
+
+    return returned
 
 
 def getLangValue(dictionary, lang=None, default=''):
@@ -301,7 +313,7 @@ def getLangValue(dictionary, lang=None, default=''):
         # not found, return first entry
         return dictionary[list(dictionary.keys())[0]]
 
-def checkerBoardBrush(self, size=32):
+def checkerBoardBrush(size=32):
     """Return a checker board brush"""
     tmpPixmap = QPixmap(size,size)
     tmpPixmap.fill(QColor(255,255,255))

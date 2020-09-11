@@ -112,6 +112,8 @@ class BCUIController(object):
         self.__savedView = BCSavedView()
         self.__lastDocumentsOpened = BCHistory()
         self.__lastDocumentsSaved = BCHistory()
+        self.__backupFilterDView = BCHistory()
+        self.__fileLayerFilterDView = BCHistory()
 
         self.__confirmAction = True
 
@@ -191,6 +193,8 @@ class BCUIController(object):
             self.__window.panels[panelId].setSavedView(self.__savedView)
             self.__window.panels[panelId].setLastDocumentsOpened(self.__lastDocumentsOpened)
             self.__window.panels[panelId].setLastDocumentsSaved(self.__lastDocumentsSaved)
+            self.__window.panels[panelId].setBackupFilterDView(self.__backupFilterDView)
+            self.__window.panels[panelId].setFileLayerFilterDView(self.__fileLayerFilterDView)
 
             self.commandPanelTabActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId)))
             self.commandPanelTabPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId)))
@@ -278,6 +282,14 @@ class BCUIController(object):
         """Return last saved doc views manager"""
         return self.__lastDocumentsSaved
 
+    def backupFilterDView(self):
+        """Return dynamic view for backup filter"""
+        return self.__backupFilterDView
+
+    def fileLayerFilterDView(self):
+        """Return dynamic view for file layer filter"""
+        return self.__fileLayerFilterDView
+
     def settings(self):
         """return settoing manager"""
         return self.__settings
@@ -292,6 +304,32 @@ class BCUIController(object):
             return self.__window.panels[self.__window.highlightedPanel()]
         else:
             return self.__window.panels[1 - self.__window.highlightedPanel()]
+
+    def oppositePanelId(self, panel):
+        """Return opposite panel"""
+        if isinstance(panel, BCMainViewTab):
+            for panelId in self.__window.panels:
+                if self.__window.panels[panelId] == panel:
+                    return 1 - panelId
+            # should not occurs
+            raise EInvalidValue("Unable to determinate opposite panel")
+        elif panel in self.__window.panels:
+            return 1 - panel
+        else:
+            raise EInvalidValue("Not a valid panel Id (0 or 1)")
+
+    def oppositePanel(self, panel):
+        """Return opposite panel"""
+        if isinstance(panel, BCMainViewTab):
+            for panelId in self.__window.panels:
+                if self.__window.panels[panelId] == panel:
+                    return self.__window.panels[1 - panelId]
+            # should not occurs
+            raise EInvalidValue("Unable to determinate opposite panel")
+        elif panel in self.__window.panels:
+            return self.__window.panels[1 - panel]
+        else:
+            raise EInvalidValue("Not a valid panel Id (0 or 1)")
 
     def theme(self):
         """Return theme object"""
@@ -310,7 +348,9 @@ class BCUIController(object):
                     '@last': (BCPathBar.QUICKREF_RESERVED_LAST_ALL, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened/saved documents'),
                     '@last opened': (BCPathBar.QUICKREF_RESERVED_LAST_OPENED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened documents'),
                     '@last saved': (BCPathBar.QUICKREF_RESERVED_LAST_SAVED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last saved documents'),
-                    '@history': (BCPathBar.QUICKREF_RESERVED_HISTORY, buildIcon([(QPixmap(":/images/history"), QIcon.Normal)]), 'History directories')
+                    '@history': (BCPathBar.QUICKREF_RESERVED_HISTORY, buildIcon([(QPixmap(":/images/history"), QIcon.Normal)]), 'History directories'),
+                    '@backup filter': (BCPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW, buildIcon([(QPixmap(":/images/filter"), QIcon.Normal)]), 'Backup files list'),
+                    '@file layer filter': (BCPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW, buildIcon([(QPixmap(":/images/large_view"), QIcon.Normal)]), 'Layer files list')
                     }
 
         if not self.__bookmark is None and self.__bookmark.length() > 0:
@@ -598,13 +638,8 @@ class BCUIController(object):
 
         closeBC = False
 
-        print('commandFileDefaultAction', file)
-
         if file is None:
             return
-
-        print('commandFileDefaultAction', file.name(), file.format())
-
 
         if file.format() == BCFileManagedFormat.DIRECTORY:
             if file.name() == '..':
@@ -1240,13 +1275,11 @@ class BCUIController(object):
 
     def commandGoLastDocsOpenedSet(self, value=[]):
         """Set last opened documents content"""
-        print("=====BC: commandGoLastDocsOpenedSet", value)
         self.__lastDocumentsOpened.clear()
         self.__lastDocumentsOpened.setItems(value)
 
     def commandGoLastDocsOpenedAdd(self, value):
         """Set last opened documents content"""
-        print("=====BC: commandGoLastDocsOpenedAdd", value)
         self.__lastDocumentsOpened.append(value)
 
     def commandGoLastDocsSavedSet(self, value=[]):
@@ -1293,6 +1326,16 @@ class BCUIController(object):
                 return False
         self.commandGoLastDocsReset()
         return True
+
+    def commandGoBackupFilterDViewSet(self, value=[]):
+        """Set backup filter dynamic view content"""
+        self.__backupFilterDView.clear()
+        self.__backupFilterDView.setItems(value)
+
+    def commandGoFileLayerFilterDViewSet(self, value=[]):
+        """Set file layer filter dynamic view content"""
+        self.__fileLayerFilterDView.clear()
+        self.__fileLayerFilterDView.setItems(value)
 
     def commandSettingsHistoryMaxSize(self, value=25):
         """Set maximum size history for history content"""

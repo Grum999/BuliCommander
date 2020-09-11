@@ -68,7 +68,8 @@ class EDialog(QDialog):
            =======
                 # define callback function
                 def my_callback_function():
-                    print("EDialog shown!")
+                    # EDialog shown!"
+                    pass
 
                 # initialise a dialog from an xml .ui file
                 dlgMain = EDialog.loadUi(uiFileName)
@@ -95,7 +96,7 @@ class EDialog(QDialog):
                 # define callback function
                 def my_callback_function(event):
                     if event.type() == QEvent.xxxx:
-                        print("Event!")
+                        # Event!
                         return True
                     return False
 

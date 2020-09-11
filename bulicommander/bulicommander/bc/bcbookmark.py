@@ -271,7 +271,6 @@ class BCBookmark(QObject):
             raise EInvalidType("Given `values` must be a list")
 
         if len(values) > 0:
-            print(values)
             for value in values:
                 if not isinstance(value, list) or len(value)!=2:
                     raise EInvalidType("Given `value` must be a list[name, path]")

@@ -53,7 +53,6 @@ class BCTheme(object):
 
 
     def __init__(self):
-        print("===[BCTheme:__init__]===")
         self.__theme = BCTheme.DARK_THEME
         self.__registeredResource = None
 
@@ -63,11 +62,8 @@ class BCTheme(object):
     def loadResources(self):
         """Load resourdes for current theme"""
 
-        print("===[BCTheme:loadResources]===")
         if not Krita.activeWindow() is None:
-            print("===[BCTheme:loadResources>>active window=YES]===")
             if not self.__registeredResource is None:
-                print("===[BCTheme:loadResources>>unregister=YES]===")
                 QResource.unregisterResource(self.__registeredResource)
 
             palette = Krita.activeWindow().qwindow().palette()
@@ -78,10 +74,8 @@ class BCTheme(object):
                 self.__theme = BCTheme.LIGHT_THEME
 
             self.__registeredResource = os.path.join(os.path.dirname(__file__), 'resources', f'{self.__theme}theme_icons.rcc')
-            print("===[BCTheme:loadResources>>__registeredResource]===", self.__registeredResource)
 
             if not QResource.registerResource(self.__registeredResource):
-                print("===[BCTheme:loadResources>>QResource=No]===")
                 self.__registeredResource = None
 
     def theme(self):

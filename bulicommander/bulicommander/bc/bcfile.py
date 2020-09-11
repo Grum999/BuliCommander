@@ -180,12 +180,9 @@ class BCFileManagedFormat(object):
         if value[0] == '.':
             value = value[1:]
 
-        if value[-1] == '~':
+        if reResult:=re.search(f'([^\.]+)({BCFileManagedFormat.backupSuffixRe()})$', value):
             backupFile = True
-            value=value[:-1]
-        elif value[0] == '~':
-            backupFile = True
-            value=value[1:]
+            value=reResult.groups()[0]
 
         value = value.upper()
 
@@ -228,18 +225,25 @@ class BCFileManagedFormat(object):
 
 
     @staticmethod
-    def extensions(withBackup=False):
-        returned = [f'.{value}' for value in BCFileManagedFormat.list()]
-        if withBackup:
-            returned+=[f'.{value}~' for value in BCFileManagedFormat.list()]
-        return returned
+    def backupSuffixRe():
+        """return backup suffix as regular expression"""
+        return '(?:\.\d+)?'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.')
 
     @staticmethod
-    def extension(value, withBackup=False):
-        returned = [f'.{value}']
-        if withBackup:
-            returned+=[f'.{value}~']
-        return returned
+    def inExtensions(value, withBackup=False, noExtIsOk=False):
+        if value == '':
+            return noExtIsOk
+
+        for extension in BCFileManagedFormat.list():
+            if BCFileManagedFormat.isExtension(value, extension, withBackup):
+                return True
+        return False
+
+    @staticmethod
+    def isExtension(value, extReference, withBackup=False):
+        if value.lower() == f'.{extReference}' or (withBackup and re.match(f"\.{extReference}{BCFileManagedFormat.backupSuffixRe()}$", value)):
+            return True
+        return False
 
 class BCFileThumbnailSize(Enum):
     """Possible sizes for a thumbnail file"""
@@ -514,8 +518,6 @@ class BCFile(BCBaseFile):
 
     __INITIALISED = False
 
-    __EXTENSIONS = BCFileManagedFormat.extensions(True) + ['']
-
     @staticmethod
     def initialiseCache(bcCachePath=None, thumbnailCacheFormat=None, thumbnailCacheDefaultSize=None):
         """Initialise thumbnails cache properties
@@ -572,15 +574,20 @@ class BCFile(BCBaseFile):
         #if os.path.isfile(fileName):
         self.__readable = True
 
-        dummy, self.__extension = os.path.splitext(fileName)
-        self.__extension=self.__extension.lower()
+        baseName, self.__extension = os.path.splitext(fileName)
 
+        if reResult:=re.match('^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
+            # seems to be an extension for a backup file with number
+            baseName, originalExtension = os.path.splitext(baseName)
+            self.__extension=f'{originalExtension}{self.__extension}'
+
+        self.__extension=self.__extension.lower()
         self.__size = os.path.getsize(self._fullPathName)
 
-        if strict and not self.__extension in self.__EXTENSIONS:
+        if strict and not BCFileManagedFormat.inExtensions(self.__extension, True, False):
             self.__readable = True
             return
-        elif self.__extension in self.__EXTENSIONS:
+        elif BCFileManagedFormat.inExtensions(self.__extension, True, True):
             imageReader = QImageReader(self._fullPathName)
 
             if imageReader.canRead():
@@ -603,7 +610,7 @@ class BCFile(BCBaseFile):
                 tmpNfo = self.__readMetaDataXcf(True)
                 if 'width' in tmpNfo and 'height' in tmpNfo:
                     self.__imgSize = QSize(tmpNfo['width'], tmpNfo['height'])
-            elif self._format == BCFileManagedFormat.KRA or self.__extension in BCFileManagedFormat.extension(BCFileManagedFormat.KRA, True):
+            elif self._format == BCFileManagedFormat.KRA or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.KRA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
                 # by qimagereader
@@ -611,7 +618,7 @@ class BCFile(BCBaseFile):
                 if not size is None:
                     self.__imgSize = size
                     self._format = BCFileManagedFormat.KRA
-            elif self._format == BCFileManagedFormat.ORA or self.__extension in BCFileManagedFormat.extension(BCFileManagedFormat.ORA, True):
+            elif self._format == BCFileManagedFormat.ORA or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.ORA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
                 # by qimagereader
@@ -1038,13 +1045,25 @@ class BCFile(BCBaseFile):
             return None
 
         try:
-            imgfile = archive.open('Thumbnails/thumbnail.png')
+            # try to read merged image preview
+            imgfile = archive.open('mergedimage.png')
         except Exception as e:
             # can't be read (not exist, not a Kra file?)
-            self.__readable = False
-            archive.close()
-            Debug.print('[BCFile.__readOraImage] Unable to find "thumbnail.png" in file {0}: {1}', self._fullPathName, str(e))
-            return None
+            imgfile = None
+
+
+        if imgfile is None:
+            # ora file is an old ora file without mergedimage.png
+            # try to read thumbnail file
+            try:
+                imgfile = archive.open('Thumbnails/thumbnail.png')
+            except Exception as e:
+                # can't be read (not exist, not a Kra file?)
+                self.__readable = False
+                archive.close()
+                Debug.print('[BCFile.__readOraImage] Unable to find "thumbnail.png" in file {0}: {1}', self._fullPathName, str(e))
+                return None
+
 
         try:
             image = imgfile.read()
@@ -1251,7 +1270,7 @@ class BCFile(BCBaseFile):
                 elif markerSegment['id'] in [b'\xFF\xC0', b'\xFF\xC2']:
                     returned.update(decodeChunk_SOFx(markerSegment))
                 #else:
-                #    print(markerSegment['id'], markerSegment['size'], markerSegment['data'][0:25])
+                #    Debug.print('[BCFile.__readMetaDataJpeg] markerSegment({0}) size: {1} / data: {2}', markerSegment['id'], markerSegment['size'], markerSegment['data'][0:25])
 
                 markerSegment = readMarkerSegment(fHandler)
 
@@ -1551,7 +1570,7 @@ class BCFile(BCBaseFile):
                 elif chunk['id']=='IEND':
                     break
                 #elif chunk['id']!='IDAT':
-                #    print(chunk)
+                #    Debug.print('[BCFile.__readMetaDataPng] Chunk: {0}', chunk)
                 chunk = readChunk(fHandler)
 
         return returned
@@ -1892,11 +1911,11 @@ class BCFile(BCBaseFile):
                 resId = struct.unpack('!H', fHandle.read(2))[0]
                 # ==> commented, used for debug and psd file format analysis
                 #if resId in __IRB_ID:
-                #    print(hex(resId), __IRB_ID[resId])
+                #    Debug.print('[BCFile.__readMetaDataPsd] IRB({0}): {1}', hex(resId), __IRB_ID[resId])
                 #elif resId >= 0x0FA0 and resId <= 0x1387:
-                #    print(hex(resId), "Plug-In resource(s). Resources added by a plug-in. See the plug-in API found in the SDK documentation")
+                #    Debug.print('[BCFile.__readMetaDataPsd] IRB({0}): "Plug-In resource(s). Resources added by a plug-in. See the plug-in API found in the SDK documentation"', hex(resId))
                 #elif resId >= 0x07D0 and resId <= 0x0BB6:
-                #    print(hex(resId), "Path Information (saved paths). See See Path resource format.")
+                #    Debug.print('[BCFile.__readMetaDataPsd] IRB({0}): "Path Information (saved paths). See See Path resource format."', hex(resId))
 
 
                 pStringSize = struct.unpack('B', fHandler.read(1))[0]
