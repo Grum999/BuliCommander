@@ -22,7 +22,7 @@
         <enum>QTabWidget::West</enum>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <property name="movable">
         <bool>true</bool>
@@ -631,7 +631,7 @@ QSlider::handle:horizontal {
                                     <x>0</x>
                                     <y>0</y>
                                     <width>773</width>
-                                    <height>640</height>
+                                    <height>639</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -783,6 +783,12 @@ QSlider::handle:horizontal {
                                    </item>
                                    <item row="6" column="1">
                                     <widget class="QLabel" name="lblOwner">
+                                     <property name="sizePolicy">
+                                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                                       <horstretch>0</horstretch>
+                                       <verstretch>0</verstretch>
+                                      </sizepolicy>
+                                     </property>
                                      <property name="font">
                                       <font>
                                        <family>DejaVu Sans Mono</family>
@@ -846,7 +852,7 @@ QSlider::handle:horizontal {
                                     <x>0</x>
                                     <y>0</y>
                                     <width>773</width>
-                                    <height>640</height>
+                                    <height>638</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1074,7 +1080,7 @@ QSlider::handle:horizontal {
                                     <x>0</x>
                                     <y>0</y>
                                     <width>773</width>
-                                    <height>640</height>
+                                    <height>638</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1331,7 +1337,7 @@ QSlider::handle:horizontal {
                                     <x>0</x>
                                     <y>0</y>
                                     <width>773</width>
-                                    <height>640</height>
+                                    <height>638</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1623,7 +1629,7 @@ QSlider::handle:horizontal {
             <item>
              <widget class="QLabel" name="lblFileNfo">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -1653,7 +1659,33 @@ QSlider::handle:horizontal {
              </widget>
             </item>
             <item>
-             <widget class="Line" name="line_2">
+             <widget class="QProgressBar" name="pbProgress">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>7</pointsize>
+                <weight>50</weight>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="value">
+               <number>0</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="lineDiskNfo">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
               </property>
