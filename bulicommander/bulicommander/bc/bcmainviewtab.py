@@ -697,7 +697,9 @@ class BCMainViewTab(QFrame):
 
         self.__pbMax=0
         self.__pbVal=0
+        self.__pbInc=0
         self.__pbDispCount=0
+        self.__pbVisible=False
 
         self.__currentStats = {
                 'nbFiles': 0,
@@ -856,7 +858,7 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot(int)
         def treeViewFiles_iconStartLoad(nbIcons):
-            self.__progressStart(nbIcons, 'Loading thumbnails %v of %m (%p%)')
+            self.__progressStart(nbIcons, i18n('Loading thumbnails %v of %m (%p%)'))
 
         @pyqtSlot()
         def treeViewFiles_iconStopLoad():
@@ -1041,10 +1043,16 @@ class BCMainViewTab(QFrame):
         if self.__fileQuery is None:
             return
 
+        if self.__fileQuery.nbFiles() > 1500:
+            self.__progressStart(0,i18n('Loading list'))
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
         self.treeViewFiles.beginUpdate()
 
         # clear all content
         self.treeViewFiles.clear()
+        QApplication.instance().processEvents()
+
         # add parent directory '..'
         self.__addParentDirectory()
 
@@ -1078,7 +1086,6 @@ class BCMainViewTab(QFrame):
                 'freeDiskSize': freeSpace
             }
 
-
         for file in self.__fileQuery.files():
             if file.format() == BCFileManagedFormat.DIRECTORY:
                 self.__currentStats['nbDir']+=1
@@ -1088,16 +1095,37 @@ class BCMainViewTab(QFrame):
 
             self.treeViewFiles.addFile(file)
 
+
         self.__currentStats['nbTotal'] = self.__currentStats['nbDir'] + self.__currentStats['nbFiles']
         self.__updateFileStats()
         self.__applyFilter(None)
 
         self.treeViewFiles.resizeColumns(True)
+
+        self.__progressStop()
+
         self.treeViewFiles.endUpdate()
+        if self.__fileQuery.nbFiles() > 1500:
+            QApplication.restoreOverrideCursor()
 
 
     def __refreshFiles(self, fileQuery=None):
         """update file list with current path"""
+        def fileQueryStepExecuted(value):
+            if value[0] == BCFileList.STEPEXECUTED_SEARCH:
+                # in this case, value[1] returns number of files to scan
+                if value[1] > 500:
+                    self.__progressStart(value[1], i18n('Analyzing file %v of %m (%p%)'))
+            elif value[0] == BCFileList.STEPEXECUTED_SCAN:
+                # in this case, scanning is finished
+                if self.__pbVisible:
+                    self.__progressStop()
+            elif value[0] == BCFileList.STEPEXECUTED_SCANNING:
+                # in this case, value[1] give processed index
+                if self.__pbVisible:
+                    self.__progressSetNext()
+
+
         if not self.isVisible():
             # if panel is not visible, do not update file list
             self.__allowRefresh = False
@@ -1154,8 +1182,20 @@ class BCMainViewTab(QFrame):
             else:
                 self.__fileQuery = fileQuery
 
-            # looks for files
+
+            try:
+                # ensure there's no current connection before create a new one
+                self.__fileQuery.stepExecuted.disconnect(fileQueryStepExecuted)
+            except:
+                pass
+            self.__fileQuery.stepExecuted.connect(fileQueryStepExecuted)
+
+            self.treeViewFiles.beginUpdate()
+            self.treeViewFiles.clear()
+            self.treeViewFiles.endUpdate()
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             self.__fileQuery.execute(True)
+            QApplication.restoreOverrideCursor()
 
         # sort files according to columns + add to treeview
         self.__sortFiles()
@@ -1938,7 +1978,10 @@ class BCMainViewTab(QFrame):
 
         self.__pbMax = maxValue
         self.__pbVal = 0
+        self.__pbInc = max(1, round(maxValue/400, 0))
         self.__pbDispCount+=1
+        self.__pbVisible=True
+
         self.pbProgress.setValue(0)
         self.pbProgress.setMaximum(maxValue)
         self.pbProgress.setFormat(text)
@@ -1946,18 +1989,19 @@ class BCMainViewTab(QFrame):
         self.lblDiskNfo.setVisible(False)
         self.lineDiskNfo.setVisible(False)
         self.pbProgress.setVisible(True)
-        #QApplication.instance().processEvents()
 
 
     def __progressStop(self):
         """Hide progress bar / display status bar information"""
         #self.lblFileNfo.setVisible(True)
-        self.__pbDispCount-=1
-        if self.__pbDispCount<=0:
-            self.lblDiskNfo.setVisible(True)
-            self.lineDiskNfo.setVisible(True)
-            self.pbProgress.setVisible(False)
-            self.__pbDispCount = 0
+        if self.__pbVisible:
+            self.__pbDispCount-=1
+            if self.__pbDispCount<=0:
+                self.lblDiskNfo.setVisible(True)
+                self.lineDiskNfo.setVisible(True)
+                self.pbProgress.setVisible(False)
+                self.__pbDispCount = 0
+                self.__pbVisible=False
 
 
     def __progressSetValue(self, value):
@@ -1969,7 +2013,8 @@ class BCMainViewTab(QFrame):
     def __progressSetNext(self):
         """set progress bar next value"""
         self.__pbVal+=1
-        self.pbProgress.setValue(self.__pbVal)
+        if self.__pbVal >=  self.pbProgress.value() + self.__pbInc:
+            self.pbProgress.setValue(self.__pbVal)
 
 
     def setVisible(self, value):
