@@ -617,7 +617,7 @@ class BCSettingsDialogBox(QDialog):
         """Set page according to category"""
         self.swCatPages.setCurrentIndex(self.lvCategory.currentItem().data(Qt.UserRole))
 
-        if self.lvCategory.currentItem().data(Qt.UserRole) == 2:
+        if self.lvCategory.currentItem().data(Qt.UserRole) == BCSettingsDialogBox.CATEGORY_CACHE:
             # calculate cache nb files+size
             self.__calculateCacheSize()
 
