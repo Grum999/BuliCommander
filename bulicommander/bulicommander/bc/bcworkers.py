@@ -110,6 +110,7 @@ class BCWorkerPool(QObject):
         self.__current = 0
         self.__locked = 0
         self.__started = 0
+        self.__allStarted = False
         self.__size = 0
         self.__nbWorkers = self.__threadpool.maxThreadCount()
         self.__workers = []
@@ -140,7 +141,7 @@ class BCWorkerPool(QObject):
     def __onFinished(self):
         """Do something.. ?"""
         self.__started-=1
-        if self.__started==0:
+        if self.__allStarted and self.__started==0:
             self.__workers.clear()
             self.signals.finished.emit()
 
@@ -199,6 +200,7 @@ class BCWorkerPool(QObject):
         # for test, force to 1 thread only
         #self.__nbWorkers = 1
 
+        self.__allStarted = False
         for index in range(self.__nbWorkers):
             self.__workers.append(BCWorker(self, callback, *callbackArgv))
             self.__workers[index].signals.processed.connect(self.__onProcessed)
@@ -206,6 +208,12 @@ class BCWorkerPool(QObject):
             self.__workers[index].setAutoDelete(True)
             self.__started+=1
             self.__threadpool.start(self.__workers[index])
+
+        self.__allStarted = True
+        if self.__started==0:
+            self.__workers.clear()
+            self.signals.finished.emit()
+            self.__allStarted = False
 
     def stopProcessing(self):
         """Stop all current thread execution"""

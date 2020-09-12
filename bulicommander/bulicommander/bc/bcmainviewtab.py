@@ -245,6 +245,9 @@ class BCMainViewFiles(QTreeView):
     """Tree view files"""
 
     focused = Signal()
+    iconStartLoad = Signal(int)
+    iconProcessed = Signal()
+    iconStopLoad = Signal()
 
     COLNUM_ICON = 0
     COLNUM_PATH = 1
@@ -259,7 +262,6 @@ class BCMainViewFiles(QTreeView):
 
     __STATUS_READY = 0
     __STATUS_UPDATING = 1
-    __STATUS_LOADTHUMBNAILS = 2
 
     USERROLE_FILE = Qt.UserRole + 1
 
@@ -288,7 +290,7 @@ class BCMainViewFiles(QTreeView):
         self.__initHeaders()
         self.__iconPool = BCWorkerPool()
         self.__iconPool.signals.processed.connect(self.__updateIconsProcessed)
-        #self.__iconPool.signals.finished.connect(self.__updateIconsFinished)
+        self.__iconPool.signals.finished.connect(self.__updateIconsFinished)
 
     def __initHeaders(self):
         """Initialise treeview header & model"""
@@ -337,12 +339,24 @@ class BCMainViewFiles(QTreeView):
             else:
                 self.__model.item(fileIndex, BCMainViewFiles.COLNUM_ICON).setText('?')
 
-    #def __updateIconsFinished(self):
-    #    pass
+        if self.__model.rowCount() > 100:
+            self.iconProcessed.emit()
+
+    def __updateIconsFinished(self):
+        """updateing icon in treeview list is terminated"""
+        self.__status = BCMainViewFiles.__STATUS_READY
+        self.iconStopLoad.emit()
 
     def __updateIcons(self):
         """Update files icons according to current view mode"""
+        if self.__model.rowCount()==0:
+            # nothing to update
+            return
+
+        self.iconStartLoad.emit(self.__model.rowCount())
+
         items = [self.__model.item(fileIndex, BCMainViewFiles.COLNUM_NAME).data(BCMainViewFiles.USERROLE_FILE) for fileIndex in range(self.__model.rowCount())]
+
         if not self.__viewThumbnail:
             self.__iconPool.startProcessing(items, BCMainViewFiles.getIcon, False)
         else:
@@ -558,8 +572,7 @@ class BCMainViewFiles(QTreeView):
 
         Execute clear/addFile inside a beginUpdate() / endUpdate()
         """
-        if self.__status == BCMainViewFiles.__STATUS_LOADTHUMBNAILS:
-            self.__stopUpdatingIcons()
+        self.__stopUpdatingIcons()
 
         self.__status = BCMainViewFiles.__STATUS_UPDATING
 
@@ -681,6 +694,10 @@ class BCMainViewTab(QFrame):
 
         self.__fileQuery = None
         self.__fileFilter = None
+
+        self.__pbMax=0
+        self.__pbVal=0
+        self.__pbDispCount=0
 
         self.__currentStats = {
                 'nbFiles': 0,
@@ -837,6 +854,20 @@ class BCMainViewTab(QFrame):
         def iconSize_update():
             self.__actionApplyIconSize.slider().setValue(self.treeViewFiles.iconSizeIndex())
 
+        @pyqtSlot(int)
+        def treeViewFiles_iconStartLoad(nbIcons):
+            self.__progressStart(nbIcons, 'Loading thumbnails %v of %m (%p%)')
+
+        @pyqtSlot()
+        def treeViewFiles_iconStopLoad():
+            self.__progressStop()
+
+        @pyqtSlot()
+        def treeViewFiles_iconProcessed():
+            self.__progressSetNext()
+
+        # hide progress bar
+        self.__progressStop()
 
         self.__fsWatcher.directoryChanged.connect(directory_changed)
 
@@ -889,6 +920,11 @@ class BCMainViewTab(QFrame):
         self.treeViewFiles.keyPressed.connect(self.__keyPressed)
 
         self.treeViewFiles.selectionModel().selectionChanged.connect(self.__selectionChanged)
+
+        self.treeViewFiles.iconStartLoad.connect(treeViewFiles_iconStartLoad)
+        self.treeViewFiles.iconStopLoad.connect(treeViewFiles_iconStopLoad)
+        self.treeViewFiles.iconProcessed.connect(treeViewFiles_iconProcessed)
+
 
         self.treeViewFiles.beginUpdate()
         self.__addParentDirectory()
@@ -1884,6 +1920,56 @@ class BCMainViewTab(QFrame):
                 self.__imgReaderAnimated.frameChanged.connect(self.setCurrentAnimatedFrame)
                 self.__imgReaderAnimated.start()
                 self.tbPlayPause.setIcon(QIcon(":/images/pause"))
+
+
+    def __progressStart(self, maxValue, text=None):
+        """Show progress bar / hide status bar information
+
+        Progress value is initialized to 0
+        Progress maxValue given maxValue
+
+        Text value:
+         %p = current percent
+         %v = current step
+         %m = total steps
+        """
+        if text is None or text == '':
+            text = '%p%'
+
+        self.__pbMax = maxValue
+        self.__pbVal = 0
+        self.__pbDispCount+=1
+        self.pbProgress.setValue(0)
+        self.pbProgress.setMaximum(maxValue)
+        self.pbProgress.setFormat(text)
+        #self.lblFileNfo.setVisible(False)
+        self.lblDiskNfo.setVisible(False)
+        self.lineDiskNfo.setVisible(False)
+        self.pbProgress.setVisible(True)
+        #QApplication.instance().processEvents()
+
+
+    def __progressStop(self):
+        """Hide progress bar / display status bar information"""
+        #self.lblFileNfo.setVisible(True)
+        self.__pbDispCount-=1
+        if self.__pbDispCount<=0:
+            self.lblDiskNfo.setVisible(True)
+            self.lineDiskNfo.setVisible(True)
+            self.pbProgress.setVisible(False)
+            self.__pbDispCount = 0
+
+
+    def __progressSetValue(self, value):
+        """set progress bar value"""
+        self.pbProgress.setValue(value)
+        self.__pbVal = value
+
+
+    def __progressSetNext(self):
+        """set progress bar next value"""
+        self.__pbVal+=1
+        self.pbProgress.setValue(self.__pbVal)
 
 
     def setVisible(self, value):
