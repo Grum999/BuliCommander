@@ -78,6 +78,7 @@ from .bcworkers import (
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
+        pyqtSignal as Signal,
         QFileInfo,
         QSize,
         QStandardPaths
@@ -3511,7 +3512,7 @@ class BCFileListSortRule(object):
         """return True if sort is ascending, otherwise False"""
         return self.__ascending
 
-class BCFileList(object):
+class BCFileList(QObject):
     """A file list wrapper
 
     Allows to manage from the simplest query (files in a directory) to the most complex (search in multiple path with
@@ -3524,6 +3525,15 @@ class BCFileList(object):
         . A SQL Like language
         . A human natural language
     """
+    stepExecuted = Signal(tuple)
+
+    STEPEXECUTED_SEARCH =   0x00
+    STEPEXECUTED_SCAN =     0x01
+    STEPEXECUTED_FILTER =   0x02
+    STEPEXECUTED_RESULT =   0x03
+    STEPEXECUTED_SORT =     0x04
+
+    STEPEXECUTED_SCANNING = 0x10
 
     __MTASKS_RULES = []
 
@@ -3574,6 +3584,7 @@ class BCFileList(object):
 
     def __init__(self, currentList=None):
         """Initialiser current list query"""
+        super(BCFileList, self).__init__(None)
         self.__currentFiles = []
         self.__currentFilesName = set()
 
@@ -4144,6 +4155,9 @@ class BCFileList(object):
 
         Return number of files matching criteria
         """
+        def progressScanning(value):
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SCANNING,value[0],len(filesList)))
+
         if clearResults:
             # reset current list if asked
             self.clearResults()
@@ -4215,6 +4229,8 @@ class BCFileList(object):
 
         totalMatch = len(foundFiles) + len(foundDirectories)
 
+        self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH, len(foundFiles), len(foundDirectories), totalMatch))
+
         Debug.print("Search in paths: {0}", self.__pathList)
         Debug.print('Found {0} of {1} files in {2}s', totalMatch, nbTotal, Stopwatch.duration("BCFileList.execute.search"))
 
@@ -4231,8 +4247,12 @@ class BCFileList(object):
 
 
         pool = BCWorkerPool()
+        pool.signals.processed.connect(progressScanning)
         filesList = pool.map(foundFiles, BCFileList.getBcFile)
+        pool.signals.processed.disconnect(progressScanning)
         directoriesList = pool.map(foundDirectories, BCFileList.getBcDirectory)
+
+        self.stepExecuted.emit((BCFileList.STEPEXECUTED_SCAN,))
 
         Debug.print('Scan {0} files in {1}s', totalMatch, Stopwatch.duration("BCFileList.execute.scan"))
 
@@ -4253,6 +4273,7 @@ class BCFileList(object):
         else:
             BCFileList.__MTASKS_RULES = []
 
+        self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER,))
         Debug.print('Filter {0} files in {1}s', len(filesList), Stopwatch.duration("BCFileList.execute.filter"))
 
         # ----
@@ -4273,10 +4294,12 @@ class BCFileList(object):
 
         Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.result"))
 
+        self.stepExecuted.emit((BCFileList.STEPEXECUTED_RESULT,))
 
         # ----
         Stopwatch.start('BCFileList.sort')
         self.sort()
+        self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT,))
         Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.sort"))
 
         Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.global"))
