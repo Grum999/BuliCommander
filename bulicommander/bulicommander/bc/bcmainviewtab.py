@@ -96,13 +96,15 @@ from .bcworkers import (
         BCWorkerPool
     )
 from .bcutils import (
+        BCTable,
         Debug,
         bytesSizeToStr,
         frToStrTime,
         getLangValue,
         secToStrTime,
         strDefault,
-        tsToStr
+        tsToStr,
+        stripTags
     )
 
 from ..pktk.pktk import (
@@ -909,6 +911,8 @@ class BCMainViewTab(QFrame):
         self.treeViewFiles.iconStopLoad.connect(treeViewFiles_iconStopLoad)
         self.treeViewFiles.iconProcessed.connect(treeViewFiles_iconProcessed)
 
+        self.widgetFilePreview.setContextMenuPolicy(Qt.DefaultContextMenu)
+        self.widgetFilePreview.contextMenuEvent = self.__contextMenuInformations
 
         self.treeViewFiles.beginUpdate()
         self.__addParentDirectory()
@@ -1997,6 +2001,88 @@ class BCMainViewTab(QFrame):
         self.__pbVal+=1
         if self.__pbVal >=  self.pbProgress.value() + self.__pbInc:
             self.pbProgress.setValue(self.__pbVal)
+
+
+    def __contextMenuInformations(self, event):
+        """Display context menu for informations tabs"""
+
+        def copyToClipboard(source=None):
+            data=[]
+
+            if source is None:
+                # loop on all tabs
+                for index in range(self.twInfo.count()):
+                    if self.twInfo.isTabEnabled(index):
+                        data.append('\n'.join(copyToClipboard(index)))
+
+            elif isinstance(source, int):
+                # source is a tab index
+                # loop on all QLabel
+                formLayout = self.twInfo.widget(source).layout().itemAt(0).widget().widget().layout()
+
+                if not formLayout is None:
+                    table=BCTable()
+
+                    table.setTitle(stripTags(self.twInfo.tabText(source)))
+                    table.setHeader(['Property', 'Value'])
+                    table.setBorderMode(BCTable.BORDER_DOUBLE)
+
+                    for row in range(formLayout.rowCount()):
+                        itemLabel = formLayout.itemAt(row, QFormLayout.LabelRole)
+                        itemValue = formLayout.itemAt(row, QFormLayout.FieldRole)
+
+                        if itemLabel is None:
+                            textLabel = ''
+                        else:
+                            textLabel = stripTags(itemLabel.widget().text())
+
+                        if itemValue is None:
+                            textValue = ''
+                        elif isinstance(itemValue.widget(), QLabel):
+                            textValue = stripTags(itemValue.widget().text())
+                            table.addRow([textLabel, textValue])
+                        elif isinstance(itemValue.widget(), QFrame):
+                            table.addSeparator()
+                    data.append(table.asText(minWidth=80)+os.linesep)
+            elif isinstance(source, QLabel):
+                data.append(stripTags(source.text()))
+
+            return data
+
+        @pyqtSlot('QString')
+        def copyAllTabs(action):
+            QApplication.clipboard().setText('\n'.join(copyToClipboard()))
+
+        @pyqtSlot('QString')
+        def copyCurrentTab(action):
+            QApplication.clipboard().setText('\n'.join(copyToClipboard(index)))
+
+        @pyqtSlot('QString')
+        def copyItem(action):
+            QApplication.clipboard().setText('\n'.join(copyToClipboard(currentItem)))
+
+        # current tab index
+        index=self.twInfo.currentIndex()
+
+        actionCopyAll = QAction(QIcon(":/images/tabs"), i18n('All tabs'), self)
+        actionCopyAll.triggered.connect(copyAllTabs)
+
+        actionCopyCurrent = QAction(self.twInfo.tabIcon(index), i18n(f'Current "{stripTags(self.twInfo.tabText(index))}" tab'), self)
+        actionCopyCurrent.triggered.connect(copyCurrentTab)
+
+        currentItem = QApplication.widgetAt(event.globalPos())
+        if isinstance(currentItem, QLabel):
+            actionCopyItem = QAction(QIcon(":/images/text"), i18n(f'Value "{stripTags(currentItem.text())}"'), self)
+            actionCopyItem.triggered.connect(copyItem)
+        else:
+            currentItem = None
+
+        contextMenu = QMenu(i18n("Copy to clipboard"))
+        contextMenu.addAction(actionCopyAll)
+        contextMenu.addAction(actionCopyCurrent)
+        if not currentItem is None:
+            contextMenu.addAction(actionCopyItem)
+        contextMenu.exec_(event.globalPos())
 
 
     def setVisible(self, value):
