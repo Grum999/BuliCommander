@@ -72,6 +72,7 @@ from PyQt5.QtWidgets import (
     )
 
 
+from .bcmenuitem import BCMenuSlider
 from .bcbookmark import BCBookmark
 from .bcfile import (
         BCBaseFile,
@@ -652,25 +653,6 @@ class BCMainViewFiles(QTreeView):
         else:
             raise EInvalidType("Given `value` must be a <bool>")
 
-
-
-class BCMenuSlider(QWidgetAction):
-    """Encapsulate a slider as a menu item"""
-    def __init__(self, label, parent=None):
-        super(BCMenuSlider, self).__init__(parent)
-
-        self.__widget = QWidget()
-        self.__layout = QVBoxLayout()
-        self.__slider = QSlider()
-        self.__slider.setOrientation(Qt.Horizontal)
-
-        self.__layout.addWidget(QLabel(label))
-        self.__layout.addWidget(self.__slider)
-        self.__widget.setLayout(self.__layout)
-        self.setDefaultWidget(self.__widget)
-
-    def slider(self):
-        return self.__slider
 
 
 # -----------------------------------------------------------------------------
