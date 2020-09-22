@@ -1332,6 +1332,8 @@ class BCMainViewTab(QFrame):
             wContainerLayout.addWidget(wValue)
             wContainerLayout.addWidget(button)
 
+            wContainer.setProperty('text', value)
+
             addNfoRow(form, label, wContainer)
 
         def addNfoRow(form, label, value, tooltip=None, style=None):
@@ -1706,6 +1708,9 @@ class BCMainViewTab(QFrame):
                                     addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), f'{fileLayer.imageSize().width()}x{fileLayer.imageSize().height()}')
                             else:
                                 addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), f'<i>{fileName}</i>', 'File is missing!', 'warning-label')
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), '-')
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), '-')
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-')
 
                     self.twInfo.setTabEnabled(2, True)
                     self.twInfo.setTabEnabled(3, True)
@@ -2043,6 +2048,9 @@ class BCMainViewTab(QFrame):
                             table.addRow([textLabel, textValue])
                         elif isinstance(itemValue.widget(), QFrame):
                             table.addSeparator()
+                        elif isinstance(itemValue.widget(), QWidget):
+                            textValue = stripTags(itemValue.widget().property('text'))
+                            table.addRow([textLabel, textValue])
                     data.append(table.asText(minWidth=80)+os.linesep)
             elif isinstance(source, QLabel):
                 data.append(stripTags(source.text()))

@@ -814,9 +814,18 @@ class BCTable(object):
         nextColCount = None
         lastIndex = len(self.__rows) - 1
         for index, row in enumerate(self.__rows):
+            nextIndex = index + 1
+            while nextIndex < (len(self.__rows) - 1 ) and isinstance(self.__rows[nextIndex], int):
+                nextIndex+=1
+
+            if nextIndex > (len(self.__rows) - 1 ) or nextIndex < (len(self.__rows) - 1 ) and isinstance(self.__rows[nextIndex], int):
+                nextRow = None
+            else:
+                nextRow = self.__rows[nextIndex]
+
             if row == 0x01:
-                if index > 1 and index < lastIndex:
-                    nextColCount = len(self.__rows[index + 1])
+                if not nextRow is None:
+                    nextColCount = len(nextRow)
                 else:
                     nextColCount = None
                 buffer+=buildSep(prevColCount, nextColCount)
@@ -827,7 +836,6 @@ class BCTable(object):
         buffer+=buildSep(prevColCount, None, BCTable.__BORDER_TYPE_BOTTOM)
 
         return os.linesep.join(buffer)
-
 
 
 class Stopwatch(object):
