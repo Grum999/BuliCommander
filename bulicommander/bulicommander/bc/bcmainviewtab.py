@@ -72,7 +72,10 @@ from PyQt5.QtWidgets import (
     )
 
 
-from .bcmenuitem import BCMenuSlider
+from .bcmenuitem import (
+        BCMenuSlider,
+        BCMenuTitle
+    )
 from .bcbookmark import BCBookmark
 from .bcfile import (
         BCBaseFile,
@@ -95,8 +98,11 @@ from .bcsettings import (
 from .bcworkers import (
         BCWorkerPool
     )
-from .bcutils import (
+from .bctable import (
         BCTable,
+        BCTableSettings
+    )
+from .bcutils import (
         Debug,
         bytesSizeToStr,
         frToStrTime,
@@ -2030,7 +2036,6 @@ class BCMainViewTab(QFrame):
 
                     table.setTitle(stripTags(self.twInfo.tabText(source)))
                     table.setHeader(['Property', 'Value'])
-                    table.setBorderMode(BCTable.BORDER_DOUBLE)
 
                     for row in range(formLayout.rowCount()):
                         itemLabel = formLayout.itemAt(row, QFormLayout.LabelRole)
@@ -2051,7 +2056,7 @@ class BCMainViewTab(QFrame):
                         elif isinstance(itemValue.widget(), QWidget):
                             textValue = stripTags(itemValue.widget().property('text'))
                             table.addRow([textLabel, textValue])
-                    data.append(table.asText(minWidth=80)+os.linesep)
+                    data.append(table.asText(self.__uiController.tableSettings())+os.linesep)
             elif isinstance(source, QLabel):
                 data.append(stripTags(source.text()))
 
@@ -2069,10 +2074,55 @@ class BCMainViewTab(QFrame):
         def copyItem(action):
             QApplication.clipboard().setText('\n'.join(copyToClipboard(currentItem)))
 
+        @pyqtSlot('QString')
+        def setBorderNone(action):
+            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_NONE)
+
+        @pyqtSlot('QString')
+        def setBorderBasic(action):
+            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_BASIC)
+
+        @pyqtSlot('QString')
+        def setBorderSimple(action):
+            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_SIMPLE)
+
+        @pyqtSlot('QString')
+        def setBorderDouble(action):
+            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_DOUBLE)
+
+        @pyqtSlot('QString')
+        def setHeader(action):
+            self.__uiController.commandInfoToClipBoardHeader(cbOptHeader.isChecked())
+
+        @pyqtSlot('QString')
+        def setMinWidthActive(action):
+            self.__uiController.commandInfoToClipBoardMinWidthActive(cbOptMinWidthActive.isChecked())
+            slOptWidthMin.setEnabled(cbOptMinWidthActive.isChecked())
+
+        @pyqtSlot('QString')
+        def setMinWidth(value):
+            self.__uiController.commandInfoToClipBoardMinWidth(value)
+            cbOptMinWidthActive.setText(f"Minimum width ({value})")
+            if value > self.__uiController.tableSettings().maxWidth():
+                slOptWidthMax.slider().setValue(value)
+
+        @pyqtSlot('QString')
+        def setMaxWidthActive(action):
+            self.__uiController.commandInfoToClipBoardMaxWidthActive(cbOptMaxWidthActive.isChecked())
+            slOptWidthMax.setEnabled(cbOptMaxWidthActive.isChecked())
+
+        @pyqtSlot('QString')
+        def setMaxWidth(value):
+            self.__uiController.commandInfoToClipBoardMaxWidth(value)
+            cbOptMaxWidthActive.setText(f"Maximum width ({value})")
+            if value < self.__uiController.tableSettings().minWidth():
+                slOptWidthMin.slider().setValue(value)
+
+
         # current tab index
         index=self.twInfo.currentIndex()
 
-        actionCopyAll = QAction(QIcon(":/images/tabs"), i18n('All tabs'), self)
+        actionCopyAll = QAction(QIcon(":/images/tabs"), i18n('All tabs--'), self)
         actionCopyAll.triggered.connect(copyAllTabs)
 
         actionCopyCurrent = QAction(self.twInfo.tabIcon(index), i18n(f'Current "{stripTags(self.twInfo.tabText(index))}" tab'), self)
@@ -2085,11 +2135,119 @@ class BCMainViewTab(QFrame):
         else:
             currentItem = None
 
-        contextMenu = QMenu(i18n("Copy to clipboard"))
+        title = BCMenuTitle(i18n("Content to clipboard"))
+
+        contextMenu = QMenu(i18n("Content to clipboard"))
+        contextMenu.addAction(title)
         contextMenu.addAction(actionCopyAll)
         contextMenu.addAction(actionCopyCurrent)
         if not currentItem is None:
             contextMenu.addAction(actionCopyItem)
+
+        contextMenu.addSeparator()
+        optionMenu = contextMenu.addMenu(QIcon(":/images/tune"), i18n('Options'))
+
+        # options menu widgets
+        # do not use classic action, but built QWidgetAction with widget insed to avoid
+        # context menu being closed after click
+
+        # -- border options
+        rbOptBorderNone = QRadioButton(i18n("No border"), optionMenu)
+        rbOptBorderBasic = QRadioButton(i18n("Basic border (ascii)"), optionMenu)
+        rbOptBorderSimple = QRadioButton(i18n("Simple border (UTF-8)"), optionMenu)
+        rbOptBorderDouble = QRadioButton(i18n("Double border (UTF-8)"), optionMenu)
+
+        rbOptBorderNone.clicked.connect(setBorderNone)
+        rbOptBorderBasic.clicked.connect(setBorderBasic)
+        rbOptBorderSimple.clicked.connect(setBorderSimple)
+        rbOptBorderDouble.clicked.connect(setBorderDouble)
+
+        rbOptBorderNoneAction = QWidgetAction(optionMenu)
+        rbOptBorderNoneAction.setDefaultWidget(rbOptBorderNone)
+        rbOptBorderBasicAction = QWidgetAction(optionMenu)
+        rbOptBorderBasicAction.setDefaultWidget(rbOptBorderBasic)
+        rbOptBorderSimpleAction = QWidgetAction(optionMenu)
+        rbOptBorderSimpleAction.setDefaultWidget(rbOptBorderSimple)
+        rbOptBorderDoubleAction = QWidgetAction(optionMenu)
+        rbOptBorderDoubleAction.setDefaultWidget(rbOptBorderDouble)
+
+        optionMenu.addAction(rbOptBorderNoneAction)
+        optionMenu.addAction(rbOptBorderBasicAction)
+        optionMenu.addAction(rbOptBorderSimpleAction)
+        optionMenu.addAction(rbOptBorderDoubleAction)
+
+        contextMenuOptBorderGroup = QActionGroup(self)
+        contextMenuOptBorderGroup.addAction(rbOptBorderNoneAction)
+        contextMenuOptBorderGroup.addAction(rbOptBorderBasicAction)
+        contextMenuOptBorderGroup.addAction(rbOptBorderSimpleAction)
+        contextMenuOptBorderGroup.addAction(rbOptBorderDoubleAction)
+
+        if self.__uiController.tableSettings().border() == BCTable.BORDER_NONE:
+            rbOptBorderNone.setChecked(True)
+        elif self.__uiController.tableSettings().border() == BCTable.BORDER_BASIC:
+            rbOptBorderBasic.setChecked(True)
+        elif self.__uiController.tableSettings().border() == BCTable.BORDER_SIMPLE:
+            rbOptBorderSimple.setChecked(True)
+        else:
+        #elif self.__uiController.tableSettings().border() == BCTable.BORDER_DOUBLE:
+            rbOptBorderDouble.setChecked(True)
+
+        optionMenu.addSeparator()
+
+        # -- header options
+        cbOptHeader = QCheckBox(i18n("Header"), optionMenu)
+        cbOptHeader.setChecked(self.__uiController.tableSettings().headerActive())
+        cbOptHeader.clicked.connect(setHeader)
+
+        cbOptHeaderAction = QWidgetAction(optionMenu)
+        cbOptHeaderAction.setDefaultWidget(cbOptHeader)
+
+        optionMenu.addAction(cbOptHeaderAction)
+
+        optionMenu.addSeparator()
+
+        # -- size options
+        value = self.__uiController.tableSettings().minWidth()
+        cbOptMinWidthActive = QCheckBox(i18n(f"Minimum width ({value})"), optionMenu)
+        cbOptMinWidthActive.setChecked(self.__uiController.tableSettings().minWidthActive())
+        cbOptMinWidthActive.clicked.connect(setMinWidthActive)
+
+        cbOptMinWidthActiveAction = QWidgetAction(optionMenu)
+        cbOptMinWidthActiveAction.setDefaultWidget(cbOptMinWidthActive)
+
+        optionMenu.addAction(cbOptMinWidthActiveAction)
+
+        slOptWidthMin = BCMenuSlider(None, optionMenu)
+        slOptWidthMin.slider().setMinimum(BCTableSettings.MIN_WIDTH)
+        slOptWidthMin.slider().setMaximum(BCTableSettings.MAX_WIDTH)
+        slOptWidthMin.slider().setValue(value)
+        slOptWidthMin.slider().setPageStep(10)
+        slOptWidthMin.slider().setSingleStep(1)
+        slOptWidthMin.slider().valueChanged.connect(setMinWidth)
+        slOptWidthMin.setEnabled(cbOptMinWidthActive.isChecked())
+        optionMenu.addAction(slOptWidthMin)
+
+
+        value = self.__uiController.tableSettings().maxWidth()
+        cbOptMaxWidthActive = QCheckBox(i18n(f"Maximum width ({value})"), optionMenu)
+        cbOptMaxWidthActive.setChecked(self.__uiController.tableSettings().maxWidthActive())
+        cbOptMaxWidthActive.clicked.connect(setMaxWidthActive)
+
+        cbOptMaxWidthActiveAction = QWidgetAction(optionMenu)
+        cbOptMaxWidthActiveAction.setDefaultWidget(cbOptMaxWidthActive)
+
+        optionMenu.addAction(cbOptMaxWidthActiveAction)
+
+        slOptWidthMax = BCMenuSlider(None, optionMenu)
+        slOptWidthMax.slider().setMinimum(BCTableSettings.MIN_WIDTH)
+        slOptWidthMax.slider().setMaximum(BCTableSettings.MAX_WIDTH)
+        slOptWidthMax.slider().setValue(value)
+        slOptWidthMax.slider().setPageStep(10)
+        slOptWidthMax.slider().setSingleStep(1)
+        slOptWidthMax.slider().valueChanged.connect(setMaxWidth)
+        slOptWidthMax.setEnabled(cbOptMaxWidthActive.isChecked())
+        optionMenu.addAction(slOptWidthMax)
+
         contextMenu.exec_(event.globalPos())
 
 
