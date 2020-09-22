@@ -74,6 +74,10 @@ from .bcimagepreview import (
         BCImagePreview
     )
 from .bcsavedview import BCSavedView
+from .bctable import (
+        BCTable,
+        BCTableSettings
+    )
 from .bcutils import (
         buildIcon,
         getBytesSizeToStrUnit,
@@ -114,6 +118,7 @@ class BCUIController(object):
         self.__lastDocumentsSaved = BCHistory()
         self.__backupFilterDView = BCHistory()
         self.__fileLayerFilterDView = BCHistory()
+        self.__tableSettings = BCTableSettings()
 
         self.__confirmAction = True
 
@@ -186,6 +191,13 @@ class BCUIController(object):
         self.commandSettingsNavBarBtnGoBack(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BACK.id()))
         self.commandSettingsNavBarBtnGoUp(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_UP.id()))
         self.commandSettingsNavBarBtnQuickFilter(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_QUICKFILTER.id()))
+
+        self.commandInfoToClipBoardBorder(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER.id()))
+        self.commandInfoToClipBoardHeader(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER.id()))
+        self.commandInfoToClipBoardMaxWidth(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH.id()))
+        self.commandInfoToClipBoardMinWidth(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH.id()))
+        self.commandInfoToClipBoardMaxWidthActive(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE.id()))
+        self.commandInfoToClipBoardMinWidthActive(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE.id()))
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setHistory(self.__history)
@@ -291,8 +303,12 @@ class BCUIController(object):
         return self.__fileLayerFilterDView
 
     def settings(self):
-        """return settoing manager"""
+        """return setting manager"""
         return self.__settings
+
+    def tableSettings(self):
+        """return table setting manager"""
+        return self.__tableSettings
 
     def panelId(self):
         """Return current highlighted panelId"""
@@ -467,6 +483,13 @@ class BCUIController(object):
             self.__settings.setOption(BCSettingsKey.SESSION_SAVEDVIEWS_ITEMS, self.__savedView.list())
             self.__settings.setOption(BCSettingsKey.SESSION_LASTDOC_O_ITEMS, self.__lastDocumentsOpened.list())
             self.__settings.setOption(BCSettingsKey.SESSION_LASTDOC_S_ITEMS, self.__lastDocumentsSaved.list())
+
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER, self.__tableSettings.border())
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER, self.__tableSettings.headerActive())
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH, self.__tableSettings.minWidth())
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH, self.__tableSettings.maxWidth())
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE, self.__tableSettings.minWidthActive())
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE, self.__tableSettings.maxWidthActive())
 
         return self.__settings.saveConfig()
 
@@ -1467,7 +1490,29 @@ class BCUIController(object):
         for panelId in self.__window.panels:
             self.__window.panels[panelId].showQuickFilter(visible)
 
+    def commandInfoToClipBoardBorder(self, border=BCTable.BORDER_DOUBLE):
+        """Set border for information panel content to clipboard"""
+        self.__tableSettings.setBorder(border)
 
+    def commandInfoToClipBoardHeader(self, header=True):
+        """Set header for information panel content to clipboard"""
+        self.__tableSettings.setHeaderActive(header)
+
+    def commandInfoToClipBoardMinWidth(self, width=0):
+        """Set minimum width for information panel content to clipboard"""
+        self.__tableSettings.setMinWidth(width)
+
+    def commandInfoToClipBoardMaxWidth(self, width=0):
+        """Set maximum width for information panel content to clipboard"""
+        self.__tableSettings.setMaxWidth(width)
+
+    def commandInfoToClipBoardMinWidthActive(self, active=True):
+        """Set minimum width active for information panel content to clipboard"""
+        self.__tableSettings.setMinWidthActive(active)
+
+    def commandInfoToClipBoardMaxWidthActive(self, active=False):
+        """Set maximum width active for information panel content to clipboard"""
+        self.__tableSettings.setMaxWidthActive(active)
 
     def commandSettingsOpen(self):
         """Open dialog box settings"""

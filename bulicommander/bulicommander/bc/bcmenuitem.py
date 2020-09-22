@@ -55,10 +55,26 @@ class BCMenuSlider(QWidgetAction):
         self.__slider = QSlider()
         self.__slider.setOrientation(Qt.Horizontal)
 
-        self.__layout.addWidget(QLabel(label))
+        if not label is None and label != '':
+            self.__layout.addWidget(QLabel(label))
         self.__layout.addWidget(self.__slider)
         self.__widget.setLayout(self.__layout)
         self.setDefaultWidget(self.__widget)
 
     def slider(self):
         return self.__slider
+
+
+class BCMenuTitle(QWidgetAction):
+    """Encapsulate a QLabel as a menu item title"""
+    def __init__(self, label, parent=None):
+        super(BCMenuTitle, self).__init__(parent)
+
+        self.__widget = QWidget()
+        self.__layout = QVBoxLayout()
+        self.__label = QLabel(label)
+        self.__label.setStyleSheet("background-color: palette(light);padding: 3; font: bold;")
+        self.__layout.addWidget(self.__label)
+        self.__widget.setLayout(self.__layout)
+        self.setDefaultWidget(self.__widget)
+

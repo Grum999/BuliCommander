@@ -132,7 +132,19 @@ class BCSettingsKey(Enum):
     CONFIG_DSESSION_PANELS_VIEW_THUMBNAIL =                  'config.defaultSession.panels.view.thumbnail'
     CONFIG_DSESSION_PANELS_VIEW_ICONSIZE =                   'config.defaultSession.panels.view.iconSize'
     CONFIG_DSESSION_PANELS_VIEW_NFOROW =                     'config.defaultSession.panels.view.rowInformation'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_BORDER =                'config.defaultSession.information.clipboard.border'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_HEADER =                'config.defaultSession.information.clipboard.header'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH =              'config.defaultSession.information.clipboard.minWidth'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH =              'config.defaultSession.information.clipboard.maxWidth'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE =       'config.defaultSession.information.clipboard.minWidthActive'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE =       'config.defaultSession.information.clipboard.maxWidthActive'
 
+    SESSION_INFO_TOCLIPBOARD_BORDER =                        'session.information.clipboard.border'
+    SESSION_INFO_TOCLIPBOARD_HEADER =                        'session.information.clipboard.header'
+    SESSION_INFO_TOCLIPBOARD_MINWIDTH =                      'session.information.clipboard.minWidth'
+    SESSION_INFO_TOCLIPBOARD_MAXWIDTH =                      'session.information.clipboard.maxWidth'
+    SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE =               'session.information.clipboard.minWidthActive'
+    SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE =               'session.information.clipboard.maxWidthActive'
 
     SESSION_MAINWINDOW_SPLITTER_POSITION =                   'session.mainwindow.splitter.position'
     SESSION_MAINWINDOW_PANEL_SECONDARYVISIBLE =              'session.mainwindow.panel.secondaryVisible'
@@ -237,6 +249,19 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_ICONSIZE.id():            (0,                        BCSettingsFmt(int, [0,1,2,3,4,5,6,7,8])),
             BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_NFOROW.id():              (7,                        BCSettingsFmt(int, [0,1,2,3,4,5,6,7,8,9])),
 
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_BORDER.id():         (3,                        BCSettingsFmt(int, [0,1,2,3])),
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_HEADER.id():         (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH.id():       (80,                       BCSettingsFmt(int)),
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH.id():       (120,                      BCSettingsFmt(int)),
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE.id():(True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
+
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER.id():                 (3,                        BCSettingsFmt(int, [0,1,2,3])),
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER.id():                 (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH.id():               (80,                       BCSettingsFmt(int)),
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH.id():               (120,                      BCSettingsFmt(int)),
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE.id():        (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE.id():        (False,                    BCSettingsFmt(bool)),
 
             BCSettingsKey.SESSION_MAINWINDOW_SPLITTER_POSITION.id():            ([1000, 1000],             BCSettingsFmt(int), BCSettingsFmt(int)),
             BCSettingsKey.SESSION_MAINWINDOW_PANEL_SECONDARYVISIBLE.id():       (True,                     BCSettingsFmt(bool)),

@@ -24,7 +24,7 @@ import locale
 import re
 import time
 import sys
-
+import os
 
 from PyQt5.Qt import *
 from PyQt5.QtGui import (
@@ -43,16 +43,17 @@ try:
 except:
     pass
 
+# ------------------------------------------------------------------------------
 # don't really like to use global variable... create a class with static methods instead?
 __bytesSizeToStrUnit = 'autobin'
 def setBytesSizeToStrUnit(unit):
     global __bytesSizeToStrUnit
     if unit.lower() in ['auto', 'autobin']:
         __bytesSizeToStrUnit = unit
+
 def getBytesSizeToStrUnit():
     global __bytesSizeToStrUnit
     return __bytesSizeToStrUnit
-
 
 def strToBytesSize(value):
     """Convert a value to bytes
@@ -189,9 +190,6 @@ def bytesSizeToStr(value, unit=None, decimals=2):
     else:
         return f'{value}B'
 
-
-
-
 def tsToStr(value, pattern=None, valueNone=''):
     """Convert a timestamp to localtime string
 
@@ -259,7 +257,6 @@ def secToStrTime(nbSeconds):
     returned+=time.strftime('%H:%M:%S', time.gmtime(nbSeconds))
 
     return returned
-
 
 def getLangValue(dictionary, lang=None, default=''):
     """Return value from a dictionary for which key is lang code (like en-US)
@@ -361,7 +358,6 @@ def buildIcon(icons):
     else:
         raise EInvalidType("Given `icons` must be a list of tuples")
 
-
 def kritaVersion():
     """Return a dictionary with following values:
 
@@ -423,10 +419,72 @@ def checkKritaVersion(major, minor, revision):
         return True
     return False
 
+def strToMaxLength(value, maxLength, completeSpace=True):
+    """Format given string `value` to fit in given `maxLength`
+
+    If len is greater than `maxLength`, string is splitted with carriage return
+
+    If value contains carriage return, each line is processed separately
+
+    If `completeSpace` is True, value is completed with space characters to get
+    the expected length.
+    """
+    returned = []
+    if os.linesep in value:
+        rows = value.split(os.linesep)
+
+        for row in rows:
+            returned.append(strToMaxLength(row, maxLength, completeSpace))
+    else:
+        textLen = len(value)
+
+        if textLen < maxLength:
+            if completeSpace:
+                # need to complete with spaces
+                returned.append( value + (' ' * (maxLength - textLen)))
+            else:
+                returned.append(value)
+        elif textLen > maxLength:
+            # keep spaces separators
+            tmpWords=re.split('(\s)', value)
+            words=[]
+
+            # build words list
+            for word in tmpWords:
+                while len(word) > maxLength:
+                    words.append(word[0:maxLength])
+                    word=word[maxLength:]
+                if word != '':
+                    words.append(word)
+
+            builtRow=''
+            for word in words:
+                if (len(builtRow) + len(word))<maxLength:
+                    builtRow+=word
+                else:
+                    returned.append(strToMaxLength(builtRow, maxLength, completeSpace))
+                    builtRow=word
+
+            if builtRow!='':
+                returned.append(strToMaxLength(builtRow, maxLength, completeSpace))
+        else:
+            returned.append(value)
+
+    return os.linesep.join(returned)
+
+def stripTags(value):
+    """Strip HTML tags and remove amperseed added by Qt"""
+    return re.sub('<[^<]+?>', '', re.sub('<br/?>', os.linesep, value))  \
+                .replace('&nbsp;', ' ')     \
+                .replace('&gt;', '>')       \
+                .replace('&lt;', '<')       \
+                .replace('&amp;', '&&')     \
+                .replace('&&', chr(1))      \
+                .replace('&', '')           \
+                .replace(chr(1), '&')
 
 
-
-
+# ------------------------------------------------------------------------------
 
 class Stopwatch(object):
     """Manage stopwatch, mainly used for performances test & debug"""
