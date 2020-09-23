@@ -155,6 +155,16 @@ class BCUIController(object):
             # already initialised, do nothing
             return
 
+        # Here we know we have an active window
+        aw=Krita.instance().activeWindow()
+        try:
+            # should not occurs as uicontroller is initialised only once, but...
+            aw.themeChanged.disconnect(self.__themeChanged)
+        except:
+            pass
+        aw.themeChanged.connect(self.__themeChanged)
+
+
         self.__window.initMainView()
 
         for panelId in self.__window.panels:
@@ -268,6 +278,13 @@ class BCUIController(object):
                     return BCUIController.__EXTENDED_OPEN_CANCEL
         return BCUIController.__EXTENDED_OPEN_KO
 
+
+    def __themeChanged(self):
+        """Theme has been changed, reload resources"""
+        #print("Theme changed!")
+        if not self.__theme is None:
+            #print("Reload resources")
+            self.__theme.loadResources()
 
     # endregion: initialisation methods ----------------------------------------
 
