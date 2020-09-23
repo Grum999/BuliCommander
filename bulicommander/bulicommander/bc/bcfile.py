@@ -536,6 +536,86 @@ class BCFile(BCBaseFile):
 
         BCFile.__INITIALISED = True
 
+
+    @staticmethod
+    def formatFileName(file, pattern=None):
+        """Return a file name build from given file and pattern
+
+        If pattern equals "<None>"
+        => return empty string
+
+        Otherwise, the following markup can be used:
+            "{file:path}"       The file path name without extension
+            "{file:base}"       The file base name without extension
+            "{file:name}"       The file path+base name without extension
+            "{file:ext}"        The file extension
+
+            "{date}"            The current system date (yyyymmdd)
+            "{date:yyyy}"       The current system year
+            "{date:mm}"         The current system month
+            "{date:dd}"         The current system day
+
+            "{time}"            The current system time (hhmmss)
+            "{time:hh}"         The current system hour (00-24)
+            "{time:mm}"         The current system minutes
+            "{time:ss}"         The current system seconds
+
+            "{size}"            The current image size (widthxheight)
+            "{size:width}"      The current image width
+            "{size:height}"     The current image height
+
+            "{counter}"         A counter to file name
+            "{counter:####}"    A counter to file name
+        """
+        if pattern is None:
+            return ''
+
+        if not isinstance(file, BCFile):
+            raise EInvalidType('Given `file` must be a <BCFile>')
+
+        if not isinstance(pattern, str):
+            raise EInvalidType('Given `pattenr` must be a <str>')
+
+        if pattern.strip() == '' or re.search('(?i)<none>', pattern):
+            return ''
+
+        currentDateTime = time.time()
+        fileName = pattern
+
+        baseFileNameWithoutExt = os.path.splitext(file.name())[0]
+
+        fileName = re.sub("(?i)\{file:path\}", file.path(),                                  fileName)
+        fileName = re.sub("(?i)\{file:base\}", baseFileNameWithoutExt,                       fileName)
+        fileName = re.sub("(?i)\{file:name\}", os.path.splitext(file.fullPathName())[0],     fileName)
+        fileName = re.sub("(?i)\{file:ext\}",  file.extension(False),                        fileName)
+
+        fileName = re.sub("(?i)\{date\}",      tsToStr(currentDateTime, '%Y%m%d'),           fileName)
+        fileName = re.sub("(?i)\{date:yyyy\}", tsToStr(currentDateTime, '%Y'),               fileName)
+        fileName = re.sub("(?i)\{date:mm\}",   tsToStr(currentDateTime, '%m'),               fileName)
+        fileName = re.sub("(?i)\{date:dd\}",   tsToStr(currentDateTime, '%d'),               fileName)
+
+        fileName = re.sub("(?i)\{time\}",      tsToStr(currentDateTime, '%H%M%S'),           fileName)
+        fileName = re.sub("(?i)\{time:hh\}",   tsToStr(currentDateTime, '%H'),               fileName)
+        fileName = re.sub("(?i)\{time:mm\}",   tsToStr(currentDateTime, '%M'),               fileName)
+        fileName = re.sub("(?i)\{time:ss\}",   tsToStr(currentDateTime, '%S'),               fileName)
+
+        fileName = re.sub("(?i)\{size\}",           f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}x{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
+        fileName = re.sub("(?i)\{size:width\}",     f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}", fileName)
+        fileName = re.sub("(?i)\{size:height\}",    f"{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
+
+        if re.search("\{counter(:#+)?\}", fileName):
+            # a counter is defined, need to determinate counter value
+            nbFiles = len([foundFile for foundFile in os.listdir(file.path()) if os.path.isfile(os.path.join(file.path(), foundFile)) and not re.match(f"{baseFileNameWithoutExt}.*", foundFile) is None]) + 1
+
+            fileName = re.sub("(?i)\{counter\}", str(nbFiles),   fileName)
+
+            if result:=re.search("(?i)\{counter(?::(#+))?\}", fileName):
+                for replaceHash in result.groups():
+                    fileName = re.sub(f"\{{counter:{replaceHash}\}}", f"{nbFiles:0{len(replaceHash)}}", fileName)
+
+        return fileName
+
+
     def __init__(self, fileName, strict=False):
         """Initialise BCFile"""
         super(BCFile, self).__init__(fileName)
