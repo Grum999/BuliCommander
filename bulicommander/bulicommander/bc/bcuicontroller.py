@@ -23,6 +23,7 @@ import os.path
 from pathlib import Path
 
 import sys
+import re
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -161,6 +162,8 @@ class BCUIController(object):
 
         self.commandSettingsFileDefaultActionKra(self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_KRA.id()))
         self.commandSettingsFileDefaultActionOther(self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER.id()))
+        self.commandSettingsFileNewFileNameKra(self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
+        self.commandSettingsFileNewFileNameOther(self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
         self.commandSettingsFileUnit(self.__settings.option(BCSettingsKey.CONFIG_FILE_UNIT.id()))
         self.commandSettingsHistoryMaxSize(self.__settings.option(BCSettingsKey.CONFIG_HISTORY_MAXITEMS.id()))
         self.commandSettingsHistoryKeepOnExit(self.__settings.option(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT.id()))
@@ -630,9 +633,23 @@ class BCUIController(object):
             elif opened == BCUIController.__EXTENDED_OPEN_OK:
                 return True
 
+            bcFile = BCFile(file)
+
+            newFileName = None
+            if bcFile.format() == BCFileManagedFormat.KRA:
+                newFileName = BCFile.formatFileName(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
+            else:
+                newFileName = BCFile.formatFileName(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
+
+            if isinstance(newFileName, str):
+                if newFileName != '' and not re.search("\.kra$", newFileName):
+                    newFileName+='.kra'
+                elif newFileName.strip() == '':
+                    newFileName = None
+
             try:
                 document = Krita.instance().openDocument(file)
-                document.setFileName(None)
+                document.setFileName(newFileName)
                 view = Krita.instance().activeWindow().addView(document)
                 Krita.instance().activeWindow().showView(view)
             except Exception as e:
@@ -1382,6 +1399,30 @@ class BCUIController(object):
     def commandSettingsFileDefaultActionOther(self, value=BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE):
         """Set default action for kra file"""
         self.__settings.setOption(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER, value)
+
+    def commandSettingsFileNewFileNameKra(self, value=None):
+        """Set default file name applied when a Krita file is opened as a new document"""
+        if value is None:
+            value = "<None>"
+        elif not isinstance(value, str):
+            raise EInvalidType("Given `value` must be a <str>")
+
+        if value.lower().strip() == '<none>':
+            value = "<None>"
+
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA, value)
+
+    def commandSettingsFileNewFileNameOther(self, value=None):
+        """Set default file name applied when a non Krita file is opened as a new document"""
+        if value is None:
+            value = "<None>"
+        elif not isinstance(value, str):
+            raise EInvalidType("Given `value` must be a <str>")
+
+        if value.lower().strip() == '<none>':
+            value = "<None>"
+
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER, value)
 
     def commandSettingsFileUnit(self, value=BCSettingsValues.FILE_UNIT_KIB):
         """Set used file unit"""

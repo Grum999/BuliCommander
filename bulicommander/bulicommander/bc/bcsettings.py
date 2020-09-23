@@ -110,6 +110,8 @@ class BCSettingsFmt(object):
 class BCSettingsKey(Enum):
     CONFIG_FILE_DEFAULTACTION_KRA =                          'config.file.defaultAction.kra'
     CONFIG_FILE_DEFAULTACTION_OTHER =                        'config.file.defaultAction.other'
+    CONFIG_FILE_NEWFILENAME_KRA =                            'config.file.newFileName.kra'
+    CONFIG_FILE_NEWFILENAME_OTHER =                          'config.file.newFileName.other'
     CONFIG_FILE_UNIT =                                       'config.file.unit'
     CONFIG_HOME_DIR_MODE =                                   'config.homeDir.mode'
     CONFIG_HOME_DIR_UD =                                     'config.homeDir.userDefined'
@@ -211,11 +213,14 @@ class BCSettings(object):
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE,
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW,
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE])),
+            BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id():                     ('<none>',                  BCSettingsFmt(str)),
             BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER.id():                 (BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE,
                                                                                                             BCSettingsFmt(str, [BCSettingsValues.FILE_DEFAULTACTION_OPEN,
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE,
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW,
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE])),
+            BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id():                   ('{file:name}.{file:ext}.kra',
+                                                                                                            BCSettingsFmt(str)),
 
             BCSettingsKey.CONFIG_FILE_UNIT.id():                                (BCSettingsValues.FILE_UNIT_KIB,
                                                                                                             BCSettingsFmt(str, [BCSettingsValues.FILE_UNIT_KIB,
@@ -568,22 +573,51 @@ class BCSettingsDialogBox(QDialog):
         value = self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_KRA.id())
         if value == BCSettingsValues.FILE_DEFAULTACTION_OPEN:
             self.rbCIFKraOpenDoc.setChecked(True)
+            self.cbCIFKraOptCloseBC.setChecked(False)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE:
-            self.rbCIFKraOpenDocAndClose.setChecked(True)
+            self.rbCIFKraOpenDoc.setChecked(True)
+            self.cbCIFKraOptCloseBC.setChecked(True)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW:
             self.rbCIFKraCreateDoc.setChecked(True)
+            self.cbCIFKraOptCloseBC.setChecked(False)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE:
-            self.rbCIFKraCreateDocAndClose.setChecked(True)
+            self.rbCIFKraCreateDoc.setChecked(True)
+            self.cbCIFKraOptCloseBC.setChecked(True)
+
+        self.cbxCIFKraOptCreDocName.addItems([
+                '<None>',
+                '{file:name}-{counter:####}.kra',
+                '{file:name}_{date}_{time}.kra',
+                i18n('{file:name}-Copy {counter:####}.kra'),
+                i18n('{file:name}-Copy {date}_{time}.kra')
+            ])
+        self.cbxCIFKraOptCreDocName.setCurrentText(self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
 
         value = self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER.id())
         if value == BCSettingsValues.FILE_DEFAULTACTION_OPEN:
             self.rbCIFOthOpenDoc.setChecked(True)
+            self.cbCIFOthOptCloseBC.setChecked(False)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE:
-            self.rbCIFOthOpenDocAndClose.setChecked(True)
+            self.rbCIFOthOpenDoc.setChecked(True)
+            self.cbCIFOthOptCloseBC.setChecked(True)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW:
             self.rbCIFOthCreateDoc.setChecked(True)
+            self.cbCIFOthOptCloseBC.setChecked(False)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE:
-            self.rbCIFOthCreateDocAndClose.setChecked(True)
+            self.rbCIFOthCreateDoc.setChecked(True)
+            self.cbCIFOthOptCloseBC.setChecked(True)
+
+        self.cbxCIFOthOptCreDocName.addItems([
+                '<None>',
+                '{file:name}.{file:ext}.kra',
+                '{file:name}({file:ext}).kra',
+                '{file:name}.kra',
+                '{file:name}_{date}_{time}.kra',
+                i18n('{file:name}-Copy {counter:####}.kra'),
+                i18n('{file:name}-Copy {date}_{time}.kra')
+            ])
+        self.cbxCIFOthOptCreDocName.setCurrentText(self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
+
 
         self.pbCNHistoryClear.clicked.connect(historyClear)
         self.pbCNLastDocumentsClear.clicked.connect(lastDocumentsClear)
@@ -607,22 +641,29 @@ class BCSettingsDialogBox(QDialog):
             self.__uiController.commandSettingsFileUnit(BCSettingsValues.FILE_UNIT_KB)
 
         if self.rbCIFKraOpenDoc.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN)
-        elif self.rbCIFKraOpenDocAndClose.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE)
+            if self.cbCIFKraOptCloseBC.isChecked():
+                self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE)
+            else:
+                self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN)
         elif self.rbCIFKraCreateDoc.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW)
-        elif self.rbCIFKraCreateDocAndClose.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE)
+            if self.cbCIFKraOptCloseBC.isChecked():
+                self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE)
+            else:
+                self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW)
 
         if self.rbCIFOthOpenDoc.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN)
-        elif self.rbCIFOthOpenDocAndClose.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE)
+            if self.cbCIFOthOptCloseBC.isChecked():
+                self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE)
+            else:
+                self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN)
         elif self.rbCIFOthCreateDoc.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW)
-        elif self.rbCIFOthCreateDocAndClose.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE)
+            if self.cbCIFOthOptCloseBC.isChecked():
+                self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE)
+            else:
+                self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW)
+
+        self.__uiController.commandSettingsFileNewFileNameKra(self.cbxCIFKraOptCreDocName.currentText())
+        self.__uiController.commandSettingsFileNewFileNameOther(self.cbxCIFOthOptCreDocName.currentText())
 
         self.__uiController.commandSettingsNavBarBtnHome(self.cbCNNavBarBtnHome.isChecked())
         self.__uiController.commandSettingsNavBarBtnViews(self.cbCNNavBarBtnViews.isChecked())
