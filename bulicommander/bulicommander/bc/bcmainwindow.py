@@ -81,8 +81,6 @@ class BCMainWindow(QMainWindow):
         self.__fontMono.setPointSize(9)
         self.__fontMono.setFamily('DejaVu Sans Mono')
 
-        self.__theme = BCTheme()
-
         for panelId in self.panels:
             self.panels[panelId].setAllowRefresh(False)
 
@@ -356,7 +354,7 @@ class BCMainWindow(QMainWindow):
                 # define callback function
                 def my_callback_function(event):
                     if event.type() == QEvent.xxxx:
-                        # Event! 
+                        # Event!
                         return True
                     return False
 
@@ -388,11 +386,6 @@ class BCMainWindow(QMainWindow):
 
         self.__highlightedPanel = highlightedPanel
         self.__uiController.updateMenuForPanel()
-
-    def theme(self):
-        """Return current theme DARK/LIGHT"""
-        return self.__theme
-
 
     # endregion: methods -------------------------------------------------------
 
