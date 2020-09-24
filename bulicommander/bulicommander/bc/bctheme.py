@@ -33,7 +33,11 @@ from PyQt5.QtCore import (
         QResource
     )
 from PyQt5.QtGui import (
-        QPalette
+        QPalette,
+        QPixmapCache
+    )
+from PyQt5.QtWidgets import (
+        QApplication
     )
 
 class BCTheme(object):
@@ -60,13 +64,16 @@ class BCTheme(object):
 
 
     def loadResources(self):
-        """Load resourdes for current theme"""
+        """Load resources for current theme"""
 
         if not Krita.activeWindow() is None:
+            # Need to clear pixmap cache otherwise some icons are not relaoded from new resource file
+            QPixmapCache.clear()
+
             if not self.__registeredResource is None:
                 QResource.unregisterResource(self.__registeredResource)
 
-            palette = Krita.activeWindow().qwindow().palette()
+            palette = QApplication.palette()
 
             if palette.color(QPalette.Window).value() <= 128:
                 self.__theme = BCTheme.DARK_THEME
@@ -87,7 +94,7 @@ class BCTheme(object):
         if name in BCTheme.STYLES_SHEET[self.__theme]:
             return BCTheme.STYLES_SHEET[self.__theme][name]
         elif self.__theme != BCTheme.DARK_THEME and name in BCTheme.STYLES_SHEET[BCTheme.DARK_THEME]:
-            return BCTheme.STYLES_SHEET[self.__theme][name]
+            return BCTheme.STYLES_SHEET[BCTheme.DARK_THEME][name]
         return ''
 
 

@@ -110,7 +110,8 @@ from .bcutils import (
         secToStrTime,
         strDefault,
         tsToStr,
-        stripTags
+        stripTags,
+        loadXmlUi
     )
 
 from ..pktk.pktk import (
@@ -751,7 +752,7 @@ class BCMainViewTab(QFrame):
         self.__dirTreeModel = QFileSystemModel()
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcmainviewtab.ui')
-        PyQt5.uic.loadUi(uiFileName, self)
+        loadXmlUi(uiFileName, self)
 
         if sys.platform != 'linux':
             self.linePerm.setVisible(False)

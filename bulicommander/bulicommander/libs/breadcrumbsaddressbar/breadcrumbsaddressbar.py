@@ -46,11 +46,9 @@ class BreadcrumbsAddressBar(QFrame):
         self.file_ico_prov = QtWidgets.QFileIconProvider()
         self.fs_model = FilenameModel('dirs', icon_provider=self.get_icon, breadcrumbs=self)
 
-        self.__paletteBase = self.palette()
-        self.__paletteBase.setColor(QtGui.QPalette.Window, self.__paletteBase.color(QtGui.QPalette.Base))
-
-        self.__paletteHighlighted = self.palette()
-        self.__paletteHighlighted.setColor(QPalette.Window, self.__paletteHighlighted.color(QPalette.Highlight))
+        self.__paletteBase = None
+        self.__paletteHighlighted = None
+        self.updatePalette()
 
         self.__isHighlighted = False
         self.__hiddenPath = False
@@ -482,6 +480,17 @@ class BreadcrumbsAddressBar(QFrame):
         Return None if not found
         """
         return None
+
+    def updatePalette(self, palette=None):
+        """Refresh current palette"""
+        if not isinstance(palette, QPalette):
+            palette = QApplication.palette()
+
+        self.__paletteBase = QPalette(palette)
+        self.__paletteBase.setColor(QPalette.Window, self.__paletteBase.color(QPalette.Base))
+
+        self.__paletteHighlighted = QPalette(palette)
+        self.__paletteHighlighted.setColor(QPalette.Window, self.__paletteHighlighted.color(QPalette.Highlight))
 
 
 if __name__ == '__main__':
