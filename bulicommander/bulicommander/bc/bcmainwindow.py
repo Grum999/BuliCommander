@@ -31,8 +31,6 @@ import re
 import sys
 import time
 
-import PyQt5.uic
-
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
         pyqtSignal
@@ -46,6 +44,7 @@ from .bchistory import BCHistory
 from .bcpathbar import BCPathBar
 from .bcmainviewtab import BCMainViewTab
 from .bctheme import BCTheme
+from .bcutils import loadXmlUi
 
 from ..pktk.pktk import EInvalidType
 from ..pktk.pktk import EInvalidValue
@@ -67,7 +66,7 @@ class BCMainWindow(QMainWindow):
         super(BCMainWindow, self).__init__(parent)
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'mainwindow.ui')
-        PyQt5.uic.loadUi(uiFileName, self)
+        loadXmlUi(uiFileName, self)
 
         self.__uiController = uiController
         self.__eventCallBack = {}
@@ -80,8 +79,6 @@ class BCMainWindow(QMainWindow):
         self.__fontMono = QFont()
         self.__fontMono.setPointSize(9)
         self.__fontMono.setFamily('DejaVu Sans Mono')
-
-        self.__theme = BCTheme()
 
         for panelId in self.panels:
             self.panels[panelId].setAllowRefresh(False)
@@ -393,10 +390,16 @@ class BCMainWindow(QMainWindow):
         self.__highlightedPanel = highlightedPanel
         self.__uiController.updateMenuForPanel()
 
-    def theme(self):
-        """Return current theme DARK/LIGHT"""
-        return self.__theme
+    def getWidgets(self):
+        """Return a list of ALL widgets"""
+        def appendWithSubWidget(parent):
+            list=[parent]
+            if len(parent.children())>0:
+                for w in parent.children():
+                    list+=appendWithSubWidget(w)
+            return list
 
+        return appendWithSubWidget(self)
 
     # endregion: methods -------------------------------------------------------
 
