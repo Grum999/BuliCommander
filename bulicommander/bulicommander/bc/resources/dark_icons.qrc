@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="images">
+    <file alias="export_list">svg/dark/32dp/export_list.svg</file>
     <file alias="text">svg/dark/32dp/text.svg</file>
     <file alias="tabs">svg/dark/32dp/tabs.svg</file>
     <file alias="clipboard">svg/dark/32dp/clipboard.svg</file>

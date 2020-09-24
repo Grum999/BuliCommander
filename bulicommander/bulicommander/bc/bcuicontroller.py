@@ -1555,6 +1555,16 @@ class BCUIController(object):
         """Set maximum width active for information panel content to clipboard"""
         self.__tableSettings.setMaxWidthActive(active)
 
+    def commandToolsExportFiles(self, panel=None):
+        """Open window for tool 'Export file list'"""
+        if panel is None:
+            panel = self.panelId()
+
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        print('commandToolsExportFiles')
+
     def commandSettingsOpen(self):
         """Open dialog box settings"""
         if BCSettingsDialogBox.open(f'{self.__bcName}::Settings', self):

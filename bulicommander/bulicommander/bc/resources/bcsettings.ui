@@ -19,6 +19,9 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
+  <property name="sizeGripEnabled">
+   <bool>true</bool>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -237,8 +240,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>973</width>
-              <height>775</height>
+              <width>530</width>
+              <height>756</height>
              </rect>
             </property>
             <layout class="QFormLayout" name="formLayout_4">
@@ -853,7 +856,7 @@
               <string>Open file as a new Krita document</string>
              </property>
              <property name="text">
-              <string>Create a new Krita document</string>
+              <string>Create a new &amp;Krita document</string>
              </property>
              <property name="checked">
               <bool>true</bool>
@@ -1098,8 +1101,8 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="buttonGroupImgDefaultOther"/>
   <buttongroup name="buttonGroupImgDefaultKrita"/>
   <buttongroup name="buttonGroupGenHomeDir"/>
-  <buttongroup name="buttonGroupImgDefaultOther"/>
  </buttongroups>
 </ui>

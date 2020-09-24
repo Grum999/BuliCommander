@@ -170,8 +170,8 @@ class BCMainWindow(QMainWindow):
 
         # Menu TOOLS
         self.actionToolsSearch.triggered.connect(self.__actionNotYetImplemented)
-        self.actionToolsStatistics.triggered.connect(self.__actionNotYetImplemented)
-        #self.actionToolsSynchronizePanels.triggered.connect(self.__actionNotYetImplemented)
+        self.actionToolsExportFiles.triggered.connect(self.__menuToolsExportFiles_clicked)
+        #self.actionToolsStatistics.triggered.connect(self.__actionNotYetImplemented)
         #self.actionConsole.triggered.connect(self.__actionNotYetImplemented)
 
         #self.actionBCSManageScripts.triggered.connect(self.__actionNotYetImplemented)
@@ -304,6 +304,10 @@ class BCMainWindow(QMainWindow):
         """Display hidden files"""
         self.__uiController.commandViewShowHiddenFiles()
 
+    def __menuToolsExportFiles_clicked(self, action):
+        """Open export file list tool"""
+        self.__uiController.commandToolsExportFiles()
+
     # endregion: define actions method -----------------------------------------
 
 
@@ -356,7 +360,7 @@ class BCMainWindow(QMainWindow):
                 # define callback function
                 def my_callback_function(event):
                     if event.type() == QEvent.xxxx:
-                        # Event! 
+                        # Event!
                         return True
                     return False
 

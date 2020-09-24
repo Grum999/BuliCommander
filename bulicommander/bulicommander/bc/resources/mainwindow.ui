@@ -39,7 +39,7 @@
        </size>
       </property>
       <property name="title">
-       <string>&amp;File</string>
+       <string>Fi&amp;le</string>
       </property>
       <addaction name="actionFolderNew"/>
       <addaction name="separator"/>
@@ -58,7 +58,7 @@
      </widget>
      <widget class="QMenu" name="menuEdit">
       <property name="title">
-       <string>&amp;Edit</string>
+       <string>E&amp;dit</string>
       </property>
       <addaction name="actionSelectAll"/>
       <addaction name="actionSelectNone"/>
@@ -119,7 +119,7 @@
       </widget>
       <widget class="QMenu" name="menuGoLastDocuments">
        <property name="title">
-        <string>Last documents</string>
+        <string>&amp;Last documents</string>
        </property>
        <property name="icon">
         <iconset resource="dark_icons.qrc">
@@ -156,10 +156,11 @@
       <addaction name="actionToolsSearch"/>
       <addaction name="actionToolsStatistics"/>
       <addaction name="actionConsole"/>
+      <addaction name="actionToolsExportFiles"/>
      </widget>
      <widget class="QMenu" name="menuSettings">
       <property name="title">
-       <string>&amp;Settings</string>
+       <string>Setti&amp;ngs</string>
       </property>
       <addaction name="actionSettingsPreferences"/>
       <addaction name="separator"/>
@@ -1110,6 +1111,24 @@
   <action name="actiontest">
    <property name="text">
     <string>test</string>
+   </property>
+  </action>
+  <action name="actionToolsExportFiles">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/export_list</normaloff>:/images/export_list</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Export files...</string>
+   </property>
+   <property name="toolTip">
+    <string>Export file list</string>
+   </property>
+   <property name="statusTip">
+    <string>Export current file list (or selected files) to clipboard or a file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
    </property>
   </action>
  </widget>
