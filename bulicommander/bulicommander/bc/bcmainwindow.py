@@ -387,6 +387,17 @@ class BCMainWindow(QMainWindow):
         self.__highlightedPanel = highlightedPanel
         self.__uiController.updateMenuForPanel()
 
+    def getWidgets(self):
+        """Return a list of ALL widgets"""
+        def appendWithSubWidget(parent):
+            list=[parent]
+            if len(parent.children())>0:
+                for w in parent.children():
+                    list+=appendWithSubWidget(w)
+            return list
+
+        return appendWithSubWidget(self)
+
     # endregion: methods -------------------------------------------------------
 
 

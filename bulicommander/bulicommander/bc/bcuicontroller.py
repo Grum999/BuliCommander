@@ -125,6 +125,11 @@ class BCUIController(object):
 
         self.__settings = BCSettings('bulicommander')
 
+        # store a global reference to activeWindow to be able to work with
+        # activeWindow signals
+        # https://krita-artists.org/t/krita-4-4-new-api/12247?u=grum999
+        self.__kraActiveWindow = None
+
         self.__initialised = False
 
         # load last documents
@@ -156,13 +161,14 @@ class BCUIController(object):
             return
 
         # Here we know we have an active window
-        aw=Krita.instance().activeWindow()
+        if self.__kraActiveWindow is None:
+            self.__kraActiveWindow=Krita.instance().activeWindow()
         try:
             # should not occurs as uicontroller is initialised only once, but...
-            aw.themeChanged.disconnect(self.__themeChanged)
+            self.__kraActiveWindow.themeChanged.disconnect(self.__themeChanged)
         except:
             pass
-        aw.themeChanged.connect(self.__themeChanged)
+        self.__kraActiveWindow.themeChanged.connect(self.__themeChanged)
 
 
         self.__window.initMainView()
@@ -281,10 +287,22 @@ class BCUIController(object):
 
     def __themeChanged(self):
         """Theme has been changed, reload resources"""
-        #print("Theme changed!")
         if not self.__theme is None:
-            #print("Reload resources")
             self.__theme.loadResources()
+
+            # need to apply new palette to widgets
+            # otherwise it seems they keep to refer to the old palette...
+            palette = QApplication.palette()
+            widgetList = self.__window.getWidgets()
+
+            for widget in widgetList:
+                if hasattr(widget, 'setPalette'):
+                    # force palette to be applied to widget
+                    widget.setPalette(palette)
+
+                # need to do something to relad icons...
+                if hasattr(widget, 'icon'):
+                    pass
 
     # endregion: initialisation methods ----------------------------------------
 
@@ -369,7 +387,7 @@ class BCUIController(object):
 
     def theme(self):
         """Return theme object"""
-        return self.__window.theme()
+        return self.__theme
 
     def quickRefDict(self):
         """Return a dictionnary of quick references
