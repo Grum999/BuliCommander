@@ -33,7 +33,8 @@ from PyQt5.QtCore import (
         QResource
     )
 from PyQt5.QtGui import (
-        QPalette
+        QPalette,
+        QPixmapCache
     )
 from PyQt5.QtWidgets import (
         QApplication
@@ -63,9 +64,12 @@ class BCTheme(object):
 
 
     def loadResources(self):
-        """Load resourdes for current theme"""
+        """Load resources for current theme"""
 
         if not Krita.activeWindow() is None:
+            # Need to clear pixmap cache otherwise some icons are not relaoded from new resource file
+            QPixmapCache.clear()
+
             if not self.__registeredResource is None:
                 QResource.unregisterResource(self.__registeredResource)
 

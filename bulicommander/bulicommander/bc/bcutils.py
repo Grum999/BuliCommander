@@ -26,6 +26,10 @@ import time
 import sys
 import os
 
+import xml.etree.ElementTree as ET
+
+import PyQt5.uic
+
 from PyQt5.Qt import *
 from PyQt5.QtGui import (
         QBrush,
@@ -36,7 +40,9 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal,
         QRect
     )
-
+from PyQt5.QtWidgets import (
+        QAction
+    )
 
 try:
     locale.setlocale(locale.LC_ALL, '')
@@ -353,10 +359,115 @@ def buildIcon(icons):
     elif isinstance(icons, list) and len(icons)>0:
         returned = QIcon()
         for icon in icons:
-            returned.addPixmap(icon[0], icon[1])
+            returned.addPixmap(*icon)
         return returned
     else:
         raise EInvalidType("Given `icons` must be a list of tuples")
+
+def buildQAction(icons, title, parent):
+    """Build a QAction and store icons resource path as properties
+
+    Tricky method to be able to reload icons on the fly when theme is modified
+    """
+    pixmapList=[]
+    propertyList=[]
+    for icon in icons:
+        if isinstance(icon[0], QPixmap):
+            pixmapListItem=[icon[0]]
+            propertyListPath=''
+        elif isinstance(icon[0], str):
+            pixmapListItem=[QPixmap(icon[0])]
+            propertyListPath=icon[0]
+
+        for index in range(1,3):
+            if index == 1:
+                if len(icon) >= 2:
+                    pixmapListItem.append(icon[index])
+                else:
+                    pixmapListItem.append(QIcon.Normal)
+            elif index == 2:
+                if len(icon) >= 3:
+                    pixmapListItem.append(icon[index])
+                else:
+                    pixmapListItem.append(QIcon.Off)
+
+        pixmapList.append(tuple(pixmapListItem))
+
+        key = '__bcIcon_'
+        if pixmapListItem[1]==QIcon.Normal:
+            key+='normal'
+        elif pixmapListItem[1]==QIcon.Active:
+            key+='active'
+        elif pixmapListItem[1]==QIcon.Disabled:
+            key+='disabled'
+        elif pixmapListItem[1]==QIcon.Selected:
+            key+='selected'
+        if pixmapListItem[2]==QIcon.Off:
+            key+='off'
+        else:
+            key+='on'
+
+        propertyList.append( (key, propertyListPath) )
+
+    returnedAction=QAction(buildIcon(pixmapList), title, parent)
+
+    for property in propertyList:
+        returnedAction.setProperty(*property)
+
+    return returnedAction
+
+def buildQMenu(icons, title, parent):
+    """Build a QMenu and store icons resource path as properties
+
+    Tricky method to be able to reload icons on the fly when theme is modified
+    """
+    pixmapList=[]
+    propertyList=[]
+    for icon in icons:
+        if isinstance(icon[0], QPixmap):
+            pixmapListItem=[icon[0]]
+            propertyListPath=''
+        elif isinstance(icon[0], str):
+            pixmapListItem=[QPixmap(icon[0])]
+            propertyListPath=icon[0]
+
+        for index in range(1,3):
+            if index == 1:
+                if len(icon) >= 2:
+                    pixmapListItem.append(icon[index])
+                else:
+                    pixmapListItem.append(QIcon.Normal)
+            elif index == 2:
+                if len(icon) >= 3:
+                    pixmapListItem.append(icon[index])
+                else:
+                    pixmapListItem.append(QIcon.Off)
+
+        pixmapList.append(tuple(pixmapListItem))
+
+        key = '__bcIcon_'
+        if pixmapListItem[1]==QIcon.Normal:
+            key+='normal'
+        elif pixmapListItem[1]==QIcon.Active:
+            key+='active'
+        elif pixmapListItem[1]==QIcon.Disabled:
+            key+='disabled'
+        elif pixmapListItem[1]==QIcon.Selected:
+            key+='selected'
+        if pixmapListItem[2]==QIcon.Off:
+            key+='off'
+        else:
+            key+='on'
+
+        propertyList.append( (key, propertyListPath) )
+
+    returnedMenu=QMenu(title, parent)
+    returnedMenu.setIcon(buildIcon(pixmapList))
+
+    for property in propertyList:
+        returnedMenu.setProperty(*property)
+
+    return returnedMenu
 
 def kritaVersion():
     """Return a dictionary with following values:
@@ -483,6 +594,40 @@ def stripTags(value):
                 .replace('&', '')           \
                 .replace(chr(1), '&')
 
+def loadXmlUi(fileName, parent):
+    """Load a ui file PyQt5.uic.loadUi()
+
+    For each item in ui file that refers to an icon resource, update widget
+    properties with icon reference
+    """
+    def findByName(parent, name):
+        # return first widget for which name match to searched name
+        if parent.objectName() == name:
+            return parent
+
+        if len(parent.children())>0:
+            for widget in parent.children():
+                searched = findByName(widget, name)
+                if not searched is None:
+                    return searched
+
+        return None
+
+    # load UI
+    PyQt5.uic.loadUi(fileName, parent)
+
+    # Parse XML file and retrieve all object for which an icon is set
+    tree = ET.parse(fileName)
+    for nodeParent in tree.getiterator():
+        for nodeChild in nodeParent:
+            if 'name' in nodeChild.attrib and nodeChild.attrib['name'] == 'icon':
+                nodeIconSet=nodeChild.find("iconset")
+                if nodeIconSet:
+                    widget = findByName(parent, nodeParent.attrib['name'])
+                    if not widget is None:
+                        for nodeIcon in list(nodeIconSet):
+                            # store on object resource path for icons
+                            widget.setProperty(f"__bcIcon_{nodeIcon.tag}", nodeIcon.text)
 
 # ------------------------------------------------------------------------------
 

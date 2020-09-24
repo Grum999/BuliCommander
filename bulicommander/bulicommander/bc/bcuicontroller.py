@@ -95,7 +95,7 @@ from ..pktk.ekrita import (
         EKritaNode
     )
 
-
+from ..libs.breadcrumbsaddressbar.breadcrumbsaddressbar import BreadcrumbsAddressBar
 
 # ------------------------------------------------------------------------------
 class BCUIController(object):
@@ -287,6 +287,31 @@ class BCUIController(object):
 
     def __themeChanged(self):
         """Theme has been changed, reload resources"""
+        def buildPixmapList(widget):
+            pixmaps=[]
+            for propertyName in widget.dynamicPropertyNames():
+                pName=bytes(propertyName).decode()
+                if re.match('__bcIcon_', pName):
+                    # a reference to resource path has been stored,
+                    # reload icon from it
+                    if pName == '__bcIcon_normalon':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Normal, QIcon.On) )
+                    elif pName == '__bcIcon_normaloff':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Normal, QIcon.Off) )
+                    elif pName == '__bcIcon_disabledon':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Disabled, QIcon.On) )
+                    elif pName == '__bcIcon_disabledoff':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Disabled, QIcon.Off) )
+                    elif pName == '__bcIcon_activeon':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Active, QIcon.On) )
+                    elif pName == '__bcIcon_activeoff':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Active, QIcon.Off) )
+                    elif pName == '__bcIcon_selectedon':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Selected, QIcon.On) )
+                    elif pName == '__bcIcon_selectedoff':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Selected, QIcon.Off) )
+            return pixmaps
+
         if not self.__theme is None:
             self.__theme.loadResources()
 
@@ -296,13 +321,28 @@ class BCUIController(object):
             widgetList = self.__window.getWidgets()
 
             for widget in widgetList:
-                if hasattr(widget, 'setPalette'):
+                if isinstance(widget, BCPathBar) or isinstance(widget, BreadcrumbsAddressBar):
+                    widget.updatePalette()
+                elif hasattr(widget, 'setPalette'):
                     # force palette to be applied to widget
                     widget.setPalette(palette)
 
+                if isinstance(widget, QTabWidget):
+                    # For QTabWidget, it's not possible to set icon directly,
+                    # need to use setTabIcon()
+                    for tabIndex in range(widget.count()):
+                        tabWidget = widget.widget(tabIndex)
+
+                        if not widget.tabIcon(tabIndex) is None:
+                            pixmaps=buildPixmapList(tabWidget)
+                            if len(pixmaps) > 0:
+                                widget.setTabIcon(tabIndex, buildIcon(pixmaps))
+
                 # need to do something to relad icons...
-                if hasattr(widget, 'icon'):
-                    pass
+                elif hasattr(widget, 'icon'):
+                    pixmaps=buildPixmapList(widget)
+                    if len(pixmaps) > 0:
+                        widget.setIcon(buildIcon(pixmaps))
 
     # endregion: initialisation methods ----------------------------------------
 
