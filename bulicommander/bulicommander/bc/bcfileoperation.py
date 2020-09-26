@@ -21,11 +21,14 @@
 
 
 from pathlib import Path
+from operator import itemgetter, attrgetter
+from functools import cmp_to_key
 
 import os
 import os.path
 import shutil
 import sys
+import re
 
 
 import PyQt5.uic
@@ -48,7 +51,8 @@ from .bcutils import (
         Debug,
         bytesSizeToStr,
         strDefault,
-        tsToStr
+        tsToStr,
+        popNotification
     )
 from ..pktk.pktk import (
         EInvalidType,
@@ -141,7 +145,7 @@ class BCFileOperationUi(object):
         """Initialise default file dialog for existing files"""
         def action_rename(dummy):
             dlgMain.__action=BCFileOperationUi.FILEEXISTS_RENAME
-            dlgMain.__renamed = dlgMain.leFileRename.text()
+            dlgMain.__renamed = dlgMain.cbxNewName.currentText()
             dlgMain.__applyToAll=dlgMain.cbApplyToAll.isChecked()
             dlgMain.accept()
 
@@ -196,10 +200,13 @@ class BCFileOperationUi(object):
             dlgMain.lblMsg.setText("The destination file already exists")
             if fileSrc.readable():
                 iconSrc = fileSrc.thumbnail(BCFileThumbnailSize.HUGE, BCBaseFile.THUMBTYPE_ICON)
-                dlgMain.lblFileSrcNfo.setText(f"<b>Date:</b> {tsToStr(fileSrc.lastModificationDateTime())}<br><b>Size:</b> {bytesSizeToStr(fileSrc.size())} ({fileSrc.size():n})<br><b>Image size:</b> {fileSrc.imageSize().width()}x{fileSrc.imageSize().height()}")
+                dlgMain.lblFileSrcNfo.setText(f"<b>Date:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{tsToStr(fileSrc.lastModificationDateTime())}<br>"
+                                              f"<b>Size:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{bytesSizeToStr(fileSrc.size())} ({fileSrc.size():n})<br>"
+                                              f"<b>Image size:</b>&nbsp;{fileSrc.imageSize().width()}x{fileSrc.imageSize().height()}")
             else:
                 iconSrc = fileSrc.icon()
-                dlgMain.lblFileSrcNfo.setText(f"<b>Date:</b> {tsToStr(fileSrc.lastModificationDateTime())}<br><b>Size:</b> {bytesSizeToStr(fileSrc.size())} ({fileSrc.size():n})")
+                dlgMain.lblFileSrcNfo.setText(f"<b>Date:</b> {tsToStr(fileSrc.lastModificationDateTime())}<br>"
+                                              f"<b>Size:</b> {bytesSizeToStr(fileSrc.size())} ({fileSrc.size():n})")
 
         if fileTgt.format() == BCFileManagedFormat.DIRECTORY:
             iconTgt = fileTgt.icon()
@@ -207,15 +214,24 @@ class BCFileOperationUi(object):
         else:
             if fileTgt.readable():
                 iconTgt = fileTgt.thumbnail(BCFileThumbnailSize.HUGE, BCBaseFile.THUMBTYPE_ICON)
-                dlgMain.lblFileTgtNfo.setText(f"<b>Date:</b> {tsToStr(fileTgt.lastModificationDateTime())}<br><b>Size:</b> {bytesSizeToStr(fileTgt.size())} ({fileTgt.size():n})<br><b>Image size:</b> {fileTgt.imageSize().width()}x{fileTgt.imageSize().height()}")
+                dlgMain.lblFileTgtNfo.setText(f"<b>Date:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{tsToStr(fileTgt.lastModificationDateTime())}<br>"
+                                              f"<b>Size:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{bytesSizeToStr(fileTgt.size())} ({fileTgt.size():n})<br>"
+                                              f"<b>Image size:</b>&nbsp;{fileTgt.imageSize().width()}x{fileTgt.imageSize().height()}")
             else:
                 iconTgt = fileTgt.icon()
-                dlgMain.lblFileTgtNfo.setText(f"<b>Date:</b> {tsToStr(fileTgt.lastModificationDateTime())}<br><b>Size:</b> {bytesSizeToStr(fileTgt.size())} ({fileTgt.size():n})")
+                dlgMain.lblFileTgtNfo.setText(f"<b>Date:</b> {tsToStr(fileTgt.lastModificationDateTime())}<br>"
+                                              f"<b>Size:</b> {bytesSizeToStr(fileTgt.size())} ({fileTgt.size():n})")
 
         dlgMain.lblFileSrcImg.setPixmap(iconSrc.pixmap(BCFileThumbnailSize.HUGE.value, BCFileThumbnailSize.HUGE.value))
         dlgMain.lblFileTgtImg.setPixmap(iconTgt.pixmap(BCFileThumbnailSize.HUGE.value, BCFileThumbnailSize.HUGE.value))
 
-        dlgMain.leFileRename.setText(fileSrc.name())
+        dlgMain.cbxNewName.addItems([
+                '{file:baseName}_{counter:####}.{file:ext}',
+                '{file:baseName}_{date}-{time}.{file:ext}',
+                i18n('{file:baseName}-Copy {counter:####}.{file:ext}'),
+                i18n('{file:baseName}-Copy {date}_{time}.{file:ext}')
+            ])
+        dlgMain.cbxNewName.setCurrentText(fileSrc.name())
 
         dlgMain.btActionRename.clicked.connect(action_rename)
         dlgMain.btActionSkip.clicked.connect(action_skip)
@@ -319,7 +335,7 @@ class BCFileOperation(object):
         BCFileOperation.__PROGRESS.pbProcessedBytes.setValue(0)
         BCFileOperation.__PROGRESS.pbProcessedBytes.setMaximum(10000)
 
-        BCFileOperation.__PROGRESS.bbCancel.rejected.connect(BCFileOperation.__PROGRESS.reject)
+        BCFileOperation.__PROGRESS.bbCancel.clicked.connect(cancel_clicked)
 
     @staticmethod
     def __hideProgressBar():
@@ -358,6 +374,258 @@ class BCFileOperation(object):
         return BCFileOperation.__PROGRESS_currentStep
 
     @staticmethod
+    def __copyOrMove(title, srcFiles, targetPath, mode):
+        """Copy or move files, according to given mode 'copy' or 'move'
+
+        Given `srcFiles` is a list of BCBaseFile
+
+        The copy/move method is practically the same so use the same function as
+        algorithm to manage automatic renaming is little bit complex
+        """
+        def fullPathNameCmpAsc(f1, f2):
+            # compare file for ascending sort
+            if f1.fullPathName()>f2.fullPathName():
+                return 1
+            return -1
+        def fullPathNameCmpDesc(f1, f2):
+            # compare file for descending sort
+            if f1.fullPathName()>f2.fullPathName():
+                return -1
+            return 1
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # According to mode, define terms to use for user information
+        if mode=='copy':
+            modeMaj=i18n('Copy')
+            modeEd=i18n('copied')
+        else:
+            modeMaj=i18n('Move')
+            modeEd=i18n('moved')
+
+        # define default action to apply if file/path already exists
+        # note: for RENAME, it will always stay to FILEEXISTS_ASK (control is made
+        #       on newFilePattern/newDirPattern content)
+        actionOnFileExist = BCFileOperationUi.FILEEXISTS_ASK
+        actionOnPathExist = BCFileOperationUi.FILEEXISTS_ASK
+        actionForFile = actionOnFileExist
+        actionForPath = actionOnPathExist
+
+        # pattern to apply for automatic RENAME action
+        newFilePattern=None
+        newDirPattern=None
+
+        # number of processed/error file
+        processed=0
+        inError=0
+
+        # initialise process:
+        # - calculate total size to copy/move (in bytes)
+        # - determinate target path for file/dir to process
+        files=[]
+        index=0
+        totalSize=0
+        pathsList={}
+        for file in srcFiles:
+            if file.format() != BCFileManagedFormat.DIRECTORY:
+                totalSize+=file.size()
+            else:
+                pathsList[file.fullPathName()]=file.name()
+            file.setTag('newPath', targetPath)
+            files.append(file)
+            index+=1
+
+        if len(pathsList)>0:
+            # there's some directory to process
+            # in this case, search all sub-directories & files and continue to feed list of items to process
+            for srcPath in pathsList:
+                fileList=BCFileList()
+                fileList.addPath(BCFileListPath(srcPath, True))
+                fileList.setIncludeDirectories(True)
+                fileList.execute()
+                srcPath = os.path.dirname(srcPath)
+                for file in fileList.files():
+                    file.setTag('newPath', os.path.join(targetPath, file.path().replace(srcPath, '').strip(os.sep)))
+                    files.append(file)
+                    totalSize+=file.size()
+
+        # ascending sort
+        files = sorted(files, key=cmp_to_key(fullPathNameCmpAsc))
+        # path list, descending sort
+        paths = sorted([file for file in files if file.format()==BCFileManagedFormat.DIRECTORY], key=cmp_to_key(fullPathNameCmpDesc))
+
+        QApplication.restoreOverrideCursor()
+        QApplication.setOverrideCursor(Qt.BusyCursor)
+        BCFileOperation.__showProgressBar(i18n(f"{title}::{modeMaj} files"), len(files), totalSize)
+
+        for file in files:
+            isDir=False
+            if file.format() == BCFileManagedFormat.DIRECTORY:
+                BCFileOperation.__progressBarNext(file.fullPathName(), 0)
+                isDir=True
+            else:
+                BCFileOperation.__progressBarNext(file.fullPathName(), file.size())
+
+            # determinate new target full path name
+            targetFile = os.path.join(file.tag('newPath'), file.name())
+
+            actionToApply = BCFileOperationUi.FILEEXISTS_OVERWRITE
+
+            while os.path.exists(targetFile):
+                # the target file already exists..
+
+                if isDir and not newDirPattern is None:
+                    # current directory exist AND a rename pattern exist for directories
+                    # => means that we try to rename directory automatically
+                    currentTarget = targetFile
+                    targetFile = os.path.join(file.tag('newPath'), BCFile.formatFileName(BCDirectory(targetFile), newDirPattern))
+
+                    if not os.path.exists(targetFile):
+                        # ok new name is valid, doesn't exist
+                        # need to modify all file designed to be processed into the new directory
+                        for fileToUpdate in files:
+                            if (currentTarget + os.sep) in fileToUpdate.tag('newPath'):
+                                fileToUpdate.setTag('newPath', fileToUpdate.tag('newPath').replace(currentTarget, targetFile))
+
+                    if not os.path.exists(targetFile):
+                        # ok new name is valid, doesn't exist
+                        # need to modify all file designed to be processed into the new directory
+                        for fileToUpdate in files:
+                            if fileToUpdate.tag('newPath') == currentTarget:
+                                fileToUpdate.setTag('newPath', targetFile)
+                        break
+                elif not isDir and not newFilePattern is None:
+                    # current directory exist AND a rename pattern exist for files
+                    # => means that we try to rename file automatically
+                    targetFile = os.path.join(file.tag('newPath'), BCFile.formatFileName(BCFile(targetFile), newFilePattern))
+
+                    if not os.path.exists(targetFile):
+                        # ok new name is valid, doesn't exist
+                        break
+
+                if (not isDir and actionOnFileExist == BCFileOperationUi.FILEEXISTS_ASK) or (isDir and actionOnPathExist == BCFileOperationUi.FILEEXISTS_ASK):
+                    # ask for user what to do...
+                    QApplication.restoreOverrideCursor()
+                    action = BCFileOperationUi.fileExists(title, modeMaj, file, targetFile, len(files))
+                    QApplication.setOverrideCursor(Qt.BusyCursor)
+
+                    if action[0] == BCFileOperationUi.FILEEXISTS_ABORT:
+                        # exit immediately
+                        actionToApply = BCFileOperationUi.FILEEXISTS_ABORT
+                        # minus one because progress bar is already on next item while item has not yet been processed
+                        processed=BCFileOperation.__value() - 1
+                        break
+                    elif action[0] == BCFileOperationUi.FILEEXISTS_RENAME:
+                        # rename file
+                        currentTarget = targetFile
+                        if isDir:
+                            targetFile = os.path.join(os.path.dirname(targetFile), BCFile.formatFileName(BCDirectory(targetFile), re.sub("(?i)\{file:(?:path|name)\}", '', action[1])))
+                        else:
+                            targetFile = os.path.join(os.path.dirname(targetFile), BCFile.formatFileName(BCFile(targetFile), re.sub("(?i)\{file:(?:path|name)\}", '', action[1])))
+                        actionToApply = BCFileOperationUi.FILEEXISTS_RENAME
+
+                        if isDir and not os.path.exists(targetFile):
+                            # need to modify all file designed to be processed into the new directory
+                            # do it only if new target not exists
+                            for fileToUpdate in files:
+                                if (currentTarget + os.sep) in fileToUpdate.tag('newPath'):
+                                    fileToUpdate.setTag('newPath', fileToUpdate.tag('newPath').replace(currentTarget, targetFile))
+
+                        # apply to all
+                        if action[2]:
+                            if isDir:
+                                newDirPattern = re.sub("(?i)\{file:(?:path|name)\}", '', action[1])
+                            else:
+                                newFilePattern = re.sub("(?i)\{file:(?:path|name)\}", '', action[1])
+
+                        # note: to do break loop
+                        #       if new defined target file already exists, user will be asked again to change file name
+                    else:
+                        # apply to all
+                        if action[2]:
+                            if isDir:
+                                actionOnPathExist = action[0]
+                            else:
+                                actionOnFileExist = action[0]
+                        actionToApply = action[0]
+                        break
+                else:
+                    if isDir:
+                        actionToApply = actionOnPathExist
+                    else:
+                        actionToApply = actionOnFileExist
+                    break
+
+            if actionToApply == BCFileOperationUi.FILEEXISTS_ABORT:
+                # minus one because progress bar is already on next item while item has not yet been processed
+                processed=BCFileOperation.__value() - 1
+                break
+            elif actionToApply == BCFileOperationUi.FILEEXISTS_SKIP:
+                continue
+            elif isDir:
+                try:
+                    os.makedirs(targetFile, exist_ok=True)
+                except Exception as e:
+                    inError+=1
+                    Debug.print('[BCFileOperation.__copyOrMove] Unable to {3} file from {0} to {1}: {2}', file.fullPathName(), targetFile, str(e), mode)
+            elif not isDir:
+                try:
+                    targetPath = os.path.dirname(targetFile)
+                    os.makedirs(targetPath, exist_ok=True)
+
+                    if mode == 'copy':
+                        shutil.copy2(file.fullPathName(), targetFile)
+                    else:
+                        shutil.move(file.fullPathName(), targetFile)
+                except Exception as e:
+                    inError+=1
+                    Debug.print('[BCFileOperation.__copyOrMove] Unable to {3} file from {0} to {1}: {2}', file.fullPathName(), targetFile, str(e), mode)
+
+            if BCFileOperation.__isCancelled():
+                processed=BCFileOperation.__value()
+                break
+
+        if mode == 'move':
+            # at this point, all file are normally moved (except if user have processed action or if
+            # error occured on a file)
+            # Directories are still present and need to be deleted too
+            # note: works on path list with a descending sort allows to check/delete deepest directories first
+            #           /home/xxx/temp/dir_to_delete_a/dir_to_delete_b/dir_to_delete_c              first deleted
+            #           /home/xxx/temp/dir_to_delete_a/dir_to_delete_b                              and then deleted
+            #           /home/xxx/temp/dir_to_delete_a                                              and then deleted
+            for path in paths:
+                if os.path.isdir(path.fullPathName()) and os.path.isdir(path.tag('newPath')):
+                    # source directory still here AND target directory exists
+                    if len(os.listdir(path.fullPathName())) == 0:
+                        # source directory is empty, delete it
+                        shutil.rmtree(path.fullPathName())
+
+
+        BCFileOperation.__hideProgressBar()
+
+        QApplication.restoreOverrideCursor()
+
+        if inError>0:
+            popNotification(
+                i18n(f"{title}::{modeMaj} files"),
+                i18n(f"{modeMaj} process has been finished with errors\n\n<i>Items not {modeEd}: <b>{inError}</b> of <b>{len(files)}</b></i>"),
+                QSystemTrayIcon.Critical
+            )
+
+        if processed!=len(files):
+            popNotification(
+                i18n(f"{title}::{modeMaj} files"),
+                i18n(f"{modeMaj} process has been cancelled\n\n<i>Items {modeEd} before action has been cancelled: <b>{processed - inError}</b> of <b>{len(files)}</b></i>"),
+                QSystemTrayIcon.Warning
+            )
+        elif inError==0:
+            popNotification(
+                i18n(f"{title}::{modeMaj} files"),
+                i18n(f"{modeMaj} finished\n\n<i>Items {modeEd}: <b>{len(files)}</b></i>"),
+                QSystemTrayIcon.Information
+            )
+
+    @staticmethod
     def delete(title, files, moveToTrash=False):
         """Delete files
 
@@ -368,6 +636,8 @@ class BCFileOperation(object):
 
         # cancelled=0
         #   when cancelled > 0, it's the number of items processed
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
         cancelled=0
         inError=0
 
@@ -376,7 +646,9 @@ class BCFileOperation(object):
             if file.format() != BCFileManagedFormat.DIRECTORY:
                 totalSize+=file.size()
 
-        BCFileOperation.__showProgressBar(f"{title}::Delete files", len(files), totalSize)
+        QApplication.restoreOverrideCursor()
+        QApplication.setOverrideCursor(Qt.BusyCursor)
+        BCFileOperation.__showProgressBar(i18n(f"{title}::Delete files"), len(files), totalSize)
 
         for file in files:
             try:
@@ -396,17 +668,19 @@ class BCFileOperation(object):
 
         BCFileOperation.__hideProgressBar()
 
+        QApplication.restoreOverrideCursor()
+
         if cancelled>0:
-            QMessageBox.information(
-                QWidget(),
-                f"{title}::Delete files",
-                f"Deletion process has been cancelled\n\nItems deleted before action has been cancelled: {cancelled}/{len(files)}"
+            popNotification(
+                i18n(f"{title}::Delete files"),
+                i18n(f"Deletion process has been cancelled\n\n<i>Items deleted before action has been cancelled: <b>{cancelled}</b> of <b>{len(files)}<b></i>"),
+                QSystemTrayIcon.Warning
             )
-        elif inError>0:
-            QMessageBox.warning(
-                QWidget(),
-                f"{title}::Delete files",
-                f"Deletion process has been finished with errors\n\nItems not deleted: {inError}/{len(files)}"
+        if inError>0:
+            popNotification(
+                i18n(f"{title}::Delete files"),
+                i18n(f"Deletion process has been finished with errors\n\n<i>Items not deleted: <b>{inError}</b> of <b>{len(files)}</b></i>"),
+                QSystemTrayIcon.Critical
             )
 
     @staticmethod
@@ -415,124 +689,15 @@ class BCFileOperation(object):
 
         Given `files` is a list of BCBaseFile
         """
-        actionOnFileExist = BCFileOperationUi.FILEEXISTS_ASK
-        actionOnPathExist = BCFileOperationUi.FILEEXISTS_ASK
-        actionForFile = actionOnFileExist
-        actionForPath = actionOnPathExist
-
-        cancelled=0
-        inError=0
-
-        index=0
-        totalSize=0
-        pathsList={}
-        for file in files:
-            if file.format() != BCFileManagedFormat.DIRECTORY:
-                totalSize+=file.size()
-            else:
-                pathsList[file.fullPathName()]=file.name()
-            index+=1
-
-        if len(pathsList)>0:
-            fileList=BCFileList()
-            fileList.addPath([BCFileListPath(path, True) for path in list(pathsList.keys())])
-            fileList.execute()
-            files+=fileList.files()
-            for file in fileList.files():
-                totalSize+=file.size()
-
-        BCFileOperation.__showProgressBar(f"{title}::Copy files", len(files), totalSize)
-
-        for file in files:
-            isDir=False
-            if file.format() == BCFileManagedFormat.DIRECTORY:
-                BCFileOperation.__progressBarNext(file.fullPathName(), 0)
-                isDir=True
-            else:
-                BCFileOperation.__progressBarNext(file.fullPathName(), file.size())
-
-            if file.path() in pathsList:
-                # use new name for current directory
-                targetFile = os.path.join(targetPath, pathsList[file.path()], file.name())
-            else:
-                targetFile = os.path.join(targetPath, file.name())
-
-            actionToApply = BCFileOperationUi.FILEEXISTS_OVERWRITE
-
-            while os.path.exists(targetFile):
-                if (not isDir and actionOnFileExist == BCFileOperationUi.FILEEXISTS_ASK) or (isDir and actionOnPathExist == BCFileOperationUi.FILEEXISTS_ASK):
-                    action = BCFileOperationUi.fileExists(title, 'Copy', file, targetFile, len(files))
-
-                    if action[0] == BCFileOperationUi.FILEEXISTS_ABORT:
-                        actionToApply = BCFileOperationUi.FILEEXISTS_ABORT
-                        cancelled=BCFileOperation.__value()
-                        break
-                    elif action[0] == BCFileOperationUi.FILEEXISTS_RENAME:
-                        if isDir and os.path.join(file.path(), file.name()) in pathsList:
-                            pathsList[os.path.join(file.path(), file.name())] = action[1]
-                        targetFile = os.path.join(targetPath, action[1])
-                        actionToApply = BCFileOperationUi.FILEEXISTS_RENAME
-                    else:
-                        # apply to all
-                        if action[2]:
-                            if isDir:
-                                actionOnPathExist = action[0]
-                            else:
-                                actionOnFileExist = action[0]
-                        actionToApply = action[0]
-                        break
-                else:
-                    if isDir:
-                        actionToApply = actionOnPathExist
-                    else:
-                        actionToApply = actionOnFileExist
-                    break
-
-            if actionToApply == BCFileOperationUi.FILEEXISTS_ABORT:
-                cancelled=BCFileOperation.__value()
-                break
-            elif actionToApply == BCFileOperationUi.FILEEXISTS_SKIP:
-                continue
-            elif isDir:
-                try:
-                    os.makedirs(targetFile, exist_ok=True)
-                except Exception as e:
-                    inError+=1
-                    Debug.print('[BCFileOperation.copy] Unable to copy file from {0} to {1}: {2}', file.fullPathName(), targetFile, str(e))
-            elif not isDir:
-                try:
-                    shutil.copy2(file.fullPathName(), targetFile)
-                except Exception as e:
-                    inError+=1
-                    Debug.print('[BCFileOperation.copy] Unable to copy file from {0} to {1}: {2}', file.fullPathName(), targetFile, str(e))
-
-            if BCFileOperation.__isCancelled():
-                cancelled=BCFileOperation.__value()
-                break
-
-        BCFileOperation.__hideProgressBar()
-
-        if cancelled>0:
-            QMessageBox.information(
-                QWidget(),
-                f"{title}::Copy files",
-                f"Copy process has been cancelled\n\nItems copied before action has been cancelled: {cancelled}/{len(files)}"
-            )
-        elif inError>0:
-            QMessageBox.warning(
-                QWidget(),
-                f"{title}::Copy files",
-                f"Copy process has been finished with errors\n\nItems not copied: {inError}/{len(files)}"
-            )
+        return BCFileOperation.__copyOrMove(title, files, targetPath, 'copy')
 
     @staticmethod
-    def move(files, targetPath):
+    def move(title, files, targetPath):
         """Move files
 
         Given `files` is a list of BCBaseFile
         """
-        # TODO: to implement
-        print('move to', targetPath)
+        return BCFileOperation.__copyOrMove(title, files, targetPath, 'move')
 
     @staticmethod
     def createDir(path, createParent=True):
@@ -544,6 +709,11 @@ class BCFileOperation(object):
             Path(path).mkdir(parents=createParent)
             return True
         except Exception as e:
+            popNotification(
+                i18n(f"{title}::Create directory"),
+                f"Unable to create directory <b>{path}</b>",
+                QSystemTrayIcon.Critical
+            )
             return False
 
 

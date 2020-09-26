@@ -349,6 +349,154 @@ class BCBaseFile(object):
         else:
             self._mdatetime = None
         self._format = BCFileManagedFormat.UNKNOWN
+        self._tag = {}
+
+    @staticmethod
+    def formatFileName(file, pattern=None):
+        """Return a file name build from given file and pattern
+
+        If pattern equals "<None>"
+        => return empty string
+
+        Otherwise, the following markup can be used:
+            "{file:path}"       The file path name without extension
+            "{file:baseName}"   The file base name without extension
+            "{file:name}"       The file path+base name without extension
+            "{file:ext}"        The file extension
+
+            "{date}"            The current system date (yyyymmdd)
+            "{date:yyyy}"       The current system year
+            "{date:mm}"         The current system month
+            "{date:dd}"         The current system day
+
+            "{time}"            The current system time (hhmmss)
+            "{time:hh}"         The current system hour (00-24)
+            "{time:mm}"         The current system minutes
+            "{time:ss}"         The current system seconds
+
+            "{size}"            The current image size (widthxheight)
+            "{size:width}"      The current image width
+            "{size:height}"     The current image height
+
+            "{counter}"         A counter to file name
+            "{counter:####}"    A counter to file name
+        """
+        if pattern is None:
+            return ''
+
+        if not isinstance(file, BCBaseFile):
+            raise EInvalidType('Given `file` must be a <BCBaseFile>')
+
+        if not isinstance(pattern, str):
+            raise EInvalidType('Given `pattenr` must be a <str>')
+
+        if pattern.strip() == '' or re.search('(?i)<none>', pattern):
+            return ''
+
+        currentDateTime = time.time()
+        fileName = pattern
+
+        isDir = False
+        if file.format() != BCFileManagedFormat.DIRECTORY:
+            baseFileNameWithoutExt = os.path.splitext(file.name())[0]
+            nameFileNameWithoutExt = os.path.splitext(file.fullPathName())[0]
+            if file.extension(False) == '' and file.name()[-1] != '.' :
+                replaceExtExpr = "(?i)\.\{file:ext\}"
+            else:
+                replaceExtExpr = "(?i)\{file:ext\}"
+
+            fileName = re.sub(replaceExtExpr,      file.extension(False),                        fileName)
+            fileName = re.sub("(?i)\{size\}",           f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}x{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
+            fileName = re.sub("(?i)\{size:width\}",     f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}", fileName)
+            fileName = re.sub("(?i)\{size:height\}",    f"{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
+        else:
+            isDir = True
+            baseFileNameWithoutExt = file.name()
+            nameFileNameWithoutExt = file.fullPathName()
+            replaceExtExpr = None
+
+            fileName = re.sub("(?i)\.\{file:ext\}",     "", fileName)
+            fileName = re.sub("(?i)\{file:ext\}",       "", fileName)
+            fileName = re.sub("(?i)\{size\}",           "0x0", fileName)
+            fileName = re.sub("(?i)\{size:width\}",     "0", fileName)
+            fileName = re.sub("(?i)\{size:height\}",    "0", fileName)
+
+
+        fileName = re.sub("(?i)\{file:path\}", file.path(),                                  fileName)
+        fileName = re.sub("(?i)\{file:baseName\}", baseFileNameWithoutExt,                   fileName)
+        fileName = re.sub("(?i)\{file:name\}", nameFileNameWithoutExt,     fileName)
+
+        fileName = re.sub("(?i)\{date\}",      tsToStr(currentDateTime, '%Y%m%d'),           fileName)
+        fileName = re.sub("(?i)\{date:yyyy\}", tsToStr(currentDateTime, '%Y'),               fileName)
+        fileName = re.sub("(?i)\{date:mm\}",   tsToStr(currentDateTime, '%m'),               fileName)
+        fileName = re.sub("(?i)\{date:dd\}",   tsToStr(currentDateTime, '%d'),               fileName)
+
+        fileName = re.sub("(?i)\{time\}",      tsToStr(currentDateTime, '%H%M%S'),           fileName)
+        fileName = re.sub("(?i)\{time:hh\}",   tsToStr(currentDateTime, '%H'),               fileName)
+        fileName = re.sub("(?i)\{time:mm\}",   tsToStr(currentDateTime, '%M'),               fileName)
+        fileName = re.sub("(?i)\{time:ss\}",   tsToStr(currentDateTime, '%S'),               fileName)
+
+        if resultCounter:=re.search("(?i)\{counter(?::(#+))?\}", fileName):
+            regEx = re.sub("(?i)\{file:path\}", re.escape(file.path()),                       pattern)
+
+            regEx = re.sub("(?i)\{file:baseName\}", re.escape(baseFileNameWithoutExt),        regEx)
+            regEx = re.sub("(?i)\{file:name\}", re.escape(nameFileNameWithoutExt),            regEx)
+            if not replaceExtExpr is None:
+                regEx = re.sub(replaceExtExpr,  re.escape(file.extension(False)),             regEx)
+            else:
+                regEx = re.sub("(?i)\.\{file:ext\}",     "", regEx)
+                regEx = re.sub("(?i)\{file:ext\}",       "", regEx)
+
+
+            regEx = re.sub("(?i)\{date\}",      r'\\d{8}',                                    regEx)
+            regEx = re.sub("(?i)\{date:yyyy\}", r'\\d{4}',                                    regEx)
+            regEx = re.sub("(?i)\{date:mm\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub("(?i)\{date:dd\}",   r'\\d{2}',                                    regEx)
+
+            regEx = re.sub("(?i)\{time\}",      r'\\d{6}',                                    regEx)
+            regEx = re.sub("(?i)\{time:hh\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub("(?i)\{time:mm\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub("(?i)\{time:ss\}",   r'\\d{2}',                                    regEx)
+
+            regEx = re.sub("(?i)\{size\}",       r'\\d+x\\d+',                                 regEx)
+            regEx = re.sub("(?i)\{size:width\}", r'\\d+',                                     regEx)
+            regEx = re.sub("(?i)\{size:height\}",r'\\d+',                                     regEx)
+
+            regEx = re.sub("(?i)\{counter\}",r'(\\d+)',                                         regEx)
+
+            for replaceHash in resultCounter.groups():
+                regEx = re.sub(f"\{{counter:{replaceHash}\}}", f"(\\\\d{{{len(replaceHash)},}})", regEx)
+
+            regEx = regEx.replace(".", r'\.')
+
+            regEx = f"^{regEx}$"
+
+
+            # a counter is defined, need to determinate counter value
+            #nbFiles = len([foundFile for foundFile in os.listdir(file.path()) if os.path.isfile(os.path.join(file.path(), foundFile)) and not re.search(regEx, foundFile) is None]) + 1
+
+            if isDir:
+                print("search directories matching regex", regEx, " in ", file.path())
+                fileList = [int(rr.groups()[0]) for foundFile in os.listdir(file.path()) if os.path.isdir(os.path.join(file.path(), foundFile)) and (rr:=re.search(regEx, foundFile))]
+            else:
+                print("search files matching regex", regEx, " in ", file.path())
+                fileList = [int(rr.groups()[0]) for foundFile in os.listdir(file.path()) if os.path.isfile(os.path.join(file.path(), foundFile)) and (rr:=re.search(regEx, foundFile))]
+            print("found files matching regexp", fileList)
+            if len(fileList) == 0:
+                nbFiles = 1
+            else:
+                nbFiles = max(fileList) + 1
+
+            fileName = re.sub("(?i)\{counter\}", str(nbFiles),   fileName)
+
+            for replaceHash in resultCounter.groups():
+                fileName = re.sub(f"\{{counter:{replaceHash}\}}", f"{nbFiles:0{len(replaceHash)}}", fileName)
+
+            print("new file", nbFiles, fileName)
+
+        return fileName
+
+
 
     def path(self):
         """Return file path"""
@@ -388,6 +536,19 @@ class BCBaseFile(object):
             return None
         else:
             raise EInvalidType('Given `property` must be a valid <BCFileProperty>')
+
+    def tag(self, key):
+        """Return tag value
+
+        If no tag exist for given key, return None
+        """
+        if key in self._tag:
+            return self._tag[key]
+        return None
+
+    def setTag(self, key, value):
+        """Set tag value"""
+        self._tag[key] = value
 
     def icon(self):
         """return system icon for file"""
@@ -443,6 +604,10 @@ class BCDirectory(BCBaseFile):
     def __repr__(self):
         """Format internal representation"""
         return f'<BCDirectory({self._path}, {self._name})>'
+
+    def size(self):
+        """Return directory size"""
+        return 0
 
 class BCMissingFile(BCBaseFile):
     """A missing file"""
@@ -535,85 +700,6 @@ class BCFile(BCBaseFile):
         BCFile.setThumbnailCacheDefaultSize(thumbnailCacheDefaultSize)
 
         BCFile.__INITIALISED = True
-
-
-    @staticmethod
-    def formatFileName(file, pattern=None):
-        """Return a file name build from given file and pattern
-
-        If pattern equals "<None>"
-        => return empty string
-
-        Otherwise, the following markup can be used:
-            "{file:path}"       The file path name without extension
-            "{file:base}"       The file base name without extension
-            "{file:name}"       The file path+base name without extension
-            "{file:ext}"        The file extension
-
-            "{date}"            The current system date (yyyymmdd)
-            "{date:yyyy}"       The current system year
-            "{date:mm}"         The current system month
-            "{date:dd}"         The current system day
-
-            "{time}"            The current system time (hhmmss)
-            "{time:hh}"         The current system hour (00-24)
-            "{time:mm}"         The current system minutes
-            "{time:ss}"         The current system seconds
-
-            "{size}"            The current image size (widthxheight)
-            "{size:width}"      The current image width
-            "{size:height}"     The current image height
-
-            "{counter}"         A counter to file name
-            "{counter:####}"    A counter to file name
-        """
-        if pattern is None:
-            return ''
-
-        if not isinstance(file, BCFile):
-            raise EInvalidType('Given `file` must be a <BCFile>')
-
-        if not isinstance(pattern, str):
-            raise EInvalidType('Given `pattenr` must be a <str>')
-
-        if pattern.strip() == '' or re.search('(?i)<none>', pattern):
-            return ''
-
-        currentDateTime = time.time()
-        fileName = pattern
-
-        baseFileNameWithoutExt = os.path.splitext(file.name())[0]
-
-        fileName = re.sub("(?i)\{file:path\}", file.path(),                                  fileName)
-        fileName = re.sub("(?i)\{file:base\}", baseFileNameWithoutExt,                       fileName)
-        fileName = re.sub("(?i)\{file:name\}", os.path.splitext(file.fullPathName())[0],     fileName)
-        fileName = re.sub("(?i)\{file:ext\}",  file.extension(False),                        fileName)
-
-        fileName = re.sub("(?i)\{date\}",      tsToStr(currentDateTime, '%Y%m%d'),           fileName)
-        fileName = re.sub("(?i)\{date:yyyy\}", tsToStr(currentDateTime, '%Y'),               fileName)
-        fileName = re.sub("(?i)\{date:mm\}",   tsToStr(currentDateTime, '%m'),               fileName)
-        fileName = re.sub("(?i)\{date:dd\}",   tsToStr(currentDateTime, '%d'),               fileName)
-
-        fileName = re.sub("(?i)\{time\}",      tsToStr(currentDateTime, '%H%M%S'),           fileName)
-        fileName = re.sub("(?i)\{time:hh\}",   tsToStr(currentDateTime, '%H'),               fileName)
-        fileName = re.sub("(?i)\{time:mm\}",   tsToStr(currentDateTime, '%M'),               fileName)
-        fileName = re.sub("(?i)\{time:ss\}",   tsToStr(currentDateTime, '%S'),               fileName)
-
-        fileName = re.sub("(?i)\{size\}",           f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}x{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
-        fileName = re.sub("(?i)\{size:width\}",     f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}", fileName)
-        fileName = re.sub("(?i)\{size:height\}",    f"{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
-
-        if re.search("\{counter(:#+)?\}", fileName):
-            # a counter is defined, need to determinate counter value
-            nbFiles = len([foundFile for foundFile in os.listdir(file.path()) if os.path.isfile(os.path.join(file.path(), foundFile)) and not re.match(f"{baseFileNameWithoutExt}.*", foundFile) is None]) + 1
-
-            fileName = re.sub("(?i)\{counter\}", str(nbFiles),   fileName)
-
-            if result:=re.search("(?i)\{counter(?::(#+))?\}", fileName):
-                for replaceHash in result.groups():
-                    fileName = re.sub(f"\{{counter:{replaceHash}\}}", f"{nbFiles:0{len(replaceHash)}}", fileName)
-
-        return fileName
 
 
     def __init__(self, fileName, strict=False):
