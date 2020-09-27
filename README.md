@@ -77,7 +77,7 @@ Here a list of some functionalities:
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.2.0a](https://github.com/Grum999/BuliCommander/releases/download/0.2.0a/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.3.0a](https://github.com/Grum999/BuliCommander/releases/download/0.3.0a/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
@@ -104,6 +104,17 @@ I think it should be Ok, because of use of python and PyQt high level and multi 
 ## Plugin's life
 
 ### What's new?
+_[2020-09-27] Version 0.3.0a_
+- Implement progress bar on background thumbnail load
+- Implement progress bar on directory file content analysis
+- Fix bug on Setting "cache" tab
+- Add "copy" context menu on information panel
+- Improve "Open as new" function
+- Update theme loading (when user change Krita's interface theme, reload properly BC theme)
+- Implement and improve copy/move/delete function
+
+
+
 _[2020-09-11] Version 0.2.0a_
 - ORA file preview use (if exists) merged image preview instead of thumbnail
 - Add BACKUP files list linked to a file
@@ -127,7 +138,6 @@ Not able to define precisely in which order functionalities will be implemented,
 - File(s) rename
 - Shortcut to launch *Buli Commander*
 - Possibility (as an option) to replace current Open dialog box with *Buli Commander*
-- Improve thumbnail generation (add a progress bar when thumbnail generation take times)
 - Generate and display thumbnails with ICC profile taken in account
 - Add a gridview mode
 - Implement *Search* tool
