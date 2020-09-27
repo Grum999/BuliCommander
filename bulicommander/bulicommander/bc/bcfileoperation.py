@@ -47,6 +47,7 @@ from .bcfile import (
         BCFileManagedFormat,
         BCFileThumbnailSize
     )
+from .bcpathbar import BCPathBar
 from .bcutils import (
         Debug,
         bytesSizeToStr,
@@ -93,10 +94,10 @@ class BCFileOperationUi(object):
         return message
 
     @staticmethod
-    def __dialogFileOperation(message, information, message2=None, targetPath=None, message3=None):
+    def __dialogFileOperation(action, nbFiles, nbDirectories, fileList, message2=None, targetPath=None, message3=None):
         """Initialise default file dialog for delete/copy/move"""
         def pathChanged(value):
-            BCFileOperationUi.__targetPath = self.frameBreacrumbPath.path()
+            BCFileOperationUi.__targetPath = dlgMain.frameBreacrumbPath.path()
 
         def showEvent(event):
             """Event trigerred when dialog is shown"""
@@ -105,12 +106,29 @@ class BCFileOperationUi(object):
             # need to set AFTER dialog is visible, otherwise there's a strange bug...
             dlgMain.frameBreacrumbPath.setPath(dlgMain.__targetPath)
 
+        def deepDirAnalysis():
+            dlgMain.pbOk.setEnabled(False)
+            dlgMain.pbCancel.setEnabled(False)
+            dlgMain.pbDeepDirAnalysis.setEnabled(False)
+
+            informations = BCFileOperationUi.buildInformation(fileList, True)
+
+            dlgMain.lblMessage.setText(informations['info']['short'])
+            dlgMain.teInfo.setHtml(informations['info']['full'])
+
+            dlgMain.pbDeepDirAnalysis.setVisible(False)
+
+            dlgMain.pbOk.setEnabled(True)
+            dlgMain.pbCancel.setEnabled(True)
+
+        informations = BCFileOperationUi.buildInformation(fileList, False)
+
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcfileoperation.ui')
         dlgMain = PyQt5.uic.loadUi(uiFileName)
         dlgMain._oldShowEvent = dlgMain.showEvent
 
-        dlgMain.lblMessage.setText(message)
-        dlgMain.pteInfo.setPlainText(information)
+        dlgMain.lblMessage.setText(informations['info']['short'])
+        dlgMain.teInfo.setHtml(informations['info']['full'])
 
         if message2 is None or message2 == '':
             dlgMain.lblMessage2.setVisible(False)
@@ -124,9 +142,8 @@ class BCFileOperationUi(object):
             dlgMain.layout().removeWidget(dlgMain.frameBreacrumbPath)
         else:
             dlgMain.frameBreacrumbPath.pathChanged.connect(pathChanged)
-            dlgMain.frameBreacrumbPath.showFilter(False)
-            dlgMain.frameBreacrumbPath.showBookmark(False)
-            dlgMain.frameBreacrumbPath.showHistory(False)
+            dlgMain.frameBreacrumbPath.setOptions(BCPathBar.OPTION_SHOW_NONE)
+            dlgMain.frameBreacrumbPath.setPath(targetPath)
             BCFileOperationUi.__targetPath = targetPath
 
         if message3 is None or message3 == '':
@@ -135,8 +152,14 @@ class BCFileOperationUi(object):
         else:
             dlgMain.lblMessage3.setText(message3)
 
-        dlgMain.buttonBox.accepted.connect(dlgMain.accept)
-        dlgMain.buttonBox.rejected.connect(dlgMain.reject)
+        if informations['stats']['nbDir'] == 0:
+            dlgMain.pbDeepDirAnalysis.setVisible(False)
+
+        dlgMain.pbOk.setText(action)
+
+        dlgMain.pbOk.clicked.connect(dlgMain.accept)
+        dlgMain.pbCancel.clicked.connect(dlgMain.reject)
+        dlgMain.pbDeepDirAnalysis.clicked.connect(deepDirAnalysis)
 
         return dlgMain
 
@@ -251,28 +274,100 @@ class BCFileOperationUi(object):
         return dlgMain
 
     @staticmethod
+    def buildInformation(fileList, full=False):
+        """Build text information from given list of BCBaseFile"""
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        fullNfo = []
+        files = sorted(fileList, key=cmp_to_key(BCBaseFile.fullPathNameCmpAsc))
+
+        statFiles={
+                'nbKra': 0,
+                'nbOther': 0,
+                'sizeKra': 0,
+                'sizeOther': 0,
+                'nbDir': 0
+            }
+
+        # ----------------------------------------------------------------------
+        # Display total number of file (+size) including sub-directories
+        # Improve BCFileList class to generate statistics ready-to-use about returned results (number of directories, nb files+size, nb non kra file+size)
+        for file in files:
+            if file.format() == BCFileManagedFormat.DIRECTORY:
+                fullNfo.append(f"<img width=16 height=16 src=':/images/folder_open'/>&nbsp;{file.fullPathName()}")
+                if full:
+                    # build informations about directory content
+                    pathFileList=BCFileList()
+                    pathFileList.addPath(BCFileListPath(file.fullPathName(), True))
+                    pathFileList.setIncludeDirectories(True)
+                    pathFileList.execute(buildStats=True, strict=False) # strict should be an option?
+
+                    stats = pathFileList.stats()
+                    for key in stats:
+                        statFiles[key]+=stats[key]
+
+                    if stats['nbKra'] > 0 or stats['nbOther'] > 0 or stats['nbDir'] > 0:
+                        nfo=["""<span style=" font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&gt; Directory contains:</span>"""]
+                        if stats['nbDir'] > 0:
+                            nfo.append(f"""<span style="margin-left: 40px; font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Sub-directories: {stats['nbDir']}</span>""" )
+                        if stats['nbKra'] > 0:
+                            nfo.append(f"""<span style="margin-left: 40px; font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Image files: {stats['nbKra']} ({bytesSizeToStr(stats['sizeKra'])})</span>""" )
+                        if stats['nbOther'] > 0:
+                            nfo.append(f"""<span style="margin-left: 40px; font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Other files: {stats['nbOther']} ({bytesSizeToStr(stats['sizeOther'])})</span>""" )
+
+                        fullNfo.append("<br/>".join(nfo))
+                statFiles['nbDir']+=1
+            elif file.format() == BCFileManagedFormat.UNKNOWN:
+                fullNfo.append(f"<img width=16 height=16 src=':/images/file'/>&nbsp;{file.fullPathName()}")
+                statFiles['nbOther']+=1
+                statFiles['sizeOther']+=file.size()
+            else:
+                fullNfo.append(f"<img width=16 height=16 src=':/images/large_view'/>&nbsp;{file.fullPathName()}")
+                statFiles['nbKra']+=1
+                statFiles['sizeKra']+=file.size()
+
+
+        shortNfo = []
+        if statFiles['nbDir'] > 0:
+            shortNfo.append(f"Directories: {statFiles['nbDir']}")
+        if statFiles['nbKra'] > 0:
+            shortNfo.append(f"Image files: {statFiles['nbKra']} ({bytesSizeToStr(statFiles['sizeKra'])})")
+        if statFiles['nbOther'] > 0:
+            shortNfo.append(f"Other files: {statFiles['nbOther']} ({bytesSizeToStr(statFiles['sizeOther'])})" )
+
+        QApplication.restoreOverrideCursor()
+
+        return {
+                'stats': statFiles,
+                'info': {
+                        'full': "<br>".join(fullNfo),
+                        'short': ", ".join(shortNfo)
+                    }
+            }
+
+    @staticmethod
     def path():
         """Return path"""
         return BCFileOperationUi.__targetPath
 
     @staticmethod
-    def delete(title, nbFiles, nbDirectories, information):
+    def delete(title, nbFiles, nbDirectories, fileList):
         """Open dialog box"""
-        db = BCFileOperationUi.__dialogFileOperation(BCFileOperationUi.__buildMsg('Delete', nbFiles, nbDirectories), information)
+        db = BCFileOperationUi.__dialogFileOperation('Delete', nbFiles, nbDirectories, fileList)
         db.setWindowTitle(f"{title}::Delete files")
         return db.exec()
 
     @staticmethod
-    def copy(title, nbFiles, nbDirectories, information, targetPath):
+    def copy(title, nbFiles, nbDirectories, fileList, targetPath):
         """Open dialog box"""
-        db = BCFileOperationUi.__dialogFileOperation(BCFileOperationUi.__buildMsg('Copy', nbFiles, nbDirectories), information, "To", targetPath)
+        db = BCFileOperationUi.__dialogFileOperation('Copy', nbFiles, nbDirectories, fileList, "To", targetPath)
         db.setWindowTitle(f"{title}::Copy files")
         return db.exec()
 
     @staticmethod
-    def move(title, nbFiles, nbDirectories, information, targetPath):
+    def move(title, nbFiles, nbDirectories, fileList, targetPath):
         """Open dialog box"""
-        db = BCFileOperationUi.__dialogFileOperation(BCFileOperationUi.__buildMsg('Move', nbFiles, nbDirectories), information, "To", targetPath)
+        db = BCFileOperationUi.__dialogFileOperation('Move', nbFiles, nbDirectories, fileList, "To", targetPath)
         db.setWindowTitle(f"{title}::Move files")
         return db.exec()
 
@@ -382,17 +477,6 @@ class BCFileOperation(object):
         The copy/move method is practically the same so use the same function as
         algorithm to manage automatic renaming is little bit complex
         """
-        def fullPathNameCmpAsc(f1, f2):
-            # compare file for ascending sort
-            if f1.fullPathName()>f2.fullPathName():
-                return 1
-            return -1
-        def fullPathNameCmpDesc(f1, f2):
-            # compare file for descending sort
-            if f1.fullPathName()>f2.fullPathName():
-                return -1
-            return 1
-
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         # According to mode, define terms to use for user information
@@ -416,7 +500,7 @@ class BCFileOperation(object):
         newDirPattern=None
 
         # number of processed/error file
-        processed=0
+        processed=None
         inError=0
 
         # initialise process:
@@ -450,9 +534,9 @@ class BCFileOperation(object):
                     totalSize+=file.size()
 
         # ascending sort
-        files = sorted(files, key=cmp_to_key(fullPathNameCmpAsc))
+        files = sorted(files, key=cmp_to_key(BCBaseFile.fullPathNameCmpAsc))
         # path list, descending sort
-        paths = sorted([file for file in files if file.format()==BCFileManagedFormat.DIRECTORY], key=cmp_to_key(fullPathNameCmpDesc))
+        paths = sorted([file for file in files if file.format()==BCFileManagedFormat.DIRECTORY], key=cmp_to_key(BCBaseFile.fullPathNameCmpDesc))
 
         QApplication.restoreOverrideCursor()
         QApplication.setOverrideCursor(Qt.BusyCursor)
@@ -582,8 +666,10 @@ class BCFileOperation(object):
                     Debug.print('[BCFileOperation.__copyOrMove] Unable to {3} file from {0} to {1}: {2}', file.fullPathName(), targetFile, str(e), mode)
 
             if BCFileOperation.__isCancelled():
-                processed=BCFileOperation.__value()
                 break
+
+        if processed is None:
+            processed=BCFileOperation.__value()
 
         if mode == 'move':
             # at this point, all file are normally moved (except if user have processed action or if

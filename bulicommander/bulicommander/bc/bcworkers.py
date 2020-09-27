@@ -96,6 +96,10 @@ class BCWorker(QRunnable):
 class BCWorkerPool(QObject):
     """A worker pool allows to process data using pyqt multithreading
     """
+    __MAP_MODE_OFF = 0
+    __MAP_MODE_ALL = 1
+    __MAP_MODE_NONONE = 2
+    __MAP_MODE_AGGREGATE = 3
 
     def __init__(self, maxWorkerCount=None):
         super(BCWorkerPool, self).__init__()
@@ -117,7 +121,7 @@ class BCWorkerPool(QObject):
         self.__stopProcess = False
         self.__dataList = []
         self.__results = []
-        self.__mapResults = False
+        self.__mapResults = BCWorkerPool.__MAP_MODE_OFF
 
         self.signals = BCWorkerSignals()
 
@@ -132,10 +136,15 @@ class BCWorkerPool(QObject):
 
     def __onProcessed(self, processedNfo):
         """an item has been processed"""
-        if self.__mapResults:
+        if self.__mapResults != BCWorkerPool.__MAP_MODE_OFF:
             index, item = processedNfo
-            if not index is None:
+            if self.__mapResults == BCWorkerPool.__MAP_MODE_ALL and not index is None:
                 self.__results[index] = item
+            elif self.__mapResults == BCWorkerPool.__MAP_MODE_NONONE and not item is None:
+                self.__results.append(item)
+            elif self.__mapResults == BCWorkerPool.__MAP_MODE_AGGREGATE and isinstance(item, dict):
+                for key in item:
+                    self.__results[key]+=item[key]
         self.signals.processed.emit(processedNfo)
 
     def __onFinished(self):
@@ -182,9 +191,10 @@ class BCWorkerPool(QObject):
 
         self.__dataList = [v for v in dataList]
 
-        if self.__mapResults:
+        if self.__mapResults == BCWorkerPool.__MAP_MODE_ALL:
             self.__results = [None] * self.__size
-        else:
+        elif self.__mapResults != BCWorkerPool.__MAP_MODE_AGGREGATE:
+            # already initialised by aggregate() method
             self.__results = []
 
 
@@ -239,10 +249,38 @@ class BCWorkerPool(QObject):
         if len(dataList) == 0:
             return []
 
-        self.__mapResults = True
+        self.__mapResults = BCWorkerPool.__MAP_MODE_ALL
         self.startProcessing(dataList, callback, *callbackArgv)
         self.waitProcessed()
-        self.__mapResults = False
+        self.__mapResults = BCWorkerPool.__MAP_MODE_OFF
         return self.__results
 
+    def mapNoNone(self, dataList, callback, *callbackArgv):
+        """Apply `callback` function to each item `datalist` list and return a list
+        If callback return None value, value is not added to result
 
+        Similar to python map() method, but for Qt threads
+            https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.Pool.map
+        """
+        if len(dataList) == 0:
+            return []
+
+        self.__mapResults = BCWorkerPool.__MAP_MODE_NONONE
+        self.startProcessing(dataList, callback, *callbackArgv)
+        self.waitProcessed()
+        self.__mapResults = BCWorkerPool.__MAP_MODE_OFF
+        return self.__results
+
+    def aggregate(self, dataList, returnedStruct, callback, *callbackArgv):
+        """Apply `callback` function to each item `datalist` list and return a dictionary with aggregated
+        results
+        """
+        if len(dataList) == 0:
+            return returnedStruct
+
+        self.__mapResults = BCWorkerPool.__MAP_MODE_AGGREGATE
+        self.__results = returnedStruct
+        self.startProcessing(dataList, callback, *callbackArgv)
+        self.waitProcessed()
+        self.__mapResults = BCWorkerPool.__MAP_MODE_OFF
+        return self.__results

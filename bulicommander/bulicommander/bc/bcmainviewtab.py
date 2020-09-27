@@ -2939,8 +2939,8 @@ class BCMainViewTab(QFrame):
 
 
     def showFilter(self, visible=True):
-        """Display/Hide the history button"""
-        self.framePathBar.showFilter(visible)
+        """Display/Hide the quick filter button"""
+        self.framePathBar.showQuickFilter(visible)
 
 
     def showHome(self, visible=True):

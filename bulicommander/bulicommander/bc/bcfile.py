@@ -476,12 +476,9 @@ class BCBaseFile(object):
             #nbFiles = len([foundFile for foundFile in os.listdir(file.path()) if os.path.isfile(os.path.join(file.path(), foundFile)) and not re.search(regEx, foundFile) is None]) + 1
 
             if isDir:
-                print("search directories matching regex", regEx, " in ", file.path())
                 fileList = [int(rr.groups()[0]) for foundFile in os.listdir(file.path()) if os.path.isdir(os.path.join(file.path(), foundFile)) and (rr:=re.search(regEx, foundFile))]
             else:
-                print("search files matching regex", regEx, " in ", file.path())
                 fileList = [int(rr.groups()[0]) for foundFile in os.listdir(file.path()) if os.path.isfile(os.path.join(file.path(), foundFile)) and (rr:=re.search(regEx, foundFile))]
-            print("found files matching regexp", fileList)
             if len(fileList) == 0:
                 nbFiles = 1
             else:
@@ -492,11 +489,21 @@ class BCBaseFile(object):
             for replaceHash in resultCounter.groups():
                 fileName = re.sub(f"\{{counter:{replaceHash}\}}", f"{nbFiles:0{len(replaceHash)}}", fileName)
 
-            print("new file", nbFiles, fileName)
-
         return fileName
 
+    @staticmethod
+    def fullPathNameCmpAsc(f1, f2):
+        # compare file for ascending sort
+        if f1.fullPathName()>f2.fullPathName():
+            return 1
+        return -1
 
+    @staticmethod
+    def fullPathNameCmpDesc(f1, f2):
+        # compare file for descending sort
+        if f1.fullPathName()>f2.fullPathName():
+            return -1
+        return 1
 
     def path(self):
         """Return file path"""
@@ -3704,16 +3711,16 @@ class BCFileList(QObject):
     __MTASKS_RULES = []
 
     @staticmethod
-    def getBcFile(itemIndex, fileName):
+    def getBcFile(itemIndex, fileName, strict=False):
         """Return a BCFile from given fileName
 
-        > Used for multiprocessing taks
+        > Used for multiprocessing tasks
         """
         if isinstance(fileName, BCFile) or isinstance(fileName, BCMissingFile):
             return fileName
 
         try:
-            return BCFile(fileName, False)
+            return BCFile(fileName, strict)
         except Exception as e:
             Debug.print('[BCFileList.getBcFile] Unable to analyse file {0}: {1}', fileName, e)
             return None
@@ -3722,7 +3729,7 @@ class BCFileList(QObject):
     def getBcDirectory(itemIndex, fileName):
         """Return a BCDirectory from given fileName
 
-        > Used for multiprocessing taks
+        > Used for multiprocessing tasks
         """
         if isinstance(fileName, BCDirectory):
             return fileName
@@ -3737,16 +3744,39 @@ class BCFileList(QObject):
     def checkBcFile(itemIndex, file):
         """Return file if matching query rules, otherwise return None
 
-        > Used for multiprocessing taks
+        > Used for multiprocessing tasks
         """
         if not file is None:
             if len(BCFileList.__MTASKS_RULES) > 0:
                 for rule in BCFileList.__MTASKS_RULES:
                     if rule.fileMatch(file):
+                        #updateStats(file, statFile)
                         return file
             else:
+                #updateStats(file, statFile)
                 return file
         return None
+
+    @staticmethod
+    def getBcFileName(itemIndex, file):
+        """Return fullPathName
+
+        > Used for multiprocessing task
+        """
+        return file.fullPathName()
+
+    @staticmethod
+    def getBcFileStats(itemIndex, file):
+        returned={}
+        if file.format() == BCFileManagedFormat.DIRECTORY:
+            returned['nbDir']=1
+        elif file.format() == BCFileManagedFormat.UNKNOWN:
+            returned['nbOther']=1
+            returned['sizeOther']=file.size()
+        else:
+            returned['nbKra']=1
+            returned['sizeKra']=file.size()
+        return returned
 
     def __init__(self, currentList=None):
         """Initialiser current list query"""
@@ -3757,6 +3787,8 @@ class BCFileList(QObject):
         self.__pathList = []
         self.__ruleList = []
         self.__sortList = []
+
+        self.__statFiles=None
 
         self.__includeDirectories = False
         self.__includeHidden = False
@@ -4311,7 +4343,7 @@ class BCFileList(QObject):
 
         return '\n'.join(returned)
 
-    def execute(self, clearResults=True):
+    def execute(self, clearResults=True, buildStats=False, strict=False):
         """Search for files
 
         Files matching criteria are added to selection.
@@ -4328,6 +4360,17 @@ class BCFileList(QObject):
             # reset current list if asked
             self.clearResults()
             Stopwatch.start('BCFileList.execute.search')
+
+        if buildStats:
+            self.__statFiles={
+                    'nbKra': 0,
+                    'nbOther': 0,
+                    'sizeKra': 0,
+                    'sizeOther': 0,
+                    'nbDir': 0
+                }
+        else:
+            self.__statFiles=None
 
         # stopwatches are just used to measure execution time performances
         Stopwatch.start('BCFileList.execute.global')
@@ -4414,9 +4457,9 @@ class BCFileList(QObject):
 
         pool = BCWorkerPool()
         pool.signals.processed.connect(progressScanning)
-        filesList = pool.map(foundFiles, BCFileList.getBcFile)
+        filesList = pool.mapNoNone(foundFiles, BCFileList.getBcFile, strict)
         pool.signals.processed.disconnect(progressScanning)
-        directoriesList = pool.map(foundDirectories, BCFileList.getBcDirectory)
+        directoriesList = pool.mapNoNone(foundDirectories, BCFileList.getBcDirectory)
 
         self.stepExecuted.emit((BCFileList.STEPEXECUTED_SCAN,))
 
@@ -4434,9 +4477,11 @@ class BCFileList(QObject):
         if len(self.__ruleList) > 0:
             BCFileList.__MTASKS_RULES = self.__ruleList
             # use all processors to parallelize files analysis
-            filesList = pool.map(filesList, BCFileList.checkBcFile)
-            directoriesList = pool.map(directoriesList, BCFileList.checkBcFile)
+            self.__currentFiles = pool.mapNoNone(filesList, BCFileList.checkBcFile)
+            self.__currentFiles += pool.mapNoNone(directoriesList, BCFileList.checkBcFile)
         else:
+            self.__currentFiles = filesList
+            self.__currentFiles += directoriesList
             BCFileList.__MTASKS_RULES = []
 
         self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER,))
@@ -4446,19 +4491,15 @@ class BCFileList(QObject):
         Stopwatch.start('BCFileList.execute.result')
         # build final result
         #   all files that match selection rules are added to current selected images
-        nb=0
-        for file in filesList:
-            if not file is None:
-                nb+=1
-                self.__currentFiles.append(file)
-                self.__currentFilesName.add(file.fullPathName())
-        for file in directoriesList:
-            if not file is None:
-                nb+=1
-                self.__currentFiles.append(file)
-                self.__currentFilesName.add(file.fullPathName())
+        self.__currentFilesName=set(pool.map(self.__currentFiles, BCFileList.getBcFileName))
+        nb = len(self.__currentFiles)
 
         Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.result"))
+
+        if buildStats:
+            Stopwatch.start('BCFileList.execute.buildStats')
+            self.__statFiles=pool.aggregate(self.__currentFiles, self.__statFiles, BCFileList.getBcFileStats)
+            Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.buildStats"))
 
         self.stepExecuted.emit((BCFileList.STEPEXECUTED_RESULT,))
 
@@ -4472,7 +4513,7 @@ class BCFileList(QObject):
 
         self.__invalidated = False
 
-        return len(self.__currentFiles)
+        return nb
 
     def sort(self):
         """Sort current result using current sort rules"""
@@ -4541,6 +4582,9 @@ class BCFileList(QObject):
 
         return len(self.__currentFiles)
 
+    def stats(self):
+        """Return stats from last execution, if any (otherwise return None"""
+        return self.__statFiles
 
 class BCFileIcon(object):
     """Provide icon for a BCBaseFile"""
