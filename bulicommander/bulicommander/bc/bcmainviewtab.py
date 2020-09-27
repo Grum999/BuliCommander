@@ -2126,7 +2126,7 @@ class BCMainViewTab(QFrame):
         # current tab index
         index=self.twInfo.currentIndex()
 
-        actionCopyAll = QAction(QIcon(":/images/tabs"), i18n('All tabs--'), self)
+        actionCopyAll = QAction(QIcon(":/images/tabs"), i18n('All tabs'), self)
         actionCopyAll.triggered.connect(copyAllTabs)
 
         actionCopyCurrent = QAction(self.twInfo.tabIcon(index), i18n(f'Current "{stripTags(self.twInfo.tabText(index))}" tab'), self)
