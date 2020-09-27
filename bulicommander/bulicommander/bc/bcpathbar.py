@@ -55,8 +55,12 @@ from PyQt5.QtGui import (
 from .bcbookmark import BCBookmark
 from .bchistory import BCHistory
 from .bcsavedview import BCSavedView
-from .bcutils import buildIcon
-from .bcutils import Debug
+from .bcutils import (
+        buildQAction,
+        buildQMenu,
+        loadXmlUi,
+        Debug
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -108,11 +112,9 @@ class BCPathBar(QFrame):
         self.__uiController = None
         self.__panel = None
 
-        self.__paletteBase = self.palette()
-        self.__paletteBase.setColor(QPalette.Window, self.__paletteBase.color(QPalette.Base))
-
-        self.__paletteHighlighted = self.palette()
-        self.__paletteHighlighted.setColor(QPalette.Window, self.__paletteHighlighted.color(QPalette.Highlight))
+        self.__paletteBase = None
+        self.__paletteHighlighted = None
+        self.updatePalette()
 
         self.__history = None
         self.__bookmark = None
@@ -131,62 +133,75 @@ class BCPathBar(QFrame):
         self.__font.setPointSize(9)
         self.__font.setFamily('DejaVu Sans Mono')
 
-        self.__actionHistoryClear = QAction(buildIcon([(QPixmap(":/images/history_clear"), QIcon.Normal), (QPixmap(":/images_d/history_clear"), QIcon.Disabled)]), i18n('Clear history'), self)
+        self.__actionHistoryClear = buildQAction([(":/images/history_clear", QIcon.Normal),
+                                                  (":/images_d/history_clear", QIcon.Disabled)], i18n('Clear history'), self)
         self.__actionHistoryClear.setStatusTip(i18n('Clear all paths from history'))
 
-        self.__actionLastDocumentsAll = QAction(buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal), (QPixmap(":/images_d/saved_view_last"), QIcon.Disabled)]), i18n('Last documents'), self)
+        self.__actionLastDocumentsAll = buildQAction([(":/images/saved_view_last", QIcon.Normal),
+                                                      (":/images_d/saved_view_last", QIcon.Disabled)], i18n('Last documents'), self)
         self.__actionLastDocumentsAll.setStatusTip(i18n('Show list of last opened and/or saved documents'))
         self.__actionLastDocumentsAll.setProperty('path', '@last')
-        self.__actionLastDocumentsOpened = QAction(buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal), (QPixmap(":/images_d/saved_view_last"), QIcon.Disabled)]), i18n('Last opened documents'), self)
+        self.__actionLastDocumentsOpened = buildQAction([(":/images/saved_view_last", QIcon.Normal),
+                                                         (":/images_d/saved_view_last", QIcon.Disabled)], i18n('Last opened documents'), self)
         self.__actionLastDocumentsOpened.setStatusTip(i18n('Show list of last opened documents'))
         self.__actionLastDocumentsOpened.setProperty('path', '@last opened')
-        self.__actionLastDocumentsSaved = QAction(buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal), (QPixmap(":/images_d/saved_view_last"), QIcon.Disabled)]), i18n('Last saved documents'), self)
+        self.__actionLastDocumentsSaved = buildQAction([(":/images/saved_view_last", QIcon.Normal),
+                                                        (":/images_d/saved_view_last", QIcon.Disabled)], i18n('Last saved documents'), self)
         self.__actionLastDocumentsSaved.setStatusTip(i18n('Show list of last saved documents'))
         self.__actionLastDocumentsSaved.setProperty('path', '@last saved')
 
-        self.__actionBookmarkClear = QAction(buildIcon([(QPixmap(":/images/bookmark_clear"), QIcon.Normal), (QPixmap(":/images_d/bookmark_clear"), QIcon.Disabled)]), i18n('Clear bookmark'), self)
+        self.__actionBookmarkClear = buildQAction([(":/images/bookmark_clear", QIcon.Normal),
+                                                   (":/images_d/bookmark_clear", QIcon.Disabled)], i18n('Clear bookmark'), self)
         self.__actionBookmarkClear.setStatusTip(i18n('Remove all bookmarked paths'))
-        self.__actionBookmarkAdd = QAction(buildIcon([(QPixmap(":/images/bookmark_add"), QIcon.Normal), (QPixmap(":/images_d/bookmark_add"), QIcon.Disabled)]), i18n('Add to bookmark...'), self)
+        self.__actionBookmarkAdd = buildQAction([(":/images/bookmark_add", QIcon.Normal),
+                                                 (":/images_d/bookmark_add", QIcon.Disabled)], i18n('Add to bookmark...'), self)
         self.__actionBookmarkAdd.triggered.connect(self.__menuBookmarkAppend_clicked)
         self.__actionBookmarkAdd.setStatusTip(i18n('Add current path to bookmarks'))
-        self.__actionBookmarkRemove = QAction(buildIcon([(QPixmap(":/images/bookmark_remove"), QIcon.Normal), (QPixmap(":/images_d/bookmark_remove"), QIcon.Disabled)]), i18n('Remove from bookmark...'), self)
+        self.__actionBookmarkRemove = buildQAction([(":/images/bookmark_remove", QIcon.Normal),
+                                                    (":/images_d/bookmark_remove", QIcon.Disabled)], i18n('Remove from bookmark...'), self)
         self.__actionBookmarkRemove.triggered.connect(self.__menuBookmarkRemove_clicked)
         self.__actionBookmarkRemove.setStatusTip(i18n('Remove current path from bookmarks'))
-        self.__actionBookmarkRename = QAction(buildIcon([(QPixmap(":/images/bookmark_rename"), QIcon.Normal), (QPixmap(":/images_d/bookmark_rename"), QIcon.Disabled)]), i18n('Rename bookmark...'), self)
+        self.__actionBookmarkRename = buildQAction([(":/images/bookmark_rename", QIcon.Normal),
+                                                    (":/images_d/bookmark_rename", QIcon.Disabled)], i18n('Rename bookmark...'), self)
         self.__actionBookmarkRename.triggered.connect(self.__menuBookmarkRename_clicked)
         self.__actionBookmarkRename.setStatusTip(i18n('Rename current bookmark'))
 
 
-        self.__actionSavedViewsClear = QAction(buildIcon([(QPixmap(":/images/saved_view_clear"), QIcon.Normal), (QPixmap(":/images_d/saved_view_clear"), QIcon.Disabled)]), i18n('Clear view content'), self)
+        self.__actionSavedViewsClear = buildQAction([(":/images/saved_view_clear", QIcon.Normal),
+                                                     (":/images_d/saved_view_clear", QIcon.Disabled)], i18n('Clear view content'), self)
         self.__actionSavedViewsClear.setStatusTip(i18n('Clear current view content'))
         self.__actionSavedViewsClear.setProperty('action', 'clear_view_content')
         self.__actionSavedViewsClear.setProperty('path', ':CURRENT')
 
-        self.__actionSavedViewsAdd = QMenu(i18n('Add to view'), self)
+        self.__actionSavedViewsAdd = buildQMenu([(":/images/saved_view_add", QIcon.Normal),
+                                                 (":/images_d/saved_view_add", QIcon.Disabled)], i18n('Add to view'), self)
         self.__actionSavedViewsAdd.setStatusTip(i18n('Add selected files to view'))
-        self.__actionSavedViewsAdd.setIcon(buildIcon([(QPixmap(":/images/saved_view_add"), QIcon.Normal), (QPixmap(":/images_d/saved_view_add"), QIcon.Disabled)]))
-        self.__actionSavedViewsAddNewView = QAction(buildIcon([(QPixmap(":/images/saved_view_new"), QIcon.Normal), (QPixmap(":/images_d/saved_view_new"), QIcon.Disabled)]), i18n('New view'), self)
+        self.__actionSavedViewsAddNewView = buildQAction([(":/images/saved_view_new", QIcon.Normal),
+                                                          (":/images_d/saved_view_new", QIcon.Disabled)], i18n('New view'), self)
         self.__actionSavedViewsAddNewView.setStatusTip(i18n('Add selected files to a new view'))
         self.__actionSavedViewsAddNewView.setProperty('action', 'create_view')
         self.__actionSavedViewsAddNewView.setProperty('path', ':NEW')
 
-        self.__actionSavedViewsRemove = QAction(buildIcon([(QPixmap(":/images/saved_view_remove"), QIcon.Normal), (QPixmap(":/images_d/saved_view_remove"), QIcon.Disabled)]), i18n('Remove from view...'), self)
+        self.__actionSavedViewsRemove = buildQAction([(":/images/saved_view_remove", QIcon.Normal),
+                                                      (":/images_d/saved_view_remove", QIcon.Disabled)], i18n('Remove from view...'), self)
         self.__actionSavedViewsRemove.setStatusTip(i18n('Remove selected files from view'))
         self.__actionSavedViewsRemove.setProperty('action', 'remove_from_view')
         self.__actionSavedViewsRemove.setProperty('path', ':CURRENT')
 
-        self.__actionSavedViewsRename = QAction(buildIcon([(QPixmap(":/images/saved_view_rename"), QIcon.Normal), (QPixmap(":/images_d/saved_view_rename"), QIcon.Disabled)]), i18n('Rename view...'), self)
+        self.__actionSavedViewsRename = buildQAction([(":/images/saved_view_rename", QIcon.Normal),
+                                                      (":/images_d/saved_view_rename", QIcon.Disabled)], i18n('Rename view...'), self)
         self.__actionSavedViewsRename.setStatusTip(i18n('Rename current view'))
         self.__actionSavedViewsRename.setProperty('action', 'rename_view')
         self.__actionSavedViewsRename.setProperty('path', ':CURRENT')
-        self.__actionSavedViewsDelete = QAction(buildIcon([(QPixmap(":/images/saved_view_delete"), QIcon.Normal), (QPixmap(":/images_d/saved_view_delete"), QIcon.Disabled)]), i18n('Delete view...'), self)
+        self.__actionSavedViewsDelete = buildQAction([(":/images/saved_view_delete", QIcon.Normal),
+                                                      (":/images_d/saved_view_delete", QIcon.Disabled)], i18n('Delete view...'), self)
         self.__actionSavedViewsDelete.setStatusTip(i18n('Delete current view'))
         self.__actionSavedViewsDelete.setProperty('action', 'delete_view')
         self.__actionSavedViewsDelete.setProperty('path', ':CURRENT')
 
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcpathbar.ui')
-        PyQt5.uic.loadUi(uiFileName, self)
+        loadXmlUi(uiFileName, self)
 
         self.__initialise()
 
@@ -474,7 +489,8 @@ class BCPathBar(QFrame):
 
             for view in self.__savedView.list():
                 # view = (name, files)
-                action = QAction(buildIcon([(QPixmap(":/images/saved_view_file"), QIcon.Normal), (QPixmap(":/images_d/saved_view_file"), QIcon.Disabled)]), view[0].replace('&', '&&'), self)
+                action = buildQAction([(":/images/saved_view_file", QIcon.Normal),
+                                       (":/images_d/saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
                 action.setFont(self.__font)
                 action.setStatusTip(i18n(f"Add selected files to view '{view[0].replace('&', '&&')}' (Current files in view: {len(view[1])})" ))
                 action.setProperty('action', 'add_to_view')
@@ -485,7 +501,8 @@ class BCPathBar(QFrame):
 
                 menu2.addAction(action)
 
-                action = QAction(buildIcon([(QPixmap(":/images/saved_view_file"), QIcon.Normal), (QPixmap(":/images_d/saved_view_file"), QIcon.Disabled)]), view[0].replace('&', '&&'), self)
+                action = buildQAction([(":/images/saved_view_file", QIcon.Normal),
+                                       (":/images_d/saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
                 action.setFont(self.__font)
                 action.setCheckable(True)
                 action.setStatusTip(i18n(f'Files in view: {len(view[1])}'))
@@ -868,13 +885,6 @@ class BCPathBar(QFrame):
         """Display/Hide the saved view button"""
         self.btSavedViews.setVisible(visible)
 
-    def showFilter(self, visible=True):
-        """Display/Hide the history button"""
-        if not visible:
-            self.btFilter.setChecked(False)
-            self.__refreshFilter()
-        self.btFilter.setVisible(visible)
-
     def showHome(self, visible=True):
         """Display/Hide the home button"""
         self.btHome.setVisible(visible)
@@ -929,3 +939,14 @@ class BCPathBar(QFrame):
         self.showHome(self.__options & BCPathBar.OPTION_SHOW_HOME == BCPathBar.OPTION_SHOW_HOME)
 
         self.showMargins(self.__options & BCPathBar.OPTION_SHOW_MARGINS == BCPathBar.OPTION_SHOW_MARGINS)
+
+    def updatePalette(self, palette=None):
+        """Refresh current palette"""
+        if not isinstance(palette, QPalette):
+            palette = QApplication.palette()
+
+        self.__paletteBase = QPalette(palette)
+        self.__paletteBase.setColor(QPalette.Window, self.__paletteBase.color(QPalette.Base))
+
+        self.__paletteHighlighted = QPalette(palette)
+        self.__paletteHighlighted.setColor(QPalette.Window, self.__paletteHighlighted.color(QPalette.Highlight))

@@ -110,6 +110,8 @@ class BCSettingsFmt(object):
 class BCSettingsKey(Enum):
     CONFIG_FILE_DEFAULTACTION_KRA =                          'config.file.defaultAction.kra'
     CONFIG_FILE_DEFAULTACTION_OTHER =                        'config.file.defaultAction.other'
+    CONFIG_FILE_NEWFILENAME_KRA =                            'config.file.newFileName.kra'
+    CONFIG_FILE_NEWFILENAME_OTHER =                          'config.file.newFileName.other'
     CONFIG_FILE_UNIT =                                       'config.file.unit'
     CONFIG_HOME_DIR_MODE =                                   'config.homeDir.mode'
     CONFIG_HOME_DIR_UD =                                     'config.homeDir.userDefined'
@@ -132,7 +134,19 @@ class BCSettingsKey(Enum):
     CONFIG_DSESSION_PANELS_VIEW_THUMBNAIL =                  'config.defaultSession.panels.view.thumbnail'
     CONFIG_DSESSION_PANELS_VIEW_ICONSIZE =                   'config.defaultSession.panels.view.iconSize'
     CONFIG_DSESSION_PANELS_VIEW_NFOROW =                     'config.defaultSession.panels.view.rowInformation'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_BORDER =                'config.defaultSession.information.clipboard.border'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_HEADER =                'config.defaultSession.information.clipboard.header'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH =              'config.defaultSession.information.clipboard.minWidth'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH =              'config.defaultSession.information.clipboard.maxWidth'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE =       'config.defaultSession.information.clipboard.minWidthActive'
+    CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE =       'config.defaultSession.information.clipboard.maxWidthActive'
 
+    SESSION_INFO_TOCLIPBOARD_BORDER =                        'session.information.clipboard.border'
+    SESSION_INFO_TOCLIPBOARD_HEADER =                        'session.information.clipboard.header'
+    SESSION_INFO_TOCLIPBOARD_MINWIDTH =                      'session.information.clipboard.minWidth'
+    SESSION_INFO_TOCLIPBOARD_MAXWIDTH =                      'session.information.clipboard.maxWidth'
+    SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE =               'session.information.clipboard.minWidthActive'
+    SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE =               'session.information.clipboard.maxWidthActive'
 
     SESSION_MAINWINDOW_SPLITTER_POSITION =                   'session.mainwindow.splitter.position'
     SESSION_MAINWINDOW_PANEL_SECONDARYVISIBLE =              'session.mainwindow.panel.secondaryVisible'
@@ -199,11 +213,14 @@ class BCSettings(object):
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE,
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW,
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE])),
+            BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id():                     ('<none>',                  BCSettingsFmt(str)),
             BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER.id():                 (BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE,
                                                                                                             BCSettingsFmt(str, [BCSettingsValues.FILE_DEFAULTACTION_OPEN,
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE,
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW,
                                                                                                                                 BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE])),
+            BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id():                   ('{file:name}.{file:ext}.kra',
+                                                                                                            BCSettingsFmt(str)),
 
             BCSettingsKey.CONFIG_FILE_UNIT.id():                                (BCSettingsValues.FILE_UNIT_KIB,
                                                                                                             BCSettingsFmt(str, [BCSettingsValues.FILE_UNIT_KIB,
@@ -237,6 +254,19 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_ICONSIZE.id():            (0,                        BCSettingsFmt(int, [0,1,2,3,4,5,6,7,8])),
             BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_NFOROW.id():              (7,                        BCSettingsFmt(int, [0,1,2,3,4,5,6,7,8,9])),
 
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_BORDER.id():         (3,                        BCSettingsFmt(int, [0,1,2,3])),
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_HEADER.id():         (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH.id():       (80,                       BCSettingsFmt(int)),
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH.id():       (120,                      BCSettingsFmt(int)),
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE.id():(True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
+
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER.id():                 (3,                        BCSettingsFmt(int, [0,1,2,3])),
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER.id():                 (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH.id():               (80,                       BCSettingsFmt(int)),
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH.id():               (120,                      BCSettingsFmt(int)),
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE.id():        (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE.id():        (False,                    BCSettingsFmt(bool)),
 
             BCSettingsKey.SESSION_MAINWINDOW_SPLITTER_POSITION.id():            ([1000, 1000],             BCSettingsFmt(int), BCSettingsFmt(int)),
             BCSettingsKey.SESSION_MAINWINDOW_PANEL_SECONDARYVISIBLE.id():       (True,                     BCSettingsFmt(bool)),
@@ -543,22 +573,51 @@ class BCSettingsDialogBox(QDialog):
         value = self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_KRA.id())
         if value == BCSettingsValues.FILE_DEFAULTACTION_OPEN:
             self.rbCIFKraOpenDoc.setChecked(True)
+            self.cbCIFKraOptCloseBC.setChecked(False)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE:
-            self.rbCIFKraOpenDocAndClose.setChecked(True)
+            self.rbCIFKraOpenDoc.setChecked(True)
+            self.cbCIFKraOptCloseBC.setChecked(True)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW:
             self.rbCIFKraCreateDoc.setChecked(True)
+            self.cbCIFKraOptCloseBC.setChecked(False)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE:
-            self.rbCIFKraCreateDocAndClose.setChecked(True)
+            self.rbCIFKraCreateDoc.setChecked(True)
+            self.cbCIFKraOptCloseBC.setChecked(True)
+
+        self.cbxCIFKraOptCreDocName.addItems([
+                '<None>',
+                '{file:name}-{counter:####}.kra',
+                '{file:name}_{date}_{time}.kra',
+                i18n('{file:name}-Copy {counter:####}.kra'),
+                i18n('{file:name}-Copy {date}_{time}.kra')
+            ])
+        self.cbxCIFKraOptCreDocName.setCurrentText(self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
 
         value = self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER.id())
         if value == BCSettingsValues.FILE_DEFAULTACTION_OPEN:
             self.rbCIFOthOpenDoc.setChecked(True)
+            self.cbCIFOthOptCloseBC.setChecked(False)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE:
-            self.rbCIFOthOpenDocAndClose.setChecked(True)
+            self.rbCIFOthOpenDoc.setChecked(True)
+            self.cbCIFOthOptCloseBC.setChecked(True)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW:
             self.rbCIFOthCreateDoc.setChecked(True)
+            self.cbCIFOthOptCloseBC.setChecked(False)
         elif value == BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE:
-            self.rbCIFOthCreateDocAndClose.setChecked(True)
+            self.rbCIFOthCreateDoc.setChecked(True)
+            self.cbCIFOthOptCloseBC.setChecked(True)
+
+        self.cbxCIFOthOptCreDocName.addItems([
+                '<None>',
+                '{file:name}.{file:ext}.kra',
+                '{file:name}({file:ext}).kra',
+                '{file:name}.kra',
+                '{file:name}_{date}_{time}.kra',
+                i18n('{file:name}-Copy {counter:####}.kra'),
+                i18n('{file:name}-Copy {date}_{time}.kra')
+            ])
+        self.cbxCIFOthOptCreDocName.setCurrentText(self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
+
 
         self.pbCNHistoryClear.clicked.connect(historyClear)
         self.pbCNLastDocumentsClear.clicked.connect(lastDocumentsClear)
@@ -582,22 +641,29 @@ class BCSettingsDialogBox(QDialog):
             self.__uiController.commandSettingsFileUnit(BCSettingsValues.FILE_UNIT_KB)
 
         if self.rbCIFKraOpenDoc.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN)
-        elif self.rbCIFKraOpenDocAndClose.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE)
+            if self.cbCIFKraOptCloseBC.isChecked():
+                self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE)
+            else:
+                self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN)
         elif self.rbCIFKraCreateDoc.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW)
-        elif self.rbCIFKraCreateDocAndClose.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE)
+            if self.cbCIFKraOptCloseBC.isChecked():
+                self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE)
+            else:
+                self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW)
 
         if self.rbCIFOthOpenDoc.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN)
-        elif self.rbCIFOthOpenDocAndClose.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE)
+            if self.cbCIFOthOptCloseBC.isChecked():
+                self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE)
+            else:
+                self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN)
         elif self.rbCIFOthCreateDoc.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW)
-        elif self.rbCIFOthCreateDocAndClose.isChecked():
-            self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE)
+            if self.cbCIFOthOptCloseBC.isChecked():
+                self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE)
+            else:
+                self.__uiController.commandSettingsFileDefaultActionOther(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW)
+
+        self.__uiController.commandSettingsFileNewFileNameKra(self.cbxCIFKraOptCreDocName.currentText())
+        self.__uiController.commandSettingsFileNewFileNameOther(self.cbxCIFOthOptCreDocName.currentText())
 
         self.__uiController.commandSettingsNavBarBtnHome(self.cbCNNavBarBtnHome.isChecked())
         self.__uiController.commandSettingsNavBarBtnViews(self.cbCNNavBarBtnViews.isChecked())
@@ -617,7 +683,7 @@ class BCSettingsDialogBox(QDialog):
         """Set page according to category"""
         self.swCatPages.setCurrentIndex(self.lvCategory.currentItem().data(Qt.UserRole))
 
-        if self.lvCategory.currentItem().data(Qt.UserRole) == 2:
+        if self.lvCategory.currentItem().data(Qt.UserRole) == BCSettingsDialogBox.CATEGORY_CACHE:
             # calculate cache nb files+size
             self.__calculateCacheSize()
 

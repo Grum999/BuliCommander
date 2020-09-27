@@ -78,6 +78,7 @@ from .bcworkers import (
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
+        pyqtSignal as Signal,
         QFileInfo,
         QSize,
         QStandardPaths
@@ -348,6 +349,161 @@ class BCBaseFile(object):
         else:
             self._mdatetime = None
         self._format = BCFileManagedFormat.UNKNOWN
+        self._tag = {}
+
+    @staticmethod
+    def formatFileName(file, pattern=None):
+        """Return a file name build from given file and pattern
+
+        If pattern equals "<None>"
+        => return empty string
+
+        Otherwise, the following markup can be used:
+            "{file:path}"       The file path name without extension
+            "{file:baseName}"   The file base name without extension
+            "{file:name}"       The file path+base name without extension
+            "{file:ext}"        The file extension
+
+            "{date}"            The current system date (yyyymmdd)
+            "{date:yyyy}"       The current system year
+            "{date:mm}"         The current system month
+            "{date:dd}"         The current system day
+
+            "{time}"            The current system time (hhmmss)
+            "{time:hh}"         The current system hour (00-24)
+            "{time:mm}"         The current system minutes
+            "{time:ss}"         The current system seconds
+
+            "{size}"            The current image size (widthxheight)
+            "{size:width}"      The current image width
+            "{size:height}"     The current image height
+
+            "{counter}"         A counter to file name
+            "{counter:####}"    A counter to file name
+        """
+        if pattern is None:
+            return ''
+
+        if not isinstance(file, BCBaseFile):
+            raise EInvalidType('Given `file` must be a <BCBaseFile>')
+
+        if not isinstance(pattern, str):
+            raise EInvalidType('Given `pattenr` must be a <str>')
+
+        if pattern.strip() == '' or re.search('(?i)<none>', pattern):
+            return ''
+
+        currentDateTime = time.time()
+        fileName = pattern
+
+        isDir = False
+        if file.format() != BCFileManagedFormat.DIRECTORY:
+            baseFileNameWithoutExt = os.path.splitext(file.name())[0]
+            nameFileNameWithoutExt = os.path.splitext(file.fullPathName())[0]
+            if file.extension(False) == '' and file.name()[-1] != '.' :
+                replaceExtExpr = "(?i)\.\{file:ext\}"
+            else:
+                replaceExtExpr = "(?i)\{file:ext\}"
+
+            fileName = re.sub(replaceExtExpr,      file.extension(False),                        fileName)
+            fileName = re.sub("(?i)\{size\}",           f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}x{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
+            fileName = re.sub("(?i)\{size:width\}",     f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}", fileName)
+            fileName = re.sub("(?i)\{size:height\}",    f"{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
+        else:
+            isDir = True
+            baseFileNameWithoutExt = file.name()
+            nameFileNameWithoutExt = file.fullPathName()
+            replaceExtExpr = None
+
+            fileName = re.sub("(?i)\.\{file:ext\}",     "", fileName)
+            fileName = re.sub("(?i)\{file:ext\}",       "", fileName)
+            fileName = re.sub("(?i)\{size\}",           "0x0", fileName)
+            fileName = re.sub("(?i)\{size:width\}",     "0", fileName)
+            fileName = re.sub("(?i)\{size:height\}",    "0", fileName)
+
+
+        fileName = re.sub("(?i)\{file:path\}", file.path(),                                  fileName)
+        fileName = re.sub("(?i)\{file:baseName\}", baseFileNameWithoutExt,                   fileName)
+        fileName = re.sub("(?i)\{file:name\}", nameFileNameWithoutExt,     fileName)
+
+        fileName = re.sub("(?i)\{date\}",      tsToStr(currentDateTime, '%Y%m%d'),           fileName)
+        fileName = re.sub("(?i)\{date:yyyy\}", tsToStr(currentDateTime, '%Y'),               fileName)
+        fileName = re.sub("(?i)\{date:mm\}",   tsToStr(currentDateTime, '%m'),               fileName)
+        fileName = re.sub("(?i)\{date:dd\}",   tsToStr(currentDateTime, '%d'),               fileName)
+
+        fileName = re.sub("(?i)\{time\}",      tsToStr(currentDateTime, '%H%M%S'),           fileName)
+        fileName = re.sub("(?i)\{time:hh\}",   tsToStr(currentDateTime, '%H'),               fileName)
+        fileName = re.sub("(?i)\{time:mm\}",   tsToStr(currentDateTime, '%M'),               fileName)
+        fileName = re.sub("(?i)\{time:ss\}",   tsToStr(currentDateTime, '%S'),               fileName)
+
+        if resultCounter:=re.search("(?i)\{counter(?::(#+))?\}", fileName):
+            regEx = re.sub("(?i)\{file:path\}", re.escape(file.path()),                       pattern)
+
+            regEx = re.sub("(?i)\{file:baseName\}", re.escape(baseFileNameWithoutExt),        regEx)
+            regEx = re.sub("(?i)\{file:name\}", re.escape(nameFileNameWithoutExt),            regEx)
+            if not replaceExtExpr is None:
+                regEx = re.sub(replaceExtExpr,  re.escape(file.extension(False)),             regEx)
+            else:
+                regEx = re.sub("(?i)\.\{file:ext\}",     "", regEx)
+                regEx = re.sub("(?i)\{file:ext\}",       "", regEx)
+
+
+            regEx = re.sub("(?i)\{date\}",      r'\\d{8}',                                    regEx)
+            regEx = re.sub("(?i)\{date:yyyy\}", r'\\d{4}',                                    regEx)
+            regEx = re.sub("(?i)\{date:mm\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub("(?i)\{date:dd\}",   r'\\d{2}',                                    regEx)
+
+            regEx = re.sub("(?i)\{time\}",      r'\\d{6}',                                    regEx)
+            regEx = re.sub("(?i)\{time:hh\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub("(?i)\{time:mm\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub("(?i)\{time:ss\}",   r'\\d{2}',                                    regEx)
+
+            regEx = re.sub("(?i)\{size\}",       r'\\d+x\\d+',                                 regEx)
+            regEx = re.sub("(?i)\{size:width\}", r'\\d+',                                     regEx)
+            regEx = re.sub("(?i)\{size:height\}",r'\\d+',                                     regEx)
+
+            regEx = re.sub("(?i)\{counter\}",r'(\\d+)',                                         regEx)
+
+            for replaceHash in resultCounter.groups():
+                regEx = re.sub(f"\{{counter:{replaceHash}\}}", f"(\\\\d{{{len(replaceHash)},}})", regEx)
+
+            regEx = regEx.replace(".", r'\.')
+
+            regEx = f"^{regEx}$"
+
+
+            # a counter is defined, need to determinate counter value
+            #nbFiles = len([foundFile for foundFile in os.listdir(file.path()) if os.path.isfile(os.path.join(file.path(), foundFile)) and not re.search(regEx, foundFile) is None]) + 1
+
+            if isDir:
+                fileList = [int(rr.groups()[0]) for foundFile in os.listdir(file.path()) if os.path.isdir(os.path.join(file.path(), foundFile)) and (rr:=re.search(regEx, foundFile))]
+            else:
+                fileList = [int(rr.groups()[0]) for foundFile in os.listdir(file.path()) if os.path.isfile(os.path.join(file.path(), foundFile)) and (rr:=re.search(regEx, foundFile))]
+            if len(fileList) == 0:
+                nbFiles = 1
+            else:
+                nbFiles = max(fileList) + 1
+
+            fileName = re.sub("(?i)\{counter\}", str(nbFiles),   fileName)
+
+            for replaceHash in resultCounter.groups():
+                fileName = re.sub(f"\{{counter:{replaceHash}\}}", f"{nbFiles:0{len(replaceHash)}}", fileName)
+
+        return fileName
+
+    @staticmethod
+    def fullPathNameCmpAsc(f1, f2):
+        # compare file for ascending sort
+        if f1.fullPathName()>f2.fullPathName():
+            return 1
+        return -1
+
+    @staticmethod
+    def fullPathNameCmpDesc(f1, f2):
+        # compare file for descending sort
+        if f1.fullPathName()>f2.fullPathName():
+            return -1
+        return 1
 
     def path(self):
         """Return file path"""
@@ -387,6 +543,19 @@ class BCBaseFile(object):
             return None
         else:
             raise EInvalidType('Given `property` must be a valid <BCFileProperty>')
+
+    def tag(self, key):
+        """Return tag value
+
+        If no tag exist for given key, return None
+        """
+        if key in self._tag:
+            return self._tag[key]
+        return None
+
+    def setTag(self, key, value):
+        """Set tag value"""
+        self._tag[key] = value
 
     def icon(self):
         """return system icon for file"""
@@ -442,6 +611,10 @@ class BCDirectory(BCBaseFile):
     def __repr__(self):
         """Format internal representation"""
         return f'<BCDirectory({self._path}, {self._name})>'
+
+    def size(self):
+        """Return directory size"""
+        return 0
 
 class BCMissingFile(BCBaseFile):
     """A missing file"""
@@ -534,6 +707,7 @@ class BCFile(BCBaseFile):
         BCFile.setThumbnailCacheDefaultSize(thumbnailCacheDefaultSize)
 
         BCFile.__INITIALISED = True
+
 
     def __init__(self, fileName, strict=False):
         """Initialise BCFile"""
@@ -3511,7 +3685,7 @@ class BCFileListSortRule(object):
         """return True if sort is ascending, otherwise False"""
         return self.__ascending
 
-class BCFileList(object):
+class BCFileList(QObject):
     """A file list wrapper
 
     Allows to manage from the simplest query (files in a directory) to the most complex (search in multiple path with
@@ -3524,20 +3698,29 @@ class BCFileList(object):
         . A SQL Like language
         . A human natural language
     """
+    stepExecuted = Signal(tuple)
+
+    STEPEXECUTED_SEARCH =   0x00
+    STEPEXECUTED_SCAN =     0x01
+    STEPEXECUTED_FILTER =   0x02
+    STEPEXECUTED_RESULT =   0x03
+    STEPEXECUTED_SORT =     0x04
+
+    STEPEXECUTED_SCANNING = 0x10
 
     __MTASKS_RULES = []
 
     @staticmethod
-    def getBcFile(itemIndex, fileName):
+    def getBcFile(itemIndex, fileName, strict=False):
         """Return a BCFile from given fileName
 
-        > Used for multiprocessing taks
+        > Used for multiprocessing tasks
         """
         if isinstance(fileName, BCFile) or isinstance(fileName, BCMissingFile):
             return fileName
 
         try:
-            return BCFile(fileName, False)
+            return BCFile(fileName, strict)
         except Exception as e:
             Debug.print('[BCFileList.getBcFile] Unable to analyse file {0}: {1}', fileName, e)
             return None
@@ -3546,7 +3729,7 @@ class BCFileList(object):
     def getBcDirectory(itemIndex, fileName):
         """Return a BCDirectory from given fileName
 
-        > Used for multiprocessing taks
+        > Used for multiprocessing tasks
         """
         if isinstance(fileName, BCDirectory):
             return fileName
@@ -3561,25 +3744,51 @@ class BCFileList(object):
     def checkBcFile(itemIndex, file):
         """Return file if matching query rules, otherwise return None
 
-        > Used for multiprocessing taks
+        > Used for multiprocessing tasks
         """
         if not file is None:
             if len(BCFileList.__MTASKS_RULES) > 0:
                 for rule in BCFileList.__MTASKS_RULES:
                     if rule.fileMatch(file):
+                        #updateStats(file, statFile)
                         return file
             else:
+                #updateStats(file, statFile)
                 return file
         return None
 
+    @staticmethod
+    def getBcFileName(itemIndex, file):
+        """Return fullPathName
+
+        > Used for multiprocessing task
+        """
+        return file.fullPathName()
+
+    @staticmethod
+    def getBcFileStats(itemIndex, file):
+        returned={}
+        if file.format() == BCFileManagedFormat.DIRECTORY:
+            returned['nbDir']=1
+        elif file.format() == BCFileManagedFormat.UNKNOWN:
+            returned['nbOther']=1
+            returned['sizeOther']=file.size()
+        else:
+            returned['nbKra']=1
+            returned['sizeKra']=file.size()
+        return returned
+
     def __init__(self, currentList=None):
         """Initialiser current list query"""
+        super(BCFileList, self).__init__(None)
         self.__currentFiles = []
         self.__currentFilesName = set()
 
         self.__pathList = []
         self.__ruleList = []
         self.__sortList = []
+
+        self.__statFiles=None
 
         self.__includeDirectories = False
         self.__includeHidden = False
@@ -4134,7 +4343,7 @@ class BCFileList(object):
 
         return '\n'.join(returned)
 
-    def execute(self, clearResults=True):
+    def execute(self, clearResults=True, buildStats=False, strict=False):
         """Search for files
 
         Files matching criteria are added to selection.
@@ -4144,10 +4353,24 @@ class BCFileList(object):
 
         Return number of files matching criteria
         """
+        def progressScanning(value):
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SCANNING,value[0],len(filesList)))
+
         if clearResults:
             # reset current list if asked
             self.clearResults()
             Stopwatch.start('BCFileList.execute.search')
+
+        if buildStats:
+            self.__statFiles={
+                    'nbKra': 0,
+                    'nbOther': 0,
+                    'sizeKra': 0,
+                    'sizeOther': 0,
+                    'nbDir': 0
+                }
+        else:
+            self.__statFiles=None
 
         # stopwatches are just used to measure execution time performances
         Stopwatch.start('BCFileList.execute.global')
@@ -4215,6 +4438,8 @@ class BCFileList(object):
 
         totalMatch = len(foundFiles) + len(foundDirectories)
 
+        self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH, len(foundFiles), len(foundDirectories), totalMatch))
+
         Debug.print("Search in paths: {0}", self.__pathList)
         Debug.print('Found {0} of {1} files in {2}s', totalMatch, nbTotal, Stopwatch.duration("BCFileList.execute.search"))
 
@@ -4231,8 +4456,12 @@ class BCFileList(object):
 
 
         pool = BCWorkerPool()
-        filesList = pool.map(foundFiles, BCFileList.getBcFile)
-        directoriesList = pool.map(foundDirectories, BCFileList.getBcDirectory)
+        pool.signals.processed.connect(progressScanning)
+        filesList = pool.mapNoNone(foundFiles, BCFileList.getBcFile, strict)
+        pool.signals.processed.disconnect(progressScanning)
+        directoriesList = pool.mapNoNone(foundDirectories, BCFileList.getBcDirectory)
+
+        self.stepExecuted.emit((BCFileList.STEPEXECUTED_SCAN,))
 
         Debug.print('Scan {0} files in {1}s', totalMatch, Stopwatch.duration("BCFileList.execute.scan"))
 
@@ -4248,42 +4477,43 @@ class BCFileList(object):
         if len(self.__ruleList) > 0:
             BCFileList.__MTASKS_RULES = self.__ruleList
             # use all processors to parallelize files analysis
-            filesList = pool.map(filesList, BCFileList.checkBcFile)
-            directoriesList = pool.map(directoriesList, BCFileList.checkBcFile)
+            self.__currentFiles = pool.mapNoNone(filesList, BCFileList.checkBcFile)
+            self.__currentFiles += pool.mapNoNone(directoriesList, BCFileList.checkBcFile)
         else:
+            self.__currentFiles = filesList
+            self.__currentFiles += directoriesList
             BCFileList.__MTASKS_RULES = []
 
+        self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER,))
         Debug.print('Filter {0} files in {1}s', len(filesList), Stopwatch.duration("BCFileList.execute.filter"))
 
         # ----
         Stopwatch.start('BCFileList.execute.result')
         # build final result
         #   all files that match selection rules are added to current selected images
-        nb=0
-        for file in filesList:
-            if not file is None:
-                nb+=1
-                self.__currentFiles.append(file)
-                self.__currentFilesName.add(file.fullPathName())
-        for file in directoriesList:
-            if not file is None:
-                nb+=1
-                self.__currentFiles.append(file)
-                self.__currentFilesName.add(file.fullPathName())
+        self.__currentFilesName=set(pool.map(self.__currentFiles, BCFileList.getBcFileName))
+        nb = len(self.__currentFiles)
 
         Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.result"))
 
+        if buildStats:
+            Stopwatch.start('BCFileList.execute.buildStats')
+            self.__statFiles=pool.aggregate(self.__currentFiles, self.__statFiles, BCFileList.getBcFileStats)
+            Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.buildStats"))
+
+        self.stepExecuted.emit((BCFileList.STEPEXECUTED_RESULT,))
 
         # ----
         Stopwatch.start('BCFileList.sort')
         self.sort()
+        self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT,))
         Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.sort"))
 
         Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.global"))
 
         self.__invalidated = False
 
-        return len(self.__currentFiles)
+        return nb
 
     def sort(self):
         """Sort current result using current sort rules"""
@@ -4352,6 +4582,9 @@ class BCFileList(object):
 
         return len(self.__currentFiles)
 
+    def stats(self):
+        """Return stats from last execution, if any (otherwise return None"""
+        return self.__statFiles
 
 class BCFileIcon(object):
     """Provide icon for a BCBaseFile"""

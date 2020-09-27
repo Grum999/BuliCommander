@@ -24,7 +24,11 @@ import locale
 import re
 import time
 import sys
+import os
 
+import xml.etree.ElementTree as ET
+
+import PyQt5.uic
 
 from PyQt5.Qt import *
 from PyQt5.QtGui import (
@@ -36,23 +40,27 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal,
         QRect
     )
-
+from PyQt5.QtWidgets import (
+        QAction,
+        QSystemTrayIcon
+    )
 
 try:
     locale.setlocale(locale.LC_ALL, '')
 except:
     pass
 
+# ------------------------------------------------------------------------------
 # don't really like to use global variable... create a class with static methods instead?
 __bytesSizeToStrUnit = 'autobin'
 def setBytesSizeToStrUnit(unit):
     global __bytesSizeToStrUnit
     if unit.lower() in ['auto', 'autobin']:
         __bytesSizeToStrUnit = unit
+
 def getBytesSizeToStrUnit():
     global __bytesSizeToStrUnit
     return __bytesSizeToStrUnit
-
 
 def strToBytesSize(value):
     """Convert a value to bytes
@@ -189,9 +197,6 @@ def bytesSizeToStr(value, unit=None, decimals=2):
     else:
         return f'{value}B'
 
-
-
-
 def tsToStr(value, pattern=None, valueNone=''):
     """Convert a timestamp to localtime string
 
@@ -259,7 +264,6 @@ def secToStrTime(nbSeconds):
     returned+=time.strftime('%H:%M:%S', time.gmtime(nbSeconds))
 
     return returned
-
 
 def getLangValue(dictionary, lang=None, default=''):
     """Return value from a dictionary for which key is lang code (like en-US)
@@ -356,11 +360,115 @@ def buildIcon(icons):
     elif isinstance(icons, list) and len(icons)>0:
         returned = QIcon()
         for icon in icons:
-            returned.addPixmap(icon[0], icon[1])
+            returned.addPixmap(*icon)
         return returned
     else:
         raise EInvalidType("Given `icons` must be a list of tuples")
 
+def buildQAction(icons, title, parent):
+    """Build a QAction and store icons resource path as properties
+
+    Tricky method to be able to reload icons on the fly when theme is modified
+    """
+    pixmapList=[]
+    propertyList=[]
+    for icon in icons:
+        if isinstance(icon[0], QPixmap):
+            pixmapListItem=[icon[0]]
+            propertyListPath=''
+        elif isinstance(icon[0], str):
+            pixmapListItem=[QPixmap(icon[0])]
+            propertyListPath=icon[0]
+
+        for index in range(1,3):
+            if index == 1:
+                if len(icon) >= 2:
+                    pixmapListItem.append(icon[index])
+                else:
+                    pixmapListItem.append(QIcon.Normal)
+            elif index == 2:
+                if len(icon) >= 3:
+                    pixmapListItem.append(icon[index])
+                else:
+                    pixmapListItem.append(QIcon.Off)
+
+        pixmapList.append(tuple(pixmapListItem))
+
+        key = '__bcIcon_'
+        if pixmapListItem[1]==QIcon.Normal:
+            key+='normal'
+        elif pixmapListItem[1]==QIcon.Active:
+            key+='active'
+        elif pixmapListItem[1]==QIcon.Disabled:
+            key+='disabled'
+        elif pixmapListItem[1]==QIcon.Selected:
+            key+='selected'
+        if pixmapListItem[2]==QIcon.Off:
+            key+='off'
+        else:
+            key+='on'
+
+        propertyList.append( (key, propertyListPath) )
+
+    returnedAction=QAction(buildIcon(pixmapList), title, parent)
+
+    for property in propertyList:
+        returnedAction.setProperty(*property)
+
+    return returnedAction
+
+def buildQMenu(icons, title, parent):
+    """Build a QMenu and store icons resource path as properties
+
+    Tricky method to be able to reload icons on the fly when theme is modified
+    """
+    pixmapList=[]
+    propertyList=[]
+    for icon in icons:
+        if isinstance(icon[0], QPixmap):
+            pixmapListItem=[icon[0]]
+            propertyListPath=''
+        elif isinstance(icon[0], str):
+            pixmapListItem=[QPixmap(icon[0])]
+            propertyListPath=icon[0]
+
+        for index in range(1,3):
+            if index == 1:
+                if len(icon) >= 2:
+                    pixmapListItem.append(icon[index])
+                else:
+                    pixmapListItem.append(QIcon.Normal)
+            elif index == 2:
+                if len(icon) >= 3:
+                    pixmapListItem.append(icon[index])
+                else:
+                    pixmapListItem.append(QIcon.Off)
+
+        pixmapList.append(tuple(pixmapListItem))
+
+        key = '__bcIcon_'
+        if pixmapListItem[1]==QIcon.Normal:
+            key+='normal'
+        elif pixmapListItem[1]==QIcon.Active:
+            key+='active'
+        elif pixmapListItem[1]==QIcon.Disabled:
+            key+='disabled'
+        elif pixmapListItem[1]==QIcon.Selected:
+            key+='selected'
+        if pixmapListItem[2]==QIcon.Off:
+            key+='off'
+        else:
+            key+='on'
+
+        propertyList.append( (key, propertyListPath) )
+
+    returnedMenu=QMenu(title, parent)
+    returnedMenu.setIcon(buildIcon(pixmapList))
+
+    for property in propertyList:
+        returnedMenu.setProperty(*property)
+
+    return returnedMenu
 
 def kritaVersion():
     """Return a dictionary with following values:
@@ -423,9 +531,111 @@ def checkKritaVersion(major, minor, revision):
         return True
     return False
 
+def strToMaxLength(value, maxLength, completeSpace=True):
+    """Format given string `value` to fit in given `maxLength`
 
+    If len is greater than `maxLength`, string is splitted with carriage return
 
+    If value contains carriage return, each line is processed separately
 
+    If `completeSpace` is True, value is completed with space characters to get
+    the expected length.
+    """
+    returned = []
+    if os.linesep in value:
+        rows = value.split(os.linesep)
+
+        for row in rows:
+            returned.append(strToMaxLength(row, maxLength, completeSpace))
+    else:
+        textLen = len(value)
+
+        if textLen < maxLength:
+            if completeSpace:
+                # need to complete with spaces
+                returned.append( value + (' ' * (maxLength - textLen)))
+            else:
+                returned.append(value)
+        elif textLen > maxLength:
+            # keep spaces separators
+            tmpWords=re.split('(\s)', value)
+            words=[]
+
+            # build words list
+            for word in tmpWords:
+                while len(word) > maxLength:
+                    words.append(word[0:maxLength])
+                    word=word[maxLength:]
+                if word != '':
+                    words.append(word)
+
+            builtRow=''
+            for word in words:
+                if (len(builtRow) + len(word))<maxLength:
+                    builtRow+=word
+                else:
+                    returned.append(strToMaxLength(builtRow, maxLength, completeSpace))
+                    builtRow=word
+
+            if builtRow!='':
+                returned.append(strToMaxLength(builtRow, maxLength, completeSpace))
+        else:
+            returned.append(value)
+
+    return os.linesep.join(returned)
+
+def stripTags(value):
+    """Strip HTML tags and remove amperseed added by Qt"""
+    return re.sub('<[^<]+?>', '', re.sub('<br/?>', os.linesep, value))  \
+                .replace('&nbsp;', ' ')     \
+                .replace('&gt;', '>')       \
+                .replace('&lt;', '<')       \
+                .replace('&amp;', '&&')     \
+                .replace('&&', chr(1))      \
+                .replace('&', '')           \
+                .replace(chr(1), '&')
+
+def loadXmlUi(fileName, parent):
+    """Load a ui file PyQt5.uic.loadUi()
+
+    For each item in ui file that refers to an icon resource, update widget
+    properties with icon reference
+    """
+    def findByName(parent, name):
+        # return first widget for which name match to searched name
+        if parent.objectName() == name:
+            return parent
+
+        if len(parent.children())>0:
+            for widget in parent.children():
+                searched = findByName(widget, name)
+                if not searched is None:
+                    return searched
+
+        return None
+
+    # load UI
+    PyQt5.uic.loadUi(fileName, parent)
+
+    # Parse XML file and retrieve all object for which an icon is set
+    tree = ET.parse(fileName)
+    for nodeParent in tree.getiterator():
+        for nodeChild in nodeParent:
+            if 'name' in nodeChild.attrib and nodeChild.attrib['name'] == 'icon':
+                nodeIconSet=nodeChild.find("iconset")
+                if nodeIconSet:
+                    widget = findByName(parent, nodeParent.attrib['name'])
+                    if not widget is None:
+                        for nodeIcon in list(nodeIconSet):
+                            # store on object resource path for icons
+                            widget.setProperty(f"__bcIcon_{nodeIcon.tag}", nodeIcon.text)
+
+def popNotification(title='', message='', icon=QSystemTrayIcon.Information):
+    tray = QSystemTrayIcon(Krita.instance())
+    tray.show()
+    tray.showMessage(title, message, icon)
+
+# ------------------------------------------------------------------------------
 
 
 class Stopwatch(object):

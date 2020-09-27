@@ -72,6 +72,10 @@ from PyQt5.QtWidgets import (
     )
 
 
+from .bcmenuitem import (
+        BCMenuSlider,
+        BCMenuTitle
+    )
 from .bcbookmark import BCBookmark
 from .bcfile import (
         BCBaseFile,
@@ -94,6 +98,10 @@ from .bcsettings import (
 from .bcworkers import (
         BCWorkerPool
     )
+from .bctable import (
+        BCTable,
+        BCTableSettings
+    )
 from .bcutils import (
         Debug,
         bytesSizeToStr,
@@ -101,7 +109,9 @@ from .bcutils import (
         getLangValue,
         secToStrTime,
         strDefault,
-        tsToStr
+        tsToStr,
+        stripTags,
+        loadXmlUi
     )
 
 from ..pktk.pktk import (
@@ -245,6 +255,9 @@ class BCMainViewFiles(QTreeView):
     """Tree view files"""
 
     focused = Signal()
+    iconStartLoad = Signal(int)
+    iconProcessed = Signal()
+    iconStopLoad = Signal()
 
     COLNUM_ICON = 0
     COLNUM_PATH = 1
@@ -259,7 +272,6 @@ class BCMainViewFiles(QTreeView):
 
     __STATUS_READY = 0
     __STATUS_UPDATING = 1
-    __STATUS_LOADTHUMBNAILS = 2
 
     USERROLE_FILE = Qt.UserRole + 1
 
@@ -288,7 +300,7 @@ class BCMainViewFiles(QTreeView):
         self.__initHeaders()
         self.__iconPool = BCWorkerPool()
         self.__iconPool.signals.processed.connect(self.__updateIconsProcessed)
-        #self.__iconPool.signals.finished.connect(self.__updateIconsFinished)
+        self.__iconPool.signals.finished.connect(self.__updateIconsFinished)
 
     def __initHeaders(self):
         """Initialise treeview header & model"""
@@ -337,12 +349,24 @@ class BCMainViewFiles(QTreeView):
             else:
                 self.__model.item(fileIndex, BCMainViewFiles.COLNUM_ICON).setText('?')
 
-    #def __updateIconsFinished(self):
-    #    pass
+        if self.__model.rowCount() > 100:
+            self.iconProcessed.emit()
+
+    def __updateIconsFinished(self):
+        """updateing icon in treeview list is terminated"""
+        self.__status = BCMainViewFiles.__STATUS_READY
+        self.iconStopLoad.emit()
 
     def __updateIcons(self):
         """Update files icons according to current view mode"""
+        if self.__model.rowCount()==0:
+            # nothing to update
+            return
+
+        self.iconStartLoad.emit(self.__model.rowCount())
+
         items = [self.__model.item(fileIndex, BCMainViewFiles.COLNUM_NAME).data(BCMainViewFiles.USERROLE_FILE) for fileIndex in range(self.__model.rowCount())]
+
         if not self.__viewThumbnail:
             self.__iconPool.startProcessing(items, BCMainViewFiles.getIcon, False)
         else:
@@ -558,8 +582,7 @@ class BCMainViewFiles(QTreeView):
 
         Execute clear/addFile inside a beginUpdate() / endUpdate()
         """
-        if self.__status == BCMainViewFiles.__STATUS_LOADTHUMBNAILS:
-            self.__stopUpdatingIcons()
+        self.__stopUpdatingIcons()
 
         self.__status = BCMainViewFiles.__STATUS_UPDATING
 
@@ -641,25 +664,6 @@ class BCMainViewFiles(QTreeView):
 
 
 
-class BCMenuSlider(QWidgetAction):
-    """Encapsulate a slider as a menu item"""
-    def __init__(self, label, parent=None):
-        super(BCMenuSlider, self).__init__(parent)
-
-        self.__widget = QWidget()
-        self.__layout = QVBoxLayout()
-        self.__slider = QSlider()
-        self.__slider.setOrientation(Qt.Horizontal)
-
-        self.__layout.addWidget(QLabel(label))
-        self.__layout.addWidget(self.__slider)
-        self.__widget.setLayout(self.__layout)
-        self.setDefaultWidget(self.__widget)
-
-    def slider(self):
-        return self.__slider
-
-
 # -----------------------------------------------------------------------------
 class BCMainViewTab(QFrame):
     """Buli Commander main view tab panel (left or right)"""
@@ -681,6 +685,12 @@ class BCMainViewTab(QFrame):
 
         self.__fileQuery = None
         self.__fileFilter = None
+
+        self.__pbMax=0
+        self.__pbVal=0
+        self.__pbInc=0
+        self.__pbDispCount=0
+        self.__pbVisible=False
 
         self.__currentStats = {
                 'nbFiles': 0,
@@ -742,7 +752,7 @@ class BCMainViewTab(QFrame):
         self.__dirTreeModel = QFileSystemModel()
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcmainviewtab.ui')
-        PyQt5.uic.loadUi(uiFileName, self)
+        loadXmlUi(uiFileName, self)
 
         if sys.platform != 'linux':
             self.linePerm.setVisible(False)
@@ -755,6 +765,7 @@ class BCMainViewTab(QFrame):
             self.lblOwner.setText('-')
 
         self.__fsWatcher = QFileSystemWatcher()
+        self.__fsWatcherTmpList = []
 
         self.__selectionChanged(None)
 
@@ -783,20 +794,22 @@ class BCMainViewTab(QFrame):
                     self.tvDirectoryTree.expand(item)
                     item=item.parent()
 
-            dirList=self.__fsWatcher.directories()
-            if len(dirList) > 0:
-                self.__fsWatcher.removePaths(dirList)
+            self.__fsWatcherTmpList=self.__fsWatcher.directories()
+            if len(self.__fsWatcherTmpList) > 0:
+                self.__fsWatcher.removePaths(self.__fsWatcherTmpList)
             expand(self.__dirTreeModel.index(self.path()))
 
             self.refresh()
             self.__fsWatcher.addPath(self.path())
+            self.__fsWatcherTmpList=self.__fsWatcher.directories()
             self.pathChanged.emit(value)
 
         @pyqtSlot('QString')
         def view_Changed(value):
-            dirList=self.__fsWatcher.directories()
-            if len(dirList) > 0:
-                self.__fsWatcher.removePaths(dirList)
+            self.__fsWatcherTmpList=self.__fsWatcher.directories()
+            if len(self.__fsWatcherTmpList) > 0:
+                self.__fsWatcher.removePaths(self.__fsWatcherTmpList)
+                self.__fsWatcherTmpList=self.__fsWatcher.directories()
 
             self.refresh()
             self.pathChanged.emit(value)
@@ -837,6 +850,20 @@ class BCMainViewTab(QFrame):
         def iconSize_update():
             self.__actionApplyIconSize.slider().setValue(self.treeViewFiles.iconSizeIndex())
 
+        @pyqtSlot(int)
+        def treeViewFiles_iconStartLoad(nbIcons):
+            self.__progressStart(nbIcons, i18n('Loading thumbnails %v of %m (%p%)'))
+
+        @pyqtSlot()
+        def treeViewFiles_iconStopLoad():
+            self.__progressStop()
+
+        @pyqtSlot()
+        def treeViewFiles_iconProcessed():
+            self.__progressSetNext()
+
+        # hide progress bar
+        self.__progressStop()
 
         self.__fsWatcher.directoryChanged.connect(directory_changed)
 
@@ -889,6 +916,13 @@ class BCMainViewTab(QFrame):
         self.treeViewFiles.keyPressed.connect(self.__keyPressed)
 
         self.treeViewFiles.selectionModel().selectionChanged.connect(self.__selectionChanged)
+
+        self.treeViewFiles.iconStartLoad.connect(treeViewFiles_iconStartLoad)
+        self.treeViewFiles.iconStopLoad.connect(treeViewFiles_iconStopLoad)
+        self.treeViewFiles.iconProcessed.connect(treeViewFiles_iconProcessed)
+
+        self.widgetFilePreview.setContextMenuPolicy(Qt.DefaultContextMenu)
+        self.widgetFilePreview.contextMenuEvent = self.__contextMenuInformations
 
         self.treeViewFiles.beginUpdate()
         self.__addParentDirectory()
@@ -1005,10 +1039,16 @@ class BCMainViewTab(QFrame):
         if self.__fileQuery is None:
             return
 
+        if self.__fileQuery.nbFiles() > 1500:
+            self.__progressStart(0,i18n('Loading list'))
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
         self.treeViewFiles.beginUpdate()
 
         # clear all content
         self.treeViewFiles.clear()
+        QApplication.instance().processEvents()
+
         # add parent directory '..'
         self.__addParentDirectory()
 
@@ -1042,7 +1082,6 @@ class BCMainViewTab(QFrame):
                 'freeDiskSize': freeSpace
             }
 
-
         for file in self.__fileQuery.files():
             if file.format() == BCFileManagedFormat.DIRECTORY:
                 self.__currentStats['nbDir']+=1
@@ -1052,16 +1091,37 @@ class BCMainViewTab(QFrame):
 
             self.treeViewFiles.addFile(file)
 
+
         self.__currentStats['nbTotal'] = self.__currentStats['nbDir'] + self.__currentStats['nbFiles']
         self.__updateFileStats()
         self.__applyFilter(None)
 
         self.treeViewFiles.resizeColumns(True)
+
+        self.__progressStop()
+
         self.treeViewFiles.endUpdate()
+        if self.__fileQuery.nbFiles() > 1500:
+            QApplication.restoreOverrideCursor()
 
 
     def __refreshFiles(self, fileQuery=None):
         """update file list with current path"""
+        def fileQueryStepExecuted(value):
+            if value[0] == BCFileList.STEPEXECUTED_SEARCH:
+                # in this case, value[1] returns number of files to scan
+                if value[1] > 500:
+                    self.__progressStart(value[1], i18n('Analyzing file %v of %m (%p%)'))
+            elif value[0] == BCFileList.STEPEXECUTED_SCAN:
+                # in this case, scanning is finished
+                if self.__pbVisible:
+                    self.__progressStop()
+            elif value[0] == BCFileList.STEPEXECUTED_SCANNING:
+                # in this case, value[1] give processed index
+                if self.__pbVisible:
+                    self.__progressSetNext()
+
+
         if not self.isVisible():
             # if panel is not visible, do not update file list
             self.__allowRefresh = False
@@ -1118,8 +1178,20 @@ class BCMainViewTab(QFrame):
             else:
                 self.__fileQuery = fileQuery
 
-            # looks for files
+
+            try:
+                # ensure there's no current connection before create a new one
+                self.__fileQuery.stepExecuted.disconnect(fileQueryStepExecuted)
+            except:
+                pass
+            self.__fileQuery.stepExecuted.connect(fileQueryStepExecuted)
+
+            self.treeViewFiles.beginUpdate()
+            self.treeViewFiles.clear()
+            self.treeViewFiles.endUpdate()
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             self.__fileQuery.execute(True)
+            QApplication.restoreOverrideCursor()
 
         # sort files according to columns + add to treeview
         self.__sortFiles()
@@ -1269,6 +1341,8 @@ class BCMainViewTab(QFrame):
 
             wContainerLayout.addWidget(wValue)
             wContainerLayout.addWidget(button)
+
+            wContainer.setProperty('text', value)
 
             addNfoRow(form, label, wContainer)
 
@@ -1644,6 +1718,9 @@ class BCMainViewTab(QFrame):
                                     addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), f'{fileLayer.imageSize().width()}x{fileLayer.imageSize().height()}')
                             else:
                                 addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), f'<i>{fileName}</i>', 'File is missing!', 'warning-label')
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), '-')
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), '-')
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-')
 
                     self.twInfo.setTabEnabled(2, True)
                     self.twInfo.setTabEnabled(3, True)
@@ -1884,6 +1961,314 @@ class BCMainViewTab(QFrame):
                 self.__imgReaderAnimated.frameChanged.connect(self.setCurrentAnimatedFrame)
                 self.__imgReaderAnimated.start()
                 self.tbPlayPause.setIcon(QIcon(":/images/pause"))
+
+
+    def __progressStart(self, maxValue, text=None):
+        """Show progress bar / hide status bar information
+
+        Progress value is initialized to 0
+        Progress maxValue given maxValue
+
+        Text value:
+         %p = current percent
+         %v = current step
+         %m = total steps
+        """
+        if text is None or text == '':
+            text = '%p%'
+
+        self.__pbMax = maxValue
+        self.__pbVal = 0
+        self.__pbInc = max(1, round(maxValue/400, 0))
+        self.__pbDispCount+=1
+        self.__pbVisible=True
+
+        self.pbProgress.setValue(0)
+        self.pbProgress.setMaximum(maxValue)
+        self.pbProgress.setFormat(text)
+        #self.lblFileNfo.setVisible(False)
+        self.lblDiskNfo.setVisible(False)
+        self.lineDiskNfo.setVisible(False)
+        self.pbProgress.setVisible(True)
+
+
+    def __progressStop(self):
+        """Hide progress bar / display status bar information"""
+        #self.lblFileNfo.setVisible(True)
+        if self.__pbVisible:
+            self.__pbDispCount-=1
+            if self.__pbDispCount<=0:
+                self.lblDiskNfo.setVisible(True)
+                self.lineDiskNfo.setVisible(True)
+                self.pbProgress.setVisible(False)
+                self.__pbDispCount = 0
+                self.__pbVisible=False
+
+
+    def __progressSetValue(self, value):
+        """set progress bar value"""
+        self.pbProgress.setValue(value)
+        self.__pbVal = value
+
+
+    def __progressSetNext(self):
+        """set progress bar next value"""
+        self.__pbVal+=1
+        if self.__pbVal >=  self.pbProgress.value() + self.__pbInc:
+            self.pbProgress.setValue(self.__pbVal)
+
+
+    def __contextMenuInformations(self, event):
+        """Display context menu for informations tabs"""
+
+        def copyToClipboard(source=None):
+            data=[]
+
+            if source is None:
+                # loop on all tabs
+                for index in range(self.twInfo.count()):
+                    if self.twInfo.isTabEnabled(index):
+                        data.append('\n'.join(copyToClipboard(index)))
+
+            elif isinstance(source, int):
+                # source is a tab index
+                # loop on all QLabel
+                formLayout = self.twInfo.widget(source).layout().itemAt(0).widget().widget().layout()
+
+                if not formLayout is None:
+                    table=BCTable()
+
+                    table.setTitle(stripTags(self.twInfo.tabText(source)))
+                    table.setHeader(['Property', 'Value'])
+
+                    for row in range(formLayout.rowCount()):
+                        itemLabel = formLayout.itemAt(row, QFormLayout.LabelRole)
+                        itemValue = formLayout.itemAt(row, QFormLayout.FieldRole)
+
+                        if itemLabel is None:
+                            textLabel = ''
+                        else:
+                            textLabel = stripTags(itemLabel.widget().text())
+
+                        if itemValue is None:
+                            textValue = ''
+                        elif isinstance(itemValue.widget(), QLabel):
+                            textValue = stripTags(itemValue.widget().text())
+                            table.addRow([textLabel, textValue])
+                        elif isinstance(itemValue.widget(), QFrame):
+                            table.addSeparator()
+                        elif isinstance(itemValue.widget(), QWidget):
+                            textValue = stripTags(itemValue.widget().property('text'))
+                            table.addRow([textLabel, textValue])
+                    data.append(table.asText(self.__uiController.tableSettings())+os.linesep)
+            elif isinstance(source, QLabel):
+                data.append(stripTags(source.text()))
+
+            return data
+
+        @pyqtSlot('QString')
+        def copyAllTabs(action):
+            QApplication.clipboard().setText('\n'.join(copyToClipboard()))
+
+        @pyqtSlot('QString')
+        def copyCurrentTab(action):
+            QApplication.clipboard().setText('\n'.join(copyToClipboard(index)))
+
+        @pyqtSlot('QString')
+        def copyItem(action):
+            QApplication.clipboard().setText('\n'.join(copyToClipboard(currentItem)))
+
+        @pyqtSlot('QString')
+        def setBorderNone(action):
+            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_NONE)
+
+        @pyqtSlot('QString')
+        def setBorderBasic(action):
+            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_BASIC)
+
+        @pyqtSlot('QString')
+        def setBorderSimple(action):
+            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_SIMPLE)
+
+        @pyqtSlot('QString')
+        def setBorderDouble(action):
+            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_DOUBLE)
+
+        @pyqtSlot('QString')
+        def setHeader(action):
+            self.__uiController.commandInfoToClipBoardHeader(cbOptHeader.isChecked())
+
+        @pyqtSlot('QString')
+        def setMinWidthActive(action):
+            self.__uiController.commandInfoToClipBoardMinWidthActive(cbOptMinWidthActive.isChecked())
+            slOptWidthMin.setEnabled(cbOptMinWidthActive.isChecked())
+
+        @pyqtSlot('QString')
+        def setMinWidth(value):
+            self.__uiController.commandInfoToClipBoardMinWidth(value)
+            cbOptMinWidthActive.setText(f"Minimum width ({value})")
+            if value > self.__uiController.tableSettings().maxWidth():
+                slOptWidthMax.slider().setValue(value)
+
+        @pyqtSlot('QString')
+        def setMaxWidthActive(action):
+            self.__uiController.commandInfoToClipBoardMaxWidthActive(cbOptMaxWidthActive.isChecked())
+            slOptWidthMax.setEnabled(cbOptMaxWidthActive.isChecked())
+
+        @pyqtSlot('QString')
+        def setMaxWidth(value):
+            self.__uiController.commandInfoToClipBoardMaxWidth(value)
+            cbOptMaxWidthActive.setText(f"Maximum width ({value})")
+            if value < self.__uiController.tableSettings().minWidth():
+                slOptWidthMin.slider().setValue(value)
+
+
+        # current tab index
+        index=self.twInfo.currentIndex()
+
+        actionCopyAll = QAction(QIcon(":/images/tabs"), i18n('All tabs--'), self)
+        actionCopyAll.triggered.connect(copyAllTabs)
+
+        actionCopyCurrent = QAction(self.twInfo.tabIcon(index), i18n(f'Current "{stripTags(self.twInfo.tabText(index))}" tab'), self)
+        actionCopyCurrent.triggered.connect(copyCurrentTab)
+
+        currentItem = QApplication.widgetAt(event.globalPos())
+        if isinstance(currentItem, QLabel):
+            actionCopyItem = QAction(QIcon(":/images/text"), i18n(f'Value "{stripTags(currentItem.text())}"'), self)
+            actionCopyItem.triggered.connect(copyItem)
+        else:
+            currentItem = None
+
+        title = BCMenuTitle(i18n("Content to clipboard"))
+
+        contextMenu = QMenu(i18n("Content to clipboard"))
+        contextMenu.addAction(title)
+        contextMenu.addAction(actionCopyAll)
+        contextMenu.addAction(actionCopyCurrent)
+        if not currentItem is None:
+            contextMenu.addAction(actionCopyItem)
+
+        contextMenu.addSeparator()
+        optionMenu = contextMenu.addMenu(QIcon(":/images/tune"), i18n('Options'))
+
+        # options menu widgets
+        # do not use classic action, but built QWidgetAction with widget insed to avoid
+        # context menu being closed after click
+
+        # -- border options
+        rbOptBorderNone = QRadioButton(i18n("No border"), optionMenu)
+        rbOptBorderBasic = QRadioButton(i18n("Basic border (ascii)"), optionMenu)
+        rbOptBorderSimple = QRadioButton(i18n("Simple border (UTF-8)"), optionMenu)
+        rbOptBorderDouble = QRadioButton(i18n("Double border (UTF-8)"), optionMenu)
+
+        rbOptBorderNone.clicked.connect(setBorderNone)
+        rbOptBorderBasic.clicked.connect(setBorderBasic)
+        rbOptBorderSimple.clicked.connect(setBorderSimple)
+        rbOptBorderDouble.clicked.connect(setBorderDouble)
+
+        rbOptBorderNoneAction = QWidgetAction(optionMenu)
+        rbOptBorderNoneAction.setDefaultWidget(rbOptBorderNone)
+        rbOptBorderBasicAction = QWidgetAction(optionMenu)
+        rbOptBorderBasicAction.setDefaultWidget(rbOptBorderBasic)
+        rbOptBorderSimpleAction = QWidgetAction(optionMenu)
+        rbOptBorderSimpleAction.setDefaultWidget(rbOptBorderSimple)
+        rbOptBorderDoubleAction = QWidgetAction(optionMenu)
+        rbOptBorderDoubleAction.setDefaultWidget(rbOptBorderDouble)
+
+        optionMenu.addAction(rbOptBorderNoneAction)
+        optionMenu.addAction(rbOptBorderBasicAction)
+        optionMenu.addAction(rbOptBorderSimpleAction)
+        optionMenu.addAction(rbOptBorderDoubleAction)
+
+        contextMenuOptBorderGroup = QActionGroup(self)
+        contextMenuOptBorderGroup.addAction(rbOptBorderNoneAction)
+        contextMenuOptBorderGroup.addAction(rbOptBorderBasicAction)
+        contextMenuOptBorderGroup.addAction(rbOptBorderSimpleAction)
+        contextMenuOptBorderGroup.addAction(rbOptBorderDoubleAction)
+
+        if self.__uiController.tableSettings().border() == BCTable.BORDER_NONE:
+            rbOptBorderNone.setChecked(True)
+        elif self.__uiController.tableSettings().border() == BCTable.BORDER_BASIC:
+            rbOptBorderBasic.setChecked(True)
+        elif self.__uiController.tableSettings().border() == BCTable.BORDER_SIMPLE:
+            rbOptBorderSimple.setChecked(True)
+        else:
+        #elif self.__uiController.tableSettings().border() == BCTable.BORDER_DOUBLE:
+            rbOptBorderDouble.setChecked(True)
+
+        optionMenu.addSeparator()
+
+        # -- header options
+        cbOptHeader = QCheckBox(i18n("Header"), optionMenu)
+        cbOptHeader.setChecked(self.__uiController.tableSettings().headerActive())
+        cbOptHeader.clicked.connect(setHeader)
+
+        cbOptHeaderAction = QWidgetAction(optionMenu)
+        cbOptHeaderAction.setDefaultWidget(cbOptHeader)
+
+        optionMenu.addAction(cbOptHeaderAction)
+
+        optionMenu.addSeparator()
+
+        # -- size options
+        value = self.__uiController.tableSettings().minWidth()
+        cbOptMinWidthActive = QCheckBox(i18n(f"Minimum width ({value})"), optionMenu)
+        cbOptMinWidthActive.setChecked(self.__uiController.tableSettings().minWidthActive())
+        cbOptMinWidthActive.clicked.connect(setMinWidthActive)
+
+        cbOptMinWidthActiveAction = QWidgetAction(optionMenu)
+        cbOptMinWidthActiveAction.setDefaultWidget(cbOptMinWidthActive)
+
+        optionMenu.addAction(cbOptMinWidthActiveAction)
+
+        slOptWidthMin = BCMenuSlider(None, optionMenu)
+        slOptWidthMin.slider().setMinimum(BCTableSettings.MIN_WIDTH)
+        slOptWidthMin.slider().setMaximum(BCTableSettings.MAX_WIDTH)
+        slOptWidthMin.slider().setValue(value)
+        slOptWidthMin.slider().setPageStep(10)
+        slOptWidthMin.slider().setSingleStep(1)
+        slOptWidthMin.slider().valueChanged.connect(setMinWidth)
+        slOptWidthMin.setEnabled(cbOptMinWidthActive.isChecked())
+        optionMenu.addAction(slOptWidthMin)
+
+
+        value = self.__uiController.tableSettings().maxWidth()
+        cbOptMaxWidthActive = QCheckBox(i18n(f"Maximum width ({value})"), optionMenu)
+        cbOptMaxWidthActive.setChecked(self.__uiController.tableSettings().maxWidthActive())
+        cbOptMaxWidthActive.clicked.connect(setMaxWidthActive)
+
+        cbOptMaxWidthActiveAction = QWidgetAction(optionMenu)
+        cbOptMaxWidthActiveAction.setDefaultWidget(cbOptMaxWidthActive)
+
+        optionMenu.addAction(cbOptMaxWidthActiveAction)
+
+        slOptWidthMax = BCMenuSlider(None, optionMenu)
+        slOptWidthMax.slider().setMinimum(BCTableSettings.MIN_WIDTH)
+        slOptWidthMax.slider().setMaximum(BCTableSettings.MAX_WIDTH)
+        slOptWidthMax.slider().setValue(value)
+        slOptWidthMax.slider().setPageStep(10)
+        slOptWidthMax.slider().setSingleStep(1)
+        slOptWidthMax.slider().valueChanged.connect(setMaxWidth)
+        slOptWidthMax.setEnabled(cbOptMaxWidthActive.isChecked())
+        optionMenu.addAction(slOptWidthMax)
+
+        contextMenu.exec_(event.globalPos())
+
+
+    def __enableWatchList(self, enabled):
+        """Allow to enable/disable current watch list"""
+        if not enabled:
+            # disable current watch
+
+            # keep in memory current watched directories
+            self.__fsWatcherTmpList=self.__fsWatcher.directories()
+            if len(self.__fsWatcherTmpList) > 0:
+                self.__fsWatcher.removePaths(self.__fsWatcherTmpList)
+        else:
+            # enable watch list
+            if len(self.__fsWatcherTmpList) > 0:
+                for path in self.__fsWatcherTmpList:
+                    self.__fsWatcher.addPath(path)
 
 
     def setVisible(self, value):
@@ -2554,8 +2939,8 @@ class BCMainViewTab(QFrame):
 
 
     def showFilter(self, visible=True):
-        """Display/Hide the history button"""
-        self.framePathBar.showFilter(visible)
+        """Display/Hide the quick filter button"""
+        self.framePathBar.showQuickFilter(visible)
 
 
     def showHome(self, visible=True):
@@ -2582,17 +2967,21 @@ class BCMainViewTab(QFrame):
         """Display/Hide margins"""
         self.framePathBar.showMargins(visible)
 
+
     def showMenuHistory(self, menu):
         """Build menu history"""
         self.framePathBar.menuHistoryShow(menu)
+
 
     def showMenuBookmarks(self, menu):
         """Build menu bookmarks"""
         self.framePathBar.menuBookmarksShow(menu)
 
+
     def showMenuSavedViews(self, menu):
         """Build menu saved views"""
         self.framePathBar.menuSavedViewsShow(menu)
+
 
     def showMenuLastDocuments(self, menu):
         """Build menu last documents views"""

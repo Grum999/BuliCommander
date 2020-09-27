@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="images">
+    <file alias="text">svg/dark/32dp/text.svg</file>
+    <file alias="tabs">svg/dark/32dp/tabs.svg</file>
     <file alias="clipboard">svg/dark/32dp/clipboard.svg</file>
     <file alias="navigation">svg/dark/32dp/navigation.svg</file>
     <file alias="saved_view_last">svg/dark/32dp/saved_view_last.svg</file>

@@ -23,6 +23,7 @@ import os.path
 from pathlib import Path
 
 import sys
+import re
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -74,6 +75,10 @@ from .bcimagepreview import (
         BCImagePreview
     )
 from .bcsavedview import BCSavedView
+from .bctable import (
+        BCTable,
+        BCTableSettings
+    )
 from .bcutils import (
         buildIcon,
         getBytesSizeToStrUnit,
@@ -90,7 +95,7 @@ from ..pktk.ekrita import (
         EKritaNode
     )
 
-
+from ..libs.breadcrumbsaddressbar.breadcrumbsaddressbar import BreadcrumbsAddressBar
 
 # ------------------------------------------------------------------------------
 class BCUIController(object):
@@ -114,10 +119,16 @@ class BCUIController(object):
         self.__lastDocumentsSaved = BCHistory()
         self.__backupFilterDView = BCHistory()
         self.__fileLayerFilterDView = BCHistory()
+        self.__tableSettings = BCTableSettings()
 
         self.__confirmAction = True
 
         self.__settings = BCSettings('bulicommander')
+
+        # store a global reference to activeWindow to be able to work with
+        # activeWindow signals
+        # https://krita-artists.org/t/krita-4-4-new-api/12247?u=grum999
+        self.__kraActiveWindow = None
 
         self.__initialised = False
 
@@ -149,6 +160,17 @@ class BCUIController(object):
             # already initialised, do nothing
             return
 
+        # Here we know we have an active window
+        if self.__kraActiveWindow is None:
+            self.__kraActiveWindow=Krita.instance().activeWindow()
+        try:
+            # should not occurs as uicontroller is initialised only once, but...
+            self.__kraActiveWindow.themeChanged.disconnect(self.__themeChanged)
+        except:
+            pass
+        self.__kraActiveWindow.themeChanged.connect(self.__themeChanged)
+
+
         self.__window.initMainView()
 
         for panelId in self.__window.panels:
@@ -156,6 +178,8 @@ class BCUIController(object):
 
         self.commandSettingsFileDefaultActionKra(self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_KRA.id()))
         self.commandSettingsFileDefaultActionOther(self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER.id()))
+        self.commandSettingsFileNewFileNameKra(self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
+        self.commandSettingsFileNewFileNameOther(self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
         self.commandSettingsFileUnit(self.__settings.option(BCSettingsKey.CONFIG_FILE_UNIT.id()))
         self.commandSettingsHistoryMaxSize(self.__settings.option(BCSettingsKey.CONFIG_HISTORY_MAXITEMS.id()))
         self.commandSettingsHistoryKeepOnExit(self.__settings.option(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT.id()))
@@ -186,6 +210,13 @@ class BCUIController(object):
         self.commandSettingsNavBarBtnGoBack(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BACK.id()))
         self.commandSettingsNavBarBtnGoUp(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_UP.id()))
         self.commandSettingsNavBarBtnQuickFilter(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_QUICKFILTER.id()))
+
+        self.commandInfoToClipBoardBorder(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER.id()))
+        self.commandInfoToClipBoardHeader(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER.id()))
+        self.commandInfoToClipBoardMaxWidth(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH.id()))
+        self.commandInfoToClipBoardMinWidth(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH.id()))
+        self.commandInfoToClipBoardMaxWidthActive(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE.id()))
+        self.commandInfoToClipBoardMinWidthActive(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE.id()))
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setHistory(self.__history)
@@ -254,6 +285,65 @@ class BCUIController(object):
         return BCUIController.__EXTENDED_OPEN_KO
 
 
+    def __themeChanged(self):
+        """Theme has been changed, reload resources"""
+        def buildPixmapList(widget):
+            pixmaps=[]
+            for propertyName in widget.dynamicPropertyNames():
+                pName=bytes(propertyName).decode()
+                if re.match('__bcIcon_', pName):
+                    # a reference to resource path has been stored,
+                    # reload icon from it
+                    if pName == '__bcIcon_normalon':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Normal, QIcon.On) )
+                    elif pName == '__bcIcon_normaloff':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Normal, QIcon.Off) )
+                    elif pName == '__bcIcon_disabledon':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Disabled, QIcon.On) )
+                    elif pName == '__bcIcon_disabledoff':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Disabled, QIcon.Off) )
+                    elif pName == '__bcIcon_activeon':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Active, QIcon.On) )
+                    elif pName == '__bcIcon_activeoff':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Active, QIcon.Off) )
+                    elif pName == '__bcIcon_selectedon':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Selected, QIcon.On) )
+                    elif pName == '__bcIcon_selectedoff':
+                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Selected, QIcon.Off) )
+            return pixmaps
+
+        if not self.__theme is None:
+            self.__theme.loadResources()
+
+            # need to apply new palette to widgets
+            # otherwise it seems they keep to refer to the old palette...
+            palette = QApplication.palette()
+            widgetList = self.__window.getWidgets()
+
+            for widget in widgetList:
+                if isinstance(widget, BCPathBar) or isinstance(widget, BreadcrumbsAddressBar):
+                    widget.updatePalette()
+                elif hasattr(widget, 'setPalette'):
+                    # force palette to be applied to widget
+                    widget.setPalette(palette)
+
+                if isinstance(widget, QTabWidget):
+                    # For QTabWidget, it's not possible to set icon directly,
+                    # need to use setTabIcon()
+                    for tabIndex in range(widget.count()):
+                        tabWidget = widget.widget(tabIndex)
+
+                        if not widget.tabIcon(tabIndex) is None:
+                            pixmaps=buildPixmapList(tabWidget)
+                            if len(pixmaps) > 0:
+                                widget.setTabIcon(tabIndex, buildIcon(pixmaps))
+
+                # need to do something to relad icons...
+                elif hasattr(widget, 'icon'):
+                    pixmaps=buildPixmapList(widget)
+                    if len(pixmaps) > 0:
+                        widget.setIcon(buildIcon(pixmaps))
+
     # endregion: initialisation methods ----------------------------------------
 
     # region: getter/setters ---------------------------------------------------
@@ -291,8 +381,12 @@ class BCUIController(object):
         return self.__fileLayerFilterDView
 
     def settings(self):
-        """return settoing manager"""
+        """return setting manager"""
         return self.__settings
+
+    def tableSettings(self):
+        """return table setting manager"""
+        return self.__tableSettings
 
     def panelId(self):
         """Return current highlighted panelId"""
@@ -333,7 +427,7 @@ class BCUIController(object):
 
     def theme(self):
         """Return theme object"""
-        return self.__window.theme()
+        return self.__theme
 
     def quickRefDict(self):
         """Return a dictionnary of quick references
@@ -467,6 +561,13 @@ class BCUIController(object):
             self.__settings.setOption(BCSettingsKey.SESSION_SAVEDVIEWS_ITEMS, self.__savedView.list())
             self.__settings.setOption(BCSettingsKey.SESSION_LASTDOC_O_ITEMS, self.__lastDocumentsOpened.list())
             self.__settings.setOption(BCSettingsKey.SESSION_LASTDOC_S_ITEMS, self.__lastDocumentsSaved.list())
+
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER, self.__tableSettings.border())
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER, self.__tableSettings.headerActive())
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH, self.__tableSettings.minWidth())
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH, self.__tableSettings.maxWidth())
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE, self.__tableSettings.minWidthActive())
+            self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE, self.__tableSettings.maxWidthActive())
 
         return self.__settings.saveConfig()
 
@@ -607,9 +708,23 @@ class BCUIController(object):
             elif opened == BCUIController.__EXTENDED_OPEN_OK:
                 return True
 
+            bcFile = BCFile(file)
+
+            newFileName = None
+            if bcFile.format() == BCFileManagedFormat.KRA:
+                newFileName = BCFile.formatFileName(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
+            else:
+                newFileName = BCFile.formatFileName(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
+
+            if isinstance(newFileName, str):
+                if newFileName != '' and not re.search("\.kra$", newFileName):
+                    newFileName+='.kra'
+                elif newFileName.strip() == '':
+                    newFileName = None
+
             try:
                 document = Krita.instance().openDocument(file)
-                document.setFileName(None)
+                document.setFileName(newFileName)
                 view = Krita.instance().activeWindow().addView(document)
                 Krita.instance().activeWindow().showView(view)
             except Exception as e:
@@ -696,8 +811,7 @@ class BCUIController(object):
 
         selectedFiles = self.panel().selectedFiles()
         if confirm:
-            fileList = "\n".join([file.fullPathName() for file in selectedFiles[5]])
-            choice = BCFileOperationUi.delete(self.__bcName, selectedFiles[2], selectedFiles[1], fileList)
+            choice = BCFileOperationUi.delete(self.__bcName, selectedFiles[2], selectedFiles[1], selectedFiles[5])
             if not choice:
                 return
 
@@ -714,8 +828,7 @@ class BCUIController(object):
         targetPath = self.panel(False).path()
         selectedFiles = self.panel().selectedFiles()
         if confirm:
-            fileList = "\n".join([file.fullPathName() for file in selectedFiles[5]])
-            choice = BCFileOperationUi.copy(self.__bcName, selectedFiles[2], selectedFiles[1], fileList, targetPath)
+            choice = BCFileOperationUi.copy(self.__bcName, selectedFiles[2], selectedFiles[1], selectedFiles[5], targetPath)
             if not choice:
                 return
             targetPath = BCFileOperationUi.path()
@@ -733,8 +846,7 @@ class BCUIController(object):
         targetPath = self.panel(False).path()
         selectedFiles = self.panel().selectedFiles()
         if confirm:
-            fileList = "\n".join([file.fullPathName() for file in selectedFiles[5]])
-            choice = BCFileOperationUi.move(self.__bcName, selectedFiles[2], selectedFiles[1], fileList, targetPath)
+            choice = BCFileOperationUi.move(self.__bcName, selectedFiles[2], selectedFiles[1], selectedFiles[5], targetPath)
             if not choice:
                 return
             targetPath = BCFileOperationUi.path()
@@ -1360,6 +1472,30 @@ class BCUIController(object):
         """Set default action for kra file"""
         self.__settings.setOption(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER, value)
 
+    def commandSettingsFileNewFileNameKra(self, value=None):
+        """Set default file name applied when a Krita file is opened as a new document"""
+        if value is None:
+            value = "<None>"
+        elif not isinstance(value, str):
+            raise EInvalidType("Given `value` must be a <str>")
+
+        if value.lower().strip() == '<none>':
+            value = "<None>"
+
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA, value)
+
+    def commandSettingsFileNewFileNameOther(self, value=None):
+        """Set default file name applied when a non Krita file is opened as a new document"""
+        if value is None:
+            value = "<None>"
+        elif not isinstance(value, str):
+            raise EInvalidType("Given `value` must be a <str>")
+
+        if value.lower().strip() == '<none>':
+            value = "<None>"
+
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER, value)
+
     def commandSettingsFileUnit(self, value=BCSettingsValues.FILE_UNIT_KIB):
         """Set used file unit"""
         setBytesSizeToStrUnit(value)
@@ -1467,7 +1603,29 @@ class BCUIController(object):
         for panelId in self.__window.panels:
             self.__window.panels[panelId].showQuickFilter(visible)
 
+    def commandInfoToClipBoardBorder(self, border=BCTable.BORDER_DOUBLE):
+        """Set border for information panel content to clipboard"""
+        self.__tableSettings.setBorder(border)
 
+    def commandInfoToClipBoardHeader(self, header=True):
+        """Set header for information panel content to clipboard"""
+        self.__tableSettings.setHeaderActive(header)
+
+    def commandInfoToClipBoardMinWidth(self, width=0):
+        """Set minimum width for information panel content to clipboard"""
+        self.__tableSettings.setMinWidth(width)
+
+    def commandInfoToClipBoardMaxWidth(self, width=0):
+        """Set maximum width for information panel content to clipboard"""
+        self.__tableSettings.setMaxWidth(width)
+
+    def commandInfoToClipBoardMinWidthActive(self, active=True):
+        """Set minimum width active for information panel content to clipboard"""
+        self.__tableSettings.setMinWidthActive(active)
+
+    def commandInfoToClipBoardMaxWidthActive(self, active=False):
+        """Set maximum width active for information panel content to clipboard"""
+        self.__tableSettings.setMaxWidthActive(active)
 
     def commandSettingsOpen(self):
         """Open dialog box settings"""
