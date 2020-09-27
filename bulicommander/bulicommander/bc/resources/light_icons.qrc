@@ -1,6 +1,6 @@
 <RCC>
   <qresource prefix="buli">
-    <file alias="normal">buli-powered-64x64.png</file>
+    <file alias="buli-rounded-border">png/buli-powered-64x64-rounded-border.png</file>
   </qresource>
   <qresource prefix="images">
     <file alias="text">svg/light/32dp/text.svg</file>
