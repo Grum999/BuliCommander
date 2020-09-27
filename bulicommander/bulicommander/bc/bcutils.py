@@ -41,7 +41,8 @@ from PyQt5.QtCore import (
         QRect
     )
 from PyQt5.QtWidgets import (
-        QAction
+        QAction,
+        QSystemTrayIcon
     )
 
 try:
@@ -629,7 +630,13 @@ def loadXmlUi(fileName, parent):
                             # store on object resource path for icons
                             widget.setProperty(f"__bcIcon_{nodeIcon.tag}", nodeIcon.text)
 
+def popNotification(title='', message='', icon=QSystemTrayIcon.Information):
+    tray = QSystemTrayIcon(Krita.instance())
+    tray.show()
+    tray.showMessage(title, message, icon)
+
 # ------------------------------------------------------------------------------
+
 
 class Stopwatch(object):
     """Manage stopwatch, mainly used for performances test & debug"""

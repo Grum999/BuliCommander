@@ -811,8 +811,7 @@ class BCUIController(object):
 
         selectedFiles = self.panel().selectedFiles()
         if confirm:
-            fileList = "\n".join([file.fullPathName() for file in selectedFiles[5]])
-            choice = BCFileOperationUi.delete(self.__bcName, selectedFiles[2], selectedFiles[1], fileList)
+            choice = BCFileOperationUi.delete(self.__bcName, selectedFiles[2], selectedFiles[1], selectedFiles[5])
             if not choice:
                 return
 
@@ -829,8 +828,7 @@ class BCUIController(object):
         targetPath = self.panel(False).path()
         selectedFiles = self.panel().selectedFiles()
         if confirm:
-            fileList = "\n".join([file.fullPathName() for file in selectedFiles[5]])
-            choice = BCFileOperationUi.copy(self.__bcName, selectedFiles[2], selectedFiles[1], fileList, targetPath)
+            choice = BCFileOperationUi.copy(self.__bcName, selectedFiles[2], selectedFiles[1], selectedFiles[5], targetPath)
             if not choice:
                 return
             targetPath = BCFileOperationUi.path()
@@ -848,8 +846,7 @@ class BCUIController(object):
         targetPath = self.panel(False).path()
         selectedFiles = self.panel().selectedFiles()
         if confirm:
-            fileList = "\n".join([file.fullPathName() for file in selectedFiles[5]])
-            choice = BCFileOperationUi.move(self.__bcName, selectedFiles[2], selectedFiles[1], fileList, targetPath)
+            choice = BCFileOperationUi.move(self.__bcName, selectedFiles[2], selectedFiles[1], selectedFiles[5], targetPath)
             if not choice:
                 return
             targetPath = BCFileOperationUi.path()

@@ -885,13 +885,6 @@ class BCPathBar(QFrame):
         """Display/Hide the saved view button"""
         self.btSavedViews.setVisible(visible)
 
-    def showFilter(self, visible=True):
-        """Display/Hide the history button"""
-        if not visible:
-            self.btFilter.setChecked(False)
-            self.__refreshFilter()
-        self.btFilter.setVisible(visible)
-
     def showHome(self, visible=True):
         """Display/Hide the home button"""
         self.btHome.setVisible(visible)
