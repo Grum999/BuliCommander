@@ -765,6 +765,7 @@ class BCMainViewTab(QFrame):
             self.lblOwner.setText('-')
 
         self.__fsWatcher = QFileSystemWatcher()
+        self.__fsWatcherTmpList = []
 
         self.__selectionChanged(None)
 
@@ -793,20 +794,22 @@ class BCMainViewTab(QFrame):
                     self.tvDirectoryTree.expand(item)
                     item=item.parent()
 
-            dirList=self.__fsWatcher.directories()
-            if len(dirList) > 0:
-                self.__fsWatcher.removePaths(dirList)
+            self.__fsWatcherTmpList=self.__fsWatcher.directories()
+            if len(self.__fsWatcherTmpList) > 0:
+                self.__fsWatcher.removePaths(self.__fsWatcherTmpList)
             expand(self.__dirTreeModel.index(self.path()))
 
             self.refresh()
             self.__fsWatcher.addPath(self.path())
+            self.__fsWatcherTmpList=self.__fsWatcher.directories()
             self.pathChanged.emit(value)
 
         @pyqtSlot('QString')
         def view_Changed(value):
-            dirList=self.__fsWatcher.directories()
-            if len(dirList) > 0:
-                self.__fsWatcher.removePaths(dirList)
+            self.__fsWatcherTmpList=self.__fsWatcher.directories()
+            if len(self.__fsWatcherTmpList) > 0:
+                self.__fsWatcher.removePaths(self.__fsWatcherTmpList)
+                self.__fsWatcherTmpList=self.__fsWatcher.directories()
 
             self.refresh()
             self.pathChanged.emit(value)
@@ -2123,7 +2126,7 @@ class BCMainViewTab(QFrame):
         # current tab index
         index=self.twInfo.currentIndex()
 
-        actionCopyAll = QAction(QIcon(":/images/tabs"), i18n('All tabs--'), self)
+        actionCopyAll = QAction(QIcon(":/images/tabs"), i18n('All tabs'), self)
         actionCopyAll.triggered.connect(copyAllTabs)
 
         actionCopyCurrent = QAction(self.twInfo.tabIcon(index), i18n(f'Current "{stripTags(self.twInfo.tabText(index))}" tab'), self)
@@ -2250,6 +2253,22 @@ class BCMainViewTab(QFrame):
         optionMenu.addAction(slOptWidthMax)
 
         contextMenu.exec_(event.globalPos())
+
+
+    def __enableWatchList(self, enabled):
+        """Allow to enable/disable current watch list"""
+        if not enabled:
+            # disable current watch
+
+            # keep in memory current watched directories
+            self.__fsWatcherTmpList=self.__fsWatcher.directories()
+            if len(self.__fsWatcherTmpList) > 0:
+                self.__fsWatcher.removePaths(self.__fsWatcherTmpList)
+        else:
+            # enable watch list
+            if len(self.__fsWatcherTmpList) > 0:
+                for path in self.__fsWatcherTmpList:
+                    self.__fsWatcher.addPath(path)
 
 
     def setVisible(self, value):
@@ -2920,8 +2939,8 @@ class BCMainViewTab(QFrame):
 
 
     def showFilter(self, visible=True):
-        """Display/Hide the history button"""
-        self.framePathBar.showFilter(visible)
+        """Display/Hide the quick filter button"""
+        self.framePathBar.showQuickFilter(visible)
 
 
     def showHome(self, visible=True):
@@ -2948,17 +2967,21 @@ class BCMainViewTab(QFrame):
         """Display/Hide margins"""
         self.framePathBar.showMargins(visible)
 
+
     def showMenuHistory(self, menu):
         """Build menu history"""
         self.framePathBar.menuHistoryShow(menu)
+
 
     def showMenuBookmarks(self, menu):
         """Build menu bookmarks"""
         self.framePathBar.menuBookmarksShow(menu)
 
+
     def showMenuSavedViews(self, menu):
         """Build menu saved views"""
         self.framePathBar.menuSavedViewsShow(menu)
+
 
     def showMenuLastDocuments(self, menu):
         """Build menu last documents views"""

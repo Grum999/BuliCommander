@@ -631,6 +631,7 @@ def loadXmlUi(fileName, parent):
 
 # ------------------------------------------------------------------------------
 
+
 class Stopwatch(object):
     """Manage stopwatch, mainly used for performances test & debug"""
     __current = {}

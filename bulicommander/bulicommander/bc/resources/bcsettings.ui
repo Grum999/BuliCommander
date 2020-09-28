@@ -19,9 +19,6 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <property name="sizeGripEnabled">
-   <bool>true</bool>
-  </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -83,10 +80,22 @@
      <item>
       <widget class="QStackedWidget" name="swCatPages">
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="pageCatGeneral">
         <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QScrollArea" name="scrollArea_2">
            <property name="frameShape">
@@ -103,28 +112,24 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>413</width>
-              <height>242</height>
+              <width>985</width>
+              <height>787</height>
              </rect>
             </property>
-            <layout class="QFormLayout" name="formLayout_2">
-             <item row="2" column="0" colspan="2">
-              <widget class="QCheckBox" name="cbCGLaunchOpenBC">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>If checked, open automatically Buli Commander interface when Krita is started</string>
-               </property>
-               <property name="statusTip">
-                <string>If checked, open automatically Buli Commander interface when Krita is started</string>
-               </property>
-               <property name="text">
-                <string>Open BuliCommander at Krita startup</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0" colspan="2">
+            <layout class="QGridLayout" name="gridLayout">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="9" column="0" colspan="3">
               <widget class="QLabel" name="label_7">
                <property name="font">
                 <font>
@@ -139,9 +144,31 @@
                <property name="text">
                 <string>Files</string>
                </property>
+               <property name="margin">
+                <number>4</number>
+               </property>
               </widget>
              </item>
-             <item row="5" column="0">
+             <item row="6" column="0">
+              <widget class="QRadioButton" name="rbCGSysTrayWhenActive">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray only if &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; is opened.&lt;/p&gt;&lt;p&gt;Icon is removed when &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; window is closed. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">padding-left: 30px</string>
+               </property>
+               <property name="text">
+                <string>When ac&amp;tive</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupGenSysTray</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="10" column="0">
               <widget class="QLabel" name="label_8">
                <property name="font">
                 <font>
@@ -154,7 +181,20 @@
                </property>
               </widget>
              </item>
-             <item row="5" column="1">
+             <item row="4" column="0" colspan="2">
+              <widget class="QLabel" name="label_16">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>Show Buli Commander icon in System Tray</string>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="0">
               <widget class="QRadioButton" name="rbCGFileUnitBinary">
                <property name="toolTip">
                 <string>Display files size with binary unit</string>
@@ -162,34 +202,94 @@
                <property name="statusTip">
                 <string>Display files size with binary unit</string>
                </property>
+               <property name="styleSheet">
+                <string notr="true">padding-left: 30px</string>
+               </property>
                <property name="text">
                 <string>Binary (&amp;1.00 KiB = 1024 bytes)</string>
                </property>
                <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="1">
-              <widget class="QRadioButton" name="rbCGFileUnitDecimal">
-               <property name="toolTip">
-                <string>Display files size with decimal unit</string>
-               </property>
-               <property name="statusTip">
-                <string>Display files size with decimal unit</string>
-               </property>
-               <property name="text">
-                <string>Decimal (1.&amp;00 KB = 1000 bytes)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0" colspan="2">
-              <widget class="QCheckBox" name="cbCGLaunchReplaceOpenDb">
-               <property name="enabled">
                 <bool>false</bool>
                </property>
+              </widget>
+             </item>
+             <item row="13" column="2">
+              <spacer name="verticalSpacer">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="8" column="0">
+              <widget class="QRadioButton" name="rbCGSysTrayNever">
                <property name="toolTip">
-                <string>If checked, Krita's Open dialog box is replaced by BuliCommanded</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Never display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray, never.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">padding-left: 30px</string>
+               </property>
+               <property name="text">
+                <string>N&amp;ever</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupGenSysTray</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="1" column="0" colspan="3">
+              <widget class="QCheckBox" name="cbCGLaunchOpenBC">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, open automatically Buli Commander interface when Krita is started&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Note: &lt;/p&gt;&lt;p&gt;- Due to technical reason, this option is only available from Krita 5.0.0&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="statusTip">
+                <string>If checked, open automatically Buli Commander interface when Krita is started</string>
+               </property>
+               <property name="text">
+                <string>Open Buli Commander at Krita startup</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="2" rowspan="5">
+              <widget class="QLabel" name="lblBuliIcon">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hey!!&lt;/p&gt;&lt;p&gt;&lt;br/&gt;This very cool icon will be used if you activate System Tray for &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Functionalities with System Tray will be improved/completed later...&lt;/span&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="pixmap">
+                <pixmap resource="dark_icons.qrc">:/buli/buli-rounded-border</pixmap>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
+               </property>
+               <property name="margin">
+                <number>16</number>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0" colspan="3">
+              <widget class="QCheckBox" name="cbCGLaunchReplaceOpenDb">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, Krita's Open dialog box is replaced by BuliCommanded&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Note: &lt;/p&gt;&lt;p&gt;- Due to technical reason, this option is only available from Krita 5.0.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="statusTip">
                 <string>If checked, Krita's Open dialog box is replaced by BuliCommanded</string>
@@ -199,7 +299,91 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="0" colspan="2">
+             <item row="7" column="0">
+              <widget class="QRadioButton" name="rbCGSysTrayNotification">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray only when a notification message is displayed.&lt;/p&gt;&lt;p&gt;In this case, icon is briefly displayed (~5s). &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">padding-left: 30px</string>
+               </property>
+               <property name="text">
+                <string>For no&amp;tification</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupGenSysTray</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="3" column="0" colspan="3">
+              <widget class="QLabel" name="label_15">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: palette(light);padding: 6;</string>
+               </property>
+               <property name="text">
+                <string>System Tray integration</string>
+               </property>
+               <property name="margin">
+                <number>4</number>
+               </property>
+              </widget>
+             </item>
+             <item row="12" column="0">
+              <widget class="QRadioButton" name="rbCGFileUnitDecimal">
+               <property name="toolTip">
+                <string>Display files size with decimal unit</string>
+               </property>
+               <property name="statusTip">
+                <string>Display files size with decimal unit</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">padding-left: 30px</string>
+               </property>
+               <property name="text">
+                <string>Decimal (1.&amp;00 KB = 1000 bytes)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QRadioButton" name="rbCGSysTrayAlways">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Always display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray, even when &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; interface is closed. &lt;/p&gt;&lt;p&gt;&lt;br/&gt;Note: &lt;/p&gt;&lt;p&gt;- With Krita &amp;gt;= 5.0.0, icon is visible at Krita's startup&lt;/p&gt;&lt;p&gt;- With Krita &amp;lt; 5.0.0, icon is visible after a first execution of &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">padding-left: 30px</string>
+               </property>
+               <property name="text">
+                <string>Alwa&amp;ys</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupGenSysTray</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="6" column="1">
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::MinimumExpanding</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="0" column="0" colspan="3">
               <widget class="QLabel" name="label_14">
                <property name="font">
                 <font>
@@ -212,7 +396,10 @@
                 <string notr="true">background-color: palette(light);padding: 6;</string>
                </property>
                <property name="text">
-                <string>Launch BuliCommander</string>
+                <string>Launch Buli Commander</string>
+               </property>
+               <property name="margin">
+                <number>4</number>
                </property>
               </widget>
              </item>
@@ -224,6 +411,18 @@
        </widget>
        <widget class="QWidget" name="pageCatNavigation">
         <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QScrollArea" name="scrollArea">
            <property name="frameShape">
@@ -240,15 +439,27 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>530</width>
-              <height>756</height>
+              <width>518</width>
+              <height>716</height>
              </rect>
             </property>
             <layout class="QFormLayout" name="formLayout_4">
              <property name="labelAlignment">
               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
              </property>
-             <item row="1" column="0" colspan="2">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0" colspan="2">
               <widget class="QLabel" name="label_11">
                <property name="font">
                 <font>
@@ -263,9 +474,12 @@
                <property name="text">
                 <string>Navigation bar buttons</string>
                </property>
+               <property name="margin">
+                <number>4</number>
+               </property>
               </widget>
              </item>
-             <item row="2" column="0">
+             <item row="1" column="0">
               <widget class="QCheckBox" name="cbCNNavBarBtnHome">
                <property name="text">
                 <string>Home</string>
@@ -276,7 +490,7 @@
                </property>
               </widget>
              </item>
-             <item row="3" column="0">
+             <item row="2" column="0">
               <widget class="QCheckBox" name="cbCNNavBarBtnViews">
                <property name="text">
                 <string>Views</string>
@@ -287,7 +501,7 @@
                </property>
               </widget>
              </item>
-             <item row="4" column="0">
+             <item row="3" column="0">
               <widget class="QCheckBox" name="cbCNNavBarBtnBookmarks">
                <property name="text">
                 <string>Bookmarks</string>
@@ -298,7 +512,7 @@
                </property>
               </widget>
              </item>
-             <item row="5" column="0">
+             <item row="4" column="0">
               <widget class="QCheckBox" name="cbCNNavBarBtnLastDocuments">
                <property name="text">
                 <string>Last documents</string>
@@ -309,7 +523,7 @@
                </property>
               </widget>
              </item>
-             <item row="6" column="0">
+             <item row="5" column="0">
               <widget class="QCheckBox" name="cbCNNavBarBtnHistory">
                <property name="text">
                 <string>History</string>
@@ -320,7 +534,7 @@
                </property>
               </widget>
              </item>
-             <item row="7" column="0">
+             <item row="6" column="0">
               <widget class="QCheckBox" name="cbCNNavBarBtnGoUp">
                <property name="text">
                 <string>Go up</string>
@@ -331,7 +545,7 @@
                </property>
               </widget>
              </item>
-             <item row="8" column="0">
+             <item row="7" column="0">
               <widget class="QCheckBox" name="cbCNNavBarBtnGoBack">
                <property name="text">
                 <string>Go back</string>
@@ -342,7 +556,7 @@
                </property>
               </widget>
              </item>
-             <item row="9" column="0">
+             <item row="8" column="0">
               <widget class="QCheckBox" name="cbCNNavBarBtnQuickFilter">
                <property name="text">
                 <string>Quick filter</string>
@@ -353,7 +567,7 @@
                </property>
               </widget>
              </item>
-             <item row="13" column="0" colspan="2">
+             <item row="9" column="0" colspan="2">
               <widget class="QLabel" name="label_3">
                <property name="font">
                 <font>
@@ -369,11 +583,11 @@
                 <string>Navigation directories history</string>
                </property>
                <property name="margin">
-                <number>0</number>
+                <number>4</number>
                </property>
               </widget>
              </item>
-             <item row="14" column="0">
+             <item row="10" column="0">
               <widget class="QLabel" name="label_4">
                <property name="font">
                 <font>
@@ -389,7 +603,7 @@
                </property>
               </widget>
              </item>
-             <item row="14" column="1">
+             <item row="10" column="1">
               <widget class="QWidget" name="widget" native="true">
                <layout class="QHBoxLayout" name="horizontalLayout_6">
                 <property name="leftMargin">
@@ -442,7 +656,49 @@
                </layout>
               </widget>
              </item>
-             <item row="19" column="0" colspan="2">
+             <item row="11" column="1">
+              <layout class="QHBoxLayout" name="horizontalLayout_8">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QCheckBox" name="cbCNHistoryKeepWhenQuit">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Keep directories history when Buli Commander is closed</string>
+                 </property>
+                 <property name="text">
+                  <string>Keep history when quit</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pbCNHistoryClear">
+                 <property name="toolTip">
+                  <string>Clear current navigation history</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>Clear current navigation history</string>
+                 </property>
+                 <property name="text">
+                  <string>Clear</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="12" column="0" colspan="2">
               <widget class="QLabel" name="label_12">
                <property name="font">
                 <font>
@@ -457,22 +713,12 @@
                <property name="text">
                 <string>Last documents history</string>
                </property>
-              </widget>
-             </item>
-             <item row="22" column="0">
-              <widget class="QLabel" name="label_13">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <bold>true</bold>
-                </font>
-               </property>
-               <property name="text">
-                <string>Maximum</string>
+               <property name="margin">
+                <number>4</number>
                </property>
               </widget>
              </item>
-             <item row="22" column="1">
+             <item row="14" column="1">
               <layout class="QHBoxLayout" name="horizontalLayout_5">
                <property name="leftMargin">
                 <number>0</number>
@@ -523,85 +769,7 @@
                </item>
               </layout>
              </item>
-             <item row="26" column="0" colspan="2">
-              <widget class="QLabel" name="label_10">
-               <property name="font">
-                <font>
-                 <pointsize>12</pointsize>
-                 <weight>75</weight>
-                 <bold>true</bold>
-                </font>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">background-color: palette(light);padding: 6;</string>
-               </property>
-               <property name="text">
-                <string>Home directory</string>
-               </property>
-              </widget>
-             </item>
-             <item row="27" column="0" colspan="2">
-              <widget class="QRadioButton" name="rbCNHomeDirSys">
-               <property name="toolTip">
-                <string>The @home directory refers to user directory defined by system</string>
-               </property>
-               <property name="statusTip">
-                <string>The @home directory refers to user directory defined by system</string>
-               </property>
-               <property name="text">
-                <string>&amp;User directory defined by system</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-               <attribute name="buttonGroup">
-                <string notr="true">buttonGroupGenHomeDir</string>
-               </attribute>
-              </widget>
-             </item>
              <item row="15" column="1">
-              <layout class="QHBoxLayout" name="horizontalLayout_8">
-               <property name="leftMargin">
-                <number>0</number>
-               </property>
-               <property name="topMargin">
-                <number>0</number>
-               </property>
-               <item>
-                <widget class="QCheckBox" name="cbCNHistoryKeepWhenQuit">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="toolTip">
-                  <string>Keep directories history when Buli Commander is closed</string>
-                 </property>
-                 <property name="text">
-                  <string>Keep history when quit</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="pbCNHistoryClear">
-                 <property name="toolTip">
-                  <string>Clear current navigation history</string>
-                 </property>
-                 <property name="statusTip">
-                  <string>Clear current navigation history</string>
-                 </property>
-                 <property name="text">
-                  <string>Clear</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item row="23" column="1">
               <layout class="QHBoxLayout" name="horizontalLayout_9">
                <property name="leftMargin">
                 <number>0</number>
@@ -650,7 +818,46 @@
                </item>
               </layout>
              </item>
-             <item row="28" column="0">
+             <item row="16" column="0" colspan="2">
+              <widget class="QLabel" name="label_10">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: palette(light);padding: 6;</string>
+               </property>
+               <property name="text">
+                <string>Home directory</string>
+               </property>
+               <property name="margin">
+                <number>4</number>
+               </property>
+              </widget>
+             </item>
+             <item row="17" column="0" colspan="2">
+              <widget class="QRadioButton" name="rbCNHomeDirSys">
+               <property name="toolTip">
+                <string>The @home directory refers to user directory defined by system</string>
+               </property>
+               <property name="statusTip">
+                <string>The @home directory refers to user directory defined by system</string>
+               </property>
+               <property name="text">
+                <string>&amp;User directory defined by system</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupNavHomeDir</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="18" column="0">
               <widget class="QRadioButton" name="rbCNHomeDirUD">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
@@ -665,14 +872,14 @@
                 <string>The @home directory refers to user defined directory</string>
                </property>
                <property name="text">
-                <string>User &amp;defined</string>
+                <string>U&amp;ser defined</string>
                </property>
                <attribute name="buttonGroup">
-                <string notr="true">buttonGroupGenHomeDir</string>
+                <string notr="true">buttonGroupNavHomeDir</string>
                </attribute>
               </widget>
              </item>
-             <item row="28" column="1">
+             <item row="18" column="1">
               <widget class="BCPathBar" name="bcpbCNUserDefined">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -708,6 +915,19 @@
                </layout>
               </widget>
              </item>
+             <item row="14" column="0">
+              <widget class="QLabel" name="label_13">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>Maximum</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </widget>
           </widget>
@@ -716,6 +936,18 @@
        </widget>
        <widget class="QWidget" name="pageCatImageFiles">
         <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
          <item>
           <layout class="QFormLayout" name="formLayout">
            <property name="labelAlignment">
@@ -750,7 +982,7 @@
               <string>Open original file in Krita</string>
              </property>
              <property name="text">
-              <string>Open doc&amp;ument</string>
+              <string>Op&amp;en document</string>
              </property>
              <property name="checked">
               <bool>true</bool>
@@ -766,7 +998,7 @@
               <string>When checked, close BuliCommander after document has been opened/created</string>
              </property>
              <property name="text">
-              <string>Close BuliCommander</string>
+              <string>Close Buli Commander</string>
              </property>
             </widget>
            </item>
@@ -799,7 +1031,7 @@
               <string>Open original file in Krita</string>
              </property>
              <property name="text">
-              <string>Open &amp;document</string>
+              <string>Open doc&amp;ument</string>
              </property>
              <attribute name="buttonGroup">
               <string notr="true">buttonGroupImgDefaultOther</string>
@@ -825,7 +1057,7 @@
               <string>When checked, close BuliCommander after document has been opened/created</string>
              </property>
              <property name="text">
-              <string>Close BuliCommander</string>
+              <string>Close Buli Commander</string>
              </property>
             </widget>
            </item>
@@ -843,7 +1075,7 @@
               </font>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define default name applied to new created document&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;&amp;lt;None&amp;gt; &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Do not affect a default name for document&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{file:path} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The file path name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{file:base} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The file base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{file:name} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The file path+base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{file:ext} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The file extension&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{date} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system date (&lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;yyyy-mm-dd&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{date:yyyy} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;year&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{date:mm} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;month&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{date:dd} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;day&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{time} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;time &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;(&lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;hh:mm:ss&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{time:hh} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;hour (00-24)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{time:mm} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;minutes&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{time:ss} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;seconds&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{size} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current image size (&lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;widthxheight&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{size:width} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;width&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{size:height} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;height&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{counter} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{counter:####} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define default name applied to new created document&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;&amp;lt;None&amp;gt; &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Do not affect a default name for document&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:path} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file path name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:baseName} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:name} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file path+base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:ext} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file extension&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system date (&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;yyyy-mm-dd&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:yyyy} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;year&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;month&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:dd} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;day&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;time &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;(&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hh:mm:ss&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:hh} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hour (00-24)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;minutes&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:ss} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;seconds&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image size (&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;widthxheight&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size:width} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;width&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size:height} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;height&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{counter} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{counter:####} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="editable">
               <bool>true</bool>
@@ -880,7 +1112,7 @@
               </font>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define default name applied to new created document&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;&amp;lt;None&amp;gt; &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Do not affect a default name for document&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{file:path} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The file path name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{file:base} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The file base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{file:name} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The file path+base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{file:ext} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The file extension&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{date} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system date (&lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;yyyy-mm-dd&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{date:yyyy} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;year&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{date:mm} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;month&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{date:dd} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;day&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{time} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;time &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;(&lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;hh:mm:ss&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{time:hh} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;hour (00-24)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{time:mm} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;minutes&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{time:ss} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;seconds&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{size} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current image size (&lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;widthxheight&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{size:width} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;width&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{size:height} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-style:italic;&quot;&gt;height&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{counter} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:9pt; font-weight:600;&quot;&gt;{counter:####} &lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define default name applied to new created document&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;&amp;lt;None&amp;gt; &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Do not affect a default name for document&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:path} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file path name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:baseName} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:name} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file path+base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:ext} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file extension&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system date (&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;yyyy-mm-dd&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:yyyy} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;year&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;month&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:dd} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;day&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;time &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;(&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hh:mm:ss&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:hh} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hour (00-24)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;minutes&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:ss} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;seconds&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image size (&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;widthxheight&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size:width} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;width&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size:height} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;height&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{counter} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{counter:####} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="styleSheet">
               <string notr="true"/>
@@ -899,10 +1131,28 @@
        </widget>
        <widget class="QWidget" name="pageCatCachedImages">
         <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
          <item>
           <layout class="QFormLayout" name="formLayout_3">
            <item row="0" column="0" colspan="2">
             <widget class="QLabel" name="label_5">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="font">
               <font>
                <pointsize>12</pointsize>
@@ -920,7 +1170,7 @@
               <string>Cached content</string>
              </property>
              <property name="margin">
-              <number>0</number>
+              <number>4</number>
              </property>
             </widget>
            </item>
@@ -1101,8 +1351,9 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroupImgDefaultOther"/>
+  <buttongroup name="buttonGroupGenSysTray"/>
   <buttongroup name="buttonGroupImgDefaultKrita"/>
-  <buttongroup name="buttonGroupGenHomeDir"/>
+  <buttongroup name="buttonGroupImgDefaultOther"/>
+  <buttongroup name="buttonGroupNavHomeDir"/>
  </buttongroups>
 </ui>
