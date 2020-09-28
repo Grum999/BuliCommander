@@ -128,8 +128,12 @@ class BuliCommander(Extension):
         self.__isKritaVersionOk = checkKritaVersion(*REQUIRED_KRITA_VERSION)
 
 
-    def __initUiController(self):
-        """Initialise UI controller"""
+    def __initUiController(self, kritaIsStarting=False):
+        """Initialise UI controller
+
+        `kritaIsStarting` set to True if UiConbtroller is intialised during Krita's startup,
+        otherwise set to False (initialised on first manual execution)
+        """
         @pyqtSlot('QString')
         def opened(document):
             # a document has been created: if filename is set, document has been opened
@@ -140,10 +144,6 @@ class BuliCommander(Extension):
             # a document has been saved
             if fileName != '':
                 self.__uiController.commandGoLastDocsSavedAdd(fileName)
-        @pyqtSlot()
-        def closing():
-            # Krita is closing, save BuliCommander configuration
-            self.__uiController.saveSettings()
 
         try:
             Krita.instance().notifier().imageCreated.disconnect()
@@ -165,9 +165,8 @@ class BuliCommander(Extension):
             # (otherwise, with Krita 5.0.0, can be triggered more than once time - on each new window)
             Krita.instance().notifier().imageCreated.connect(opened)
             Krita.instance().notifier().imageSaved.connect(saved)
-            Krita.instance().notifier().applicationClosing.connect(closing)
 
-            self.__uiController = BCUIController(PLUGIN_MENU_ENTRY, PLUGIN_VERSION)
+            self.__uiController = BCUIController(PLUGIN_MENU_ENTRY, PLUGIN_VERSION, kritaIsStarting)
 
 
     def setup(self):
@@ -175,7 +174,7 @@ class BuliCommander(Extension):
         @pyqtSlot()
         def windowCreated():
             # the best place to initialise controller (just after main window is created)
-            self.__initUiController()
+            self.__initUiController(True)
 
         if not self.__isKritaVersionOk:
             return
@@ -203,7 +202,7 @@ class BuliCommander(Extension):
 
         if self.__uiController is None:
             # with krita 5.0.0, might be created at krita startup
-            self.__initUiController()
+            self.__initUiController(False)
         self.__uiController.start()
 
 
