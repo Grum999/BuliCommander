@@ -19,8 +19,10 @@
 # A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
-
+from PyQt5.Qt import *
 from PyQt5.QtWidgets import (
+        QAction,
+        QMenu,
         QSystemTrayIcon
     )
 from PyQt5.QtGui import (
@@ -48,6 +50,16 @@ class BCSysTray(object):
 
     def __init__(self, uiController):
         """Initialise SysTray manager"""
+        def actionAbout(action):
+            self.__uiController.commandAboutBc()
+
+        def actionDisplayBc(action):
+            self.__displayBuliCommander()
+
+        def actionQuitBc(action):
+            self.__uiController.commandQuit()
+
+
         # Note: theme must be loaded before BCSysTray is instancied (otherwise no icon will be set)
         self.__buliIcon = buildIcon([(QPixmap(':/buli/buli-rounded-border'), QIcon.Normal)])
         self.__tray = QSystemTrayIcon(self.__buliIcon, Krita.instance())
@@ -60,14 +72,37 @@ class BCSysTray(object):
 
         BCSysTray.__selfInstance = self
 
+        self.__actionAbout=QAction(i18n('About Buli Commander...'))
+        self.__actionAbout.triggered.connect(actionAbout)
+        self.__actionOpenBc=QAction(i18n('Open Buli Commander...'))
+        self.__actionOpenBc.triggered.connect(actionDisplayBc)
+        self.__actionCloseBc=QAction(i18n('Quit Buli Commander'))
+        self.__actionCloseBc.triggered.connect(actionQuitBc)
+
+        self.__menu = QMenu()
+        self.__menu.addAction(self.__actionAbout)
+        self.__menu.addSeparator()
+        self.__menu.addAction(self.__actionOpenBc)
+        self.__menu.addSeparator()
+        self.__menu.addAction(self.__actionCloseBc)
+
+        self.__tray.setContextMenu(self.__menu)
+
 
     def __displayContextMenu(self):
         """Display context menu on systray icon"""
-        print('[BCSysTray] Display context menu')
+        # menu
+
+        # About BC
+        # --------
+        # Open BC  | Show BC            ==> Open is not yet opened, otherwise show
+        # Quit BC
+        print("__displayContextMenu()")
 
 
     def __displayBuliCommander(self):
         """Display buli commander"""
+        print("__displayBuliCommander()")
         if self.__uiController.started():
             self.__uiController.commandViewBringToFront()
         else:
@@ -87,6 +122,9 @@ class BCSysTray(object):
 
     def __displaySysTrayIcon(self):
         """Display systray if allowed by mode"""
+        self.__actionOpenBc.setVisible(not self.__uiController.started())
+        self.__actionCloseBc.setVisible(self.__uiController.started())
+
         if self.__visibleMode==BCSysTray.SYSTRAY_MODE_ALWAYS:
             self.__tray.show()
         elif self.__visibleMode==BCSysTray.SYSTRAY_MODE_WHENACTIVE:
@@ -103,6 +141,9 @@ class BCSysTray(object):
 
     def __hideSysTrayIcon(self):
         """Hide systray if allowed by mode"""
+        self.__actionOpenBc.setVisible(not self.__uiController.started())
+        self.__actionCloseBc.setVisible(self.__uiController.started())
+
         if self.__visibleMode!=BCSysTray.SYSTRAY_MODE_ALWAYS:
             self.__tray.hide()
 
@@ -150,7 +191,6 @@ class BCSysTray(object):
             tmpTray.show()
             tmpTray.showMessage(title, message, icon)
             tmpTray.hide()
-
 
 
     @staticmethod
