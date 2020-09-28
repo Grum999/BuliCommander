@@ -58,6 +58,7 @@ from .bcmainviewtab import (
         BCMainViewTabTabs
     )
 from .bcmainwindow import BCMainWindow
+from .bcsystray import BCSysTray
 from .bcpathbar import BCPathBar
 from .bcsettings import (
         BCSettings,
@@ -98,14 +99,22 @@ from ..pktk.ekrita import (
 from ..libs.breadcrumbsaddressbar.breadcrumbsaddressbar import BreadcrumbsAddressBar
 
 # ------------------------------------------------------------------------------
-class BCUIController(object):
+class BCUIController(QObject):
     """The controller provide an access to all BuliCommander functions
     """
     __EXTENDED_OPEN_OK = 1
     __EXTENDED_OPEN_KO = -1
     __EXTENDED_OPEN_CANCEL = 0
 
+    bcWindowShown = pyqtSignal()
+    bcWindowClosed = pyqtSignal()
+
     def __init__(self, bcName="Buli Commander", bcVersion="testing"):
+        super(BCUIController, self).__init__(None)
+
+        self.__bcStarted = False
+        self.__bcStarting = False
+
         self.__theme = BCTheme()
         self.__window = None
         self.__bcName = bcName
@@ -125,6 +134,9 @@ class BCUIController(object):
 
         self.__settings = BCSettings('bulicommander')
 
+        self.__systray=BCSysTray(self)
+        self.commandSettingsSysTrayMode(self.__settings.option(BCSettingsKey.CONFIG_SYSTRAY_MODE.id()))
+
         # store a global reference to activeWindow to be able to work with
         # activeWindow signals
         # https://krita-artists.org/t/krita-4-4-new-api/12247?u=grum999
@@ -139,6 +151,12 @@ class BCUIController(object):
         BCFile.initialiseCache()
 
     def start(self):
+        if self.__bcStarted or self.__bcStarting:
+            # user interface is already started, exit
+            return
+
+        self.__bcStarting = True
+
         if not self.__theme is None:
             self.__theme.loadResources()
 
@@ -157,6 +175,8 @@ class BCUIController(object):
         (ie: the widget size are known) to be applied
         """
         if self.__initialised:
+            self.__bcStarted = True
+            self.bcWindowShown.emit()
             # already initialised, do nothing
             return
 
@@ -185,6 +205,7 @@ class BCUIController(object):
         self.commandSettingsHistoryKeepOnExit(self.__settings.option(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT.id()))
         self.commandSettingsLastDocsMaxSize(self.__settings.option(BCSettingsKey.CONFIG_LASTDOC_MAXITEMS.id()))
         self.commandSettingsSaveSessionOnExit(self.__settings.option(BCSettingsKey.CONFIG_SESSION_SAVE.id()))
+        self.commandSettingsSysTrayMode(self.__settings.option(BCSettingsKey.CONFIG_SYSTRAY_MODE.id()))
 
         self.commandViewMainWindowGeometry(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY.id()))
         self.commandViewMainWindowMaximized(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED.id()))
@@ -258,6 +279,9 @@ class BCUIController(object):
             self.__window.panels[panelId].setAllowRefresh(True)
 
         self.__initialised = True
+        self.__bcStarted = True
+        self.__bcStarting = False
+        self.bcWindowShown.emit()
 
 
     def __extendedOpen(self, file):
@@ -492,6 +516,9 @@ class BCUIController(object):
             return refDict[refId][2]
         return None
 
+    def started(self):
+        """Return True if BuliCommander interface is started"""
+        return self.__bcStarted
 
     # endregion: getter/setters ------------------------------------------------
 
@@ -603,6 +630,9 @@ class BCUIController(object):
         # stop all async processes (thumbnail generating)
         for panelRef in self.__window.panels:
             self.__window.panels[panelRef].close()
+
+        self.__bcStarted = False
+        self.bcWindowClosed.emit()
 
     def optionViewDisplaySecondaryPanel(self):
         """Return current option value"""
@@ -858,6 +888,11 @@ class BCUIController(object):
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setAllowRefresh(True)
+
+    def commandViewBringToFront(self):
+        """Bring main window to front"""
+        self.__window.setWindowState( (self.__window.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
+        self.__window.activateWindow()
 
     def commandViewSwapPanels(self):
         """Swap panels positions"""
@@ -1511,6 +1546,11 @@ class BCUIController(object):
     def commandSettingsHomeDirUserDefined(self, value=''):
         """Set user defined directory for home"""
         self.__settings.setOption(BCSettingsKey.CONFIG_HOME_DIR_UD, value)
+
+    def commandSettingsSysTrayMode(self, value=BCSysTray.SYSTRAY_MODE_WHENACTIVE):
+        """Set mode for systray notifier"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_SYSTRAY_MODE, value)
+        self.__systray.setVisibleMode(value)
 
     def commandSettingsSaveSessionOnExit(self, saveSession=None):
         """Define if current session properties have to be save or not"""

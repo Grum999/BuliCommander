@@ -47,7 +47,7 @@ from .bcfile import (
         BCFileManagedFormat,
         BCFileThumbnailSize
     )
-from .bcnotifier import BCNotifier
+from .bcsystray import BCSysTray
 from .bcpathbar import BCPathBar
 from .bcutils import (
         Debug,
@@ -692,18 +692,18 @@ class BCFileOperation(object):
         QApplication.restoreOverrideCursor()
 
         if inError>0:
-            BCNotifier.messageCritical(
+            BCSysTray.messageCritical(
                 i18n(f"{title}::{modeMaj} files"),
                 i18n(f"{modeMaj} process has been finished with errors\n\n<i>Items not {modeEd}: <b>{inError}</b> of <b>{len(files)}</b></i>")
             )
 
         if processed!=len(files):
-            BCNotifier.messageWarning(
+            BCSysTray.messageWarning(
                 i18n(f"{title}::{modeMaj} files"),
                 i18n(f"{modeMaj} process has been cancelled\n\n<i>Items {modeEd} before action has been cancelled: <b>{processed - inError}</b> of <b>{len(files)}</b></i>")
             )
         elif inError==0:
-            BCNotifier.messageInformation(
+            BCSysTray.messageInformation(
                 i18n(f"{title}::{modeMaj} files"),
                 i18n(f"{modeMaj} finished\n\n<i>Items {modeEd}: <b>{len(files)}</b></i>")
             )
@@ -754,12 +754,12 @@ class BCFileOperation(object):
         QApplication.restoreOverrideCursor()
 
         if cancelled>0:
-            BCNotifier.messageWarning(
+            BCSysTray.messageWarning(
                 i18n(f"{title}::Delete files"),
                 i18n(f"Deletion process has been cancelled\n\n<i>Items deleted before action has been cancelled: <b>{cancelled}</b> of <b>{len(files)}<b></i>")
             )
         if inError>0:
-            BCNotifier.messageCritical(
+            BCSysTray.messageCritical(
                 i18n(f"{title}::Delete files"),
                 i18n(f"Deletion process has been finished with errors\n\n<i>Items not deleted: <b>{inError}</b> of <b>{len(files)}</b></i>")
             )
@@ -790,7 +790,7 @@ class BCFileOperation(object):
             Path(path).mkdir(parents=createParent)
             return True
         except Exception as e:
-            BCNotifier.messageCritical(
+            BCSysTray.messageCritical(
                 i18n(f"{title}::Create directory"),
                 f"Unable to create directory <b>{path}</b>"
             )
