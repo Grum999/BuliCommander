@@ -49,6 +49,7 @@ from .bcpathbar import BCPathBar
 from .bcsystray import BCSysTray
 from .bcutils import (
         bytesSizeToStr,
+        checkKritaVersion,
         Debug
     )
 
@@ -127,6 +128,8 @@ class BCSettingsKey(Enum):
     CONFIG_NAVBAR_BUTTONS_BACK =                             'config.navbar.buttons.back'
     CONFIG_NAVBAR_BUTTONS_UP =                               'config.navbar.buttons.up'
     CONFIG_NAVBAR_BUTTONS_QUICKFILTER =                      'config.navbar.buttons.quickFilter'
+    CONFIG_OPEN_ATSTARTUP =                                  'config.open.atStartup'
+    CONFIG_OPEN_OVERRIDEKRITA =                              'config.open.overridekrita'
     CONFIG_SYSTRAY_MODE =                                    'config.systray.mode'
     CONFIG_SESSION_SAVE =                                    'config.session.save'
     CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY =          'config.defaultSession.panels.view.filesManagedOnly'
@@ -247,6 +250,9 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_NAVBAR_BUTTONS_QUICKFILTER.id():               (True,                     BCSettingsFmt(bool)),
 
             BCSettingsKey.CONFIG_SYSTRAY_MODE.id():                             (2,                        BCSettingsFmt(int, [0,1,2,3])),
+
+            BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id():                           (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id():                       (False,                    BCSettingsFmt(bool)),
 
             BCSettingsKey.CONFIG_SESSION_SAVE.id():                             (True,                     BCSettingsFmt(bool)),
 
@@ -575,6 +581,13 @@ class BCSettingsDialogBox(QDialog):
         updateBtn()
 
         # --- GEN Category -----------------------------------------------------
+        self.cbCGLaunchOpenBC.setEnabled(checkKritaVersion(5,0,0))
+        self.cbCGLaunchOpenBC.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id()))
+
+        # not yet implemented...
+        #self.cbCGLaunchReplaceOpenDb.setEnabled(checkKritaVersion(5,0,0))
+        self.cbCGLaunchReplaceOpenDb.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()))
+
         if self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_UNIT.id()) == BCSettingsValues.FILE_UNIT_KIB:
             self.rbCGFileUnitBinary.setChecked(True)
         else:
@@ -665,6 +678,9 @@ class BCSettingsDialogBox(QDialog):
         self.__uiController.commandSettingsLastDocsMaxSize(self.hsCNLastDocsMax.value())
 
         # --- GEN Category -----------------------------------------------------
+        self.__uiController.commandSettingsOpenAtStartup(self.cbCGLaunchOpenBC.isChecked())
+        self.__uiController.commandSettingsOpenOverrideKrita(self.cbCGLaunchReplaceOpenDb.isChecked())
+
         if self.rbCGFileUnitBinary.isChecked():
             self.__uiController.commandSettingsFileUnit(BCSettingsValues.FILE_UNIT_KIB)
         else:

@@ -109,7 +109,7 @@ class BCUIController(QObject):
     bcWindowShown = pyqtSignal()
     bcWindowClosed = pyqtSignal()
 
-    def __init__(self, bcName="Buli Commander", bcVersion="testing"):
+    def __init__(self, bcName="Buli Commander", bcVersion="testing", kritaIsStarting=False):
         super(BCUIController, self).__init__(None)
 
         self.__bcStarted = False
@@ -149,6 +149,9 @@ class BCUIController(QObject):
         self.commandGoLastDocsSavedSet(self.__settings.option(BCSettingsKey.SESSION_LASTDOC_S_ITEMS.id()))
 
         BCFile.initialiseCache()
+
+        if kritaIsStarting and self.__settings.option(BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id()):
+            self.start()
 
     def start(self):
         if self.__bcStarted or self.__bcStarting:
@@ -209,6 +212,8 @@ class BCUIController(QObject):
         self.commandSettingsLastDocsMaxSize(self.__settings.option(BCSettingsKey.CONFIG_LASTDOC_MAXITEMS.id()))
         self.commandSettingsSaveSessionOnExit(self.__settings.option(BCSettingsKey.CONFIG_SESSION_SAVE.id()))
         self.commandSettingsSysTrayMode(self.__settings.option(BCSettingsKey.CONFIG_SYSTRAY_MODE.id()))
+        self.commandSettingsOpenAtStartup(self.__settings.option(BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id()))
+        self.commandSettingsOpenOverrideKrita(self.__settings.option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()))
 
         self.commandViewMainWindowGeometry(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY.id()))
         self.commandViewMainWindowMaximized(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED.id()))
@@ -1587,6 +1592,15 @@ class BCUIController(QObject):
         """Set mode for systray notifier"""
         self.__settings.setOption(BCSettingsKey.CONFIG_SYSTRAY_MODE, value)
         self.__systray.setVisibleMode(value)
+
+    def commandSettingsOpenAtStartup(self, value=False):
+        """Set option to start BC at Krita's startup"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_OPEN_ATSTARTUP, value)
+
+    def commandSettingsOpenOverrideKrita(self, value=False):
+        """Set option to override krita's open command"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA, value)
+        # TODO: need to implement....
 
     def commandSettingsSaveSessionOnExit(self, saveSession=None):
         """Define if current session properties have to be save or not"""

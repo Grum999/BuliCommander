@@ -245,7 +245,7 @@
              <item row="1" column="0" colspan="3">
               <widget class="QCheckBox" name="cbCGLaunchOpenBC">
                <property name="enabled">
-                <bool>false</bool>
+                <bool>true</bool>
                </property>
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, open automatically Buli Commander interface when Krita is started&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Note: &lt;/p&gt;&lt;p&gt;- Due to technical reason, this option is only available from Krita 5.0.0&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -439,8 +439,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>985</width>
-              <height>787</height>
+              <width>518</width>
+              <height>716</height>
              </rect>
             </property>
             <layout class="QFormLayout" name="formLayout_4">
