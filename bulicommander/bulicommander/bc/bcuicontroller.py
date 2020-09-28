@@ -157,6 +157,9 @@ class BCUIController(QObject):
 
         self.__bcStarting = True
 
+        # Check if windows are opened and then, connect signal if needed
+        self.__checkKritaWindows()
+
         if not self.__theme is None:
             self.__theme.loadResources()
 
@@ -367,6 +370,39 @@ class BCUIController(QObject):
                     pixmaps=buildPixmapList(widget)
                     if len(pixmaps) > 0:
                         widget.setIcon(buildIcon(pixmaps))
+
+
+    def __checkKritaWindows(self):
+        """Check if windows signal windowClosed() is already defined and, if not,
+        define it
+        """
+        # applicationClosing signal can't be used, because when while BC is opened,
+        # application is still running and then signal is not trigerred..
+        #
+        # solution is, when a window is closed, to check how many windows are still
+        # opened
+        #
+        for window in Krita.instance().windows():
+            # DO NOT SET PROPERTY ON WINDOW
+            # but on qwindow() as the qwindow() is always the same
+            # and as window is just an instance that wrap the underlied QMainWindow
+            # a new object is returned each time windows() list is returned
+            if window.qwindow().property('__bcWindowClosed') != True:
+                window.windowClosed.connect(self.__windowClosed)
+                window.qwindow().setProperty('__bcWindowClosed', True)
+
+    def __windowClosed(self):
+        """A krita window has been closed"""
+        # check how many windows are still opened
+        # if there's no window opened, close BC
+
+        # need to ensure that all windows are connected to close signal
+        # (maybe, since BC has been opened, new Krita windows has been created...)
+        self.__checkKritaWindows()
+
+        if len( Krita.instance().windows()) == 0:
+            self.commandQuit()
+
 
     # endregion: initialisation methods ----------------------------------------
 
