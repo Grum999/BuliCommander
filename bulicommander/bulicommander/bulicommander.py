@@ -160,11 +160,14 @@ class BuliCommander(Extension):
         except Exception as e:
             pass
 
-        Krita.instance().notifier().imageCreated.connect(opened)
-        Krita.instance().notifier().imageSaved.connect(saved)
-        Krita.instance().notifier().applicationClosing.connect(closing)
+        if self.__uiController is None:
+            # no controller, create it
+            # (otherwise, with Krita 5.0.0, can be triggered more than once time - on each new window)
+            Krita.instance().notifier().imageCreated.connect(opened)
+            Krita.instance().notifier().imageSaved.connect(saved)
+            Krita.instance().notifier().applicationClosing.connect(closing)
 
-        self.__uiController = BCUIController(PLUGIN_MENU_ENTRY, PLUGIN_VERSION)
+            self.__uiController = BCUIController(PLUGIN_MENU_ENTRY, PLUGIN_VERSION)
 
 
     def setup(self):
