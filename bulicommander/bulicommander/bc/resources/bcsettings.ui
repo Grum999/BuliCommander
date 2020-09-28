@@ -286,10 +286,10 @@
              <item row="2" column="0" colspan="3">
               <widget class="QCheckBox" name="cbCGLaunchReplaceOpenDb">
                <property name="enabled">
-                <bool>false</bool>
+                <bool>true</bool>
                </property>
                <property name="toolTip">
-                <string>If checked, Krita's Open dialog box is replaced by BuliCommanded</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, Krita's Open dialog box is replaced by BuliCommanded&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Note: &lt;/p&gt;&lt;p&gt;- Due to technical reason, this option is only available from Krita 5.0.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="statusTip">
                 <string>If checked, Krita's Open dialog box is replaced by BuliCommanded</string>

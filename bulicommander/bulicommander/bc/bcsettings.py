@@ -129,7 +129,7 @@ class BCSettingsKey(Enum):
     CONFIG_NAVBAR_BUTTONS_UP =                               'config.navbar.buttons.up'
     CONFIG_NAVBAR_BUTTONS_QUICKFILTER =                      'config.navbar.buttons.quickFilter'
     CONFIG_OPEN_ATSTARTUP =                                  'config.open.atStartup'
-    CONFIG_OPEN_OVERRIDEKRITA =                              'config.open.overridekrita'
+    CONFIG_OPEN_OVERRIDEKRITA =                              'config.open.overrideKrita'
     CONFIG_SYSTRAY_MODE =                                    'config.systray.mode'
     CONFIG_SESSION_SAVE =                                    'config.session.save'
     CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY =          'config.defaultSession.panels.view.filesManagedOnly'
@@ -488,6 +488,8 @@ class BCSettingsDialogBox(QDialog):
 
         self.__uiController = uicontroller
 
+        self.__replaceOpenDbAlertUser = True
+
         self.pbCCIClearCache.clicked.connect(self.__clearCache)
 
         self.bbOkCancel.accepted.connect(self.__applySettings)
@@ -585,8 +587,9 @@ class BCSettingsDialogBox(QDialog):
         self.cbCGLaunchOpenBC.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id()))
 
         # not yet implemented...
-        #self.cbCGLaunchReplaceOpenDb.setEnabled(checkKritaVersion(5,0,0))
+        self.cbCGLaunchReplaceOpenDb.setEnabled(checkKritaVersion(5,0,0))
         self.cbCGLaunchReplaceOpenDb.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()))
+        self.cbCGLaunchReplaceOpenDb.toggled.connect(self.__replaceOpenDbAlert)
 
         if self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_UNIT.id()) == BCSettingsValues.FILE_UNIT_KIB:
             self.rbCGFileUnitBinary.setChecked(True)
@@ -722,6 +725,36 @@ class BCSettingsDialogBox(QDialog):
         self.__uiController.commandSettingsFileNewFileNameOther(self.cbxCIFOthOptCreDocName.currentText())
 
 
+    def __replaceOpenDbAlert(self, checked):
+        """Tick has been changed for checkbox cbCGLaunchReplaceOpenDb<"Overrides Krita 'Open' function">
+
+        Alert user about impact
+        """
+        if not self.__replaceOpenDbAlertUser:
+            # user have already been alerted, then do not display alert again
+            return
+
+        self.__replaceOpenDbAlertUser = False
+
+        if checked:
+            # User will ask to replace native dialog box
+            QMessageBox.warning(
+                    self,
+                    i18n(f"{self.__title}::Override Krita's native ""Open file"" dialog"),
+                    i18n(f"Once option is applied, Krita's native <i>Open file</i> dialog will be replaced by <i>Buli Commander</><br><br>"
+                         f"If later you want restore original <i>Open file</i> dialog, keep in mind that at this moment you'll need to restart Krita"
+                        )
+                )
+        else:
+            # User want to restore native dialog box
+            QMessageBox.warning(
+                    self,
+                    i18n(f"{self.__title}::Restore Krita's native ""Open file"" dialog"),
+                    i18n(f"Please keep in mind that original <i>Open file</i> dialog will be restored only on next Krita's startup"
+                        )
+                )
+
+
     def __categoryChanged(self):
         """Set page according to category"""
         self.swCatPages.setCurrentIndex(self.lvCategory.currentItem().data(Qt.UserRole))
@@ -760,7 +793,7 @@ class BCSettingsDialogBox(QDialog):
     def __clearCache(self):
         """Clear cache after user confirmation"""
 
-        if QMessageBox.question(self, f"{self.__title}::Clear Cache", f"Current cache content will be cleared ({self.lblCCINbFileAndSize.text()})\n\nDo you confirm action?", QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
+        if QMessageBox.question(self, i18n(f"{self.__title}::Clear Cache"), i18n(f"Current cache content will be cleared ({self.lblCCINbFileAndSize.text()})\n\nDo you confirm action?"), QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
             shutil.rmtree(BCFile.thumbnailCacheDirectory(), ignore_errors=True)
             self.__calculateCacheSize()
 
