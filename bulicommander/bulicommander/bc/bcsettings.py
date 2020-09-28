@@ -46,6 +46,7 @@ from .bcfile import (
     )
 
 from .bcpathbar import BCPathBar
+from .bcsystray import BCSysTray
 from .bcutils import (
         bytesSizeToStr,
         Debug
@@ -126,6 +127,7 @@ class BCSettingsKey(Enum):
     CONFIG_NAVBAR_BUTTONS_BACK =                             'config.navbar.buttons.back'
     CONFIG_NAVBAR_BUTTONS_UP =                               'config.navbar.buttons.up'
     CONFIG_NAVBAR_BUTTONS_QUICKFILTER =                      'config.navbar.buttons.quickFilter'
+    CONFIG_SYSTRAY_MODE =                                    'config.systray.mode'
     CONFIG_SESSION_SAVE =                                    'config.session.save'
     CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY =          'config.defaultSession.panels.view.filesManagedOnly'
     CONFIG_DSESSION_PANELS_VIEW_FILES_BACKUP =               'config.defaultSession.panels.view.filesBackup'
@@ -243,6 +245,8 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BACK.id():                      (True,                     BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_NAVBAR_BUTTONS_UP.id():                        (True,                     BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_NAVBAR_BUTTONS_QUICKFILTER.id():               (True,                     BCSettingsFmt(bool)),
+
+            BCSettingsKey.CONFIG_SYSTRAY_MODE.id():                             (2,                        BCSettingsFmt(int, [0,1,2,3])),
 
             BCSettingsKey.CONFIG_SESSION_SAVE.id():                             (True,                     BCSettingsFmt(bool)),
 
@@ -449,6 +453,7 @@ class BCSettings(object):
 
 
 class BCSettingsDialogBox(QDialog):
+    """User interface fo settings"""
 
     CATEGORY_GENERAL = 0
     CATEGORY_NAVIGATION = 1
@@ -530,10 +535,15 @@ class BCSettingsDialogBox(QDialog):
             if self.__uiController.commandGoLastDocsResetUI():
                 updateBtn()
 
+        self.lvCategory.addItem(self.__itemCatGeneral)
+        self.lvCategory.addItem(self.__itemCatNavigation)
+        self.lvCategory.addItem(self.__itemCatImageFiles)
+        self.lvCategory.addItem(self.__itemCatCachedImages)
+        self.__setCategory(BCSettingsDialogBox.CATEGORY_GENERAL)
 
+        # --- NAV Category -----------------------------------------------------
         self.bcpbCNUserDefined.setPath(self.__uiController.settings().option(BCSettingsKey.CONFIG_HOME_DIR_UD.id()))
         self.bcpbCNUserDefined.setOptions(BCPathBar.OPTION_SHOW_NONE)
-
 
         self.cbCNNavBarBtnHome.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HOME.id()))
         self.cbCNNavBarBtnViews.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_VIEWS.id()))
@@ -554,22 +564,33 @@ class BCSettingsDialogBox(QDialog):
         self.rbCNHomeDirSys.clicked.connect(setHomeDirSys)
         self.rbCNHomeDirUD.clicked.connect(setHomeDirUD)
 
-        self.lvCategory.addItem(self.__itemCatGeneral)
-        self.lvCategory.addItem(self.__itemCatNavigation)
-        self.lvCategory.addItem(self.__itemCatImageFiles)
-        self.lvCategory.addItem(self.__itemCatCachedImages)
-        self.__setCategory(BCSettingsDialogBox.CATEGORY_GENERAL)
-
         self.hsCNHistoryMax.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_HISTORY_MAXITEMS.id()))
         self.cbCNHistoryKeepWhenQuit.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT.id()))
 
         self.hsCNLastDocsMax.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_LASTDOC_MAXITEMS.id()))
 
+        self.pbCNHistoryClear.clicked.connect(historyClear)
+        self.pbCNLastDocumentsClear.clicked.connect(lastDocumentsClear)
+        self.pbCNLastDocumentsReset.clicked.connect(lastDocumentsReset)
+        updateBtn()
+
+        # --- GEN Category -----------------------------------------------------
         if self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_UNIT.id()) == BCSettingsValues.FILE_UNIT_KIB:
             self.rbCGFileUnitBinary.setChecked(True)
         else:
             self.rbCGFileUnitDecimal.setChecked(True)
 
+        value = self.__uiController.settings().option(BCSettingsKey.CONFIG_SYSTRAY_MODE.id())
+        if value == BCSysTray.SYSTRAY_MODE_ALWAYS:
+            self.rbCGSysTrayAlways.setChecked(True)
+        elif value == BCSysTray.SYSTRAY_MODE_WHENACTIVE:
+            self.rbCGSysTrayWhenActive.setChecked(True)
+        elif value == BCSysTray.SYSTRAY_MODE_NEVER:
+            self.rbCGSysTrayNever.setChecked(True)
+        elif value == BCSysTray.SYSTRAY_MODE_FORNOTIFICATION:
+            self.rbCGSysTrayNotification.setChecked(True)
+
+        # --- Image Category -----------------------------------------------------
         value = self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_KRA.id())
         if value == BCSettingsValues.FILE_DEFAULTACTION_OPEN:
             self.rbCIFKraOpenDoc.setChecked(True)
@@ -619,27 +640,46 @@ class BCSettingsDialogBox(QDialog):
         self.cbxCIFOthOptCreDocName.setCurrentText(self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
 
 
-        self.pbCNHistoryClear.clicked.connect(historyClear)
-        self.pbCNLastDocumentsClear.clicked.connect(lastDocumentsClear)
-        self.pbCNLastDocumentsReset.clicked.connect(lastDocumentsReset)
-        updateBtn()
-
-
     def __applySettings(self):
         """Apply current settings"""
 
+        # --- NAV Category -----------------------------------------------------
         self.__uiController.commandSettingsHomeDirUserDefined(self.bcpbCNUserDefined.path())
         if self.rbCNHomeDirSys.isChecked():
             self.__uiController.commandSettingsHomeDirMode(BCSettingsValues.HOME_DIR_SYS)
         else:
             self.__uiController.commandSettingsHomeDirMode(BCSettingsValues.HOME_DIR_UD)
 
+        self.__uiController.commandSettingsNavBarBtnHome(self.cbCNNavBarBtnHome.isChecked())
+        self.__uiController.commandSettingsNavBarBtnViews(self.cbCNNavBarBtnViews.isChecked())
+        self.__uiController.commandSettingsNavBarBtnBookmarks(self.cbCNNavBarBtnBookmarks.isChecked())
+        self.__uiController.commandSettingsNavBarBtnHistory(self.cbCNNavBarBtnHistory.isChecked())
+        self.__uiController.commandSettingsNavBarBtnLastDocuments(self.cbCNNavBarBtnLastDocuments.isChecked())
+        self.__uiController.commandSettingsNavBarBtnGoBack(self.cbCNNavBarBtnGoBack.isChecked())
+        self.__uiController.commandSettingsNavBarBtnGoUp(self.cbCNNavBarBtnGoUp.isChecked())
+        self.__uiController.commandSettingsNavBarBtnQuickFilter(self.cbCNNavBarBtnQuickFilter.isChecked())
 
+        self.__uiController.commandSettingsHistoryMaxSize(self.hsCNHistoryMax.value())
+        self.__uiController.commandSettingsHistoryKeepOnExit(self.cbCNHistoryKeepWhenQuit.isChecked())
+
+        self.__uiController.commandSettingsLastDocsMaxSize(self.hsCNLastDocsMax.value())
+
+        # --- GEN Category -----------------------------------------------------
         if self.rbCGFileUnitBinary.isChecked():
             self.__uiController.commandSettingsFileUnit(BCSettingsValues.FILE_UNIT_KIB)
         else:
             self.__uiController.commandSettingsFileUnit(BCSettingsValues.FILE_UNIT_KB)
 
+        if self.rbCGSysTrayAlways.isChecked():
+            self.__uiController.commandSettingsSysTrayMode(BCSysTray.SYSTRAY_MODE_ALWAYS)
+        elif self.rbCGSysTrayWhenActive.isChecked():
+            self.__uiController.commandSettingsSysTrayMode(BCSysTray.SYSTRAY_MODE_WHENACTIVE)
+        elif self.rbCGSysTrayNever.isChecked():
+            self.__uiController.commandSettingsSysTrayMode(BCSysTray.SYSTRAY_MODE_NEVER)
+        elif self.rbCGSysTrayNotification.isChecked():
+            self.__uiController.commandSettingsSysTrayMode(BCSysTray.SYSTRAY_MODE_FORNOTIFICATION)
+
+        # --- Image Category -----------------------------------------------------
         if self.rbCIFKraOpenDoc.isChecked():
             if self.cbCIFKraOptCloseBC.isChecked():
                 self.__uiController.commandSettingsFileDefaultActionKra(BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE)
@@ -665,19 +705,6 @@ class BCSettingsDialogBox(QDialog):
         self.__uiController.commandSettingsFileNewFileNameKra(self.cbxCIFKraOptCreDocName.currentText())
         self.__uiController.commandSettingsFileNewFileNameOther(self.cbxCIFOthOptCreDocName.currentText())
 
-        self.__uiController.commandSettingsNavBarBtnHome(self.cbCNNavBarBtnHome.isChecked())
-        self.__uiController.commandSettingsNavBarBtnViews(self.cbCNNavBarBtnViews.isChecked())
-        self.__uiController.commandSettingsNavBarBtnBookmarks(self.cbCNNavBarBtnBookmarks.isChecked())
-        self.__uiController.commandSettingsNavBarBtnHistory(self.cbCNNavBarBtnHistory.isChecked())
-        self.__uiController.commandSettingsNavBarBtnLastDocuments(self.cbCNNavBarBtnLastDocuments.isChecked())
-        self.__uiController.commandSettingsNavBarBtnGoBack(self.cbCNNavBarBtnGoBack.isChecked())
-        self.__uiController.commandSettingsNavBarBtnGoUp(self.cbCNNavBarBtnGoUp.isChecked())
-        self.__uiController.commandSettingsNavBarBtnQuickFilter(self.cbCNNavBarBtnQuickFilter.isChecked())
-
-        self.__uiController.commandSettingsHistoryMaxSize(self.hsCNHistoryMax.value())
-        self.__uiController.commandSettingsHistoryKeepOnExit(self.cbCNHistoryKeepWhenQuit.isChecked())
-
-        self.__uiController.commandSettingsLastDocsMaxSize(self.hsCNLastDocsMax.value())
 
     def __categoryChanged(self):
         """Set page according to category"""

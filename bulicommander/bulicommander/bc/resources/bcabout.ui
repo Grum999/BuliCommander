@@ -131,7 +131,7 @@
             <string/>
            </property>
            <property name="pixmap">
-            <pixmap>buli-powered-big.png</pixmap>
+            <pixmap>png/buli-powered-big.png</pixmap>
            </property>
           </widget>
          </item>
