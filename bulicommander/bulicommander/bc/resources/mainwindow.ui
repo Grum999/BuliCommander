@@ -1119,13 +1119,13 @@
      <normaloff>:/images/export_list</normaloff>:/images/export_list</iconset>
    </property>
    <property name="text">
-    <string>&amp;Export files...</string>
+    <string>&amp;Export files list...</string>
    </property>
    <property name="toolTip">
-    <string>Export file list</string>
+    <string>Export files list to clipboard or a to a file</string>
    </property>
    <property name="statusTip">
-    <string>Export current file list (or selected files) to clipboard or a file</string>
+    <string>Export current file list (or selected files) to clipboard or to a file</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+E</string>

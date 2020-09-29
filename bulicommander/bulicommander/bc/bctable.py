@@ -23,6 +23,12 @@ from .bcutils import (
 )
 
 import os
+import re
+
+from ..pktk.pktk import (
+        EInvalidType,
+        EInvalidValue
+    )
 
 class BCTableSettingsText(object):
     """Define settings to render a table"""
@@ -42,7 +48,7 @@ class BCTableSettingsText(object):
         self.__maxWidthActive = False
         self.__maxWidthValue = 120
 
-        self.__columnAlignments = []
+        self.__columnsAlignment = []
 
     def border(self):
         return self.__border
@@ -90,17 +96,18 @@ class BCTableSettingsText(object):
             self.__maxWidthValue = maxWidth
 
     def columnAlignment(self, columnIndex):
-        if columnIndex < len(self.__columnAlignments):
-            return self.__columnAlignments[columnIndex]
+        if columnIndex < len(self.__columnsAlignment):
+            return self.__columnsAlignment[columnIndex]
         else:
             # by default return LEFT aligment (0)
             return 0
 
-    def columnAlignments(self):
-        return self.__columnAlignments
+    def columnsAlignment(self):
+        return self.__columnsAlignment
 
-    def setColumnAlignment(self, alignments):
-        self.__columnAlignments = alignments
+    def setColumnsAlignment(self, alignments):
+        self.__columnsAlignment = alignments
+
 
 class BCTableSettingsTextCsv(object):
     """Define settings to render a table"""
@@ -110,7 +117,6 @@ class BCTableSettingsTextCsv(object):
         self.__headerActive = True
         self.__enclosedField = False
         self.__separator = ','
-
 
     def separator(self):
         return self.__separator
@@ -131,6 +137,43 @@ class BCTableSettingsTextCsv(object):
     def setEnclosedField(self, enclosedField):
         if isinstance(enclosedField, bool):
             self.__enclosedField = enclosedField
+
+
+class BCTableSettingsTextMarkdown(object):
+    """Define settings to render a table in mardkown"""
+
+    def __init__(self):
+        self.__columnsFormatting = []
+
+    def columnFormatting(self, columnIndex):
+        if columnIndex < len(self.__columnsFormatting):
+            return self.__columnsFormatting[columnIndex]
+        else:
+            # by default return LEFT aligment (0)
+            return None
+
+    def columnsFormatting(self):
+        return self.__columnsFormatting
+
+    def setColumnsFormatting(self, formatting):
+        """Set column content formatting
+
+        Given `formatting` is a list tuple or None
+
+        Each tuple item is a markup '{text}' formatted in markdown
+
+        Example:
+            Format in italic+bold
+                setColumnsFormatting( ('*{text}*', '**{text}**') )
+
+            Format in code
+                setColumnsFormatting( ('`{text}`', ) )
+        """
+
+        if not(isinstance(formatting, list) or formatting is None):
+            raise EInvalidType("Given `formatting` must be a <tuple>")
+
+        self.__columnsFormatting = formatting
 
 
 
@@ -447,7 +490,8 @@ class BCTable(object):
         # --------------------------------------------------------
         lastRowIndex = len(self.__rows) - 1
 
-        buffer+=buildTitle()
+        if self.__title.strip() != '':
+            buffer+=buildTitle()
         buffer+=buildHeader()
 
         prevColCount = None
@@ -478,7 +522,7 @@ class BCTable(object):
         return os.linesep.join(buffer)
 
     def asTextCsv(self, settings):
-        """Return current table as a string, ussing given settings (BCTableSettingsText)"""
+        """Return current table as CSV formatted string, using given settings (BCTableSettingsTextCsv)"""
 
         def buildRow(columnsContent):
             if enclosed:
@@ -512,10 +556,118 @@ class BCTable(object):
         # --------------------------------------------------------
         buffer=buildHeader()
 
-        for index, row in enumerate(self.__rows):
+        for row in self.__rows:
             if row != 0x01:
                 # ignore separators for CSV file :)
                 buffer+=buildRow(row)
+
+        return os.linesep.join(buffer)
+
+    def asTextMarkdown(self, settings):
+        """Return current table as Markdown (GitHub flavored version) formatted string, using given settings (BCTableSettingsTextMarkdown)"""
+
+        def buildRow(columnsContent, format):
+            def escape(text):
+                if text == '':
+                    return text
+
+                text = text.replace("\\", r"\\")
+                text = text.replace(r"`", r"\`")
+                text = text.replace(r"*", r"\*")
+                text = text.replace(r"_", r"\_")
+                text = text.replace(r"{", r"\{")
+                text = text.replace(r"}", r"\}")
+                text = text.replace(r"[", r"\[")
+                text = text.replace(r"]", r"\]")
+                text = text.replace(r"(", r"\(")
+                text = text.replace(r")", r"\)")
+                text = text.replace(r"#", r"\#")
+                text = text.replace(r"+", r"\+")
+                text = text.replace(r"-", r"\-")
+                text = text.replace(r".", r"\.")
+                text = text.replace(r"!", r"\!")
+                return text
+
+            def formatItem(text, formatting):
+                returned = text
+                if isinstance(formatting, tuple) and text!='':
+                    canEscape=True
+                    for format in formatting:
+                        if re.match("`[^`]+`", format):
+                            canEscape=False
+                            break
+                    if canEscape:
+                        returned = esacape(returned)
+
+                    for format in formatting:
+                        returned = format.replace('{text}', returned)
+                return returned
+
+            if format:
+                return [' | '.join([formatItem(column, settings.columnFormatting(index)) for index, column in enumerate(columnsContent)])]
+            else:
+                return [' | '.join([escape(column) for column in columnsContent])]
+
+        def buildHeader():
+            returned=[]
+
+            header = []
+            maxColNumber = 0
+            for row in self.__rows:
+                rowLen = len(row)
+                if rowLen > maxColNumber:
+                    maxColNumber = rowLen
+
+            if len(self.__header) == 0 and maxColNumber > 0:
+                # no header!?
+                # github flavored markdown table NEED header..
+                # build one :)
+                header = ['?'] * maxColNumber
+            elif len(self.__header) > 0:
+                header = self.__header
+
+                if len(header) < maxColNumber:
+                    # not enough cell in header... add missing cells
+                    header += ['?'] * (maxColNumber - len(header))
+
+            if len(header) == 0:
+                # no header AND no data
+                # return nothing
+                return returned
+
+            headerSep = ['--'] * len(header)
+            returned=buildRow(header, False)
+            returned+=[' | '.join(headerSep)]
+
+            if len(self.__rows) == 0:
+                # there's an header, but no data....?
+                # create an empty row as data to display at least, the header
+                returned=+buildRow([' '] * len(header), False)
+
+            return returned
+
+        def buildTitle():
+            """Add a title to generated table"""
+            return [self.__title]
+
+        if not isinstance(settings, BCTableSettingsTextMarkdown):
+            raise EInvalidType("Given `settings` must be <BCTableSettingsTextMarkdown>")
+
+        # one text row = one buffer row
+        buffer=[]
+
+        if self.__title.strip() != '':
+            buffer+=buildTitle()
+        buffer+=buildHeader()
+
+        if len(buffer) == 0:
+            # nothing to format...
+            return ''
+
+        for row in self.__rows:
+            if row != 0x01:
+                # ignore separators for CSV file :)
+                buffer+=buildRow(row, True)
 
         return os.linesep.join(buffer)
 

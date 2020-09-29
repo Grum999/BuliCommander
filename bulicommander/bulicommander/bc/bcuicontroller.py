@@ -586,6 +586,15 @@ class BCUIController(QObject):
         """Return True if BuliCommander interface is started"""
         return self.__bcStarted
 
+    def bcVersion(self):
+        return self.__bcVersion
+
+    def bcName(self):
+        return self.__bcName
+
+    def bcTitle(self):
+        return self.__bcTitle
+
     # endregion: getter/setters ------------------------------------------------
 
 

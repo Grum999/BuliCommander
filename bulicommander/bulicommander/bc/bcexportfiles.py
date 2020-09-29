@@ -33,6 +33,7 @@ from PyQt5.QtWidgets import (
     )
 
 import os
+import time
 
 from .bcfile import (
         BCDirectory,
@@ -44,7 +45,8 @@ from .bcsystray import BCSysTray
 from .bctable import (
         BCTable,
         BCTableSettingsText,
-        BCTableSettingsTextCsv
+        BCTableSettingsTextCsv,
+        BCTableSettingsTextMarkdown
     )
 from .bcutils import (
         bytesSizeToStr,
@@ -102,137 +104,160 @@ class BCExportFilesDialogBox(QDialog):
                                                     # data:         data to return in exported result
                                                     # alignment:    for format that support colupmn alignment, define
                                                     #               data alignment (0: left / 1: right)
+                                                    # format:       how to format data (use markdown notation)
                                                     # selected:     default status in listbox
         'file.path':                                {'label':       i18n('Path'),
                                                      'toolTip':     i18n('The file path'),
                                                      'data':        '{file.path()}',
                                                      'alignment':   0,
+                                                     'format':      ('`{text}`', ),
                                                      'selected':    True
                                                     },
         'file.name':                                {'label':       i18n('File name'),
                                                      'toolTip':     i18n('The file name, including extension'),
                                                      'data':        '{file.name()}',
                                                      'alignment':   0,
+                                                     'format':      ('`{text}`', ),
                                                      'selected':    True
                                                     },
         'file.baseName':                            {'label':       i18n('File base name'),
                                                      'toolTip':     i18n('The file name, excluding extension'),
                                                      'data':        '{file.baseName() if not isinstance(file, BCDirectory) else file.name()}',
                                                      'alignment':   0,
+                                                     'format':      ('`{text}`', ),
                                                      'selected':    False
                                                     },
         'file.extension':                           {'label':       i18n('File extension'),
                                                      'toolTip':     i18n('The file extension, including dot separator)'),
                                                      'data':        '{file.extension() if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   0,
+                                                     'format':      ('`{text}`', ),
                                                      'selected':    False
                                                     },
         'file.fullPathName':                        {'label':       i18n('Full path/file name'),
                                                      'toolTip':     i18n('The complete file name, including path'),
                                                      'data':        '{file.fullPathName()}',
                                                      'alignment':   0,
+                                                     'format':      ('`{text}`', ),
                                                      'selected':    False
                                                     },
         'file.format.short':                        {'label':       i18n('File format (short)'),
                                                      'toolTip':     i18n('The file format (short value)'),
                                                      'data':        '{BCFileManagedFormat.translate(file.format(), True)}',
                                                      'alignment':   0,
+                                                     'format':      None,
                                                      'selected':    True
                                                     },
         'file.format.long':                         {'label':       i18n('File format (long)'),
                                                      'toolTip':     i18n('The file format (long value)'),
                                                      'data':        '{BCFileManagedFormat.translate(file.format(), False)}',
                                                      'alignment':   0,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'modified.datetime':                        {'label':       i18n('Date/Time'),
                                                      'toolTip':     i18n('File date/time (<span style="font-family:''monospace''"><i>yyyy-mm-dd hh:mi:ss</i></span>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"dt")}',
                                                      'alignment':   0,
+                                                     'format':      None,
                                                      'selected':    True
                                                     },
         'modified.date.full':                       {'label':       i18n('Date'),
                                                      'toolTip':     i18n('File date (<span style="font-family:''monospace''"><i>yyyy-mm-dd</i></span>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"d")}',
                                                      'alignment':   0,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'modified.date.year':                       {'label':       i18n('Date (year)'),
                                                      'toolTip':     i18n('File date (<i>Year: <span style="font-family:''monospace''">yyyy</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%Y")}',
                                                      'alignment':   0,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'modified.date.month':                      {'label':       i18n('Date (month)'),
                                                      'toolTip':     i18n('File date (<i>Month: <span style="font-family:''monospace''">mm</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%m")}',
                                                      'alignment':   0,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'modified.date.day':                        {'label':       i18n('Date (day)'),
                                                      'toolTip':     i18n('File date (<i>Month: <span style="font-family:''monospace''">dd</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%d")}',
                                                      'alignment':   0,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'modified.time.full':                       {'label':       i18n('Time'),
                                                      'toolTip':     i18n('File time (<span style="font-family:''monospace''"><i>hh:mi:ss</i></span>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"t")}',
                                                      'alignment':   0,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'modified.time.hour':                       {'label':       i18n('Time (hour)'),
                                                      'toolTip':     i18n('File time (<i>Hour (H24): <span style="font-family:''monospace''">hh</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%H")}',
                                                      'alignment':   0,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'modified.time.minute':                     {'label':       i18n('Time (minutes)'),
                                                      'toolTip':     i18n('File time (<i>Minutes: <span style="font-family:''monospace''">mm</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%M")}',
                                                      'alignment':   0,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'modified.time.seconds':                    {'label':       i18n('Date (seconds)'),
                                                      'toolTip':     i18n('File time (<i>Seconds: <span style="font-family:''monospace''">ss</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%S")}',
                                                      'alignment':   0,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'size.bytes':                               {'label':       i18n('Size (bytes)'),
                                                      'toolTip':     i18n('File size in bytes'),
                                                      'data':        '{file.size() if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'size.unit.decimal':                        {'label':       i18n('Size (best decimal unit)'),
                                                      'toolTip':     i18n('File size, using the best decimal unit (KB, MB, GB)<br/>Size is rounded to 2 decimals'),
                                                      'data':        '{bytesSizeToStr(file.size(), "auto") if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'size.unit.binary':                         {'label':       i18n('Size (best binary unit)'),
                                                      'toolTip':     i18n('File size, using the best binary unit (KiB, MiB, GiB)<br/>Size is rounded to 2 decimals'),
                                                      'data':        '{bytesSizeToStr(file.size(), "autobin") if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
+                                                     'format':      None,
                                                      'selected':    True
                                                     },
         'image.size.full':                          {'label':       i18n('Image size (width x height)'),
                                                      'toolTip':     i18n('The current image size (<span style="font-family:''monospace''"></i>width</i>x<i>height</i></span>)'),
                                                      'data':        '{str(file.imageSize().width()) + "x" + str(file.imageSize().height()) if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
+                                                     'format':      None,
                                                      'selected':    True
                                                     },
         'image.size.width':                         {'label':       i18n('Image size (width)'),
                                                      'toolTip':     i18n('The current image size (width)'),
                                                      'data':        '{file.imageSize().width() if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
+                                                     'format':      None,
                                                      'selected':    False
                                                     },
         'image.size.height':                         {'label':      i18n('Image size (height)'),
                                                      'toolTip':     i18n('The current image size (height)'),
                                                      'data':        '{file.imageSize().height() if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
+                                                     'format':      None,
                                                      'selected':    False
                                                     }
     }
@@ -283,7 +308,6 @@ class BCExportFilesDialogBox(QDialog):
             # uncheck all properties
             for itemIndex in range(self.lwPerimeterProperties.count()):
                 self.lwPerimeterProperties.item(itemIndex).setCheckState(Qt.Unchecked)
-
 
         def resetFields():
             # reset field list
@@ -523,6 +547,41 @@ class BCExportFilesDialogBox(QDialog):
         QApplication.clipboard().setText(exportedContent)
 
 
+    def __parseText(self, text):
+        """Parse given text to replace markup with their values"""
+        returned = text
+
+        if self.rbPerimeterSelectPath.isChecked():
+            returned = returned.replace("{source}", self.__uiController.panel().path())
+        else:
+            returned = returned.replace("{source}", "Current user selection")
+
+        currentDateTime = time.time()
+
+        returned = returned.replace("{bc:name}", self.__uiController.bcName())
+        returned = returned.replace("{bc:version}", self.__uiController.bcVersion())
+        returned = returned.replace("{bc:title}", self.__uiController.bcTitle())
+
+        returned = returned.replace("{date}", tsToStr(currentDateTime, "d" ))
+        returned = returned.replace("{date:yyyy}", tsToStr(currentDateTime, "%Y" ))
+        returned = returned.replace("{date:mm}", tsToStr(currentDateTime, "%m" ))
+        returned = returned.replace("{date:dd}", tsToStr(currentDateTime, "%d" ))
+
+        returned = returned.replace("{time}", tsToStr(currentDateTime, "t" ))
+        returned = returned.replace("{time:hh}", tsToStr(currentDateTime, "%H" ))
+        returned = returned.replace("{time:mm}", tsToStr(currentDateTime, "%M" ))
+        returned = returned.replace("{time:ss}", tsToStr(currentDateTime, "%S" ))
+
+        returned = returned.replace("{items:total.count}", str(self.__fileNfo[3]))
+        returned = returned.replace("{items:directories.count}", str(self.__fileNfo[1]))
+        returned = returned.replace("{items:files.count}", str(self.__fileNfo[2]))
+        returned = returned.replace("{items:files.size}", str(self.__fileNfo[6]))
+        returned = returned.replace("{items:files.size(KiB)}", bytesSizeToStr(self.__fileNfo[6], 'autobin'))
+        returned = returned.replace("{items:files.size(KB)}", bytesSizeToStr(self.__fileNfo[6], 'auto'))
+
+        return returned
+
+
     def __getTable(self, fields, items, title=None, preview=False):
         """Generic method to intialise a BCTable content"""
         returnedTable = BCTable()
@@ -585,7 +644,7 @@ class BCExportFilesDialogBox(QDialog):
         titleContent = None
         if config.get('title.active', defaultConfig['title.active']):
             # title asked
-            titleContent = config.get('title.content', defaultConfig['title.content'])
+            titleContent = self.__parseText(config.get('title.content', defaultConfig['title.content']))
 
         tableSettings = BCTableSettingsText()
         tableSettings.setHeaderActive(config.get('header.active', defaultConfig['header.active']))
@@ -594,7 +653,7 @@ class BCExportFilesDialogBox(QDialog):
         tableSettings.setMaxWidthActive(config.get('maximumWidth.active', defaultConfig['maximumWidth.active']))
         tableSettings.setMinWidth(config.get('minimumWidth.value', defaultConfig['minimumWidth.value']))
         tableSettings.setMaxWidth(config.get('maximumWidth.value', defaultConfig['maximumWidth.value']))
-        tableSettings.setColumnAlignment([BCExportFilesDialogBox.FIELDS[key]['alignment'] for key in config.get('fields', defaultConfig['fields'])])
+        tableSettings.setColumnsAlignment([BCExportFilesDialogBox.FIELDS[key]['alignment'] for key in config.get('fields', defaultConfig['fields'])])
 
         table = self.__getTable(config.get('fields', defaultConfig['fields']),
                                 config.get('files', defaultConfig['files']),
@@ -641,7 +700,6 @@ class BCExportFilesDialogBox(QDialog):
 
         If `preview`, only the Nth first items are exported
         """
-        return ''
         # define a default configuration, if config is missing...
         defaultConfig = {
                 'title.active': False,
@@ -654,11 +712,17 @@ class BCExportFilesDialogBox(QDialog):
         if not isinstance(config, dict):
             config = defaultConfig
 
-        tableSettings = BCTableSettingsMarkdown()
+        titleContent = None
+        if config.get('title.active', defaultConfig['title.active']):
+            # title asked
+            titleContent = self.__parseText(config.get('title.content', defaultConfig['title.content']))
+
+        tableSettings = BCTableSettingsTextMarkdown()
+        tableSettings.setColumnsFormatting([BCExportFilesDialogBox.FIELDS[key]['format'] for key in config.get('fields', defaultConfig['fields'])])
 
         table = self.__getTable(config.get('fields', defaultConfig['fields']),
                                 config.get('files', defaultConfig['files']),
-                                None,
+                                titleContent,
                                 preview)
 
         return table.asTextMarkdown(tableSettings)
