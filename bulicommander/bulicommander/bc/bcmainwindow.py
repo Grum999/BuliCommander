@@ -203,12 +203,11 @@ class BCMainWindow(QMainWindow):
         """Build menu history"""
         self.__uiController.panel().showMenuSavedViews(self.menuGoSavedViews)
 
-
-
     # endregion: initialisation methods ----------------------------------------
 
 
     # region: define actions method --------------------------------------------
+
     def __actionNotYetImplemented(self, v=None):
         """"Method called when an action not yet implemented is triggered"""
         QMessageBox.warning(
@@ -303,7 +302,7 @@ class BCMainWindow(QMainWindow):
 
     def __menuToolsExportFiles_clicked(self, action):
         """Open export file list tool"""
-        self.__uiController.commandToolsExportFiles()
+        self.__uiController.commandToolsExportFilesOpen()
 
     # endregion: define actions method -----------------------------------------
 

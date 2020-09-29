@@ -224,7 +224,6 @@ class BCFileManagedFormat(object):
                     BCFileManagedFormat.GIF,
                     BCFileManagedFormat.WEBP]
 
-
     @staticmethod
     def backupSuffixRe():
         """return backup suffix as regular expression"""
@@ -517,6 +516,10 @@ class BCBaseFile(object):
         """Return full file path/name"""
         return self._fullPathName
 
+    def baseName(self):
+        """Return file name"""
+        return self._name
+
     def format(self):
         """Return file format"""
         return self._format
@@ -628,6 +631,19 @@ class BCMissingFile(BCBaseFile):
         self._mdatetime = None
         self._format = BCFileManagedFormat.MISSING
 
+        self.__baseName, self.__extension = os.path.splitext(fileName)
+
+        if reResult:=re.match('^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
+            # seems to be an extension for a backup file with number
+            baseName, originalExtension = os.path.splitext(self.__baseName)
+            self.__extension=f'{originalExtension}{self.__extension}'
+
+        self.__baseName = os.path.basename(self.__baseName)
+        self.__extension=self.__extension.lower()
+
+    def baseName(self):
+        return self.__baseName
+
     def lastModificationDateTime(self, onlyDate=False):
         """Return file last modification time stamp"""
         return None
@@ -654,7 +670,10 @@ class BCMissingFile(BCBaseFile):
 
     def extension(self, dot=True):
         """Return file extension"""
-        return ''
+        if dot:
+            return self.__extension
+        else:
+            return self.__extension[1:]
 
     def imageSize(self):
         """Return file image size"""
@@ -718,6 +737,7 @@ class BCFile(BCBaseFile):
         self.__qHash = ''
         self.__readable = False
         self.__extension = ''
+        self.__baseName = ''
 
         if not BCFile.__INITIALISED:
             raise EInvalidStatus('BCFile class is not initialised')
@@ -748,13 +768,14 @@ class BCFile(BCBaseFile):
         #if os.path.isfile(fileName):
         self.__readable = True
 
-        baseName, self.__extension = os.path.splitext(fileName)
+        self.__baseName, self.__extension = os.path.splitext(fileName)
 
         if reResult:=re.match('^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
             # seems to be an extension for a backup file with number
-            baseName, originalExtension = os.path.splitext(baseName)
+            baseName, originalExtension = os.path.splitext(self.__baseName)
             self.__extension=f'{originalExtension}{self.__extension}'
 
+        self.__baseName = os.path.basename(self.__baseName)
         self.__extension=self.__extension.lower()
         self.__size = os.path.getsize(self._fullPathName)
 
@@ -2822,6 +2843,9 @@ class BCFile(BCBaseFile):
             else:
                 # on bigger image, we can reduce quality to get a better compression and sve disk :)
                 BCFile.__THUMBNAIL_CACHE_COMPRESSION = 85
+
+    def baseName(self):
+        return self.__baseName
 
     def size(self):
         """Return file size"""

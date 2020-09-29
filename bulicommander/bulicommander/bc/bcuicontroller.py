@@ -49,6 +49,7 @@ from .bcfileoperation import (
         BCFileOperationUi,
         BCFileOperation
     )
+from .bcexportfiles import BCExportFilesDialogBox
 from .bchistory import BCHistory
 from .bcmainviewtab import (
         BCMainViewTab,
@@ -78,7 +79,7 @@ from .bcimagepreview import (
 from .bcsavedview import BCSavedView
 from .bctable import (
         BCTable,
-        BCTableSettings
+        BCTableSettingsText
     )
 from .bcutils import (
         buildIcon,
@@ -129,7 +130,7 @@ class BCUIController(QObject):
         self.__lastDocumentsSaved = BCHistory()
         self.__backupFilterDView = BCHistory()
         self.__fileLayerFilterDView = BCHistory()
-        self.__tableSettings = BCTableSettings()
+        self.__tableSettings = BCTableSettingsText()
 
         self.__confirmAction = True
 
@@ -1717,7 +1718,7 @@ class BCUIController(QObject):
         for panelId in self.__window.panels:
             self.__window.panels[panelId].showQuickFilter(visible)
 
-    def commandInfoToClipBoardBorder(self, border=BCTable.BORDER_DOUBLE):
+    def commandInfoToClipBoardBorder(self, border=BCTableSettingsText.BORDER_DOUBLE):
         """Set border for information panel content to clipboard"""
         self.__tableSettings.setBorder(border)
 
@@ -1741,15 +1742,9 @@ class BCUIController(QObject):
         """Set maximum width active for information panel content to clipboard"""
         self.__tableSettings.setMaxWidthActive(active)
 
-    def commandToolsExportFiles(self, panel=None):
+    def commandToolsExportFilesOpen(self):
         """Open window for tool 'Export file list'"""
-        if panel is None:
-            panel = self.panelId()
-
-        if not panel in self.__window.panels:
-            raise EInvalidValue('Given `panel` is not valid')
-
-        print('commandToolsExportFiles')
+        BCExportFilesDialogBox.open(f'{self.__bcName}::Settings', self)
 
     def commandSettingsOpen(self):
         """Open dialog box settings"""
