@@ -131,6 +131,27 @@ class BCSettingsKey(Enum):
     CONFIG_OPEN_ATSTARTUP =                                  'config.open.atStartup'
     CONFIG_OPEN_OVERRIDEKRITA =                              'config.open.overrideKrita'
     CONFIG_SYSTRAY_MODE =                                    'config.systray.mode'
+
+    CONFIG_EXPORTFILESLIST_GLB_SAVED =                       'config.export.filesList.global.saved'
+    CONFIG_EXPORTFILESLIST_GLB_PROPERTIES =                  'config.export.filesList.global.properties'
+    CONFIG_EXPORTFILESLIST_GLB_FILENAME =                    'config.export.filesList.global.fileName'
+    CONFIG_EXPORTFILESLIST_GLB_FORMAT =                      'config.export.filesList.global.format'
+    CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_ACTIVE =             'config.export.filesList.text.userDefinedLayout.active'
+    CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_CONTENT =            'config.export.filesList.text.userDefinedLayout.content'
+    CONFIG_EXPORTFILESLIST_TXT_HEADER_ACTIVE =               'config.export.filesList.text.header.active'
+    CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE =               'config.export.filesList.text.borders.style'
+    CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_ACTIVE =             'config.export.filesList.text.minimumWidth.active'
+    CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_VALUE =              'config.export.filesList.text.minimumWidth.value'
+    CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_ACTIVE =             'config.export.filesList.text.maximumWidth.active'
+    CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_VALUE =              'config.export.filesList.text.maximumWidth.value'
+    CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE =            'config.export.filesList.textCsv.header.active'
+    CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED =          'config.export.filesList.textCsv.fields.enclosed'
+    CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR =         'config.export.filesList.textCsv.fields.separator'
+    CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_ACTIVE =           'config.export.filesList.textMd.userDefinedLayout.active'
+    CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT =          'config.export.filesList.textMd.userDefinedLayout.content'
+    CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED =           'config.export.filesList.textMd.thumbnails.included'
+    CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE =               'config.export.filesList.textMd.thumbnails.size'
+
     CONFIG_SESSION_SAVE =                                    'config.session.save'
     CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY =          'config.defaultSession.panels.view.filesManagedOnly'
     CONFIG_DSESSION_PANELS_VIEW_FILES_BACKUP =               'config.defaultSession.panels.view.filesBackup'
@@ -250,6 +271,26 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_NAVBAR_BUTTONS_QUICKFILTER.id():               (True,                     BCSettingsFmt(bool)),
 
             BCSettingsKey.CONFIG_SYSTRAY_MODE.id():                             (2,                        BCSettingsFmt(int, [0,1,2,3])),
+
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED.id():                (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES.id():           ([],                       BCSettingsFmt(list, str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME.id():             ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT.id():               (0,                        BCSettingsFmt(int, [0,1,2])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_ACTIVE.id():      (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_CONTENT.id():     ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_HEADER_ACTIVE.id():        (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE.id():        (2,                        BCSettingsFmt(int, [0,1,2,3])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_ACTIVE.id():      (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_VALUE.id():       (80,                       BCSettingsFmt(int)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_ACTIVE.id():      (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_VALUE.id():       (120,                      BCSettingsFmt(int)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE.id():     (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED.id():   (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR.id():  (0,                        BCSettingsFmt(int, [0,1,2,3])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_ACTIVE.id():    (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT.id():   ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED.id():    (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE.id():        (0,                        BCSettingsFmt(int, [0,1,2,3])),
 
             BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id():                           (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id():                       (False,                    BCSettingsFmt(bool)),

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1180</width>
-    <height>745</height>
+    <height>782</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -476,12 +476,12 @@ Drag'n'drop properties to reorganize order.</string>
          </item>
          <item>
           <property name="text">
-           <string>Text/CSV</string>
+           <string>Text/Markdown</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>Text/Markdown</string>
+           <string>Text/CSV</string>
           </property>
          </item>
         </widget>
@@ -497,7 +497,7 @@ Drag'n'drop properties to reorganize order.</string>
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>72</height>
+           <height>66</height>
           </size>
          </property>
          <property name="maximumSize">
@@ -547,7 +547,7 @@ Drag'n'drop properties to reorganize order.</string>
           <string notr="true"/>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="pageFormatPropertiesText">
           <property name="styleSheet">
@@ -555,7 +555,7 @@ Drag'n'drop properties to reorganize order.</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
            <property name="leftMargin">
-            <number>30</number>
+            <number>0</number>
            </property>
            <property name="topMargin">
             <number>0</number>
@@ -569,7 +569,36 @@ Drag'n'drop properties to reorganize order.</string>
            <property name="verticalSpacing">
             <number>-1</number>
            </property>
-           <item row="6" column="0">
+           <item row="2" column="0" colspan="5">
+            <widget class="QLabel" name="label_10">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Table properties</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QCheckBox" name="cbFormatTextBorders">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add borders to table&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;(if unchecked, means &lt;/span&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;None&lt;/span&gt;&lt;span style=&quot; font-style:italic;&quot;&gt; choice is selected)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">padding-left: 30px</string>
+             </property>
+             <property name="text">
+              <string>Borders</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="9" column="0">
             <widget class="QCheckBox" name="cbFormatTextMinWidth">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -580,6 +609,9 @@ Drag'n'drop properties to reorganize order.</string>
              <property name="toolTip">
               <string>Apply a minimum width (in characters) to exported table</string>
              </property>
+             <property name="styleSheet">
+              <string notr="true">padding-left: 30px</string>
+             </property>
              <property name="text">
               <string>Minimum width</string>
              </property>
@@ -588,51 +620,10 @@ Drag'n'drop properties to reorganize order.</string>
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
-            <widget class="QRadioButton" name="rbFormatTextBorderBasic">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="toolTip">
-              <string>&lt;html&gt;
-&lt;head/&gt;
-&lt;body&gt;
-&lt;p&gt;Apply a basic border (ASCII characters) to table.&lt;br/&gt;
-&lt;/p&gt;
-&lt;p&gt;
-&lt;span style=&quot; font-style:italic;&quot;&gt;Example&lt;/span&gt;
-&lt;/p&gt;
-&lt;p style=&quot; font-family:'monospace'; font-weight:600;line-height:1;white-space: pre;&quot;&gt;
-&lt;span &gt;+========+========+  
-|Header A|Header B|  
-+========+========+  
-|Row 1.1 |Row 1.2 |  
-|Row 2.1 |Row 2.2 |  
-|Row 3.1 |Row 3.2 |  
-+========+========+
-&lt;/span&gt;
-&lt;/p&gt;
-&lt;/body&gt;
-&lt;/html&gt;</string>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string>B&amp;asic</string>
-             </property>
-             <attribute name="buttonGroup">
-              <string notr="true">buttonGroupFormatTextBorder</string>
-             </attribute>
-            </widget>
-           </item>
-           <item row="2" column="1">
+           <item row="4" column="1">
             <widget class="QRadioButton" name="rbFormatTextBorderNone">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -673,8 +664,40 @@ Row 3.1   Row 3.2
              </attribute>
             </widget>
            </item>
-           <item row="4" column="1">
-            <widget class="QRadioButton" name="rbFormatTextBorderSimple">
+           <item row="0" column="0" colspan="5">
+            <widget class="QLabel" name="label_4">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string>Document layout</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" alignment="Qt::AlignTop">
+            <widget class="QCheckBox" name="cbFormatTextLayoutUserDefined">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set a user defined layout for produced document&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;If not selected, the document will only contains the exported table&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">padding-left: 30px</string>
+             </property>
+             <property name="text">
+              <string>User defined</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="10" column="0">
+            <widget class="QCheckBox" name="cbFormatTextMaxWidth">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
                <horstretch>0</horstretch>
@@ -682,65 +705,18 @@ Row 3.1   Row 3.2
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;
-&lt;head/&gt;
-&lt;body&gt;
-&lt;p&gt;Apply a simple border (UTF-8 characters) to table.&lt;br/&gt;
-&lt;/p&gt;
-&lt;p&gt;
-&lt;span style=&quot; font-style:italic;&quot;&gt;Example&lt;/span&gt;
-&lt;/p&gt;
-&lt;p style=&quot; font-family:'monospace'; font-weight:600;line-height:1;white-space: pre;&quot;&gt;
-&lt;span &gt;┌────────┬────────┐
-│Header A│Header B│
-├────────┼────────┤
-│Row 1.1 │Row 1.2 │
-│Row 2.1 │Row 2.2 │
-│Row 3.1 │Row 3.2 │
-└────────┴────────┘
-&lt;/span&gt;
-&lt;/p&gt;
-&lt;/body&gt;
-&lt;/html&gt;</string>
+              <string>Apply a maximum width (in characters) to exported table</string>
              </property>
              <property name="styleSheet">
-              <string notr="true"/>
+              <string notr="true">padding-left: 30px</string>
              </property>
              <property name="text">
-              <string>S&amp;imple</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-             <attribute name="buttonGroup">
-              <string notr="true">buttonGroupFormatTextBorder</string>
-             </attribute>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QCheckBox" name="cbFormatTextHeader">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add header (properties names) to exported table&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string>Header</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
+              <string>Maximum width</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QPlainTextEdit" name="teFormatTextTitle">
+           <item row="1" column="1" colspan="4">
+            <widget class="QPlainTextEdit" name="teFormatTextLayoutUserDefined">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                <horstretch>0</horstretch>
@@ -772,42 +748,18 @@ Row 3.1   Row 3.2
 Exported from: {source}
 Exported at:   {date} {time}
 
+{table}
+
 Directories:   {items:directories.count}
 Files:         {items:files.count} ({items:files.size(KiB)})
 </string>
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_9">
+           <item row="4" column="3">
+            <widget class="QRadioButton" name="rbFormatTextBorderSimple">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <weight>50</weight>
-               <italic>false</italic>
-               <bold>false</bold>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string>Borders</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="1">
-            <widget class="QRadioButton" name="rbFormatTextBorderDouble">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -816,22 +768,19 @@ Files:         {items:files.count} ({items:files.size(KiB)})
               <string>&lt;html&gt;
 &lt;head/&gt;
 &lt;body&gt;
-&lt;p&gt;Apply a double border (UTF-8 characters) to table.&lt;br/&gt;
-&lt;/p&gt;
-&lt;p&gt;
-&lt;span style=&quot; font-style:italic;&quot;&gt;Example&lt;/span&gt;
+&lt;p&gt;Apply a simple border (UTF-8 characters) to table.&lt;br/&gt;
 &lt;/p&gt;
 &lt;p&gt;
 &lt;span style=&quot; font-style:italic;&quot;&gt;Example&lt;/span&gt;
 &lt;/p&gt;
 &lt;p style=&quot; font-family:'monospace'; font-weight:600;line-height:1;white-space: pre;&quot;&gt;
-&lt;span &gt;╔════════╤════════╗  
-║Header A│Header B║  
-╠════════╪════════╣  
-║Row 1.1 │Row 1.2 ║  
-║Row 2.1 │Row 2.2 ║  
-║Row 3.1 │Row 3.2 ║  
-╚════════╧════════╝
+&lt;span &gt;┌────────┬────────┐
+│Header A│Header B│
+├────────┼────────┤
+│Row 1.1 │Row 1.2 │
+│Row 2.1 │Row 2.2 │
+│Row 3.1 │Row 3.2 │
+└────────┴────────┘
 &lt;/span&gt;
 &lt;/p&gt;
 &lt;/body&gt;
@@ -841,15 +790,18 @@ Files:         {items:files.count} ({items:files.size(KiB)})
               <string notr="true"/>
              </property>
              <property name="text">
-              <string>Do&amp;uble</string>
+              <string>Simp&amp;le</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
              </property>
              <attribute name="buttonGroup">
               <string notr="true">buttonGroupFormatTextBorder</string>
              </attribute>
             </widget>
            </item>
-           <item row="7" column="0">
-            <widget class="QCheckBox" name="cbFormatTextMaxWidth">
+           <item row="3" column="0" colspan="5">
+            <widget class="QCheckBox" name="cbFormatTextHeader">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
                <horstretch>0</horstretch>
@@ -857,14 +809,20 @@ Files:         {items:files.count} ({items:files.size(KiB)})
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>Apply a maximum width (in characters) to exported table</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add header (properties names) to exported table&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">padding-left: 30px</string>
              </property>
              <property name="text">
-              <string>Maximum width</string>
+              <string>Header</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="6" column="1">
+           <item row="9" column="1" colspan="4">
             <widget class="QWidget" name="widget_3" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
@@ -938,7 +896,92 @@ Files:         {items:files.count} ({items:files.size(KiB)})
              </layout>
             </widget>
            </item>
-           <item row="7" column="1">
+           <item row="4" column="4">
+            <widget class="QRadioButton" name="rbFormatTextBorderDouble">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;
+&lt;head/&gt;
+&lt;body&gt;
+&lt;p&gt;Apply a double border (UTF-8 characters) to table.&lt;br/&gt;
+&lt;/p&gt;
+&lt;p&gt;
+&lt;span style=&quot; font-style:italic;&quot;&gt;Example&lt;/span&gt;
+&lt;/p&gt;
+&lt;p&gt;
+&lt;span style=&quot; font-style:italic;&quot;&gt;Example&lt;/span&gt;
+&lt;/p&gt;
+&lt;p style=&quot; font-family:'monospace'; font-weight:600;line-height:1;white-space: pre;&quot;&gt;
+&lt;span &gt;╔════════╤════════╗  
+║Header A│Header B║  
+╠════════╪════════╣  
+║Row 1.1 │Row 1.2 ║  
+║Row 2.1 │Row 2.2 ║  
+║Row 3.1 │Row 3.2 ║  
+╚════════╧════════╝
+&lt;/span&gt;
+&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string>Do&amp;uble</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroupFormatTextBorder</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="4" column="2">
+            <widget class="QRadioButton" name="rbFormatTextBorderBasic">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;
+&lt;head/&gt;
+&lt;body&gt;
+&lt;p&gt;Apply a basic border (ASCII characters) to table.&lt;br/&gt;
+&lt;/p&gt;
+&lt;p&gt;
+&lt;span style=&quot; font-style:italic;&quot;&gt;Example&lt;/span&gt;
+&lt;/p&gt;
+&lt;p style=&quot; font-family:'monospace'; font-weight:600;line-height:1;white-space: pre;&quot;&gt;
+&lt;span &gt;+========+========+  
+|Header A|Header B|  
++========+========+  
+|Row 1.1 |Row 1.2 |  
+|Row 2.1 |Row 2.2 |  
+|Row 3.1 |Row 3.2 |  
++========+========+
+&lt;/span&gt;
+&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string>B&amp;asic</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroupFormatTextBorder</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="10" column="1" colspan="4">
             <widget class="QWidget" name="widget_4" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -1009,28 +1052,15 @@ Files:         {items:files.count} ({items:files.size(KiB)})
              </layout>
             </widget>
            </item>
-           <item row="0" column="0" alignment="Qt::AlignTop">
-            <widget class="QCheckBox" name="cbFormatTextTitle">
-             <property name="toolTip">
-              <string>Add a title to exported content</string>
-             </property>
-             <property name="text">
-              <string>Title</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="pageFormatPropertiesTextCSV">
+         <widget class="QWidget" name="pageFormatPropertiesTextMD">
           <property name="styleSheet">
            <string notr="true"/>
           </property>
-          <layout class="QGridLayout" name="gridLayout_4">
+          <layout class="QGridLayout" name="gridLayout_5">
            <property name="leftMargin">
-            <number>30</number>
+            <number>0</number>
            </property>
            <property name="topMargin">
             <number>0</number>
@@ -1041,7 +1071,154 @@ Files:         {items:files.count} ({items:files.size(KiB)})
            <property name="bottomMargin">
             <number>0</number>
            </property>
-           <item row="0" column="0" colspan="2" alignment="Qt::AlignTop">
+           <item row="0" column="0" colspan="4">
+            <widget class="QLabel" name="label_9">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Document layout</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QCheckBox" name="cbFormatTextMDIncludeThumbnails">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This options allows to include thumbnails in generated Markdown document&lt;/p&gt;&lt;p&gt;(Thumbnails will, in this case, be stored in a dedicated directory &lt;span style=&quot; font-family:'monospace'; font-weight:600;&quot;&gt;&amp;lt;filename&amp;gt;-&amp;lt;ext&amp;gt;_img&lt;/span&gt; located at the same place than Markdown file)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">padding-left: 30px</string>
+             </property>
+             <property name="text">
+              <string>Include thumbnails</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" alignment="Qt::AlignTop">
+            <widget class="QCheckBox" name="cbFormatTextMDLayoutUserDefined">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set a user defined layout for produced document&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;If not selected, the document will only contains the exported table&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">padding-left: 30px</string>
+             </property>
+             <property name="text">
+              <string>User defined</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="4">
+            <widget class="QLabel" name="label_16">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Table properties</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1" colspan="3">
+            <widget class="QPlainTextEdit" name="teFormatTextMDLayoutUserDefined">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>DejaVu Sans Mono</family>
+               <pointsize>9</pointsize>
+              </font>
+             </property>
+             <property name="toolTip">
+              <string/>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">padding-left: 0px</string>
+             </property>
+             <property name="plainText">
+              <string>## Buli Commander *v{bc:version}* - File list exporter
+
+&gt; Export from | Exported at | Directories | Files 
+&gt; -- | -- | -- | --
+&gt; `{source}` | {date} {time} | {items:directories.count} | {items:files.count} *({items:files.size(KiB)})*
+
+{table}</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1" colspan="3">
+            <widget class="QComboBox" name="cbxFormatTextMDThumbnailsSize">
+             <item>
+              <property name="text">
+               <string>Small - 64x64 pixels</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Medium - 128x128 pixels</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Large - 256x256 pixels</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Huge - 512x512 pixels</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="pageFormatPropertiesTextCSV">
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_4">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item row="1" column="0" colspan="2" alignment="Qt::AlignTop">
             <widget class="QCheckBox" name="cbFormatTextCSVHeader">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -1052,6 +1229,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
              <property name="toolTip">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add header (properties names) to exported CSV&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
+             <property name="styleSheet">
+              <string notr="true">padding-left: 30px</string>
+             </property>
              <property name="text">
               <string>Header</string>
              </property>
@@ -1060,14 +1240,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
              </property>
             </widget>
            </item>
-           <item row="1" column="0" colspan="2">
-            <widget class="QCheckBox" name="cbxFormatTextCSVEnclosedFields">
-             <property name="text">
-              <string>Enclose fields within double-quote</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
+           <item row="4" column="1">
             <widget class="QComboBox" name="cbxFormatTextCSVSeparator">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -1109,14 +1282,17 @@ Files:         {items:files.count} ({items:files.size(KiB)})
              </item>
             </widget>
            </item>
-           <item row="2" column="0">
+           <item row="4" column="0">
             <widget class="QLabel" name="label_11">
+             <property name="styleSheet">
+              <string notr="true">padding-left: 30px</string>
+             </property>
              <property name="text">
               <string>Fields separator</string>
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
+           <item row="5" column="1">
             <spacer name="verticalSpacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
@@ -1129,71 +1305,39 @@ Files:         {items:files.count} ({items:files.size(KiB)})
              </property>
             </spacer>
            </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="pageFormatPropertiesTextMD">
-          <property name="styleSheet">
-           <string notr="true"/>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_5">
-           <property name="leftMargin">
-            <number>30</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item row="0" column="0" alignment="Qt::AlignTop">
-            <widget class="QCheckBox" name="cbFormatTextMD">
-             <property name="toolTip">
-              <string>Add a title to exported content</string>
+           <item row="0" column="0" colspan="2">
+            <widget class="QLabel" name="label_14">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
              </property>
              <property name="text">
-              <string>Title</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
+              <string>Document layout</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QPlainTextEdit" name="teFormatTextMDTitle">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
-             </property>
+           <item row="2" column="0" colspan="2">
+            <widget class="QLabel" name="label_15">
              <property name="font">
               <font>
-               <family>DejaVu Sans Mono</family>
-               <pointsize>9</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
               </font>
              </property>
-             <property name="toolTip">
-              <string/>
+             <property name="text">
+              <string>Data format</string>
              </property>
+            </widget>
+           </item>
+           <item row="3" column="0" colspan="2">
+            <widget class="QCheckBox" name="cbFormatTextCSVEnclosedFields">
              <property name="styleSheet">
-              <string notr="true">padding-left: 0px</string>
+              <string notr="true">padding-left: 30px</string>
              </property>
-             <property name="plainText">
-              <string>## Buli Commander *v{bc:version}* - File list exporter
-
-&gt; Export from | Exported at | Directories | Files 
-&gt; -- | -- | -- | --
-&gt; `{source}` | {date} {time} | {items:directories.count} | {items:files.count} *({items:files.size(KiB)})*
-</string>
+             <property name="text">
+              <string>Enclose fields within double-quote</string>
              </property>
             </widget>
            </item>
@@ -1222,7 +1366,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         </widget>
        </item>
        <item row="3" column="0" colspan="2">
-        <widget class="QLabel" name="label_10">
+        <widget class="QLabel" name="lblFormatOptions">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
            <horstretch>0</horstretch>
@@ -1231,12 +1375,19 @@ Files:         {items:files.count} ({items:files.size(KiB)})
          </property>
          <property name="font">
           <font>
+           <pointsize>12</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: palette(light);padding: 6;</string>
+         </property>
          <property name="text">
           <string>Format options</string>
+         </property>
+         <property name="margin">
+          <number>4</number>
          </property>
         </widget>
        </item>
@@ -1370,7 +1521,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
        <item row="3" column="0">
         <widget class="QRadioButton" name="rbTargetResultClipboard">
          <property name="text">
-          <string>&amp;Clipboard</string>
+          <string>C&amp;lipboard</string>
          </property>
          <attribute name="buttonGroup">
           <string notr="true">buttonGroupTargetResult</string>
@@ -1403,20 +1554,22 @@ Files:         {items:files.count} ({items:files.size(KiB)})
       </sizepolicy>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <widget class="QPushButton" name="pbOptionsSetAsDefault">
-        <property name="toolTip">
-         <string>Set current settings as default settings for file list export</string>
-        </property>
-        <property name="text">
-         <string>Set as default</string>
-        </property>
-       </widget>
-      </item>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
       <item>
        <widget class="QPushButton" name="pbOptionsLoadDefault">
         <property name="toolTip">
-         <string>Reset configurations settings to Buli Commander default value</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reset all configurations settings to Buli Commander default values&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Load default</string>
@@ -1485,17 +1638,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         </property>
         <property name="icon">
          <iconset theme="dialog-cancel">
-          <normaloff>.</normaloff>.</iconset>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pbClose">
-        <property name="text">
-         <string>Close</string>
-        </property>
-        <property name="icon">
-         <iconset theme="dialog-close">
           <normaloff>.</normaloff>.</iconset>
         </property>
        </widget>
