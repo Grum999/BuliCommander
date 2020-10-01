@@ -84,6 +84,8 @@ class BCExportFilesDialogBox(QDialog):
 
     __FIELD_ID = 1000
 
+    __CLIPBOARD = '@clipboard'
+
 
     FMT_PROPERTIES = {
             BCExportFormat.EXPORT_FMT_TEXT:         {'label':               i18n('Text'),
@@ -884,64 +886,80 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         self.__loadDefaultPageTarget()
 
 
-    def __export(self):
-        """Export process"""
-        def saveFile(fileName, data):
+    def __exportDataToFile(self, fileName, data):
+        """Save data to file :)
+
+        if data is string, save as UTF-8 text file otherwise try to save binary
+        data according to type
+
+        return True if file has been saved, otherwise False
+        """
+        try:
             if isinstance(data, str):
                 with open(fileName, 'wb') as file:
                     file.write(data.encode('utf-8'))
             else:
+                # othercase, try binary data save
                 with open(fileName, 'wb') as file:
                     file.write(data)
+            return True
+        except Exception as e:
+            Debug.print('[BCExportFilesDialogBox.__exportDataToFile] Unable to save file {0}: {1}', fileName, e)
+            return False
 
 
+    def __exportDataToClipboard(self, data):
+        """Export data to clipboard
+
+        return True if file has been copied to clipboard, otherwise False
+        """
+        try:
+            QApplication.clipboard().setText(data)
+            return True
+        except Exception as e:
+            Debug.print('[BCExportFilesDialogBox.__exportDataToClipboard] Unable to copy to clipboard: {0}', e)
+            return False
+
+
+    def __export(self):
+        """Export process"""
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        exportedContent = None
+
+        if self.rbTargetResultClipboard.isChecked():
+            target = BCExportFilesDialogBox.__CLIPBOARD
+        else:
+            target = self.leTargetResultFile.text()
 
         if self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT:
-            exportedContent = self.exportAsText(self.__generateConfig(), False)
+            exported = self.exportAsText(target, self.__generateConfig(), False)
         elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_CSV:
-            exportedContent = self.exportAsTextCsv(self.__generateConfig(), False)
+            exported = self.exportAsTextCsv(target, self.__generateConfig(), False)
         elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_MD:
-            exportedContent = self.exportAsTextMd(self.__generateConfig(), False)
+            exported = self.exportAsTextMd(target, self.__generateConfig(), False)
 
-        if not exportedContent is None:
+        QApplication.restoreOverrideCursor()
+
+        # exported is a dict
+        # {'exported': bool
+        #  'message': string
+        # }
+        if exported['exported']:
+            # export successful, save current settings
             self.__saveSettings()
-            if self.rbTargetResultClipboard.isChecked():
-                try:
-                    QApplication.clipboard().setText(exportedContent)
-                    BCSysTray.messageInformation(i18n(f"{self.__uiController.bcName()}::Export files list"),
-                                                 i18n(f"Export as <i>{BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> format to clipboard is finished"))
+            BCSysTray.messageInformation(i18n(f"{self.__uiController.bcName()}::Export files list"),
+                                         i18n(f"Export as <i>{BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> format {exported['message']} is finished"))
 
-                    QApplication.restoreOverrideCursor()
-                    #self.accept()
-                except Exception as e:
-                    Debug.print('[BCExportFilesDialogBox.__export] Unable to save file {0}: {1}', fileName, e)
-                    BCSysTray.messageCritical(i18n(f"{self.__uiController.bcName()}::Export files list"),
-                                              i18n(f"Export as <i>{BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> format to clipboard has failed!"))
+            QApplication.restoreOverrideCursor()
+            # and close export window
+            # self.accept()
+        else:
+            BCSysTray.messageCritical(i18n(f"{self.__uiController.bcName()}::Export files list"),
+                                      i18n(f"Export as <i>{BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> format {exported['message']} has failed!"))
 
-                    QApplication.restoreOverrideCursor()
-                    # do not close dialog box if in error
-                    # self.reject()
-            else:
-                fileName = self.leTargetResultFile.text()
-
-                try:
-                    saveFile(fileName, exportedContent)
-                    BCSysTray.messageInformation(i18n(f"{self.__uiController.bcName()}::Export files list"),
-                                                 i18n(f"Export as <i>{BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> format to file <b>{os.path.basename(fileName)}</b> is finished"))
-
-                    QApplication.restoreOverrideCursor()
-                    #self.accept()
-                except Exception as e:
-                    BCSysTray.messageCritical(i18n(f"{self.__uiController.bcName()}::Export files list"),
-                                              i18n(f"Export as <i>{BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> format to file <b>{os.path.basename(fileName)}</b> has failed!"))
-                    Debug.print('[BCExportFilesDialogBox.__export] Unable to save file {0}: {1}', fileName, e)
-
-                    QApplication.restoreOverrideCursor()
-                    # do not close dialog box if in error
-                    # self.reject()
-        pass
+            QApplication.restoreOverrideCursor()
+            ##### export failed: do not close window, let user try to check/fix the problem
+            ##### DON'T UNCOMMENT! :-)
+            ##### self.reject()
 
 
     def __parseText(self, text, tableContent):
@@ -1013,12 +1031,15 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         return returnedTable
 
 
-    def exportAsText(self, config=None, preview=False):
+    def exportAsText(self, target, config=None, preview=False):
         """Export content as text
 
         If `preview`, only the Nth first items are exported
         """
-        # define a default configuration, if config is missing...
+        returned = {'exported': False,
+                    'message': 'not processed :)'
+                }
+        # define a default configuration, if given config is missing...
         defaultConfig = {
                 'userDefinedLayout.active': False,
                 'userDefinedLayout.content': '{table}',
@@ -1049,25 +1070,43 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         tableSettings.setMaxWidth(config.get('maximumWidth.value', defaultConfig['maximumWidth.value']))
         tableSettings.setColumnsAlignment([BCExportFilesDialogBox.FIELDS[key]['alignment'] for key in config.get('fields', defaultConfig['fields'])])
 
-        table = self.__getTable(config.get('fields', defaultConfig['fields']),
-                                config.get('files', defaultConfig['files']),
-                                None,
-                                preview)
+        try:
+            table = self.__getTable(config.get('fields', defaultConfig['fields']),
+                                    config.get('files', defaultConfig['files']),
+                                    None,
+                                    preview)
 
-        if config.get('userDefinedLayout.active', defaultConfig['userDefinedLayout.active']):
-            # layout asked
-            return self.__parseText(config.get('userDefinedLayout.content', defaultConfig['userDefinedLayout.content']), table.asText(tableSettings))
+            if config.get('userDefinedLayout.active', defaultConfig['userDefinedLayout.active']):
+                # layout asked
+                content = self.__parseText(config.get('userDefinedLayout.content', defaultConfig['userDefinedLayout.content']), table.asText(tableSettings))
+            else:
+                content = table.asText(tableSettings)
+
+            # data are ready
+            returned['exported'] = True
+        except Exception as e:
+            Debug.print('[BCExportFilesDialogBox.exportAsText] Unable to generate data: {0}', e)
+
+        if target == BCExportFilesDialogBox.__CLIPBOARD:
+            returned['message'] = 'to clipboard'
+            if returned['exported']:
+                returned['exported'] = self.__exportDataToClipboard(content)
         else:
-            return table.asText(tableSettings)
+            returned['message'] = f'to file <b>{os.path.basename(target)}</b>'
+            if returned['exported']:
+                returned['exported'] = self.__exportDataToFile(target, content)
 
-        return
+        return returned
 
 
-    def exportAsTextCsv(self, config=None, preview=False):
+    def exportAsTextCsv(self, target, config=None, preview=False):
         """Export content as text
 
         If `preview`, only the Nth first items are exported
         """
+        returned = {'exported': False,
+                    'message': 'not processed :)'
+                }
         # define a default configuration, if config is missing...
         defaultConfig = {
                 'header.active': True,
@@ -1087,19 +1126,39 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         tableSettings.setEnclosedField(config.get('field.enclosed', defaultConfig['field.enclosed']))
         tableSettings.setSeparator(config.get('field.separator', defaultConfig['field.separator']))
 
-        table = self.__getTable(config.get('fields', defaultConfig['fields']),
-                                config.get('files', defaultConfig['files']),
-                                None,
-                                preview)
+        try:
+            table = self.__getTable(config.get('fields', defaultConfig['fields']),
+                                    config.get('files', defaultConfig['files']),
+                                    None,
+                                    preview)
 
-        return table.asTextCsv(tableSettings)
+            content = table.asTextCsv(tableSettings)
+
+            # data are ready
+            returned['exported'] = True
+        except Exception as e:
+            Debug.print('[BCExportFilesDialogBox.exportAsTextCsv] Unable to generate data: {0}', e)
+
+        if target == BCExportFilesDialogBox.__CLIPBOARD:
+            returned['message'] = 'to clipboard'
+            if returned['exported']:
+                returned['exported'] = self.__exportDataToClipboard(content)
+        else:
+            returned['message'] = f'to file <b>{os.path.basename(target)}</b>'
+            if returned['exported']:
+                returned['exported'] = self.__exportDataToFile(target, content)
+
+        return returned
 
 
-    def exportAsTextMd(self, config=None, preview=False):
+    def exportAsTextMd(self, target, config=None, preview=False):
         """Export content as text
 
         If `preview`, only the Nth first items are exported
         """
+        returned = {'exported': False,
+                    'message': 'not processed :)'
+                }
         # define a default configuration, if config is missing...
         defaultConfig = {
                 'userDefinedLayout.active': False,
@@ -1118,16 +1177,33 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         tableSettings = BCTableSettingsTextMarkdown()
         tableSettings.setColumnsFormatting([BCExportFilesDialogBox.FIELDS[key]['format'] for key in config.get('fields', defaultConfig['fields'])])
 
-        table = self.__getTable(config.get('fields', defaultConfig['fields']),
-                                config.get('files', defaultConfig['files']),
-                                None,
-                                preview)
+        try:
+            table = self.__getTable(config.get('fields', defaultConfig['fields']),
+                                    config.get('files', defaultConfig['files']),
+                                    None,
+                                    preview)
 
-        if config.get('userDefinedLayout.active', defaultConfig['userDefinedLayout.active']):
-            # layout asked
-            return self.__parseText(config.get('userDefinedLayout.content', defaultConfig['userDefinedLayout.content']), table.asTextMarkdown(tableSettings))
+            if config.get('userDefinedLayout.active', defaultConfig['userDefinedLayout.active']):
+                # layout asked
+                content = self.__parseText(config.get('userDefinedLayout.content', defaultConfig['userDefinedLayout.content']), table.asTextMarkdown(tableSettings))
+            else:
+                content = table.asTextMarkdown(tableSettings)
+
+            # data are ready
+            returned['exported'] = True
+        except Exception as e:
+            Debug.print('[BCExportFilesDialogBox.exportAsTextMd] Unable to generate data: {0}', e)
+
+        if target == BCExportFilesDialogBox.__CLIPBOARD:
+            returned['message'] = 'to clipboard'
+            if returned['exported']:
+                returned['exported'] = self.__exportDataToClipboard(content)
         else:
-            return table.asTextMarkdown(tableSettings)
+            returned['message'] = f'to file <b>{os.path.basename(target)}</b>'
+            if returned['exported']:
+                returned['exported'] = self.__exportDataToFile(target, content)
+
+        return returned
 
 
     @staticmethod
