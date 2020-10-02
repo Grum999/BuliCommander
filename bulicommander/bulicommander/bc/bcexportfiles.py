@@ -1020,34 +1020,34 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         returned = text
 
         if self.rbPerimeterSelectPath.isChecked():
-            returned = returned.replace("{source}", self.__uiController.panel().path())
+            returned = re.sub("(?i)\{source\}",                     self.__uiController.panel().path(),                 returned)
         else:
-            returned = returned.replace("{source}", "Current user selection")
+            returned = re.sub("(?i)\{source}",                      "Current user selection",                           returned)
 
         currentDateTime = time.time()
 
-        returned = returned.replace("{bc:name}", self.__uiController.bcName())
-        returned = returned.replace("{bc:version}", self.__uiController.bcVersion())
-        returned = returned.replace("{bc:title}", self.__uiController.bcTitle())
+        returned = re.sub("(?i)\{bc:name\}",                        self.__uiController.bcName(),                       returned)
+        returned = re.sub("(?i)\{bc:version\}",                     self.__uiController.bcVersion(),                    returned)
+        returned = re.sub("(?i)\{bc:title\}",                       self.__uiController.bcTitle(),                      returned)
 
-        returned = returned.replace("{date}", tsToStr(currentDateTime, "d" ))
-        returned = returned.replace("{date:yyyy}", tsToStr(currentDateTime, "%Y" ))
-        returned = returned.replace("{date:mm}", tsToStr(currentDateTime, "%m" ))
-        returned = returned.replace("{date:dd}", tsToStr(currentDateTime, "%d" ))
+        returned = re.sub("(?i)\{date\}",                           tsToStr(currentDateTime, "d" ),                     returned)
+        returned = re.sub("(?i)\{date:yyyy\}",                      tsToStr(currentDateTime, "%Y" ),                    returned)
+        returned = re.sub("(?i)\{date:mm\}",                        tsToStr(currentDateTime, "%m" ),                    returned)
+        returned = re.sub("(?i)\{date:dd\}",                        tsToStr(currentDateTime, "%d" ),                    returned)
 
-        returned = returned.replace("{time}", tsToStr(currentDateTime, "t" ))
-        returned = returned.replace("{time:hh}", tsToStr(currentDateTime, "%H" ))
-        returned = returned.replace("{time:mm}", tsToStr(currentDateTime, "%M" ))
-        returned = returned.replace("{time:ss}", tsToStr(currentDateTime, "%S" ))
+        returned = re.sub("(?i)\{time\}",                           tsToStr(currentDateTime, "t" ),                     returned)
+        returned = re.sub("(?i)\{time:hh\}",                        tsToStr(currentDateTime, "%H" ),                    returned)
+        returned = re.sub("(?i)\{time:mm\}",                        tsToStr(currentDateTime, "%M" ),                    returned)
+        returned = re.sub("(?i)\{time:ss\}",                        tsToStr(currentDateTime, "%S" ),                    returned)
 
-        returned = returned.replace("{items:total.count}", str(self.__fileNfo[3]))
-        returned = returned.replace("{items:directories.count}", str(self.__fileNfo[1]))
-        returned = returned.replace("{items:files.count}", str(self.__fileNfo[2]))
-        returned = returned.replace("{items:files.size}", str(self.__fileNfo[6]))
-        returned = returned.replace("{items:files.size(KiB)}", bytesSizeToStr(self.__fileNfo[6], 'autobin'))
-        returned = returned.replace("{items:files.size(KB)}", bytesSizeToStr(self.__fileNfo[6], 'auto'))
+        returned = re.sub("(?i)\{items:total\.count\}",             str(self.__fileNfo[3]),                             returned)
+        returned = re.sub("(?i)\{items:directories\.count\}",       str(self.__fileNfo[1]),                             returned)
+        returned = re.sub("(?i)\{items:files\.count\}",             str(self.__fileNfo[2]),                             returned)
+        returned = re.sub("(?i)\{items:files\.size\}",              str(self.__fileNfo[6]),                             returned)
+        returned = re.sub("(?i)\{items:files\.size\(KiB\)\}",       bytesSizeToStr(self.__fileNfo[6], 'autobin'),       returned)
+        returned = re.sub("(?i)\{items:files\.size\(KB\)\}",        bytesSizeToStr(self.__fileNfo[6], 'auto'),          returned)
 
-        returned = returned.replace("{table}", tableContent)
+        returned = re.sub("(?i)\{table\}",                          tableContent,                                       returned)
 
         return returned
 
