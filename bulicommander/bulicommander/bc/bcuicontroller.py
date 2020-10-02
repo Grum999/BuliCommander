@@ -49,6 +49,7 @@ from .bcfileoperation import (
         BCFileOperationUi,
         BCFileOperation
     )
+from .bcexportfiles import BCExportFilesDialogBox
 from .bchistory import BCHistory
 from .bcmainviewtab import (
         BCMainViewTab,
@@ -78,7 +79,7 @@ from .bcimagepreview import (
 from .bcsavedview import BCSavedView
 from .bctable import (
         BCTable,
-        BCTableSettings
+        BCTableSettingsText
     )
 from .bcutils import (
         buildIcon,
@@ -129,7 +130,7 @@ class BCUIController(QObject):
         self.__lastDocumentsSaved = BCHistory()
         self.__backupFilterDView = BCHistory()
         self.__fileLayerFilterDView = BCHistory()
-        self.__tableSettings = BCTableSettings()
+        self.__tableSettings = BCTableSettingsText()
 
         self.__confirmAction = True
 
@@ -584,6 +585,15 @@ class BCUIController(QObject):
     def started(self):
         """Return True if BuliCommander interface is started"""
         return self.__bcStarted
+
+    def bcVersion(self):
+        return self.__bcVersion
+
+    def bcName(self):
+        return self.__bcName
+
+    def bcTitle(self):
+        return self.__bcTitle
 
     # endregion: getter/setters ------------------------------------------------
 
@@ -1717,7 +1727,7 @@ class BCUIController(QObject):
         for panelId in self.__window.panels:
             self.__window.panels[panelId].showQuickFilter(visible)
 
-    def commandInfoToClipBoardBorder(self, border=BCTable.BORDER_DOUBLE):
+    def commandInfoToClipBoardBorder(self, border=BCTableSettingsText.BORDER_DOUBLE):
         """Set border for information panel content to clipboard"""
         self.__tableSettings.setBorder(border)
 
@@ -1740,6 +1750,10 @@ class BCUIController(QObject):
     def commandInfoToClipBoardMaxWidthActive(self, active=False):
         """Set maximum width active for information panel content to clipboard"""
         self.__tableSettings.setMaxWidthActive(active)
+
+    def commandToolsExportFilesOpen(self):
+        """Open window for tool 'Export file list'"""
+        BCExportFilesDialogBox.open(f'{self.__bcName}::Settings', self)
 
     def commandSettingsOpen(self):
         """Open dialog box settings"""

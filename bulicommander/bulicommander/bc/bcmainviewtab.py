@@ -100,7 +100,7 @@ from .bcworkers import (
     )
 from .bctable import (
         BCTable,
-        BCTableSettings
+        BCTableSettingsText
     )
 from .bcutils import (
         Debug,
@@ -522,6 +522,21 @@ class BCMainViewFiles(QTreeView):
 
         self.selectionModel().select(QItemSelection(first, last), QItemSelectionModel.Toggle)
 
+    def files(self):
+        """Return a list of files"""
+        returned=[]
+
+        #for fileIndex in range(self.__model.rowCount()):
+        #    fileNfo = self.__model.item(fileIndex, BCMainViewFiles.COLNUM_NAME).data(BCMainViewFiles.USERROLE_FILE)
+        #    if not(fileNfo.name() == '..' and fileNfo.format() == BCFileManagedFormat.DIRECTORY):
+        #        returned.append(fileNfo)
+        for rowIndex in range(self.__proxyModel.rowCount()):
+            fileNfo = self.__proxyModel.index(rowIndex, BCMainViewFiles.COLNUM_NAME).data(BCMainViewFiles.USERROLE_FILE)
+            if not(fileNfo.name() == '..' and fileNfo.format() == BCFileManagedFormat.DIRECTORY):
+                returned.append(fileNfo)
+
+        return returned
+
     def selectedFiles(self):
         """Return a list of selected files
 
@@ -533,7 +548,7 @@ class BCMainViewFiles(QTreeView):
         for item in smodel:
             fileNfo = item.data(BCMainViewFiles.USERROLE_FILE)
             if not(fileNfo.name() == '..' and fileNfo.format() == BCFileManagedFormat.DIRECTORY):
-                returned.append(item.data(BCMainViewFiles.USERROLE_FILE))
+                returned.append(fileNfo)
 
         return returned
 
@@ -2038,7 +2053,7 @@ class BCMainViewTab(QFrame):
                 if not formLayout is None:
                     table=BCTable()
 
-                    table.setTitle(stripTags(self.twInfo.tabText(source)))
+                    table.setTitle(f'[ {stripTags(self.twInfo.tabText(source))} ]' )
                     table.setHeader(['Property', 'Value'])
 
                     for row in range(formLayout.rowCount()):
@@ -2080,19 +2095,19 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot('QString')
         def setBorderNone(action):
-            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_NONE)
+            self.__uiController.commandInfoToClipBoardBorder(BCTableSettingsText.BORDER_NONE)
 
         @pyqtSlot('QString')
         def setBorderBasic(action):
-            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_BASIC)
+            self.__uiController.commandInfoToClipBoardBorder(BCTableSettingsText.BORDER_BASIC)
 
         @pyqtSlot('QString')
         def setBorderSimple(action):
-            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_SIMPLE)
+            self.__uiController.commandInfoToClipBoardBorder(BCTableSettingsText.BORDER_SIMPLE)
 
         @pyqtSlot('QString')
         def setBorderDouble(action):
-            self.__uiController.commandInfoToClipBoardBorder(BCTable.BORDER_DOUBLE)
+            self.__uiController.commandInfoToClipBoardBorder(BCTableSettingsText.BORDER_DOUBLE)
 
         @pyqtSlot('QString')
         def setHeader(action):
@@ -2186,14 +2201,14 @@ class BCMainViewTab(QFrame):
         contextMenuOptBorderGroup.addAction(rbOptBorderSimpleAction)
         contextMenuOptBorderGroup.addAction(rbOptBorderDoubleAction)
 
-        if self.__uiController.tableSettings().border() == BCTable.BORDER_NONE:
+        if self.__uiController.tableSettings().border() == BCTableSettingsText.BORDER_NONE:
             rbOptBorderNone.setChecked(True)
-        elif self.__uiController.tableSettings().border() == BCTable.BORDER_BASIC:
+        elif self.__uiController.tableSettings().border() == BCTableSettingsText.BORDER_BASIC:
             rbOptBorderBasic.setChecked(True)
-        elif self.__uiController.tableSettings().border() == BCTable.BORDER_SIMPLE:
+        elif self.__uiController.tableSettings().border() == BCTableSettingsText.BORDER_SIMPLE:
             rbOptBorderSimple.setChecked(True)
         else:
-        #elif self.__uiController.tableSettings().border() == BCTable.BORDER_DOUBLE:
+        #elif self.__uiController.tableSettings().border() == BCTableSettingsText.BORDER_DOUBLE:
             rbOptBorderDouble.setChecked(True)
 
         optionMenu.addSeparator()
@@ -2222,8 +2237,8 @@ class BCMainViewTab(QFrame):
         optionMenu.addAction(cbOptMinWidthActiveAction)
 
         slOptWidthMin = BCMenuSlider(None, optionMenu)
-        slOptWidthMin.slider().setMinimum(BCTableSettings.MIN_WIDTH)
-        slOptWidthMin.slider().setMaximum(BCTableSettings.MAX_WIDTH)
+        slOptWidthMin.slider().setMinimum(BCTableSettingsText.MIN_WIDTH)
+        slOptWidthMin.slider().setMaximum(BCTableSettingsText.MAX_WIDTH)
         slOptWidthMin.slider().setValue(value)
         slOptWidthMin.slider().setPageStep(10)
         slOptWidthMin.slider().setSingleStep(1)
@@ -2243,8 +2258,8 @@ class BCMainViewTab(QFrame):
         optionMenu.addAction(cbOptMaxWidthActiveAction)
 
         slOptWidthMax = BCMenuSlider(None, optionMenu)
-        slOptWidthMax.slider().setMinimum(BCTableSettings.MIN_WIDTH)
-        slOptWidthMax.slider().setMaximum(BCTableSettings.MAX_WIDTH)
+        slOptWidthMax.slider().setMinimum(BCTableSettingsText.MIN_WIDTH)
+        slOptWidthMax.slider().setMaximum(BCTableSettingsText.MAX_WIDTH)
         slOptWidthMax.slider().setValue(value)
         slOptWidthMax.slider().setPageStep(10)
         slOptWidthMax.slider().setSingleStep(1)
@@ -2893,13 +2908,46 @@ class BCMainViewTab(QFrame):
         [3] nb directories + files
         [4] nb readable
         [5] list of BCFiles
+        [6] size of files
         """
         return (self.__selectedFiles,
                 self.__selectedNbDir,
                 self.__selectedNbFile,
                 self.__selectedNbTotal,
                 self.__selectedNbReadable,
-                self.__selectedFiles)
+                self.__selectedFiles,
+                self.__currentStats['sizeSelectedFiles'])
+
+
+    def files(self):
+        """Return information about files (filtered applied)
+
+        Information is provided as a tuple:
+        [0] list of BCBaseFile
+        [1] nb directories
+        [2] nb files
+        [3] nb directories + files
+        [4] nb readable
+        [5] list of BCFiles
+        [6] size of files
+        """
+        files = self.treeViewFiles.files()
+        if self.__currentStats['nbFilteredTotal'] > 0:
+            return (files,
+                    self.__currentStats['nbFilteredDir'],
+                    self.__currentStats['nbFilteredFiles'],
+                    self.__currentStats['nbFilteredTotal'],
+                    self.__currentStats['nbFilteredTotal'],
+                    files,
+                    self.__currentStats['sizeFilteredFiles'])
+        else:
+            return (files,
+                    self.__currentStats['nbDir'],
+                    self.__currentStats['nbFiles'],
+                    self.__currentStats['nbTotal'],
+                    self.__currentStats['nbTotal'],
+                    files,
+                    self.__currentStats['sizeFiles'])
 
 
     def previewBackground(self):
