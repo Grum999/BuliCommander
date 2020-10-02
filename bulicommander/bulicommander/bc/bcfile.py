@@ -601,7 +601,6 @@ class BCBaseFile(object):
                 except Exception as e:
                     Debug.print('[BCBaseFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, str(e))
 
-            print('thumbnailFile', thumbnailFile)
             return thumbnailFile
 
     def permissions(self):
@@ -684,7 +683,6 @@ class BCMissingFile(BCBaseFile):
 
     def thumbnail(self, size=None, thumbType=None, icon=None):
         """return system icon for file"""
-        print('missing file', thumbType, self._fullPathName)
         return super(BCMissingFile, self).thumbnail(size, thumbType, QIcon(':/images/warning'))
 
     def permissions(self):
