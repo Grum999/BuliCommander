@@ -342,7 +342,7 @@ class BCExportFilesDialogBox(QDialog):
             # the "Selected files" can be disabled
             self.rbPerimeterSelectPath.setChecked(True)
 
-            self.lblPerimeterSelectPathNfo.setText(i18n(f"<b>{self.__uiController.panel().path()}</b> (Files: {self.__fileNfo[2]}, Directories: {self.__fileNfo[1]})"))
+            self.lblPerimeterSelectPathNfo.setText(i18n(f"<b>{self.__getPath()}</b> (Files: {self.__fileNfo[2]}, Directories: {self.__fileNfo[1]})"))
             self.lblPerimeterSelectSelNfo.setText(i18n(f"(Files: {self.__selectedFileNfo[2]}, Directories: {self.__selectedFileNfo[1]})"))
             if self.__selectedFileNfo[3] > 0:
                 self.rbPerimeterSelectSel.setEnabled(True)
@@ -1015,12 +1015,23 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         pass
 
 
+    def __getPath(self):
+        """Return path (path file/name or quick ref)"""
+        path=self.__uiController.panel().path()
+        lPath=path.lower()
+        refDict=self.__uiController.quickRefDict()
+
+        if lPath in refDict:
+            return f"{refDict[path][2]}"
+        return path
+
+
     def __parseText(self, text, tableContent):
         """Parse given text to replace markup with their values"""
         returned = text
 
         if self.rbPerimeterSelectPath.isChecked():
-            returned = re.sub("(?i)\{source\}",                     self.__uiController.panel().path(),                 returned)
+            returned = re.sub("(?i)\{source\}",                     self.__getPath(),                                   returned)
         else:
             returned = re.sub("(?i)\{source}",                      "Current user selection",                           returned)
 
