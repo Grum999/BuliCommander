@@ -33,14 +33,17 @@ from PyQt5.QtWidgets import (
     )
 
 import os
-import time
 import re
+import shutil
+import time
 
 from .bcfile import (
+        BCBaseFile,
         BCDirectory,
         BCFile,
         BCFileManagedFormat,
-        BCFileProperty
+        BCFileProperty,
+        BCFileThumbnailSize
     )
 from .bcsettings import BCSettingsKey
 from .bcsystray import BCSysTray
@@ -118,12 +121,22 @@ class BCExportFilesDialogBox(QDialog):
                                                     # alignment:    for format that support colupmn alignment, define
                                                     #               data alignment (0: left / 1: right)
                                                     # format:       how to format data (use markdown notation)
+                                                    # inList:       visible in selection list or not,
                                                     # selected:     default status in listbox
+        'file.thumbnailMD':                         {'label':       i18n('Thumbnail'),
+                                                     'toolTip':     i18n('The image thumbnail'),
+                                                     'data':        '![](./{extraData[1]}/{os.path.basename(file.thumbnail(extraData[0], BCBaseFile.THUMBTYPE_FILENAME))})',
+                                                     'alignment':   0,
+                                                     'format':      None,
+                                                     'inList':      False,
+                                                     'selected':    True
+                                                    },
         'file.path':                                {'label':       i18n('Path'),
                                                      'toolTip':     i18n('The file path'),
                                                      'data':        '{file.path()}',
                                                      'alignment':   0,
                                                      'format':      ('`{text}`', ),
+                                                     'inList':      True,
                                                      'selected':    True
                                                     },
         'file.name':                                {'label':       i18n('File name'),
@@ -131,6 +144,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{file.name()}',
                                                      'alignment':   0,
                                                      'format':      ('`{text}`', ),
+                                                     'inList':      True,
                                                      'selected':    True
                                                     },
         'file.baseName':                            {'label':       i18n('File base name'),
@@ -138,6 +152,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{file.baseName() if not isinstance(file, BCDirectory) else file.name()}',
                                                      'alignment':   0,
                                                      'format':      ('`{text}`', ),
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'file.extension':                           {'label':       i18n('File extension'),
@@ -145,6 +160,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{file.extension() if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   0,
                                                      'format':      ('`{text}`', ),
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'file.fullPathName':                        {'label':       i18n('Full path/file name'),
@@ -152,6 +168,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{file.fullPathName()}',
                                                      'alignment':   0,
                                                      'format':      ('`{text}`', ),
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'file.format.short':                        {'label':       i18n('File format (short)'),
@@ -159,6 +176,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{BCFileManagedFormat.translate(file.format(), True)}',
                                                      'alignment':   0,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    True
                                                     },
         'file.format.long':                         {'label':       i18n('File format (long)'),
@@ -166,6 +184,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{BCFileManagedFormat.translate(file.format(), False)}',
                                                      'alignment':   0,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'modified.datetime':                        {'label':       i18n('Date/Time'),
@@ -173,6 +192,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"dt")}',
                                                      'alignment':   0,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    True
                                                     },
         'modified.date.full':                       {'label':       i18n('Date'),
@@ -180,6 +200,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"d")}',
                                                      'alignment':   0,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'modified.date.year':                       {'label':       i18n('Date (year)'),
@@ -187,6 +208,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%Y")}',
                                                      'alignment':   0,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'modified.date.month':                      {'label':       i18n('Date (month)'),
@@ -194,6 +216,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%m")}',
                                                      'alignment':   0,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'modified.date.day':                        {'label':       i18n('Date (day)'),
@@ -201,6 +224,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%d")}',
                                                      'alignment':   0,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'modified.time.full':                       {'label':       i18n('Time'),
@@ -208,6 +232,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"t")}',
                                                      'alignment':   0,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'modified.time.hour':                       {'label':       i18n('Time (hour)'),
@@ -215,6 +240,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%H")}',
                                                      'alignment':   0,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'modified.time.minute':                     {'label':       i18n('Time (minutes)'),
@@ -222,6 +248,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%M")}',
                                                      'alignment':   0,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'modified.time.seconds':                    {'label':       i18n('Date (seconds)'),
@@ -229,6 +256,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%S")}',
                                                      'alignment':   0,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'size.bytes':                               {'label':       i18n('Size (bytes)'),
@@ -236,6 +264,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{file.size() if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'size.unit.decimal':                        {'label':       i18n('Size (best decimal unit)'),
@@ -243,6 +272,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{bytesSizeToStr(file.size(), "auto") if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'size.unit.binary':                         {'label':       i18n('Size (best binary unit)'),
@@ -250,6 +280,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{bytesSizeToStr(file.size(), "autobin") if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    True
                                                     },
         'image.size.full':                          {'label':       i18n('Image size (width x height)'),
@@ -257,6 +288,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{str(file.imageSize().width()) + "x" + str(file.imageSize().height()) if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    True
                                                     },
         'image.size.width':                         {'label':       i18n('Image size (width)'),
@@ -264,6 +296,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{file.imageSize().width() if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     },
         'image.size.height':                         {'label':      i18n('Image size (height)'),
@@ -271,6 +304,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'data':        '{file.imageSize().height() if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
+                                                     'inList':      True,
                                                      'selected':    False
                                                     }
     }
@@ -281,6 +315,9 @@ class BCExportFilesDialogBox(QDialog):
 
         self.__title = title
         self.__previewLimit = 20
+
+        # defined as global to class... simple way to define
+        self.__extraData = []
 
         self.__uiController = uicontroller
         self.__fileNfo = self.__uiController.panel().files()
@@ -317,16 +354,17 @@ class BCExportFilesDialogBox(QDialog):
             # define list of properties with default internal selection
             self.lwPerimeterProperties.clear()
             for field in BCExportFilesDialogBox.FIELDS:
-                item = QListWidgetItem(BCExportFilesDialogBox.FIELDS[field]['label'])
+                if BCExportFilesDialogBox.FIELDS[field]['inList']:
+                    item = QListWidgetItem(BCExportFilesDialogBox.FIELDS[field]['label'])
 
-                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-                if BCExportFilesDialogBox.FIELDS[field]['selected']:
-                    item.setCheckState(Qt.Checked)
-                else:
-                    item.setCheckState(Qt.Unchecked)
-                item.setData(BCExportFilesDialogBox.__FIELD_ID, field)   # store field ID
-                item.setToolTip(BCExportFilesDialogBox.FIELDS[field]['toolTip'])
-                self.lwPerimeterProperties.addItem(item)
+                    item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+                    if BCExportFilesDialogBox.FIELDS[field]['selected']:
+                        item.setCheckState(Qt.Checked)
+                    else:
+                        item.setCheckState(Qt.Unchecked)
+                    item.setData(BCExportFilesDialogBox.__FIELD_ID, field)   # store field ID
+                    item.setToolTip(BCExportFilesDialogBox.FIELDS[field]['toolTip'])
+                    self.lwPerimeterProperties.addItem(item)
 
             # connectors
             self.pbPerimeterReset.clicked.connect(self.__slotPagePerimeterResetFields)
@@ -699,11 +737,25 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             self.leTargetResultFile.setText(fileName.replace('{ext}', BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['fileExtension']))
 
-            if not BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['clipboard']:
+
+            clipboardAllowed={
+                    'status': BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['clipboard'],
+                    'tooltip': ''
+                }
+
+            if not clipboardAllowed['status']:
+                clipboardAllowed['tooltip']=i18n("This format doesn't allow export to clipboard")
+            elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_MD and self.cbFormatTextMDIncludeThumbnails.isChecked():
+                clipboardAllowed['status']=False
+                clipboardAllowed['tooltip']=i18n("When option <i>Include thumbnails</i> is checked, Markdown can't be exported to clipboard")
+
+            if not clipboardAllowed['status']:
                 self.rbTargetResultFile.setChecked(True)
                 self.rbTargetResultClipboard.setEnabled(False)
             else:
                 self.rbTargetResultClipboard.setEnabled(True)
+
+            self.rbTargetResultClipboard.setToolTip(clipboardAllowed['tooltip'])
 
         self.__updateBtn()
 
@@ -835,9 +887,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE, self.cbFormatTextBorders.isChecked())
 
-            if self.rbFormatTextBorderSimple.isChecked():
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT, )
-
             if self.rbFormatTextBorderNone.isChecked():
                 currentBordersStyle = 0
             elif self.rbFormatTextBorderBasic.isChecked():
@@ -951,7 +1000,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             QApplication.restoreOverrideCursor()
             # and close export window
-            # self.accept()
+            self.accept()
         else:
             BCSysTray.messageCritical(i18n(f"{self.__uiController.bcName()}::Export files list"),
                                       i18n(f"Export as <i>{BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> format {exported['message']} has failed!"))
@@ -960,6 +1009,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             ##### export failed: do not close window, let user try to check/fix the problem
             ##### DON'T UNCOMMENT! :-)
             ##### self.reject()
+
+        # the pass... is useless i know; it's used to let Atom editor being avle to fold the function properly
+        # (not able to fold properly if last line in function are comment ^_^')
+        pass
 
 
     def __parseText(self, text, tableContent):
@@ -1014,6 +1067,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         maxRows = None
         if preview:
             maxRows = min(self.__previewLimit, len(items))
+
+        extraData = self.__extraData
 
         currentRow = 0
         for file in items:
@@ -1174,11 +1229,23 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if not isinstance(config, dict):
             config = defaultConfig
 
+        includeThumbnails = config.get('thumbnails.included', defaultConfig['thumbnails.included'])
+
+        if includeThumbnails and target != BCExportFilesDialogBox.__CLIPBOARD:
+            targetBaseName=os.path.basename(target)
+            self.__extraData = [BCFileThumbnailSize.fromValue(config.get('thumbnails.size', defaultConfig['thumbnails.size'])), # thumbnail size
+                                f"{targetBaseName}-img" # Relative path to MD file
+                                ]
+            fieldsList=['file.thumbnailMD']
+        else:
+            fieldsList=[]
+        fieldsList+=config.get('fields', defaultConfig['fields'])
+
         tableSettings = BCTableSettingsTextMarkdown()
-        tableSettings.setColumnsFormatting([BCExportFilesDialogBox.FIELDS[key]['format'] for key in config.get('fields', defaultConfig['fields'])])
+        tableSettings.setColumnsFormatting([BCExportFilesDialogBox.FIELDS[key]['format'] for key in fieldsList])
 
         try:
-            table = self.__getTable(config.get('fields', defaultConfig['fields']),
+            table = self.__getTable(fieldsList,
                                     config.get('files', defaultConfig['files']),
                                     None,
                                     preview)
@@ -1202,6 +1269,31 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             returned['message'] = f'to file <b>{os.path.basename(target)}</b>'
             if returned['exported']:
                 returned['exported'] = self.__exportDataToFile(target, content)
+
+            if returned['exported'] and includeThumbnails:
+                # MD file export is Ok, copy thumnails
+                try:
+                    # create target directory
+                    targetPath = os.path.join(os.path.dirname(target), self.__extraData[1])
+                    if os.path.isdir(targetPath):
+                        shutil.rmtree(targetPath)
+
+                    os.makedirs(targetPath, exist_ok=True)
+                except Exception as e:
+                    returned['exported'] = False
+                    Debug.print('[BCExportFilesDialogBox.exportAsTextMd] Unable to create target directory: {0}', e)
+
+            if returned['exported'] and includeThumbnails:
+                # MD file export is Ok, copy thumnails
+                for file in config.get('files', defaultConfig['files']):
+                    try:
+                        thumbnailFileName=file.thumbnail(self.__extraData[0], BCBaseFile.THUMBTYPE_FILENAME)
+                        if os.path.isfile(thumbnailFileName):
+                            shutil.copy2(thumbnailFileName, os.path.join(targetPath, os.path.basename(thumbnailFileName)))
+                    except Exception as e:
+                        Debug.print('[BCExportFilesDialogBox.exportAsTextMd] Unable to copy thumbnails: {0}', e)
+
+
 
         return returned
 

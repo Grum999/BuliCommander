@@ -337,6 +337,7 @@ class BCBaseFile(object):
 
     THUMBTYPE_ICON = 'qicon'
     THUMBTYPE_IMAGE = 'qimage'
+    THUMBTYPE_FILENAME = 'filename'     # in this case, return thumbnail file name instead of icon/image
 
     def __init__(self, fileName):
         """Initialise BCFile"""
@@ -564,15 +565,44 @@ class BCBaseFile(object):
         """return system icon for file"""
         return BCFileIcon.get(self._fullPathName)
 
-    def thumbnail(self, size=None, thumbType=None):
+    def thumbnail(self, size=None, thumbType=None, icon=None):
         """return system icon for file"""
         if size is None or not isinstance(size, BCFileThumbnailSize):
             size = BCFile.thumbnailCacheDefaultSize()
 
+        # that's not the best way to do this
+        if not isinstance(icon, QIcon):
+            # generate icon from file
+            icon = BCFileIcon.get(self._fullPathName)
+
         if thumbType is None or thumbType==BCBaseFile.THUMBTYPE_IMAGE:
-            return BCFileIcon.get(self._fullPathName).pixmap(size.size(QSize)).toImage()
+            return icon.pixmap(size.size(QSize)).toImage()
+        elif thumbType==BCBaseFile.THUMBTYPE_ICON:
+            return icon
         else:
-            return BCFileIcon.get(self._fullPathName)
+            # BCBaseFile.THUMBTYPE_FILENAME
+            # get pixmap of icon
+            thumbnailImg = icon.pixmap(size.size(QSize)).toImage()
+
+            ptrBits = thumbnailImg.constBits()
+            ptrBits.setsize(thumbnailImg.byteCount())
+
+            # calculate hash on pixmap
+            fileHash = hashlib.blake2b(digest_size=32)
+            fileHash.update(ptrBits)
+            hash=fileHash.hexdigest()
+
+            thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(size), f'{hash}.{BCFile.thumbnailCacheFormat().value}')
+
+            if not os.path.isfile(thumbnailFile):
+                # generate thumbnail file
+                try:
+                    thumbnailImg.save(thumbnailFile, quality=BCFile.thumbnailCacheCompression())
+                except Exception as e:
+                    Debug.print('[BCBaseFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, str(e))
+
+            print('thumbnailFile', thumbnailFile)
+            return thumbnailFile
 
     def permissions(self):
         """Return permission as rwx------ string"""
@@ -652,9 +682,10 @@ class BCMissingFile(BCBaseFile):
         """return system icon for file"""
         return QIcon(':/images/warning')
 
-    def thumbnail(self, size=None, thumbType=None):
+    def thumbnail(self, size=None, thumbType=None, icon=None):
         """return system icon for file"""
-        return QIcon(':/images/warning')
+        print('missing file', thumbType, self._fullPathName)
+        return super(BCMissingFile, self).thumbnail(size, thumbType, QIcon(':/images/warning'))
 
     def permissions(self):
         """Return permission as rwx------ string"""
@@ -686,7 +717,6 @@ class BCMissingFile(BCBaseFile):
     def readable(self):
         """Return True if file is readable"""
         return False
-
 
 class BCFile(BCBaseFile):
     """Provide an easy way to work with images files:
@@ -2795,6 +2825,11 @@ class BCFile(BCBaseFile):
             return
 
     @staticmethod
+    def thumbnailCacheCompression():
+        """Return current thumbnail cache compression parameter"""
+        return BCFile.__THUMBNAIL_CACHE_COMPRESSION
+
+    @staticmethod
     def thumbnailCacheFormat():
         """Return current thumbnail cache format"""
         return BCFile.__THUMBNAIL_CACHE_FMT
@@ -2935,8 +2970,11 @@ class BCFile(BCBaseFile):
                         # the found thumbnail is already to expected size, return it
                         if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
                             return imageSrc
-                        else:
+                        elif thumbType==BCBaseFile.THUMBTYPE_ICON:
                             return QIcon(QPixmap.fromImage(imageSrc))
+                        else:
+                            # BCBaseFile.THUMBTYPE_FILENAME
+                            return thumbnailFile
                     break
 
                 # use larger thumbnail size as source
@@ -2976,8 +3014,11 @@ class BCFile(BCBaseFile):
                 if not thumbnailImg is None:
                     if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
                         return thumbnailImg
-                    else:
+                    elif thumbType==BCBaseFile.THUMBTYPE_ICON:
                         return QIcon(QPixmap.fromImage(thumbnailImg))
+                    else:
+                        # BCBaseFile.THUMBTYPE_FILENAME
+                        return thumbnailFile
 
         if thumbnailImg is None:
             # make thumbnail
@@ -2987,8 +3028,12 @@ class BCFile(BCBaseFile):
             # no need to save thumbnail
             if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
                 return thumbnailImg
-            else:
+            elif thumbType==BCBaseFile.THUMBTYPE_ICON:
                 return QIcon(QPixmap.fromImage(thumbnailImg))
+            else:
+                # BCBaseFile.THUMBTYPE_FILENAME
+                # in this case (no cache + asked for file name?) return None -- this should not occurs, otherwise I'm a dumb :)
+                return None
 
         thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(size), f'{self.__qHash}.{BCFile.__THUMBNAIL_CACHE_FMT.value}')
         try:
@@ -2999,8 +3044,11 @@ class BCFile(BCBaseFile):
         # finally, return thumbnail
         if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
             return thumbnailImg
-        else:
+        elif thumbType==BCBaseFile.THUMBTYPE_ICON:
             return QIcon(QPixmap.fromImage(thumbnailImg))
+        else:
+            # BCBaseFile.THUMBTYPE_FILENAME
+            return thumbnailFile
 
     def getProperty(self, property):
         """return property value"""
