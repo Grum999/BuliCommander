@@ -1753,7 +1753,7 @@ class BCUIController(QObject):
 
     def commandToolsExportFilesOpen(self):
         """Open window for tool 'Export file list'"""
-        BCExportFilesDialogBox.open(f'{self.__bcName}::Settings', self)
+        BCExportFilesDialogBox.open(f'{self.__bcName}::Export files list', self)
 
     def commandSettingsOpen(self):
         """Open dialog box settings"""

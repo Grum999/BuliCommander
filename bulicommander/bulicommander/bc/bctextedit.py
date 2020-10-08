@@ -1,0 +1,440 @@
+#-----------------------------------------------------------------------------
+# Buli Commander
+# Copyright (C) 2020 - Grum999
+# -----------------------------------------------------------------------------
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.
+# If not, see https://www.gnu.org/licenses/
+# -----------------------------------------------------------------------------
+# A Krita plugin designed to manage documents
+# -----------------------------------------------------------------------------
+
+
+
+
+# -----------------------------------------------------------------------------
+import PyQt5.uic
+
+import os
+
+from PyQt5.Qt import *
+from PyQt5.QtCore import (
+        pyqtSignal as Signal
+    )
+from PyQt5.QtWidgets import (
+        QApplication,
+        QFrame,
+        QHBoxLayout,
+        QVBoxLayout,
+        QWidget
+    )
+
+
+class BCTextEditDialog(QDialog):
+    """A simple dialog box to edit formatted text"""
+
+    def __init__(self, parent):
+        super(BCTextEditDialog, self).__init__(parent)
+
+        self.setSizeGripEnabled(True)
+        self.setModal(True)
+
+        self.__editor = BCTextEdit(self)
+
+        dbbxOkCancel = QDialogButtonBox(self)
+        dbbxOkCancel.setOrientation(Qt.Horizontal)
+        dbbxOkCancel.setStandardButtons(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        dbbxOkCancel.accepted.connect(self.accept)
+        dbbxOkCancel.rejected.connect(self.reject)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.__editor)
+        layout.addWidget(dbbxOkCancel)
+
+    def toPlainText(self):
+        """Return current text as plain text"""
+        return self.__editor.toPlainText()
+
+    def setPlainText(self, text):
+        """Set current text as plain text"""
+        self.__editor.setPlainText(text)
+
+    def toHtml(self):
+        """Return current text as HTML text"""
+        return self.__editor.toHtml()
+
+    def setHtml(self, text):
+        """Set current text as HTML text"""
+        self.__editor.setHtml(text)
+
+    @staticmethod
+    def edit(title, text):
+        """Open a dialog box to edit text"""
+        dlgBox = BCTextEditDialog(None)
+        dlgBox.setHtml(text)
+        dlgBox.setWindowTitle(title)
+
+        returned = dlgBox.exec()
+
+        if returned == QDialog.Accepted:
+            return dlgBox.toHtml()
+        else:
+            return None
+
+
+class BCTextEdit(QWidget):
+    """A small text editor widget with a basic formatting toolbar"""
+
+    def __init__(self, parent=None):
+        super(BCTextEdit, self).__init__(parent)
+
+        self.__toolBarItems = {}
+        self.__textEdit = QTextEdit()
+        self.__toolBar = QWidget()
+
+        self.__formattingWidgets=[]
+
+        self.__initTextEdit()
+        self.__initToolBar()
+
+        layout = QVBoxLayout()
+        layout.setSpacing(6)
+        layout.setContentsMargins(QMargins(0,0,0,0))
+        layout.addWidget(self.__toolBar)
+        layout.addWidget(self.__textEdit)
+
+        self.setLayout(layout)
+
+
+    def __initTextEdit(self):
+        """Initialise text edit widget"""
+        self.__textEdit.setAutoFormatting(QTextEdit.AutoAll)
+        self.__textEdit.cursorPositionChanged.connect(self.__updateToolbar)
+
+        font = QFont('Sans serif', 10)
+        self.__textEdit.setFont(font)
+        self.__textEdit.setFontPointSize(10)
+
+
+    def __initToolBar(self):
+        """Initialise toolbar widget
+
+        [Copy] [Cut] [paste] | [Font name] [Font size] [Bold] [Italic] [Underline] [Color] | [Left alignment] [Center alignment] [Right alignment] [Justfied alignment]
+
+        """
+        layout = QHBoxLayout()
+        layout.setSpacing(6)
+        layout.setContentsMargins(QMargins(0,0,0,0))
+
+        items = [
+            {'type':            'button',
+             'id':              'undo',
+             'tooltip':         i18n('Undo last action'),
+             'icon':            QIcon.fromTheme('edit-undo'),
+             'action':          self.__textEdit.undo,
+             'checkable':       False
+            },
+            {'type':            'button',
+             'id':              'redo',
+             'tooltip':         i18n('Redo last action'),
+             'icon':            QIcon.fromTheme('edit-redo'),
+             'action':          self.__textEdit.redo,
+             'checkable':       False
+            },
+            {'type':            'separator'},
+            {'type':            'button',
+             'id':              'copy',
+             'tooltip':         i18n('Copy selection to clipboard'),
+             'icon':            QIcon.fromTheme('edit-copy'),
+             'action':          self.__textEdit.copy,
+             'checkable':       False
+            },
+            {'type':            'button',
+             'id':              'cut',
+             'tooltip':         i18n('Cut selection to clipboard'),
+             'icon':            QIcon.fromTheme('edit-cut'),
+             'action':          self.__textEdit.cut,
+             'checkable':       False
+            },
+            {'type':            'button',
+             'id':              'paste',
+             'tooltip':         i18n('Paste from clipboard'),
+             'icon':            QIcon.fromTheme('edit-paste'),
+             'action':          self.__textEdit.paste,
+             'checkable':       False
+            },
+            {'type':            'separator'},
+            {'type':            'fontComboBox',
+             'id':              'fontName',
+             'tooltip':         i18n('Applied font'),
+             'action':          self.__updateSelectedTextFontFamily,
+             'isFormatting':    True
+            },
+            {'type':            'comboBox',
+             'id':              'fontSize',
+             'tooltip':         i18n('Applied font size'),
+             'list':            [str(value) for value in [6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 36, 48, 64, 72, 96, 144]],
+             'editable':        True,
+             'action':          (lambda value: self.__textEdit.setFontPointSize(float(value))),
+             'isFormatting':    True
+            },
+            {'type':            'button',
+             'id':              'fontBold',
+             'tooltip':         i18n('Set current font style <b>Bold</b>'),
+             'icon':            QIcon.fromTheme('format-text-bold'),
+             'action':          (lambda value: self.__textEdit.setFontWeight(QFont.Bold if value else QFont.Normal)),
+             'checkable':       True,
+             'isFormatting':    True
+            },
+            {'type':            'button',
+             'id':              'fontItalic',
+             'tooltip':         i18n('Set current font style <i>Italic</i>'),
+             'icon':            QIcon.fromTheme('format-text-italic'),
+             'action':          self.__textEdit.setFontItalic,
+             'checkable':       True,
+             'isFormatting':    True
+            },
+            {'type':            'button',
+             'id':              'fontUnderline',
+             'tooltip':         i18n('Set current font style <u>Underline</u>'),
+             'icon':            QIcon.fromTheme('format-text-underline'),
+             'action':          self.__textEdit.setFontUnderline,
+             'checkable':       True,
+             'isFormatting':    True
+            },
+            {'type':            'button',
+             'id':              'fontColor',
+             'tooltip':         i18n('Set current font color'),
+             'icon':            QIcon.fromTheme('format-text-color'),
+             'action':          self.__updateSelectedTextFontColor,
+             'checkable':       False
+            },
+            {'type':            'separator'},
+            {'type':            'button',
+             'id':              'textAlignLeft',
+             'tooltip':         i18n('Set Left text alignment'),
+             'icon':            QIcon.fromTheme('format-justify-left'),
+             'action':          (lambda: self.__textEdit.setAlignment(Qt.AlignLeft)),
+             'group':           'text-align',
+             'checkable':       True
+            },
+            {'type':            'button',
+             'id':              'textAlignCenter',
+             'tooltip':         i18n('Set Centered text alignment'),
+             'icon':            QIcon.fromTheme('format-justify-center'),
+             'action':          (lambda: self.__textEdit.setAlignment(Qt.AlignCenter)),
+             'group':           'text-align',
+             'checkable':       True
+            },
+            {'type':            'button',
+             'id':              'textAlignRight',
+             'tooltip':         i18n('Set Right text alignment'),
+             'icon':            QIcon.fromTheme('format-justify-right'),
+             'action':          (lambda: self.__textEdit.setAlignment(Qt.AlignRight)),
+             'group':           'text-align',
+             'checkable':       True
+            },
+            {'type':            'button',
+             'id':              'textAlignJustify',
+             'tooltip':         i18n('Set Justified text alignment'),
+             'icon':            QIcon.fromTheme('format-justify-fill'),
+             'action':          (lambda: self.__textEdit.setAlignment(Qt.AlignJustify)),
+             'group':           'text-align',
+             'checkable':       True
+            }
+        ]
+
+        groups = {}
+
+        for item in items:
+            if item['type'] == 'button':
+                policy = QSizePolicy()
+                policy.setHorizontalPolicy(QSizePolicy.Maximum)
+
+                qItem = QPushButton(self.__toolBar)
+                qItem.setIcon(item['icon'])
+                qItem.setCheckable(item['checkable'])
+                if item['checkable']:
+                    qItem.toggled.connect(item['action'])
+                else:
+                    qItem.clicked.connect(item['action'])
+
+                qItem.setSizePolicy(policy)
+
+                if 'group' in item:
+                    if not item['group'] in groups:
+                        groups[item['group']]=QButtonGroup(self)
+                        groups[item['group']].setExclusive(True)
+                    groups[item['group']].addButton(qItem)
+            elif item['type'] == 'separator':
+                qItem = QFrame(self.__toolBar)
+                qItem.setFrameShape(QFrame.VLine)
+                qItem.setFrameShadow(QFrame.Sunken)
+                qItem.setLineWidth(1)
+                qItem.setMidLineWidth(0)
+            elif item['type'] == 'fontComboBox':
+                qItem = QFontComboBox(self.__toolBar)
+                qItem.currentFontChanged.connect(item['action'])
+            elif item['type'] == 'comboBox':
+                qItem = QComboBox(self.__toolBar)
+                qItem.addItems(item['list'])
+                qItem.setEditable(item['editable'])
+                qItem.currentTextChanged.connect(item['action'])
+
+            if 'tooltip' in item:
+                qItem.setToolTip(item['tooltip'])
+            if 'id' in item:
+                qItem.setObjectName(item['id'])
+            if 'isFormatting' in item and item['isFormatting']:
+                self.__formattingWidgets.append(qItem)
+
+            if 'id' in item:
+                self.__toolBarItems[item['id']]=qItem
+            layout.addWidget(qItem)
+
+        self.__toolBar.setLayout(layout)
+
+
+    def __blockSignals(self, blocked):
+        """Block (True) or Unblock(False) signals for formatting widgets"""
+        for widget in self.__formattingWidgets:
+            widget.blockSignals(blocked)
+
+
+    def __updateSelectedTextFontColor(self):
+        """Open a color dialog-box and set color"""
+        returnedColor = QColorDialog.getColor(self.__textEdit.textColor(), self, "Text color", QColorDialog.DontUseNativeDialog)
+        if returnedColor.isValid():
+            return self.__textEdit.setTextColor(returnedColor)
+
+
+    def __updateSelectedTextFontFamily(self, font):
+        """Update font familly for editor"""
+        # the QFontComboBox signal 'currentFontChanged' gives a QFont
+        # but we just want to change font family
+        self.__textEdit.setFontFamily(font.family())
+
+
+    def __updateToolbar(self):
+        """update toolbar buttons according to current selected text"""
+        # Disable current signals on formatting items
+        self.__blockSignals(True)
+
+        self.__toolBarItems['fontName'].setCurrentFont(self.__textEdit.currentFont())
+        self.__toolBarItems['fontSize'].setCurrentText(str(int(self.__textEdit.fontPointSize())))
+
+        self.__toolBarItems['fontBold'].setChecked(self.__textEdit.fontWeight() == QFont.Bold)
+        self.__toolBarItems['fontItalic'].setChecked(self.__textEdit.fontItalic())
+        self.__toolBarItems['fontUnderline'].setChecked(self.__textEdit.fontUnderline())
+
+        self.__toolBarItems['textAlignLeft'].setChecked(self.__textEdit.alignment() == Qt.AlignLeft)
+        self.__toolBarItems['textAlignCenter'].setChecked(self.__textEdit.alignment() == Qt.AlignCenter)
+        self.__toolBarItems['textAlignRight'].setChecked(self.__textEdit.alignment() == Qt.AlignRight)
+        self.__toolBarItems['textAlignJustify'].setChecked(self.__textEdit.alignment() == Qt.AlignJustify)
+
+        self.__blockSignals(False)
+
+
+    def toHtml(self):
+        """Return current text as html"""
+        return self.__textEdit.toHtml()
+
+
+    def setHtml(self, text):
+        """set html text"""
+        return self.__textEdit.setHtml(text)
+
+
+    def plainText(self):
+        """Return text as plain text"""
+        return self.__textEdit.toPlainText()
+
+
+    def setPlainText(self, text):
+        """set plain text"""
+        return self.__textEdit.setPlainText(text)
+
+
+class BCSmallTextEdit(QFrame):
+    """A small widget that allows to open a BCTextEditDialog"""
+    textChanged = Signal()
+
+    def __init__(self, parent):
+        super(BCSmallTextEdit, self).__init__(parent)
+
+        self.__title = ""
+
+        palette = QApplication.palette()
+        self.__paletteBase = QPalette(palette)
+        self.__paletteBase.setColor(QPalette.Window, self.__paletteBase.color(QPalette.Base))
+
+        self.__html = ""
+        self.__plainText = ""
+
+        self.setPalette(self.__paletteBase)
+        self.setAutoFillBackground(True)
+        self.setFrameShape(self.NoFrame)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.__teTextEdit = QTextEdit(self)
+
+        self.__lePreview = QLineEdit(self)
+        self.__lePreview.setFrame(False)
+        self.__lePreview.setReadOnly(True)
+
+        self.__btnEdit = QToolButton(self)
+        self.__btnEdit.setAutoRaise(True)
+        self.__btnEdit.setIcon(QIcon.fromTheme('document-edit'))
+        self.__btnEdit.setToolTip("Edit text")
+        self.__btnEdit.clicked.connect(self.__editText)
+
+        sp = self.__btnEdit.sizePolicy()
+        sp.setVerticalPolicy(sp.Maximum)
+        sp.setHorizontalPolicy(sp.Maximum)
+        self.__btnEdit.setSizePolicy(sp)
+
+        layout.addWidget(self.__lePreview)
+        layout.addWidget(self.__btnEdit)
+
+    def __editText(self):
+        returned = BCTextEditDialog.edit(self.__title, self.__html)
+        if not returned is None:
+            self.setHtml(returned)
+            self.textChanged.emit()
+
+    def title(self):
+        return self.__title
+
+    def setTitle(self, title):
+        self.__title = title
+
+    def toPlainText(self):
+        return self.__plainText
+
+    def toHtml(self):
+        return self.__html
+
+    def setHtml(self, value):
+        self.__teTextEdit.setHtml(value)
+        self.__html = value
+        self.__plainText = self.__teTextEdit.toPlainText()
+
+        rows = self.__plainText.split(os.linesep, 1)
+        if len(rows) > 1:
+            self.__lePreview.setText(f"{rows[0]} ../..")
+        else:
+            self.__lePreview.setText(rows[0])
+        self.setToolTip(value)

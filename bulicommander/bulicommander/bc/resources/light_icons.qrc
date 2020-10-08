@@ -3,6 +3,8 @@
     <file alias="buli-rounded-border">png/buli-powered-64x64-rounded-border.png</file>
   </qresource>
   <qresource prefix="images">
+    <file alias="page_layout">svg/light/32dp/page_layout.svg</file>
+    <file alias="page_setup">svg/light/32dp/page_setup.svg</file>
     <file alias="export_list">svg/light/32dp/export_list.svg</file>
     <file alias="text">svg/light/32dp/text.svg</file>
     <file alias="tabs">svg/light/32dp/tabs.svg</file>

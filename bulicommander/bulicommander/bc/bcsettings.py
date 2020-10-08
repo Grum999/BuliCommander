@@ -151,6 +151,89 @@ class BCSettingsKey(Enum):
     CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT =          'config.export.filesList.textMd.userDefinedLayout.content'
     CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED =           'config.export.filesList.textMd.thumbnails.included'
     CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE =               'config.export.filesList.textMd.thumbnails.size'
+    CONFIG_EXPORTFILESLIST_DOCPDF_UNIT =                     'config.export.filesList.doc.pdf.unit'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAPERSIZE =                'config.export.filesList.doc.pdf.paperSize'
+    CONFIG_EXPORTFILESLIST_DOCPDF_ORIENTATION =              'config.export.filesList.doc.pdf.orientation'
+    CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LEFT =             'config.export.filesList.doc.pdf.margins.left'
+    CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_RIGHT =            'config.export.filesList.doc.pdf.margins.right'
+    CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_TOP =              'config.export.filesList.doc.pdf.margins.top'
+    CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_BOTTOM =           'config.export.filesList.doc.pdf.margins.bottom'
+    CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LINKED =           'config.export.filesList.doc.pdf.margins.linked'
+    CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_ACTIVE =            'config.export.filesList.doc.pdf.header.active'
+    CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_CONTENT =           'config.export.filesList.doc.pdf.header.content'
+    CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_ACTIVE =            'config.export.filesList.doc.pdf.footer.active'
+    CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_CONTENT =           'config.export.filesList.doc.pdf.footer.content'
+    CONFIG_EXPORTFILESLIST_DOCPDF_FPGLAYOUT_ACTIVE =         'config.export.filesList.doc.pdf.firstPageLayout.active'
+    CONFIG_EXPORTFILESLIST_DOCPDF_FPGLAYOUT_CONTENT =        'config.export.filesList.doc.pdf.firstPageLayout.content'
+    CONFIG_EXPORTFILESLIST_DOCPDF_FPGLAYOUT_PREVIEW =        'config.export.filesList.doc.pdf.firstPageLayout.preview'
+    CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_THUMPROW =       'config.export.filesList.doc.pdf.allPageLayout.thumbnailsPerRow'
+    CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_THUMSP =         'config.export.filesList.doc.pdf.allPageLayout.thumbnailsSpacing'
+    CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_PROPPOS =        'config.export.filesList.doc.pdf.allPageLayout.properties.position'
+    CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_PROPFNAME =      'config.export.filesList.doc.pdf.allPageLayout.properties.font.name'
+    CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_PROPFSIZE =      'config.export.filesList.doc.pdf.allPageLayout.properties.font.size'
+    CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION =               'config.export.filesList.img.kra.resolution'
+    CONFIG_EXPORTFILESLIST_IMGKRA_UNIT =                     'config.export.filesList.img.kra.unit'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAPERSIZE =                'config.export.filesList.img.kra.paperSize'
+    CONFIG_EXPORTFILESLIST_IMGKRA_ORIENTATION =              'config.export.filesList.img.kra.orientation'
+    CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LEFT =             'config.export.filesList.img.kra.margins.left'
+    CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_RIGHT =            'config.export.filesList.img.kra.margins.right'
+    CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_TOP =              'config.export.filesList.img.kra.margins.top'
+    CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_BOTTOM =           'config.export.filesList.img.kra.margins.bottom'
+    CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LINKED =           'config.export.filesList.img.kra.margins.linked'
+    CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_ACTIVE =            'config.export.filesList.img.kra.header.active'
+    CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_CONTENT =           'config.export.filesList.img.kra.header.content'
+    CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_ACTIVE =            'config.export.filesList.img.kra.footer.active'
+    CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_CONTENT =           'config.export.filesList.img.kra.footer.content'
+    CONFIG_EXPORTFILESLIST_IMGKRA_FPGLAYOUT_ACTIVE =         'config.export.filesList.img.kra.firstPageLayout.active'
+    CONFIG_EXPORTFILESLIST_IMGKRA_FPGLAYOUT_CONTENT =        'config.export.filesList.img.kra.firstPageLayout.content'
+    CONFIG_EXPORTFILESLIST_IMGKRA_FPGLAYOUT_PREVIEW =        'config.export.filesList.img.kra.firstPageLayout.preview'
+    CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_THUMPROW =       'config.export.filesList.img.kra.allPageLayout.thumbnailsPerRow'
+    CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_THUMSP =         'config.export.filesList.img.kra.allPageLayout.thumbnailsSpacing'
+    CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_PROPPOS =        'config.export.filesList.img.kra.allPageLayout.properties.position'
+    CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_PROPFNAME =      'config.export.filesList.img.kra.allPageLayout.properties.font.name'
+    CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_PROPFSIZE =      'config.export.filesList.img.kra.allPageLayout.properties.font.size'
+    CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION =               'config.export.filesList.img.png.resolution'
+    CONFIG_EXPORTFILESLIST_IMGPNG_UNIT =                     'config.export.filesList.img.png.unit'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAPERSIZE =                'config.export.filesList.img.png.paperSize'
+    CONFIG_EXPORTFILESLIST_IMGPNG_ORIENTATION =              'config.export.filesList.img.png.orientation'
+    CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LEFT =             'config.export.filesList.img.png.margins.left'
+    CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_RIGHT =            'config.export.filesList.img.png.margins.right'
+    CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_TOP =              'config.export.filesList.img.png.margins.top'
+    CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_BOTTOM =           'config.export.filesList.img.png.margins.bottom'
+    CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LINKED =           'config.export.filesList.img.png.margins.linked'
+    CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_ACTIVE =            'config.export.filesList.img.png.header.active'
+    CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_CONTENT =           'config.export.filesList.img.png.header.content'
+    CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_ACTIVE =            'config.export.filesList.img.png.footer.active'
+    CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_CONTENT =           'config.export.filesList.img.png.footer.content'
+    CONFIG_EXPORTFILESLIST_IMGPNG_FPGLAYOUT_ACTIVE =         'config.export.filesList.img.png.firstPageLayout.active'
+    CONFIG_EXPORTFILESLIST_IMGPNG_FPGLAYOUT_CONTENT =        'config.export.filesList.img.png.firstPageLayout.content'
+    CONFIG_EXPORTFILESLIST_IMGPNG_FPGLAYOUT_PREVIEW =        'config.export.filesList.img.png.firstPageLayout.preview'
+    CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_THUMPROW =       'config.export.filesList.img.png.allPageLayout.thumbnailsPerRow'
+    CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_THUMSP =         'config.export.filesList.img.png.allPageLayout.thumbnailsSpacing'
+    CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_PROPPOS =        'config.export.filesList.img.png.allPageLayout.properties.position'
+    CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_PROPFNAME =      'config.export.filesList.img.png.allPageLayout.properties.font.name'
+    CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_PROPFSIZE =      'config.export.filesList.img.png.allPageLayout.properties.font.size'
+    CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION =               'config.export.filesList.img.jpg.resolution'
+    CONFIG_EXPORTFILESLIST_IMGJPG_UNIT =                     'config.export.filesList.img.jpg.unit'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAPERSIZE =                'config.export.filesList.img.jpg.paperSize'
+    CONFIG_EXPORTFILESLIST_IMGJPG_ORIENTATION =              'config.export.filesList.img.jpg.orientation'
+    CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LEFT =             'config.export.filesList.img.jpg.margins.left'
+    CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_RIGHT =            'config.export.filesList.img.jpg.margins.right'
+    CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_TOP =              'config.export.filesList.img.jpg.margins.top'
+    CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_BOTTOM =           'config.export.filesList.img.jpg.margins.bottom'
+    CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LINKED =           'config.export.filesList.img.jpg.margins.linked'
+    CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_ACTIVE =            'config.export.filesList.img.jpg.header.active'
+    CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_CONTENT =           'config.export.filesList.img.jpg.header.content'
+    CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_ACTIVE =            'config.export.filesList.img.jpg.footer.active'
+    CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_CONTENT =           'config.export.filesList.img.jpg.footer.content'
+    CONFIG_EXPORTFILESLIST_IMGJPG_FPGLAYOUT_ACTIVE =         'config.export.filesList.img.jpg.firstPageLayout.active'
+    CONFIG_EXPORTFILESLIST_IMGJPG_FPGLAYOUT_CONTENT =        'config.export.filesList.img.jpg.firstPageLayout.content'
+    CONFIG_EXPORTFILESLIST_IMGJPG_FPGLAYOUT_PREVIEW =        'config.export.filesList.img.jpg.firstPageLayout.preview'
+    CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_THUMPROW =       'config.export.filesList.img.jpg.allPageLayout.thumbnailsPerRow'
+    CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_THUMSP =         'config.export.filesList.img.jpg.allPageLayout.thumbnailsSpacing'
+    CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_PROPPOS =        'config.export.filesList.img.jpg.allPageLayout.properties.position'
+    CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_PROPFNAME =      'config.export.filesList.img.jpg.allPageLayout.properties.font.name'
+    CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_PROPFSIZE =      'config.export.filesList.img.jpg.allPageLayout.properties.font.size'
 
     CONFIG_SESSION_SAVE =                                    'config.session.save'
     CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY =          'config.defaultSession.panels.view.filesManagedOnly'
@@ -291,6 +374,89 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT.id():   ('',                       BCSettingsFmt(str)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED.id():    (True,                     BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE.id():        (0,                        BCSettingsFmt(int, [0,1,2,3])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPERSIZE.id():         ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_ORIENTATION.id():       (0,                        BCSettingsFmt(int, [0,1])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LEFT.id():      (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_RIGHT.id():     (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_TOP.id():       (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_BOTTOM.id():    (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LINKED.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGLAYOUT_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGLAYOUT_CONTENT.id(): ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGLAYOUT_PREVIEW.id(): (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_THUMPROW.id():(2,                        BCSettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_THUMSP.id():  (5.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_PROPPOS.id(): ('none',                   BCSettingsFmt(str, ['none','left','right','top','bottom'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_PROPFNAME.id():('sans serif',            BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_PROPFSIZE.id():(10,                      BCSettingsFmt(int)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION.id():        (300,                      BCSettingsFmt(int, [72,96,150,300,600,900,1200])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPERSIZE.id():         ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_ORIENTATION.id():       (0,                        BCSettingsFmt(int, [0,1])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LEFT.id():      (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_RIGHT.id():     (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_TOP.id():       (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_BOTTOM.id():    (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LINKED.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGLAYOUT_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGLAYOUT_CONTENT.id(): ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGLAYOUT_PREVIEW.id(): (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_THUMPROW.id():(2,                        BCSettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_THUMSP.id():  (5.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_PROPPOS.id(): ('none',                   BCSettingsFmt(str, ['none','left','right','top','bottom'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_PROPFNAME.id():('sans serif',            BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_PROPFSIZE.id():(10,                      BCSettingsFmt(int)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION.id():        (300,                      BCSettingsFmt(int, [72,96,150,300,600,900,1200])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPERSIZE.id():         ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_ORIENTATION.id():       (0,                        BCSettingsFmt(int, [0,1])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LEFT.id():      (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_RIGHT.id():     (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_TOP.id():       (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_BOTTOM.id():    (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LINKED.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGLAYOUT_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGLAYOUT_CONTENT.id(): ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGLAYOUT_PREVIEW.id(): (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_THUMPROW.id():(2,                        BCSettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_THUMSP.id():  (5.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_PROPPOS.id(): ('none',                   BCSettingsFmt(str, ['none','left','right','top','bottom'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_PROPFNAME.id():('sans serif',            BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_PROPFSIZE.id():(10,                      BCSettingsFmt(int)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION.id():        (300,                      BCSettingsFmt(int, [72,96,150,300,600,900,1200])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPERSIZE.id():         ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_ORIENTATION.id():       (0,                        BCSettingsFmt(int, [0,1])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LEFT.id():      (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_RIGHT.id():     (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_TOP.id():       (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_BOTTOM.id():    (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LINKED.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGLAYOUT_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGLAYOUT_CONTENT.id(): ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGLAYOUT_PREVIEW.id(): (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_THUMPROW.id():(2,                        BCSettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_THUMSP.id():  (5.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_PROPPOS.id(): ('none',                   BCSettingsFmt(str, ['none','left','right','top','bottom'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_PROPFNAME.id():('sans serif',            BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_PROPFSIZE.id():(10,                      BCSettingsFmt(int)),
 
             BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id():                           (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id():                       (False,                    BCSettingsFmt(bool)),
@@ -837,6 +1003,7 @@ class BCSettingsDialogBox(QDialog):
         if QMessageBox.question(self, i18n(f"{self.__title}::Clear Cache"), i18n(f"Current cache content will be cleared ({self.lblCCINbFileAndSize.text()})\n\nDo you confirm action?"), QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
             shutil.rmtree(BCFile.thumbnailCacheDirectory(), ignore_errors=True)
             self.__calculateCacheSize()
+
 
     @staticmethod
     def open(title, uicontroller):
