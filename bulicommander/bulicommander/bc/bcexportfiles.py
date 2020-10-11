@@ -36,6 +36,10 @@ import os
 import re
 import shutil
 import time
+from math import (
+        ceil,
+        floor
+    )
 
 from .bcfile import (
         BCBaseFile,
@@ -61,6 +65,7 @@ from .bcutils import (
         bytesSizeToStr,
         strDefault,
         tsToStr,
+        cloneRect,
         Debug
     )
 
@@ -68,6 +73,7 @@ from ..pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
+from ..pktk.ekrita import EKritaNode
 
 # -----------------------------------------------------------------------------
 
@@ -228,13 +234,13 @@ class BCExportFilesDialogBox(QDialog):
               }
     }
     IMAGE_RESOLUTIONS = {
-        '72dpi': 72,
-        '96dpi': 96,
-        '150dpi': 150,
-        '300dpi': 300,
-        '600dpi': 600,
-        '900dpi': 900,
-        '1200dpi': 1200
+        '72dpi': 72.00,
+        '96dpi': 96.00,
+        '150dpi': 150.00,
+        '300dpi': 300.00,
+        '600dpi': 600.00,
+        '900dpi': 900.00,
+        '1200dpi': 1200.00
     }
     ORIENTATION_PORTRAIT = 0x00
     ORIENTATION_LANDSCAPE = 0x01
@@ -509,6 +515,11 @@ class BCExportFilesDialogBox(QDialog):
         self.__formatPdfImgPaperOrientation = BCExportFilesDialogBox.ORIENTATION_PORTRAIT
         self.__formatPdfImgNbProperties = 0
         self.__formatPdfImgFontSize = 10
+        self.__formatPdfImgPageCurrent = 0
+        self.__formatPdfImgPageTotal = 0
+        self.__formatPdfImgPixmapResolution = QApplication.primaryScreen().logicalDotsPerInch()
+
+        self.__exportedFileName = ''
 
         self.__blockedSlots = True
 
@@ -611,7 +622,7 @@ class BCExportFilesDialogBox(QDialog):
             self.cbxFormatDocImgPaperSize.clear()
 
             for resolution in BCExportFilesDialogBox.IMAGE_RESOLUTIONS:
-                self.cbxFormatDocImgPaperResolution.addItem(resolution)
+                self.cbxFormatDocImgPaperResolution.addItem(resolution, BCExportFilesDialogBox.IMAGE_RESOLUTIONS[resolution])
             self.cbxFormatDocImgPaperResolution.setCurrentIndex(3) # 300dpi
 
             self.cbxFormatDocImgPaperResolution.currentIndexChanged.connect(self.__slotPageFormatDocImgPageSetupResolutionChanged)
@@ -629,7 +640,7 @@ class BCExportFilesDialogBox(QDialog):
             self.cbFormatDocImgHeader.toggled.connect(self.__slotPageFormatDocImgPageLayoutChanged)
             self.cbFormatDocImgFooter.toggled.connect(self.__slotPageFormatDocImgPageLayoutChanged)
             self.cbFormatDocImgFPageNotes.toggled.connect(self.__slotPageFormatDocImgPageLayoutChanged)
-            self.cbFormatDocImgFPageLayoutPreview.toggled.connect(self.__slotPageFormatDocImgPageLayoutChanged)
+            self.cbFormatDocImgFPageNotesPreview.toggled.connect(self.__slotPageFormatDocImgPageLayoutChanged)
 
             self.bcsteFormatDocImgHeader.textChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
             self.bcsteFormatDocImgFooter.textChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
@@ -690,8 +701,10 @@ class BCExportFilesDialogBox(QDialog):
         self.__blockSlot(False)
 
     # -- Utils -----------------------------------------------------------------
-    def convertSize(self, value, fromUnit, toUnit, roundValue=None):
+    def convertSize(self, value, fromUnit, toUnit, resolution=None, roundValue=None):
         """Return converted value from given `fromUnit` to `toUnit`"""
+        if resolution is None:
+            resolution = self.__formatPdfImgPaperResolution
         if roundValue is None:
             roundValue = BCExportFilesDialogBox.UNITS[toUnit]['marginDec']
         if fromUnit == 'mm':
@@ -700,28 +713,28 @@ class BCExportFilesDialogBox(QDialog):
             elif toUnit == 'in':
                 return round(value/25.4, roundValue)
             elif toUnit == 'px':
-                return round(self.convertSize(value, fromUnit, 'in') * self.__formatPdfImgPaperResolution, roundValue)
+                return round(self.convertSize(value, fromUnit, 'in') * resolution, roundValue)
         elif fromUnit == 'cm':
             if toUnit == 'mm':
                 return round(value*10, roundValue)
             elif toUnit == 'in':
                 return round(value/2.54, roundValue)
             elif toUnit == 'px':
-                return round(self.convertSize(value, fromUnit, 'in') * self.__formatPdfImgPaperResolution, roundValue)
+                return round(self.convertSize(value, fromUnit, 'in') * resolution, roundValue)
         elif fromUnit == 'in':
             if toUnit == 'mm':
                 return round(value*25.4, roundValue)
             elif toUnit == 'cm':
                 return round(value*2.54, roundValue)
             elif toUnit == 'px':
-                return round(value * self.__formatPdfImgPaperResolution, roundValue)
+                return round(value * resolution, roundValue)
         elif fromUnit == 'px':
             if toUnit == 'mm':
                 return round(self.convertSize(value, fromUnit, 'in')*25.4, roundValue)
             elif toUnit == 'cm':
                 return round(self.convertSize(value, fromUnit, 'in')*2.54, roundValue)
             elif toUnit == 'in':
-                return round(value / self.__formatPdfImgPaperResolution, roundValue)
+                return round(value / resolution, roundValue)
         elif fromUnit == 'pt':
             if toUnit == 'mm':
                 return round(value * 0.35277777777777775, roundValue)   # 25.4/72
@@ -730,9 +743,28 @@ class BCExportFilesDialogBox(QDialog):
             elif toUnit == 'in':
                 return round(value / 72, roundValue)
             elif toUnit == 'px':
-                return round(self.__formatPdfImgPaperResolution * self.convertSize(value, fromUnit, 'in')/72, roundValue)
+                return round(resolution * self.convertSize(value, fromUnit, 'in')/72, roundValue)
         # all other combination are not valid, return initial value
         return value
+
+    def updatePointSize(self, content):
+        """QTextDocument convert pt to pixels, using default QPainter resolution
+
+        QPainter resolution of device (printer) or screen
+
+        Then, if QPainter is 96dpi and target is 300dpi, we need to convert given
+        value
+        """
+        def repPt(v):
+            point = float(v.groups()[1])
+            newValue = round(point * ratio, 2)
+            return v.groups()[0].replace(v.groups()[1], str(newValue))
+
+        ratio = self.__formatPdfImgPaperResolution / self.__formatPdfImgPixmapResolution
+
+        if isinstance(content, str):
+            return re.sub(r"(?i)(font-size\s*:\s*(\d+|\d+\.\d*|\.d+)\s*pt\s*;)", repPt, content)
+        return round(point * ratio, 2)
 
     def __blockSlot(self, value):
         self.__blockedSlots = value
@@ -784,6 +816,20 @@ class BCExportFilesDialogBox(QDialog):
         self.__updateBtn()
 
     # -- Manage page Format -------------------------------------------------
+    def __getPaperSize(self, paperSize, unit, orientation, resolution=None):
+        """Return QSize for given paperSize + unit"""
+        size=BCExportFilesDialogBox.PAPER_SIZES[paperSize][unit]
+
+        if unit == 'px' and not resolution is None:
+            # in this case, unit is in inch
+            # need t oconvert to pixels
+            size = QSizeF(size.width() * resolution, size.height() * resolution)
+
+        if orientation == BCExportFilesDialogBox.ORIENTATION_LANDSCAPE:
+            #self.cbxFormatDocImgPaperSize.setItemText(itemIndex, f"{paperSize} - {size.height():{unitFmt}}x{size.width():{unitFmt}}")
+            return QSize(size.height(), size.width())
+        return size
+
     def __loadDefaultPageFormat(self):
         """Load default internal configuration for page perimeter"""
         def defaultText():
@@ -849,6 +895,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             # --- DOC/PDF interface ---
             self.swFormatDocImgRef.setCurrentIndex(0)
             self.lvFormatDocImgRef.setCurrentRow(0)
+            self.cbxFormatDocImgPaperResolution.setCurrentIndex(3)  # 300dpi
             self.cbxFormatDocImgPaperUnit.setCurrentIndex(0)        # 'mm'
             self.cbxFormatDocImgPaperSize.setCurrentIndex(2)        # 'A4'
             self.cbxFormatDocImgPaperOrientation.setCurrentIndex(0) # 'portrait'
@@ -861,7 +908,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.cbFormatDocImgHeader.setChecked(True)
             self.cbFormatDocImgFooter.setChecked(True)
             self.cbFormatDocImgFPageNotes.setChecked(True)
-            self.cbFormatDocImgFPageLayoutPreview.setChecked(True)
+            self.cbFormatDocImgFPageNotesPreview.setChecked(True)
 
             self.bcsteFormatDocImgHeader.setPlainText('')
             self.bcsteFormatDocImgFooter.setPlainText('')
@@ -874,6 +921,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.fcbxFormatDocImgPropertiesFontFamily.setCurrentFont(QFont('DejaVu sans'))
             self.dsbFormatDocImgPropertiesFontSize.setValue(10)
 
+            self.__updateFormatDocImgPaperSizeList()
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
             self.__slotPageFormatDocImgPageSetupUnitChanged()
             self.__slotPageFormatDocImgPageSetupSizeChanged()
@@ -892,7 +940,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         defaultTextCsv()
         defaultDocImg()
 
-    def __loadSettingsPageFormat(self):
+    def __loadSettingsPageFormat(self, target=None):
         """Load saved settings for page format"""
         def defaultText():
             # --- TEXT interface ---
@@ -968,12 +1016,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             self.cbFormatDocImgHeader.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_ACTIVE.id()))
             self.cbFormatDocImgFooter.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGLAYOUT_ACTIVE.id()))
-            self.cbFormatDocImgFPageLayoutPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGLAYOUT_PREVIEW.id()))
+            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_ACTIVE.id()))
+            self.cbFormatDocImgFPageNotesPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_PREVIEW.id()))
 
             self.bcsteFormatDocImgHeader.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_CONTENT.id()))
             self.bcsteFormatDocImgFooter.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_CONTENT.id()))
-            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGLAYOUT_CONTENT.id()))
+            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_CONTENT.id()))
 
             self.sbFormatDocImgThumbsPerRow.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_THUMPROW.id()))
             self.dsbFormatDocImgThumbsSpacing.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_APGLAYOUT_THUMSP.id()))
@@ -989,6 +1037,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.__slotPageFormatDocImgPageSetupMarginLinkChanged()
             self.__slotPageFormatDocImgPageLayoutChanged()
             self.__slotPageFormatDocImgPropertiesFontChanged()
+            self.__updateFormatDocImgPaperSizeList()
 
         def defaultImgKra():
             # --- IMG/KRA interface ---
@@ -1027,12 +1076,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             self.cbFormatDocImgHeader.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_ACTIVE.id()))
             self.cbFormatDocImgFooter.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGLAYOUT_ACTIVE.id()))
-            self.cbFormatDocImgFPageLayoutPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGLAYOUT_PREVIEW.id()))
+            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_ACTIVE.id()))
+            self.cbFormatDocImgFPageNotesPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_PREVIEW.id()))
 
             self.bcsteFormatDocImgHeader.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_CONTENT.id()))
             self.bcsteFormatDocImgFooter.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_CONTENT.id()))
-            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGLAYOUT_CONTENT.id()))
+            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_CONTENT.id()))
 
             self.sbFormatDocImgThumbsPerRow.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_THUMPROW.id()))
             self.dsbFormatDocImgThumbsSpacing.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_THUMSP.id()))
@@ -1041,10 +1090,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.fcbxFormatDocImgPropertiesFontFamily.setCurrentFont(QFont(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_PROPFNAME.id())))
             self.dsbFormatDocImgPropertiesFontSize.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_PROPFSIZE.id()))
 
+            self.__updateFormatDocImgPaperSizeList()
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
             self.__slotPageFormatDocImgPageSetupUnitChanged()
-            self.__slotPageFormatDocImgPageSetupSizeChanged()
             self.__slotPageFormatDocImgPageSetupOrientationChanged()
+            self.__slotPageFormatDocImgPageSetupSizeChanged()
             self.__slotPageFormatDocImgPageSetupMarginLinkChanged()
             self.__slotPageFormatDocImgPageLayoutChanged()
             self.__slotPageFormatDocImgPropertiesFontChanged()
@@ -1086,12 +1136,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             self.cbFormatDocImgHeader.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_ACTIVE.id()))
             self.cbFormatDocImgFooter.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGLAYOUT_ACTIVE.id()))
-            self.cbFormatDocImgFPageLayoutPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGLAYOUT_PREVIEW.id()))
+            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_ACTIVE.id()))
+            self.cbFormatDocImgFPageNotesPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_PREVIEW.id()))
 
             self.bcsteFormatDocImgHeader.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_CONTENT.id()))
             self.bcsteFormatDocImgFooter.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_CONTENT.id()))
-            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGLAYOUT_CONTENT.id()))
+            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_CONTENT.id()))
 
             self.sbFormatDocImgThumbsPerRow.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_THUMPROW.id()))
             self.dsbFormatDocImgThumbsSpacing.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_APGLAYOUT_THUMSP.id()))
@@ -1107,6 +1157,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.__slotPageFormatDocImgPageSetupMarginLinkChanged()
             self.__slotPageFormatDocImgPageLayoutChanged()
             self.__slotPageFormatDocImgPropertiesFontChanged()
+            self.__updateFormatDocImgPaperSizeList()
 
         def defaultImgJpg():
             # --- IMG/JPG interface ---
@@ -1145,12 +1196,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             self.cbFormatDocImgHeader.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_ACTIVE.id()))
             self.cbFormatDocImgFooter.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGLAYOUT_ACTIVE.id()))
-            self.cbFormatDocImgFPageLayoutPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGLAYOUT_PREVIEW.id()))
+            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_ACTIVE.id()))
+            self.cbFormatDocImgFPageNotesPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_PREVIEW.id()))
 
             self.bcsteFormatDocImgHeader.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_CONTENT.id()))
             self.bcsteFormatDocImgFooter.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_CONTENT.id()))
-            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGLAYOUT_CONTENT.id()))
+            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_CONTENT.id()))
 
             self.sbFormatDocImgThumbsPerRow.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_THUMPROW.id()))
             self.dsbFormatDocImgThumbsSpacing.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_APGLAYOUT_THUMSP.id()))
@@ -1166,24 +1217,39 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.__slotPageFormatDocImgPageSetupMarginLinkChanged()
             self.__slotPageFormatDocImgPageLayoutChanged()
             self.__slotPageFormatDocImgPropertiesFontChanged()
+            self.__updateFormatDocImgPaperSizeList()
 
         if not self.__hasSavedSettings:
             # no saved settings: load default and exit
-            self.__loadDefaultPageFormat()
+            self.__loadDefaultPageFormat(target)
             return
 
-        # --- ALL format ---
-        self.cbxFormat.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT.id()))
-        self.__slotPageFormatFormatChanged()
+        if target is None:
+            # --- ALL format ---
+            self.cbxFormat.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT.id()))
+            self.__slotPageFormatFormatChanged()
 
-        # -- pages
-        defaultText()
-        defaultTextMd()
-        defaultTextCsv()
-        defaultDocPdf()
-        defaultImgKra()
-        defaultImgPng()
-        defaultImgJpg()
+            # -- pages
+            defaultText()
+            defaultTextMd()
+            defaultTextCsv()
+            if self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_DOC_PDF:
+                defaultDocPdf()
+            elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_KRA:
+                defaultImgKra()
+            elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_PNG:
+                defaultImgPng()
+            elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_JPG:
+                defaultImgJpg()
+            self.lblFormatDocImgPreview.update()
+        elif target == BCExportFormat.EXPORT_FMT_DOC_PDF:
+            defaultDocPdf()
+        elif target == BCExportFormat.EXPORT_FMT_IMG_KRA:
+            defaultImgKra()
+        elif target == BCExportFormat.EXPORT_FMT_IMG_PNG:
+            defaultImgPng()
+        elif target == BCExportFormat.EXPORT_FMT_IMG_JPG:
+            defaultImgJpg()
 
     def __initFormatDocImgLists(self):
         wasBlocked = self.__blockedSlots
@@ -1218,17 +1284,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         for itemIndex in range(self.cbxFormatDocImgPaperSize.count()):
             paperSize = self.cbxFormatDocImgPaperSize.itemData(itemIndex)
-            size=BCExportFilesDialogBox.PAPER_SIZES[paperSize][unit]
+            size=self.__getPaperSize(paperSize, unit, self.__formatPdfImgPaperOrientation, self.__formatPdfImgPaperResolution)
 
-            if unit == 'px':
-                # in this case, unit is in inch
-                # need t oconvert to pixels
-                size = QSizeF(size.width() * self.__formatPdfImgPaperResolution, size.height() * self.__formatPdfImgPaperResolution)
-
-            if self.__formatPdfImgPaperOrientation == BCExportFilesDialogBox.ORIENTATION_PORTRAIT:
-                self.cbxFormatDocImgPaperSize.setItemText(itemIndex, f"{paperSize} - {size.width():{unitFmt}}x{size.height():{unitFmt}}")
-            else:
-                self.cbxFormatDocImgPaperSize.setItemText(itemIndex, f"{paperSize} - {size.height():{unitFmt}}x{size.width():{unitFmt}}")
+            self.cbxFormatDocImgPaperSize.setItemText(itemIndex, f"{paperSize} - {size.width():{unitFmt}}x{size.height():{unitFmt}}")
 
     def __updateFormatDocImgConfigurationPreview(self, event):
         """Generate a configuration preview and update it"""
@@ -1294,7 +1352,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             # ----------------------------------------------------------------------
             # First page layout
-            if self.cbFormatDocImgFPageLayoutPreview.isChecked() and self.cbFormatDocImgFPageNotes.isChecked() and self.bcsteFormatDocImgFPageNotes.toPlainText() != '':
+            if self.cbFormatDocImgFPageNotesPreview.isChecked() and self.cbFormatDocImgFPageNotes.isChecked() and self.bcsteFormatDocImgFPageNotes.toPlainText() != '':
                 # represent First page layout
                 for textRow in range(self.bcsteFormatDocImgFPageNotes.toPlainText().count("\n") + 1):
                     painter.fillRect( drawingArea.left(), drawingArea.top(), drawingArea.width(), characterHeight, brush)
@@ -1451,6 +1509,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         margin = 6
         shadowOffset = 4
 
+        if self.__formatPdfImgPaperSize.height() == 0:
+            print("__updateFormatDocImgConfigurationPreview", self.__formatPdfImgPaperSize.height())
+            return
+
         # paper size w/h ratio
         ratioPaperSize = self.__formatPdfImgPaperSize.width() / self.__formatPdfImgPaperSize.height()
 
@@ -1470,7 +1532,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                         )
 
         # nb pixels used to represent one text line in preview
-        characterHeight = round(ratioPaperPreview * self.convertSize(self.__formatPdfImgFontSize, 'pt', self.__formatPdfImgPaperSizeUnit, 6), 0)
+        characterHeight = round(ratioPaperPreview * self.convertSize(self.__formatPdfImgFontSize, 'pt', self.__formatPdfImgPaperSizeUnit, roundValue=6), 0)
 
         # ----------------------------------------------------------------------
         # initialise a default pen
@@ -1515,7 +1577,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         # Thumbnails
         drawThumbnails()
 
-
         # paper border limit
         pen.setStyle(Qt.SolidLine)
         pen.setColor(Qt.darkGray)
@@ -1558,6 +1619,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 self.lblFormatDocImgPaperOrImage.setText(i18n('Image'))
                 self.lblFormatDocImgPaperResolution.setVisible(True)
                 self.cbxFormatDocImgPaperResolution.setVisible(True)
+                self.__loadSettingsPageFormat(index)
             self.__initFormatDocImgLists()
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
             self.__slotPageFormatDocImgPageSetupUnitChanged()
@@ -1701,7 +1763,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __slotPageFormatDocImgPageSetupSizeChanged(self, dummy=None):
         """Choice of size has been modified"""
-        if self.__blockedSlots:
+        if self.__formatPdfImgPaperSizeUnit is None or self.cbxFormatDocImgPaperSize.currentData() is None:
             return
 
         size=BCExportFilesDialogBox.PAPER_SIZES[self.cbxFormatDocImgPaperSize.currentData()][self.__formatPdfImgPaperSizeUnit]
@@ -1715,6 +1777,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             # in this case, unit is in inch
             # need to convert to pixels
             self.__formatPdfImgPaperSize = QSizeF(self.__formatPdfImgPaperSize.width() * self.__formatPdfImgPaperResolution, self.__formatPdfImgPaperSize.height() * self.__formatPdfImgPaperResolution)
+
+        if self.__blockedSlots:
+            return
 
         self.__updateFormatDocImgMargins()
         self.lblFormatDocImgPreview.update()
@@ -1983,6 +2048,34 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                     'fields': getFields(),
                     'files': getFiles()
                 }
+        elif self.cbxFormat.currentIndex() in [BCExportFormat.EXPORT_FMT_IMG_KRA,
+                                               BCExportFormat.EXPORT_FMT_IMG_JPG,
+                                               BCExportFormat.EXPORT_FMT_IMG_PNG,
+                                               BCExportFormat.EXPORT_FMT_DOC_PDF]:
+            returned = {
+                    'allPageLayout.properties.font.name': self.fcbxFormatDocImgPropertiesFontFamily.currentFont().family(),
+                    'allPageLayout.properties.font.size': self.dsbFormatDocImgPropertiesFontSize.value(),
+                    'allPageLayout.properties.position': ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgPropertiesPosition.currentIndex()],
+                    'allPageLayout.thumbnailsPerRow': self.sbFormatDocImgThumbsPerRow.value(),
+                    'allPageLayout.thumbnailsSpacing': self.dsbFormatDocImgThumbsSpacing.value(),
+                    'firstPageNotes.active': self.cbFormatDocImgFPageNotes.isChecked(),
+                    'firstPageNotes.content': self.bcsteFormatDocImgFPageNotes.toHtml(),
+                    'footer.active': self.cbFormatDocImgFooter.isChecked(),
+                    'footer.content': self.bcsteFormatDocImgFooter.toHtml(),
+                    'header.active': self.cbFormatDocImgHeader.isChecked(),
+                    'header.content': self.bcsteFormatDocImgHeader.toHtml(),
+                    'margins.bottom': self.dsbFormatDocImgMarginsBottom.value(),
+                    'margins.left': self.dsbFormatDocImgMarginsLeft.value(),
+                    'margins.right': self.dsbFormatDocImgMarginsRight.value(),
+                    'margins.top': self.dsbFormatDocImgMarginsTop.value(),
+                    'orientation': self.cbxFormatDocImgPaperOrientation.currentIndex(),
+                    'paperSize': self.cbxFormatDocImgPaperSize.currentData(),
+                    'resolution': self.cbxFormatDocImgPaperResolution.currentData(),
+                    'unit': self.cbxFormatDocImgPaperUnit.currentData(),
+
+                    'fields': getFields(),
+                    'files': getFiles()
+                }
 
         return returned
 
@@ -1994,38 +2087,83 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         def __savePageFormat():
             self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT, self.cbxFormat.currentIndex())
 
-            # -- TEXT format --
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_ACTIVE, self.cbFormatTextLayoutUserDefined.isChecked())
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_CONTENT, self.teFormatTextLayoutUserDefined.toPlainText())
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_HEADER_ACTIVE, self.cbFormatTextHeader.isChecked())
+            if self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT:
+                # -- TEXT format --
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_ACTIVE, self.cbFormatTextLayoutUserDefined.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_CONTENT, self.teFormatTextLayoutUserDefined.toPlainText())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_HEADER_ACTIVE, self.cbFormatTextHeader.isChecked())
 
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE, self.cbFormatTextBorders.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE, self.cbFormatTextBorders.isChecked())
 
-            if self.rbFormatTextBorderNone.isChecked():
-                currentBordersStyle = 0
-            elif self.rbFormatTextBorderBasic.isChecked():
-                currentBordersStyle = 1
-            elif self.rbFormatTextBorderSimple.isChecked():
-                currentBordersStyle = 2
-            elif self.rbFormatTextBorderDouble.isChecked():
-                currentBordersStyle = 3
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE, currentBordersStyle)
+                if self.rbFormatTextBorderNone.isChecked():
+                    currentBordersStyle = 0
+                elif self.rbFormatTextBorderBasic.isChecked():
+                    currentBordersStyle = 1
+                elif self.rbFormatTextBorderSimple.isChecked():
+                    currentBordersStyle = 2
+                elif self.rbFormatTextBorderDouble.isChecked():
+                    currentBordersStyle = 3
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE, currentBordersStyle)
 
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_ACTIVE, self.cbFormatTextMinWidth.isChecked())
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_VALUE, self.hsFormatTextMinWidth.value())
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_ACTIVE, self.cbFormatTextMaxWidth.isChecked())
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_VALUE, self.hsFormatTextMaxWidth.value())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_ACTIVE, self.cbFormatTextMinWidth.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_VALUE, self.hsFormatTextMinWidth.value())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_ACTIVE, self.cbFormatTextMaxWidth.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_VALUE, self.hsFormatTextMaxWidth.value())
+            elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_MD:
+                # -- TEXT/MARKDOWN format --
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_ACTIVE, self.cbFormatTextMDLayoutUserDefined.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT, self.teFormatTextMDLayoutUserDefined.toPlainText())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED, self.cbFormatTextMDIncludeThumbnails.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE, self.cbxFormatTextMDThumbnailsSize.currentIndex())
+            elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_CSV:
+                # -- TEXT/CSV format --
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE, self.cbFormatTextCSVHeader.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED, self.cbFormatTextCSVEnclosedFields.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR, self.cbxFormatTextCSVSeparator.currentIndex())
+            elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_DOC_PDF:
+                # -- DOC/PDF format --
+                pass
+            elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_KRA:
+                # -- IMG/KRA format --
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION, self.cbxFormatDocImgPaperResolution.currentData())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPERSIZE, self.cbxFormatDocImgPaperSize.currentData())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_UNIT, self.cbxFormatDocImgPaperUnit.currentData())
 
-            # -- TEXT/MARKDOWN format --
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_ACTIVE, self.cbFormatTextMDLayoutUserDefined.isChecked())
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT, self.teFormatTextMDLayoutUserDefined.toPlainText())
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED, self.cbFormatTextMDIncludeThumbnails.isChecked())
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE, self.cbxFormatTextMDThumbnailsSize.currentIndex())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_ORIENTATION, self.cbxFormatDocImgPaperOrientation.currentIndex())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LEFT, self.dsbFormatDocImgMarginsLeft.value())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_RIGHT, self.dsbFormatDocImgMarginsRight.value())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_TOP, self.dsbFormatDocImgMarginsTop.value())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_BOTTOM, self.dsbFormatDocImgMarginsBottom.value())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LINKED, self.cbFormatDocImgMarginsLinked.isChecked())
 
-            # -- TEXT/CSV format --
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE, self.cbFormatTextCSVHeader.isChecked())
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED, self.cbFormatTextCSVEnclosedFields.isChecked())
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR, self.cbxFormatTextCSVSeparator.currentIndex())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_ACTIVE, self.cbFormatDocImgHeader.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_ACTIVE, self.cbFormatDocImgFooter.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_ACTIVE, self.cbFormatDocImgFPageNotes.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_PREVIEW, self.cbFormatDocImgFPageNotesPreview.isChecked())
+
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_CONTENT, self.bcsteFormatDocImgHeader.toHtml())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
+
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_THUMPROW, self.sbFormatDocImgThumbsPerRow.value())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_THUMSP, self.dsbFormatDocImgThumbsSpacing.value())
+
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_PROPPOS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgPropertiesPosition.currentIndex()])
+
+
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_PROPFNAME, self.fcbxFormatDocImgPropertiesFontFamily.currentFont().family())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_APGLAYOUT_PROPFSIZE, self.dsbFormatDocImgPropertiesFontSize.value())
+            elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_PNG:
+                # -- IMG/PNG format --
+                pass
+            elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_JPG:
+                # -- IMG/JPG format --
+                pass
+
+
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE, self.cbFormatTextCSVHeader.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED, self.cbFormatTextCSVEnclosedFields.isChecked())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR, self.cbxFormatTextCSVSeparator.currentIndex())
 
         def __savePageTarget():
             fileName = self.leTargetResultFile.text()
@@ -2085,24 +2223,24 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         if self.rbTargetResultClipboard.isChecked():
-            target = BCExportFilesDialogBox.__CLIPBOARD
+            self.__exportedFileName = BCExportFilesDialogBox.__CLIPBOARD
         else:
-            target = self.leTargetResultFile.text()
+            self.__exportedFileName = self.leTargetResultFile.text()
 
         if self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT:
-            exported = self.exportAsText(target, self.__generateConfig(), False)
+            exported = self.exportAsText(self.__exportedFileName, self.__generateConfig(), False)
         elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_CSV:
-            exported = self.exportAsTextCsv(target, self.__generateConfig(), False)
+            exported = self.exportAsTextCsv(self.__exportedFileName, self.__generateConfig(), False)
         elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_MD:
-            exported = self.exportAsTextMd(target, self.__generateConfig(), False)
+            exported = self.exportAsTextMd(self.__exportedFileName, self.__generateConfig(), False)
         elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_DOC_PDF:
-            exported = self.exportAsDocumentPdf(target, self.__generateConfig(), False)
+            exported = self.exportAsDocumentPdf(self.__exportedFileName, self.__generateConfig(), False)
         elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_KRA:
-            exported = self.exportAsImageKra(target, self.__generateConfig(), False)
+            exported = self.exportAsImageKra(self.__exportedFileName, self.__generateConfig(), False)
         elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_PNG:
-            exported = self.exportAsImageSeq(target, self.__generateConfig(), False, 'png')
+            exported = self.exportAsImageSeq(self.__exportedFileName, self.__generateConfig(), False, 'png')
         elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_JPG:
-            exported = self.exportAsImageSeq(target, self.__generateConfig(), False, 'jpeg')
+            exported = self.exportAsImageSeq(self.__exportedFileName, self.__generateConfig(), False, 'jpeg')
 
         QApplication.restoreOverrideCursor()
 
@@ -2142,7 +2280,17 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             return f"{refDict[path][2]}"
         return path
 
-    def __parseText(self, text, tableContent):
+    def __buildHtml(self, rows, fontName='DejaVu sans', fontSize=10, fontColor='000000'):
+        """Build a html text from given rows"""
+        htmlP=f"<p style='margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;'>"
+        htmlSpan=f"""<span style="font-family:'{fontName}'; font-size:{fontSize}pt; color:#{fontColor};">"""
+
+        nfoContent=f"</span></p>{htmlP}{htmlSpan}".join(rows)
+
+        return f"<html><head><meta name='qrichtext' content='1'/><style type='text/css'>p, li {{ white-space: nowrap; }}</style></head><body>{htmlP}{htmlSpan}{nfoContent}</span></p></body></html>"
+
+
+    def __parseText(self, text, tableContent=''):
         """Parse given text to replace markup with their values"""
         returned = text
 
@@ -2173,6 +2321,13 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         returned = re.sub("(?i)\{items:files\.size\}",              str(self.__fileNfo[6]),                             returned)
         returned = re.sub("(?i)\{items:files\.size\(KiB\)\}",       bytesSizeToStr(self.__fileNfo[6], 'autobin'),       returned)
         returned = re.sub("(?i)\{items:files\.size\(KB\)\}",        bytesSizeToStr(self.__fileNfo[6], 'auto'),          returned)
+
+        returned = re.sub("(?i)\{page:current\}",                   str(self.__formatPdfImgPageCurrent),                returned)
+        returned = re.sub("(?i)\{page:total\}",                     str(self.__formatPdfImgPageTotal),                  returned)
+
+        returned = re.sub("(?i)\{fileName:full\}",                  self.__exportedFileName,                            returned)
+        returned = re.sub("(?i)\{fileName:path\}",                  self.__exportedFileName,                            returned)
+        returned = re.sub("(?i)\{fileName:base\}",                  self.__exportedFileName,                            returned)
 
         returned = re.sub("(?i)\{table\}",                          tableContent,                                       returned)
 
@@ -2211,15 +2366,312 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         return returnedTable
 
-    def __drawPage(self, painter, options, fields, items, title):
-        """Draw given to `painter` using givens properties
+    def __getPagesInformation(self, imageSize, config, defaultConfig):
+        """Calculate pages informations
+
+        return a dictionnary:
+            {
+                'page.global.bounds':           QRect(),
+
+                'page.first.bounds':            QRect(),
+                'page.first.nbRowsMax':         int,
+
+                'page.normal.bounds':           QRect(),
+                'page.normal.nbRowsMax':        int,
+
+                'header.height':                int,
+                'footer.height':                int,
+                'fpNotes.height':               int,
+
+                'cell.global.size':             QSize(),
+                'cell.thumbnail.size':          QSize(),
+                'cell.text.size':               QSize(),
+                'cell.thumbnail.spacing':       int,
+                'cell.thumbnail.innerSpacing':  int,
+                'cell.thumbnail.propPosition':  int,
+
+                'rows.total':                   int,
+                'page.total':                   int
+            }
+        """
+        fieldsList=config.get('fields', defaultConfig['fields'])
+        imageResolution = config.get('resolution', defaultConfig['resolution'])
+
+        # calculate bounds within margins
+        fromUnit = config.get('unit', defaultConfig['unit'])
+        imageBounds = QRect(
+                QPoint(round(self.convertSize(config.get('margins.left', defaultConfig['margins.left']), fromUnit, 'px', imageResolution), 0),
+                       round(self.convertSize(config.get('margins.top', defaultConfig['margins.top']), fromUnit, 'px', imageResolution), 0)),
+                QPoint(round(imageSize.width() - self.convertSize(config.get('margins.right', defaultConfig['margins.right']), fromUnit, 'px', imageResolution), 0),
+                       round(imageSize.height() - self.convertSize(config.get('margins.bottom', defaultConfig['margins.bottom']), fromUnit, 'px', imageResolution), 0))
+            )
+
+        fPageBounds=cloneRect(imageBounds)
+        nPageBounds=cloneRect(imageBounds)
+
+
+        # used to calculate texts sizes...
+        document = QTextDocument()
+        document.setPageSize(QSizeF(imageBounds.size()))
+
+        thumbnailsSpacing = round(self.convertSize(config.get('allPageLayout.thumbnailsSpacing', defaultConfig['allPageLayout.thumbnailsSpacing']), fromUnit, 'px'), 0)
+
+        # calculate height for Header
+        headerHeight = 0
+        if config.get('header.active', defaultConfig['header.active']) and config.get('header.content', defaultConfig['header.content']).strip() != '':
+            document.setHtml(self.updatePointSize(config.get('header.content', defaultConfig['header.content'])))
+            headerHeight = document.size().height() + thumbnailsSpacing
+
+            fPageBounds.setTop(fPageBounds.top() + headerHeight)
+            nPageBounds.setTop(nPageBounds.top() + headerHeight)
+
+        # calculate height for Footer
+        footerHeight = 0
+        if config.get('footer.active', defaultConfig['footer.active']) and config.get('footer.content', defaultConfig['footer.content']).strip() != '':
+            document.setHtml(self.updatePointSize(config.get('footer.content', defaultConfig['footer.content'])))
+            footerHeight = document.size().height() + thumbnailsSpacing
+
+            fPageBounds.setBottom(fPageBounds.bottom() - footerHeight)
+            nPageBounds.setBottom(nPageBounds.bottom() - footerHeight)
+
+        # calculate height for first page note
+        fpNotesHeight = 0
+        if config.get('firstPageNotes.active', defaultConfig['firstPageNotes.active']) and config.get('firstPageNotes.content', defaultConfig['firstPageNotes.content']).strip() != '':
+            document.setHtml(self.updatePointSize(config.get('firstPageNotes.content', defaultConfig['firstPageNotes.content'])))
+            fpNotesHeight = document.size().height() + thumbnailsSpacing
+
+            fPageBounds.setTop(fPageBounds.top() + fpNotesHeight)
+
+        # calculate bounds for a thumbnail
+        thumbPerRow = config.get('allPageLayout.thumbnailsPerRow', defaultConfig['allPageLayout.thumbnailsPerRow'])
+        propertiesPosition = config.get('allPageLayout.properties.position', defaultConfig['allPageLayout.properties.position'])
+        cellWidth = int(round((imageBounds.width() - thumbnailsSpacing * (thumbPerRow - 1))/thumbPerRow, 0))
+
+        fontName = config.get('allPageLayout.properties.font.name', defaultConfig['allPageLayout.properties.font.name'])
+        fontSize = config.get('allPageLayout.properties.font.size', defaultConfig['allPageLayout.properties.font.size'])
+        fontColor = '000000'
+
+
+        document.setDefaultFont(QFont(config.get('allPageLayout.properties.font.name', defaultConfig['allPageLayout.properties.font.name'])))
+        document.setHtml(self.updatePointSize(self.__buildHtml(["X"]*len(fieldsList), fontName, fontSize, fontColor)))
+        cellTextHeight = document.size().height()
+        cellSpace=self.convertSize(1, 'mm', 'px', imageResolution)
+
+        if propertiesPosition == 'none':
+            # no properties to display
+            # then, height = width
+            cellHeight = cellWidth
+
+            # thumb size = 100% of cell
+            thumbSize = cellWidth
+
+            # no text
+            cellTextWidth = 0
+            cellTextHeight = 0
+        elif propertiesPosition in ['left', 'right']:
+            # left/right position
+            # in this case, consider that image size = 50% of cellWidth
+            thumbSize = (cellWidth - cellTextHeight)//2
+
+            # cell height is the greatest height between thumbnail and text
+            cellHeight = max(cellTextHeight, thumbSize)
+
+            # text width is 50% of cell
+            cellTextWidth = cellWidth - thumbSize
+        else:
+            # top/bottom position
+            # in this case, consider that image size = cellWidth - textHeight; but can't be smaller than 25% of cell width
+            thumbSize = max(cellWidth - cellTextHeight - cellSpace, cellWidth * 0.25)
+
+            # cell height is the sum of thumb height and text height
+            cellHeight = cellTextHeight + thumbSize + cellSpace
+
+            # text width is 10% of cell
+            cellTextWidth = cellWidth
+
+        # - - calculate number of pages
+        # total number of rows to display
+        nbRows = ceil(len(config.get('files', defaultConfig['files']))/thumbPerRow)
+        # maximum row per page
+        fpNbRowsMax = floor((fPageBounds.height() + thumbnailsSpacing) / (cellHeight+thumbnailsSpacing))
+        npNbRowsMax = floor((nPageBounds.height() + thumbnailsSpacing) / (cellHeight+thumbnailsSpacing))
+
+        if nbRows <= fpNbRowsMax:
+            nbPages = 1
+        else:
+            nbPages = 1 + ceil((nbRows - fpNbRowsMax) / npNbRowsMax)
+
+        returned= {
+            'page.size':                    imageSize,
+            'page.global.bounds':           imageBounds,
+
+            'page.first.bounds':            fPageBounds,
+            'page.first.nbRowsMax':         fpNbRowsMax,
+
+            'page.normal.bounds':           nPageBounds,
+            'page.normal.nbRowsMax':        npNbRowsMax,
+
+            'header.height':                headerHeight,
+            'footer.height':                footerHeight,
+            'fpNotes.height':               fpNotesHeight,
+
+            'cell.global.size':             QSize(cellWidth, cellHeight),
+            'cell.thumbnail.size':          QSize(thumbSize, thumbSize),
+            'cell.text.size':               QSize(cellTextWidth, cellTextHeight),
+            'cell.thumbnail.spacing':       thumbnailsSpacing,
+            'cell.thumbnail.innerSpacing':  cellSpace,
+            'cell.thumbnail.propPosition':  propertiesPosition,
+
+            'rows.total':                   nbRows,
+            'page.total':                   nbPages
+        }
+
+        return returned
+
+    def __drawPage(self, painter, pagesInformation, config, defaultConfig):
+        """Draw given page to `painter` (QPainter) using givens properties
 
         Given `options` is dictionary with the following properties:
         -
 
         Return a number of items drawn on page
         """
-        pass
+        # note: painter has been initialised (begin() already started)
+        def drawThumbnail(index, position, file, thumbFields):
+            def getData(data, file):
+                return eval(f"f'{data}'")
+
+            painter.resetTransform()
+            painter.translate(position)
+
+            # for debug...
+            painter.drawRect(0, 0, cellSize.width(), cellSize.height())
+            painter.drawText(0, 0, f"Item {index}")
+
+            propertiesPosition = pagesInformation['cell.thumbnail.propPosition']
+            cellInnerSpacing = pagesInformation['cell.thumbnail.innerSpacing']
+
+            imgPosition = QPoint(0, 0)
+            txtPosition = QPoint(0, 0)
+
+            image=file.thumbnail(BCFileThumbnailSize.fromValue(512), BCBaseFile.THUMBTYPE_IMAGE)
+            if isinstance(image, QImage):
+                thumbPixmap = QPixmap.fromImage(image.scaled(pagesInformation['cell.thumbnail.size'], Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            else:
+                thumbPixmap = None
+
+            if propertiesPosition == 'left':
+                # left
+                imgPosition.setX(imgPosition.x() + pagesInformation['cell.text.size'].width() + cellInnerSpacing)
+                if not thumbPixmap is None:
+                    imgPosition.setX((pagesInformation['cell.thumbnail.size'].width() - thumbPixmap.width())/2)
+                    imgPosition.setY((pagesInformation['cell.global.size'].height() - thumbPixmap.height())/2)
+            elif propertiesPosition == 'right':
+                # right
+                txtPosition.setX(txtPosition.x() + pagesInformation['cell.thumbnail.size'].width() + cellInnerSpacing)
+                if not thumbPixmap is None:
+                    imgPosition.setX((pagesInformation['cell.thumbnail.size'].width() - thumbPixmap.width())/2)
+                    imgPosition.setY((pagesInformation['cell.global.size'].height() - thumbPixmap.height())/2)
+            elif propertiesPosition == 'top':
+                # top
+                if not thumbPixmap is None:
+                    imgPosition.setX((pagesInformation['cell.global.size'].width() - thumbPixmap.width())/2)
+                    imgPosition.setY((pagesInformation['cell.thumbnail.size'].height() - thumbPixmap.height())/2)
+                imgPosition.setY(imgPosition.y() + pagesInformation['cell.text.size'].height() + cellInnerSpacing)
+            elif propertiesPosition == 'bottom':
+                # bottom
+                if not thumbPixmap is None:
+                    imgPosition.setX((pagesInformation['cell.global.size'].width() - thumbPixmap.width())/2)
+                    imgPosition.setY((pagesInformation['cell.thumbnail.size'].height() - thumbPixmap.height())/2)
+                txtPosition.setY(txtPosition.y() + pagesInformation['cell.thumbnail.size'].height() + cellInnerSpacing)
+
+            if not thumbPixmap is None:
+                painter.drawPixmap(imgPosition.x(), imgPosition.y(), thumbPixmap)
+
+            if propertiesPosition != 'none':
+                # text
+                fontName = config.get('allPageLayout.properties.font.name', defaultConfig['allPageLayout.properties.font.name'])
+                fontSize = config.get('allPageLayout.properties.font.size', defaultConfig['allPageLayout.properties.font.size'])
+                fontColor = '000000'
+
+                painter.resetTransform()
+                painter.translate(position)
+                painter.translate(txtPosition)
+
+                document = QTextDocument()
+                document.setPageSize(QSizeF(pagesInformation['cell.text.size'].width(), pagesInformation['cell.text.size'].height()))
+                document.setHtml(self.updatePointSize(self.__buildHtml([getData(BCExportFilesDialogBox.FIELDS[fieldName]['data'], file) for fieldName in thumbFields], fontName, fontSize, fontColor)))
+                document.drawContents(painter)
+
+
+        pageBounds = cloneRect(pagesInformation['page.global.bounds'])
+
+        thumbPerRow = config.get('allPageLayout.thumbnailsPerRow', defaultConfig['allPageLayout.thumbnailsPerRow'])
+        thumbSpacing = pagesInformation['cell.thumbnail.spacing']
+
+        # calculate current thumbnail index in list
+        if self.__formatPdfImgPageCurrent == 1:
+            thumbMaxPages = pagesInformation['page.first.nbRowsMax'] * thumbPerRow
+            thumbIndex = 0
+            thumbBounds = cloneRect(pagesInformation['page.first.bounds'])
+        else:
+            thumbMaxPages = pagesInformation['page.normal.nbRowsMax'] * thumbPerRow
+            thumbIndex = pagesInformation['page.first.nbRowsMax'] * thumbPerRow + (pagesInformation['page.normal.nbRowsMax'] * thumbPerRow) * (self.__formatPdfImgPageCurrent - 2)
+            thumbBounds = cloneRect(pagesInformation['page.normal.bounds'])
+
+        #
+        painter.translate(pageBounds.topLeft())
+
+        document = QTextDocument()
+        document.setPageSize(QSizeF(thumbBounds.size()))
+
+        if pagesInformation['header.height'] > 0:
+            # header to draw
+            document.setHtml(self.updatePointSize(self.__parseText(config.get('header.content', defaultConfig['header.content']))))
+            document.drawContents(painter)
+            painter.translate(QPointF(0, pagesInformation['header.height']))
+
+        if self.__formatPdfImgPageCurrent == 1 and pagesInformation['fpNotes.height'] > 0:
+            # first page notes to draw
+            document.setHtml(self.updatePointSize(self.__parseText(config.get('firstPageNotes.content', defaultConfig['firstPageNotes.content']))))
+            document.drawContents(painter)
+            painter.translate(QPointF(0, pagesInformation['fpNotes.height']))
+
+        if pagesInformation['footer.height'] > 0:
+            # footer to draw
+            painter.resetTransform()
+            painter.translate(QPointF(thumbBounds.left(), thumbBounds.bottom() + pagesInformation['cell.thumbnail.spacing']))
+            document.setHtml(self.updatePointSize(self.__parseText(config.get('footer.content', defaultConfig['footer.content']))))
+            document.drawContents(painter)
+
+        # thumbnails
+        thumbFields = config.get('fields', defaultConfig['fields'])
+        thumbFiles = config.get('files', defaultConfig['files'])
+        nbThumbFiles = len(thumbFiles)
+
+        cellSize = pagesInformation['cell.global.size']
+        position = thumbBounds.topLeft()
+        for pageIndex in range(thumbMaxPages):
+            if thumbIndex >= nbThumbFiles:
+                # finished!
+                break
+
+            drawThumbnail(thumbIndex, position, thumbFiles[thumbIndex], thumbFields)
+
+            if (pageIndex+1) % thumbPerRow == 0:
+                # next row
+                position.setX(thumbBounds.left())
+                position.setY(position.y() + cellSize.height() + thumbSpacing)
+            else:
+                position.setX(position.x() + cellSize.width() + thumbSpacing)
+
+
+            thumbIndex+=1
+
+        pen = QPen(Qt.blue)
+        painter.resetTransform()
+        painter.setPen(pen)
+        painter.drawRect(thumbBounds.left(), thumbBounds.top(), thumbBounds.width(), thumbBounds.height())
 
     def exportAsText(self, target, config=None, preview=False):
         """Export content as text
@@ -2435,10 +2887,107 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         If `preview`, only the first layer is generated
         """
-        returned = {'exported': False,
-                    'message': 'not yet implemented!'
-                }
+        def fillLayer(layer, color):
+            rect = layer.bounds()
+            img = QImage(rect.width(), rect.height(), QImage.Format_ARGB32)
+            img.fill(color)
+            EKritaNode.fromQImage(layer, img, rect.topLeft())
 
+        def drawLayer(layer, pagesInformation, config, defaultConfig):
+            rect = pagesInformation['page.size']
+            pixmap = QPixmap(rect.width(), rect.height())
+            pixmap.fill(Qt.transparent)
+            painter = QPainter()
+            painter.begin(pixmap)
+            self.__drawPage(painter, pagesInformation, config, defaultConfig)
+            painter.end()
+            EKritaNode.fromQPixmap(layer, pixmap)
+
+        returned = {'exported': False,
+                    'message': 'not processed :)'
+                }
+        # define a default configuration, if given config is missing...
+        defaultConfig = {
+                'allPageLayout.properties.font.name': 'DejaVu sans',
+                'allPageLayout.properties.font.size': 10,
+                'allPageLayout.properties.position': 'none',
+                'allPageLayout.thumbnailsPerRow': 2,
+                'allPageLayout.thumbnailsSpacing': 5.0,
+                'allPageLayout.background.color': Qt.white,
+                'firstPageNotes.active': False,
+                'firstPageNotes.content': "",
+                'footer.active': False,
+                'footer.content': "",
+                'header.active': False,
+                'header.content': "",
+                'margins.bottom': 20.0,
+                'margins.left': 20.0,
+                'margins.right': 20.0,
+                'margins.top': 20.0,
+                'orientation': BCExportFilesDialogBox.ORIENTATION_PORTRAIT, # portrait
+                'paperSize': "A4",
+                'resolution': 300.0,
+                'unit': "mm",
+
+                'fields': [key for key in BCExportFilesDialogBox.FIELDS if BCExportFilesDialogBox.FIELDS[key]['selected']],
+                'files': []
+            }
+
+        if not isinstance(config, dict):
+            config = defaultConfig
+
+        fieldsList=config.get('fields', defaultConfig['fields'])
+
+        # 1) Create KRA file
+        # 2) Set white Background layer
+        # While all thumbnails are not processed
+        #   3.a) generate page
+        #   3.b) create new layer "Page N"
+        #   3.c) add page content to layer "Page N"
+        # 4) save file
+        #       ==> instead of "clipboard" option, set "create new document" ???
+
+        imageResolution = config.get('resolution', defaultConfig['resolution'])
+
+        # need image size in pixels
+        imageSize = self.__getPaperSize(config.get('paperSize', defaultConfig['paperSize']),
+                                        'px',
+                                        config.get('orientation', defaultConfig['orientation']),
+                                        imageResolution)
+
+        kraDocument = Krita.instance().createDocument(imageSize.width(),
+                                                      imageSize.height(),
+                                                      "Document name",
+                                                      "RGBA",
+                                                      "U8",
+                                                      "",
+                                                      imageResolution)
+
+        # shows it in the application for debug
+        Krita.instance().activeWindow().addView(kraDocument)
+
+        # prepare background layer
+        rootNode = kraDocument.rootNode()
+        bgNode = rootNode.childNodes()[0]
+        bgNode.setOpacity(255) # it seems that node opactiry is 0% ??? not sure if normal or not, ensure that it's 100%
+        fillLayer(bgNode, config.get('allPageLayout.background.color', defaultConfig['allPageLayout.background.color']))
+
+        # calculate pages informations
+        pagesInformation = self.__getPagesInformation(imageSize, config, defaultConfig)
+
+        self.__formatPdfImgPageTotal = pagesInformation['page.total']
+        for page in range(self.__formatPdfImgPageTotal):
+            self.__formatPdfImgPageCurrent = page + 1
+
+            newPage = kraDocument.createNode(f'Page {self.__formatPdfImgPageCurrent}/{self.__formatPdfImgPageTotal}', "paintLayer")
+            if page > 0:
+                newPage.setVisible(False)
+            drawLayer(newPage, pagesInformation, config, defaultConfig)
+            rootNode.addChildNode(newPage, bgNode)
+
+        kraDocument.refreshProjection()
+
+        returned['exported'] = True
         return returned
 
     def exportAsImageSeq(self, target, config, preview=False, imageFormat=None):

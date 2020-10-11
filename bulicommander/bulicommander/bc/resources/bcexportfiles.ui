@@ -1487,7 +1487,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
               </sizepolicy>
              </property>
              <property name="currentIndex">
-              <number>0</number>
+              <number>1</number>
              </property>
              <widget class="QWidget" name="pageFormatDocImgPageSetup">
               <layout class="QGridLayout" name="gridLayout_7">
@@ -1756,7 +1756,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="6" column="2" colspan="2" alignment="Qt::AlignRight">
-                <widget class="QCheckBox" name="cbFormatDocImgFPageLayoutPreview">
+                <widget class="QCheckBox" name="cbFormatDocImgFPageNotesPreview">
                  <property name="font">
                   <font>
                    <pointsize>9</pointsize>
