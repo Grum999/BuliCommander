@@ -439,7 +439,7 @@ class BCSmallTextEdit(QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.__teTextEdit = QTextEdit(self)
+        self.__document = QTextDocument(self)
 
         self.__lePreview = QLineEdit(self)
         self.__lePreview.setFrame(False)
@@ -510,9 +510,9 @@ class BCSmallTextEdit(QFrame):
         return self.__html
 
     def setHtml(self, value):
-        self.__teTextEdit.setHtml(value)
+        self.__document.setHtml(value)
         self.__html = value
-        self.__plainText = self.__teTextEdit.toPlainText()
+        self.__plainText = self.__document.toPlainText()
 
         rows = self.__plainText.split(os.linesep, 1)
         if len(rows) > 1:
