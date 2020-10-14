@@ -78,11 +78,17 @@ class BCTextEditDialog(QDialog):
         self.__editor.setHtml(text)
 
     @staticmethod
-    def edit(title, text):
+    def edit(title, text, textColor=None, textBackgroundColor=None):
         """Open a dialog box to edit text"""
         dlgBox = BCTextEditDialog(None)
         dlgBox.setHtml(text)
         dlgBox.setWindowTitle(title)
+
+        if not textColor is None:
+            dlgBox.__editor.setTextColor(textColor)
+
+        if not textBackgroundColor is None:
+            dlgBox.__editor.setTextBackgroundColor(textBackgroundColor)
 
         returned = dlgBox.exec()
 
@@ -103,6 +109,9 @@ class BCTextEdit(QWidget):
         self.__toolBar = QWidget()
 
         self.__formattingWidgets=[]
+
+        self.__fgColor = None
+        self.__bgColor = None
 
         self.__initTextEdit()
         self.__initToolBar()
@@ -345,6 +354,22 @@ class BCTextEdit(QWidget):
         self.__blockSignals(False)
 
 
+    def __updateStyleSheet(self):
+        """Update bc editstyle sheet acoording to given colors"""
+        style = ''
+        if not self.__fgColor is None:
+            style+=f'color: {self.__fgColor.name()}; '
+
+        if not self.__bgColor is None:
+            style+=f'background-color: {self.__bgColor.name()};'
+            if self.__bgColor.value() >= 128:
+                self.__textEdit.setTextColor(Qt.black)
+            else:
+                self.__textEdit.setTextColor(Qt.white)
+
+        self.__textEdit.setStyleSheet(style)
+
+
     def toHtml(self):
         """Return current text as html"""
         return self.__textEdit.toHtml()
@@ -365,6 +390,28 @@ class BCTextEdit(QWidget):
         return self.__textEdit.setPlainText(text)
 
 
+    def textColor(self):
+        """Return current text color"""
+        return self.__fgColor()
+
+
+    def setTextColor(self, color):
+        """Set current text color"""
+        self.__fgColor = color
+        self.__updateStyleSheet()
+
+
+    def textBackgroundColor(self):
+        """Return current text background color"""
+        return self.__bgColor
+
+
+    def setTextBackgroundColor(self, color):
+        """Set current text background color"""
+        self.__bgColor = color
+        self.__updateStyleSheet()
+
+
 class BCSmallTextEdit(QFrame):
     """A small widget that allows to open a BCTextEditDialog"""
     textChanged = Signal()
@@ -380,6 +427,9 @@ class BCSmallTextEdit(QFrame):
 
         self.__html = ""
         self.__plainText = ""
+
+        self.__fgColor = None
+        self.__bgColor = None
 
         self.setPalette(self.__paletteBase)
         self.setAutoFillBackground(True)
@@ -410,10 +460,42 @@ class BCSmallTextEdit(QFrame):
         layout.addWidget(self.__btnEdit)
 
     def __editText(self):
-        returned = BCTextEditDialog.edit(self.__title, self.__html)
+        returned = BCTextEditDialog.edit(self.__title, self.__html, self.__fgColor, self.__bgColor)
         if not returned is None:
             self.setHtml(returned)
             self.textChanged.emit()
+
+    def __updateStyleSheet(self):
+        """Update bc editstyle sheet acoording to given colors"""
+        style = 'white-space: pre; padding: 4px; '
+        if not self.__fgColor is None:
+            style+=f'color: {self.__fgColor.name()}; '
+
+        if not self.__bgColor is None:
+            style+=f'background-color: {self.__bgColor.name()}; '
+
+        if style != '':
+            self.setStyleSheet(f"QToolTip {{ {style} }}")
+        else:
+            self.setStyleSheet('')
+
+    def textColor(self):
+        """Return current text color"""
+        return self.__fgColor
+
+    def setTextColor(self, color):
+        """Set current text color"""
+        self.__fgColor = QColor(color)
+        self.__updateStyleSheet()
+
+    def textBackgroundColor(self):
+        """Return current text background color"""
+        return self.__bgColor
+
+    def setTextBackgroundColor(self, color):
+        """Set current text background color"""
+        self.__bgColor = QColor(color)
+        self.__updateStyleSheet()
 
     def title(self):
         return self.__title
