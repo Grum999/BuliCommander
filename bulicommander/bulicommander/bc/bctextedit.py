@@ -226,7 +226,8 @@ class BCTextEdit(QWidget):
              'tooltip':         i18n('Set current font color'),
              'icon':            QIcon.fromTheme('format-text-color'),
              'action':          self.__updateSelectedTextFontColor,
-             'checkable':       False
+             'checkable':       False,
+             'isFormatting':    True
             },
             {'type':            'separator'},
             {'type':            'button',
@@ -235,7 +236,8 @@ class BCTextEdit(QWidget):
              'icon':            QIcon.fromTheme('format-justify-left'),
              'action':          (lambda: self.__textEdit.setAlignment(Qt.AlignLeft)),
              'group':           'text-align',
-             'checkable':       True
+             'checkable':       True,
+             'isFormatting':    True
             },
             {'type':            'button',
              'id':              'textAlignCenter',
@@ -243,7 +245,8 @@ class BCTextEdit(QWidget):
              'icon':            QIcon.fromTheme('format-justify-center'),
              'action':          (lambda: self.__textEdit.setAlignment(Qt.AlignCenter)),
              'group':           'text-align',
-             'checkable':       True
+             'checkable':       True,
+             'isFormatting':    True
             },
             {'type':            'button',
              'id':              'textAlignRight',
@@ -251,7 +254,8 @@ class BCTextEdit(QWidget):
              'icon':            QIcon.fromTheme('format-justify-right'),
              'action':          (lambda: self.__textEdit.setAlignment(Qt.AlignRight)),
              'group':           'text-align',
-             'checkable':       True
+             'checkable':       True,
+             'isFormatting':    True
             },
             {'type':            'button',
              'id':              'textAlignJustify',
@@ -259,7 +263,8 @@ class BCTextEdit(QWidget):
              'icon':            QIcon.fromTheme('format-justify-fill'),
              'action':          (lambda: self.__textEdit.setAlignment(Qt.AlignJustify)),
              'group':           'text-align',
-             'checkable':       True
+             'checkable':       True,
+             'isFormatting':    True
             }
         ]
 
