@@ -2458,6 +2458,17 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __export(self):
         """Export process"""
+
+        if self.rbTargetResultClipboard.isChecked():
+            self.__exportedFileName = BCExportFilesDialogBox.__CLIPBOARD
+        else:
+            self.__exportedFileName = self.leTargetResultFile.text()
+
+            if os.path.exists(self.__exportedFileName):
+                choice = QMessageBox.question(self, self.__title, f"Target file <b>{os.path.basename(self.__exportedFileName)}</b> already exist.<br><br>Do you want to override it?")
+                if choice == QDialogButtonBox.No:
+                    return
+
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         self.pbOptionsLoadDefault.setEnabled(False)
@@ -2465,11 +2476,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         self.pbNext.setEnabled(False)
         self.pbExport.setEnabled(False)
         self.pbCancel.setEnabled(False)
-
-        if self.rbTargetResultClipboard.isChecked():
-            self.__exportedFileName = BCExportFilesDialogBox.__CLIPBOARD
-        else:
-            self.__exportedFileName = self.leTargetResultFile.text()
 
         if self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT:
             exported = self.exportAsText(self.__exportedFileName, self.__generateConfig(), False)
