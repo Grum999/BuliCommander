@@ -38,6 +38,7 @@ from PyQt5.QtWidgets import (
         QVBoxLayout,
         QWidget
     )
+from .bccolorbutton import BCColorButton
 
 
 class BCTextEditDialog(QDialog):
@@ -193,8 +194,9 @@ class BCTextEdit(QWidget):
              'id':              'fontSize',
              'tooltip':         i18n('Applied font size'),
              'list':            [str(value) for value in [6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 36, 48, 64, 72, 96, 144]],
+             'validator':       QDoubleValidator(0.25, 512, 2),
              'editable':        True,
-             'action':          (lambda value: self.__textEdit.setFontPointSize(float(value))),
+             'action':          self.__updateSelectedTextFontSize,
              'isFormatting':    True
             },
             {'type':            'button',
@@ -221,10 +223,10 @@ class BCTextEdit(QWidget):
              'checkable':       True,
              'isFormatting':    True
             },
-            {'type':            'button',
+            {'type':            'cbutton',
              'id':              'fontColor',
              'tooltip':         i18n('Set current font color'),
-             'icon':            QIcon.fromTheme('format-text-color'),
+             'icon':            QIcon(':/images/format_text_color'),
              'action':          self.__updateSelectedTextFontColor,
              'checkable':       False,
              'isFormatting':    True
@@ -271,17 +273,24 @@ class BCTextEdit(QWidget):
         groups = {}
 
         for item in items:
-            if item['type'] == 'button':
+            if item['type'] in ('button','cbutton'):
                 policy = QSizePolicy()
                 policy.setHorizontalPolicy(QSizePolicy.Maximum)
 
-                qItem = QPushButton(self.__toolBar)
-                qItem.setIcon(item['icon'])
-                qItem.setCheckable(item['checkable'])
-                if item['checkable']:
-                    qItem.toggled.connect(item['action'])
+                if item['type'] == 'cbutton':
+                    qItem = BCColorButton(self.__toolBar)
+
+                    qItem.setIcon(item['icon'])
+                    qItem.colorChanged.connect(item['action'])
                 else:
-                    qItem.clicked.connect(item['action'])
+                    qItem = QPushButton(self.__toolBar)
+
+                    qItem.setIcon(item['icon'])
+                    qItem.setCheckable(item['checkable'])
+                    if item['checkable']:
+                        qItem.toggled.connect(item['action'])
+                    else:
+                        qItem.clicked.connect(item['action'])
 
                 qItem.setSizePolicy(policy)
 
@@ -297,14 +306,21 @@ class BCTextEdit(QWidget):
                 qItem.setLineWidth(1)
                 qItem.setMidLineWidth(0)
             elif item['type'] == 'fontComboBox':
+                sizePolicy=QSizePolicy()
+                policy.setHorizontalPolicy(QSizePolicy.Preferred)
                 qItem = QFontComboBox(self.__toolBar)
                 qItem.currentFontChanged.connect(item['action'])
+                qItem.setSizePolicy(policy)
             elif item['type'] == 'comboBox':
+                sizePolicy=QSizePolicy()
+                policy.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
                 qItem = QComboBox(self.__toolBar)
                 qItem.addItems(item['list'])
                 qItem.setEditable(item['editable'])
+                if 'validator' in item:
+                    qItem.setValidator(item['validator'])
                 qItem.currentTextChanged.connect(item['action'])
-
+                qItem.setSizePolicy(policy)
             if 'tooltip' in item:
                 qItem.setToolTip(item['tooltip'])
             if 'id' in item:
@@ -325,11 +341,16 @@ class BCTextEdit(QWidget):
             widget.blockSignals(blocked)
 
 
-    def __updateSelectedTextFontColor(self):
+    def __updateSelectedTextFontColor(self, color):
         """Open a color dialog-box and set color"""
-        returnedColor = QColorDialog.getColor(self.__textEdit.textColor(), self, "Text color", QColorDialog.DontUseNativeDialog)
-        if returnedColor.isValid():
-            return self.__textEdit.setTextColor(returnedColor)
+        self.__textEdit.setTextColor(color)
+
+
+    def __updateSelectedTextFontSize(self, value):
+        """Update text size if given value is valid"""
+        toFloat = QLocale().toFloat(value)
+        if toFloat[1]:
+            self.__textEdit.setFontPointSize(toFloat[0])
 
 
     def __updateSelectedTextFontFamily(self, font):
@@ -344,12 +365,20 @@ class BCTextEdit(QWidget):
         # Disable current signals on formatting items
         self.__blockSignals(True)
 
+        fValue = float(self.__textEdit.fontPointSize())
+        if (fValue%1)==0:
+            # no decimal part
+            self.__toolBarItems['fontSize'].setCurrentText(str(int(fValue)))
+        else:
+            self.__toolBarItems['fontSize'].setCurrentText(str(round(fValue, 2)))
+
         self.__toolBarItems['fontName'].setCurrentFont(self.__textEdit.currentFont())
-        self.__toolBarItems['fontSize'].setCurrentText(str(int(self.__textEdit.fontPointSize())))
 
         self.__toolBarItems['fontBold'].setChecked(self.__textEdit.fontWeight() == QFont.Bold)
         self.__toolBarItems['fontItalic'].setChecked(self.__textEdit.fontItalic())
         self.__toolBarItems['fontUnderline'].setChecked(self.__textEdit.fontUnderline())
+
+        self.__toolBarItems['fontColor'].setColor(self.__textEdit.textColor())
 
         self.__toolBarItems['textAlignLeft'].setChecked(self.__textEdit.alignment() == Qt.AlignLeft)
         self.__toolBarItems['textAlignCenter'].setChecked(self.__textEdit.alignment() == Qt.AlignCenter)

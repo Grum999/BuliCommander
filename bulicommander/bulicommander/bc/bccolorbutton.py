@@ -51,6 +51,8 @@ class BCColorButton(QPushButton):
         self.__pen = QPen(QColor("#88888888"))
         self.__pen.setWidth(1)
 
+        self.__alphaChannel = True
+
         self.setText("")
         self.setText=newSetText
 
@@ -74,21 +76,29 @@ class BCColorButton(QPushButton):
 
         return QBrush(tmpPixmap)
 
-
     def paintEvent(self, event):
         super(BCColorButton, self).paintEvent(event)
 
         margin = ceil(self.height()/2)//2
         margin2 = margin<<1
+        if not self.icon().isNull():
+            rect=QRect(margin, self.height() - margin//2 - 4, self.width() - margin2, margin//2)
+        else:
+            rect=QRect(margin, margin, self.width() - margin2,  self.height() - margin2)
 
         painter = QPainter(self)
-        painter.fillRect(margin, margin, self.width() - margin2,  self.height() - margin2, self.__cbBrush)
+        painter.fillRect(rect, self.__cbBrush)
         painter.setPen(self.__pen)
         painter.setBrush(self.__brush)
-        painter.drawRect(margin, margin, self.width() - margin2,  self.height() - margin2)
+        painter.drawRect(rect)
 
     def mouseReleaseEvent(self, event):
-        returnedColor = QColorDialog.getColor(self.__color, None, i18n("Choose color"), QColorDialog.ShowAlphaChannel|QColorDialog.DontUseNativeDialog)
+        if self.__alphaChannel:
+            options = QColorDialog.ShowAlphaChannel|QColorDialog.DontUseNativeDialog
+        else:
+            options = QColorDialog.DontUseNativeDialog
+
+        returnedColor = QColorDialog.getColor(self.__color, None, i18n("Choose color"), options)
         if returnedColor.isValid():
             self.setColor(returnedColor)
             self.colorChanged.emit(self.__color)
@@ -101,3 +111,13 @@ class BCColorButton(QPushButton):
         """Set current button color"""
         self.__color = QColor(color)
         self.__brush.setColor(self.__color)
+        self.update()
+
+    def alphaChannel(self):
+        """Return if alpha channel is managed or not"""
+        return self.__alphaChannel
+
+    def setAlphaChannel(self, value):
+        """Set if alpha channel is managed or not"""
+        self.__alphaChannel=value
+
