@@ -66,6 +66,7 @@ from .bccolorbutton import (
     )
 from .bcutils import (
         bytesSizeToStr,
+        checkerBoardBrush,
         strDefault,
         tsToStr,
         cloneRect,
@@ -105,6 +106,10 @@ class BCExportFilesDialogBox(QDialog):
     __PANEL_FORMAT_DOCIMG_PAGESETUP_UNIT_MM = 0
     __PANEL_FORMAT_DOCIMG_PAGESETUP_UNIT_CM = 1
     __PANEL_FORMAT_DOCIMG_PAGESETUP_UNIT_INCH = 2
+
+
+    __PREVIEW_MODE_LAYOUT = 0
+    __PREVIEW_MODE_STYLE = 1
 
 
     __FIELD_ID = 1000
@@ -529,6 +534,8 @@ class BCExportFilesDialogBox(QDialog):
         self.__formatPdfImgPageTotal = 0
         self.__formatPdfImgPixmapResolution = QApplication.primaryScreen().logicalDotsPerInch()
         self.__formatPdfImgEstimatedPages = 0
+        self.__formatPdfImgPagesInformation = None
+        self.__formatPdfImgConfig = None
 
         self.__exportedFileName = ''
 
@@ -594,7 +601,7 @@ class BCExportFilesDialogBox(QDialog):
             # --- ALL ---
             self.cbxFormat.currentIndexChanged.connect(self.__slotPageFormatFormatChanged)
 
-            self.lblFormatDocImgPreview.paintEvent = self.__updateFormatDocImgConfigurationPreview
+            self.lblFormatDocImgPreview.paintEvent = self.__updateFormatDocImgConfigurationPreviewPaint
 
             # --- TEXT interface ---
             self.cbFormatTextLayoutUserDefined.toggled.connect(self.__slotPageFormatTextLayoutUserDefined)
@@ -689,6 +696,8 @@ class BCExportFilesDialogBox(QDialog):
             self.dsbFormatDocImgThumbsSpacingInner.valueChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
 
             self.pbFormatDocImgTextFontColor.colorChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
+
+            self.cbxFormatDocImgPreviewMode.currentIndexChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
 
             self.__loadSettingsPageFormat()
 
@@ -978,6 +987,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             # placed here instead of __loadDefaultPageTarget
             self.cbTargetResultFileOpen.setChecked(False)
 
+            self.cbxFormatDocImgPreviewMode.setCurrentIndex(0)
+
             self.__updateFormatDocImgPaperSizeList()
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
             self.__slotPageFormatDocImgPageSetupUnitChanged()
@@ -1106,6 +1117,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgTextFontSize.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTSIZE.id()))
             self.pbFormatDocImgTextFontColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTCOL.id()))
 
+            self.cbxFormatDocImgPreviewMode.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE.id()))
+
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
             self.__slotPageFormatDocImgPageSetupUnitChanged()
             self.__slotPageFormatDocImgPageSetupSizeChanged()
@@ -1191,6 +1204,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             # placed here instead of __loadSettingsPageTarget
             self.cbTargetResultFileOpen.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE.id()))
 
+            self.cbxFormatDocImgPreviewMode.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE.id()))
+
+
             self.__updateFormatDocImgPaperSizeList()
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
             self.__slotPageFormatDocImgPageSetupUnitChanged()
@@ -1272,6 +1288,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             # placed here instead of __loadSettingsPageTarget
             self.cbTargetResultFileOpen.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE.id()))
+
+            self.cbxFormatDocImgPreviewMode.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE.id()))
 
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
             self.__slotPageFormatDocImgPageSetupUnitChanged()
@@ -1355,6 +1373,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             # placed here instead of __loadSettingsPageTarget
             self.cbTargetResultFileOpen.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE.id()))
 
+            self.cbxFormatDocImgPreviewMode.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE.id()))
+
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
             self.__slotPageFormatDocImgPageSetupUnitChanged()
             self.__slotPageFormatDocImgPageSetupSizeChanged()
@@ -1386,7 +1406,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 defaultImgPng()
             elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_JPG:
                 defaultImgJpg()
-            self.lblFormatDocImgPreview.update()
+            self.__updateFormatDocImgConfigurationPreview()
         elif target == BCExportFormat.EXPORT_FMT_DOC_PDF:
             defaultDocPdf()
         elif target == BCExportFormat.EXPORT_FMT_IMG_KRA:
@@ -1407,8 +1427,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         self.bcsteFormatDocImgHeader.setTextBackgroundColor(color)
         self.bcsteFormatDocImgFooter.setTextBackgroundColor(color)
         self.bcsteFormatDocImgFPageNotes.setTextBackgroundColor(color)
-
-        print('color changed...')
 
     def __initFormatDocImgLists(self):
         wasBlocked = self.__blockedSlots
@@ -1447,7 +1465,31 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             self.cbxFormatDocImgPaperSize.setItemText(itemIndex, f"{paperSize} - {size.width():{unitFmt}}x{size.height():{unitFmt}}")
 
-    def __updateFormatDocImgConfigurationPreview(self, event):
+    def __updateFormatDocImgConfigurationPreview(self):
+        """Generate a configuration preview and update it"""
+
+        if self.__formatPdfImgPaperSize.height() == 0:
+            return
+
+        # paper size w/h ratio
+        self.__formatPdfImgRatioPaperSize = self.__formatPdfImgPaperSize.width() / self.__formatPdfImgPaperSize.height()
+
+        # get current configuration
+        self.__formatPdfImgConfig = self.__generateConfig()
+
+        # need real image size in pixels
+        imageSize = self.__getPaperSize(self.__formatPdfImgConfig['paper.size'],
+                                        'px',
+                                        self.__formatPdfImgConfig['paper.orientation'],
+                                        self.__formatPdfImgConfig['paper.resolution'])
+
+        self.__formatPdfImgPagesInformation = self.__getPagesInformation(imageSize, self.__formatPdfImgConfig, self.__formatPdfImgConfig)
+
+        self.lblFormatDocImgPreviewNbPages.setText(i18n(f"Number of pages: {self.__formatPdfImgPagesInformation['page.total']}"))
+
+        self.lblFormatDocImgPreview.update()
+
+    def __updateFormatDocImgConfigurationPreviewPaint(self, event):
         """Generate a configuration preview and update it"""
         # Mathod is paintEvent() for widget lblFormatDocImgPreview
 
@@ -1459,11 +1501,13 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 pen.setColor(Qt.lightGray)
                 brush.setColor(Qt.lightGray)
 
-        def drawMargins():
+        def drawLayoutMargins():
             # first page / margins
             pen.setStyle(Qt.DashLine)
             setActiveColor(0)
             painter.setPen(pen)
+
+            drawingArea = previewPagesInformation['page.global.bounds']
 
             painter.drawLine(drawingArea.left(), previewRect.top(), drawingArea.left(), previewRect.bottom())
             painter.drawLine(drawingArea.right(), previewRect.top(), drawingArea.right(), previewRect.bottom())
@@ -1475,58 +1519,46 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             drawingArea.setTop(drawingArea.top() + 2)
             drawingArea.setBottom(drawingArea.bottom() - 3)
 
-        def drawLayout():
+        def drawLayoutLayout():
             pen.setStyle(Qt.SolidLine)
             brush.setStyle(Qt.DiagCrossPattern)
             setActiveColor(1)
             painter.setPen(pen)
 
+            drawingArea = previewPagesInformation['page.inside.bounds']
+
             # ----------------------------------------------------------------------
             # Header
-            if self.cbFormatDocImgHeader.isChecked() and self.bcsteFormatDocImgHeader.toPlainText() != '':
-                # represent Header
-                for textRow in range(self.bcsteFormatDocImgHeader.toPlainText().count("\n") + 1):
-                    painter.fillRect( drawingArea.left(), drawingArea.top(), drawingArea.width(), characterHeight, brush)
-                    painter.drawRect( drawingArea.left(), drawingArea.top(), drawingArea.width(), characterHeight )
+            top = 0
+            if self.cbFormatDocImgHeader.isChecked() and previewPagesInformation['header.height'] > 0:
+                areaHeight=previewPagesInformation['header.height'] - 2
 
-                    drawingArea.setTop(drawingArea.top() + characterHeight + 2)
+                painter.fillRect( drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight, brush)
+                painter.drawRect( drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight )
 
-                # +5mm space after header
-                drawingArea.setTop(drawingArea.top() + characterHeight + 2)
+                top = previewPagesInformation['header.height']
 
             # ----------------------------------------------------------------------
             # Footer
-            footerHeight = 0
-            if self.cbFormatDocImgFooter.isChecked() and self.bcsteFormatDocImgFooter.toPlainText() != '':
-                # calculate footer height
-                footerHeight = characterHeight - 2
+            if self.cbFormatDocImgFooter.isChecked() and previewPagesInformation['footer.height'] > 0:
+                areaHeight=previewPagesInformation['footer.height'] - 2
 
-                for textRow in range(self.bcsteFormatDocImgFooter.toPlainText().count("\n") + 1):
-                    painter.fillRect( drawingArea.left(), drawingArea.bottom() - footerHeight, drawingArea.width(), characterHeight, brush)
-                    painter.drawRect( drawingArea.left(), drawingArea.bottom() - footerHeight, drawingArea.width(), characterHeight )
-
-                    footerHeight+=characterHeight + 2
-
-                drawingArea.setBottom(drawingArea.bottom() - footerHeight)
+                painter.fillRect( drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight, brush)
+                painter.drawRect( drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight )
 
             # ----------------------------------------------------------------------
             # First page layout
-            if self.cbFormatDocImgFPageNotesPreview.isChecked() and self.cbFormatDocImgFPageNotes.isChecked() and self.bcsteFormatDocImgFPageNotes.toPlainText() != '':
-                # represent First page layout
-                for textRow in range(self.bcsteFormatDocImgFPageNotes.toPlainText().count("\n") + 1):
-                    painter.fillRect( drawingArea.left(), drawingArea.top(), drawingArea.width(), characterHeight, brush)
-                    painter.drawRect( drawingArea.left(), drawingArea.top(), drawingArea.width(), characterHeight )
+            if (self.cbFormatDocImgFPageNotesPreview.isChecked() or previewPagesInformation['page.total'] == 1) and self.cbFormatDocImgFPageNotes.isChecked() and previewPagesInformation['fpNotes.height'] > 0:
+                areaHeight=previewPagesInformation['fpNotes.height'] - 2
 
-                    drawingArea.setTop(drawingArea.top() + characterHeight + 2)
+                painter.fillRect( drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight, brush)
+                painter.drawRect( drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight )
 
-                # +5mm space after layout
-                drawingArea.setTop(drawingArea.top() + characterHeight + 2)
-
-        def getThumbnailCellPixmap(propertiesPosition, cellWidth, cellHeight, thumbSize, textWidth, textHeight, textRows):
+        def getThumbnailCellPixmap(textRows):
             # return a pixmap
 
             # draw one cell in a pixmap and then, paste same pixmap for each cell
-            imageThumb = QImage(cellWidth, cellHeight, QImage.Format_ARGB32)
+            imageThumb = QImage(previewPagesInformation['cell.global.size'].width(), previewPagesInformation['cell.global.size'].height(), QImage.Format_ARGB32)
             imageThumb.fill(Qt.transparent)
             pixmapThumb = QPixmap.fromImage(imageThumb)
 
@@ -1538,44 +1570,52 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             setActiveColor(1)
 
-            #
-            if propertiesPosition == 1:
+            propertiesPosition = previewPagesInformation['cell.thumbnail.propPosition']
+            thumbSize  = previewPagesInformation['cell.thumbnail.size'].height()
+            textWidth = previewPagesInformation['cell.text.size'].width()
+            textHeight = previewPagesInformation['cell.text.size'].height()
+            if propertiesPosition == 'left':
                 # left
-                imgLeft = 2 + textWidth
+                imgLeft = 2 + previewPagesInformation['cell.text.size'].width()
                 imgTop = 2
                 textLeft = 2
                 textTop = 2
-                textWidth-=3
-            elif propertiesPosition == 2:
+                textWidth-=2
+                textHeight-=4
+            elif propertiesPosition == 'right':
                 # right
                 imgLeft = 2
                 imgTop = 2
                 textLeft = thumbSize - 1
                 textTop = 2
-                textWidth-=3
-            elif propertiesPosition == 3:
+                textWidth-=2
+                textHeight-=4
+            elif propertiesPosition == 'top':
                 # top
                 imgLeft = 2
                 imgTop = 2 + textHeight
                 textLeft = 2
                 textTop = 2
                 textWidth-=5
-            elif propertiesPosition == 4:
+                textHeight-=4
+            elif propertiesPosition == 'bottom':
                 # bottom
                 imgLeft = 2
                 imgTop = 2
                 textLeft = 2
                 textTop = 2 + thumbSize
                 textWidth-=5
+                textHeight-=4
             else:
                 imgLeft = 2
                 imgTop = 2
                 textLeft = 0
                 textTop = 0
+                textHeight-=4
 
             # cell bounds
             painterThumb.setPen(pen)
-            painterThumb.drawRect(0, 0, cellWidth - 1, cellHeight - 1)
+            painterThumb.drawRect(0, 0, previewPagesInformation['cell.global.size'].width() - 1, previewPagesInformation['cell.global.size'].height() - 1)
 
             setActiveColor(2)
 
@@ -1596,93 +1636,52 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             painterThumb.setPen(pen)
 
             # texts
-            if propertiesPosition > 0:
-                for row in range(textRows):
-                    painterThumb.fillRect( textLeft, textTop, textWidth, characterHeight, brush)
-                    painterThumb.drawRect( textLeft, textTop, textWidth, characterHeight )
-
-                    textTop+=characterHeight+2
+            if propertiesPosition != 'none':
+                painterThumb.fillRect( textLeft, textTop, textWidth, textHeight, brush)
+                painterThumb.drawRect( textLeft, textTop, textWidth, textHeight )
 
             painterThumb.end()
 
             return pixmapThumb
 
-        def drawThumbnails():
-            thumbPerRow = self.sbFormatDocImgThumbsPerRow.value()
-            thumbSpacing = ratioPaperPreview * self.dsbFormatDocImgThumbsSpacingOuter.value()
-            propertiesPosition = self.cbxFormatDocImgTextPosition.currentIndex()
-
-            # cell width for a thumnbail is (drawing area width - spacing * (nb cells - 1)) / nb cell
-            cellWidth = int(round( (drawingArea.width() - thumbSpacing * (thumbPerRow - 1) ) / thumbPerRow, 0))
-
-            # height calculation is more complicated; it depends of:
-            # - number of properties (with 1 property per line)
-            # - position of properties
-
-            textHeight = self.__formatPdfImgNbProperties * (characterHeight + 2)
-
-            if propertiesPosition == 0:
-                # no properties to display
-                # then, height = width
-                cellHeight = cellWidth
-
-                # thumb size = 100% of cell
-                thumbSize = cellWidth
-
-                # no text
-                textWidth = 0
-                textHeight = 0
-            elif propertiesPosition in [1, 2]:
-                # left/right position
-                # in this case, consider that image size = 50% of cellWidth
-                thumbSize = (cellWidth - characterHeight)//2
-
-                # cell height is the greatest height between thumbnail and text
-                cellHeight = max(textHeight, thumbSize)
-
-                # text width is 50% of cell
-                textWidth = cellWidth - thumbSize
+        def drawLayoutThumbnails():
+            if (self.cbFormatDocImgFPageNotesPreview.isChecked() or previewPagesInformation['page.total'] == 1) and self.cbFormatDocImgFPageNotes.isChecked() and previewPagesInformation['fpNotes.height'] > 0:
+                drawingArea = previewPagesInformation['page.first.bounds']
+                nbRows = previewPagesInformation['page.first.nbRowsMax']
             else:
-                # top/bottom position
-                # in this case, consider that image size = cellWidth - textHeight; but can't be smaller than 25% of cell width
-                thumbSize = max(cellWidth - textHeight - 2, cellWidth * 0.25)
+                drawingArea = previewPagesInformation['page.normal.bounds']
+                nbRows = previewPagesInformation['page.normal.nbRowsMax']
 
-                # cell height is the sum of thumb height and text height
-                cellHeight = textHeight + thumbSize + 2
+            thumbPerRow = self.sbFormatDocImgThumbsPerRow.value()
 
-                # text width is 10% of cell
-                textWidth = cellWidth
+            pixmapThumb = getThumbnailCellPixmap(self.__formatPdfImgNbProperties)
 
-            pixmapThumb = getThumbnailCellPixmap(propertiesPosition, cellWidth, cellHeight, thumbSize, textWidth, textHeight, self.__formatPdfImgNbProperties)
-
-            while drawingArea.top() + cellHeight <= drawingArea.bottom():
+            for rowNumber in range(nbRows):
                 offsetLeft = 0
                 for column in range(thumbPerRow):
                     painter.drawPixmap(drawingArea.left() + offsetLeft, drawingArea.top(), pixmapThumb)
 
-                    offsetLeft+=cellWidth + thumbSpacing
+                    offsetLeft+=previewPagesInformation['cell.global.size'].width() + previewPagesInformation['cell.thumbnail.outerSpacing']
 
-                drawingArea.setTop(drawingArea.top() + cellHeight + thumbSpacing)
+                drawingArea.setTop(drawingArea.top() + previewPagesInformation['cell.global.size'].height() + previewPagesInformation['cell.thumbnail.outerSpacing'])
 
         # margin to border / arbitrary 6px
         margin = 6
         shadowOffset = 4
 
         if self.__formatPdfImgPaperSize.height() == 0:
-            print("__updateFormatDocImgConfigurationPreview", self.__formatPdfImgPaperSize.height())
             return
 
-        # paper size w/h ratio
-        ratioPaperSize = self.__formatPdfImgPaperSize.width() / self.__formatPdfImgPaperSize.height()
-
         if self.__formatPdfImgPaperOrientation == BCExportFilesDialogBox.ORIENTATION_PORTRAIT:
-            previewHeight = round(self.lblFormatDocImgPreview.height() - 2 * margin, 0)
-            previewWidth = round(previewHeight * ratioPaperSize, 0)
+            previewHeight = floor(self.lblFormatDocImgPreview.height() - 2 * margin)
+            previewWidth = floor(previewHeight * self.__formatPdfImgRatioPaperSize)
+
+            ratioPaperPreview = previewHeight / self.__formatPdfImgPagesInformation['page.size'].height()
         else:
             previewWidth = self.lblFormatDocImgPreview.width() - 2 * margin
-            previewHeight = round(previewWidth / ratioPaperSize, 0)
+            previewHeight = floor(previewWidth / self.__formatPdfImgRatioPaperSize)
 
-        ratioPaperPreview = previewWidth / self.__formatPdfImgPaperSize.width()
+            ratioPaperPreview = previewWidth / self.__formatPdfImgPagesInformation['page.size'].width()
 
         previewRect = QRect((self.lblFormatDocImgPreview.width() - previewWidth)/2,
                             (self.lblFormatDocImgPreview.height() - previewHeight)/2,
@@ -1690,8 +1689,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                             previewHeight
                         )
 
-        # nb pixels used to represent one text line in preview
-        characterHeight = round(ratioPaperPreview * self.convertSize(self.__formatPdfImgFontSize, 'pt', self.__formatPdfImgPaperSizeUnit, roundValue=6), 0)
+        # ----------------------------------------------------------------------
+        # start rendering paper
+        painter = QPainter(self.lblFormatDocImgPreview)
 
         # ----------------------------------------------------------------------
         # initialise a default pen
@@ -1699,43 +1699,118 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         pen.setStyle(Qt.SolidLine)
         pen.setWidth(1)
         pen.setColor(Qt.darkGray)
-
         brush = QBrush()
-
-        # ----------------------------------------------------------------------
-        # start rendering preview
-        painter = QPainter(self.lblFormatDocImgPreview)
-
         painter.setPen(pen)
 
         # ----------------------------------------------------------------------
         # paper shadow
         painter.fillRect(previewRect.left() + shadowOffset, previewRect.top() + shadowOffset, previewRect.width(), previewRect.height(), QColor(0x202020))
 
+        previewPagesInformation = self.__formatPdfImgPagesInformation.copy()
+
+        if previewPagesInformation['page.total'] == 1:
+            self.cbFormatDocImgFPageNotesPreview.setVisible(False)
+        else:
+            self.cbFormatDocImgFPageNotesPreview.setVisible(True)
+
+        # start rendering preview
+        if self.cbxFormatDocImgPreviewMode.currentIndex() == BCExportFilesDialogBox.__PREVIEW_MODE_LAYOUT:
+            # ----------------------------------------------------------------------
+            # Paper white
+            painter.fillRect(previewRect, Qt.white)
+
+            # ----------------------------------------------------------------------
+            # Initialise drawing area rect
+            #drawingArea = QRect(QPoint(previewRect.left() + round(self.dsbFormatDocImgMarginsLeft.value() * ratioPaperPreview, 0),
+            #                           previewRect.top() + round(self.dsbFormatDocImgMarginsTop.value() * ratioPaperPreview, 0)),
+            #                    QPoint(1 + previewRect.right() - round(self.dsbFormatDocImgMarginsRight.value() * ratioPaperPreview, 0),
+            #                           1 + previewRect.bottom() - round(self.dsbFormatDocImgMarginsBottom.value() * ratioPaperPreview, 0)))
+            previewPagesInformation['page.global.bounds'] = QRect(
+                                QPoint(previewRect.left() + floor(previewPagesInformation['page.global.bounds'].left() * ratioPaperPreview),
+                                       previewRect.top() + floor(previewPagesInformation['page.global.bounds'].top() * ratioPaperPreview)),
+                                QPoint(previewRect.left() + floor(previewPagesInformation['page.global.bounds'].right() * ratioPaperPreview),
+                                       previewRect.top() + floor(previewPagesInformation['page.global.bounds'].bottom() * ratioPaperPreview)))
+
+            previewPagesInformation['page.inside.bounds'] = QRect(
+                                QPoint(previewRect.left() + 2 + floor(previewPagesInformation['page.inside.bounds'].left() * ratioPaperPreview),
+                                       previewRect.top() + 2 + floor(previewPagesInformation['page.inside.bounds'].top() * ratioPaperPreview)),
+                                QPoint(previewRect.left() + floor(previewPagesInformation['page.inside.bounds'].right() * ratioPaperPreview),
+                                       previewRect.top() + floor(previewPagesInformation['page.inside.bounds'].bottom() * ratioPaperPreview)))
+
+            previewPagesInformation['page.first.bounds'] = QRect(
+                                QPoint(previewRect.left() + 2 + floor(previewPagesInformation['page.first.bounds'].left() * ratioPaperPreview),
+                                       previewRect.top() + 2 + floor(previewPagesInformation['page.first.bounds'].top() * ratioPaperPreview)),
+                                QPoint(previewRect.left() + floor(previewPagesInformation['page.first.bounds'].right() * ratioPaperPreview),
+                                       previewRect.top() + floor(previewPagesInformation['page.first.bounds'].bottom() * ratioPaperPreview)))
+
+            previewPagesInformation['page.normal.bounds'] = QRect(
+                                QPoint(previewRect.left() + 2 + floor(previewPagesInformation['page.normal.bounds'].left() * ratioPaperPreview),
+                                       previewRect.top() + 2 + floor(previewPagesInformation['page.normal.bounds'].top() * ratioPaperPreview)),
+                                QPoint(previewRect.left() + floor(previewPagesInformation['page.normal.bounds'].right() * ratioPaperPreview),
+                                       previewRect.top() + floor(previewPagesInformation['page.normal.bounds'].bottom() * ratioPaperPreview)))
+
+            previewPagesInformation['header.height']=floor(previewPagesInformation['header.height'] * ratioPaperPreview)
+            previewPagesInformation['footer.height']=floor(previewPagesInformation['footer.height'] * ratioPaperPreview)
+            previewPagesInformation['fpNotes.height']=floor(previewPagesInformation['fpNotes.height'] * ratioPaperPreview)
+
+            previewPagesInformation['cell.global.size']=QSize(
+                                floor(previewPagesInformation['cell.global.size'].width() * ratioPaperPreview),
+                                floor(previewPagesInformation['cell.global.size'].height() * ratioPaperPreview))
+
+            previewPagesInformation['cell.thumbnail.size']=QSize(
+                                floor(previewPagesInformation['cell.thumbnail.size'].width() * ratioPaperPreview),
+                                floor(previewPagesInformation['cell.thumbnail.size'].height() * ratioPaperPreview))
+
+            previewPagesInformation['cell.text.size']=QSize(
+                                floor(previewPagesInformation['cell.text.size'].width() * ratioPaperPreview),
+                                floor(previewPagesInformation['cell.text.size'].height() * ratioPaperPreview))
+
+            previewPagesInformation['cell.thumbnail.outerSpacing']=floor(previewPagesInformation['cell.thumbnail.outerSpacing'] * ratioPaperPreview)
+            previewPagesInformation['cell.thumbnail.innerSpacing']=floor(previewPagesInformation['cell.thumbnail.innerSpacing'] * ratioPaperPreview)
+
+            # ----------------------------------------------------------------------
+            # Margins
+            drawLayoutMargins()
+
+            # ----------------------------------------------------------------------
+            # Header / Footer / First page layout
+            drawLayoutLayout()
+
+            # ----------------------------------------------------------------------
+            # Thumbnails
+            drawLayoutThumbnails()
+        else:
+            # ----------------------------------------------------------------------
+            # Paper background
+            painter.fillRect(previewRect, checkerBoardBrush())
+
+            if self.cbFormatDocImgPaperColor.isChecked():
+                painter.fillRect(previewRect, self.pbFormatDocImgPaperColor.color())
+
+            if self.cbFormatDocImgFPageNotesPreview.isChecked() or previewPagesInformation['page.total'] == 1:
+                self.__formatPdfImgPageCurrent = 1
+            else:
+                self.__formatPdfImgPageCurrent = 2
+            self.__formatPdfImgPageTotal=previewPagesInformation['page.total']
+
+            previewImg = QImage(previewPagesInformation['page.size'].width(), previewPagesInformation['page.size'].height(), QImage.Format_ARGB32)
+            previewImg.fill(Qt.transparent)
+            previewPixmap = QPixmap.fromImage(previewImg)
+
+            previewPainter = QPainter()
+            previewPainter.begin(previewPixmap)
+
+            self.__drawPage(previewPainter, self.__formatPdfImgPagesInformation, self.__formatPdfImgConfig, self.__formatPdfImgConfig)
+
+            previewPainter.end()
+
+            painter.drawPixmap(previewRect.left(), previewRect.top(), previewPixmap.scaled(previewRect.width(), previewRect.height(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation))
+
+
+
         # ----------------------------------------------------------------------
-        # Paper white
-        painter.fillRect(previewRect, Qt.white)
-
-
-        # ----------------------------------------------------------------------
-        # Initialise drawing area rect
-        drawingArea = QRect(QPoint(previewRect.left() + round(self.dsbFormatDocImgMarginsLeft.value() * ratioPaperPreview, 0),
-                                   previewRect.top() + round(self.dsbFormatDocImgMarginsTop.value() * ratioPaperPreview, 0)),
-                            QPoint(1 + previewRect.right() - round(self.dsbFormatDocImgMarginsRight.value() * ratioPaperPreview, 0),
-                                   1 + previewRect.bottom() - round(self.dsbFormatDocImgMarginsBottom.value() * ratioPaperPreview, 0)))
-
-        # ----------------------------------------------------------------------
-        # Margins
-        drawMargins()
-
-        # ----------------------------------------------------------------------
-        # Header / Footer / First page layout
-        drawLayout()
-
-        # ----------------------------------------------------------------------
-        # Thumbnails
-        drawThumbnails()
-
+        # finalize rendering paper
+        # --
         # paper border limit
         pen.setStyle(Qt.SolidLine)
         pen.setColor(Qt.darkGray)
@@ -1787,7 +1862,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.__slotPageFormatDocImgPageSetupOrientationChanged()
             self.__slotPageFormatDocImgPageSetupMarginLinkChanged()
             self.__slotPageFormatDocImgPageLayoutChanged()
-            self.lblFormatDocImgPreview.update()
+            self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextLayoutUserDefined(self, checked=None):
         # user defined layout option ahs been checked/unchecked
@@ -1795,7 +1870,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             checked = self.cbFormatTextLayoutUserDefined.isChecked()
 
         self.teFormatTextLayoutUserDefined.setEnabled(checked)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextBordersCheck(self, checked=None):
         # user defined borders option ahs been checked/unchecked
@@ -1805,11 +1880,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if not checked:
             self.rbFormatTextBorderNone.setChecked(True)
 
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextBordersStyleCheck(self, checked=None):
         self.cbFormatTextBorders.setChecked(not self.rbFormatTextBorderNone.isChecked())
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMinWidthCheck(self, checked=None):
         # State of checkbox Minimum width has been changed
@@ -1818,7 +1893,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         self.hsFormatTextMinWidth.setEnabled(checked)
         self.spFormatTextMinWidth.setEnabled(checked)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMaxWidthCheck(self, checked=None):
         # State of checkbox Maximum width has been changed
@@ -1827,7 +1902,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         self.hsFormatTextMaxWidth.setEnabled(checked)
         self.spFormatTextMaxWidth.setEnabled(checked)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMinWidthChanged(self, value=None):
         # Value of Minimum width has changed
@@ -1837,7 +1912,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         if value > self.hsFormatTextMaxWidth.value():
             self.hsFormatTextMaxWidth.setValue(value)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMaxWidthChanged(self, value=None):
         # Value of Maximum width has changed
@@ -1847,7 +1922,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         if value < self.hsFormatTextMinWidth.value():
             self.hsFormatTextMinWidth.setValue(value)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMDLayoutUserDefined(self, checked=None):
         # user defined layout option has been checked/unchecked
@@ -1855,7 +1930,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             checked = self.cbFormatTextMDLayoutUserDefined.isChecked()
 
         self.teFormatTextMDLayoutUserDefined.setEnabled(checked)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMDIncludeThumbnails(self, checked=None):
         # include thumbnail in md export has been checked/unchecked
@@ -1863,12 +1938,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             checked = self.cbFormatTextMDIncludeThumbnails.isChecked()
 
         self.cbxFormatTextMDThumbnailsSize.setEnabled(checked)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgRefChanged(self):
         """Set page according to current configuration type"""
         self.swFormatDocImgRef.setCurrentIndex(self.lvFormatDocImgRef.currentIndex().data(Qt.UserRole))
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgPageSetupResolutionChanged(self):
         """Resolution has been changed"""
@@ -1939,7 +2014,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         self.__slotPageFormatDocImgPageSetupSizeChanged()
         self.__updateFormatDocImgMargins()
         self.__updateFormatDocImgPaperSizeList()
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgPageSetupSizeChanged(self, dummy=None):
         """Choice of size has been modified"""
@@ -1962,7 +2037,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             return
 
         self.__updateFormatDocImgMargins()
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgPageSetupOrientationChanged(self, dummy=None):
         """Choice of orientation has been modified"""
@@ -1974,7 +2049,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         self.__slotPageFormatDocImgPageSetupSizeChanged()
         self.__updateFormatDocImgPaperSizeList()
         self.__updateFormatDocImgMargins()
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgPageSetupMarginLChanged(self, dummy=None):
         """Margin LEFT has been modified"""
@@ -1986,7 +2061,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgMarginsTop.setValue(self.dsbFormatDocImgMarginsLeft.value())
             self.dsbFormatDocImgMarginsBottom.setValue(self.dsbFormatDocImgMarginsLeft.value())
         self.__blockSlot(False)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgPageSetupMarginRChanged(self, dummy=None):
         """Margin RIGHT has been modified"""
@@ -1998,7 +2073,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgMarginsTop.setValue(self.dsbFormatDocImgMarginsRight.value())
             self.dsbFormatDocImgMarginsBottom.setValue(self.dsbFormatDocImgMarginsRight.value())
         self.__blockSlot(False)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgPageSetupMarginTChanged(self, dummy=None):
         """Margin TOP has been modified"""
@@ -2010,7 +2085,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgMarginsRight.setValue(self.dsbFormatDocImgMarginsTop.value())
             self.dsbFormatDocImgMarginsBottom.setValue(self.dsbFormatDocImgMarginsTop.value())
         self.__blockSlot(False)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgPageSetupMarginBChanged(self, dummy=None):
         """Margin BOTTOM has been modified"""
@@ -2022,7 +2097,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgMarginsRight.setValue(self.dsbFormatDocImgMarginsBottom.value())
             self.dsbFormatDocImgMarginsTop.setValue(self.dsbFormatDocImgMarginsBottom.value())
         self.__blockSlot(False)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgPageSetupMarginLinkChanged(self, dummy=None):
         """Margins linked has been modified"""
@@ -2035,7 +2110,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgMarginsTop.setValue(self.dsbFormatDocImgMarginsLeft.value())
             self.dsbFormatDocImgMarginsBottom.setValue(self.dsbFormatDocImgMarginsLeft.value())
         self.__blockSlot(False)
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgPageLayoutChanged(self, dummy=None):
         """page layout has been modified"""
@@ -2045,12 +2120,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         self.__updateSmallTextEditColors()
 
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgPropertiesFontChanged(self, dummy=None):
         """Font family/size changed"""
         self.__formatPdfImgFontSize = self.dsbFormatDocImgTextFontSize.value()
-        self.lblFormatDocImgPreview.update()
+        self.__updateFormatDocImgConfigurationPreview()
 
     # -- Manage page Target -------------------------------------------------
     def __loadDefaultPageTarget(self):
@@ -2084,7 +2159,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             for itemIndex in range(self.lwPerimeterProperties.count()):
                 if  self.lwPerimeterProperties.item(itemIndex).checkState() == Qt.Checked:
                     self.__formatPdfImgNbProperties+=1
-            self.lblFormatDocImgPreview.update()
+            self.__updateFormatDocImgConfigurationPreview()
 
         if self.swPages.currentIndex() == BCExportFilesDialogBox.__PAGE_TARGET:
             # when last page reached, enable/disable clipboard choice according to export format
@@ -2391,6 +2466,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
 
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE, self.cbTargetResultFileOpen.isChecked())
+
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE, self.cbxFormatDocImgPreviewMode.currentIndex())
             elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_PNG:
                 # -- IMG/PNG format --
                 pass
@@ -2620,6 +2697,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         return a dictionnary:
             {
+                'page.size':                    QRect(),
                 'page.global.bounds':           QRect(),
                 'page.inside.bounds':           QRect(),
 
@@ -2650,10 +2728,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         # calculate bounds within margins
         fromUnit = config.get('paper.unit', defaultConfig['paper.unit'])
         imageBounds = QRect(
-                QPoint(round(self.convertSize(config.get('margins.left', defaultConfig['margins.left']), fromUnit, 'px', imageResolution), 0),
-                       round(self.convertSize(config.get('margins.top', defaultConfig['margins.top']), fromUnit, 'px', imageResolution), 0)),
-                QPoint(round(imageSize.width() - self.convertSize(config.get('margins.right', defaultConfig['margins.right']), fromUnit, 'px', imageResolution), 0),
-                       round(imageSize.height() - self.convertSize(config.get('margins.bottom', defaultConfig['margins.bottom']), fromUnit, 'px', imageResolution), 0))
+                QPoint(floor(self.convertSize(config.get('margins.left', defaultConfig['margins.left']), fromUnit, 'px', imageResolution)),
+                       floor(self.convertSize(config.get('margins.top', defaultConfig['margins.top']), fromUnit, 'px', imageResolution))),
+                QPoint(floor(imageSize.width() - self.convertSize(config.get('margins.right', defaultConfig['margins.right']), fromUnit, 'px', imageResolution)),
+                       floor(imageSize.height() - self.convertSize(config.get('margins.bottom', defaultConfig['margins.bottom']), fromUnit, 'px', imageResolution)))
             )
 
         insideBounds = cloneRect(imageBounds)

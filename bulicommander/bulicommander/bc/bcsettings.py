@@ -189,6 +189,7 @@ class BCSettingsKey(Enum):
     CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS =     'config.export.filesList.doc.pdf.thumbnails.border.radius'
     CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE =         'config.export.filesList.doc.pdf.thumbnails.background.active'
     CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL =            'config.export.filesList.doc.pdf.thumbnails.background.color'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE =             'config.export.filesList.doc.pdf.preview.mode'
 
     CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION =               'config.export.filesList.img.kra.resolution'
     CONFIG_EXPORTFILESLIST_IMGKRA_UNIT =                     'config.export.filesList.img.kra.unit'
@@ -229,6 +230,7 @@ class BCSettingsKey(Enum):
     CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_ACTIVE =         'config.export.filesList.img.kra.thumbnails.background.active'
     CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL =            'config.export.filesList.img.kra.thumbnails.background.color'
     CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE =             'config.export.filesList.img.kra.options.openFileInKrita'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE =             'config.export.filesList.img.kra.preview.mode'
 
     CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION =               'config.export.filesList.img.png.resolution'
     CONFIG_EXPORTFILESLIST_IMGPNG_UNIT =                     'config.export.filesList.img.png.unit'
@@ -269,6 +271,7 @@ class BCSettingsKey(Enum):
     CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_ACTIVE =         'config.export.filesList.img.png.thumbnails.background.active'
     CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL =            'config.export.filesList.img.png.thumbnails.background.color'
     CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE =             'config.export.filesList.img.png.options.openFileInKrita'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE =             'config.export.filesList.img.png.preview.mode'
 
     CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION =               'config.export.filesList.img.jpg.resolution'
     CONFIG_EXPORTFILESLIST_IMGJPG_UNIT =                     'config.export.filesList.img.jpg.unit'
@@ -309,6 +312,7 @@ class BCSettingsKey(Enum):
     CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_ACTIVE =         'config.export.filesList.img.jpg.thumbnails.background.active'
     CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL =            'config.export.filesList.img.jpg.thumbnails.background.color'
     CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE =             'config.export.filesList.img.jpg.options.openFileInKrita'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE =             'config.export.filesList.img.jpg.preview.mode'
 
     CONFIG_SESSION_SAVE =                                    'config.session.save'
     CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY =          'config.defaultSession.panels.view.filesManagedOnly'
@@ -486,6 +490,7 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS.id():(0.0,                    BCSettingsFmt(float)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
 
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION.id():        (300.0,                    BCSettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
@@ -526,6 +531,7 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE.id():      (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
 
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION.id():        (300.0,                    BCSettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
@@ -565,7 +571,8 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS.id():(0.0,                    BCSettingsFmt(float)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
-            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE.id():      (False,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE.id():      (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
 
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION.id():        (300.0,                    BCSettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
@@ -606,6 +613,7 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE.id():      (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
 
             BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id():                           (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id():                       (False,                    BCSettingsFmt(bool)),
