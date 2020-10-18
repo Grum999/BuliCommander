@@ -152,6 +152,169 @@ class BCSettingsKey(Enum):
     CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED =           'config.export.filesList.textMd.thumbnails.included'
     CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE =               'config.export.filesList.textMd.thumbnails.size'
 
+    CONFIG_EXPORTFILESLIST_DOCPDF_RESOLUTION =               'config.export.filesList.doc.pdf.resolution'
+    CONFIG_EXPORTFILESLIST_DOCPDF_UNIT =                     'config.export.filesList.doc.pdf.unit'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE =               'config.export.filesList.doc.pdf.paper.size'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION =        'config.export.filesList.doc.pdf.paper.orientation'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE =       'config.export.filesList.doc.pdf.paper.color.active'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR =              'config.export.filesList.doc.pdf.paper.color.value'
+    CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LEFT =             'config.export.filesList.doc.pdf.margins.left'
+    CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_RIGHT =            'config.export.filesList.doc.pdf.margins.right'
+    CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_TOP =              'config.export.filesList.doc.pdf.margins.top'
+    CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_BOTTOM =           'config.export.filesList.doc.pdf.margins.bottom'
+    CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LINKED =           'config.export.filesList.doc.pdf.margins.linked'
+    CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_ACTIVE =            'config.export.filesList.doc.pdf.header.active'
+    CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_CONTENT =           'config.export.filesList.doc.pdf.header.content'
+    CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_ACTIVE =            'config.export.filesList.doc.pdf.footer.active'
+    CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_CONTENT =           'config.export.filesList.doc.pdf.footer.content'
+    CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_ACTIVE =          'config.export.filesList.doc.pdf.firstPageNotes.active'
+    CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_CONTENT =         'config.export.filesList.doc.pdf.firstPageNotes.content'
+    CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_PREVIEW =         'config.export.filesList.doc.pdf.firstPageNotes.preview'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_ACTIVE =       'config.export.filesList.doc.pdf.page.border.active'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_COL =          'config.export.filesList.doc.pdf.page.border.color'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_WIDTH =        'config.export.filesList.doc.pdf.page.border.width'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_RADIUS =       'config.export.filesList.doc.pdf.page.border.radius'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_ACTIVE =           'config.export.filesList.doc.pdf.page.background.active'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_COL =              'config.export.filesList.doc.pdf.page.background.color'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_NBPERROW =          'config.export.filesList.doc.pdf.thumbnails.layout.nbPerRow'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_OUTER =     'config.export.filesList.doc.pdf.thumbnails.layout.spacing.outer'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_INNER =     'config.export.filesList.doc.pdf.thumbnails.layout.spacing.inner'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_TEXT =      'config.export.filesList.doc.pdf.thumbnails.layout.spacing.text'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS =           'config.export.filesList.doc.pdf.thumbnails.text.position'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTNAME =       'config.export.filesList.doc.pdf.thumbnails.text.font.name'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTSIZE =       'config.export.filesList.doc.pdf.thumbnails.text.font.size'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTCOL =        'config.export.filesList.doc.pdf.thumbnails.text.font.color'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_ACTIVE =     'config.export.filesList.doc.pdf.thumbnails.border.active'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_COL =        'config.export.filesList.doc.pdf.thumbnails.border.color'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_WIDTH =      'config.export.filesList.doc.pdf.thumbnails.border.width'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS =     'config.export.filesList.doc.pdf.thumbnails.border.radius'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE =         'config.export.filesList.doc.pdf.thumbnails.background.active'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL =            'config.export.filesList.doc.pdf.thumbnails.background.color'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE =             'config.export.filesList.doc.pdf.preview.mode'
+
+    CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION =               'config.export.filesList.img.kra.resolution'
+    CONFIG_EXPORTFILESLIST_IMGKRA_UNIT =                     'config.export.filesList.img.kra.unit'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE =               'config.export.filesList.img.kra.paper.size'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION =        'config.export.filesList.img.kra.paper.orientation'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE =       'config.export.filesList.img.kra.paper.color.active'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR =              'config.export.filesList.img.kra.paper.color.value'
+    CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LEFT =             'config.export.filesList.img.kra.margins.left'
+    CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_RIGHT =            'config.export.filesList.img.kra.margins.right'
+    CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_TOP =              'config.export.filesList.img.kra.margins.top'
+    CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_BOTTOM =           'config.export.filesList.img.kra.margins.bottom'
+    CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LINKED =           'config.export.filesList.img.kra.margins.linked'
+    CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_ACTIVE =            'config.export.filesList.img.kra.header.active'
+    CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_CONTENT =           'config.export.filesList.img.kra.header.content'
+    CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_ACTIVE =            'config.export.filesList.img.kra.footer.active'
+    CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_CONTENT =           'config.export.filesList.img.kra.footer.content'
+    CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_ACTIVE =          'config.export.filesList.img.kra.firstPageNotes.active'
+    CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_CONTENT =         'config.export.filesList.img.kra.firstPageNotes.content'
+    CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_PREVIEW =         'config.export.filesList.img.kra.firstPageNotes.preview'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_ACTIVE =       'config.export.filesList.img.kra.page.border.active'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_COL =          'config.export.filesList.img.kra.page.border.color'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_WIDTH =        'config.export.filesList.img.kra.page.border.width'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_RADIUS =       'config.export.filesList.img.kra.page.border.radius'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_ACTIVE =           'config.export.filesList.img.kra.page.background.active'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_COL =              'config.export.filesList.img.kra.page.background.color'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_NBPERROW =          'config.export.filesList.img.kra.thumbnails.layout.nbPerRow'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_OUTER =     'config.export.filesList.img.kra.thumbnails.layout.spacing.outer'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_INNER =     'config.export.filesList.img.kra.thumbnails.layout.spacing.inner'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_TEXT =      'config.export.filesList.img.kra.thumbnails.layout.spacing.text'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS =           'config.export.filesList.img.kra.thumbnails.text.position'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTNAME =       'config.export.filesList.img.kra.thumbnails.text.font.name'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTSIZE =       'config.export.filesList.img.kra.thumbnails.text.font.size'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTCOL =        'config.export.filesList.img.kra.thumbnails.text.font.color'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_ACTIVE =     'config.export.filesList.img.kra.thumbnails.border.active'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_COL =        'config.export.filesList.img.kra.thumbnails.border.color'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_WIDTH =      'config.export.filesList.img.kra.thumbnails.border.width'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS =     'config.export.filesList.img.kra.thumbnails.border.radius'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_ACTIVE =         'config.export.filesList.img.kra.thumbnails.background.active'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL =            'config.export.filesList.img.kra.thumbnails.background.color'
+    CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE =             'config.export.filesList.img.kra.options.openFileInKrita'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE =             'config.export.filesList.img.kra.preview.mode'
+
+    CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION =               'config.export.filesList.img.png.resolution'
+    CONFIG_EXPORTFILESLIST_IMGPNG_UNIT =                     'config.export.filesList.img.png.unit'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE =               'config.export.filesList.img.png.paper.size'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION =        'config.export.filesList.img.png.paper.orientation'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE =       'config.export.filesList.img.png.paper.color.active'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR =              'config.export.filesList.img.png.paper.color.value'
+    CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LEFT =             'config.export.filesList.img.png.margins.left'
+    CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_RIGHT =            'config.export.filesList.img.png.margins.right'
+    CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_TOP =              'config.export.filesList.img.png.margins.top'
+    CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_BOTTOM =           'config.export.filesList.img.png.margins.bottom'
+    CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LINKED =           'config.export.filesList.img.png.margins.linked'
+    CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_ACTIVE =            'config.export.filesList.img.png.header.active'
+    CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_CONTENT =           'config.export.filesList.img.png.header.content'
+    CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_ACTIVE =            'config.export.filesList.img.png.footer.active'
+    CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_CONTENT =           'config.export.filesList.img.png.footer.content'
+    CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_ACTIVE =          'config.export.filesList.img.png.firstPageNotes.active'
+    CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_CONTENT =         'config.export.filesList.img.png.firstPageNotes.content'
+    CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_PREVIEW =         'config.export.filesList.img.png.firstPageNotes.preview'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_ACTIVE =       'config.export.filesList.img.png.page.border.active'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_COL =          'config.export.filesList.img.png.page.border.color'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_WIDTH =        'config.export.filesList.img.png.page.border.width'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_RADIUS =       'config.export.filesList.img.png.page.border.radius'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_ACTIVE =           'config.export.filesList.img.png.page.background.active'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_COL =              'config.export.filesList.img.png.page.background.color'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_NBPERROW =          'config.export.filesList.img.png.thumbnails.layout.nbPerRow'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_OUTER =     'config.export.filesList.img.png.thumbnails.layout.spacing.outer'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_INNER =     'config.export.filesList.img.png.thumbnails.layout.spacing.inner'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_TEXT =      'config.export.filesList.img.png.thumbnails.layout.spacing.text'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS =           'config.export.filesList.img.png.thumbnails.text.position'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME =       'config.export.filesList.img.png.thumbnails.text.font.name'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTSIZE =       'config.export.filesList.img.png.thumbnails.text.font.size'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTCOL =        'config.export.filesList.img.png.thumbnails.text.font.color'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_ACTIVE =     'config.export.filesList.img.png.thumbnails.border.active'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_COL =        'config.export.filesList.img.png.thumbnails.border.color'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_WIDTH =      'config.export.filesList.img.png.thumbnails.border.width'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS =     'config.export.filesList.img.png.thumbnails.border.radius'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_ACTIVE =         'config.export.filesList.img.png.thumbnails.background.active'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL =            'config.export.filesList.img.png.thumbnails.background.color'
+    CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE =             'config.export.filesList.img.png.options.openFileInKrita'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE =             'config.export.filesList.img.png.preview.mode'
+
+    CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION =               'config.export.filesList.img.jpg.resolution'
+    CONFIG_EXPORTFILESLIST_IMGJPG_UNIT =                     'config.export.filesList.img.jpg.unit'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE =               'config.export.filesList.img.jpg.paper.size'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION =        'config.export.filesList.img.jpg.paper.orientation'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE =       'config.export.filesList.img.jpg.paper.color.active'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR =              'config.export.filesList.img.jpg.paper.color.value'
+    CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LEFT =             'config.export.filesList.img.jpg.margins.left'
+    CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_RIGHT =            'config.export.filesList.img.jpg.margins.right'
+    CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_TOP =              'config.export.filesList.img.jpg.margins.top'
+    CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_BOTTOM =           'config.export.filesList.img.jpg.margins.bottom'
+    CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LINKED =           'config.export.filesList.img.jpg.margins.linked'
+    CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_ACTIVE =            'config.export.filesList.img.jpg.header.active'
+    CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_CONTENT =           'config.export.filesList.img.jpg.header.content'
+    CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_ACTIVE =            'config.export.filesList.img.jpg.footer.active'
+    CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_CONTENT =           'config.export.filesList.img.jpg.footer.content'
+    CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_ACTIVE =          'config.export.filesList.img.jpg.firstPageNotes.active'
+    CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_CONTENT =         'config.export.filesList.img.jpg.firstPageNotes.content'
+    CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_PREVIEW =         'config.export.filesList.img.jpg.firstPageNotes.preview'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_ACTIVE =       'config.export.filesList.img.jpg.page.border.active'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_COL =          'config.export.filesList.img.jpg.page.border.color'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_WIDTH =        'config.export.filesList.img.jpg.page.border.width'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_RADIUS =       'config.export.filesList.img.jpg.page.border.radius'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_ACTIVE =           'config.export.filesList.img.jpg.page.background.active'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_COL =              'config.export.filesList.img.jpg.page.background.color'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_NBPERROW =          'config.export.filesList.img.jpg.thumbnails.layout.nbPerRow'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_OUTER =     'config.export.filesList.img.jpg.thumbnails.layout.spacing.outer'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_INNER =     'config.export.filesList.img.jpg.thumbnails.layout.spacing.inner'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_TEXT =      'config.export.filesList.img.jpg.thumbnails.layout.spacing.text'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS =           'config.export.filesList.img.jpg.thumbnails.text.position'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME =       'config.export.filesList.img.jpg.thumbnails.text.font.name'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTSIZE =       'config.export.filesList.img.jpg.thumbnails.text.font.size'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTCOL =        'config.export.filesList.img.jpg.thumbnails.text.font.color'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_ACTIVE =     'config.export.filesList.img.jpg.thumbnails.border.active'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_COL =        'config.export.filesList.img.jpg.thumbnails.border.color'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_WIDTH =      'config.export.filesList.img.jpg.thumbnails.border.width'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS =     'config.export.filesList.img.jpg.thumbnails.border.radius'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_ACTIVE =         'config.export.filesList.img.jpg.thumbnails.background.active'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL =            'config.export.filesList.img.jpg.thumbnails.background.color'
+    CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE =             'config.export.filesList.img.jpg.options.openFileInKrita'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE =             'config.export.filesList.img.jpg.preview.mode'
+
     CONFIG_SESSION_SAVE =                                    'config.session.save'
     CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY =          'config.defaultSession.panels.view.filesManagedOnly'
     CONFIG_DSESSION_PANELS_VIEW_FILES_BACKUP =               'config.defaultSession.panels.view.filesBackup'
@@ -275,7 +438,7 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED.id():                (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES.id():           ([],                       BCSettingsFmt(list, str)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME.id():             ('',                       BCSettingsFmt(str)),
-            BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT.id():               (0,                        BCSettingsFmt(int, [0,1,2])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT.id():               (0,                        BCSettingsFmt(int, [0,1,2,3,4,5,6])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_ACTIVE.id():      (True,                     BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_CONTENT.id():     ('',                       BCSettingsFmt(str)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_HEADER_ACTIVE.id():        (True,                     BCSettingsFmt(bool)),
@@ -291,6 +454,169 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT.id():   ('',                       BCSettingsFmt(str)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED.id():    (True,                     BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE.id():        (0,                        BCSettingsFmt(int, [0,1,2,3])),
+
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_RESOLUTION.id():        (300.0,                    BCSettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION.id(): (0,                        BCSettingsFmt(int, [0,1])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR.id():       ('#ffffff',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LEFT.id():      (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_RIGHT.id():     (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_TOP.id():       (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_BOTTOM.id():    (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LINKED.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_ACTIVE.id():   (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_CONTENT.id():  ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_PREVIEW.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_COL.id():   ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_WIDTH.id(): (1.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_RADIUS.id():(0.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_ACTIVE.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_COL.id():       ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_NBPERROW.id():   (2,                        BCSettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_OUTER.id():(5.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_INNER.id():(1.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_TEXT.id():(1.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS.id():    ('none',                   BCSettingsFmt(str, ['none','left','right','top','bottom'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTNAME.id():('DejaVu sans',            BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTSIZE.id():(10.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTCOL.id(): ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_ACTIVE.id():(False,                  BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_COL.id(): ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_WIDTH.id():(1.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS.id():(0.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
+
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION.id():        (300.0,                    BCSettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION.id(): (0,                        BCSettingsFmt(int, [0,1])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR.id():       ('#FFFFFF',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LEFT.id():      (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_RIGHT.id():     (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_TOP.id():       (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_BOTTOM.id():    (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LINKED.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_ACTIVE.id():   (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_CONTENT.id():  ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_PREVIEW.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_COL.id():   ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_WIDTH.id(): (1.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_RADIUS.id():(0.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_ACTIVE.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_COL.id():       ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_NBPERROW.id():   (2,                        BCSettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_OUTER.id():(5.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_INNER.id():(1.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_TEXT.id():(1.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS.id():    ('none',                   BCSettingsFmt(str, ['none','left','right','top','bottom'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTNAME.id():('DejaVu sans',            BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTSIZE.id():(10.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTCOL.id(): ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_ACTIVE.id():(False,                  BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_COL.id(): ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_WIDTH.id():(1.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS.id():(0.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE.id():      (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
+
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION.id():        (300.0,                    BCSettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION.id(): (0,                        BCSettingsFmt(int, [0,1])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR.id():       ('#FFFFFF',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LEFT.id():      (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_RIGHT.id():     (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_TOP.id():       (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_BOTTOM.id():    (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LINKED.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_ACTIVE.id():   (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_CONTENT.id():  ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_PREVIEW.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_COL.id():   ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_WIDTH.id(): (1.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_RADIUS.id():(0.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_ACTIVE.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_COL.id():       ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_NBPERROW.id():   (2,                        BCSettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_OUTER.id():(5.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_INNER.id():(1.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_TEXT.id():(1.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS.id():    ('none',                   BCSettingsFmt(str, ['none','left','right','top','bottom'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME.id():('DejaVu sans',            BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTSIZE.id():(10.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTCOL.id(): ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_ACTIVE.id():(False,                  BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_COL.id(): ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_WIDTH.id():(1.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS.id():(0.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE.id():      (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
+
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION.id():        (300.0,                    BCSettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION.id(): (0,                        BCSettingsFmt(int, [0,1])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR.id():       ('#FFFFFF',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LEFT.id():      (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_RIGHT.id():     (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_TOP.id():       (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_BOTTOM.id():    (20.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LINKED.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_ACTIVE.id():     (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_CONTENT.id():    ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_ACTIVE.id():   (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_CONTENT.id():  ('',                       BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_PREVIEW.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_COL.id():   ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_WIDTH.id(): (1.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_RADIUS.id():(0.0,                      BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_ACTIVE.id():    (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_COL.id():       ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_NBPERROW.id():   (2,                        BCSettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_OUTER.id():(5.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_INNER.id():(1.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_TEXT.id():(1.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS.id():    ('none',                   BCSettingsFmt(str, ['none','left','right','top','bottom'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME.id():('DejaVu sans',            BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTSIZE.id():(10.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTCOL.id(): ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_ACTIVE.id():(False,                  BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_COL.id(): ('#000000',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_WIDTH.id():(1.0,                     BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS.id():(0.0,                    BCSettingsFmt(float)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE.id():      (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
 
             BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id():                           (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id():                       (False,                    BCSettingsFmt(bool)),
@@ -837,6 +1163,7 @@ class BCSettingsDialogBox(QDialog):
         if QMessageBox.question(self, i18n(f"{self.__title}::Clear Cache"), i18n(f"Current cache content will be cleared ({self.lblCCINbFileAndSize.text()})\n\nDo you confirm action?"), QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
             shutil.rmtree(BCFile.thumbnailCacheDirectory(), ignore_errors=True)
             self.__calculateCacheSize()
+
 
     @staticmethod
     def open(title, uicontroller):

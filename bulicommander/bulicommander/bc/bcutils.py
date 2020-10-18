@@ -632,6 +632,10 @@ def loadXmlUi(fileName, parent):
                             # store on object resource path for icons
                             widget.setProperty(f"__bcIcon_{nodeIcon.tag}", nodeIcon.text)
 
+def cloneRect(rect):
+    """Clone a QRect"""
+    return QRect(rect.left(), rect.top(), rect.width(), rect.height())
+
 # ------------------------------------------------------------------------------
 
 

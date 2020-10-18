@@ -597,7 +597,7 @@ class BCTable(object):
                             canEscape=False
                             break
                     if canEscape:
-                        returned = esacape(returned)
+                        returned = escape(returned)
 
                     for format in formatting:
                         returned = format.replace('{text}', returned)
