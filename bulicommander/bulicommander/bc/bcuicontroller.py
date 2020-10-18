@@ -709,6 +709,12 @@ class BCUIController(QObject):
         self.__bcStarted = False
         self.bcWindowClosed.emit()
 
+    def setAllowRefresh(self, allow):
+        """change allow refresh for both panels"""
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(allow)
+
+
     def optionViewDisplaySecondaryPanel(self):
         """Return current option value"""
         return self.__window.actionViewDisplaySecondaryPanel.isChecked()
