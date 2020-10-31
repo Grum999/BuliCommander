@@ -49,6 +49,7 @@ from .bcfileoperation import (
         BCFileOperationUi,
         BCFileOperation
     )
+from .bcexportfiles import BCExportFilesDialogBox
 from .bchistory import BCHistory
 from .bcmainviewtab import (
         BCMainViewTab,
@@ -58,6 +59,7 @@ from .bcmainviewtab import (
         BCMainViewTabTabs
     )
 from .bcmainwindow import BCMainWindow
+from .bcsystray import BCSysTray
 from .bcpathbar import BCPathBar
 from .bcsettings import (
         BCSettings,
@@ -77,12 +79,13 @@ from .bcimagepreview import (
 from .bcsavedview import BCSavedView
 from .bctable import (
         BCTable,
-        BCTableSettings
+        BCTableSettingsText
     )
 from .bcutils import (
         buildIcon,
         getBytesSizeToStrUnit,
         setBytesSizeToStrUnit,
+        checkKritaVersion,
         Debug
     )
 from ..pktk.pktk import (
@@ -98,14 +101,22 @@ from ..pktk.ekrita import (
 from ..libs.breadcrumbsaddressbar.breadcrumbsaddressbar import BreadcrumbsAddressBar
 
 # ------------------------------------------------------------------------------
-class BCUIController(object):
+class BCUIController(QObject):
     """The controller provide an access to all BuliCommander functions
     """
     __EXTENDED_OPEN_OK = 1
     __EXTENDED_OPEN_KO = -1
     __EXTENDED_OPEN_CANCEL = 0
 
-    def __init__(self, bcName="Buli Commander", bcVersion="testing"):
+    bcWindowShown = pyqtSignal()
+    bcWindowClosed = pyqtSignal()
+
+    def __init__(self, bcName="Buli Commander", bcVersion="testing", kritaIsStarting=False):
+        super(BCUIController, self).__init__(None)
+
+        self.__bcStarted = False
+        self.__bcStarting = False
+
         self.__theme = BCTheme()
         self.__window = None
         self.__bcName = bcName
@@ -119,11 +130,14 @@ class BCUIController(object):
         self.__lastDocumentsSaved = BCHistory()
         self.__backupFilterDView = BCHistory()
         self.__fileLayerFilterDView = BCHistory()
-        self.__tableSettings = BCTableSettings()
+        self.__tableSettings = BCTableSettingsText()
 
         self.__confirmAction = True
 
         self.__settings = BCSettings('bulicommander')
+
+        self.__systray=BCSysTray(self)
+        self.commandSettingsSysTrayMode(self.__settings.option(BCSettingsKey.CONFIG_SYSTRAY_MODE.id()))
 
         # store a global reference to activeWindow to be able to work with
         # activeWindow signals
@@ -138,7 +152,27 @@ class BCUIController(object):
 
         BCFile.initialiseCache()
 
+        # overrides native Krita Open dialog...
+        self.commandSettingsOpenOverrideKrita(self.__settings.option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()))
+
+        if kritaIsStarting and self.__settings.option(BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id()):
+            self.start()
+
+
     def start(self):
+        if self.__bcStarted:
+            # user interface is already started, bring to front and exit
+            self.commandViewBringToFront()
+            return
+        elif self.__bcStarting:
+            # user interface is already starting, exit
+            return
+
+        self.__bcStarting = True
+
+        # Check if windows are opened and then, connect signal if needed
+        self.__checkKritaWindows()
+
         if not self.__theme is None:
             self.__theme.loadResources()
 
@@ -150,6 +184,7 @@ class BCUIController(object):
         self.__window.show()
         self.__window.activateWindow()
 
+
     # region: initialisation methods -------------------------------------------
 
     def __initSettings(self):
@@ -157,6 +192,8 @@ class BCUIController(object):
         (ie: the widget size are known) to be applied
         """
         if self.__initialised:
+            self.__bcStarted = True
+            self.bcWindowShown.emit()
             # already initialised, do nothing
             return
 
@@ -185,6 +222,9 @@ class BCUIController(object):
         self.commandSettingsHistoryKeepOnExit(self.__settings.option(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT.id()))
         self.commandSettingsLastDocsMaxSize(self.__settings.option(BCSettingsKey.CONFIG_LASTDOC_MAXITEMS.id()))
         self.commandSettingsSaveSessionOnExit(self.__settings.option(BCSettingsKey.CONFIG_SESSION_SAVE.id()))
+        self.commandSettingsSysTrayMode(self.__settings.option(BCSettingsKey.CONFIG_SYSTRAY_MODE.id()))
+        self.commandSettingsOpenAtStartup(self.__settings.option(BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id()))
+        self.commandSettingsOpenOverrideKrita(self.__settings.option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()))
 
         self.commandViewMainWindowGeometry(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY.id()))
         self.commandViewMainWindowMaximized(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED.id()))
@@ -258,6 +298,9 @@ class BCUIController(object):
             self.__window.panels[panelId].setAllowRefresh(True)
 
         self.__initialised = True
+        self.__bcStarted = True
+        self.__bcStarting = False
+        self.bcWindowShown.emit()
 
 
     def __extendedOpen(self, file):
@@ -343,6 +386,53 @@ class BCUIController(object):
                     pixmaps=buildPixmapList(widget)
                     if len(pixmaps) > 0:
                         widget.setIcon(buildIcon(pixmaps))
+
+
+    def __checkKritaWindows(self):
+        """Check if windows signal windowClosed() is already defined and, if not,
+        define it
+        """
+        # applicationClosing signal can't be used, because when while BC is opened,
+        # application is still running and then signal is not trigerred..
+        #
+        # solution is, when a window is closed, to check how many windows are still
+        # opened
+        #
+        for window in Krita.instance().windows():
+            # DO NOT SET PROPERTY ON WINDOW
+            # but on qwindow() as the qwindow() is always the same
+            # and as window is just an instance that wrap the underlied QMainWindow
+            # a new object is returned each time windows() list is returned
+            if window.qwindow().property('__bcWindowClosed') != True:
+                window.windowClosed.connect(self.__windowClosed)
+                window.qwindow().setProperty('__bcWindowClosed', True)
+
+
+    def __windowClosed(self):
+        """A krita window has been closed"""
+        # check how many windows are still opened
+        # if there's no window opened, close BC
+
+        # need to ensure that all windows are connected to close signal
+        # (maybe, since BC has been opened, new Krita windows has been created...)
+        self.__checkKritaWindows()
+
+        if len( Krita.instance().windows()) == 0:
+            self.commandQuit()
+
+
+    def __overrideOpenKrita(self):
+        """Overrides the native "Open" Krita dialogcommand with BuliCommander"""
+        if checkKritaVersion(5,0,0) and self.__settings.option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()):
+            # override the native "Open" Krita command with Buli Commander
+            # notes:
+            #   - once it's applied, to reactivate native Open Dialog file
+            #     Krita must be restarted
+            #   - deactivated for Krita < 5.0.0 as only krita 5.0.0 is able to initialize BC at startup
+            actionOpen=Krita.instance().action("file_open")
+            actionOpen.disconnect()
+            actionOpen.triggered.connect(lambda checked : self.start())
+
 
     # endregion: initialisation methods ----------------------------------------
 
@@ -492,6 +582,18 @@ class BCUIController(object):
             return refDict[refId][2]
         return None
 
+    def started(self):
+        """Return True if BuliCommander interface is started"""
+        return self.__bcStarted
+
+    def bcVersion(self):
+        return self.__bcVersion
+
+    def bcName(self):
+        return self.__bcName
+
+    def bcTitle(self):
+        return self.__bcTitle
 
     # endregion: getter/setters ------------------------------------------------
 
@@ -603,6 +705,15 @@ class BCUIController(object):
         # stop all async processes (thumbnail generating)
         for panelRef in self.__window.panels:
             self.__window.panels[panelRef].close()
+
+        self.__bcStarted = False
+        self.bcWindowClosed.emit()
+
+    def setAllowRefresh(self, allow):
+        """change allow refresh for both panels"""
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(allow)
+
 
     def optionViewDisplaySecondaryPanel(self):
         """Return current option value"""
@@ -858,6 +969,11 @@ class BCUIController(object):
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setAllowRefresh(True)
+
+    def commandViewBringToFront(self):
+        """Bring main window to front"""
+        self.__window.setWindowState( (self.__window.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
+        self.__window.activateWindow()
 
     def commandViewSwapPanels(self):
         """Swap panels positions"""
@@ -1512,6 +1628,20 @@ class BCUIController(object):
         """Set user defined directory for home"""
         self.__settings.setOption(BCSettingsKey.CONFIG_HOME_DIR_UD, value)
 
+    def commandSettingsSysTrayMode(self, value=BCSysTray.SYSTRAY_MODE_WHENACTIVE):
+        """Set mode for systray notifier"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_SYSTRAY_MODE, value)
+        self.__systray.setVisibleMode(value)
+
+    def commandSettingsOpenAtStartup(self, value=False):
+        """Set option to start BC at Krita's startup"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_OPEN_ATSTARTUP, value)
+
+    def commandSettingsOpenOverrideKrita(self, value=False):
+        """Set option to override krita's open command"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA, value)
+        self.__overrideOpenKrita()
+
     def commandSettingsSaveSessionOnExit(self, saveSession=None):
         """Define if current session properties have to be save or not"""
         if saveSession is None:
@@ -1603,7 +1733,7 @@ class BCUIController(object):
         for panelId in self.__window.panels:
             self.__window.panels[panelId].showQuickFilter(visible)
 
-    def commandInfoToClipBoardBorder(self, border=BCTable.BORDER_DOUBLE):
+    def commandInfoToClipBoardBorder(self, border=BCTableSettingsText.BORDER_DOUBLE):
         """Set border for information panel content to clipboard"""
         self.__tableSettings.setBorder(border)
 
@@ -1626,6 +1756,10 @@ class BCUIController(object):
     def commandInfoToClipBoardMaxWidthActive(self, active=False):
         """Set maximum width active for information panel content to clipboard"""
         self.__tableSettings.setMaxWidthActive(active)
+
+    def commandToolsExportFilesOpen(self):
+        """Open window for tool 'Export file list'"""
+        BCExportFilesDialogBox.open(f'{self.__bcName}::Export files list', self)
 
     def commandSettingsOpen(self):
         """Open dialog box settings"""

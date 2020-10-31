@@ -167,8 +167,8 @@ class BCMainWindow(QMainWindow):
 
         # Menu TOOLS
         self.actionToolsSearch.triggered.connect(self.__actionNotYetImplemented)
-        self.actionToolsStatistics.triggered.connect(self.__actionNotYetImplemented)
-        #self.actionToolsSynchronizePanels.triggered.connect(self.__actionNotYetImplemented)
+        self.actionToolsExportFiles.triggered.connect(self.__menuToolsExportFiles_clicked)
+        #self.actionToolsStatistics.triggered.connect(self.__actionNotYetImplemented)
         #self.actionConsole.triggered.connect(self.__actionNotYetImplemented)
 
         #self.actionBCSManageScripts.triggered.connect(self.__actionNotYetImplemented)
@@ -203,12 +203,11 @@ class BCMainWindow(QMainWindow):
         """Build menu history"""
         self.__uiController.panel().showMenuSavedViews(self.menuGoSavedViews)
 
-
-
     # endregion: initialisation methods ----------------------------------------
 
 
     # region: define actions method --------------------------------------------
+
     def __actionNotYetImplemented(self, v=None):
         """"Method called when an action not yet implemented is triggered"""
         QMessageBox.warning(
@@ -300,6 +299,10 @@ class BCMainWindow(QMainWindow):
     def __menuViewShowHiddenFiles_clicked(self, action):
         """Display hidden files"""
         self.__uiController.commandViewShowHiddenFiles()
+
+    def __menuToolsExportFiles_clicked(self, action):
+        """Open export file list tool"""
+        self.__uiController.commandToolsExportFilesOpen()
 
     # endregion: define actions method -----------------------------------------
 

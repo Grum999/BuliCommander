@@ -23,28 +23,41 @@ from .bcutils import (
 )
 
 import os
+import re
 
-class BCTableSettings(object):
+from ..pktk.pktk import (
+        EInvalidType,
+        EInvalidValue
+    )
+
+class BCTableSettingsText(object):
     """Define settings to render a table"""
     MIN_WIDTH = 1
     MAX_WIDTH = 512
 
+    BORDER_NONE = 0
+    BORDER_BASIC = 1
+    BORDER_SIMPLE = 2
+    BORDER_DOUBLE = 3
+
     def __init__(self):
-        self.__border = BCTable.BORDER_DOUBLE
+        self.__border = BCTableSettingsText.BORDER_DOUBLE
         self.__headerActive = True
         self.__minWidthActive = True
         self.__minWidthValue = 80
         self.__maxWidthActive = False
         self.__maxWidthValue = 120
 
+        self.__columnsAlignment = []
+
     def border(self):
         return self.__border
 
     def setBorder(self, border):
-        if border in [BCTable.BORDER_NONE,
-                      BCTable.BORDER_BASIC,
-                      BCTable.BORDER_SIMPLE,
-                      BCTable.BORDER_DOUBLE]:
+        if border in [BCTableSettingsText.BORDER_NONE,
+                      BCTableSettingsText.BORDER_BASIC,
+                      BCTableSettingsText.BORDER_SIMPLE,
+                      BCTableSettingsText.BORDER_DOUBLE]:
             self.__border = border
 
     def headerActive(self):
@@ -72,70 +85,146 @@ class BCTableSettings(object):
         return self.__minWidthValue
 
     def setMinWidth(self, minWidth):
-        if isinstance(minWidth, int) and minWidth >= BCTableSettings.MIN_WIDTH and minWidth <= BCTableSettings.MAX_WIDTH:
+        if isinstance(minWidth, int) and minWidth >= BCTableSettingsText.MIN_WIDTH and minWidth <= BCTableSettingsText.MAX_WIDTH:
             self.__minWidthValue = minWidth
 
     def maxWidth(self):
         return self.__maxWidthValue
 
     def setMaxWidth(self, maxWidth):
-        if isinstance(maxWidth, int) and maxWidth >= BCTableSettings.MIN_WIDTH and maxWidth <= BCTableSettings.MAX_WIDTH:
+        if isinstance(maxWidth, int) and maxWidth >= BCTableSettingsText.MIN_WIDTH and maxWidth <= BCTableSettingsText.MAX_WIDTH:
             self.__maxWidthValue = maxWidth
+
+    def columnAlignment(self, columnIndex):
+        if columnIndex < len(self.__columnsAlignment):
+            return self.__columnsAlignment[columnIndex]
+        else:
+            # by default return LEFT aligment (0)
+            return 0
+
+    def columnsAlignment(self):
+        return self.__columnsAlignment
+
+    def setColumnsAlignment(self, alignments):
+        self.__columnsAlignment = alignments
+
+
+class BCTableSettingsTextCsv(object):
+    """Define settings to render a table"""
+
+    def __init__(self):
+        self.__border = BCTableSettingsText.BORDER_DOUBLE
+        self.__headerActive = True
+        self.__enclosedField = False
+        self.__separator = ','
+
+    def separator(self):
+        return self.__separator
+
+    def setSeparator(self, separator):
+        self.__separator = separator
+
+    def headerActive(self):
+        return self.__headerActive
+
+    def setHeaderActive(self, headerActive):
+        if isinstance(headerActive, bool):
+            self.__headerActive = headerActive
+
+    def enclosedField(self):
+        return self.__enclosedField
+
+    def setEnclosedField(self, enclosedField):
+        if isinstance(enclosedField, bool):
+            self.__enclosedField = enclosedField
+
+
+class BCTableSettingsTextMarkdown(object):
+    """Define settings to render a table in mardkown"""
+
+    def __init__(self):
+        self.__columnsFormatting = []
+
+    def columnFormatting(self, columnIndex):
+        if columnIndex < len(self.__columnsFormatting):
+            return self.__columnsFormatting[columnIndex]
+        else:
+            # by default return LEFT aligment (0)
+            return None
+
+    def columnsFormatting(self):
+        return self.__columnsFormatting
+
+    def setColumnsFormatting(self, formatting):
+        """Set column content formatting
+
+        Given `formatting` is a list tuple or None
+
+        Each tuple item is a markup '{text}' formatted in markdown
+
+        Example:
+            Format in italic+bold
+                setColumnsFormatting( ('*{text}*', '**{text}**') )
+
+            Format in code
+                setColumnsFormatting( ('`{text}`', ) )
+        """
+
+        if not(isinstance(formatting, list) or formatting is None):
+            raise EInvalidType("Given `formatting` must be a <tuple>")
+
+        self.__columnsFormatting = formatting
+
 
 
 class BCTable(object):
     """An object to store data in a table that can easily be exported as text"""
-    BORDER_NONE = 0
-    BORDER_BASIC = 1
-    BORDER_SIMPLE = 2
-    BORDER_DOUBLE = 3
+    __BORDER_TEXT_CHARS_TL=0
+    __BORDER_TEXT_CHARS_TM=1
+    __BORDER_TEXT_CHARS_TCA=2
+    __BORDER_TEXT_CHARS_TCB=3
+    __BORDER_TEXT_CHARS_TC=4
+    __BORDER_TEXT_CHARS_TR=5
+    __BORDER_TEXT_CHARS_BL=6
+    __BORDER_TEXT_CHARS_BM=7
+    __BORDER_TEXT_CHARS_BCA=8
+    __BORDER_TEXT_CHARS_BCB=9
+    __BORDER_TEXT_CHARS_BC=10
+    __BORDER_TEXT_CHARS_BR=11
+    __BORDER_TEXT_CHARS_RL=12
+    __BORDER_TEXT_CHARS_RM=13
+    __BORDER_TEXT_CHARS_RCA=14
+    __BORDER_TEXT_CHARS_RCB=15
+    __BORDER_TEXT_CHARS_RC=16
+    __BORDER_TEXT_CHARS_RR=17
+    __BORDER_TEXT_CHARS_SL=18
+    __BORDER_TEXT_CHARS_SM=19
+    __BORDER_TEXT_CHARS_SCA=20
+    __BORDER_TEXT_CHARS_SCB=21
+    __BORDER_TEXT_CHARS_SC=22
+    __BORDER_TEXT_CHARS_SR=23
+    __BORDER_TEXT_CHARS_HL=24
+    __BORDER_TEXT_CHARS_HM=25
+    __BORDER_TEXT_CHARS_HCA=26
+    __BORDER_TEXT_CHARS_HCB=27
+    __BORDER_TEXT_CHARS_HC=28
+    __BORDER_TEXT_CHARS_HR=29
 
-    __BORDER_CHARS_TL=0
-    __BORDER_CHARS_TM=1
-    __BORDER_CHARS_TCA=2
-    __BORDER_CHARS_TCB=3
-    __BORDER_CHARS_TC=4
-    __BORDER_CHARS_TR=5
-    __BORDER_CHARS_BL=6
-    __BORDER_CHARS_BM=7
-    __BORDER_CHARS_BCA=8
-    __BORDER_CHARS_BCB=9
-    __BORDER_CHARS_BC=10
-    __BORDER_CHARS_BR=11
-    __BORDER_CHARS_RL=12
-    __BORDER_CHARS_RM=13
-    __BORDER_CHARS_RCA=14
-    __BORDER_CHARS_RCB=15
-    __BORDER_CHARS_RC=16
-    __BORDER_CHARS_RR=17
-    __BORDER_CHARS_SL=18
-    __BORDER_CHARS_SM=19
-    __BORDER_CHARS_SCA=20
-    __BORDER_CHARS_SCB=21
-    __BORDER_CHARS_SC=22
-    __BORDER_CHARS_SR=23
-    __BORDER_CHARS_HL=24
-    __BORDER_CHARS_HM=25
-    __BORDER_CHARS_HCA=26
-    __BORDER_CHARS_HCB=27
-    __BORDER_CHARS_HC=28
-    __BORDER_CHARS_HR=29
-
-    __BORDER_TYPE_SEP = 0
-    __BORDER_TYPE_HSEP = 1
-    __BORDER_TYPE_TOP = 2
-    __BORDER_TYPE_BOTTOM = 3
+    __BORDER_TEXT_TYPE_SEP = 0
+    __BORDER_TEXT_TYPE_HSEP = 1
+    __BORDER_TEXT_TYPE_TOP = 2
+    __BORDER_TEXT_TYPE_BOTTOM = 3
 
     __BORDER_CHARS={
-            # BCTable.BORDER_NONE
+            # BCTableSettingsText.BORDER_NONE
             0: [
                     '', '', '', '', '', '',             # tl, tm, tca, tcb, tc, tr
                     '', '', '', '', '', '',             # bl, bm, bca, bcb, bc, br
-                    '', '', '', '', '', '',             # rl, rm, rca, rcb, rc, rr
+                    '', '', '', '', ' ', '',             # rl, rm, rca, rcb, rc, rr
                     '', '', '', '', '', '',             # sl, sm, sca, scb, sc, sr
                     '', '', '', '', '', ''              # hl, hm, hca, hcb, hc, hr
                 ],
-            # BCTable.BORDER_BASIC
+            # BCTableSettingsText.BORDER_BASIC
             1: [
                     '+', '=', '+', '+', '+', '+',       # tl, tm, tca, tcb, tc, tr
                     '+', '=', '+', '+', '+', '+',       # bl, bm, bca, bcb, bc, br
@@ -143,7 +232,7 @@ class BCTable(object):
                     '+', '-', '+', '+', '+', '+',       # sl, sm, sca, scb, sc, sr
                     '+', '=', '+', '+', '+', '+'        # hl, hm, hca, hcb, hc, hr
                 ],
-            # BCTable.BORDER_SIMPLE
+            # BCTableSettingsText.BORDER_SIMPLE
             2: [
                     '┌', '─', '┬', '┬', '┬', '┐',       # tl, tm, tca, tcb, tc, tr
                     '└', '─', '┴', '┴', '┴', '┘',       # bl, bm, bca, bcb, bc, br
@@ -151,7 +240,7 @@ class BCTable(object):
                     '├', '─', '┴', '┬', '┼', '┤',       # sl, sm, sca, scb, sc, sr
                     '├', '─', '┴', '┬', '┼', '┤'        # hl, hm, hca, hcb, hc, hr
                 ],
-            # BCTable.BORDER_DOUBLE
+            # BCTableSettingsText.BORDER_DOUBLE
             3: [
                     '╔', '═', '╤', '╤', '╤', '╗',       # tl, tm, tca, tcb, tc, tr
                     '╚', '═', '╧', '╧', '╧', '╝',       # bl, bm, bca, bcb, bc, br
@@ -217,7 +306,7 @@ class BCTable(object):
             self.__title = None
 
     def asText(self, settings):
-        """Return current table as a string, ussing given settings (BCTableSettings)"""
+        """Return current table as a string, ussing given settings (BCTableSettingsText)"""
         def columnsWidth(row, ref=None):
             # calculate columns width
             returned = [0] * self.__nbColumns
@@ -243,21 +332,21 @@ class BCTable(object):
             if columnsBelow is None:
                 columnsBelow = 0
 
-            if sepType == BCTable.__BORDER_TYPE_TOP:
+            if sepType == BCTable.__BORDER_TEXT_TYPE_TOP:
                 headerOffset=-18
-            elif sepType == BCTable.__BORDER_TYPE_BOTTOM:
+            elif sepType == BCTable.__BORDER_TEXT_TYPE_BOTTOM:
                 headerOffset=-12
-            elif sepType == BCTable.__BORDER_TYPE_HSEP:
+            elif sepType == BCTable.__BORDER_TEXT_TYPE_HSEP:
                 headerOffset=6
 
-            if settings.border() == BCTable.BORDER_NONE:
+            if settings.border() == BCTableSettingsText.BORDER_NONE:
                 # doesn't take in account above and below rows
                 returned = '-' * self.__currentWidth
             else:
-                returned = BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_CHARS_SL+headerOffset]
+                returned = BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_TEXT_CHARS_SL+headerOffset]
 
                 for index in range(self.__nbCols):
-                    returned += BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_CHARS_SM+headerOffset] * self.__colSize[index]
+                    returned += BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_TEXT_CHARS_SM+headerOffset] * self.__colSize[index]
                     if index < (self.__nbCols - 1):
                         # add columns separator
                         offset = 0
@@ -265,9 +354,9 @@ class BCTable(object):
                             offset += 0b01
                         if (index + 1) < columnsBelow:
                             offset += 0b10
-                        returned += BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_CHARS_SM + offset + headerOffset]
+                        returned += BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_TEXT_CHARS_SM + offset + headerOffset]
 
-                returned += BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_CHARS_SR + headerOffset]
+                returned += BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_TEXT_CHARS_SR + headerOffset]
 
             return [returned]
 
@@ -285,7 +374,7 @@ class BCTable(object):
             colsContent=[]
 
             for index, column in enumerate(columnsContent):
-                fmtRow=strToMaxLength(column, columnsSize[index], True).split(os.linesep)
+                fmtRow=strToMaxLength(column, columnsSize[index], True, settings.columnAlignment(index)==0).split(os.linesep)
                 colsContent.append(fmtRow)
 
                 nbFmtRows=len(fmtRow)
@@ -294,25 +383,25 @@ class BCTable(object):
 
             lastColIndex = len(columnsContent) -1
             for rowIndex in range(nbRows):
-                returnedRow=BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_CHARS_RL]
+                returnedRow=BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_TEXT_CHARS_RL]
 
                 for colIndex, column in enumerate(colsContent):
                     if rowIndex < len(column):
                         returnedRow+=column[rowIndex]
                     else:
-                        returnedRow+=strToMaxLength(' ', columnsSize[colIndex], True)
+                        returnedRow+=strToMaxLength(' ', columnsSize[colIndex], True, settings.columnAlignment(colIndex)==0)
 
                     if colIndex < lastColIndex:
-                        returnedRow+=BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_CHARS_RC]
+                        returnedRow+=BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_TEXT_CHARS_RC]
 
-                returnedRow+=BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_CHARS_RR]
+                returnedRow+=BCTable.__BORDER_CHARS[settings.border()][BCTable.__BORDER_TEXT_CHARS_RR]
                 returned.append(returnedRow)
 
             return returned
 
         def buildTitle():
             """Add a title to generated table"""
-            return [f'[ {self.__title} ]']
+            return [self.__title]
 
         def buildHeader():
             returned=[]
@@ -323,21 +412,21 @@ class BCTable(object):
                     # no rows...
                     return returned
 
-                returned+=buildSep(None, len(self.__rows[0]), BCTable.__BORDER_TYPE_TOP)
+                returned+=buildSep(None, len(self.__rows[0]), BCTable.__BORDER_TEXT_TYPE_TOP)
             else:
-                returned+=buildSep(None, len(self.__header), BCTable.__BORDER_TYPE_TOP)
+                returned+=buildSep(None, len(self.__header), BCTable.__BORDER_TEXT_TYPE_TOP)
                 returned+=buildRow(self.__header)
 
                 if len(self.__rows) == 0:
                     # no rows...
-                    returned+=buildSep(len(self.__header), None, BCTable.__BORDER_TYPE_BOTTOM)
+                    returned+=buildSep(len(self.__header), None, BCTable.__BORDER_TEXT_TYPE_BOTTOM)
                 else:
-                    returned+=buildSep(len(self.__header), len(self.__rows[0]), BCTable.__BORDER_TYPE_HSEP)
+                    returned+=buildSep(len(self.__header), len(self.__rows[0]), BCTable.__BORDER_TEXT_TYPE_HSEP)
 
             return returned
 
-        if not isinstance(settings, BCTableSettings):
-            raise EInvalidType("Given `settings` must be BCTableSettings")
+        if not isinstance(settings, BCTableSettingsText):
+            raise EInvalidType("Given `settings` must be <BCTableSettingsText>")
 
 
         maxWidth = settings.maxWidth()
@@ -369,7 +458,7 @@ class BCTable(object):
 
         # 3. Adjust columns width according to min/max table width
         # --------------------------------------------------------
-        if settings.border() == BCTable.BORDER_NONE:
+        if settings.border() == BCTableSettingsText.BORDER_NONE:
             # no external borders
             extBorderSize = -1
         else:
@@ -401,7 +490,8 @@ class BCTable(object):
         # --------------------------------------------------------
         lastRowIndex = len(self.__rows) - 1
 
-        buffer+=buildTitle()
+        if self.__title.strip() != '':
+            buffer+=buildTitle()
         buffer+=buildHeader()
 
         prevColCount = None
@@ -427,7 +517,157 @@ class BCTable(object):
                 buffer+=buildRow(row)
                 prevColCount=len(row)
 
-        buffer+=buildSep(prevColCount, None, BCTable.__BORDER_TYPE_BOTTOM)
+        buffer+=buildSep(prevColCount, None, BCTable.__BORDER_TEXT_TYPE_BOTTOM)
+
+        return os.linesep.join(buffer)
+
+    def asTextCsv(self, settings):
+        """Return current table as CSV formatted string, using given settings (BCTableSettingsTextCsv)"""
+
+        def buildRow(columnsContent):
+            if enclosed:
+                sep = f'"{separator}"'
+                returned = f'"{sep.join(columnsContent)}"'
+            else:
+                returned = separator.join(columnsContent)
+
+            return [returned]
+
+        def buildHeader():
+            returned=[]
+
+            if len(self.__header) == 0 or not settings.headerActive():
+                return returned
+            else:
+                returned=buildRow(self.__header)
+
+            return returned
+
+        if not isinstance(settings, BCTableSettingsTextCsv):
+            raise EInvalidType("Given `settings` must be <BCTableSettingsTextCsv>")
+
+        # one text row = one buffer row
+        buffer=[]
+
+        separator = settings.separator()
+        enclosed = settings.enclosedField()
+
+        # 1. Generate table
+        # --------------------------------------------------------
+        buffer=buildHeader()
+
+        for row in self.__rows:
+            if row != 0x01:
+                # ignore separators for CSV file :)
+                buffer+=buildRow(row)
+
+        return os.linesep.join(buffer)
+
+    def asTextMarkdown(self, settings):
+        """Return current table as Markdown (GitHub flavored version) formatted string, using given settings (BCTableSettingsTextMarkdown)"""
+
+        def buildRow(columnsContent, format):
+            def escape(text):
+                if text == '':
+                    return text
+
+                text = text.replace("\\", r"\\")
+                text = text.replace(r"`", r"\`")
+                text = text.replace(r"*", r"\*")
+                text = text.replace(r"_", r"\_")
+                text = text.replace(r"{", r"\{")
+                text = text.replace(r"}", r"\}")
+                text = text.replace(r"[", r"\[")
+                text = text.replace(r"]", r"\]")
+                text = text.replace(r"(", r"\(")
+                text = text.replace(r")", r"\)")
+                text = text.replace(r"#", r"\#")
+                text = text.replace(r"+", r"\+")
+                text = text.replace(r"-", r"\-")
+                text = text.replace(r".", r"\.")
+                text = text.replace(r"!", r"\!")
+                return text
+
+            def formatItem(text, formatting):
+                returned = text
+                if isinstance(formatting, tuple) and text!='':
+                    canEscape=True
+                    for format in formatting:
+                        if re.match("`[^`]+`", format):
+                            canEscape=False
+                            break
+                    if canEscape:
+                        returned = escape(returned)
+
+                    for format in formatting:
+                        returned = format.replace('{text}', returned)
+                return returned
+
+            if format:
+                return [' | '.join([formatItem(column, settings.columnFormatting(index)) for index, column in enumerate(columnsContent)])]
+            else:
+                return [' | '.join([escape(column) for column in columnsContent])]
+
+        def buildHeader():
+            returned=[]
+
+            header = []
+            maxColNumber = 0
+            for row in self.__rows:
+                rowLen = len(row)
+                if rowLen > maxColNumber:
+                    maxColNumber = rowLen
+
+            if len(self.__header) == 0 and maxColNumber > 0:
+                # no header!?
+                # github flavored markdown table NEED header..
+                # build one :)
+                header = ['?'] * maxColNumber
+            elif len(self.__header) > 0:
+                header = self.__header
+
+                if len(header) < maxColNumber:
+                    # not enough cell in header... add missing cells
+                    header += ['?'] * (maxColNumber - len(header))
+
+            if len(header) == 0:
+                # no header AND no data
+                # return nothing
+                return returned
+
+            headerSep = ['--'] * len(header)
+            returned=buildRow(header, False)
+            returned+=[' | '.join(headerSep)]
+
+            if len(self.__rows) == 0:
+                # there's an header, but no data....?
+                # create an empty row as data to display at least, the header
+                returned=+buildRow([' '] * len(header), False)
+
+            return returned
+
+        def buildTitle():
+            """Add a title to generated table"""
+            return [self.__title]
+
+        if not isinstance(settings, BCTableSettingsTextMarkdown):
+            raise EInvalidType("Given `settings` must be <BCTableSettingsTextMarkdown>")
+
+        # one text row = one buffer row
+        buffer=[]
+
+        if self.__title.strip() != '':
+            buffer+=buildTitle()
+        buffer+=buildHeader()
+
+        if len(buffer) == 0:
+            # nothing to format...
+            return ''
+
+        for row in self.__rows:
+            if row != 0x01:
+                # ignore separators for CSV file :)
+                buffer+=buildRow(row, True)
 
         return os.linesep.join(buffer)
 

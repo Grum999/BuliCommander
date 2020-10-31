@@ -70,6 +70,7 @@ Here a list of some functionalities:
   - Image properties (format, dimension, mode/depth, profile)
   - Krita image properties (About + Author)
 - File manipulation (copy, move, delete)
+- Export files as list
 - Miscellaneous opening modes
   - Improved GIF/WEBP import file
 
@@ -77,7 +78,7 @@ Here a list of some functionalities:
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.3.0a](https://github.com/Grum999/BuliCommander/releases/download/0.3.0a/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.4.0a](https://github.com/Grum999/BuliCommander/releases/download/0.4.0a/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
@@ -95,7 +96,7 @@ When you want to execute *Buli Commander*, simply go to **Tools** -> **Scripts**
 
 
 ### Tested platforms
-Plugin has been tested with Krita 4.3.0 (appimage) on Linux Debian 10
+Plugin has been tested with Krita 4.4.0 (appimage) on Linux Debian 10
 
 Currently don't kwow if plugin works on Windows and MacOs.
 I think it should be Ok, because of use of python and PyQt high level and multi OS file system functions, but...
@@ -104,7 +105,17 @@ I think it should be Ok, because of use of python and PyQt high level and multi 
 ## Plugin's life
 
 ### What's new?
+_[2020-11-01] Version 0.4.0a_
+*[Show detailed release content](https://github.com/Grum999/BuliCommander/releases-notes/RELEASE-0.4.0a.md)*
+- Implement *Auto close*
+- Implement *Auto open*
+- Implement *Override Krita open file dialog*
+- Implement tool *Export files list*
+- Improve notification system
+
+
 _[2020-09-27] Version 0.3.0a_
+*[Show detailed release content](https://github.com/Grum999/BuliCommander/releases-notes/RELEASE-0.3.0a.md)*
 - Implement progress bar on background thumbnail load
 - Implement progress bar on directory file content analysis
 - Fix bug on Setting "cache" tab
@@ -114,8 +125,8 @@ _[2020-09-27] Version 0.3.0a_
 - Implement and improve copy/move/delete function
 
 
-
 _[2020-09-11] Version 0.2.0a_
+*[Show detailed release content](https://github.com/Grum999/BuliCommander/releases-notes/RELEASE-0.2.0a.md)*
 - ORA file preview use (if exists) merged image preview instead of thumbnail
 - Add BACKUP files list linked to a file
 - Add FILE LAYERS files list linked to a KRA image
@@ -137,7 +148,6 @@ Yes, we have.
 Not able to define precisely in which order functionalities will be implemented, neither when, but here a list of what is currently expected for final 1.0.0 version:
 - File(s) rename
 - Shortcut to launch *Buli Commander*
-- Possibility (as an option) to replace current Open dialog box with *Buli Commander*
 - Generate and display thumbnails with ICC profile taken in account
 - Add a gridview mode
 - Implement *Search* tool

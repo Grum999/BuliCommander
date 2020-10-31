@@ -1,5 +1,12 @@
 <RCC>
+  <qresource prefix="buli">
+    <file alias="buli-rounded-border">png/buli-powered-64x64-rounded-border.png</file>
+  </qresource>
   <qresource prefix="images">
+    <file alias="format_text_color">svg/dark/32dp/format_text_color.svg</file>
+    <file alias="page_layout">svg/dark/32dp/page_layout.svg</file>
+    <file alias="page_setup">svg/dark/32dp/page_setup.svg</file>
+    <file alias="export_list">svg/dark/32dp/export_list.svg</file>
     <file alias="text">svg/dark/32dp/text.svg</file>
     <file alias="tabs">svg/dark/32dp/tabs.svg</file>
     <file alias="clipboard">svg/dark/32dp/clipboard.svg</file>

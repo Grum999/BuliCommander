@@ -41,8 +41,7 @@ from PyQt5.QtCore import (
         QRect
     )
 from PyQt5.QtWidgets import (
-        QAction,
-        QSystemTrayIcon
+        QAction
     )
 
 try:
@@ -118,7 +117,7 @@ def strDefault(value, default=''):
 
     If value is empty or None, return default value
     """
-    if value is None or value == '':
+    if value is None or value == '' or value == 0:
         return default
     return str(value)
 
@@ -531,7 +530,7 @@ def checkKritaVersion(major, minor, revision):
         return True
     return False
 
-def strToMaxLength(value, maxLength, completeSpace=True):
+def strToMaxLength(value, maxLength, completeSpace=True, leftAlignment=True):
     """Format given string `value` to fit in given `maxLength`
 
     If len is greater than `maxLength`, string is splitted with carriage return
@@ -553,7 +552,10 @@ def strToMaxLength(value, maxLength, completeSpace=True):
         if textLen < maxLength:
             if completeSpace:
                 # need to complete with spaces
-                returned.append( value + (' ' * (maxLength - textLen)))
+                if leftAlignment:
+                    returned.append( value + (' ' * (maxLength - textLen)))
+                else:
+                    returned.append( (' ' * (maxLength - textLen)) + value )
             else:
                 returned.append(value)
         elif textLen > maxLength:
@@ -630,10 +632,9 @@ def loadXmlUi(fileName, parent):
                             # store on object resource path for icons
                             widget.setProperty(f"__bcIcon_{nodeIcon.tag}", nodeIcon.text)
 
-def popNotification(title='', message='', icon=QSystemTrayIcon.Information):
-    tray = QSystemTrayIcon(Krita.instance())
-    tray.show()
-    tray.showMessage(title, message, icon)
+def cloneRect(rect):
+    """Clone a QRect"""
+    return QRect(rect.left(), rect.top(), rect.width(), rect.height())
 
 # ------------------------------------------------------------------------------
 
