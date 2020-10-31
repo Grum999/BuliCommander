@@ -106,7 +106,9 @@ I think it should be Ok, because of use of python and PyQt high level and multi 
 
 ### What's new?
 _[2020-11-01] Version 0.4.0a_
-*[Show detailed release content](https://github.com/Grum999/BuliCommander/releases-notes/RELEASE-0.4.0a.md)*
+
+*[Show detailed release content](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.4.0a.md)*
+
 - Implement *Auto close*
 - Implement *Auto open*
 - Implement *Override Krita open file dialog*
@@ -115,7 +117,9 @@ _[2020-11-01] Version 0.4.0a_
 
 
 _[2020-09-27] Version 0.3.0a_
-*[Show detailed release content](https://github.com/Grum999/BuliCommander/releases-notes/RELEASE-0.3.0a.md)*
+
+*[Show detailed release content](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.3.0a.md)*
+
 - Implement progress bar on background thumbnail load
 - Implement progress bar on directory file content analysis
 - Fix bug on Setting "cache" tab
@@ -126,7 +130,9 @@ _[2020-09-27] Version 0.3.0a_
 
 
 _[2020-09-11] Version 0.2.0a_
-*[Show detailed release content](https://github.com/Grum999/BuliCommander/releases-notes/RELEASE-0.2.0a.md)*
+
+*[Show detailed release content](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.2.0a.md)*
+
 - ORA file preview use (if exists) merged image preview instead of thumbnail
 - Add BACKUP files list linked to a file
 - Add FILE LAYERS files list linked to a KRA image
