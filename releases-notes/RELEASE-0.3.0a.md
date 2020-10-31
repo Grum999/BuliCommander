@@ -3,19 +3,19 @@
 > ### Note: due to use of specific Krita’s API introduced with Krita 4.4.0, this version is not compatible with Krita 4.3.0 and other previous versions
 
 
-## Implement progress bar on directory file content analysis
+## Implement progress bar on directory file content analysis
 When there’s many files (hundred or more) reading files information (image size) cant take time: in this case, a progress bar is displayed while files are analyzed.
 
 ![Directory content analysis progress](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-3-0a_progress-analysis.png)
 
 
-## Implement progress bar on background thumbnail load
+## Implement progress bar on background thumbnail load
 When there’s many files (hundred or more) generating and/or loading cache thumbnails can take time: in this case, a progress bar is displayed while thumbnail are loaded in background.
 
 ![Thumbnails loading progress](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-3-0a_progress-thumbload.png)
 
 
-## Add a *copy to clipboard* context menu on information panel
+## Add a *copy to clipboard* context menu on information panel
 
 A right click on image information panel display a context menu to easily copy information to clipboard.
 
