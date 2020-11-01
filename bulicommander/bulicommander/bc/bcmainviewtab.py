@@ -51,6 +51,7 @@ from PyQt5.QtCore import (
         QThreadPool
     )
 from PyQt5.QtGui import (
+        QFontDatabase,
         QImage,
         QMovie,
         QPixmap
@@ -1448,7 +1449,7 @@ class BCMainViewTab(QFrame):
             self.__imgReaderAnimated.stop()
             self.__imgReaderAnimated = None
 
-        # ------------------- !!!!! Here start the noodel spaghetti !!!!! -------------------
+        # ------------------- !!!!! Here start the noodle spaghetti !!!!! -------------------
         if self.__selectedNbTotal == 1:
             # ------------------------------ File ------------------------------
             file = self.__selectedFiles[0]
@@ -1691,6 +1692,24 @@ class BCMainViewTab(QFrame):
 
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'No')
+
+                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                    if len(imgNfo['document.usedFonts']) > 0:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', str(len(imgNfo['document.usedFonts'])))
+
+                        fontList=QFontDatabase().families()
+
+                        fontNumber = 1
+                        for fontName in imgNfo['document.usedFonts']:
+                            if fontName in fontList:
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fontName}</i>')
+                            else:
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fontName}</i>', i18n('Font is missing on this sytem!'), 'warning-label')
+
+                            fontNumber+=1
+                    else:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', 'None')
+
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
                     if imgNfo['document.layerCount'] > 0:
