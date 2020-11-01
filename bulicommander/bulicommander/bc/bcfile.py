@@ -44,6 +44,7 @@ from functools import cmp_to_key
 from multiprocessing import Pool
 
 import hashlib
+import io
 import json
 import os
 import re
@@ -1023,10 +1024,12 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readArchiveDataFile(self, file):
+    def __readArchiveDataFile(self, file, source=None):
         """Read an archive file (.kra, .ora) file and return data from archive
 
         The function will unzip the given `file` and return it
+
+        If `source` is provided, use it a zip file source to open
 
         return None if not able to read Krita file
         """
@@ -1034,8 +1037,11 @@ class BCFile(BCBaseFile):
             # file must exist
             return None
 
+        if source is None:
+            source = self._fullPathName
+
         try:
-            archive = zipfile.ZipFile(self._fullPathName, 'r')
+            archive = zipfile.ZipFile(source, 'r')
         except Exception as e:
             # can't be read (not exist, not a zip file?)
             self.__readable = False
@@ -2440,6 +2446,27 @@ class BCFile(BCBaseFile):
 
             return returned
 
+        def getPaletteList():
+            # return a list of palette files into archive
+
+            try:
+                archive = zipfile.ZipFile(self._fullPathName, 'r')
+            except Exception as e:
+                # can't be read (not exist, not a zip file?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, str(e))
+                return []
+
+            # notes:
+            #   - look directly for content.svg files into all *.shapelayer directory
+            #     simpler to get shapelayer node and then build filename...
+            #   - dot '.' is used because don't know how path is returned in windows ----+
+            #                                                                            V
+            returned = [file.filename for file in archive.filelist if re.search('palettes..*\.kpl$', file.filename)]
+            archive.close()
+
+            return returned
+
         returned = {
             'resolutionX': (0, 'Unknown'),
             'resolutionY': (0, 'Unknown'),
@@ -2452,9 +2479,8 @@ class BCFile(BCBaseFile):
 
             'document.layerCount': 0,
             'document.fileLayers': [],
-
             'document.usedFonts': [],
-
+            'document.embeddedPalettes': {},
 
             'about.title': '',
             'about.subject': '',
@@ -2742,22 +2768,49 @@ class BCFile(BCBaseFile):
         for filename in getShapeLayerList():
             contentDoc = self.__readArchiveDataFile(filename)
 
-            parsed = False
-            try:
-                xmlDoc = xmlElement.fromstring(contentDoc.decode())
-                parsed = True
-            except Exception as e:
-                # can't be read (not xml?)
-                self.__readable = False
-                Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, str(e), filename)
+            if not contentDoc is None:
+                parsed = False
+                try:
+                    xmlDoc = xmlElement.fromstring(contentDoc.decode())
+                    parsed = True
+                except Exception as e:
+                    # can't be read (not xml?)
+                    self.__readable = False
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, str(e), filename)
 
-            if parsed:
-                fontList=[node.attrib['font-family'] for node in xmlDoc.findall('.//*[@font-family]')]
+                if parsed:
+                    fontList=[node.attrib['font-family'] for node in xmlDoc.findall('.//*[@font-family]')]
 
-                if len(fontList) > 0:
-                    returned['document.usedFonts'] = list(set(returned['document.usedFonts'] + fontList))
+                    if len(fontList) > 0:
+                        returned['document.usedFonts'] = list(set(returned['document.usedFonts'] + fontList))
 
         returned['document.usedFonts'].sort()
+
+        for filename in getPaletteList():
+            kplFile = self.__readArchiveDataFile(filename)
+
+            if not kplFile is None:
+                # retrieved kpl file is a ZIP archive
+                contentDoc = self.__readArchiveDataFile('colorset.xml', io.BytesIO(kplFile))
+
+                parsed = False
+                try:
+                    xmlDoc = xmlElement.fromstring(contentDoc.decode())
+                    parsed = True
+                except Exception as e:
+                    # can't be read (not xml?)
+                    self.__readable = False
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, str(e), filename)
+
+                if parsed:
+                    try:
+                        returned['document.embeddedPalettes'][xmlDoc.attrib['name']]={
+                                            'colors':  len(xmlDoc.findall('ColorSetEntry')),
+                                            'rows':    int(xmlDoc.attrib['rows']),
+                                            'columns': int(xmlDoc.attrib['columns'])
+                                        }
+                    except Exception as e:
+                        Debug.print('[BCFile.__readMetaDataKra] Malformed palette {2} in file {0}: {1}', self._fullPathName, str(e), filename)
 
         return returned
 

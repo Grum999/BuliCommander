@@ -1362,7 +1362,7 @@ class BCMainViewTab(QFrame):
 
             addNfoRow(form, label, wContainer)
 
-        def addNfoRow(form, label, value, tooltip=None, style=None):
+        def addNfoRow(form, label, value, tooltip=None, style=None, shifted=False):
             """add a row"""
             fntLabel = QFont()
             fntLabel.setBold(True)
@@ -1370,6 +1370,9 @@ class BCMainViewTab(QFrame):
             wLabel = QLabel(label)
             wLabel.setFont(fntLabel)
             wLabel.sizePolicy().setVerticalPolicy(QSizePolicy.Expanding)
+
+            if shifted:
+                wLabel.setContentsMargins(30, 0, 0, 0)
 
             fntValue = QFont()
             fntValue.setFamily('DejaVu Sans Mono')
@@ -1388,10 +1391,12 @@ class BCMainViewTab(QFrame):
 
             form.layout().addRow(wLabel, wValue)
 
-        def addSeparator(form):
+        def addSeparator(form, shifted=False):
             line = QFrame()
             line.setFrameShape(QFrame.HLine)
             line.setFrameShadow(QFrame.Sunken)
+            if shifted:
+                line.setContentsMargins(30, 0, 0, 0)
             form.layout().addRow(line)
 
         def applyBackupFilter(action):
@@ -1534,8 +1539,8 @@ class BCMainViewTab(QFrame):
                     addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n(f"{backupList.nbFiles()} backup files found"), filterButton)
 
                 for fileBackup in backupList.files():
-                    addSeparator(self.scrollAreaWidgetContentsNfoGeneric)
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup file"), fileBackup.name())
+                    addSeparator(self.scrollAreaWidgetContentsNfoGeneric, shifted=True)
+                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup file"), fileBackup.name(), shifted=True)
 
                     lastModifiedDiffStr=""
                     lastModifiedDiffTooltip=''
@@ -1544,8 +1549,7 @@ class BCMainViewTab(QFrame):
                         lastModifiedDiffStr=i18n(f'<br><i>{secToStrTime(lastModifiedDiff)} ago<sup>(from current file)</sup></i>')
                         lastModifiedDiffTooltip=''
 
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Modified"), tsToStr(fileBackup.lastModificationDateTime(), valueNone='-')+lastModifiedDiffStr, lastModifiedDiffTooltip)
-
+                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Modified"), tsToStr(fileBackup.lastModificationDateTime(), valueNone='-')+lastModifiedDiffStr, lastModifiedDiffTooltip, shifted=True)
 
                     backupSizeDiffTooltip=''
                     backupSizeDiffStr=""
@@ -1556,8 +1560,7 @@ class BCMainViewTab(QFrame):
                     elif backupSizeDiff<0:
                         backupSizeDiffStr=f'<br><i>-{bytesSizeToStr(abs(backupSizeDiff))} ({backupSizeDiff:n})</i>'
                         backupSizeDiffTooltip=''
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Size"), f'{bytesSizeToStr(fileBackup.size())} ({fileBackup.size():n}){backupSizeDiffStr}', backupSizeDiffTooltip)
-
+                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Size"), f'{bytesSizeToStr(fileBackup.size())} ({fileBackup.size():n}){backupSizeDiffStr}', backupSizeDiffTooltip, shifted=True)
 
 
             # ------------------------------ Image ------------------------------
@@ -1699,14 +1702,11 @@ class BCMainViewTab(QFrame):
 
                         fontList=QFontDatabase().families()
 
-                        fontNumber = 1
                         for fontName in imgNfo['document.usedFonts']:
                             if fontName in fontList:
                                 addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fontName}</i>')
                             else:
                                 addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fontName}</i>', i18n('Font is missing on this sytem!'), 'warning-label')
-
-                            fontNumber+=1
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', 'None')
 
@@ -1737,24 +1737,39 @@ class BCMainViewTab(QFrame):
                             fullFileName = os.path.join(file.path(), fileName)
                             fileLayerList.append(fullFileName)
 
-                            addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                            addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
                             if os.path.isfile(fullFileName):
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), fileName)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), fileName, shifted=True)
 
                                 fileLayer = BCFile(fullFileName)
 
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), tsToStr(fileLayer.lastModificationDateTime(), valueNone='-'))
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), f'{bytesSizeToStr(fileLayer.size())} ({fileLayer.size():n})')
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), tsToStr(fileLayer.lastModificationDateTime(), valueNone='-'), shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), f'{bytesSizeToStr(fileLayer.size())} ({fileLayer.size():n})', shifted=True)
 
                                 if fileLayer.imageSize().width() == -1 or fileLayer.imageSize().height() == -1:
-                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-')
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-', shifted=True)
                                 else:
-                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), f'{fileLayer.imageSize().width()}x{fileLayer.imageSize().height()}')
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), f'{fileLayer.imageSize().width()}x{fileLayer.imageSize().height()}', shifted=True)
                             else:
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), f'<i>{fileName}</i>', 'File is missing!', 'warning-label')
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), '-')
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), '-')
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-')
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), f'<i>{fileName}</i>', 'File is missing!', 'warning-label', shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), '-', shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), '-', shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-', shifted=True)
+
+
+                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                    if len(imgNfo['document.embeddedPalettes']) > 0:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', str(len(imgNfo['document.embeddedPalettes'])))
+
+                        for paletteName in imgNfo['document.embeddedPalettes']:
+                            palette = imgNfo['document.embeddedPalettes'][paletteName]
+                            addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Palette'), paletteName, shifted=True)
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Dimension'), f'{palette["columns"]}x{palette["rows"]}', shifted=True)
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Colors'), str(palette["colors"]), shifted=True)
+                    else:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', 'None')
+
 
                     self.twInfo.setTabEnabled(2, True)
                     self.twInfo.setTabEnabled(3, True)
