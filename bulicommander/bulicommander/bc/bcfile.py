@@ -2419,6 +2419,27 @@ class BCFile(BCBaseFile):
 
     def __readMetaDataKra(self):
         """Read metadata from Krita file"""
+        def getShapeLayerList():
+            # return a list of shape layer files into archive
+
+            try:
+                archive = zipfile.ZipFile(self._fullPathName, 'r')
+            except Exception as e:
+                # can't be read (not exist, not a zip file?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, str(e))
+                return []
+
+            # notes:
+            #   - look directly for content.svg files into all *.shapelayer directory
+            #     simpler to get shapelayer node and then build filename...
+            #   - dot '.' is used because don't know how path is returned in windows ----+
+            #                                                                            V
+            returned = [file.filename for file in archive.filelist if re.search('\.shapelayer.content\.svg', file.filename)]
+            archive.close()
+
+            return returned
+
         returned = {
             'resolutionX': (0, 'Unknown'),
             'resolutionY': (0, 'Unknown'),
@@ -2431,6 +2452,8 @@ class BCFile(BCBaseFile):
 
             'document.layerCount': 0,
             'document.fileLayers': [],
+
+            'document.usedFonts': [],
 
 
             'about.title': '',
@@ -2630,7 +2653,6 @@ class BCFile(BCBaseFile):
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers in file {0}: {1}', self._fullPathName, str(e))
 
-
         infoDoc = self.__readArchiveDataFile("documentinfo.xml")
         if not infoDoc is None:
             parsed = False
@@ -2717,6 +2739,25 @@ class BCFile(BCBaseFile):
                         if strDefault(node.text) != '':
                             returned['author.contact'].append({node.attrib['type']: strDefault(node.text)})
 
+        for filename in getShapeLayerList():
+            contentDoc = self.__readArchiveDataFile(filename)
+
+            parsed = False
+            try:
+                xmlDoc = xmlElement.fromstring(contentDoc.decode())
+                parsed = True
+            except Exception as e:
+                # can't be read (not xml?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, str(e), filename)
+
+            if parsed:
+                fontList=[node.attrib['font-family'] for node in xmlDoc.findall('.//*[@font-family]')]
+
+                if len(fontList) > 0:
+                    returned['document.usedFonts'] = list(set(returned['document.usedFonts'] + fontList))
+
+        returned['document.usedFonts'].sort()
 
         return returned
 
