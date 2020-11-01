@@ -1781,10 +1781,11 @@ class BCFile(BCBaseFile):
                     returned.update(decodeChunk_gAMA(chunk))
                 elif chunk['id']=='sRGB':
                     returned.update(decodeChunk_sRGB(chunk))
-                    returned.pop('gamma')
+                    # if sRGB, ignore gamma
+                    returned.pop('gamma', None)
                 elif chunk['id']=='iCCP':
                     returned.update(decodeChunk_iCCP(chunk))
-                    # if icc profile, ignore gamme and sRGB
+                    # if icc profile, ignore gamma and sRGB
                     returned.pop('gamma', None)
                     returned.pop('sRGBRendering', None)
                 elif chunk['id']=='IDAT' and not idat1Processed:
