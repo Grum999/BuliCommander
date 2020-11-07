@@ -60,7 +60,7 @@ from .bcmainviewtab import (
     )
 from .bcmainwindow import BCMainWindow
 from .bcsystray import BCSysTray
-from .bcpathbar import BCPathBar
+from .bcwpathbar import BCWPathBar
 from .bcsettings import (
         BCSettings,
         BCSettingsDialogBox,
@@ -73,8 +73,8 @@ from .bcimportanimated import (
         BCImportDialogBox,
         BCImportAnimated
     )
-from .bcimagepreview import (
-        BCImagePreview
+from .bcwimagepreview import (
+        BCWImagePreview
     )
 from .bcsavedview import BCSavedView
 from .bctable import (
@@ -364,7 +364,7 @@ class BCUIController(QObject):
             widgetList = self.__window.getWidgets()
 
             for widget in widgetList:
-                if isinstance(widget, BCPathBar) or isinstance(widget, BreadcrumbsAddressBar):
+                if isinstance(widget, BCWPathBar) or isinstance(widget, BreadcrumbsAddressBar):
                     widget.updatePalette()
                 elif hasattr(widget, 'setPalette'):
                     # force palette to be applied to widget
@@ -528,22 +528,22 @@ class BCUIController(QObject):
         iconSavedView = buildIcon([(QPixmap(":/images/saved_view_file"), QIcon.Normal)])
         iconBookmark = buildIcon([(QPixmap(":/images/bookmark"), QIcon.Normal)])
 
-        returned = {'@home': (BCPathBar.QUICKREF_RESERVED_HOME, buildIcon([(QPixmap(":/images/home"), QIcon.Normal)]), 'Home'),
-                    '@last': (BCPathBar.QUICKREF_RESERVED_LAST_ALL, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened/saved documents'),
-                    '@last opened': (BCPathBar.QUICKREF_RESERVED_LAST_OPENED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened documents'),
-                    '@last saved': (BCPathBar.QUICKREF_RESERVED_LAST_SAVED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last saved documents'),
-                    '@history': (BCPathBar.QUICKREF_RESERVED_HISTORY, buildIcon([(QPixmap(":/images/history"), QIcon.Normal)]), 'History directories'),
-                    '@backup filter': (BCPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW, buildIcon([(QPixmap(":/images/filter"), QIcon.Normal)]), 'Backup files list'),
-                    '@file layer filter': (BCPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW, buildIcon([(QPixmap(":/images/large_view"), QIcon.Normal)]), 'Layer files list')
+        returned = {'@home': (BCWPathBar.QUICKREF_RESERVED_HOME, buildIcon([(QPixmap(":/images/home"), QIcon.Normal)]), 'Home'),
+                    '@last': (BCWPathBar.QUICKREF_RESERVED_LAST_ALL, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened/saved documents'),
+                    '@last opened': (BCWPathBar.QUICKREF_RESERVED_LAST_OPENED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened documents'),
+                    '@last saved': (BCWPathBar.QUICKREF_RESERVED_LAST_SAVED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last saved documents'),
+                    '@history': (BCWPathBar.QUICKREF_RESERVED_HISTORY, buildIcon([(QPixmap(":/images/history"), QIcon.Normal)]), 'History directories'),
+                    '@backup filter': (BCWPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW, buildIcon([(QPixmap(":/images/filter"), QIcon.Normal)]), 'Backup files list'),
+                    '@file layer filter': (BCWPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW, buildIcon([(QPixmap(":/images/large_view"), QIcon.Normal)]), 'Layer files list')
                     }
 
         if not self.__bookmark is None and self.__bookmark.length() > 0:
             for bookmark in self.__bookmark.list():
-                returned[f'@{bookmark[0].lower()}']=(BCPathBar.QUICKREF_BOOKMARK, iconBookmark, bookmark[0])
+                returned[f'@{bookmark[0].lower()}']=(BCWPathBar.QUICKREF_BOOKMARK, iconBookmark, bookmark[0])
 
         if not self.__savedView is None and self.__savedView.length() > 0:
             for savedView in self.__savedView.list():
-                returned[f'@{savedView[0].lower()}']=(BCPathBar.QUICKREF_SAVEDVIEW_LIST, iconSavedView, savedView[0])
+                returned[f'@{savedView[0].lower()}']=(BCWPathBar.QUICKREF_SAVEDVIEW_LIST, iconSavedView, savedView[0])
 
         return returned
 
@@ -1107,8 +1107,8 @@ class BCUIController(QObject):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        if not mode in BCImagePreview.backgroundList():
-            mode = BCImagePreview.BG_CHECKER_BOARD
+        if not mode in BCWImagePreview.backgroundList():
+            mode = BCWImagePreview.BG_CHECKER_BOARD
 
         self.__window.panels[panel].setPreviewBackground(mode)
 

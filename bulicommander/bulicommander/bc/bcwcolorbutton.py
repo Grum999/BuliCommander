@@ -34,12 +34,12 @@ from PyQt5.QtWidgets import (
         QPushButton,
     )
 
-class BCColorButton(QPushButton):
+class BCWColorButton(QPushButton):
     """A button to choose color"""
     colorChanged = Signal(QColor)
 
     def __init__(self, label, parent=None):
-        super(BCColorButton, self).__init__(parent)
+        super(BCWColorButton, self).__init__(parent)
 
         def newSetText(value):
             # don't let external code trying to set button text: there's no text :)
@@ -77,7 +77,7 @@ class BCColorButton(QPushButton):
         return QBrush(tmpPixmap)
 
     def paintEvent(self, event):
-        super(BCColorButton, self).paintEvent(event)
+        super(BCWColorButton, self).paintEvent(event)
 
         margin = ceil(self.height()/2)//2
         margin2 = margin<<1

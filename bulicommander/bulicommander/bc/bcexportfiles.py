@@ -57,12 +57,12 @@ from .bctable import (
         BCTableSettingsTextCsv,
         BCTableSettingsTextMarkdown
     )
-from .bctextedit import (
-        BCTextEdit,
-        BCTextEditDialog
+from .bcwtextedit import (
+        BCWTextEdit,
+        BCWTextEditDialog
     )
-from .bccolorbutton import (
-        BCColorButton
+from .bcwcolorbutton import (
+        BCWColorButton
     )
 from .bcutils import (
         bytesSizeToStr,

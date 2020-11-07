@@ -333,7 +333,7 @@ class BreadcrumbsAddressBar(QFrame):
 
             self.__quickRef=refDict[path]
 
-            # BCPathBar.QUICKREF_RESERVED_HOME, BCPathBar.QUICKREF_BOOKMARK
+            # BCWPathBar.QUICKREF_RESERVED_HOME, BCWPathBar.QUICKREF_BOOKMARK
             if self.__quickRef[0] in (0, 1):
                 # bookmark
                 path=self.getQuickRefPath(path)

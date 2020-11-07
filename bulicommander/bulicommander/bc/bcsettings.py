@@ -45,7 +45,7 @@ from .bcfile import (
         BCFile
     )
 
-from .bcpathbar import BCPathBar
+from .bcwpathbar import BCWPathBar
 from .bcsystray import BCSysTray
 from .bcutils import (
         bytesSizeToStr,
@@ -926,7 +926,7 @@ class BCSettingsDialogBox(QDialog):
 
         # --- NAV Category -----------------------------------------------------
         self.bcpbCNUserDefined.setPath(self.__uiController.settings().option(BCSettingsKey.CONFIG_HOME_DIR_UD.id()))
-        self.bcpbCNUserDefined.setOptions(BCPathBar.OPTION_SHOW_NONE)
+        self.bcpbCNUserDefined.setOptions(BCWPathBar.OPTION_SHOW_NONE)
 
         self.cbCNNavBarBtnHome.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HOME.id()))
         self.cbCNNavBarBtnViews.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_VIEWS.id()))
