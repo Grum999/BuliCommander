@@ -48,7 +48,7 @@ from .bcfile import (
         BCFileThumbnailSize
     )
 from .bcsystray import BCSysTray
-from .bcpathbar import BCPathBar
+from .bcwpathbar import BCWPathBar
 from .bcutils import (
         Debug,
         bytesSizeToStr,
@@ -142,7 +142,7 @@ class BCFileOperationUi(object):
             dlgMain.layout().removeWidget(dlgMain.frameBreacrumbPath)
         else:
             dlgMain.frameBreacrumbPath.pathChanged.connect(pathChanged)
-            dlgMain.frameBreacrumbPath.setOptions(BCPathBar.OPTION_SHOW_NONE)
+            dlgMain.frameBreacrumbPath.setOptions(BCWPathBar.OPTION_SHOW_NONE)
             dlgMain.frameBreacrumbPath.setPath(targetPath)
             BCFileOperationUi.__targetPath = targetPath
 

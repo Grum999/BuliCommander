@@ -73,9 +73,9 @@ from PyQt5.QtWidgets import (
     )
 
 
-from .bcmenuitem import (
-        BCMenuSlider,
-        BCMenuTitle
+from .bcwmenuitem import (
+        BCWMenuSlider,
+        BCWMenuTitle
     )
 from .bcbookmark import BCBookmark
 from .bcfile import (
@@ -91,7 +91,7 @@ from .bcfile import (
         BCMissingFile
     )
 from .bchistory import BCHistory
-from .bcpathbar import BCPathBar
+from .bcwpathbar import BCWPathBar
 from .bcsettings import (
         BCSettingsKey,
         BCSettingsValues
@@ -749,7 +749,7 @@ class BCMainViewTab(QFrame):
         self.__actionApplyTabFilesLayoutRight.setCheckable(True)
         self.__actionApplyTabFilesLayoutRight.setProperty('layout', BCMainViewTabFilesLayout.RIGHT)
 
-        self.__actionApplyIconSize = BCMenuSlider(i18n("Icon size"))
+        self.__actionApplyIconSize = BCWMenuSlider(i18n("Icon size"))
         self.__actionApplyIconSize.slider().setMinimum(0)
         self.__actionApplyIconSize.slider().setMaximum(8)
         self.__actionApplyIconSize.slider().setPageStep(1)
@@ -1046,7 +1046,7 @@ class BCMainViewTab(QFrame):
 
     def __addParentDirectory(self):
         """Add parent directory to treeview"""
-        if self.framePathBar.mode() == BCPathBar.MODE_PATH:
+        if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
             self.treeViewFiles.addFile(BCDirectory(os.path.join(self.path(), '..')))
 
 
@@ -1070,7 +1070,7 @@ class BCMainViewTab(QFrame):
 
         self.__fileFilter = None
 
-        if self.framePathBar.mode() == BCPathBar.MODE_PATH:
+        if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
             self.treeViewFiles.setShowPath(False)
             totalSpace, usedSpace, freeSpace = shutil.disk_usage(self.path())
         else:
@@ -1144,26 +1144,26 @@ class BCMainViewTab(QFrame):
             self.__blockedRefresh+=1
             return
 
-        if self.framePathBar.mode() == BCPathBar.MODE_SAVEDVIEW:
+        if self.framePathBar.mode() == BCWPathBar.MODE_SAVEDVIEW:
             if self.__fileQuery is None:
                 self.__fileQuery = BCFileList()
 
             refType = self.__uiController.quickRefType(self.path())
 
 
-            if refType == BCPathBar.QUICKREF_RESERVED_LAST_OPENED:
+            if refType == BCWPathBar.QUICKREF_RESERVED_LAST_OPENED:
                 self.__fileQuery.setResult(self.lastDocumentsOpened().list())
-            elif refType == BCPathBar.QUICKREF_RESERVED_LAST_SAVED:
+            elif refType == BCWPathBar.QUICKREF_RESERVED_LAST_SAVED:
                 self.__fileQuery.setResult(self.lastDocumentsSaved().list())
-            elif refType == BCPathBar.QUICKREF_RESERVED_LAST_ALL:
+            elif refType == BCWPathBar.QUICKREF_RESERVED_LAST_ALL:
                 self.__fileQuery.setResult(list(set(self.lastDocumentsOpened().list() + self.lastDocumentsSaved().list())))
-            elif refType == BCPathBar.QUICKREF_RESERVED_HISTORY:
+            elif refType == BCWPathBar.QUICKREF_RESERVED_HISTORY:
                 self.__fileQuery.setResult([directory for directory in self.history().list() if not directory.startswith('@')])
-            elif refType == BCPathBar.QUICKREF_SAVEDVIEW_LIST:
+            elif refType == BCWPathBar.QUICKREF_SAVEDVIEW_LIST:
                 self.__fileQuery.setResult(self.savedView().get())
-            elif refType == BCPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW:
+            elif refType == BCWPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW:
                 self.__fileQuery.setResult(self.backupFilterDView().list())
-            elif refType == BCPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW:
+            elif refType == BCWPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW:
                 self.__fileQuery.setResult(self.fileLayerFilterDView().list())
 
         else:
@@ -1933,7 +1933,7 @@ class BCMainViewTab(QFrame):
         self.lblFileNfo.setText(key+', '.join(fileText))
         self.lblFileNfo.setStatusTip(key+', '.join(statusFileText))
 
-        if self.framePathBar.mode() == BCPathBar.MODE_PATH:
+        if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
             if self.__currentStats['totalDiskSize'] > 0:
                 pctUsed = 100 * (self.__currentStats['usedDiskSize']/self.__currentStats['totalDiskSize'])
                 pUsed = f' ({pctUsed:.2f}%)'
@@ -2188,7 +2188,7 @@ class BCMainViewTab(QFrame):
         else:
             currentItem = None
 
-        title = BCMenuTitle(i18n("Content to clipboard"))
+        title = BCWMenuTitle(i18n("Content to clipboard"))
 
         contextMenu = QMenu(i18n("Content to clipboard"))
         contextMenu.addAction(title)
@@ -2270,7 +2270,7 @@ class BCMainViewTab(QFrame):
 
         optionMenu.addAction(cbOptMinWidthActiveAction)
 
-        slOptWidthMin = BCMenuSlider(None, optionMenu)
+        slOptWidthMin = BCWMenuSlider(None, optionMenu)
         slOptWidthMin.slider().setMinimum(BCTableSettingsText.MIN_WIDTH)
         slOptWidthMin.slider().setMaximum(BCTableSettingsText.MAX_WIDTH)
         slOptWidthMin.slider().setValue(value)
@@ -2291,7 +2291,7 @@ class BCMainViewTab(QFrame):
 
         optionMenu.addAction(cbOptMaxWidthActiveAction)
 
-        slOptWidthMax = BCMenuSlider(None, optionMenu)
+        slOptWidthMax = BCWMenuSlider(None, optionMenu)
         slOptWidthMax.slider().setMinimum(BCTableSettingsText.MIN_WIDTH)
         slOptWidthMax.slider().setMaximum(BCTableSettingsText.MAX_WIDTH)
         slOptWidthMax.slider().setValue(value)

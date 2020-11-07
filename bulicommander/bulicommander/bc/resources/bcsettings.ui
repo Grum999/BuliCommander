@@ -880,7 +880,7 @@
               </widget>
              </item>
              <item row="18" column="1">
-              <widget class="BCPathBar" name="bcpbCNUserDefined">
+              <widget class="BCWPathBar" name="bcpbCNUserDefined">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -1242,9 +1242,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>BCPathBar</class>
+   <class>BCWPathBar</class>
    <extends>QFrame</extends>
-   <header>bulicommander.bc.bcpathbar</header>
+   <header>bulicommander.bc.bcwpathbar</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

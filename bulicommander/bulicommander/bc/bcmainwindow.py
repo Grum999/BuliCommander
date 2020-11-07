@@ -41,7 +41,7 @@ from PyQt5.QtWidgets import (
 
 from .bcbookmark import BCBookmark
 from .bchistory import BCHistory
-from .bcpathbar import BCPathBar
+from .bcwpathbar import BCWPathBar
 from .bcmainviewtab import BCMainViewTab
 from .bctheme import BCTheme
 from .bcutils import loadXmlUi

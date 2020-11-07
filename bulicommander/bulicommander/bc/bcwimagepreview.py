@@ -59,7 +59,7 @@ from ..pktk.pktk import (
 
 
 # -----------------------------------------------------------------------------
-class BCImagePreview(QGraphicsView):
+class BCWImagePreview(QGraphicsView):
     """Display image with pan/zoom hability"""
 
     BG_BLACK = 0
@@ -84,17 +84,17 @@ class BCImagePreview(QGraphicsView):
         def zoom1x1(dummy):
             self.setZoom(1.0)
         def bgColorBlack(dummy):
-            self.setBackgroundType(BCImagePreview.BG_BLACK)
+            self.setBackgroundType(BCWImagePreview.BG_BLACK)
         def bgColorWhite(dummy):
-            self.setBackgroundType(BCImagePreview.BG_WHITE)
+            self.setBackgroundType(BCWImagePreview.BG_WHITE)
         def bgColorNGray(dummy):
-            self.setBackgroundType(BCImagePreview.BG_NEUTRAL_GRAY)
+            self.setBackgroundType(BCWImagePreview.BG_NEUTRAL_GRAY)
         def bgColorNone(dummy):
-            self.setBackgroundType(BCImagePreview.BG_TRANSPARENT)
+            self.setBackgroundType(BCWImagePreview.BG_TRANSPARENT)
         def bgColorCheckerBoard(dummy):
-            self.setBackgroundType(BCImagePreview.BG_CHECKER_BOARD)
+            self.setBackgroundType(BCWImagePreview.BG_CHECKER_BOARD)
 
-        super(BCImagePreview, self).__init__(parent)
+        super(BCWImagePreview, self).__init__(parent)
 
         # Image is a QPixmap in a QGraphicsScene
         self.__gScene = QGraphicsScene()
@@ -176,7 +176,7 @@ class BCImagePreview(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
 
-        self.setBackgroundType(BCImagePreview.BG_CHECKER_BOARD)
+        self.setBackgroundType(BCWImagePreview.BG_CHECKER_BOARD)
 
 
 
@@ -186,11 +186,11 @@ class BCImagePreview(QGraphicsView):
     @staticmethod
     def backgroundList():
         """return list of possible values"""
-        return [BCImagePreview.BG_BLACK,
-                BCImagePreview.BG_WHITE,
-                BCImagePreview.BG_NEUTRAL_GRAY,
-                BCImagePreview.BG_TRANSPARENT,
-                BCImagePreview.BG_CHECKER_BOARD]
+        return [BCWImagePreview.BG_BLACK,
+                BCWImagePreview.BG_WHITE,
+                BCWImagePreview.BG_NEUTRAL_GRAY,
+                BCWImagePreview.BG_TRANSPARENT,
+                BCWImagePreview.BG_CHECKER_BOARD]
 
 
     def allowZoom(self):
@@ -234,37 +234,37 @@ class BCImagePreview(QGraphicsView):
         """Set current background definition
 
         Can be:
-            BCImagePreview.BG_BLACK = 0
-            BCImagePreview.BG_WHITE = 1
-            BCImagePreview.BG_NEUTRAL_GRAY = 2
-            BCImagePreview.BG_TRANSPARENT = 3
-            BCImagePreview.BG_CHECKER_BOARD = 4
+            BCWImagePreview.BG_BLACK = 0
+            BCWImagePreview.BG_WHITE = 1
+            BCWImagePreview.BG_NEUTRAL_GRAY = 2
+            BCWImagePreview.BG_TRANSPARENT = 3
+            BCWImagePreview.BG_CHECKER_BOARD = 4
         """
         if not isinstance(value, int):
             raise EInvalidType("Given `value` must be a valid <int>")
 
-        if not value in [BCImagePreview.BG_BLACK,
-                         BCImagePreview.BG_WHITE,
-                         BCImagePreview.BG_NEUTRAL_GRAY,
-                         BCImagePreview.BG_TRANSPARENT,
-                         BCImagePreview.BG_CHECKER_BOARD]:
+        if not value in [BCWImagePreview.BG_BLACK,
+                         BCWImagePreview.BG_WHITE,
+                         BCWImagePreview.BG_NEUTRAL_GRAY,
+                         BCWImagePreview.BG_TRANSPARENT,
+                         BCWImagePreview.BG_CHECKER_BOARD]:
             raise EInvalidValue("Given `value` is not valid")
 
         if self.__backgroundType != value:
             self.__backgroundType = value
-            if self.__backgroundType == BCImagePreview.BG_BLACK:
+            if self.__backgroundType == BCWImagePreview.BG_BLACK:
                 self.__gScene.setBackgroundBrush(QBrush(Qt.black))
                 self.__actionBgBlack.setChecked(True)
-            elif self.__backgroundType == BCImagePreview.BG_WHITE:
+            elif self.__backgroundType == BCWImagePreview.BG_WHITE:
                 self.__gScene.setBackgroundBrush(QBrush(Qt.white))
                 self.__actionBgWhite.setChecked(True)
-            elif self.__backgroundType == BCImagePreview.BG_NEUTRAL_GRAY:
+            elif self.__backgroundType == BCWImagePreview.BG_NEUTRAL_GRAY:
                 self.__gScene.setBackgroundBrush(QBrush(QColor(128,128,128)))
                 self.__actionBgNGray.setChecked(True)
-            elif self.__backgroundType == BCImagePreview.BG_TRANSPARENT:
+            elif self.__backgroundType == BCWImagePreview.BG_TRANSPARENT:
                 self.__gScene.setBackgroundBrush(QBrush(Krita.activeWindow().qwindow().palette().color(QPalette.Mid)))
                 self.__actionBgNone.setChecked(True)
-            elif self.__backgroundType == BCImagePreview.BG_CHECKER_BOARD:
+            elif self.__backgroundType == BCWImagePreview.BG_CHECKER_BOARD:
                 self.__gScene.setBackgroundBrush(checkerBoardBrush(32))
                 self.__actionBgCheckerBoard.setChecked(True)
 
