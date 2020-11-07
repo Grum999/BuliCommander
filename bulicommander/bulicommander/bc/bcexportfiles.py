@@ -202,10 +202,35 @@ class BCExportFilesDialogBox(QDialog):
                         'in':QSizeF(8.5, 11.0),
                         'px':QSizeF(8.5, 11.0)
               },
-        'Legal (US)': {'mm':QSizeF(216, 356),
-                       'cm':QSizeF(21.6, 35.6),
-                       'in':QSizeF(8.5, 14.0),
-                       'px':QSizeF(8.5, 14.0)
+        'Legal (US)':  {'mm':QSizeF(216, 356),
+                        'cm':QSizeF(21.6, 35.6),
+                     'in':QSizeF(8.5, 14.0),
+                        'px':QSizeF(8.5, 14.0)
+              },
+        'Square (A2)': {'mm':QSizeF(420, 420),
+                        'cm':QSizeF(42.0, 42.0),
+                        'in':QSizeF(16.5, 16.5),
+                        'px':QSizeF(16.5, 16.5)
+              },
+        'Square (A3)': {'mm':QSizeF(297, 297),
+                       'cm':QSizeF(29.7, 29.7),
+                       'in':QSizeF(11.7, 11.7),
+                       'px':QSizeF(11.7, 11.7)
+              },
+        'Square (A4)': {'mm':QSizeF(210, 210),
+                       'cm':QSizeF(21.0, 21.0),
+                       'in':QSizeF(8.3, 8.3),
+                       'px':QSizeF(8.3, 8.3)
+              },
+        'Square (A5)': {'mm':QSizeF(148, 148),
+                       'cm':QSizeF(14.8, 14.8),
+                       'in':QSizeF(5.8, 5.8),
+                       'px':QSizeF(5.8, 5.8)
+              },
+        'Square (A6)': {'mm':QSizeF(105, 105),
+                       'cm':QSizeF(10.5, 10.5),
+                       'in':QSizeF(4.1, 4.1),
+                       'px':QSizeF(4.1, 4.1)
               }
     }
     UNITS = {
@@ -3010,8 +3035,24 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         # total number of rows to display
         nbRows = ceil(len(config.get('files', defaultConfig['files']))/thumbPerRow)
         # maximum row per page
-        fpNbRowsMax = floor((fPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing))
-        npNbRowsMax = floor((nPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing))
+        fpNbRowsMax = (fPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing)
+        npNbRowsMax = (nPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing)
+
+        # allow a small error to derterminate number of rows 
+        # > value defined arbitrary, mybe need to be affined
+        if abs(ceil(fpNbRowsMax) - fpNbRowsMax) <= 0.025:
+            fpNbRowsMax = ceil(fpNbRowsMax)
+        else:
+            fpNbRowsMax = floor(fpNbRowsMax)
+
+        if abs(ceil(npNbRowsMax) - npNbRowsMax) <= 0.025:
+            npNbRowsMax = ceil(npNbRowsMax)
+        else:
+            npNbRowsMax = floor(npNbRowsMax)
+
+
+        print('--fp', fpNbRowsMax, (fPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing))
+        print('--np', npNbRowsMax, (nPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing))
 
         if nbRows <= fpNbRowsMax:
             nbPages = 1
@@ -3882,7 +3923,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         self.pgbTargetResultExport.setValue(self.__formatPdfImgPageTotal)
 
         returned['exported']=isOk
-        
+
         return returned
 
     @staticmethod
