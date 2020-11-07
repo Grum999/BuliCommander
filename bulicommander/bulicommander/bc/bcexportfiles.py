@@ -707,6 +707,7 @@ class BCExportFilesDialogBox(QDialog):
             self.bcsteFormatDocImgFPageNotes.setTitle(f"{self.__title}::{i18n('Document/PDF - First page layout')}")
 
             # - - - Thumb layout
+            self.cbxFormatDocImgThumbMode.currentIndexChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
             self.cbxFormatDocImgTextPosition.currentIndexChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
             self.fcbxFormatDocImgTextFontFamily.currentFontChanged.connect(self.__slotPageFormatDocImgPropertiesFontChanged)
             self.dsbFormatDocImgTextFontSize.valueChanged.connect(self.__slotPageFormatDocImgPropertiesFontChanged)
@@ -1002,6 +1003,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(1.0)
             self.dsbFormatDocImgThumbsBorderRadius.setValue(0.0)
             self.dsbFormatDocImgThumbsSpacingInner.setValue(1.0)
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(0)        # fit
 
             self.cbxFormatDocImgTextPosition.setCurrentIndex(2)   # right
 
@@ -1143,6 +1145,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_WIDTH.id()))
             self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS.id()))
             self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_INNER.id()))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD.id())))
 
             self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS.id())))
             self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTNAME.id())))
@@ -1224,6 +1227,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_WIDTH.id()))
             self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS.id()))
             self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_INNER.id()))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD.id())))
 
             self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS.id())))
             self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTNAME.id())))
@@ -1309,6 +1313,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_WIDTH.id()))
             self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS.id()))
             self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_INNER.id()))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGPNG.id())))
 
             self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS.id())))
             self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME.id())))
@@ -1393,6 +1398,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_WIDTH.id()))
             self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS.id()))
             self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_INNER.id()))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGJPG.id())))
 
             self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS.id())))
             self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME.id())))
@@ -2359,6 +2365,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                     'thumbnails.border.width': self.dsbFormatDocImgThumbsBorderWidth.value(),
                     'thumbnails.border.radius': self.dsbFormatDocImgThumbsBorderRadius.value(),
                     'thumbnails.layout.spacing.inner': self.dsbFormatDocImgThumbsSpacingInner.value(),
+                    'thumbnails.image.mode': ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()],
                     'thumbnails.text.position': ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()],
                     'thumbnails.text.font.name': self.fcbxFormatDocImgTextFontFamily.currentFont().family(),
                     'thumbnails.text.font.size': self.dsbFormatDocImgTextFontSize.value(),
@@ -2485,6 +2492,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
 
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
@@ -2537,6 +2545,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
 
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
@@ -2591,6 +2600,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
 
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
@@ -2643,6 +2653,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
+                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
 
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
@@ -3038,7 +3049,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         fpNbRowsMax = (fPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing)
         npNbRowsMax = (nPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing)
 
-        # allow a small error to derterminate number of rows 
+        # allow a small error to derterminate number of rows
         # > value defined arbitrary, mybe need to be affined
         if abs(ceil(fpNbRowsMax) - fpNbRowsMax) <= 0.025:
             fpNbRowsMax = ceil(fpNbRowsMax)
@@ -3122,9 +3133,21 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             image=file.thumbnail(BCFileThumbnailSize.fromValue(512), BCBaseFile.THUMBTYPE_IMAGE)
             if isinstance(image, QImage):
+                thumbWidth = floor(pagesInformation['cell.thumbnail.size'].width())
+                thumbHeight = floor(pagesInformation['cell.thumbnail.size'].height())
                 #thumbPixmap = QPixmap.fromImage(image.scaled(pagesInformation['cell.thumbnail.size'], Qt.KeepAspectRatio, Qt.SmoothTransformation))
-                thumbPixmap = QPixmap.fromImage(image.scaled(QSize(floor(pagesInformation['cell.thumbnail.size'].width()),
-                                                                   floor(pagesInformation['cell.thumbnail.size'].height())), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                if config.get('thumbnails.image.mode', defaultConfig['thumbnails.image.mode'])=='fit':
+                    thumbPixmap = QPixmap.fromImage(image.scaled(QSize(thumbWidth,thumbHeight), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                else:
+                    print('crop', pagesInformation['cell.thumbnail.size'])
+                    if image.width() > image.height():
+                        tmpImg=image.scaledToHeight(thumbHeight, Qt.SmoothTransformation)
+                        pX=floor((tmpImg.width() - thumbWidth)/2)
+                        thumbPixmap = QPixmap.fromImage(tmpImg.copy(pX, 0, thumbWidth, tmpImg.height()))
+                    else:
+                        tmpImg=image.scaledToWidth(thumbWidth, Qt.SmoothTransformation)
+                        pY=floor((tmpImg.height() - thumbHeight)/2)
+                        thumbPixmap = QPixmap.fromImage(tmpImg.copy(0,pY,tmpImg.width(), thumbHeight))
             else:
                 thumbPixmap = None
 
@@ -3533,6 +3556,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 'thumbnails.border.width': 1.0,
                 'thumbnails.border.radius': 0.0,
                 'thumbnails.layout.spacing.inner': 2.0,
+                'thumbnails.image.mode': 'fit',
                 'thumbnails.text.position': 'none',
                 'thumbnails.text.font.name': 'DejaVu sans',
                 'thumbnails.text.font.size': 10,
@@ -3656,6 +3680,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 'thumbnails.border.width': 1.0,
                 'thumbnails.border.radius': 0.0,
                 'thumbnails.layout.spacing.inner': 2.0,
+                'thumbnails.image.mode': 'fit',
                 'thumbnails.text.position': 'none',
                 'thumbnails.text.font.name': 'DejaVu sans',
                 'thumbnails.text.font.size': 10,
@@ -3776,6 +3801,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 'thumbnails.border.width': 1.0,
                 'thumbnails.border.radius': 0.0,
                 'thumbnails.layout.spacing.inner': 2.0,
+                'thumbnails.image.mode': 'fit',
                 'thumbnails.text.position': 'none',
                 'thumbnails.text.font.name': 'DejaVu sans',
                 'thumbnails.text.font.size': 10,
