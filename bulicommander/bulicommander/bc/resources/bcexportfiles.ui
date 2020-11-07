@@ -1487,7 +1487,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
               </sizepolicy>
              </property>
              <property name="currentIndex">
-              <number>1</number>
+              <number>2</number>
              </property>
              <widget class="QWidget" name="pageFormatDocImgPageSetup">
               <layout class="QGridLayout" name="gridLayout_7">
@@ -2174,7 +2174,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                <property name="bottomMargin">
                 <number>0</number>
                </property>
-               <item row="10" column="0">
+               <item row="11" column="0">
                 <widget class="QLabel" name="label_37">
                  <property name="styleSheet">
                   <string notr="true">padding-left: 30px</string>
@@ -2184,7 +2184,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="9" column="0">
+               <item row="10" column="0">
                 <widget class="QLabel" name="label_34">
                  <property name="styleSheet">
                   <string notr="true">padding-left: 30px</string>
@@ -2194,7 +2194,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="7" column="0">
+               <item row="8" column="0">
                 <widget class="QLabel" name="label_33">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
@@ -2210,7 +2210,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="8" column="0">
+               <item row="9" column="0">
                 <widget class="QLabel" name="label_17">
                  <property name="styleSheet">
                   <string notr="true">padding-left: 30px</string>
@@ -2220,7 +2220,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="7" column="1" colspan="2">
+               <item row="8" column="1" colspan="2">
                 <widget class="QComboBox" name="cbxFormatDocImgTextPosition">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define file information position, relative to file thumbnail&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -2252,7 +2252,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </item>
                 </widget>
                </item>
-               <item row="11" column="2">
+               <item row="12" column="2">
                 <spacer name="verticalSpacer_5">
                  <property name="orientation">
                   <enum>Qt::Vertical</enum>
@@ -2265,7 +2265,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </spacer>
                </item>
-               <item row="6" column="0" colspan="3">
+               <item row="7" column="0" colspan="3">
                 <widget class="QLabel" name="label_26">
                  <property name="font">
                   <font>
@@ -2342,20 +2342,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="8" column="1" colspan="2">
-                <widget class="QFontComboBox" name="fcbxFormatDocImgTextFontFamily">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define font used for file information&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="9" column="1" colspan="2">
+               <item row="10" column="1" colspan="2">
                 <widget class="QDoubleSpinBox" name="dsbFormatDocImgTextFontSize">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define font size used for file information&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -2377,7 +2364,20 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="10" column="1" colspan="2">
+               <item row="9" column="1" colspan="2">
+                <widget class="QFontComboBox" name="fcbxFormatDocImgTextFontFamily">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define font used for file information&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="11" column="1" colspan="2">
                 <widget class="BCColorButton" name="pbFormatDocImgTextFontColor">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define color used for file information&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -2460,6 +2460,33 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  <property name="suffix">
                   <string> mm</string>
                  </property>
+                </widget>
+               </item>
+               <item row="6" column="0">
+                <widget class="QLabel" name="label_43">
+                 <property name="styleSheet">
+                  <string notr="true">padding-left: 30px</string>
+                 </property>
+                 <property name="text">
+                  <string>Image</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="1" colspan="2">
+                <widget class="QComboBox" name="cbxFormatDocImgThumbMode">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define how image is displayed!&lt;/p&gt;&lt;p&gt;- Fit: image is resized to fit in given space&lt;/p&gt;&lt;p&gt;- Crop: image is resized, cropped and centered in given space&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>Fit</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Crop</string>
+                  </property>
+                 </item>
                 </widget>
                </item>
               </layout>
@@ -2937,8 +2964,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroupTargetResult"/>
   <buttongroup name="buttonGroupPerimeterSelection"/>
+  <buttongroup name="buttonGroupTargetResult"/>
   <buttongroup name="buttonGroupFormatTextBorder"/>
  </buttongroups>
 </ui>
