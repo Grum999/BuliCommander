@@ -26,3 +26,22 @@ Information is "minimal":
 
 ![Embedded palette example](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_infopanel_embeddedpalettes.png)
 
+
+## Improve Krita Export file list - *Square paper sizes*
+
+Add some new paper sizes with *Square* format.
+
+
+## Improve Krita Export file list - *Thumbnail mode*
+
+Add possibility to define how image are drawn in thumbnail area:
+- Fit mode: entire image is drawn (default mode)
+- Crop mode: image is cropped for a better composition
+
+
+*Image fit mode*
+![Export file list - image fit](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_exportlist_imgfit.png)
+
+*Image crop mode*
+![Export file list - image crop](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_exportlist_imgcrop.png)
+
