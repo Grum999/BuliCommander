@@ -34,7 +34,10 @@ from PyQt5.QtCore import (
         QEventLoop,
         QTimer
     )
-from .bcutils import buildIcon
+from .bcutils import (
+        buildIcon,
+        Debug
+    )
 
 class BCSysTray(object):
     """Manage system tray"""
@@ -102,7 +105,6 @@ class BCSysTray(object):
 
     def __displayBuliCommander(self):
         """Display buli commander"""
-        print("__displayBuliCommander()")
         if self.__uiController.started():
             self.__uiController.commandViewBringToFront()
         else:
@@ -117,7 +119,7 @@ class BCSysTray(object):
         elif QSystemTrayIcon.DoubleClick:
             self.__displayBuliCommander()
         else:
-            print('[BCSysTray] Unknown')
+            Debug.print('[BCSysTray] Unknown')
 
 
     def __displaySysTrayIcon(self):
