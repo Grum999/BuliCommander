@@ -168,6 +168,7 @@ class BCMainWindow(QMainWindow):
         # Menu TOOLS
         self.actionToolsSearch.triggered.connect(self.__actionNotYetImplemented)
         self.actionToolsExportFiles.triggered.connect(self.__menuToolsExportFiles_clicked)
+        self.actionToolsConvertFiles.triggered.connect(self.__menuToolsConvertFiles_clicked)
         #self.actionToolsStatistics.triggered.connect(self.__actionNotYetImplemented)
         #self.actionConsole.triggered.connect(self.__actionNotYetImplemented)
 
@@ -303,6 +304,10 @@ class BCMainWindow(QMainWindow):
     def __menuToolsExportFiles_clicked(self, action):
         """Open export file list tool"""
         self.__uiController.commandToolsExportFilesOpen()
+
+    def __menuToolsConvertFiles_clicked(self, action):
+        """Open convert file tool"""
+        self.__uiController.commandToolsConvertFilesOpen()
 
     # endregion: define actions method -----------------------------------------
 

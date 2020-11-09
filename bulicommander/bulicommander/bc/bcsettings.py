@@ -319,6 +319,25 @@ class BCSettingsKey(Enum):
     CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE =             'config.export.filesList.img.jpg.options.openFileInKrita'
     CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE =             'config.export.filesList.img.jpg.preview.mode'
 
+    CONFIG_CONVERTFILES_GLB_SAVED =                          'config.convert.global.saved'
+    CONFIG_CONVERTFILES_GLB_FORMAT =                         'config.convert.global.format'
+    CONFIG_CONVERTFILES_GLB_TARGET_MODE =                    'config.convert.global.target.mode'
+    CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN =             'config.convert.global.target.filePattern'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_COMPRESSION =            'config.convert.img.png.compression'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_INDEXED =                'config.convert.img.png.indexed'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_INTERLACED =             'config.convert.img.png.interlaced'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_SAVEICCPROFILE =         'config.convert.img.png.saveIccProfile'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_FORCESRGB =              'config.convert.img.png.forceSRGB'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_ALPHA =                  'config.convert.img.png.alpha'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_BGCOLOR =                'config.convert.img.png.transparencyFillcolor'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_QUALITY =                'config.convert.img.jpg.quality'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_SMOOTHING =              'config.convert.img.jpg.smoothing'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_SUBSAMPLING =            'config.convert.img.jpg.subsampling'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_PROGRESSIVE =            'config.convert.img.jpg.progressive'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_OPTIMIZE =               'config.convert.img.jpg.optimize'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_SAVEICCPROFILE =         'config.convert.img.jpg.saveProfile'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_BGCOLOR =                'config.convert.img.jpg.transparencyFillcolor'
+
     CONFIG_SESSION_SAVE =                                    'config.session.save'
     CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY =          'config.defaultSession.panels.view.filesManagedOnly'
     CONFIG_DSESSION_PANELS_VIEW_FILES_BACKUP =               'config.defaultSession.panels.view.filesBackup'
@@ -625,6 +644,26 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD.id():     ('fit',                    BCSettingsFmt(str, ['fit', 'crop'])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE.id():      (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
+
+            BCSettingsKey.CONFIG_CONVERTFILES_GLB_SAVED.id():                   (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_GLB_FORMAT.id():                  ('kra',                    BCSettingsFmt(str, ['kra','png','jpeg'])),
+            BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE.id():             ('sdir',                   BCSettingsFmt(str, ['sdir', 'ddir'])),
+            BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN.id():      ('{file:baseName}.{targetExtension}', BCSettingsFmt(str)),
+
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_COMPRESSION.id():     (6,                        BCSettingsFmt(int, [0,1,2,3,4,5,6,7,8,9])),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INDEXED.id():         (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INTERLACED.id():      (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_SAVEICCPROFILE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_FORCESRGB.id():       (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_ALPHA.id():           (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_BGCOLOR.id():         ('#FFFFFF',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_QUALITY.id():         (85,                       BCSettingsFmt(int, list(range(0, 101)))),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SMOOTHING.id():       (15,                       BCSettingsFmt(int, list(range(0, 101)))),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SUBSAMPLING.id():     ('4:2:0',                  BCSettingsFmt(str, ['4:2:0','4:2:2','4:4:0','4:4:4'])),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_PROGRESSIVE.id():     (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_OPTIMIZE.id():        (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SAVEICCPROFILE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_BGCOLOR.id():         ('#FFFFFF',                BCSettingsFmt(str)),
 
             BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id():                           (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id():                       (False,                    BCSettingsFmt(bool)),

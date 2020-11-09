@@ -353,7 +353,7 @@ class BCBaseFile(object):
         self._tag = {}
 
     @staticmethod
-    def formatFileName(file, pattern=None):
+    def formatFileName(file, pattern=None, targetPath=None):
         """Return a file name build from given file and pattern
 
         If pattern equals "<None>"
@@ -397,6 +397,9 @@ class BCBaseFile(object):
         currentDateTime = time.time()
         fileName = pattern
 
+        if targetPath is None:
+            targetPath = file.path()
+
         isDir = False
         if file.format() != BCFileManagedFormat.DIRECTORY:
             baseFileNameWithoutExt = os.path.splitext(file.name())[0]
@@ -423,7 +426,7 @@ class BCBaseFile(object):
             fileName = re.sub("(?i)\{size:height\}",    "0", fileName)
 
 
-        fileName = re.sub("(?i)\{file:path\}", file.path(),                                  fileName)
+        fileName = re.sub("(?i)\{file:path\}", targetPath,                                   fileName)
         fileName = re.sub("(?i)\{file:baseName\}", baseFileNameWithoutExt,                   fileName)
         fileName = re.sub("(?i)\{file:name\}", nameFileNameWithoutExt,     fileName)
 
@@ -438,7 +441,7 @@ class BCBaseFile(object):
         fileName = re.sub("(?i)\{time:ss\}",   tsToStr(currentDateTime, '%S'),               fileName)
 
         if resultCounter:=re.search("(?i)\{counter(?::(#+))?\}", fileName):
-            regEx = re.sub("(?i)\{file:path\}", re.escape(file.path()),                       pattern)
+            regEx = re.sub("(?i)\{file:path\}", re.escape(targetPath),                        pattern)
 
             regEx = re.sub("(?i)\{file:baseName\}", re.escape(baseFileNameWithoutExt),        regEx)
             regEx = re.sub("(?i)\{file:name\}", re.escape(nameFileNameWithoutExt),            regEx)
@@ -466,7 +469,8 @@ class BCBaseFile(object):
             regEx = re.sub("(?i)\{counter\}",r'(\\d+)',                                         regEx)
 
             for replaceHash in resultCounter.groups():
-                regEx = re.sub(f"\{{counter:{replaceHash}\}}", f"(\\\\d{{{len(replaceHash)},}})", regEx)
+                if not replaceHash is None:
+                    regEx = re.sub(f"\{{counter:{replaceHash}\}}", f"(\\\\d{{{len(replaceHash)},}})", regEx)
 
             regEx = regEx.replace(".", r'\.')
 
@@ -477,9 +481,9 @@ class BCBaseFile(object):
             #nbFiles = len([foundFile for foundFile in os.listdir(file.path()) if os.path.isfile(os.path.join(file.path(), foundFile)) and not re.search(regEx, foundFile) is None]) + 1
 
             if isDir:
-                fileList = [int(rr.groups()[0]) for foundFile in os.listdir(file.path()) if os.path.isdir(os.path.join(file.path(), foundFile)) and (rr:=re.search(regEx, foundFile))]
+                fileList = [int(rr.groups()[0]) for foundFile in os.listdir(targetPath) if os.path.isdir(os.path.join(targetPath, foundFile)) and (rr:=re.search(regEx, foundFile))]
             else:
-                fileList = [int(rr.groups()[0]) for foundFile in os.listdir(file.path()) if os.path.isfile(os.path.join(file.path(), foundFile)) and (rr:=re.search(regEx, foundFile))]
+                fileList = [int(rr.groups()[0]) for foundFile in os.listdir(targetPath) if os.path.isfile(os.path.join(targetPath, foundFile)) and (rr:=re.search(regEx, foundFile))]
             if len(fileList) == 0:
                 nbFiles = 1
             else:
@@ -488,7 +492,8 @@ class BCBaseFile(object):
             fileName = re.sub("(?i)\{counter\}", str(nbFiles),   fileName)
 
             for replaceHash in resultCounter.groups():
-                fileName = re.sub(f"\{{counter:{replaceHash}\}}", f"{nbFiles:0{len(replaceHash)}}", fileName)
+                if not replaceHash is None:
+                    fileName = re.sub(f"\{{counter:{replaceHash}\}}", f"{nbFiles:0{len(replaceHash)}}", fileName)
 
         return fileName
 

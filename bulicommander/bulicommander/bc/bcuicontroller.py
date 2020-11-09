@@ -50,6 +50,7 @@ from .bcfileoperation import (
         BCFileOperation
     )
 from .bcexportfiles import BCExportFilesDialogBox
+from .bcconvertfiles import BCConvertFilesDialogBox
 from .bchistory import BCHistory
 from .bcmainviewtab import (
         BCMainViewTab,
@@ -1760,6 +1761,10 @@ class BCUIController(QObject):
     def commandToolsExportFilesOpen(self):
         """Open window for tool 'Export file list'"""
         BCExportFilesDialogBox.open(f'{self.__bcName}::Export files list', self)
+
+    def commandToolsConvertFilesOpen(self):
+        """Open window for tool 'Convert files'"""
+        BCConvertFilesDialogBox.open(f'{self.__bcName}::Convert files', self)
 
     def commandSettingsOpen(self):
         """Open dialog box settings"""
