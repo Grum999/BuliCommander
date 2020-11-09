@@ -835,7 +835,7 @@ class BCMainViewTab(QFrame):
             self.setPath(self.__dirTreeModel.filePath(self.tvDirectoryTree.currentIndex()))
 
         @pyqtSlot('QString')
-        def tvselectedpath_expanded(value):
+        def tvselectedpath_expandedCollapsed(value):
             self.tvDirectoryTree.resizeColumnToContents(0)
 
         @pyqtSlot('QString')
@@ -959,7 +959,11 @@ class BCMainViewTab(QFrame):
         self.__dirTreeModel.setFilter(QDir.AllDirs|QDir.Dirs|QDir.Drives|QDir.NoSymLinks|QDir.NoDotAndDotDot)
         self.tvDirectoryTree.setModel(self.__dirTreeModel)
         self.tvDirectoryTree.selectionModel().selectionChanged.connect(tvselectedpath_changed)
-        self.tvDirectoryTree.expanded.connect(tvselectedpath_expanded)
+        self.tvDirectoryTree.expanded.connect(tvselectedpath_expandedCollapsed)
+        self.tvDirectoryTree.collapsed.connect(tvselectedpath_expandedCollapsed)
+        self.tvDirectoryTree.contextMenuEvent = self.__contextMenuDirectoryTree
+        self.tvDirectoryTree.hideColumn(1) # gide 'size'
+        self.tvDirectoryTree.hideColumn(2) # gide 'type'
 
         self.__refreshTabFilesLayout()
 
@@ -2300,6 +2304,54 @@ class BCMainViewTab(QFrame):
         slOptWidthMax.slider().valueChanged.connect(setMaxWidth)
         slOptWidthMax.setEnabled(cbOptMaxWidthActive.isChecked())
         optionMenu.addAction(slOptWidthMax)
+
+        contextMenu.exec_(event.globalPos())
+
+
+    def __contextMenuDirectoryTree(self, event):
+        """Display context menu for directory tree"""
+
+        def expandAll(action):
+            def expand(item):
+                # item = QModelIndex
+                if not item.isValid():
+                    return
+
+                model = item.model()
+                childCount = model.rowCount(item)
+                for index in range(childCount):
+                    expand(model.index(index, 0, item))
+
+                if not self.tvDirectoryTree.isExpanded(item):
+                    self.tvDirectoryTree.expand(item)
+            expand(self.tvDirectoryTree.currentIndex())
+
+        def collapseAll(action):
+            def collapse(item, current=True):
+                # item = QModelIndex
+                if not item.isValid():
+                    return
+
+                model = item.model()
+                childCount = model.rowCount(item)
+                for index in range(childCount):
+                    collapse(model.index(index, 0, item))
+
+                if current and self.tvDirectoryTree.isExpanded(item):
+                    self.tvDirectoryTree.collapse(item)
+
+            collapse(self.tvDirectoryTree.currentIndex(), False)
+
+        actionExpandAll = QAction(QIcon(":/images/tree_expand"), i18n('Expand all subdirectories'), self)
+        actionExpandAll.triggered.connect(expandAll)
+
+        actionCollapseAll = QAction(QIcon(":/images/tree_collapse"), i18n('Collapse all subdirectories'), self)
+        actionCollapseAll.triggered.connect(collapseAll)
+
+        # current tab index
+        contextMenu = QMenu()
+        contextMenu.addAction(actionExpandAll)
+        contextMenu.addAction(actionCollapseAll)
 
         contextMenu.exec_(event.globalPos())
 
