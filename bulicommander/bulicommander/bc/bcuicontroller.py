@@ -677,6 +677,7 @@ class BCUIController(QObject):
     def updateMenuForPanel(self):
         """Update menu (enabled/disabled/checked/unchecked) according to current panel"""
         self.__window.actionViewThumbnail.setChecked(self.panel().viewThumbnail())
+        self.__window.actionViewDisplayQuickFilter.setChecked(self.panel().filterVisible())
 
         selectionInfo = self.panel().selectedFiles()
 
@@ -1096,6 +1097,23 @@ class BCUIController(QObject):
 
         self.__window.actionViewThumbnail.setChecked(mode)
         self.__window.panels[panel].setViewThumbnail(mode)
+
+        self.updateMenuForPanel()
+
+        return mode
+
+    def commandViewDisplayQuickFilter(self, panel=None, mode=None):
+        """Set current view mode"""
+        if panel is None:
+            panel = self.panelId()
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        if mode is None or not isinstance(mode, bool):
+            mode = False
+
+        self.__window.actionViewDisplayQuickFilter.setChecked(mode)
+        self.__window.panels[panel].setFilterVisible(mode)
 
         self.updateMenuForPanel()
 
