@@ -163,6 +163,7 @@ class BCMainWindow(QMainWindow):
         self.actionViewShowBackupFiles.triggered.connect(self.__menuViewShowBackupFiles_clicked)
         self.actionViewShowHiddenFiles.triggered.connect(self.__menuViewShowHiddenFiles_clicked)
         self.actionViewDisplaySecondaryPanel.triggered.connect(self.__uiController.commandViewDisplaySecondaryPanel)
+        self.actionViewDisplayQuickFilter.triggered.connect(self.__menuViewDisplayQuickFilter_clicked)
         self.actionViewSwapPanels.triggered.connect(self.__uiController.commandViewSwapPanels)
 
         # Menu TOOLS
@@ -288,6 +289,10 @@ class BCMainWindow(QMainWindow):
     def __menuViewThumbnail_clicked(self, action):
         """Set view mode as icon"""
         self.__uiController.commandViewThumbnail(self.__highlightedPanel, action)
+
+    def __menuViewDisplayQuickFilter_clicked(self, action):
+        """Display/hide quick filter for panel"""
+        self.__uiController.commandViewDisplayQuickFilter(self.__highlightedPanel, action)
 
     def __menuViewShowImageFileOnly_clicked(self, action):
         """Display readable file only"""

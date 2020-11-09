@@ -146,6 +146,7 @@
       <addaction name="actionViewShowHiddenFiles"/>
       <addaction name="separator"/>
       <addaction name="actionViewDisplaySecondaryPanel"/>
+      <addaction name="actionViewDisplayQuickFilter"/>
       <addaction name="separator"/>
       <addaction name="actionViewSwapPanels"/>
      </widget>
@@ -1138,10 +1139,25 @@
      <normaloff>:/images/convert</normaloff>:/images/convert</iconset>
    </property>
    <property name="text">
-    <string>Convert files...</string>
+    <string>&amp;Convert files...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionViewDisplayQuickFilter">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/filter</normaloff>:/images/filter</iconset>
+   </property>
+   <property name="text">
+    <string>Display quick filter</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+F</string>
    </property>
   </action>
  </widget>
