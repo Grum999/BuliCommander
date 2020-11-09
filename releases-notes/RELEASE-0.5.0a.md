@@ -1,6 +1,32 @@
 # Buli Commander :: Release 0.5.0a [YYYY-MM-DD]
 
 
+## Implement tool *Convert files*
+
+The convert tool allows to convert multiples KRA/PNG/JPEG files to KRA/PNG/JPEG files.
+- Target format PNG/JPEG provides similar options than Krita *export* option (modulo: EXIF/IPTC are not managed)
+- Target file name can be defined with markup (allowing to set, or not, the same base filename than original file)
+- If target already exist, file conversion is automatically skipped
+
+> **Note:**
+>
+> This functionnality is slow compared to some tools like *imagemagick* (this might be relative to internal Krita opening/export process..?)
+>
+> Do not consider this as the best way to made conversion `PNG -> JPEG` or `JPEG -> PNG`: tool is mostly here to convert `KRA -> PNG/JPEG` or `PNG/JPEG -> KRA`
+
+
+*Perimeter to convert + target file format options*
+
+![Perimeter to convert + target file format options](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_convert_options.png)
+
+
+*Target directory*
+
+![Target directory](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_convert_target.png)
+
+
+
+
 ## Improve Krita image information - *Used fonts list*
 
 Image information panel provides for Krita file the list of used fonts.
@@ -8,9 +34,12 @@ Image information panel provides for Krita file the list of used fonts.
 If a font is missing on system, font is highlighted.
 
 *Used font list (all OK) example*
+
 ![Font list - ok](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_infopanel_font_ok.png)
 
+
 *Used font list (KO) example*
+
 ![Font list - ko](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_infopanel_font_ko.png)
 
 
@@ -40,8 +69,11 @@ Add possibility to define how image are drawn in thumbnail area:
 
 
 *Image fit mode*
+
 ![Export file list - image fit](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_exportlist_imgfit.png)
 
+
 *Image crop mode*
+
 ![Export file list - image crop](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_exportlist_imgcrop.png)
 
