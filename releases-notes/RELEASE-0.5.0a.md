@@ -25,6 +25,9 @@ The convert tool allows to convert multiples KRA/PNG/JPEG files to KRA/PNG/JPEG 
 ![Target directory](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_convert_target.png)
 
 
+## Implement shortcut for quick filter
+
+Panel's quick filter can be activated/deactivated through `CTRL + SHIFT + F` shortcut
 
 
 ## Improve Krita image information - *Used fonts list*
