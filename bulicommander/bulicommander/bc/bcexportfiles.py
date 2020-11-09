@@ -2205,7 +2205,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             else:
                 # a name is already set...?
                 # update extension
-                if result:=re.match("(.*)(\..*)$", self.leTargetResultFile.text()):
+                if result:=re.match("(.*)(\.[^\.]*)$", self.leTargetResultFile.text()):
                     fileName = f"{result.groups()[0]}.{{ext}}"
                 else:
                     fileName = f"{self.leTargetResultFile.text()}.{{ext}}"
@@ -2842,6 +2842,19 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         currentDateTime = time.time()
 
+        if self.__exportedFileName == BCExportFilesDialogBox.__CLIPBOARD:
+            fileName = i18n('Clipboard')
+            baseName = i18n('Clipboard')
+            extName = ''
+        else:
+            fileName = os.path.basename(self.__exportedFileName)
+            if result:=re.match("(.*)(\.[^\.]*)$", fileName):
+                baseName = result.groups()[0]
+                extName = result.groups()[1]
+            else:
+                baseName = fileName
+                extName = ''
+
         returned = re.sub("(?i)\{bc:name\}",                        self.__uiController.bcName(),                       returned)
         returned = re.sub("(?i)\{bc:version\}",                     self.__uiController.bcVersion(),                    returned)
         returned = re.sub("(?i)\{bc:title\}",                       self.__uiController.bcTitle(),                      returned)
@@ -2865,9 +2878,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         returned = self.__parsePageNumber(returned)
 
-        returned = re.sub("(?i)\{fileName:full\}",                  self.__exportedFileName,                            returned)
-        returned = re.sub("(?i)\{fileName:path\}",                  self.__exportedFileName,                            returned)
-        returned = re.sub("(?i)\{fileName:base\}",                  self.__exportedFileName,                            returned)
+        returned = re.sub("(?i)\{file:name\}",                      fileName,                                           returned)
+        returned = re.sub("(?i)\{file:baseName\}",                  baseName,                                           returned)
+        returned = re.sub("(?i)\{file:ext\}",                       extName,                                            returned)
 
         returned = re.sub("(?i)\{table\}",                          tableContent,                                       returned)
 
@@ -3061,10 +3074,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         else:
             npNbRowsMax = floor(npNbRowsMax)
 
-
-        print('--fp', fpNbRowsMax, (fPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing))
-        print('--np', npNbRowsMax, (nPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing))
-
         if nbRows <= fpNbRowsMax:
             nbPages = 1
         else:
@@ -3139,7 +3148,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 if config.get('thumbnails.image.mode', defaultConfig['thumbnails.image.mode'])=='fit':
                     thumbPixmap = QPixmap.fromImage(image.scaled(QSize(thumbWidth,thumbHeight), Qt.KeepAspectRatio, Qt.SmoothTransformation))
                 else:
-                    print('crop', pagesInformation['cell.thumbnail.size'])
                     if image.width() > image.height():
                         tmpImg=image.scaledToHeight(thumbHeight, Qt.SmoothTransformation)
                         pX=floor((tmpImg.width() - thumbWidth)/2)
