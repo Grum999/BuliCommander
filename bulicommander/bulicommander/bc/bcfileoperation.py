@@ -29,7 +29,7 @@ import os.path
 import shutil
 import sys
 import re
-
+import time
 
 import PyQt5.uic
 from PyQt5.Qt import *
@@ -42,6 +42,8 @@ from .bcfile import (
         BCFile,
         BCFileList,
         BCFileListPath,
+        BCFileManipulateName,
+        BCFileManipulateNameLanguageDef,
         BCBaseFile,
         BCDirectory,
         BCFileManagedFormat,
@@ -274,6 +276,200 @@ class BCFileOperationUi(object):
         return dlgMain
 
     @staticmethod
+    def __dialogFileRenameSingle(fileList):
+        """Initialise default file dialog for single file rename"""
+        def pathChanged(value):
+            dlgMain.buttonBox.button(QDialogButtonBox.Ok).setEnabled( not (value.strip() == '' or value.strip() == sourceFileName) )
+
+        def returnedValue():
+            return {
+                    'files': [fileList[0]],
+                    'rule': dlgMain.leNewFileName.text()
+                }
+
+        if fileList[0].format()==BCFileManagedFormat.DIRECTORY:
+            label=i18n('directory')
+        else:
+            label=i18n('file')
+
+        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcrenamefile_single.ui')
+        dlgMain = PyQt5.uic.loadUi(uiFileName)
+
+        sourceFileName=fileList[0].name()
+
+        dlgMain.leCurrentPathFileName.setText(fileList[0].fullPathName())
+        dlgMain.leNewFileName.setText(sourceFileName)
+        dlgMain.leNewFileName.textChanged.connect(pathChanged)
+
+        dlgMain.lblCurrentName.setText(i18n(f'Current {label} name'))
+        dlgMain.lblNewName.setText(i18n(f'New {label} name'))
+
+        dlgMain.buttonBox.accepted.connect(dlgMain.accept)
+        dlgMain.buttonBox.rejected.connect(dlgMain.reject)
+        dlgMain.returnedValue=returnedValue
+
+        pathChanged(sourceFileName)
+
+        return dlgMain
+
+    @staticmethod
+    def __dialogFileRenameMulti(fileList):
+        """Initialise default file dialog for multiple file rename"""
+        FILEDATA = Qt.UserRole + 1
+
+        def patternChanged():
+            newFileName=BCFileManipulateName.calculateFileName(fileList[0], dlgMain.cePattern.toPlainText())
+            if not newFileName[1] is None:
+                # error
+                dlgMain.lblError.setText(newFileName[1])
+                dlgMain.lblError.setVisible(True)
+            elif dlgMain.cePattern.toPlainText()==defaultPattern:
+                # error...
+                dlgMain.lblError.setText(i18n(f"Note: can't rename {labelPlural} when source name is identical to target name"))
+                dlgMain.lblError.setVisible(True)
+            else:
+                dlgMain.lblError.setText('')
+                dlgMain.lblError.setVisible(False)
+            updateFilesFromListView()
+            updateNbFilesLabelAndBtnOk()
+
+        def showPathChanged(value):
+            header.setSectionHidden(0, (not value))
+
+        def getNewFileName(file):
+            newFileName=BCFileManipulateName.calculateFileName(file, dlgMain.cePattern.toPlainText())
+            if not newFileName[1] is None:
+                # error
+                return i18n('Invalid renaming pattern')
+            else:
+                return newFileName[0]
+
+        def returnedValue():
+            returned=[]
+
+            if dlgMain.cbExcludeSelected.isChecked():
+                for row in range(model.rowCount()):
+                    item=model.item(row, 1)
+                    if not dlgMain.tvResultPreview.selectionModel().isSelected(item.index()):
+                        returned.append(item.data(FILEDATA))
+            else:
+                returned=fileList
+
+            return {
+                    'files': returned,
+                    'rule': dlgMain.cePattern.toPlainText()
+                }
+
+        def addFileToListView(file):
+            newRow = [
+                    QStandardItem(''),
+                    QStandardItem(''),
+                    QStandardItem('')
+                ]
+
+            newRow[0].setText(file.path())
+            newRow[1].setText(file.name())
+            newRow[1].setData(file, FILEDATA)
+            newRow[2].setText(getNewFileName(file))
+
+            model.appendRow(newRow)
+
+        def updateFilesFromListView():
+            for row in range(model.rowCount()):
+                item=model.item(row, 2)
+                item.setText(getNewFileName(model.item(row, 1).data(FILEDATA)))
+
+            dlgMain.tvResultPreview.resizeColumnToContents(2)
+
+        def updateNbFilesLabelAndBtnOk(dummy=None):
+            toProcess=nbFiles
+            textExcluded=''
+            nbExcluded=0
+            if dlgMain.cbExcludeSelected.isChecked():
+                nbExcluded=len(dlgMain.tvResultPreview.selectionModel().selectedRows())
+                toProcess-=nbExcluded
+                textExcluded=i18n(f', {nbExcluded} excluded')
+
+            text=i18n(f'{toProcess} to rename')+textExcluded
+
+            dlgMain.buttonBox.button(QDialogButtonBox.Ok).setEnabled((toProcess>0) and not dlgMain.lblError.isVisible())
+
+            dlgMain.lblNbFiles.setText(text)
+
+        def selectionChanged(selected=None, deselected=None):
+            if dlgMain.cbExcludeSelected.isChecked():
+                updateNbFilesLabelAndBtnOk()
+
+
+        nbFiles = 0
+
+        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcrenamefile_multi.ui')
+        dlgMain = PyQt5.uic.loadUi(uiFileName)
+
+        if fileList[0].format()==BCFileManagedFormat.DIRECTORY:
+            label=i18n('directory')
+            labelPlural=i18n('directories')
+            defaultPattern='{file:baseName}'
+        else:
+            label=i18n('file')
+            labelPlural=i18n('files')
+            defaultPattern='{file:baseName}.{file:ext}'
+
+        dlgMain.cePattern.setPlainText(defaultPattern)
+        dlgMain.cePattern.textChanged.connect(patternChanged)
+        dlgMain.cePattern.setLanguageDefinition(BCFileManipulateNameLanguageDef())
+        dlgMain.cePattern.setOptionMultiLine(False)
+        dlgMain.cePattern.setOptionShowLineNumber(False)
+        dlgMain.cePattern.setOptionShowIndentLevel(False)
+        dlgMain.cePattern.setOptionShowRightLimit(False)
+        dlgMain.cePattern.setOptionShowSpaces(False)
+        dlgMain.cePattern.setOptionAllowWheelSetFontSize(False)
+        dlgMain.cePattern.setShortCut(Qt.Key_Tab, False, None) # disable indent
+        dlgMain.cePattern.setShortCut(Qt.Key_Backtab, False, None) # disable dedent
+        dlgMain.cePattern.setShortCut(Qt.Key_Slash, True, None) # disable toggle comment
+        dlgMain.cePattern.setShortCut(Qt.Key_Return, False, None) # disable autoindent
+
+        dlgMain.cbShowPath.toggled.connect(showPathChanged)
+
+        dlgMain.lblError.setVisible(False)
+
+        model = QStandardItemModel(0, 3, dlgMain)
+        model.setHeaderData(0, Qt.Horizontal, i18n("Path"))
+        model.setHeaderData(1, Qt.Horizontal, i18n(f"Source {label} name"))
+        model.setHeaderData(2, Qt.Horizontal, i18n(f"Renamed {label} name"))
+
+        dlgMain.tvResultPreview.setModel(model)
+
+        header = dlgMain.tvResultPreview.header()
+        header.setStretchLastSection(False)
+        header.setSectionResizeMode(0, QHeaderView.Interactive)
+        header.setSectionResizeMode(1, QHeaderView.Interactive)
+
+        for file in fileList:
+            if not file.format() == BCFileManagedFormat.MISSING:
+                addFileToListView(file)
+                nbFiles+=1
+
+        updateNbFilesLabelAndBtnOk()
+
+        dlgMain.tvResultPreview.resizeColumnToContents(0)
+        dlgMain.tvResultPreview.resizeColumnToContents(1)
+        dlgMain.tvResultPreview.resizeColumnToContents(2)
+
+        header.setSectionHidden(0, True)
+
+        dlgMain.cbExcludeSelected.setText(i18n(f'Exclude selected {labelPlural}'))
+
+        dlgMain.cbExcludeSelected.toggled.connect(updateNbFilesLabelAndBtnOk)
+        dlgMain.tvResultPreview.selectionModel().selectionChanged.connect(updateNbFilesLabelAndBtnOk)
+
+        dlgMain.buttonBox.accepted.connect(dlgMain.accept)
+        dlgMain.buttonBox.rejected.connect(dlgMain.reject)
+        dlgMain.returnedValue=returnedValue
+
+        return dlgMain
+
+    @staticmethod
     def buildInformation(fileList, full=False):
         """Build text information from given list of BCBaseFile"""
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -377,6 +573,43 @@ class BCFileOperationUi(object):
         value, ok = QInputDialog.getText(QWidget(), f"{title}::Create directory", f"Create a new directory into\n{targetPath}", QLineEdit.Normal,"New directory")
         if ok and value != '':
             return os.path.join(targetPath, value)
+        return None
+
+    @staticmethod
+    def rename(title, fileList):
+        """Open dialog box to rename file
+
+        If there's only one file to rename, open 'single' rename dialog box
+        Otherwise open 'multi' rename dialog box
+
+        Return None if user cancel action
+        Otherwise return a dictionary
+        {
+            'files': BCFile List,
+            'rule': rule to rename file
+        }
+        """
+        if len(fileList) == 0:
+            return None
+        elif len(fileList) == 1:
+            if fileList[0].format()==BCFileManagedFormat.DIRECTORY:
+                label=i18n('directory')
+            else:
+                label=i18n('file')
+            db = BCFileOperationUi.__dialogFileRenameSingle(fileList)
+            db.setWindowTitle(i18n(f"{title}::Rename {label}"))
+            if db.exec():
+                return db.returnedValue()
+        else:
+            if fileList[0].format()==BCFileManagedFormat.DIRECTORY:
+                label=i18n('directories')
+            else:
+                label=i18n('files')
+            db = BCFileOperationUi.__dialogFileRenameMulti(fileList)
+            db.setWindowTitle(i18n(f"{title}::Rename {label}"))
+            if db.exec():
+                return db.returnedValue()
+
         return None
 
     @staticmethod
@@ -492,8 +725,6 @@ class BCFileOperation(object):
         #       on newFilePattern/newDirPattern content)
         actionOnFileExist = BCFileOperationUi.FILEEXISTS_ASK
         actionOnPathExist = BCFileOperationUi.FILEEXISTS_ASK
-        actionForFile = actionOnFileExist
-        actionForPath = actionOnPathExist
 
         # pattern to apply for automatic RENAME action
         newFilePattern=None
@@ -562,7 +793,7 @@ class BCFileOperation(object):
                     # current directory exist AND a rename pattern exist for directories
                     # => means that we try to rename directory automatically
                     currentTarget = targetFile
-                    targetFile = os.path.join(file.tag('newPath'), BCFile.formatFileName(BCDirectory(targetFile), newDirPattern))
+                    targetFile = os.path.join(file.tag('newPath'), BCFileManipulateName.parseFileNameKw(BCDirectory(targetFile), newDirPattern))
 
                     if not os.path.exists(targetFile):
                         # ok new name is valid, doesn't exist
@@ -581,7 +812,7 @@ class BCFileOperation(object):
                 elif not isDir and not newFilePattern is None:
                     # current directory exist AND a rename pattern exist for files
                     # => means that we try to rename file automatically
-                    targetFile = os.path.join(file.tag('newPath'), BCFile.formatFileName(BCFile(targetFile), newFilePattern))
+                    targetFile = os.path.join(file.tag('newPath'), BCFileManipulateName.parseFileNameKw(BCFile(targetFile), newFilePattern))
 
                     if not os.path.exists(targetFile):
                         # ok new name is valid, doesn't exist
@@ -603,9 +834,9 @@ class BCFileOperation(object):
                         # rename file
                         currentTarget = targetFile
                         if isDir:
-                            targetFile = os.path.join(os.path.dirname(targetFile), BCFile.formatFileName(BCDirectory(targetFile), re.sub("(?i)\{file:(?:path|name)\}", '', action[1])))
+                            targetFile = os.path.join(os.path.dirname(targetFile), BCFileManipulateName.parseFileNameKw(BCDirectory(targetFile), re.sub("(?i)\{file:(?:path|name)\}", '', action[1])))
                         else:
-                            targetFile = os.path.join(os.path.dirname(targetFile), BCFile.formatFileName(BCFile(targetFile), re.sub("(?i)\{file:(?:path|name)\}", '', action[1])))
+                            targetFile = os.path.join(os.path.dirname(targetFile), BCFileManipulateName.parseFileNameKw(BCFile(targetFile), re.sub("(?i)\{file:(?:path|name)\}", '', action[1])))
                         actionToApply = BCFileOperationUi.FILEEXISTS_RENAME
 
                         if isDir and not os.path.exists(targetFile):
@@ -796,4 +1027,120 @@ class BCFileOperation(object):
             )
             return False
 
+    @staticmethod
+    def rename(title, files, renamePattern):
+        """Rename file(s)
 
+        Given `files` is a list of BCBaseFile
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        actionOnFileExist = BCFileOperationUi.FILEEXISTS_ASK
+
+        # cancelled=0
+        #   when cancelled > 0, it's the number of items processed
+        cancelled=0
+        inError=0
+        processed=None
+
+        totalFiles=len(files)
+        totalSize=0
+        for file in files:
+            totalSize+=file.size()
+
+        QApplication.restoreOverrideCursor()
+        QApplication.setOverrideCursor(Qt.BusyCursor)
+
+        if totalFiles>0:
+            BCFileOperation.__showProgressBar(i18n(f"{title}::Rename files"), len(files), totalSize)
+
+        for file in files:
+            if totalFiles>0:
+                BCFileOperation.__progressBarNext(file.fullPathName(), file.size())
+
+            # determinate new target full path name
+            newFileName=BCFileManipulateName.calculateFileName(file, renamePattern)
+            if not newFileName[1] is None:
+                inError+=1
+                Debug.print('[BCFileOperation.rename] Unable to rename file {0}: {1}', file.fullPathName(), newFileName[1])
+                continue
+            targetFile = os.path.join(file.path(), newFileName[0] )
+
+            actionToApply = BCFileOperationUi.FILEEXISTS_OVERWRITE
+
+            while os.path.exists(targetFile):
+                # the target file already exists..
+
+                if actionOnFileExist == BCFileOperationUi.FILEEXISTS_ASK:
+                    # ask for user what to do...
+                    QApplication.restoreOverrideCursor()
+                    action = BCFileOperationUi.fileExists(title, 'Rename', file, targetFile, len(files))
+                    QApplication.setOverrideCursor(Qt.BusyCursor)
+
+                    if action[0] == BCFileOperationUi.FILEEXISTS_ABORT:
+                        # exit immediately
+                        actionToApply = BCFileOperationUi.FILEEXISTS_ABORT
+                        # minus one because progress bar is already on next item while item has not yet been processed
+                        processed=BCFileOperation.__value() - 1
+                        break
+                    elif action[0] == BCFileOperationUi.FILEEXISTS_RENAME:
+                        # rename file
+                        currentTarget = targetFile
+                        targetFile = os.path.join(os.path.dirname(targetFile), BCFileManipulateName.parseFileNameKw(BCFile(targetFile), re.sub("(?i)\{file:(?:path|name)\}", '', action[1])))
+                        actionToApply = BCFileOperationUi.FILEEXISTS_RENAME
+
+                        # apply to all
+                        if action[2]:
+                            newFilePattern = re.sub("(?i)\{file:(?:path|name)\}", '', action[1])
+
+                        # note: to do break loop
+                        #       if new defined target file already exists, user will be asked again to change file name
+                    else:
+                        # apply to all
+                        if action[2]:
+                            actionOnFileExist = action[0]
+                        actionToApply = action[0]
+                        break
+                else:
+                    actionToApply = actionOnFileExist
+                    break
+
+            if actionToApply == BCFileOperationUi.FILEEXISTS_ABORT:
+                # minus one because progress bar is already on next item while item has not yet been processed
+                processed=BCFileOperation.__value() - 1
+                break
+            elif actionToApply == BCFileOperationUi.FILEEXISTS_SKIP:
+                continue
+            else:
+                try:
+                    #print('rename', file.fullPathName(), targetFile)
+                    os.rename(file.fullPathName(), targetFile)
+                except Exception as e:
+                    inError+=1
+                    Debug.print('[BCFileOperation.rename] Unable to rename file from {0} to {1}: {2}', file.fullPathName(), newName, str(e))
+
+
+            if BCFileOperation.__isCancelled():
+                cancelled=BCFileOperation.__value()
+                break
+
+        if totalFiles>0:
+            BCFileOperation.__hideProgressBar()
+
+        QApplication.restoreOverrideCursor()
+
+        if cancelled>0:
+            BCSysTray.messageWarning(
+                i18n(f"{title}::Rename files"),
+                i18n(f"Renaming process has been cancelled\n\n<i>Items renamed before action has been cancelled: <b>{cancelled}</b> of <b>{totalFiles}<b></i>")
+            )
+        if inError>0:
+            BCSysTray.messageCritical(
+                i18n(f"{title}::Rename files"),
+                i18n(f"Renaming process has been finished with errors\n\n<i>Items not renamed: <b>{inError}</b> of <b>{totalFiles}</b></i>")
+            )
+        elif inError==0 and cancelled==0:
+            BCSysTray.messageInformation(
+                i18n(f"{title}::Rename files"),
+                i18n(f"Renaming finished\n\n<i>Items renamed: <b>{totalFiles}</b></i>")
+            )

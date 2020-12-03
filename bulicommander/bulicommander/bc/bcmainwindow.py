@@ -137,8 +137,8 @@ class BCMainWindow(QMainWindow):
         self.actionFileOpenAsNewDocumentCloseBC.triggered.connect(self.__menuFileOpenAsNewDocumentCloseBC)
         self.actionFileCopyToOtherPanel.triggered.connect(self.__menuFileCopyConfirm)
         self.actionFileMoveToOtherPanel.triggered.connect(self.__menuFileMoveConfirm)
+        self.actionFileRename.triggered.connect(self.__menuFileRename)
         self.actionFileDelete.triggered.connect(self.__menuFileDeleteConfirm)
-        self.actionFileRename.triggered.connect(self.__actionNotYetImplemented)
         self.actionQuit.triggered.connect(self.__uiController.commandQuit)
 
         # Menu EDIT
@@ -261,6 +261,10 @@ class BCMainWindow(QMainWindow):
     def __menuFileMoveNoConfirm(self):
         """Move file without confirmation"""
         self.__uiController.commandFileMove(False)
+
+    def __menuFileRename(self):
+        """Rename file(s)"""
+        self.__uiController.commandFileRename()
 
     def __menuSelectAll_clicked(self, action):
         """Select all files"""

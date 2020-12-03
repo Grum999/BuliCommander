@@ -88,7 +88,9 @@ class BCList(object):
             self.__index = 0
             return self.value()
         else:
-            return self.__list[0]
+            if len(self.__list) > 0:
+                return self.__list[0]
+            return None
 
     def last(self, move=True):
         """Move to last item and return value
@@ -99,7 +101,9 @@ class BCList(object):
             self.__index = len(self.__list) - 1
             return self.value()
         else:
-            return self.__list[len(self.__list) - 1]
+            if len(self.__list) > 0:
+                return self.__list[len(self.__list) - 1]
+            return None
 
     def index(self):
         """Return current index"""
@@ -129,3 +133,7 @@ class BCList(object):
     def length(self):
         """Return list length"""
         return len(self.__list)
+
+    def resetIndex(self):
+        """Reset index to none"""
+        self.__index=-1

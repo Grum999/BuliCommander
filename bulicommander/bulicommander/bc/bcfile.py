@@ -68,14 +68,24 @@ from .bcutils import (
 
         strToBytesSize,
         bytesSizeToStr,
+        regExIsValid,
         strToTs,
         tsToStr,
         strDefault,
         intDefault
     )
+from .bclanguagedef import (
+        BCLanguageDef
+    )
+from .bctokenizer import (
+        BCTokenizer,
+        BCTokenizerRule,
+        BCTokenType
+    )
 from .bcworkers import (
         BCWorkerPool
     )
+from .bctheme import BCTheme
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -100,6 +110,10 @@ if sys.platform == 'linux':
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
+class EInvalidExpression(Exception):
+    """An invalid expression is detected"""
+    pass
+
 class EInvalidRuleParameter(Exception):
     """An invalid rule parameter has been detected"""
     pass
@@ -107,6 +121,393 @@ class EInvalidRuleParameter(Exception):
 class EInvalidQueryResult(Exception):
     """Query result is not valid"""
     pass
+
+class BCFileManipulateNameLanguageDef(BCLanguageDef):
+
+    class TokenType(BCTokenType, Enum):
+        STRING = ('String', 'A STRING value')
+        KW = ('Keyword', 'A keyword return a STRING value')
+        FUNCO_STR = ('String function', 'A FUNCTION for which returned result is a STRING')
+        FUNCO_NUM = ('Number function', 'A FUNCTION for which returned result is a NUMBER')
+        FUNCC = ('Function terminator', 'Define end of function')
+        SEPARATOR = ('Separator', 'A separator for functions arguments')
+        NUMBER = ('Number', 'A NUMBER value')
+        TEXT = ('Text', 'A TEXT value')
+        ETEXT = ('Escaped text', 'A TEXT value')
+
+    def __init__(self):
+        super(BCFileManipulateNameLanguageDef, self).__init__([
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.STRING, r'"[^"\\]*(?:\\.[^"\\]*)*"'),
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.STRING, r"'[^'\\]*(?:\\.[^'\\]*)*'"),
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR, r'\[(?:upper|lower|capitalize|replace|sub|regex|index|camelize):',
+                                                                    'Function [STRING]',
+                                                                    [('[upper:\x01<value>]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [STRING]',
+                                                                                # description
+                                                                                'Convert text *<value>* to uppercase text\n\n'
+                                                                                'Given *<value>* can be:\n'
+                                                                                ' - a string\n'
+                                                                                ' - a keyword',
+                                                                                # example
+                                                                                'Following instruction:\n'
+                                                                                '**`[upper:{file:baseName}]`**\n\n'
+                                                                                'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
+                                                                                '**`MY_FILE__NAME01`**')),
+                                                                     ('[lower:\x01<value>]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [STRING]',
+                                                                                # description
+                                                                                'Convert text *<value>* to lowercase text\n\n'
+                                                                                'Given *<value>* can be:\n'
+                                                                                ' - a string\n'
+                                                                                ' - a keyword',
+                                                                                # example
+                                                                                'Following instruction:\n'
+                                                                                '**`[lower:{file:baseName}]`**\n\n'
+                                                                                'Will return, if *`{file:baseName}`* equals *`MY-FILE--NAME01`*:\n'
+                                                                                '**`my_file__name01`**')),
+                                                                     ('[capitalize:\x01<value>]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [STRING]',
+                                                                                # description
+                                                                                'Convert text *<value>* to capitalized text\n\n'
+                                                                                'Given *<value>* can be:\n'
+                                                                                ' - a string\n'
+                                                                                ' - a keyword',
+                                                                                # example
+                                                                                'Following instruction:\n'
+                                                                                '**`[capitalize:{file:baseName}]`**\n\n'
+                                                                                'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
+                                                                                '**`My_file__name01`**')),
+                                                                     ('[camelize:\x01<value>]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [STRING]',
+                                                                                # description
+                                                                                'Convert text *<value>* to camel case text\n'
+                                                                                '(First alpha character after non-alpha character is set yo upper case)\n\n'
+                                                                                'Given *<value>* can be:\n'
+                                                                                ' - a string\n'
+                                                                                ' - a keyword',
+                                                                                # example
+                                                                                'Following instruction:\n'
+                                                                                '**`[camelize:{file:baseName}]`**\n\n'
+                                                                                'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
+                                                                                '**`My_File__Name01`**')),
+                                                                     ('[replace:\x01<value>, "<search>", "<replace>"]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [STRING]',
+                                                                                # description
+                                                                                'Search *<search>* sequences in *<value>* and replace it with *<replace>*\n\n'
+                                                                                'Given *<value>* can be:\n'
+                                                                                ' - a string\n'
+                                                                                ' - a keyword\n\n'
+                                                                                'Given *<search>* and *<replace>* must be a string',
+                                                                                # example
+                                                                                'Following instruction:\n'
+                                                                                '**`[replace:{file:baseName}, "_", "-"]`**\n\n'
+                                                                                'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
+                                                                                '**`my-file--name`**')),
+                                                                     ('[regex:\x01<value>, "<pattern>"]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [STRING]',
+                                                                                # description
+                                                                                'Return sequences from *<value>* that match given regular expression *<pattern>*\n\n'
+                                                                                'Given *<value>* can be:\n'
+                                                                                ' - a string\n'
+                                                                                ' - a keyword\n\n'
+                                                                                'Given *<pattern>* must be a valid regular expression string',
+                                                                                # example
+                                                                                'Following instruction:\n'
+                                                                                '**`[regex:{file:baseName}, "[a-z]+"]`**\n\n'
+                                                                                'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
+                                                                                '**`myfilename`**')),
+                                                                     ('[regex:\x01<value>, "<pattern>", "<replace>"]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [STRING]',
+                                                                                # description
+                                                                                'Replace sequences from *<value>* that match given regular expression *<pattern>* with *<replace>*\n\n'
+                                                                                'Given *<value>* can be:\n'
+                                                                                ' - a string\n'
+                                                                                ' - a keyword\n\n'
+                                                                                'Given *<pattern>* must be a valid regular expression string\n\n'
+                                                                                'Given *<replace>* must be a string (use $1, $2, $*n*... to replace captured groups)\n\n',
+                                                                                # example
+                                                                                'Following instruction:\n'
+                                                                                '**`[regex:{file:baseName}, "([^\d]+)(\d+)", "$2--$1"]`**\n\n'
+                                                                                'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
+                                                                                '**`01--my_file__name`**')),
+                                                                     ('[index:\x01<value>, "<separator>", <index>]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [STRING]',
+                                                                                # description
+                                                                                'Return string defined by *<index>* whitin *<value>* splitted with *<separator>*\n\n'
+                                                                                'Given *<value>* can be:\n'
+                                                                                ' - a string\n'
+                                                                                ' - a keyword\n\n'
+                                                                                'Given *<separator>* position must be a valid string\n'
+                                                                                'Given *<index>* position must be a valid number\n'
+                                                                                ' - First index position is 1\n',
+                                                                                # example
+                                                                                'Following instructions:\n'
+                                                                                '**`[index:{file:baseName}, "_", 2]`**\n\n'
+                                                                                'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
+                                                                                '**`file`**')),
+                                                                     ('[sub:\x01<value>, <start>]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [STRING]',
+                                                                                # description
+                                                                                'Return substring from *<value>* from *<start>* position\n\n'
+                                                                                'Given *<value>* can be:\n'
+                                                                                ' - a string\n'
+                                                                                ' - a keyword\n\n'
+                                                                                'Given *<start>* position must be a valid number\n'
+                                                                                ' - First character position is 1\n'
+                                                                                ' - Negative value means to start from last character',
+                                                                                # example
+                                                                                'Following instructions:\n'
+                                                                                '**`[sub:{file:baseName}, 4]`** and **`[sub:{file:baseName}, -6]`**\n\n'
+                                                                                'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
+                                                                                '**`file__name01`** and **`name01`**')),
+                                                                     ('[sub:\x01<value>, <start>, <length>]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [STRING]',
+                                                                                # description
+                                                                                'Return substring from *<value>* from *<start>* position for *<length>* characters\n\n'
+                                                                                'Given *<value>* can be:\n'
+                                                                                ' - a string\n'
+                                                                                ' - a keyword\n\n'
+                                                                                'Given *<start>* position must be a valid number\n'
+                                                                                ' - First character position is 1\n'
+                                                                                ' - Negative value means to start from last character\n\n'
+                                                                                'Given *<length>* must be a valid number\n',
+                                                                                # example
+                                                                                'Following instructions:\n'
+                                                                                '**`[sub:{file:baseName}, 4, 4]`** and **`[sub:{file:baseName}, -6, 4]`**\n\n'
+                                                                                'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
+                                                                                '**`file`** and **`name`**'))
+                                                                    ],
+                                                                    'f'),
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.FUNCO_NUM, r'\[(?:len):',
+                                                                    'Function [NUMBER]',
+                                                                    [('[len:\x01<value>]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [NUMBER]',
+                                                                                # description
+                                                                                'Return length (number of characters) for given text *<value>*',
+                                                                                # example
+                                                                                'Following instruction:\n'
+                                                                                '**`[len:"text"]`**\n\n'
+                                                                                'Will return:\n'
+                                                                                '**4**')),
+                                                                     ('[len:\x01<value>, <adjustment>]',
+                                                                            BCTokenizerRule.formatDescription(
+                                                                                'Function [NUMBER]',
+                                                                                # description
+                                                                                'Return length (number of characters) for given text *<value>* with adjusted with given *<adjustment>* number',
+                                                                                # example
+                                                                                'Following instruction:\n'
+                                                                                '**`[len:"text", 1]`**\n\n'
+                                                                                'Will return:\n'
+                                                                                '**5**'))
+                                                                    ],
+                                                                    'f'),
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.KW, r'\{(?:counter(?::#+)?|image:size(?::(?:width|height)(?::#+)?)?|time(?::(?:hh|mm|ss))?|date(?::(?:yyyy|mm|dd))?|file:date(?::(?:yyyy|mm|dd))?|file:time(?::(?:hh|mm|ss))?|file:ext|file:baseName|file:path|file:format|file:hash:(?:md5|sha1|sha256|sha512))\}',
+                                                                  'Keyword',
+                                                                  [('{file:baseName}',
+                                                                         BCTokenizerRule.formatDescription(
+                                                                             'Keyword',
+                                                                             # description
+                                                                             'Return file name, without path and without extension')),
+                                                                   ('{file:ext}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return file extension, without dot **`.`**')),
+                                                                   ('{file:path}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return file path\n\n'
+                                                                              'Please note, path separators are stripped')),
+                                                                   ('{file:format}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return file format (can be different than extension)')),
+                                                                   ('{file:date}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return file date, with format *`YYYYMMDD`*')),
+                                                                   ('{file:date:yyyy}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *year* from file date, with format *`YYYY`*')),
+                                                                   ('{file:date:mm}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *month* from file date, with format *`MM`*')),
+                                                                   ('{file:date:dd}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *day* from file date, with format *`DD`*')),
+                                                                   ('{file:time}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return file time, with format *`HHMMSS`*')),
+                                                                   ('{file:time:hh}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *hours* from file time, with format *`HH`*')),
+                                                                   ('{file:time:mm}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *minutes* from file time, with format *`MM`*')),
+                                                                   ('{file:time:ss}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *seconds* from file time, with format *`SS`*')),
+                                                                   ('{file:hash:md5}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return hash for file using MD5 algorithm (32 characters length)')),
+                                                                   ('{file:hash:sha1}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return hash for file using SHA-1 algorithm (40 characters length)')),
+                                                                   ('{file:hash:sha256}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return hash for file using SHA-256 algorithm (64 characters length)')),
+                                                                   ('{file:hash:sha512}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return hash for file using SHA-512 algorithm (128 characters length)')),
+                                                                   ('{image:size}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return image size from file, with format *`WxH`*')),
+                                                                   ('{image:size:width}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return image width from file')),
+                                                                   ('{image:size:width:####}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return image width from file\n\n'
+                                                                              'Use hash character **`#`** to define minimum number of digits')),
+                                                                   ('{image:size:height}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return image height from file')),
+                                                                   ('{image:size:height:####}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return image height from file\n\n'
+                                                                              'Use hash character **`#`** to define minimum number of digits')),
+                                                                   ('{date}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return current sytem date, with format *`YYYYMMDD`*')),
+                                                                   ('{date:yyyy}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *year* from current sytem date, with format *`YYYY`*')),
+                                                                   ('{date:mm}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *month* from current sytem date, with format *`MM`*')),
+                                                                   ('{date:dd}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *day* from current sytem date, with format *`DD`*')),
+                                                                   ('{time}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return current sytem time, with format *`HHMMSS`*')),
+                                                                   ('{time:hh}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *hours* from current sytem time, with format *`HH`*')),
+                                                                   ('{time:mm}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *minutes* from current sytem time, with format *`MM`*')),
+                                                                   ('{time:ss}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return *seconds* from current sytem time, with format *`SS`*')),
+                                                                   ('{counter}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return a counter value\n\n'
+                                                                              'Counter start from 1, and is incremented if a target file already match the same pattern')),
+                                                                   ('{counter:####}',
+                                                                          BCTokenizerRule.formatDescription(
+                                                                              'Keyword',
+                                                                              # description
+                                                                              'Return a counter value\n\n'
+                                                                              'Counter start from 1, and is incremented if a target file already match the same pattern\n\n'
+                                                                              'Use hash character **`#`** to define minimum counter digits'))
+                                                                  ],
+                                                                  'k'),
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.ETEXT, r'\\\[|\\\]|\\,'),
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.NUMBER, r'-\d+|^\d+'),
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.SEPARATOR, r',{1}?'),
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.FUNCC, r'\]{1}?'),
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.SPACE, r'\s+'),
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.TEXT, r'[{\[,][^{\[\]\}"\'\\\/\s,]*|[^{\[\]\}"\'\\\/\s,]+')
+        ])
+
+        self.setStyles(BCTheme.DARK_THEME, [
+            (BCFileManipulateNameLanguageDef.TokenType.STRING, '#9ac07c', False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.NUMBER, '#c9986a', False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR, '#e5dd82', True, False),
+            (BCFileManipulateNameLanguageDef.TokenType.FUNCO_NUM, '#e5dd82', True, False),
+            (BCFileManipulateNameLanguageDef.TokenType.FUNCC, '#e5dd82', True, False),
+            (BCFileManipulateNameLanguageDef.TokenType.KW, '#e18890', False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.SEPARATOR, '#c278da', False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.SPACE, None, False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.TEXT, '#ffffff', False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.ETEXT, '#999999', False, False)
+        ])
+        self.setStyles(BCTheme.LIGHT_THEME, [
+            (BCFileManipulateNameLanguageDef.TokenType.STRING, '#9ac07c', False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.NUMBER, '#c9986a', False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR, '#c278da', True, False),
+            (BCFileManipulateNameLanguageDef.TokenType.FUNCC, '#c278da', True, False),
+            (BCFileManipulateNameLanguageDef.TokenType.KW, '#e18890', False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.SEPARATOR, '#c278da', False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.SPACE, None, False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.TEXT, '#6aafec', False, False),
+            (BCFileManipulateNameLanguageDef.TokenType.ETEXT, '#c278da', False, False)
+        ])
 
 class BCFileManagedFormat(object):
     """Managed files format """
@@ -333,37 +734,38 @@ class BCFileProperty(Enum):
         else:
             return self.value
 
-class BCBaseFile(object):
-    """Base class for directories and files"""
+class BCFileManipulateName(object):
 
-    THUMBTYPE_ICON = 'qicon'
-    THUMBTYPE_IMAGE = 'qimage'
-    THUMBTYPE_FILENAME = 'filename'     # in this case, return thumbnail file name instead of icon/image
-
-    def __init__(self, fileName):
-        """Initialise BCFile"""
-        self._fullPathName = os.path.expanduser(fileName)
-        self._name = os.path.basename(self._fullPathName)
-        self._path = os.path.dirname(self._fullPathName)
-        if os.path.isdir(self._fullPathName) or os.path.isfile(self._fullPathName):
-            self._mdatetime = os.path.getmtime(self._fullPathName)
-        else:
-            self._mdatetime = None
-        self._format = BCFileManagedFormat.UNKNOWN
-        self._tag = {}
+    __tokenizer = None
 
     @staticmethod
-    def formatFileName(file, pattern=None, targetPath=None):
+    def parseFileNameKw(file, pattern=None, targetPath=None):
         """Return a file name build from given file and pattern
 
         If pattern equals "<None>"
         => return empty string
 
         Otherwise, the following markup can be used:
-            "{file:path}"       The file path name without extension
+            "{file:path}"       The file path name
             "{file:baseName}"   The file base name without extension
             "{file:name}"       The file path+base name without extension
             "{file:ext}"        The file extension
+            "{file:format}"     The file format
+
+            "{file:date}"            The current system date (yyyymmdd)
+            "{file:date:yyyy}"       The current system year
+            "{file:date:mm}"         The current system month
+            "{file:date:dd}"         The current system day
+
+            "{file:time}"            The current system time (hhmmss)
+            "{file:time:hh}"         The current system hour (00-24)
+            "{file:time:mm}"         The current system minutes
+            "{file:time:ss}"         The current system seconds
+
+            "{file:hash:md5}"        File hash - MD5
+            "{file:hash:sha1}"       File hash - SHA-1
+            "{file:hash:sha256}"     File hash - SHA-256
+            "{file:hash:sha512}"     File hash - SHA-512
 
             "{date}"            The current system date (yyyymmdd)
             "{date:yyyy}"       The current system year
@@ -375,9 +777,11 @@ class BCBaseFile(object):
             "{time:mm}"         The current system minutes
             "{time:ss}"         The current system seconds
 
-            "{size}"            The current image size (widthxheight)
-            "{size:width}"      The current image width
-            "{size:height}"     The current image height
+            "{image:size}"            The current image size (widthxheight)
+            "{image:size:width}"      The current image width
+            "{image:size:width:####}"      The current image width
+            "{image:size:height}"     The current image height
+            "{image:size:height:####}"     The current image height
 
             "{counter}"         A counter to file name
             "{counter:####}"    A counter to file name
@@ -410,9 +814,19 @@ class BCBaseFile(object):
                 replaceExtExpr = "(?i)\{file:ext\}"
 
             fileName = re.sub(replaceExtExpr,      file.extension(False),                        fileName)
-            fileName = re.sub("(?i)\{size\}",           f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}x{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
-            fileName = re.sub("(?i)\{size:width\}",     f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}", fileName)
-            fileName = re.sub("(?i)\{size:height\}",    f"{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
+            fileName = re.sub("(?i)\{image:size\}",           f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}x{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
+            fileName = re.sub("(?i)\{image:size:width\}",     f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}", fileName)
+            fileName = re.sub("(?i)\{image:size:height\}",    f"{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
+
+            if kw:=re.search("(?i)\{image:size:width:(#+)\}", fileName):
+                replaceHash=kw.groups()[0]
+                fileName = re.sub(f"(?i){{image:size:width:{replaceHash}}}", f"{file.getProperty(BCFileProperty.IMAGE_WIDTH):0{len(replaceHash)}}", fileName)
+
+            if kw:=re.search("(?i)\{image:size:height:(#+)\}", fileName):
+                replaceHash=kw.groups()[0]
+                fileName = re.sub(f"(?i){{image:size:height:{replaceHash}}}", f"{file.getProperty(BCFileProperty.IMAGE_HEIGHT):0{len(replaceHash)}}", fileName)
+
+
         else:
             isDir = True
             baseFileNameWithoutExt = file.name()
@@ -421,14 +835,34 @@ class BCBaseFile(object):
 
             fileName = re.sub("(?i)\.\{file:ext\}",     "", fileName)
             fileName = re.sub("(?i)\{file:ext\}",       "", fileName)
-            fileName = re.sub("(?i)\{size\}",           "0x0", fileName)
-            fileName = re.sub("(?i)\{size:width\}",     "0", fileName)
-            fileName = re.sub("(?i)\{size:height\}",    "0", fileName)
+            fileName = re.sub("(?i)\{image:size\}",           "0x0", fileName)
+            fileName = re.sub("(?i)\{image:size:width\}",     "0", fileName)
+            fileName = re.sub("(?i)\{image:size:height\}",    "0", fileName)
 
 
         fileName = re.sub("(?i)\{file:path\}", targetPath,                                   fileName)
         fileName = re.sub("(?i)\{file:baseName\}", baseFileNameWithoutExt,                   fileName)
         fileName = re.sub("(?i)\{file:name\}", nameFileNameWithoutExt,     fileName)
+        fileName = re.sub("(?i)\{file:format\}", file.format(),     fileName)
+
+        if re.match("(?i)\{file:hash:md5\}", fileName):
+            fileName = re.sub("(?i)\{file:hash:md5\}",      file.hash('md5'),           fileName)
+        if re.match("(?i)\{file:hash:sha1\}", fileName):
+            fileName = re.sub("(?i)\{file:hash:sha1\}",      file.hash('sha1'),           fileName)
+        if re.match("(?i)\{file:hash:sha256\}", fileName):
+            fileName = re.sub("(?i)\{file:hash:sha256\}",      file.hash('sha256'),           fileName)
+        if re.match("(?i)\{file:hash:sha512\}", fileName):
+            fileName = re.sub("(?i)\{file:hash:sha512\}",      file.hash('sha512'),           fileName)
+
+        fileName = re.sub("(?i)\{file:date\}",      tsToStr(file.lastModificationDateTime(), '%Y%m%d'),           fileName)
+        fileName = re.sub("(?i)\{file:date:yyyy\}", tsToStr(file.lastModificationDateTime(), '%Y'),               fileName)
+        fileName = re.sub("(?i)\{file:date:mm\}",   tsToStr(file.lastModificationDateTime(), '%m'),               fileName)
+        fileName = re.sub("(?i)\{file:date:dd\}",   tsToStr(file.lastModificationDateTime(), '%d'),               fileName)
+
+        fileName = re.sub("(?i)\{file:time\}",      tsToStr(file.lastModificationDateTime(), '%H%M%S'),           fileName)
+        fileName = re.sub("(?i)\{file:time:hh\}",   tsToStr(file.lastModificationDateTime(), '%H'),               fileName)
+        fileName = re.sub("(?i)\{file:time:mm\}",   tsToStr(file.lastModificationDateTime(), '%M'),               fileName)
+        fileName = re.sub("(?i)\{file:time:ss\}",   tsToStr(file.lastModificationDateTime(), '%S'),               fileName)
 
         fileName = re.sub("(?i)\{date\}",      tsToStr(currentDateTime, '%Y%m%d'),           fileName)
         fileName = re.sub("(?i)\{date:yyyy\}", tsToStr(currentDateTime, '%Y'),               fileName)
@@ -451,6 +885,23 @@ class BCBaseFile(object):
                 regEx = re.sub("(?i)\.\{file:ext\}",     "", regEx)
                 regEx = re.sub("(?i)\{file:ext\}",       "", regEx)
 
+            regEx = re.sub("(?i)\{file:format\}", re.escape(file.format()),     regEx)
+
+
+            regEx = re.sub("(?i)\{file:hash:md5\}",      r'[a-z0-9]{32}',           regEx)
+            regEx = re.sub("(?i)\{file:hash:sha1\}",     r'[a-z0-9]{40}',           regEx)
+            regEx = re.sub("(?i)\{file:hash:sha256\}",   r'[a-z0-9]{64}',           regEx)
+            regEx = re.sub("(?i)\{file:hash:sha512\}",   r'[a-z0-9]{128}',          regEx)
+
+            regEx = re.sub("(?i)\{file:date\}",      r'\\d{8}',                                    regEx)
+            regEx = re.sub("(?i)\{file:date:yyyy\}", r'\\d{4}',                                    regEx)
+            regEx = re.sub("(?i)\{file:date:mm\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub("(?i)\{file:date:dd\}",   r'\\d{2}',                                    regEx)
+
+            regEx = re.sub("(?i)\{file:time\}",      r'\\d{6}',                                    regEx)
+            regEx = re.sub("(?i)\{file:time:hh\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub("(?i)\{file:time:mm\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub("(?i)\{file:time:ss\}",   r'\\d{2}',                                    regEx)
 
             regEx = re.sub("(?i)\{date\}",      r'\\d{8}',                                    regEx)
             regEx = re.sub("(?i)\{date:yyyy\}", r'\\d{4}',                                    regEx)
@@ -462,9 +913,9 @@ class BCBaseFile(object):
             regEx = re.sub("(?i)\{time:mm\}",   r'\\d{2}',                                    regEx)
             regEx = re.sub("(?i)\{time:ss\}",   r'\\d{2}',                                    regEx)
 
-            regEx = re.sub("(?i)\{size\}",       r'\\d+x\\d+',                                 regEx)
-            regEx = re.sub("(?i)\{size:width\}", r'\\d+',                                     regEx)
-            regEx = re.sub("(?i)\{size:height\}",r'\\d+',                                     regEx)
+            regEx = re.sub("(?i)\{image:size\}",       r'\\d+x\\d+',                                 regEx)
+            regEx = re.sub("(?i)\{image:size:width\}", r'\\d+',                                     regEx)
+            regEx = re.sub("(?i)\{image:size:height\}",r'\\d+',                                     regEx)
 
             regEx = re.sub("(?i)\{counter\}",r'(\\d+)',                                         regEx)
 
@@ -496,6 +947,396 @@ class BCBaseFile(object):
                     fileName = re.sub(f"\{{counter:{replaceHash}\}}", f"{nbFiles:0{len(replaceHash)}}", fileName)
 
         return fileName
+
+    @staticmethod
+    def calculateFileName(file, pattern=None, keepInvalidCharacters=False):
+        """Process file name manipulation
+
+        Following keywords are supported (same than parseFileNameKw):
+            "{file:path}"       The file path name
+            "{file:baseName}"   The file base name without extension
+            "{file:ext}"        The file extension
+            "{file:format}"     The file format
+
+            "{file:date}"            The current system date (yyyymmdd)
+            "{file:date:yyyy}"       The current system year
+            "{file:date:mm}"         The current system month
+            "{file:date:dd}"         The current system day
+
+            "{file:time}"            The current system time (hhmmss)
+            "{file:time:hh}"         The current system hour (00-24)
+            "{file:time:mm}"         The current system minutes
+            "{file:time:ss}"         The current system seconds
+
+            "{file:hash:md5}"        File hash - MD5
+            "{file:hash:sha1}"       File hash - SHA-1
+            "{file:hash:sha256}"     File hash - SHA-256
+            "{file:hash:sha512}"     File hash - SHA-512
+
+            "{date}"            The current system date (yyyymmdd)
+            "{date:yyyy}"       The current system year
+            "{date:mm}"         The current system month
+            "{date:dd}"         The current system day
+
+            "{time}"            The current system time (hhmmss)
+            "{time:hh}"         The current system hour (00-24)
+            "{time:mm}"         The current system minutes
+            "{time:ss}"         The current system seconds
+
+            "{image:size}"            The current image size (widthxheight)
+            "{image:size:width}"      The current image width
+            "{image:size:width:####}"      The current image width
+            "{image:size:height}"     The current image height
+            "{image:size:height:####}"     The current image height
+
+            "{counter}"         A counter to file name
+            "{counter:####}"    A counter to file name
+
+        Following functions are supporter:
+            return STRING:
+                upper(value)
+                lower(value)
+                capitalize(value)
+                camelize(values)
+                replace(value, regex, replaced)
+                sub(value, start[, length])
+                regex(value, find[, replace])
+                index(value, separator, index)
+            return NUMBER
+                len(value)
+
+        Example:
+            pattern="[lower:[sub:{file:baseName},1,4]]-[sub:{file:baseName},-4].[upper:{file:ext}]"
+
+        Return a tuple:
+            (value, error)
+
+        If any error occurs, returned value is None
+        Otherwise returned error is None
+
+        """
+        NL='\n'
+
+        def processTokenFuncIsArg(token):
+            # return True if token can be considered as a function argument
+            if token:
+                return (not token.type() in (BCFileManipulateNameLanguageDef.TokenType.FUNCC, BCFileManipulateNameLanguageDef.TokenType.SEPARATOR, BCFileManipulateNameLanguageDef.TokenType.SPACE))
+            else:
+                return False
+
+        def processTokenFuncGetNextArg(tokenName):
+            # return next token that can be considered as a function argument
+            token=tokens.next()
+
+            while token and token.type() == BCFileManipulateNameLanguageDef.TokenType.SPACE:
+                token=tokens.next()
+
+            if not token:
+                return None
+
+            if token.type() == BCFileManipulateNameLanguageDef.TokenType.SEPARATOR:
+                token=tokens.next()
+            elif token.type() == BCFileManipulateNameLanguageDef.TokenType.FUNCC:
+                return token
+            else:
+                raise EInvalidExpression(f'Invalid expression for [{tokenName}] function, a separator is missing{NL}{tokens.inText()}')
+
+            while token and token.type() == BCFileManipulateNameLanguageDef.TokenType.SPACE:
+                token=tokens.next()
+
+            return token
+
+        def processTokenFunc(token):
+            # token is a function, current processed value for function
+            returned=""
+            tokenName=token.text()[1:-1].capitalize()
+            terminatorMissing=''
+
+            if tokenName == 'Lower':
+                token=tokens.next()
+                if processTokenFuncIsArg(token):
+                    if not token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                        raise EInvalidExpression(f'Invalid argument type for [Lower] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                    returned=processToken(token).lower()
+                else:
+                    raise EInvalidExpression(f'Missing argument for [Lower] function{NL}{tokens.inText()}')
+
+                token=tokens.next()
+            elif tokenName == 'Upper':
+                token=tokens.next()
+                if processTokenFuncIsArg(token):
+                    if not token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                        raise EInvalidExpression(f'Invalid <value> argument type for [Upper] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                    returned=processToken(token).upper()
+                else:
+                    raise EInvalidExpression(f'Missing <value> argument for [Upper] function{NL}{tokens.inText()}')
+
+                token=tokens.next()
+            elif tokenName == 'Capitalize':
+                token=tokens.next()
+                if processTokenFuncIsArg(token):
+                    if not token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                        raise EInvalidExpression(f'Invalid <value> argument type for [Capitalize] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                    returned=processToken(token).capitalize()
+                else:
+                    raise EInvalidExpression(f'Missing <value> argument for [Capitalize] function{NL}{tokens.inText()}')
+
+                token=tokens.next()
+            elif tokenName == 'Camelize':
+                token=tokens.next()
+                if processTokenFuncIsArg(token):
+                    if not token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                        raise EInvalidExpression(f'Invalid <value> argument type for [Camelize] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                    returned=processToken(token).title()
+                else:
+                    raise EInvalidExpression(f'Missing <value> argument for [Camelize] function{NL}{tokens.inText()}')
+
+                token=tokens.next()
+            elif tokenName == 'Replace':
+                token=tokens.next()
+                if processTokenFuncIsArg(token):
+                    if not token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                        raise EInvalidExpression(f'Invalid <value> argument type for [Replace] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                    returned=processToken(token)
+                else:
+                    raise EInvalidExpression(f'Missing <value> argument for [Replace] function{NL}{tokens.inText()}')
+
+                find=0
+                replace=0
+
+                token=processTokenFuncGetNextArg(tokenName)
+                if token and token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                    find=processToken(token)
+                elif not token or token.type() == BCFileManipulateNameLanguageDef.TokenType.FUNCC:
+                    raise EInvalidExpression(f'Missing <search> argument for [Replace] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                else:
+                    raise EInvalidExpression(f'Invalid <search> argument for [Replace] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+
+
+                token=processTokenFuncGetNextArg(tokenName)
+                if token and token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                    replace=processToken(token)
+                elif not token or token.type() == BCFileManipulateNameLanguageDef.TokenType.FUNCC:
+                    raise EInvalidExpression(f'Missing <replace> argument for [Replace] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                else:
+                    raise EInvalidExpression(f'Invalid <replace> argument for [Replace] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+
+                returned=returned.replace(find, replace)
+                token=tokens.next()
+            elif tokenName == 'Regex':
+                token=tokens.next()
+                if processTokenFuncIsArg(token):
+                    if not token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                        raise EInvalidExpression(f'Invalid <value> argument type for [Regex] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                    returned=processToken(token)
+                else:
+                    raise EInvalidExpression(f'Missing <value> argument for [Regex] function{NL}{tokens.inText()}')
+
+                find=""
+                replace=None
+
+                token=processTokenFuncGetNextArg(tokenName)
+                if token and token.type() == BCFileManipulateNameLanguageDef.TokenType.STRING:
+                    find=processToken(token)
+
+                    if not regExIsValid(find):
+                        raise EInvalidExpression(f'Invalid <pattern> argument for [Regex] function{NL}Expected argument must be a valid regular expression STRING{NL}{tokens.inText()}')
+                elif not token or token.type() == BCFileManipulateNameLanguageDef.TokenType.FUNCC:
+                    raise EInvalidExpression(f'Missing <pattern> argument for [Regex] function{NL}Expected argument must be a regular expression STRING{NL}{tokens.inText()}')
+                else:
+                    raise EInvalidExpression(f'Invalid <pattern> argument for [Regex] function{NL}Expected argument must be a regular expression STRING{NL}{tokens.inText()}')
+
+                token=processTokenFuncGetNextArg(tokenName)
+                if token and token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                    replace=processToken(token)
+                    token=tokens.next()
+                elif token and token.type() != BCFileManipulateNameLanguageDef.TokenType.FUNCC:
+                    raise EInvalidExpression(f'Invalid <replace> argument for [Regex] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+
+                terminatorMissing='<replace>'
+
+                if replace is None:
+                    # return found value(s)
+                    if result:=re.findall(find, returned, re.IGNORECASE):
+                        returned=''.join([value for value in result if not value is None])
+                else:
+                    returned=re.sub(find, re.sub("\$", "\\\\",  replace,flags=re.IGNORECASE), returned, flags=re.IGNORECASE)
+            elif tokenName == 'Sub':
+                # returned=text to process
+                token=tokens.next()
+                if processTokenFuncIsArg(token):
+                    if not token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                        raise EInvalidExpression(f'Invalid <value> argument type for [Sub] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                    returned=processToken(token)
+                else:
+                    raise EInvalidExpression(f'Missing <value> argument for [Sub] function{NL}{tokens.inText()}')
+
+                start=0
+                length=0
+
+                token=processTokenFuncGetNextArg(tokenName)
+                if token and token.type() == BCFileManipulateNameLanguageDef.TokenType.NUMBER:
+                    start=int(token.text())
+                    if start>0:
+                        start-=1
+                elif token and token.type() == BCFileManipulateNameLanguageDef.TokenType.FUNCO_NUM:
+                    start=processToken(token)
+                    if start>0:
+                        start-=1
+                elif not token or token.type() == BCFileManipulateNameLanguageDef.TokenType.FUNCC:
+                    raise EInvalidExpression(f'Missing <start> argument for [Sub] function{NL}Expected argument must be a NUMBER, a NUMBER FUNCTION{NL}{tokens.inText()}')
+                else:
+                    raise EInvalidExpression(f'Invalid <start> argument for [Sub] function{NL}Expected argument must be a NUMBER, a NUMBER FUNCTION{NL}{tokens.inText()}')
+
+                token=processTokenFuncGetNextArg(tokenName)
+                if token and token.type() == BCFileManipulateNameLanguageDef.TokenType.NUMBER:
+                    length=int(token.text())
+                    token=tokens.next()
+                elif token and token.type() == BCFileManipulateNameLanguageDef.TokenType.FUNCO_NUM:
+                    length=processToken(token)
+                    token=tokens.next()
+                elif token and token.type() != BCFileManipulateNameLanguageDef.TokenType.FUNCC:
+                    raise EInvalidExpression(f'Invalid <length> argument for [Sub] function{NL}Expected argument must be a NUMBER, a NUMBER FUNCTION{NL}{tokens.inText()}')
+
+                terminatorMissing='<length>'
+
+                if length!=0:
+                    returned=returned[start:(start+length)]
+                else:
+                    returned=returned[start:]
+            elif tokenName == 'Index':
+                # returned=text to process
+                token=tokens.next()
+                if processTokenFuncIsArg(token):
+                    if not token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                        raise EInvalidExpression(f'Invalid <value> argument type for [Index] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                    returned=processToken(token)
+                else:
+                    raise EInvalidExpression(f'Missing <value> argument for [Index] function{NL}{tokens.inText()}')
+
+                separator=''
+                index=0
+
+                token=processTokenFuncGetNextArg(tokenName)
+                if token and token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                    separator=processToken(token)
+                elif not token or token.type() == BCFileManipulateNameLanguageDef.TokenType.FUNCC:
+                    raise EInvalidExpression(f'Missing <separator> argument for [Index] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                else:
+                    raise EInvalidExpression(f'Invalid <separator> argument for [Index] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+
+                token=processTokenFuncGetNextArg(tokenName)
+                if token and token.type() == BCFileManipulateNameLanguageDef.TokenType.NUMBER:
+                    index=int(token.text())
+                elif token and token.type() == BCFileManipulateNameLanguageDef.TokenType.FUNCO_NUM:
+                    index=processToken(token)
+                elif not token or token.type() == BCFileManipulateNameLanguageDef.TokenType.FUNCC:
+                    raise EInvalidExpression(f'Missing <index> argument for [Index] function{NL}Expected argument must be a NUMBER, a NUMBER FUNCTION{NL}{tokens.inText()}')
+                else:
+                    raise EInvalidExpression(f'Invalid <index> argument for [Index] function{NL}Expected argument must be a NUMBER, a NUMBER FUNCTION{NL}{tokens.inText()}')
+
+                try:
+                    if index>1:
+                        index-=1
+                    returned=returned.split(separator)[index]
+                except Exception as e:
+                    returned=''
+                token=tokens.next()
+            elif tokenName == 'Len':
+                token=tokens.next()
+                if processTokenFuncIsArg(token):
+                    if not token.type() in (BCFileManipulateNameLanguageDef.TokenType.STRING, BCFileManipulateNameLanguageDef.TokenType.KW, BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR):
+                        raise EInvalidExpression(f'Invalid argument type for [Len] function{NL}Expected argument must be a STRING, a KEYWORD, a STRING FUNCTION{NL}{tokens.inText()}')
+                    returned=len(processToken(token))
+                else:
+                    raise EInvalidExpression(f'Missing argument for [Len] function{NL}{tokens.inText()}')
+
+                adjustment=0
+                token=processTokenFuncGetNextArg(tokenName)
+                if token and token.type() == BCFileManipulateNameLanguageDef.TokenType.NUMBER:
+                    adjustment=int(token.text())
+                    token=tokens.next()
+                elif token and token.type() == BCFileManipulateNameLanguageDef.TokenType.FUNCO_NUM:
+                    adjustment=processToken(token)
+                    token=tokens.next()
+                elif token and token.type() != BCFileManipulateNameLanguageDef.TokenType.FUNCC:
+                    raise EInvalidExpression(f'Invalid <adjustment> argument for [Len] function{NL}Expected argument must be a NUMBER, a NUMBER FUNCTION{NL}{tokens.inText()}')
+
+                terminatorMissing='<length>'
+
+                if adjustment!=0:
+                    returned=returned+adjustment
+
+
+            if not token or token.type() != BCFileManipulateNameLanguageDef.TokenType.FUNCC:
+                if terminatorMissing != '':
+                    raise EInvalidExpression(f'Missing argument {terminatorMissing} and/or function terminator "]" for [{tokenName}] function{NL}{tokens.inText()}')
+                else:
+                    raise EInvalidExpression(f'Missing function terminator "]" for [{tokenName}] function{NL}{tokens.inText()}')
+
+            return returned
+
+        def processToken(token):
+            # return value for token
+            returned = ""
+
+            if token is None:
+                return ""
+
+            if token.type() == BCFileManipulateNameLanguageDef.TokenType.STRING:
+                return token.text().strip('"')
+            elif token.type() in (BCFileManipulateNameLanguageDef.TokenType.TEXT, BCFileManipulateNameLanguageDef.TokenType.NUMBER, BCFileManipulateNameLanguageDef.TokenType.SPACE):
+                return token.text()
+            elif token.type() == BCFileManipulateNameLanguageDef.TokenType.ETEXT:
+                return token.text().strip(r'\\')
+            elif token.type() == BCFileManipulateNameLanguageDef.TokenType.KW:
+                return BCFileManipulateName.parseFileNameKw(file, token.text())
+            elif token.type() in (BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR, BCFileManipulateNameLanguageDef.TokenType.FUNCO_NUM):
+                return processTokenFunc(token)
+            else:
+                return ""
+
+        # Rules to tokenize expression
+        if BCFileManipulateName.__tokenizer is None:
+            BCFileManipulateName.__tokenizer = BCFileManipulateNameLanguageDef().tokenizer()
+
+        tokens = BCFileManipulateName.__tokenizer.tokenize(pattern)
+
+        returnedValue = ""
+
+        # get first token (or None if no tokens)
+        try:
+            token=tokens.next()
+            while not token is None:
+                returnedValue+=processToken(token)
+                token=tokens.next()
+        except Exception as e:
+            return (None, str(e))
+
+        if not keepInvalidCharacters:
+            returnedValue=re.sub(r'[*\\/<>?:;"|]', '', returnedValue)
+        return (returnedValue, None)
+
+
+
+class BCBaseFile(object):
+    """Base class for directories and files"""
+
+    THUMBTYPE_ICON = 'qicon'
+    THUMBTYPE_IMAGE = 'qimage'
+    THUMBTYPE_FILENAME = 'filename'     # in this case, return thumbnail file name instead of icon/image
+
+    def __init__(self, fileName):
+        """Initialise BCFile"""
+        self._fullPathName = os.path.expanduser(fileName)
+        self._name = os.path.basename(self._fullPathName)
+        self._path = os.path.dirname(self._fullPathName)
+        if os.path.isdir(self._fullPathName) or os.path.isfile(self._fullPathName):
+            self._mdatetime = os.path.getmtime(self._fullPathName)
+        else:
+            self._mdatetime = None
+        self._format = BCFileManagedFormat.UNKNOWN
+        self._tag = {}
 
     @staticmethod
     def fullPathNameCmpAsc(f1, f2):
@@ -632,6 +1473,20 @@ class BCBaseFile(object):
             fs = os.stat(self._fullPathName)
             return (pwd.getpwuid(fs.st_uid).pw_name, grp.getgrgid(fs.st_uid).gr_name)
         return ('', '')
+
+    def hash(self, method):
+        """Return hash for file"""
+        if not method in ('md5', 'sha1', 'sha256', 'sha512'):
+            raise EInvalidValue('Given `method` value must be "md5", "sha1", "sha256" or "sha512"')
+
+        if method=='md5':
+            return '0' * 32
+        elif method=='sha1':
+            return '0' * 40
+        elif method=='sha256':
+            return '0' * 64
+        elif method=='sha512':
+            return '0' * 128
 
 class BCDirectory(BCBaseFile):
     """Provides common properties with BCFile to normalize way directory & file
@@ -772,6 +1627,14 @@ class BCFile(BCBaseFile):
         self.__readable = False
         self.__extension = ''
         self.__baseName = ''
+
+        # hash in cache
+        self.__hashCache={
+                'md5': None,
+                'sha1': None,
+                'sha256': None,
+                'sha512': None
+            }
 
         if not BCFile.__INITIALISED:
             raise EInvalidStatus('BCFile class is not initialised')
@@ -3187,6 +4050,38 @@ class BCFile(BCBaseFile):
         else:
             return {}
 
+    def hash(self, method, chunkSize=8192):
+        """Return hash for file, using method (md5, sha1, sha256, sha512)
+
+        Hash is stored in cache
+        """
+        if not method in ('md5', 'sha1', 'sha256', 'sha512'):
+            raise EInvalidValue('Given `method` value must be "md5", "sha1", "sha256" or "sha512"')
+
+        if os.path.isfile(self._fullPathName):
+            _mdatetime = os.path.getmtime(self._fullPathName)
+        else:
+            return super(BCFile, self).hash(method)
+
+        if self._mdatetime != _mdatetime or self.__hashCache[method] is None:
+            # recalculate hash
+            fileHash={
+                    'md5': hashlib.md5(),
+                    'sha1': hashlib.sha1(),
+                    'sha256': hashlib.sha256(),
+                    'sha512': hashlib.sha512()
+                }
+
+            with open(self._fullPathName, "rb") as fileHandle:
+                buffer=fileHandle.read(chunkSize)
+                while buffer:
+                    fileHash[method].update(buffer)
+                    buffer=fileHandle.read(chunkSize)
+
+                self.__hashCache[method]=fileHash[method].hexdigest()
+
+        return self.__hashCache[method]
+
     # endregion: getter/setters ------------------------------------------------
 
 class BCFileListRuleOperatorType(Enum):
@@ -4779,5 +5674,3 @@ class BCFileIcon(object):
 
 
 Debug.setEnabled(True)
-
-

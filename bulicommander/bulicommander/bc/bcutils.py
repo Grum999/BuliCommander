@@ -636,6 +636,14 @@ def cloneRect(rect):
     """Clone a QRect"""
     return QRect(rect.left(), rect.top(), rect.width(), rect.height())
 
+def regExIsValid(regex):
+    """Return True if given regular expression is valid, otherwise false"""
+    try:
+        r=re.compile(regex)
+    except:
+        return False
+    return True
+
 # ------------------------------------------------------------------------------
 
 
