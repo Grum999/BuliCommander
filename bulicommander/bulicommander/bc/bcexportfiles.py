@@ -1313,7 +1313,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_WIDTH.id()))
             self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS.id()))
             self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_INNER.id()))
-            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGPNG.id())))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD.id())))
 
             self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS.id())))
             self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME.id())))
@@ -1398,7 +1398,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_WIDTH.id()))
             self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS.id()))
             self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_INNER.id()))
-            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGJPG.id())))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD.id())))
 
             self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS.id())))
             self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME.id())))
@@ -3965,4 +3965,3 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         """Open dialog box"""
         db = BCExportFilesDialogBox(title, uicontroller)
         return db.exec()
-
