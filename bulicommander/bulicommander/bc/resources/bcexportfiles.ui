@@ -327,7 +327,7 @@ Drag'n'drop properties to reorganize order.</string>
            <widget class="QPushButton" name="pbPerimeterCheckAll">
             <property name="font">
              <font>
-              <family>ABeeZee</family>
+              <family>DejaVu Sans</family>
               <pointsize>8</pointsize>
               <italic>true</italic>
              </font>
@@ -344,7 +344,7 @@ Drag'n'drop properties to reorganize order.</string>
            <widget class="QPushButton" name="pbPerimeterUncheckAll">
             <property name="font">
              <font>
-              <family>ABeeZee</family>
+              <family>DejaVu Sans</family>
               <pointsize>8</pointsize>
               <italic>true</italic>
              </font>
@@ -2269,7 +2269,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 <widget class="QLabel" name="label_26">
                  <property name="font">
                   <font>
-                   <family>ABeeZee</family>
+                   <family>DejaVu Sans</family>
                    <weight>75</weight>
                    <bold>true</bold>
                   </font>
@@ -2612,7 +2612,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         <widget class="QLabel" name="label_12">
          <property name="font">
           <font>
-           <family>ABeeZee</family>
+           <family>DejaVu Sans</family>
            <pointsize>12</pointsize>
            <weight>75</weight>
            <italic>false</italic>
@@ -2710,7 +2710,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         <widget class="QLabel" name="label_13">
          <property name="font">
           <font>
-           <family>ABeeZee</family>
+           <family>DejaVu Sans</family>
            <pointsize>10</pointsize>
            <weight>75</weight>
            <italic>false</italic>

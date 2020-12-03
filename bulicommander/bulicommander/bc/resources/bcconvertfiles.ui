@@ -488,7 +488,7 @@
         <widget class="QLabel" name="label_13">
          <property name="font">
           <font>
-           <family>ABeeZee</family>
+           <family>DejaVu Sans</family>
            <pointsize>10</pointsize>
            <weight>75</weight>
            <italic>false</italic>
