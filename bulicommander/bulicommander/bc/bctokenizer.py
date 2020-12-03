@@ -20,18 +20,98 @@
 # -----------------------------------------------------------------------------
 
 
-#from bulicommander import (
-#        BCList
-#    )
-
 from enum import Enum
 
+import hashlib
 import re
+import time
 
+from PyQt5.Qt import *
 from .bclist import BCList
+from .bctheme import BCTheme
+from ..pktk.pktk import EInvalidType
+from ..pktk.pktk import EInvalidValue
+
 
 class BCTokenType(Enum):
-    pass
+    UNKNOWN = ('Unknown', 'This value is not know in grammar and might not be interpreted')
+    NEWLINE = ('New line', 'A line feed')
+    SPACE = ('Space', 'Space(s) character(s)')
+
+    def id(self, **param):
+        """Return token Id value"""
+        if isinstance(param, dict):
+            return self.value[0].format(**param)
+        else:
+            return self.value[0]
+
+    def description(self, **param):
+        """Return token description"""
+        if isinstance(param, dict):
+            return self.value[1].format(**param)
+        else:
+            return self.value[1]
+
+class BCTokenStyle:
+    """Define styles applied for tokens types"""
+
+    def __init__(self, styles=[]):
+        """Initialise token family"""
+        self.__currentThemeId = BCTheme.DARK_THEME
+
+        # define default styles for tokens
+        self.__tokenStyles = {}
+
+        styles = {
+                BCTheme.DARK_THEME: [
+                        (BCTokenType.UNKNOWN, '#d85151', True, True, '#7b1b1b'),
+                        (BCTokenType.NEWLINE, None, False, False)
+                    ],
+                BCTheme.LIGHT_THEME: [
+                        (BCTokenType.UNKNOWN, '#d85151', True, True, '#7b1b1b'),
+                        (BCTokenType.NEWLINE, None, False, False)
+                    ]
+            }
+
+        for style in styles:
+            for definition in styles[style]:
+                self.setStyle(style, *definition)
+
+    def style(self, type):
+        """Return style to apply for a token type"""
+        if isinstance(type, BCTokenType):
+            if type in self.__tokenStyles[self.__currentThemeId]:
+                return self.__tokenStyles[self.__currentThemeId][type]
+        # in all other case, token style is not known...
+        return self.__tokenStyles[self.__currentThemeId][BCTokenType.UNKNOWN]
+
+    def setStyle(self, themeId, tokenType, fgColor, bold, italic, bgColor=None):
+        """Define style for a token family"""
+        textFmt = QTextCharFormat()
+        textFmt.setFontItalic(italic)
+        if bold:
+            textFmt.setFontWeight(QFont.Bold)
+
+        if not fgColor is None:
+            textFmt.setForeground(QColor(fgColor))
+        if not bgColor is None:
+            textFmt.setBackground(QColor(bgColor))
+
+        if not themeId in self.__tokenStyles:
+            self.__tokenStyles[themeId]={}
+
+        self.__tokenStyles[themeId][tokenType]=textFmt
+
+    def theme(self):
+        """Return current defined theme"""
+        return self.__currentThemeId
+
+    def setTheme(self, themeId):
+        """Set current theme
+
+        If theme doesn't exist, current theme is not changed"""
+        if themeId in self.__currentThemeId:
+            self.__currentThemeId=themeId
 
 class BCToken(object):
     """A token
@@ -43,33 +123,101 @@ class BCToken(object):
     - a value
     - position (column and row) from original text
     """
-    def __init__(self, type, value, col=None, row=None):
-        self.__type = type
-        self.__value = value
-        self.__pCol = col
-        self.__pRow = row
+    __LINE_NUMBER = 0
+    __LINE_POSSTART = 0
+
+    @staticmethod
+    def resetTokenizer():
+        BCToken.__LINE_NUMBER = 1
+        BCToken.__LINE_POSSTART = 0
+
+    def __init__(self, text, rule, positionStart, positionEnd, length):
+        self.__text = text.lstrip()
+        self.__rule = rule
+        self.__positionStart=positionStart
+        self.__positionEnd=positionEnd
+        self.__length=length
+        self.__lineNumber=BCToken.__LINE_NUMBER
+        self.__linePositionStart=(positionStart - BCToken.__LINE_POSSTART)+1
+        self.__linePositionEnd=self.__linePositionStart + length
+        self.__next = None
+        self.__previous = None
+
+        if self.type()==BCTokenType.NEWLINE:
+            self.__indent=0
+            BCToken.__LINE_NUMBER+=1
+            BCToken.__LINE_POSSTART=positionEnd
+        else:
+            self.__indent=len(text) - len(self.__text)
 
     def __repr__(self):
-        return f'<BCToken(Position={self.__pCol},{self.__pRow}; Type={self.__type}; Value={self.__value})>'
+        if self.type()==BCTokenType.NEWLINE:
+            txt=''
+        else:
+            txt=self.__text
+        return (f"<BCToken({self.__indent}, '{txt}', Type[{self.type()}]"
+                f"Length: {self.__length}, "
+                f"Global[Start: {self.__positionStart}, End: {self.__positionEnd}], "
+                f"Line[Start: {self.__linePositionStart}, End: {self.__linePositionEnd}, Number: {self.__lineNumber}])>")
 
     def __str__(self):
-        return f'| {self.__pCol:>5} | {self.__pRow:>5} | {self.__type:<50} | {self.__value}'
+        return f'| {self.__linePositionStart:>5} | {self.__lineNumber:>5} | {self.type():<50} | {self.__length:>2} | `{self.__text}`'
 
     def type(self):
-        """Return token type"""
-        return self.__type
+        """return token type"""
+        return self.__rule.type()
 
-    def value(self):
-        """Return token value"""
-        return self.__value
+    def positionStart(self):
+        """Return position (start) in text"""
+        return self.__positionStart
+
+    def positionEnd(self):
+        """Return position (end) in text"""
+        return self.__positionEnd
+
+    def length(self):
+        """Return text length"""
+        return self.__length
+
+    def indent(self):
+        """Return token indentation"""
+        return self.__indent
+
+    def text(self):
+        """Return token text"""
+        return self.__text
+
+    def rule(self):
+        """Return token rule"""
+        return self.__rule
+
+    def setNext(self, token=None):
+        """Set next token"""
+        self.__next = token
+
+    def setPrevious(self, token=None):
+        """Set previous token"""
+        self.__previous = token
+
+    def next(self):
+        """Return next token, or None if current token is the last one"""
+        return self.__next
+
+    def previous(self):
+        """Return previous token, or None if current token is the last one"""
+        return self.__previous
 
     def column(self):
         """Return column number for token"""
-        return self.__pCol
+        return self.__linePositionStart
 
     def row(self):
         """Return row number for token"""
-        return self.__pRow
+        return self.__lineNumber
+
+    def isUnknown(self):
+        """return if it's an unknown token"""
+        return (self.__rule.type() == BCTokenType.UNKNOWN)
 
 class BCTokens(BCList):
     """A tokenized text with facilities to access and parse tokens"""
@@ -84,43 +232,64 @@ class BCTokens(BCList):
         else:
             raise Exception('Given `text` must be a <str>')
 
+    def __repr__(self):
+        nl='\n'
+        return f"<BCTokens({self.length()}, [{nl}{f'{nl}'.join([str(token) for token in self.list()])}{nl}])>"
+
     def text(self):
         """Return original tokenized text"""
         return self.__text
 
-    def inText(self, displayPosition=False, position=None):
+    def inText(self, displayPosition=False, reference=None):
         """Return current token in text
 
-        if `position` is provided (a tuple(column, row)), return text at the given
-        position
+        if `reference` is provided, return text for the given reference
+        can be:
+        - a tuple(column, row)
+        - a token
+        - None (in this case, return information for current token)
+
         """
         col = 0
         row = 0
         length = 1
+        outsideArrowRight = ">"
 
-        if position is None:
+        if reference is None:
             if self.value() is None:
-                # nothing to return
-                return ""
+                if self.last(False) is None:
+                    # nothing to return
+                    return ""
+                else:
+                    # need to set position after last token in this case
+                    token=self.last(False)
+                    col = token.column() + token.length()
+                    row = token.row() - 1 # as token start to row 1, and here we start to row 0
+                    length = 1
+                    outsideArrowRight = "^"
             else:
-                col = self.value().column()
-                row = self.value().row()
-                length = len(self.value().value())
-        elif isinstance(position, tuple):
-            if len(position) >= 2 and isinstance(position[0], int):
-                col = position[0]
+                col = self.value().column() - 1 # as token start to col 1, and here we start to col 0
+                row = self.value().row() - 1 # as token start to row 1, and here we start to row 0
+                length = self.value().length()
+        elif isinstance(reference, BCToken):
+            col = reference.column() - 1 # as token start to col 1, and here we start to col 0
+            row = reference.row() - 1 # as token start to row 1, and here we start to row 0
+            length = reference.length()
+        elif isinstance(reference, tuple):
+            if len(reference) >= 2 and isinstance(reference[0], int):
+                col = reference[0]
             else:
-                raise Exception("Given `position` must be a <tuple(<int>,<int>)>")
+                raise Exception("Given `reference` must be a <tuple(<int>,<int>)>")
 
-            if len(position) >= 2 and isinstance(position[1], int):
-                row = position[1]
+            if len(reference) >= 2 and isinstance(reference[1], int):
+                row = reference[1]
             else:
-                raise Exception("Given `position` must be a <tuple(<int>,<int>)>")
+                raise Exception("Given `reference` must be a <tuple(<int>,<int>)>")
 
-            if len(position) >= 3 and isinstance(position[3], int):
-                length = max(1, position[1])
+            if len(reference) >= 3 and isinstance(reference[3], int):
+                length = max(1, reference[1])
         else:
-            raise Exception("Given `position` must be a <tuple(<int>,<int>)>")
+            raise Exception("When given, `reference` must be a <BCToken> or <tuple(<int>,<int>)>")
 
         rows = self.__text.split('\n')
 
@@ -136,11 +305,30 @@ class BCTokens(BCList):
             elif col<0:
                 returned.append( '<--' )
             else:
-                returned.append( ('-' * len(rows[row])) + '>' )
+                returned.append( ('-' * len(rows[row])) + outsideArrowRight )
 
             return '\n'.join(returned)
         else:
             return f"Given position ({col}, {row}) is outside text"
+
+    def tokenAt(self, col, row):
+        """Return token for given row/col (start from 1/1)
+
+        Return None if nothing to return
+        """
+        token=self.first(False)
+
+        while token and token.row() < row:
+            # continue to next tokens
+            token=token.next()
+
+        # tokens from row
+        while token and token.row() == row and token.column() <= col:
+            if token.column() <= col and col < token.column() + token.length():
+                return token
+            token=token.next()
+
+        return None
 
 class BCTokenizerRule(object):
     """Define a rule used by tokenizer to build a token
@@ -148,49 +336,116 @@ class BCTokenizerRule(object):
     A tokenizer rule is defined by:
     - A regular expression
     - A token type
+    - An optional description
+    - An optional autocompletion properties
+    - An option autoCompletion character (for popup, used as an 'icon')
+    - An optional flag to set rule case insensitive (by default=True) or case sensitive
     """
-    def __init__(self, type, regex):
+
+    @staticmethod
+    def formatDescription(title=None, description='', example=''):
+        """Return a formatted text, ready for tooltip
+
+        Allows use of some 'Markdown' code:
+        **XXX** => bold
+        *XXX* => italic
+        --- => separator
+        `` => monospace
+        """
+        def parsedText(text):
+            text=text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            text=re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', text)
+            text=re.sub(r'\*([^*]+)\*', r'<i>\1</i>', text)
+            text=re.sub(r'`([^`]+)`', r'<span style="font-family:monospace">\1</span>', text)
+            text=re.sub(r'\n*---\n*', '<hr>', text)
+            text=text.replace('\n', '<br>')
+            return text
+
+        returned=[]
+
+        if isinstance(title, str) and title.strip()!='':
+            returned.append(f'<b>{title}</b><br>')
+
+        if isinstance(description, str) and description.strip()!='':
+            returned.append(parsedText(description))
+
+        if isinstance(example, str) and example.strip()!='':
+            returned.append('<hr><i>Example</i><br><br>')
+            returned.append(parsedText(example))
+
+        return ''.join(returned)
+
+    def __init__(self, type, regex, description=None, autoCompletion=None, autoCompletionChar=None, caseInsensitive=True):
+        """Initialise a tokenizer rule
+
+        Given `type` determinate which type of token will be generated by rule
+        Given `regex` is a regular expression that will define token
+        Given `description` is an optional str, and provide a textual description of token
+        Given `autoCompletion` is an optional str / list(str) / tuple / list(tuple), and is provide a list of possible autocompletion value
+            When given as an str, consider there's only one possible autocompletion
+            When given as a list(str), consider there's multiple possible autocompletion
+            When given as a tuple, consider there's only one possible autocompletion; tuple is in form (value, description)
+            When given as a list(tuple), consider there's multiple possible autocompletion; tuple is in form (value, description)
+        """
         self.__type = None
-        self.__regex = ''
+        self.__regEx = None
         self.__error = []
+        self.__autoCompletion = []
+        self.__autoCompletionChar = None
+        self.__caseInsensitive = caseInsensitive
+
+        if isinstance(autoCompletionChar, str):
+            self.__autoCompletionChar = autoCompletionChar
 
         self.__setRegEx(regex)
         self.__setType(type)
 
+        if isinstance(autoCompletion, str):
+            self.__autoCompletion=[(autoCompletion, autoCompletion, '')]
+        elif isinstance(autoCompletion, tuple) and len(autoCompletion)==2 and isinstance(autoCompletion[0], str) and isinstance(autoCompletion[1], str):
+            self.__autoCompletion=[autoCompletion]
+        elif isinstance(autoCompletion, list):
+            for item in autoCompletion:
+                if isinstance(item, str):
+                    self.__autoCompletion.append((item, item, ''))
+                elif isinstance(item, tuple) and len(item)==2 and isinstance(item[0], str) and isinstance(item[1], str):
+                    self.__autoCompletion.append(item)
+
     def __str__(self):
-        return f'{self.__type.value}: {self.__regex}'
+        if self.isValid():
+            return f'{self.__type}: {self.__regEx.pattern()}'
+        elif self.__regEx is None:
+            return f'{self.__type} / None / {self.__error}'
+        else:
+            return f"{self.__type} / '{self.__regEx.pattern()}' / {self.__error}"
 
     def __repr__(self):
-        return f"<BCTokenizerRule({self.__type.value}, '{self.__regex}')>"
+        if self.__regEx is None:
+            return f"<BCTokenizerRule({self.__type}, None)>"
+        return f"<BCTokenizerRule({self.__type}, '{self.__regEx.pattern()}')>"
 
-    def regEx(self):
-        """Return current regular expression for rule"""
-        return self.__regex
-
-    def type(self):
-        """Return current type for rule"""
-        return self.__type
-
-    def __setRegEx(self, value):
+    def __setRegEx(self, regEx):
         """Set current regular expression for rule
 
-        Given `value` can be:
-        - A regex.pattern
+        Given `regEx` can be:
+        - A QRegularExpression
         - A string
 
         If invalid, doesn't raise error: just define rule as 'in error' with a message
         """
-        if isinstance(value, re.Pattern):
-            self.__regex = value.pattern
-        elif isinstance(value, str):
-            self.__regex = str(value)
-            try:
-                re.compile(value)
-            except Exception as e:
-                self.__error = "Given rule is not a valid regular expression: " + str(e)
-        else:
-            self.__regex = str(value)
-            self.__error.append("Given rule must be a valid regular expression string")
+        if isinstance(regEx, str):
+            if self.__caseInsensitive:
+                regEx = QRegularExpression(regEx, QRegularExpression.CaseInsensitiveOption)
+            else:
+                regEx = QRegularExpression(regEx)
+        elif not isinstance(regEx, QRegularExpression):
+            self.__error.append("Given regular expression must be a <str> or <QRegularExpression> type")
+            return
+
+        if not regEx.isValid():
+            self.__error.append("Given regular expression is not a valid")
+
+        self.__regEx = regEx
 
     def __setType(self, value):
         """Set current type for rule"""
@@ -199,30 +454,93 @@ class BCTokenizerRule(object):
         else:
             self.__error.append("Given type must be a valid <BCTokenType>")
 
+    def regEx(self):
+        """Return regular expression for rule (as QRegularExpression)"""
+        return self.__regEx
+
+    def type(self):
+        """Return current type for rule"""
+        return self.__type
+
     def isValid(self):
         """Return True is token rule is valid"""
-        return len(self.__error) == 0
+        return (len(self.__error) == 0 and not self.__regEx is None)
 
     def errors(self):
         """Return errors list"""
         return self.__error
+
+    def description(self):
+        """Return rule description (return str)"""
+        return self.__description
+
+    def caseInsensitive(self):
+        """Return true if rule is case case insensitive"""
+        return self.__caseInsensitive
+
+    def autoCompletion(self):
+        """Return rule autoCompletion (return list of tuple(value, description))"""
+        return self.__autoCompletion
+
+    def autoCompletionChar(self):
+        """Return autoCompletion character"""
+        return self.__autoCompletionChar
+
+    def matchText(self, matchText, full=False):
+        """Return rule as a autoCompletion (return list of tuple (str, str, rule), or empty list if there's no text representation) and
+        that match the given `matchText`
+
+        given `matchText` can be a str or a regular expression
+
+        return list of tuple (str, str, rule)
+            str: autoCompletion value
+            str: description
+            rule: current rule
+        """
+        returned=[]
+        if isinstance(matchText, str):
+            if self.__caseInsensitive:
+                matchText=re.compile(re.escape(re.sub('\s+', '\x02', matchText)).replace('\x02', r'\s+')+'.*', re.IGNORECASE)
+            else:
+                matchText=re.compile(re.escape(re.sub('\s+', '\x02', matchText)).replace('\x02', r'\s+')+'.*')
+
+        if isinstance(matchText, re.Pattern):
+            for item in self.__autoCompletion:
+                if result:=re.match(r'([^\x01]+)', item[0]):
+                    checkMatch=result.groups()[0]
+                else:
+                    checkMatch=item[0]
+
+                if matchText.match(checkMatch):
+                    if full:
+                        returned.append((checkMatch, item[0], item[1], self))
+                    else:
+                        returned.append(checkMatch)
+
+        return returned
 
 class BCTokenizer(object):
     """A tokenizer will 'split' a text into tokens, according to given rules
 
 
     note: the tokenizer doesn't verify the validity of tokenized text (this is
-          made in a second time by parser)
+          made in a second time by a parser)
     """
 
     def __init__(self, rules=None):
-        self.__ruleList = []
-        self.__ruleDict = {}
+        # internal storage for rules (list of BCTokenizerRule)
+        self.__rules = []
 
         self.__invalidRules = []
 
-        self.__reBuilt = None
-        self.__caseRule = re.IGNORECASE
+        # a global regEx with all rules
+        self.__regEx = None
+
+        # a flag to determinate if regular expression&cache need to be updated
+        self.__needUpdate = True
+
+        # a cache to store tokenized code
+        self.__cache={}
 
         if not rules is None:
             self.setRules(rules)
@@ -230,93 +548,135 @@ class BCTokenizer(object):
     def __str__(self):
         return ""
 
-    def __add(self, rule):
+    def add(self, rule):
         """Add a tokenizer rule
 
         Given `rule` must be a <BCTokenizerRule>
         """
         if isinstance(rule, BCTokenizerRule):
-            if not rule.type() in self.__ruleDict:
-                if rule.type() != None:
-                    self.__ruleList.append(rule.regEx())
-                    self.__ruleDict[rule.type()] = rule
-                else:
-                    self.__invalidRules.append((rule, "The rule type is set to NONE: the NONE type is reserved"))
+            if rule.type() != None:
+                self.__rules.append(rule)
+                self.__needUpdate = True
             else:
-                self.__invalidRules.append((rule, 'A rule has already been provided for type!'))
+                self.__invalidRules.append((rule, "The rule type is set to NONE: the NONE type is reserved"))
         else:
             raise Exception("Given `rule` must be a <BCTokenizerRule>")
 
-    def __identify(self, value):
-        """Identify type or given token"""
-        for ruleType in self.__ruleDict:
-            #print('identify:', self.__ruleDict[ruleType].regEx(), ' / ', value)
-            if not re.match(self.__ruleDict[ruleType].regEx(), value, self.__caseRule) is None:
-                return ruleType
-
-        return None
-
     def rules(self):
         """return list of given (and valid) rules"""
-        return self.__ruleList
+        return self.__rules
+
+    def setRules(self, rules):
+        """Define tokenizer rules"""
+        if isinstance(rules, list):
+            self.__rules = []
+            self.__invalidRules = []
+
+            for rule in rules:
+                self.add(rule)
+        else:
+            raise Exception("Given `rules` must be a list of <BCTokenizerRule>")
 
     def invalidRules(self):
         """Return list of invalid given rules"""
         return self.__invalidRules
 
-    def setRules(self, rules):
-        """Define tokenizer rules"""
-        if isinstance(rules, list):
-            self.__ruleList = []
-            self.__ruleDict = {}
-            self.__invalidRules = []
+    def regEx(self):
+        """Return current built regular expression used for lexer"""
+        def ruleInsensitive(rule):
+            if rule.caseInsensitive():
+                return f"(?:(?i){rule.regEx().pattern()})"
+            else:
+                return rule.regEx().pattern()
 
-            for rule in rules:
-                self.__add(rule)
+        if self.__needUpdate:
+            self.__needUpdate = False
+            self.__regEx=QRegularExpression('|'.join([ruleInsensitive(rule) for rule in self.__rules]), QRegularExpression.MultilineOption)
 
-            self.__reBuilt = re.compile('|'.join(self.__ruleList), self.__caseRule)
+        return self.__regEx
+
+    def clearCache(self, full=True):
+        """Clear cache content
+
+        If `full`, clear everything
+        Otherwise, clear oldest values
+        """
+        if full:
+            self.__cache={}
         else:
-            raise Exception("Given `rules` must be a list of <BCTokenizerRule>")
+            currentTime=time.time()
+            for key in list(self.__cache.keys()):
+                if len(self.__cache)<5:
+                    # keep at least, five items
+                    break
+                if (currentTime - self.__cache[key][0]) > 120:
+                    # older than than 2minutes, clear it
+                    self.__cache.pop(key)
 
     def tokenize(self, text):
         """Tokenize given text
 
         Return a BCTokens object
         """
-        returned = []
-
         if not isinstance(text, str):
-            raise Exception("Given `text` must be a <str>")
+            raise EInvalidType("Given `text` must be a <str>")
 
-        if text == "" or len(self.__ruleList) == 0:
+        returned=[]
+
+        if self.__needUpdate:
+            # rules has been modified, cleanup cache
+            self.clearCache(True)
+
+        if text == "" or len(self.__rules) == 0:
             # nothing to process (empty string and/or no rules?)
-            returned.append(BCToken(None, ''))
-            return returned
+            return BCTokens(text, returned)
 
-        tokens = self.__reBuilt.findall(text)
-        if len(tokens) > 0:
-            currentCol = 0
-            currentRow = 0
-            for token in tokens:
-                #print('Token:', token, ' / Type:', self.identify(token))
+        textHash=hashlib.sha1()
+        textHash.update(text.encode())
+        hashValue=textHash.hexdigest()
 
-                returned.append(BCToken(self.__identify(token), token, currentCol, currentRow))
+        if hashValue in self.__cache:
+            self.__cache[hashValue][0]=time.time()
+            self.__cache[hashValue][1].resetIndex()
+            return self.__cache[hashValue][1]
 
-                if token == '\n':
-                    currentCol = 0
-                    currentRow += 1
-                else:
-                    currentCol += len(token)
+        matchIterator = self.regEx().globalMatch(text)
 
-        else:
-            returned.append(BCToken(None, ''))
-            return returned
+        BCToken.resetTokenizer()
 
+        previousToken = None
+        # iterate all found tokens
+        while matchIterator.hasNext():
+            match = matchIterator.next()
 
+            if match.hasMatch():
+                for textIndex in range(len(match.capturedTexts())):
+                    value = match.captured(textIndex)
 
-        return BCTokens(text, returned)
+                    position = 0
+                    for rule in self.__rules:
+                        if rule.caseInsensitive():
+                            options=QRegularExpression.CaseInsensitiveOption
+                        else:
+                            options=QRegularExpression.NoPatternOption
 
-class BCTokenFollow(object):
+                        if QRegularExpression(f'^{rule.regEx().pattern()}$', options).match(value).hasMatch():
+                            token = BCToken(match.captured(textIndex), rule,
+                                            match.capturedStart(textIndex),
+                                            match.capturedEnd(textIndex),
+                                            match.capturedLength(textIndex))
+                            token.setPrevious(previousToken)
+                            if not previousToken is None:
+                                previousToken.setNext(token)
+                            returned.append(token)
+                            previousToken=token
+                            # do not need to continue to check for another token type
+                            break
 
-    def __init__(self, tokenType, section=None, newSection=None):
-        pass
+        self.__cache[hashValue]=[time.time(), BCTokens(text, returned)]
+        self.__cache[hashValue][1].resetIndex()
+
+        # need to clear unused item in cache
+        self.clearCache(False)
+
+        return self.__cache[hashValue][1]

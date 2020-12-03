@@ -43,7 +43,8 @@ from .bcfile import (
         BCBaseFile,
         BCDirectory,
         BCFile,
-        BCFileManagedFormat
+        BCFileManagedFormat,
+        BCFileManipulateName
     )
 from .bcfileoperation import (
         BCFileOperationUi,
@@ -688,7 +689,14 @@ class BCUIController(QObject):
         self.__window.actionFileCopyToOtherPanel.setEnabled(selectionInfo[3]>0)
         self.__window.actionFileMoveToOtherPanel.setEnabled(selectionInfo[3]>0)
         self.__window.actionFileDelete.setEnabled(selectionInfo[3]>0)
-        self.__window.actionFileRename.setEnabled(selectionInfo[3]==1)
+
+        # ^ ==> xor logical operator
+        # Can do rename if:
+        #   - one or more files are selected [2]
+        # exclusive or
+        #   - one or more directory is selected [1]
+        #
+        self.__window.actionFileRename.setEnabled( (selectionInfo[2]>0) ^ (selectionInfo[1]>0))
 
         self.__window.actionFileCopyToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
         self.__window.actionFileMoveToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
@@ -825,9 +833,9 @@ class BCUIController(QObject):
 
             newFileName = None
             if bcFile.format() == BCFileManagedFormat.KRA:
-                newFileName = BCFile.formatFileName(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
+                newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
             else:
-                newFileName = BCFile.formatFileName(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
+                newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
 
             if isinstance(newFileName, str):
                 if newFileName != '' and not re.search("\.kra$", newFileName):
@@ -968,6 +976,21 @@ class BCUIController(QObject):
             self.__window.panels[panelId].setAllowRefresh(False)
 
         BCFileOperation.move(self.__bcName, selectedFiles[5], targetPath)
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(True)
+
+    def commandFileRename(self):
+        """Rename file(s)"""
+        selectedFiles = self.panel().selectedFiles()
+        renameAction = BCFileOperationUi.rename(self.__bcName, selectedFiles[0])
+        if renameAction is None:
+            return
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(False)
+
+        BCFileOperation.rename(self.__bcName, renameAction['files'], renameAction['rule'])
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setAllowRefresh(True)

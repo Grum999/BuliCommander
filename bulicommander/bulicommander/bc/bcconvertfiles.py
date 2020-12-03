@@ -43,6 +43,7 @@ from .bcfile import (
         BCDirectory,
         BCFile,
         BCFileManagedFormat,
+        BCFileManipulateName,
         BCFileProperty,
         BCFileThumbnailSize
     )
@@ -394,7 +395,7 @@ class BCConvertFilesDialogBox(QDialog):
             if self.__processing==False:
                 break
             self.__convertedFileName = file.fullPathName()
-            targetName = os.path.join(targetDirectory, self.__formatFileName(file, filePattern, targetDirectory))
+            targetName = os.path.join(targetDirectory, self.__parseFileNameKw(file, filePattern, targetDirectory))
 
 
             self.pgbTargetResultExport.setValue(fileNumber)
@@ -487,7 +488,7 @@ class BCConvertFilesDialogBox(QDialog):
             return f"{refDict[path][2]}"
         return path
 
-    def __formatFileName(self, file, filePattern, targetDirectory):
+    def __parseFileNameKw(self, file, filePattern, targetDirectory):
         """Parse given text to replace markup with their values"""
         returned = filePattern
 
@@ -497,7 +498,7 @@ class BCConvertFilesDialogBox(QDialog):
 
         returned = re.sub("(?i)\{targetExtension\}",                self.__targetExtension,                             returned)
 
-        returned = BCBaseFile.formatFileName(file, returned, targetDirectory)
+        returned = BCFileManipulateName.parseFileNameKw(file, returned, targetDirectory)
 
         return returned
 
@@ -506,4 +507,3 @@ class BCConvertFilesDialogBox(QDialog):
         """Open dialog box"""
         db = BCConvertFilesDialogBox(title, uicontroller)
         return db.exec()
-
