@@ -1,6 +1,98 @@
 # Buli Commander :: Release 0.5.0a [YYYY-MM-DD]
 
 
+## Implement function *Rename*
+
+It's now possible to rename files & directories directly from *BuliCommander*
+
+### Renaming a single file/directory
+
+*Renaming a single file*
+
+![Rename file](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_rename-single.png)
+
+A simple dialog box to set new file (or directory) name\
+(I don't really like to rename items directly into file explorer...)
+
+
+### Renaming multiple files/directories
+
+> **Note:**
+> Multiples files *OR* mulitples directories can be renamed at the same time, not the both
+> If files and directories are selected, function is not available
+
+The renaming functionnality provides a set of functions and keywords to build new file name.
+The 'language' tries to be as simple as possible, to let non developper being able to use it.
+
+Interface provides an editor with:
+ - Highlighted syntax
+ - Autocompletion popup with basic help
+ - Syntax validator
+ - Preview for *Original file name > New file name* renaming
+
+
+*Renaming multiple files: syntax not valid example*
+
+![Rename file](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_rename-multi01.png)
+
+
+*Renaming multiple files: autocompletion&help example*
+
+![Rename file](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_rename-multi02.png)
+
+
+*Renaming multiple files: renaming rules example*
+
+![Rename file](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_rename-multi03.png)
+
+
+Available *function* list:
+- `[upper:<value>]`
+- `[lower:<value>]`
+- `[capitalize:<value>]`
+- `[camelize:<value>]`
+- `[replace:<value>, "<search>", "<replace>"]`
+- `[regex:<value>, "<pattern>"]`
+- `[regex:<value>, "<pattern>", "<replace>"]`
+- `[index:<value>, "<separator>", <index>]`
+- `[sub:<value>, <start>]`
+- `[sub:<value>, <start>, <length>]`
+- `[len:<value>]`
+
+Available *keyword* list:
+- `{file:baseName}`
+- `{file:ext}`
+- `{file:path}`
+- `{file:format}`
+- `{file:date}`
+- `{file:date:yyyy}`
+- `{file:date:mm}`
+- `{file:date:dd}`
+- `{file:time}`
+- `{file:time:hh}`
+- `{file:time:mm}`
+- `{file:time:ss}`
+- `{file:hash:md5}`
+- `{file:hash:sha1}`
+- `{file:hash:sha256}`
+- `{file:hash:sha512}`
+- `{image:size}`
+- `{image:size:width}`
+- `{image:size:width:####}`
+- `{image:size:height}`
+- `{image:size:height:####}`
+- `{date}`
+- `{date:yyyy}`
+- `{date:mm}`
+- `{date:dd}`
+- `{time}`
+- `{time:hh}`
+- `{time:mm}`
+- `{time:ss}`
+- `{counter}`
+- `{counter:####}`
+
+
 ## Implement tool *Convert files*
 
 The convert tool allows to convert multiples KRA/PNG/JPEG files to KRA/PNG/JPEG files.
@@ -84,4 +176,3 @@ Add possibility to define how image are drawn in thumbnail area:
 *Image crop mode*
 
 ![Export file list - image crop](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_exportlist_imgcrop.png)
-
