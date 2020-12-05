@@ -44,11 +44,16 @@ from .bcfile import (
         BCFile,
         BCFileManagedFormat,
         BCFileManipulateName,
+        BCFileManipulateNameLanguageDef,
         BCFileProperty,
         BCFileThumbnailSize
     )
 from .bcsettings import BCSettingsKey
 from .bcsystray import BCSysTray
+from .bctokenizer import (
+        BCTokenizer,
+        BCTokenizerRule
+    )
 
 from .bcwconsole import BCWConsole
 from .bcwexportoptions import (
@@ -72,9 +77,9 @@ from ..pktk.ekrita import EKritaNode
 
 # -----------------------------------------------------------------------------
 
-
 class BCConvertFilesDialogBox(QDialog):
     """User interface to convert files"""
+    __FILEDATA = Qt.UserRole + 1
 
     __PAGE_PERIMETER = 0
     __PAGE_TARGET = 1
@@ -91,6 +96,8 @@ class BCConvertFilesDialogBox(QDialog):
         self.__title = title
         self.__convertedFileName = ''
         self.__targetExtension = 'kra'
+        self.__targetDirectory = ''
+        self.__languageDef = None
 
         self.__uiController = uicontroller
         self.__fileNfo = self.__uiController.panel().files()
@@ -100,10 +107,14 @@ class BCConvertFilesDialogBox(QDialog):
 
         self.__processing=False
 
+        self.__fileList = None
+        self.__model = None
+
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcconvertfiles.ui')
         PyQt5.uic.loadUi(uiFileName, self)
 
-        self.bcwpbTargetDirectory.setOptions(BCWPathBar.OPTION_SHOW_NONE)
+        self.bcwpbTargetDirectory.setOptions(BCWPathBar.OPTION_SHOW_QUICKFILTER)
+        #self.bcwpbTargetDirectory.setOptions(BCWPathBar.OPTION_SHOW_NONE)
 
         self.setWindowTitle(self.__title)
 
@@ -115,33 +126,79 @@ class BCConvertFilesDialogBox(QDialog):
             # Initialise interface widgets for page perimeter
             # interface widgets that don't depend of users settings
 
-            # always select "Selected path" as default (not stored in settings) as
-            # the "Selected files" can be disabled
-            self.rbPerimeterSelectPath.setChecked(True)
-
             self.lblPerimeterSelectPathNfo.setText(i18n(f"<b>{self.__getPath()}</b> (Files: {self.__fileNfo[2]}, Directories: {self.__fileNfo[1]})"))
             self.lblPerimeterSelectSelNfo.setText(i18n(f"(Files: {self.__selectedFileNfo[2]}, Directories: {self.__selectedFileNfo[1]})"))
             if self.__selectedFileNfo[3] > 0:
                 self.rbPerimeterSelectSel.setEnabled(True)
                 self.lblPerimeterSelectSelNfo.setEnabled(True)
+                # some files are selected, consider by default wewant to convert them and not all the directory
+                self.rbPerimeterSelectSel.setChecked(True)
             else:
                 self.rbPerimeterSelectSel.setEnabled(False)
                 self.lblPerimeterSelectSelNfo.setEnabled(False)
+                # no files are selected, can only convert all files from directory
+                self.rbPerimeterSelectPath.setChecked(True)
 
             self.cbxFormat.currentIndexChanged.connect(self.__slotFormatChanged)
 
             self.__loadSettingsPagePerimeter()
 
         def __initialisePageTarget():
+            def hideConsole(dummy=None):
+                self.wProgress.setVisible(False)
+                self.pbHideConsole.setVisible(False)
+
             # Initialise interface widgets for page target
-            def checkButton(dummy):
-                self.__updateBtn()
-
             self.wProgress.setVisible(False)
+            self.pbHideConsole.setVisible(False)
+            self.pbHideConsole.clicked.connect(hideConsole)
 
-            self.rbTargetDirectorySame.toggled.connect(checkButton)
-            self.rbTargetDirectoryDesigned.toggled.connect(checkButton)
-            self.leTargetFilePattern.textChanged.connect(checkButton)
+            self.rbTargetDirectorySame.toggled.connect(self.__targetPathChanged)
+            self.rbTargetDirectoryDesigned.toggled.connect(self.__targetPathChanged)
+
+            # Update language rule to add keyword "{targetFile:ext}"
+            self.__languageDef = BCFileManipulateNameLanguageDef()
+            self.__languageDef.tokenizer().addRule(BCTokenizerRule(
+                                            BCFileManipulateNameLanguageDef.TokenType.KW,
+                                            r'\{(?:file:targetExt)\}',
+                                            'Keyword',
+                                            [('{file:targetExt}',
+                                                BCTokenizerRule.formatDescription(
+                                                    'Keyword',
+                                                    # description
+                                                    'Return target extension (without dot **`.`**) for file, according to defined conversion format')
+                                                )
+                                            ],
+                                            'k'),
+                                            BCTokenizer.ADD_RULE_TYPE_AFTER_FIRST)
+
+            self.ceTargetFilePattern.textChanged.connect(self.__patternChanged)
+            self.ceTargetFilePattern.setLanguageDefinition(self.__languageDef)
+            self.ceTargetFilePattern.setOptionMultiLine(False)
+            self.ceTargetFilePattern.setOptionShowLineNumber(False)
+            self.ceTargetFilePattern.setOptionShowIndentLevel(False)
+            self.ceTargetFilePattern.setOptionShowRightLimit(False)
+            self.ceTargetFilePattern.setOptionShowSpaces(False)
+            self.ceTargetFilePattern.setOptionAllowWheelSetFontSize(False)
+            self.ceTargetFilePattern.setShortCut(Qt.Key_Tab, False, None) # disable indent
+            self.ceTargetFilePattern.setShortCut(Qt.Key_Backtab, False, None) # disable dedent
+            self.ceTargetFilePattern.setShortCut(Qt.Key_Slash, True, None) # disable toggle comment
+            self.ceTargetFilePattern.setShortCut(Qt.Key_Return, False, None) # disable autoindent
+
+
+            self.__model = QStandardItemModel(0, 2, self)
+            self.__model.setHeaderData(0, Qt.Horizontal, i18n("Source file"))
+            self.__model.setHeaderData(1, Qt.Horizontal, i18n("Converted file"))
+
+
+            self.tvResultPreview.setModel(self.__model)
+
+            header = self.tvResultPreview.header()
+            header.setStretchLastSection(False)
+            header.setSectionResizeMode(0, QHeaderView.Interactive)
+            header.setSectionResizeMode(1, QHeaderView.Interactive)
+
+            self.lblError.setVisible(False)
 
             self.__loadSettingsPageTarget()
 
@@ -208,7 +265,7 @@ class BCConvertFilesDialogBox(QDialog):
     # -- Manage page Target -------------------------------------------------
     def __loadDefaultPageTarget(self):
         """Load default internal configuration for page target"""
-        self.leTargetFilePattern.setText('{file:baseName}.{targetExtension}')
+        self.ceTargetFilePattern.setPlainText('{file:baseName}.{file:tagertExt}')
 
     def __loadSettingsPageTarget(self):
         """Load saved settings for page format"""
@@ -220,11 +277,35 @@ class BCConvertFilesDialogBox(QDialog):
             self.__loadDefaultPageTarget()
             return
 
-        self.leTargetFilePattern.setText(self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN.id()))
+        self.ceTargetFilePattern.setPlainText(self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN.id()))
         self.rbTargetDirectorySame.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE.id())=='sdir')
         self.rbTargetDirectoryDesigned.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE.id())=='ddir')
 
     # -- Other functions -------------------------------------------------
+    def __targetPathChanged(self, dummy=None):
+        if self.rbTargetDirectorySame.isChecked():
+            self.__targetDirectory = self.__uiController.panel().path()
+        else:
+            self.__targetDirectory = self.bcwpbTargetDirectory.path()
+
+        self.__updateResultPreview()
+        self.__updateBtn()
+
+    def __patternChanged(self):
+        if self.__fileList is None:
+            return
+
+        newFileName=BCFileManipulateName.calculateFileName(self.__fileList[0], self.ceTargetFilePattern.toPlainText(), checkOnly=True, tokenizer=self.__languageDef.tokenizer())
+        if not newFileName[1] is None:
+            # error
+            self.lblError.setText(newFileName[1])
+            self.lblError.setVisible(True)
+        else:
+            self.lblError.setText('')
+            self.lblError.setVisible(False)
+        self.__updateResultPreview()
+        self.__updateBtn()
+
     def __goPreviousPage(self, action):
         """Go to previous page"""
         if self.swPages.currentIndex() > 0:
@@ -238,10 +319,58 @@ class BCConvertFilesDialogBox(QDialog):
             self.swPages.setCurrentIndex(self.swPages.currentIndex() + 1)
 
         if self.swPages.currentIndex() == BCConvertFilesDialogBox.__PAGE_TARGET:
-            # xxx
-            pass
+            if self.cbxFormat.currentIndex()==0:
+                self.__targetExtension = 'kra'
+            elif self.cbxFormat.currentIndex()==1:
+                self.__targetExtension = 'png'
+            elif self.cbxFormat.currentIndex()==2:
+                self.__targetExtension = 'jpeg'
+
+            self.__buildPreviewList()
 
         self.__updateBtn()
+
+    def __buildPreviewList(self):
+        if self.rbPerimeterSelectPath.isChecked():
+            self.__fileList = self.__fileNfo[5]
+        else:
+            self.__fileList = self.__selectedFileNfo[5]
+
+        self.__model.removeRows(0, self.__model.rowCount())
+
+        for file in self.__fileList:
+            if not file.format() == BCFileManagedFormat.MISSING:
+                self.__addFileToListView(file)
+
+        self.tvResultPreview.resizeColumnToContents(0)
+        self.tvResultPreview.resizeColumnToContents(1)
+
+    def __addFileToListView(self, file):
+        newRow = [
+                QStandardItem(''),
+                QStandardItem('')
+            ]
+
+        newRow[0].setText(file.name())
+        newRow[0].setData(file, self.__FILEDATA)
+        newRow[1].setText(self.__getNewFileName(file))
+
+        self.__model.appendRow(newRow)
+
+    def __getNewFileName(self, file):
+        newFileName=self.__parseFileNameKw(file, self.ceTargetFilePattern.toPlainText(), self.__targetDirectory)
+        if not newFileName[1] is None:
+            # error
+            return i18n('Invalid renaming pattern')
+        else:
+            return newFileName[0]
+
+    def __updateResultPreview(self):
+        for row in range(self.__model.rowCount()):
+            item=self.__model.item(row, 1)
+            item.setText(self.__getNewFileName(self.__model.item(row, 0).data(self.__FILEDATA)))
+
+        self.tvResultPreview.resizeColumnToContents(1)
 
     def __cancel(self, action):
         """Button cancel clicked"""
@@ -281,7 +410,7 @@ class BCConvertFilesDialogBox(QDialog):
 
         # otherwise target is valid if a file name is provided
         # do not check if provided path/filename make sense...
-        return (self.leTargetFilePattern.text().strip() != '')
+        return (self.ceTargetFilePattern.toPlainText().strip() != '' and not self.lblError.isVisible())
 
     def __generateConfig(self):
         """Generate export config"""
@@ -325,7 +454,7 @@ class BCConvertFilesDialogBox(QDialog):
             else:
                 self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE, 'ddir')
 
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN, self.leTargetFilePattern.text())
+            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN, self.ceTargetFilePattern.toPlainText())
 
         __savePagePerimeter()
         __savePageTarget()
@@ -347,19 +476,11 @@ class BCConvertFilesDialogBox(QDialog):
         self.__processing=True
 
         if self.cbxFormat.currentIndex()==0:
-            self.__targetExtension = 'kra'
             exportOptions = None
         elif self.cbxFormat.currentIndex()==1:
-            self.__targetExtension = 'png'
             exportOptions = self.bcweoPng.options(True)
         elif self.cbxFormat.currentIndex()==2:
-            self.__targetExtension = 'jpeg'
             exportOptions = self.bcweoJpg.options(True)
-
-        if self.rbTargetDirectorySame.isChecked():
-            targetDirectory = self.__uiController.panel().path()
-        else:
-            targetDirectory = self.bcwpbTargetDirectory.path()
 
         self.pbOptionsLoadDefault.setEnabled(False)
         self.pbPrevious.setEnabled(False)
@@ -369,7 +490,7 @@ class BCConvertFilesDialogBox(QDialog):
         self.rbTargetDirectorySame.setEnabled(False)
         self.rbTargetDirectoryDesigned.setEnabled(False)
         self.bcwpbTargetDirectory.setEnabled(False)
-        self.leTargetFilePattern.setEnabled(False)
+        self.ceTargetFilePattern.setEnabled(False)
 
         self.__uiController.setAllowRefresh(False)
 
@@ -380,7 +501,7 @@ class BCConvertFilesDialogBox(QDialog):
         else:
             files = self.__selectedFileNfo[5]
 
-        filePattern = self.leTargetFilePattern.text()
+        filePattern = self.ceTargetFilePattern.toPlainText()
 
         self.pteConsole.clear()
 
@@ -395,51 +516,59 @@ class BCConvertFilesDialogBox(QDialog):
             if self.__processing==False:
                 break
             self.__convertedFileName = file.fullPathName()
-            targetName = os.path.join(targetDirectory, self.__parseFileNameKw(file, filePattern, targetDirectory))
+            newFileName=self.__parseFileNameKw(file, filePattern, self.__targetDirectory)
 
+            if not newFileName[1] is None:
+                self.pteConsole.appendLine(i18n(f'Convert file <i>{fileNumber}</i> of <i>{fileTotalNumber}</i>'))
+                self.pteConsole.appendLine(i18n(f'. Source file <i>{self.__convertedFileName}</i> ({bytesSizeToStr(file.size())})'))
+                self.pteConsole.appendLine('> ')
+                self.pteConsole.append([(i18n('KO '), 'error'),  (i18n('<i>(Unable to build target file name)</i>'), 'info')])
+            else:
+                targetName = os.path.join(self.__targetDirectory, newFileName[0])
 
-            self.pgbTargetResultExport.setValue(fileNumber)
-            QApplication.instance().processEvents()
+                QApplication.instance().processEvents()
 
-            self.pteConsole.appendLine(i18n(f'Convert file <i>{fileNumber}</i> of <i>{fileTotalNumber}</i>'))
-            self.pteConsole.appendLine(i18n(f'. Source file <i>{self.__convertedFileName}</i> ({bytesSizeToStr(file.size())})'))
-            self.pteConsole.appendLine(i18n(f'. Target file <i>{targetName}</i>'))
+                self.pteConsole.appendLine(i18n(f'Convert file <i>{fileNumber}</i> of <i>{fileTotalNumber}</i>'))
+                self.pteConsole.appendLine(i18n(f'. Source file <i>{self.__convertedFileName}</i> ({bytesSizeToStr(file.size())})'))
+                self.pteConsole.appendLine(i18n(f'. Target file <i>{targetName}</i>'))
 
-            if targetName != self.__convertedFileName:
-                if not os.path.exists(targetName):
-                    self.pteConsole.appendLine(i18n('> Load source file: '))
-                    currentDocument = Krita.instance().openDocument(self.__convertedFileName)
+                if targetName != self.__convertedFileName:
+                    if not os.path.exists(targetName):
+                        self.pteConsole.appendLine(i18n('> Load source file: '))
+                        currentDocument = Krita.instance().openDocument(self.__convertedFileName)
 
-                    if not currentDocument is None:
-                        self.pteConsole.append(i18n('OK'), 'ok')
-
-                        currentDocument.setBatchmode(True) # no popups while saving
-
-                        if self.__processing==False:
-                            break
-
-                        if self.__targetExtension == 'kra':
-                            self.pteConsole.appendLine(i18n('> Save target file: '))
-                            saved = currentDocument.saveAs(targetName)
-                        else:
-                            self.pteConsole.appendLine(i18n('> Export target file: '))
-                            saved = currentDocument.exportImage(targetName, exportOptions)
-
-                        if not saved:
-                            self.pteConsole.append(i18n('KO'), 'error')
-                            fileKo+=1
-                        else:
+                        if not currentDocument is None:
                             self.pteConsole.append(i18n('OK'), 'ok')
 
-                        currentDocument.close()
+                            currentDocument.setBatchmode(True) # no popups while saving
+
+                            if self.__processing==False:
+                                break
+
+                            if self.__targetExtension == 'kra':
+                                self.pteConsole.appendLine(i18n('> Save target file: '))
+                                saved = currentDocument.saveAs(targetName)
+                            else:
+                                self.pteConsole.appendLine(i18n('> Export target file: '))
+                                saved = currentDocument.exportImage(targetName, exportOptions)
+
+                            if not saved:
+                                self.pteConsole.append(i18n('KO'), 'error')
+                                fileKo+=1
+                            else:
+                                self.pteConsole.append(i18n('OK'), 'ok')
+
+                            currentDocument.close()
+                        else:
+                            self.pteConsole.append([(i18n('KO '), 'error'),  (i18n('<i>(Unable to open file)</i>'), 'info')])
                     else:
-                        self.pteConsole.append([(i18n('KO '), 'error'),  (i18n('<i>(Unable to open file)</i>'), 'info')])
+                        self.pteConsole.appendLine('> ')
+                        self.pteConsole.append([(i18n('SKIPPED '), 'ignore'),  (i18n('<i>(Target file already exists)</i>'), 'info')])
                 else:
                     self.pteConsole.appendLine('> ')
-                    self.pteConsole.append([(i18n('SKIPPED '), 'ignore'),  (i18n('<i>(Target file already exists)</i>'), 'info')])
-            else:
-                self.pteConsole.appendLine('> ')
-                self.pteConsole.append([(i18n('SKIPPED '), 'ignore'),  (i18n('<i>(Target and source are identical)</i>'), 'info')])
+                    self.pteConsole.append([(i18n('SKIPPED '), 'ignore'),  (i18n('<i>(Target and source are identical)</i>'), 'info')])
+
+                self.pgbTargetResultExport.setValue(fileNumber)
 
             self.pteConsole.appendLine('')
             fileNumber+=1
@@ -474,7 +603,8 @@ class BCConvertFilesDialogBox(QDialog):
         self.rbTargetDirectoryDesigned.setEnabled(True)
         if self.rbTargetDirectoryDesigned.isChecked():
             self.bcwpbTargetDirectory.setEnabled(True)
-        self.leTargetFilePattern.setEnabled(True)
+        self.ceTargetFilePattern.setEnabled(True)
+        self.pbHideConsole.setVisible(True)
         #self.pbCancel.setEnabled(True)
         self.__processing=False
 
@@ -490,15 +620,12 @@ class BCConvertFilesDialogBox(QDialog):
 
     def __parseFileNameKw(self, file, filePattern, targetDirectory):
         """Parse given text to replace markup with their values"""
+        def kwCallBack(file, pattern):
+            return re.sub("(?i)\{file:targetext\}",  f'{self.__targetExtension}', pattern)
+
         returned = filePattern
 
-        returned = re.sub("(?i)\{bc:name\}",                        self.__uiController.bcName(),                       returned)
-        returned = re.sub("(?i)\{bc:version\}",                     self.__uiController.bcVersion(),                    returned)
-        returned = re.sub("(?i)\{bc:title\}",                       self.__uiController.bcTitle(),                      returned)
-
-        returned = re.sub("(?i)\{targetExtension\}",                self.__targetExtension,                             returned)
-
-        returned = BCFileManipulateName.parseFileNameKw(file, returned, targetDirectory)
+        returned = BCFileManipulateName.calculateFileName(file, returned, False, targetDirectory, tokenizer=self.__languageDef.tokenizer(), kwCallBack=kwCallBack)
 
         return returned
 
