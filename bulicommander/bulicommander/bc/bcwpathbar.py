@@ -572,11 +572,11 @@ class BCWPathBar(QFrame):
         idealMinHeight=self.widgetPath.sizeHint().height()
 
         if self.btFilter.isChecked():
-            idealMinHeight+=self.widgetFilter.sizeHint().height()
             self.frameFilter.setVisible(True)
             self.leFilterQuery.setFocus()
             self.leFilterQuery.selectAll()
             self.filterVisibilityChanged.emit(True)
+            idealMinHeight+=self.widgetFilter.sizeHint().height()
         else:
             self.frameFilter.setVisible(False)
             self.filterVisibilityChanged.emit(False)
