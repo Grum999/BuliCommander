@@ -568,7 +568,11 @@ class BCWPathBar(QFrame):
 
     def __refreshFilter(self):
         """Refresh filter layout"""
+        self.setMinimumHeight(0)
+        idealMinHeight=self.widgetPath.sizeHint().height()
+
         if self.btFilter.isChecked():
+            idealMinHeight+=self.widgetFilter.sizeHint().height()
             self.frameFilter.setVisible(True)
             self.leFilterQuery.setFocus()
             self.leFilterQuery.selectAll()
@@ -576,6 +580,8 @@ class BCWPathBar(QFrame):
         else:
             self.frameFilter.setVisible(False)
             self.filterVisibilityChanged.emit(False)
+
+        self.setMinimumHeight(idealMinHeight)
 
     def __menuBookmarkAppend_clicked(self, action):
         """Append current path to bookmark"""
