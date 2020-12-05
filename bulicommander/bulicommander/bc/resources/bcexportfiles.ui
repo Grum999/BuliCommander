@@ -41,7 +41,7 @@
       <enum>Qt::LeftToRight</enum>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="pagePerimeter">
       <layout class="QGridLayout" name="gridLayout">
@@ -327,7 +327,7 @@ Drag'n'drop properties to reorganize order.</string>
            <widget class="QPushButton" name="pbPerimeterCheckAll">
             <property name="font">
              <font>
-              <family>ABeeZee</family>
+              <family>DejaVu Sans</family>
               <pointsize>8</pointsize>
               <italic>true</italic>
              </font>
@@ -344,7 +344,7 @@ Drag'n'drop properties to reorganize order.</string>
            <widget class="QPushButton" name="pbPerimeterUncheckAll">
             <property name="font">
              <font>
-              <family>ABeeZee</family>
+              <family>DejaVu Sans</family>
               <pointsize>8</pointsize>
               <italic>true</italic>
              </font>
@@ -622,7 +622,7 @@ Drag'n'drop properties to reorganize order.</string>
           <string notr="true"/>
          </property>
          <property name="currentIndex">
-          <number>3</number>
+          <number>2</number>
          </property>
          <widget class="QWidget" name="pageFormatPropertiesText">
           <property name="styleSheet">
@@ -811,7 +811,7 @@ Row 3.1   Row 3.2
               </font>
              </property>
              <property name="toolTip">
-              <string/>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;List of available markups&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:baseName} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The exported file base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:name} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The exported file path+base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:ext} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The exported file extension&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system date (&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;yyyy-mm-dd&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:yyyy} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;year&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;month&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:dd} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;day&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;time &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;(&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hh:mm:ss&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:hh} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hour (00-24)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;minutes&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:ss} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;seconds&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:total.count} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of item to export&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:directories.count} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of directories to export&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:files.count} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of files to export&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:files.size} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of bytes (from files to export)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:files.size(KiB)} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of bytes (from files to export)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:files.size(KB)} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of bytes (from files to export)&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{table} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Table of items to export&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{bc:name} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;BuliCommander name :-)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{bc:version} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;BuliCommander version&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{bc:title} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;BuliCommander complete title&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="styleSheet">
               <string notr="true">padding-left: 0px</string>
@@ -1234,7 +1234,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
               </font>
              </property>
              <property name="toolTip">
-              <string/>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;List of available markups&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:baseName} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The exported file base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:name} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The exported file path+base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:ext} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The exported file extension&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system date (&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;yyyy-mm-dd&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:yyyy} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;year&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;month&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:dd} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;day&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;time &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;(&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hh:mm:ss&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:hh} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hour (00-24)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;minutes&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:ss} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;seconds&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:total.count} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of item to export&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:directories.count} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of directories to export&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:files.count} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of files to export&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:files.size} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of bytes (from files to export)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:files.size(KiB)} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of bytes (from files to export)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{items:files.size(KB)} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The total number of bytes (from files to export)&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{table} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Table of items to export&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{bc:name} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;BuliCommander name :-)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{bc:version} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;BuliCommander version&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{bc:title} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;BuliCommander complete title&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="styleSheet">
               <string notr="true">padding-left: 0px</string>
@@ -1487,7 +1487,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
               </sizepolicy>
              </property>
              <property name="currentIndex">
-              <number>1</number>
+              <number>2</number>
              </property>
              <widget class="QWidget" name="pageFormatDocImgPageSetup">
               <layout class="QGridLayout" name="gridLayout_7">
@@ -1766,7 +1766,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="5" column="1">
-                <widget class="BCColorButton" name="pbFormatDocImgPaperColor">
+                <widget class="BCWColorButton" name="pbFormatDocImgPaperColor">
                  <property name="toolTip">
                   <string>Paper color to apply</string>
                  </property>
@@ -1818,7 +1818,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="5" column="1" colspan="3">
-                <widget class="BCSmallTextEdit" name="bcsteFormatDocImgFooter">
+                <widget class="BCWSmallTextEdit" name="bcsteFormatDocImgFooter">
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
@@ -1866,7 +1866,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="3" column="1" colspan="3">
-                <widget class="BCSmallTextEdit" name="bcsteFormatDocImgHeader">
+                <widget class="BCWSmallTextEdit" name="bcsteFormatDocImgHeader">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
                    <horstretch>0</horstretch>
@@ -2016,7 +2016,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="11" column="2" colspan="2">
-                <widget class="BCColorButton" name="pbFormatDocImgPageBorderColor">
+                <widget class="BCWColorButton" name="pbFormatDocImgPageBorderColor">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Color applied for borders&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
@@ -2042,7 +2042,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="8" column="1" colspan="3">
-                <widget class="BCSmallTextEdit" name="bcsteFormatDocImgFPageNotes">
+                <widget class="BCWSmallTextEdit" name="bcsteFormatDocImgFPageNotes">
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
@@ -2074,7 +2074,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="10" column="2" colspan="2">
-                <widget class="BCColorButton" name="pbFormatDocImgPageBgColor">
+                <widget class="BCWColorButton" name="pbFormatDocImgPageBgColor">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Background page color&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;This value is different than page color as only page content inside margins is painted&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
@@ -2174,7 +2174,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                <property name="bottomMargin">
                 <number>0</number>
                </property>
-               <item row="10" column="0">
+               <item row="11" column="0">
                 <widget class="QLabel" name="label_37">
                  <property name="styleSheet">
                   <string notr="true">padding-left: 30px</string>
@@ -2184,7 +2184,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="9" column="0">
+               <item row="10" column="0">
                 <widget class="QLabel" name="label_34">
                  <property name="styleSheet">
                   <string notr="true">padding-left: 30px</string>
@@ -2194,7 +2194,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="7" column="0">
+               <item row="8" column="0">
                 <widget class="QLabel" name="label_33">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
@@ -2210,7 +2210,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="8" column="0">
+               <item row="9" column="0">
                 <widget class="QLabel" name="label_17">
                  <property name="styleSheet">
                   <string notr="true">padding-left: 30px</string>
@@ -2220,7 +2220,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="7" column="1" colspan="2">
+               <item row="8" column="1" colspan="2">
                 <widget class="QComboBox" name="cbxFormatDocImgTextPosition">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define file information position, relative to file thumbnail&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -2252,7 +2252,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </item>
                 </widget>
                </item>
-               <item row="11" column="2">
+               <item row="12" column="2">
                 <spacer name="verticalSpacer_5">
                  <property name="orientation">
                   <enum>Qt::Vertical</enum>
@@ -2265,11 +2265,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </spacer>
                </item>
-               <item row="6" column="0" colspan="3">
+               <item row="7" column="0" colspan="3">
                 <widget class="QLabel" name="label_26">
                  <property name="font">
                   <font>
-                   <family>ABeeZee</family>
+                   <family>DejaVu Sans</family>
                    <weight>75</weight>
                    <bold>true</bold>
                   </font>
@@ -2310,7 +2310,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="1" column="1" colspan="2">
-                <widget class="BCColorButton" name="pbFormatDocImgThumbsBgColor">
+                <widget class="BCWColorButton" name="pbFormatDocImgThumbsBgColor">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Background thumbnail color&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
@@ -2320,7 +2320,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="2" column="1" colspan="2">
-                <widget class="BCColorButton" name="pbFormatDocImgThumbsBorderColor">
+                <widget class="BCWColorButton" name="pbFormatDocImgThumbsBorderColor">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Color applied for borders&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
@@ -2342,20 +2342,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="8" column="1" colspan="2">
-                <widget class="QFontComboBox" name="fcbxFormatDocImgTextFontFamily">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define font used for file information&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="9" column="1" colspan="2">
+               <item row="10" column="1" colspan="2">
                 <widget class="QDoubleSpinBox" name="dsbFormatDocImgTextFontSize">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define font size used for file information&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -2377,8 +2364,21 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  </property>
                 </widget>
                </item>
-               <item row="10" column="1" colspan="2">
-                <widget class="BCColorButton" name="pbFormatDocImgTextFontColor">
+               <item row="9" column="1" colspan="2">
+                <widget class="QFontComboBox" name="fcbxFormatDocImgTextFontFamily">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define font used for file information&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="11" column="1" colspan="2">
+                <widget class="BCWColorButton" name="pbFormatDocImgTextFontColor">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define color used for file information&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
@@ -2460,6 +2460,33 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                  <property name="suffix">
                   <string> mm</string>
                  </property>
+                </widget>
+               </item>
+               <item row="6" column="0">
+                <widget class="QLabel" name="label_43">
+                 <property name="styleSheet">
+                  <string notr="true">padding-left: 30px</string>
+                 </property>
+                 <property name="text">
+                  <string>Image</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="1" colspan="2">
+                <widget class="QComboBox" name="cbxFormatDocImgThumbMode">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define how image is displayed!&lt;/p&gt;&lt;p&gt;- Fit: image is resized to fit in given space&lt;/p&gt;&lt;p&gt;- Crop: image is resized, cropped and centered in given space&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>Fit</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Crop</string>
+                  </property>
+                 </item>
                 </widget>
                </item>
               </layout>
@@ -2585,7 +2612,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         <widget class="QLabel" name="label_12">
          <property name="font">
           <font>
-           <family>ABeeZee</family>
+           <family>DejaVu Sans</family>
            <pointsize>12</pointsize>
            <weight>75</weight>
            <italic>false</italic>
@@ -2632,6 +2659,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
           </property>
           <item>
            <widget class="QLineEdit" name="leTargetResultFile">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define default name applied to new created document&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;&amp;lt;None&amp;gt; &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Do not affect a default name for document&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:path} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file path name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:baseName} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:name} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file path+base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:ext} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file extension&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system date (&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;yyyy-mm-dd&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:yyyy} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;year&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;month&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:dd} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;day&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;time &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;(&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hh:mm:ss&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:hh} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hour (00-24)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;minutes&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:ss} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;seconds&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image size (&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;widthxheight&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size:width} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;width&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size:height} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;height&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{counter} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{counter:####} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="clearButtonEnabled">
              <bool>true</bool>
             </property>
@@ -2680,7 +2710,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         <widget class="QLabel" name="label_13">
          <property name="font">
           <font>
-           <family>ABeeZee</family>
+           <family>DejaVu Sans</family>
            <pointsize>10</pointsize>
            <weight>75</weight>
            <italic>false</italic>
@@ -2858,15 +2888,15 @@ Files:         {items:files.count} ({items:files.size(KiB)})
  </widget>
  <customwidgets>
   <customwidget>
-   <class>BCSmallTextEdit</class>
-   <extends>QFrame</extends>
-   <header>bulicommander.bc.bctextedit</header>
-   <container>1</container>
+   <class>BCWColorButton</class>
+   <extends>QPushButton</extends>
+   <header>bulicommander.bc.bcwcolorbutton</header>
   </customwidget>
   <customwidget>
-   <class>BCColorButton</class>
-   <extends>QPushButton</extends>
-   <header>bulicommander.bc.bccolorbutton</header>
+   <class>BCWSmallTextEdit</class>
+   <extends>QFrame</extends>
+   <header>bulicommander.bc.bcwtextedit</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
@@ -2878,12 +2908,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1008</x>
-     <y>408</y>
+     <x>105</x>
+     <y>252</y>
     </hint>
     <hint type="destinationlabel">
-     <x>674</x>
-     <y>403</y>
+     <x>50</x>
+     <y>252</y>
     </hint>
    </hints>
   </connection>
@@ -2894,12 +2924,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>829</x>
-     <y>479</y>
+     <x>50</x>
+     <y>257</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1015</x>
-     <y>479</y>
+     <x>105</x>
+     <y>257</y>
     </hint>
    </hints>
   </connection>
@@ -2910,12 +2940,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>993</x>
-     <y>482</y>
+     <x>105</x>
+     <y>257</y>
     </hint>
     <hint type="destinationlabel">
-     <x>697</x>
-     <y>482</y>
+     <x>50</x>
+     <y>257</y>
     </hint>
    </hints>
   </connection>
@@ -2926,19 +2956,19 @@ Files:         {items:files.count} ({items:files.size(KiB)})
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>871</x>
-     <y>399</y>
+     <x>50</x>
+     <y>252</y>
     </hint>
     <hint type="destinationlabel">
-     <x>991</x>
-     <y>407</y>
+     <x>105</x>
+     <y>252</y>
     </hint>
    </hints>
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroupTargetResult"/>
   <buttongroup name="buttonGroupPerimeterSelection"/>
+  <buttongroup name="buttonGroupTargetResult"/>
   <buttongroup name="buttonGroupFormatTextBorder"/>
  </buttongroups>
 </ui>

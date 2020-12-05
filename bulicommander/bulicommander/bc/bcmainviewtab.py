@@ -51,6 +51,7 @@ from PyQt5.QtCore import (
         QThreadPool
     )
 from PyQt5.QtGui import (
+        QFontDatabase,
         QImage,
         QMovie,
         QPixmap
@@ -72,9 +73,9 @@ from PyQt5.QtWidgets import (
     )
 
 
-from .bcmenuitem import (
-        BCMenuSlider,
-        BCMenuTitle
+from .bcwmenuitem import (
+        BCWMenuSlider,
+        BCWMenuTitle
     )
 from .bcbookmark import BCBookmark
 from .bcfile import (
@@ -90,7 +91,7 @@ from .bcfile import (
         BCMissingFile
     )
 from .bchistory import BCHistory
-from .bcpathbar import BCPathBar
+from .bcwpathbar import BCWPathBar
 from .bcsettings import (
         BCSettingsKey,
         BCSettingsValues
@@ -748,7 +749,7 @@ class BCMainViewTab(QFrame):
         self.__actionApplyTabFilesLayoutRight.setCheckable(True)
         self.__actionApplyTabFilesLayoutRight.setProperty('layout', BCMainViewTabFilesLayout.RIGHT)
 
-        self.__actionApplyIconSize = BCMenuSlider(i18n("Icon size"))
+        self.__actionApplyIconSize = BCWMenuSlider(i18n("Icon size"))
         self.__actionApplyIconSize.slider().setMinimum(0)
         self.__actionApplyIconSize.slider().setMaximum(8)
         self.__actionApplyIconSize.slider().setPageStep(1)
@@ -834,7 +835,7 @@ class BCMainViewTab(QFrame):
             self.setPath(self.__dirTreeModel.filePath(self.tvDirectoryTree.currentIndex()))
 
         @pyqtSlot('QString')
-        def tvselectedpath_expanded(value):
+        def tvselectedpath_expandedCollapsed(value):
             self.tvDirectoryTree.resizeColumnToContents(0)
 
         @pyqtSlot('QString')
@@ -958,7 +959,11 @@ class BCMainViewTab(QFrame):
         self.__dirTreeModel.setFilter(QDir.AllDirs|QDir.Dirs|QDir.Drives|QDir.NoSymLinks|QDir.NoDotAndDotDot)
         self.tvDirectoryTree.setModel(self.__dirTreeModel)
         self.tvDirectoryTree.selectionModel().selectionChanged.connect(tvselectedpath_changed)
-        self.tvDirectoryTree.expanded.connect(tvselectedpath_expanded)
+        self.tvDirectoryTree.expanded.connect(tvselectedpath_expandedCollapsed)
+        self.tvDirectoryTree.collapsed.connect(tvselectedpath_expandedCollapsed)
+        self.tvDirectoryTree.contextMenuEvent = self.__contextMenuDirectoryTree
+        self.tvDirectoryTree.hideColumn(1) # gide 'size'
+        self.tvDirectoryTree.hideColumn(2) # gide 'type'
 
         self.__refreshTabFilesLayout()
 
@@ -1045,7 +1050,7 @@ class BCMainViewTab(QFrame):
 
     def __addParentDirectory(self):
         """Add parent directory to treeview"""
-        if self.framePathBar.mode() == BCPathBar.MODE_PATH:
+        if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
             self.treeViewFiles.addFile(BCDirectory(os.path.join(self.path(), '..')))
 
 
@@ -1069,7 +1074,7 @@ class BCMainViewTab(QFrame):
 
         self.__fileFilter = None
 
-        if self.framePathBar.mode() == BCPathBar.MODE_PATH:
+        if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
             self.treeViewFiles.setShowPath(False)
             totalSpace, usedSpace, freeSpace = shutil.disk_usage(self.path())
         else:
@@ -1143,26 +1148,26 @@ class BCMainViewTab(QFrame):
             self.__blockedRefresh+=1
             return
 
-        if self.framePathBar.mode() == BCPathBar.MODE_SAVEDVIEW:
+        if self.framePathBar.mode() == BCWPathBar.MODE_SAVEDVIEW:
             if self.__fileQuery is None:
                 self.__fileQuery = BCFileList()
 
             refType = self.__uiController.quickRefType(self.path())
 
 
-            if refType == BCPathBar.QUICKREF_RESERVED_LAST_OPENED:
+            if refType == BCWPathBar.QUICKREF_RESERVED_LAST_OPENED:
                 self.__fileQuery.setResult(self.lastDocumentsOpened().list())
-            elif refType == BCPathBar.QUICKREF_RESERVED_LAST_SAVED:
+            elif refType == BCWPathBar.QUICKREF_RESERVED_LAST_SAVED:
                 self.__fileQuery.setResult(self.lastDocumentsSaved().list())
-            elif refType == BCPathBar.QUICKREF_RESERVED_LAST_ALL:
+            elif refType == BCWPathBar.QUICKREF_RESERVED_LAST_ALL:
                 self.__fileQuery.setResult(list(set(self.lastDocumentsOpened().list() + self.lastDocumentsSaved().list())))
-            elif refType == BCPathBar.QUICKREF_RESERVED_HISTORY:
+            elif refType == BCWPathBar.QUICKREF_RESERVED_HISTORY:
                 self.__fileQuery.setResult([directory for directory in self.history().list() if not directory.startswith('@')])
-            elif refType == BCPathBar.QUICKREF_SAVEDVIEW_LIST:
+            elif refType == BCWPathBar.QUICKREF_SAVEDVIEW_LIST:
                 self.__fileQuery.setResult(self.savedView().get())
-            elif refType == BCPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW:
+            elif refType == BCWPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW:
                 self.__fileQuery.setResult(self.backupFilterDView().list())
-            elif refType == BCPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW:
+            elif refType == BCWPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW:
                 self.__fileQuery.setResult(self.fileLayerFilterDView().list())
 
         else:
@@ -1361,7 +1366,7 @@ class BCMainViewTab(QFrame):
 
             addNfoRow(form, label, wContainer)
 
-        def addNfoRow(form, label, value, tooltip=None, style=None):
+        def addNfoRow(form, label, value, tooltip=None, style=None, shifted=False):
             """add a row"""
             fntLabel = QFont()
             fntLabel.setBold(True)
@@ -1369,6 +1374,9 @@ class BCMainViewTab(QFrame):
             wLabel = QLabel(label)
             wLabel.setFont(fntLabel)
             wLabel.sizePolicy().setVerticalPolicy(QSizePolicy.Expanding)
+
+            if shifted:
+                wLabel.setContentsMargins(30, 0, 0, 0)
 
             fntValue = QFont()
             fntValue.setFamily('DejaVu Sans Mono')
@@ -1387,10 +1395,12 @@ class BCMainViewTab(QFrame):
 
             form.layout().addRow(wLabel, wValue)
 
-        def addSeparator(form):
+        def addSeparator(form, shifted=False):
             line = QFrame()
             line.setFrameShape(QFrame.HLine)
             line.setFrameShadow(QFrame.Sunken)
+            if shifted:
+                line.setContentsMargins(30, 0, 0, 0)
             form.layout().addRow(line)
 
         def applyBackupFilter(action):
@@ -1448,7 +1458,7 @@ class BCMainViewTab(QFrame):
             self.__imgReaderAnimated.stop()
             self.__imgReaderAnimated = None
 
-        # ------------------- !!!!! Here start the noodel spaghetti !!!!! -------------------
+        # ------------------- !!!!! Here start the noodle spaghetti !!!!! -------------------
         if self.__selectedNbTotal == 1:
             # ------------------------------ File ------------------------------
             file = self.__selectedFiles[0]
@@ -1533,8 +1543,8 @@ class BCMainViewTab(QFrame):
                     addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n(f"{backupList.nbFiles()} backup files found"), filterButton)
 
                 for fileBackup in backupList.files():
-                    addSeparator(self.scrollAreaWidgetContentsNfoGeneric)
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup file"), fileBackup.name())
+                    addSeparator(self.scrollAreaWidgetContentsNfoGeneric, shifted=True)
+                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup file"), fileBackup.name(), shifted=True)
 
                     lastModifiedDiffStr=""
                     lastModifiedDiffTooltip=''
@@ -1543,8 +1553,7 @@ class BCMainViewTab(QFrame):
                         lastModifiedDiffStr=i18n(f'<br><i>{secToStrTime(lastModifiedDiff)} ago<sup>(from current file)</sup></i>')
                         lastModifiedDiffTooltip=''
 
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Modified"), tsToStr(fileBackup.lastModificationDateTime(), valueNone='-')+lastModifiedDiffStr, lastModifiedDiffTooltip)
-
+                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Modified"), tsToStr(fileBackup.lastModificationDateTime(), valueNone='-')+lastModifiedDiffStr, lastModifiedDiffTooltip, shifted=True)
 
                     backupSizeDiffTooltip=''
                     backupSizeDiffStr=""
@@ -1555,8 +1564,7 @@ class BCMainViewTab(QFrame):
                     elif backupSizeDiff<0:
                         backupSizeDiffStr=f'<br><i>-{bytesSizeToStr(abs(backupSizeDiff))} ({backupSizeDiff:n})</i>'
                         backupSizeDiffTooltip=''
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Size"), f'{bytesSizeToStr(fileBackup.size())} ({fileBackup.size():n}){backupSizeDiffStr}', backupSizeDiffTooltip)
-
+                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Size"), f'{bytesSizeToStr(fileBackup.size())} ({fileBackup.size():n}){backupSizeDiffStr}', backupSizeDiffTooltip, shifted=True)
 
 
             # ------------------------------ Image ------------------------------
@@ -1693,6 +1701,21 @@ class BCMainViewTab(QFrame):
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'No')
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                    if len(imgNfo['document.usedFonts']) > 0:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', str(len(imgNfo['document.usedFonts'])))
+
+                        fontList=QFontDatabase().families()
+
+                        for fontName in imgNfo['document.usedFonts']:
+                            if fontName in fontList:
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fontName}</i>')
+                            else:
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fontName}</i>', i18n('Font is missing on this sytem!'), 'warning-label')
+                    else:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', 'None')
+
+
+                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
                     if imgNfo['document.layerCount'] > 0:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', str(imgNfo['document.layerCount']))
                     else:
@@ -1718,24 +1741,39 @@ class BCMainViewTab(QFrame):
                             fullFileName = os.path.join(file.path(), fileName)
                             fileLayerList.append(fullFileName)
 
-                            addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                            addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
                             if os.path.isfile(fullFileName):
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), fileName)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), fileName, shifted=True)
 
                                 fileLayer = BCFile(fullFileName)
 
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), tsToStr(fileLayer.lastModificationDateTime(), valueNone='-'))
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), f'{bytesSizeToStr(fileLayer.size())} ({fileLayer.size():n})')
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), tsToStr(fileLayer.lastModificationDateTime(), valueNone='-'), shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), f'{bytesSizeToStr(fileLayer.size())} ({fileLayer.size():n})', shifted=True)
 
                                 if fileLayer.imageSize().width() == -1 or fileLayer.imageSize().height() == -1:
-                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-')
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-', shifted=True)
                                 else:
-                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), f'{fileLayer.imageSize().width()}x{fileLayer.imageSize().height()}')
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), f'{fileLayer.imageSize().width()}x{fileLayer.imageSize().height()}', shifted=True)
                             else:
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), f'<i>{fileName}</i>', 'File is missing!', 'warning-label')
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), '-')
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), '-')
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-')
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), f'<i>{fileName}</i>', 'File is missing!', 'warning-label', shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), '-', shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), '-', shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-', shifted=True)
+
+
+                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                    if len(imgNfo['document.embeddedPalettes']) > 0:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', str(len(imgNfo['document.embeddedPalettes'])))
+
+                        for paletteName in imgNfo['document.embeddedPalettes']:
+                            palette = imgNfo['document.embeddedPalettes'][paletteName]
+                            addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Palette'), paletteName, shifted=True)
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Dimension'), f'{palette["columns"]}x{palette["rows"]}', shifted=True)
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Colors'), str(palette["colors"]), shifted=True)
+                    else:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', 'None')
+
 
                     self.twInfo.setTabEnabled(2, True)
                     self.twInfo.setTabEnabled(3, True)
@@ -1899,7 +1937,7 @@ class BCMainViewTab(QFrame):
         self.lblFileNfo.setText(key+', '.join(fileText))
         self.lblFileNfo.setStatusTip(key+', '.join(statusFileText))
 
-        if self.framePathBar.mode() == BCPathBar.MODE_PATH:
+        if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
             if self.__currentStats['totalDiskSize'] > 0:
                 pctUsed = 100 * (self.__currentStats['usedDiskSize']/self.__currentStats['totalDiskSize'])
                 pUsed = f' ({pctUsed:.2f}%)'
@@ -2154,7 +2192,7 @@ class BCMainViewTab(QFrame):
         else:
             currentItem = None
 
-        title = BCMenuTitle(i18n("Content to clipboard"))
+        title = BCWMenuTitle(i18n("Content to clipboard"))
 
         contextMenu = QMenu(i18n("Content to clipboard"))
         contextMenu.addAction(title)
@@ -2236,7 +2274,7 @@ class BCMainViewTab(QFrame):
 
         optionMenu.addAction(cbOptMinWidthActiveAction)
 
-        slOptWidthMin = BCMenuSlider(None, optionMenu)
+        slOptWidthMin = BCWMenuSlider(None, optionMenu)
         slOptWidthMin.slider().setMinimum(BCTableSettingsText.MIN_WIDTH)
         slOptWidthMin.slider().setMaximum(BCTableSettingsText.MAX_WIDTH)
         slOptWidthMin.slider().setValue(value)
@@ -2257,7 +2295,7 @@ class BCMainViewTab(QFrame):
 
         optionMenu.addAction(cbOptMaxWidthActiveAction)
 
-        slOptWidthMax = BCMenuSlider(None, optionMenu)
+        slOptWidthMax = BCWMenuSlider(None, optionMenu)
         slOptWidthMax.slider().setMinimum(BCTableSettingsText.MIN_WIDTH)
         slOptWidthMax.slider().setMaximum(BCTableSettingsText.MAX_WIDTH)
         slOptWidthMax.slider().setValue(value)
@@ -2266,6 +2304,54 @@ class BCMainViewTab(QFrame):
         slOptWidthMax.slider().valueChanged.connect(setMaxWidth)
         slOptWidthMax.setEnabled(cbOptMaxWidthActive.isChecked())
         optionMenu.addAction(slOptWidthMax)
+
+        contextMenu.exec_(event.globalPos())
+
+
+    def __contextMenuDirectoryTree(self, event):
+        """Display context menu for directory tree"""
+
+        def expandAll(action):
+            def expand(item):
+                # item = QModelIndex
+                if not item.isValid():
+                    return
+
+                model = item.model()
+                childCount = model.rowCount(item)
+                for index in range(childCount):
+                    expand(model.index(index, 0, item))
+
+                if not self.tvDirectoryTree.isExpanded(item):
+                    self.tvDirectoryTree.expand(item)
+            expand(self.tvDirectoryTree.currentIndex())
+
+        def collapseAll(action):
+            def collapse(item, current=True):
+                # item = QModelIndex
+                if not item.isValid():
+                    return
+
+                model = item.model()
+                childCount = model.rowCount(item)
+                for index in range(childCount):
+                    collapse(model.index(index, 0, item))
+
+                if current and self.tvDirectoryTree.isExpanded(item):
+                    self.tvDirectoryTree.collapse(item)
+
+            collapse(self.tvDirectoryTree.currentIndex(), False)
+
+        actionExpandAll = QAction(QIcon(":/images/tree_expand"), i18n('Expand all subdirectories'), self)
+        actionExpandAll.triggered.connect(expandAll)
+
+        actionCollapseAll = QAction(QIcon(":/images/tree_collapse"), i18n('Collapse all subdirectories'), self)
+        actionCollapseAll.triggered.connect(collapseAll)
+
+        # current tab index
+        contextMenu = QMenu()
+        contextMenu.addAction(actionExpandAll)
+        contextMenu.addAction(actionCollapseAll)
 
         contextMenu.exec_(event.globalPos())
 

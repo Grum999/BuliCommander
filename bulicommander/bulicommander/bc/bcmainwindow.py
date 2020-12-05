@@ -41,7 +41,7 @@ from PyQt5.QtWidgets import (
 
 from .bcbookmark import BCBookmark
 from .bchistory import BCHistory
-from .bcpathbar import BCPathBar
+from .bcwpathbar import BCWPathBar
 from .bcmainviewtab import BCMainViewTab
 from .bctheme import BCTheme
 from .bcutils import loadXmlUi
@@ -137,8 +137,8 @@ class BCMainWindow(QMainWindow):
         self.actionFileOpenAsNewDocumentCloseBC.triggered.connect(self.__menuFileOpenAsNewDocumentCloseBC)
         self.actionFileCopyToOtherPanel.triggered.connect(self.__menuFileCopyConfirm)
         self.actionFileMoveToOtherPanel.triggered.connect(self.__menuFileMoveConfirm)
+        self.actionFileRename.triggered.connect(self.__menuFileRename)
         self.actionFileDelete.triggered.connect(self.__menuFileDeleteConfirm)
-        self.actionFileRename.triggered.connect(self.__actionNotYetImplemented)
         self.actionQuit.triggered.connect(self.__uiController.commandQuit)
 
         # Menu EDIT
@@ -163,11 +163,13 @@ class BCMainWindow(QMainWindow):
         self.actionViewShowBackupFiles.triggered.connect(self.__menuViewShowBackupFiles_clicked)
         self.actionViewShowHiddenFiles.triggered.connect(self.__menuViewShowHiddenFiles_clicked)
         self.actionViewDisplaySecondaryPanel.triggered.connect(self.__uiController.commandViewDisplaySecondaryPanel)
+        self.actionViewDisplayQuickFilter.triggered.connect(self.__menuViewDisplayQuickFilter_clicked)
         self.actionViewSwapPanels.triggered.connect(self.__uiController.commandViewSwapPanels)
 
         # Menu TOOLS
         self.actionToolsSearch.triggered.connect(self.__actionNotYetImplemented)
         self.actionToolsExportFiles.triggered.connect(self.__menuToolsExportFiles_clicked)
+        self.actionToolsConvertFiles.triggered.connect(self.__menuToolsConvertFiles_clicked)
         #self.actionToolsStatistics.triggered.connect(self.__actionNotYetImplemented)
         #self.actionConsole.triggered.connect(self.__actionNotYetImplemented)
 
@@ -260,6 +262,10 @@ class BCMainWindow(QMainWindow):
         """Move file without confirmation"""
         self.__uiController.commandFileMove(False)
 
+    def __menuFileRename(self):
+        """Rename file(s)"""
+        self.__uiController.commandFileRename()
+
     def __menuSelectAll_clicked(self, action):
         """Select all files"""
         self.__uiController.commandPanelSelectAll(self.__highlightedPanel)
@@ -288,6 +294,10 @@ class BCMainWindow(QMainWindow):
         """Set view mode as icon"""
         self.__uiController.commandViewThumbnail(self.__highlightedPanel, action)
 
+    def __menuViewDisplayQuickFilter_clicked(self, action):
+        """Display/hide quick filter for panel"""
+        self.__uiController.commandViewDisplayQuickFilter(self.__highlightedPanel, action)
+
     def __menuViewShowImageFileOnly_clicked(self, action):
         """Display readable file only"""
         self.__uiController.commandViewShowImageFileOnly()
@@ -303,6 +313,10 @@ class BCMainWindow(QMainWindow):
     def __menuToolsExportFiles_clicked(self, action):
         """Open export file list tool"""
         self.__uiController.commandToolsExportFilesOpen()
+
+    def __menuToolsConvertFiles_clicked(self, action):
+        """Open convert file tool"""
+        self.__uiController.commandToolsConvertFilesOpen()
 
     # endregion: define actions method -----------------------------------------
 

@@ -68,7 +68,7 @@ from .bcutils import (
 
 
 # -----------------------------------------------------------------------------
-class BCPathBar(QFrame):
+class BCWPathBar(QFrame):
     """Buli Commander path bar"""
 
     MODE_PATH = 0
@@ -105,7 +105,7 @@ class BCPathBar(QFrame):
     filterVisibilityChanged = Signal(bool)
 
     def __init__(self, parent=None):
-        super(BCPathBar, self).__init__(parent)
+        super(BCWPathBar, self).__init__(parent)
 
         self.__isHighlighted = False
 
@@ -125,9 +125,9 @@ class BCPathBar(QFrame):
         self.__backupFilterDView = None
         self.__fileLayerFilterDView = None
 
-        self.__mode = BCPathBar.MODE_PATH
+        self.__mode = BCWPathBar.MODE_PATH
 
-        self.__options = BCPathBar.OPTION_SHOW_ALL
+        self.__options = BCWPathBar.OPTION_SHOW_ALL
 
         self.__font = QFont()
         self.__font.setPointSize(9)
@@ -200,13 +200,13 @@ class BCPathBar(QFrame):
         self.__actionSavedViewsDelete.setProperty('path', ':CURRENT')
 
 
-        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcpathbar.ui')
+        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcwpathbar.ui')
         loadXmlUi(uiFileName, self)
 
         self.__initialise()
 
     def __initialise(self):
-        """Initialise BCPathBar"""
+        """Initialise BCWPathBar"""
 
         @pyqtSlot('QString')
         def item_Clicked(value):
@@ -239,12 +239,12 @@ class BCPathBar(QFrame):
 
         @pyqtSlot('QString')
         def path_Selected(value):
-            Debug.print('[BCPathBar.path_Selected] path: {0} ({1})', self.path(), value)
+            Debug.print('[BCWPathBar.path_Selected] path: {0} ({1})', self.path(), value)
             self.__backList.append(self.path())
             self.__updateUpBtn()
             self.__updateBackBtn()
 
-            self.setMode(BCPathBar.MODE_PATH)
+            self.setMode(BCWPathBar.MODE_PATH)
 
             if not self.__uiController is None:
                 self.__uiController.updateMenuForPanel()
@@ -259,7 +259,7 @@ class BCPathBar(QFrame):
             self.__updateUpBtn()
             self.__updateBackBtn()
 
-            self.setMode(BCPathBar.MODE_SAVEDVIEW)
+            self.setMode(BCWPathBar.MODE_SAVEDVIEW)
 
             if not self.__uiController is None:
                 self.__uiController.updateMenuForPanel()
@@ -433,13 +433,13 @@ class BCPathBar(QFrame):
                 self.__actionBookmarkRemove.setEnabled(True)
                 self.__actionBookmarkRename.setEnabled(True)
             else:
-                self.__actionBookmarkAdd.setEnabled(self.mode() != BCPathBar.MODE_SAVEDVIEW)
+                self.__actionBookmarkAdd.setEnabled(self.mode() != BCWPathBar.MODE_SAVEDVIEW)
                 self.__actionBookmarkRemove.setEnabled(False)
                 self.__actionBookmarkRename.setEnabled(False)
         else:
             self.__actionBookmarkClear.setEnabled(False)
             self.__actionBookmarkClear.setText(i18n('Clear bookmark'))
-            self.__actionBookmarkAdd.setEnabled(self.mode() != BCPathBar.MODE_SAVEDVIEW)
+            self.__actionBookmarkAdd.setEnabled(self.mode() != BCWPathBar.MODE_SAVEDVIEW)
             self.__actionBookmarkRemove.setEnabled(False)
             self.__actionBookmarkRename.setEnabled(False)
 
@@ -478,7 +478,7 @@ class BCPathBar(QFrame):
         self.__actionSavedViewsAddNewView.setEnabled(allowAddRemove)
 
 
-        isSavedView = (self.__uiController.quickRefType(self.path()) == BCPathBar.QUICKREF_SAVEDVIEW_LIST)
+        isSavedView = (self.__uiController.quickRefType(self.path()) == BCWPathBar.QUICKREF_SAVEDVIEW_LIST)
 
 
         if self.__savedView.length() > 0:
@@ -557,8 +557,8 @@ class BCPathBar(QFrame):
 
 
     def __refreshStyle(self):
-        """refresh current style for BCPathBar"""
-        Debug.print('[BCPathBar.__refreshStyle] current: {0} // {1}', self.__isHighlighted, self.path())
+        """refresh current style for BCWPathBar"""
+        Debug.print('[BCWPathBar.__refreshStyle] current: {0} // {1}', self.__isHighlighted, self.path())
         if self.__isHighlighted:
             self.widgetPath.setPalette(self.__paletteHighlighted)
         else:
@@ -568,14 +568,20 @@ class BCPathBar(QFrame):
 
     def __refreshFilter(self):
         """Refresh filter layout"""
+        self.setMinimumHeight(0)
+        idealMinHeight=self.widgetPath.sizeHint().height()
+
         if self.btFilter.isChecked():
             self.frameFilter.setVisible(True)
             self.leFilterQuery.setFocus()
             self.leFilterQuery.selectAll()
             self.filterVisibilityChanged.emit(True)
+            idealMinHeight+=self.widgetFilter.sizeHint().height()
         else:
             self.frameFilter.setVisible(False)
             self.filterVisibilityChanged.emit(False)
+
+        self.setMinimumHeight(idealMinHeight)
 
     def __menuBookmarkAppend_clicked(self, action):
         """Append current path to bookmark"""
@@ -673,28 +679,28 @@ class BCPathBar(QFrame):
 
     def setMode(self, mode):
         """Set current mode"""
-        if not mode in [BCPathBar.MODE_PATH, BCPathBar.MODE_SAVEDVIEW]:
+        if not mode in [BCWPathBar.MODE_PATH, BCWPathBar.MODE_SAVEDVIEW]:
             raise EInvalidValue("Given `mode` is not valid")
 
         if mode != self.__mode:
             self.__mode = mode
-            if mode in [BCPathBar.MODE_PATH, BCPathBar.MODE_SAVEDVIEW]:
+            if mode in [BCWPathBar.MODE_PATH, BCWPathBar.MODE_SAVEDVIEW]:
                 self.swBarMode.setCurrentIndex(0)
             else:
                 # should not occurs...
                 self.swBarMode.setCurrentIndex(1)
 
     def panel(self):
-        """Return current panel for which BCPathBar is attached to"""
+        """Return current panel for which BCWPathBar is attached to"""
         return self.__panel
 
     def setPanel(self, value):
-        """Set current panel for which BCPathBar is attached to"""
+        """Set current panel for which BCWPathBar is attached to"""
         self.__panel = value
 
     def setHighlighted(self, value):
         """Allows to change highlighted status"""
-        Debug.print('[BCPathBar.setHighlighted] current: {0} / value: {1} // {2}', self.__isHighlighted, value, self.path())
+        Debug.print('[BCWPathBar.setHighlighted] current: {0} / value: {1} // {2}', self.__isHighlighted, value, self.path())
 
         if not isinstance(value, bool):
             raise EInvalidType("Given `value` must be a <bool>")
@@ -708,17 +714,17 @@ class BCPathBar(QFrame):
 
     def path(self):
         """Return current path"""
-        if self.__mode in [BCPathBar.MODE_PATH, BCPathBar.MODE_SAVEDVIEW]:
+        if self.__mode in [BCWPathBar.MODE_PATH, BCWPathBar.MODE_SAVEDVIEW]:
             return str(self.frameBreacrumbPath.path())
         elif not self.__savedView is None:
-            # BCPathBar.MODE_SAVEDVIEW
+            # BCWPathBar.MODE_SAVEDVIEW
             return f"@{self.__savedView.current()}"
         else:
             return None
 
     def setPath(self, path=None):
         """Set current path"""
-        Debug.print('[BCPathBar.setPath] path: {0}', path)
+        Debug.print('[BCWPathBar.setPath] path: {0}', path)
         self.frameBreacrumbPath.set_path(path)
 
     def goToBackPath(self):
@@ -929,16 +935,16 @@ class BCPathBar(QFrame):
         if isinstance(options, int):
             self.__options = options
 
-        self.showQuickFilter(self.__options & BCPathBar.OPTION_SHOW_QUICKFILTER == BCPathBar.OPTION_SHOW_QUICKFILTER)
-        self.showGoUp(self.__options & BCPathBar.OPTION_SHOW_UP == BCPathBar.OPTION_SHOW_UP)
-        self.showGoBack(self.__options & BCPathBar.OPTION_SHOW_PREVIOUS == BCPathBar.OPTION_SHOW_PREVIOUS)
-        self.showHistory(self.__options & BCPathBar.OPTION_SHOW_HISTORY == BCPathBar.OPTION_SHOW_HISTORY)
-        self.showLastDocuments(self.__options & BCPathBar.OPTION_SHOW_LASTDOCUMENTS == BCPathBar.OPTION_SHOW_LASTDOCUMENTS)
-        self.showBookmark(self.__options & BCPathBar.OPTION_SHOW_BOOKMARKS == BCPathBar.OPTION_SHOW_BOOKMARKS)
-        self.showSavedView(self.__options & BCPathBar.OPTION_SHOW_SAVEDVIEWS == BCPathBar.OPTION_SHOW_SAVEDVIEWS)
-        self.showHome(self.__options & BCPathBar.OPTION_SHOW_HOME == BCPathBar.OPTION_SHOW_HOME)
+        self.showQuickFilter(self.__options & BCWPathBar.OPTION_SHOW_QUICKFILTER == BCWPathBar.OPTION_SHOW_QUICKFILTER)
+        self.showGoUp(self.__options & BCWPathBar.OPTION_SHOW_UP == BCWPathBar.OPTION_SHOW_UP)
+        self.showGoBack(self.__options & BCWPathBar.OPTION_SHOW_PREVIOUS == BCWPathBar.OPTION_SHOW_PREVIOUS)
+        self.showHistory(self.__options & BCWPathBar.OPTION_SHOW_HISTORY == BCWPathBar.OPTION_SHOW_HISTORY)
+        self.showLastDocuments(self.__options & BCWPathBar.OPTION_SHOW_LASTDOCUMENTS == BCWPathBar.OPTION_SHOW_LASTDOCUMENTS)
+        self.showBookmark(self.__options & BCWPathBar.OPTION_SHOW_BOOKMARKS == BCWPathBar.OPTION_SHOW_BOOKMARKS)
+        self.showSavedView(self.__options & BCWPathBar.OPTION_SHOW_SAVEDVIEWS == BCWPathBar.OPTION_SHOW_SAVEDVIEWS)
+        self.showHome(self.__options & BCWPathBar.OPTION_SHOW_HOME == BCWPathBar.OPTION_SHOW_HOME)
 
-        self.showMargins(self.__options & BCPathBar.OPTION_SHOW_MARGINS == BCPathBar.OPTION_SHOW_MARGINS)
+        self.showMargins(self.__options & BCWPathBar.OPTION_SHOW_MARGINS == BCWPathBar.OPTION_SHOW_MARGINS)
 
     def updatePalette(self, palette=None):
         """Refresh current palette"""

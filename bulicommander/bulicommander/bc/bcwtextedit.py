@@ -38,19 +38,19 @@ from PyQt5.QtWidgets import (
         QVBoxLayout,
         QWidget
     )
-from .bccolorbutton import BCColorButton
+from .bcwcolorbutton import BCWColorButton
 
 
-class BCTextEditDialog(QDialog):
+class BCWTextEditDialog(QDialog):
     """A simple dialog box to edit formatted text"""
 
     def __init__(self, parent):
-        super(BCTextEditDialog, self).__init__(parent)
+        super(BCWTextEditDialog, self).__init__(parent)
 
         self.setSizeGripEnabled(True)
         self.setModal(True)
 
-        self.__editor = BCTextEdit(self)
+        self.__editor = BCWTextEdit(self)
 
         dbbxOkCancel = QDialogButtonBox(self)
         dbbxOkCancel.setOrientation(Qt.Horizontal)
@@ -81,7 +81,7 @@ class BCTextEditDialog(QDialog):
     @staticmethod
     def edit(title, text, textColor=None, textBackgroundColor=None):
         """Open a dialog box to edit text"""
-        dlgBox = BCTextEditDialog(None)
+        dlgBox = BCWTextEditDialog(None)
         dlgBox.setHtml(text)
         dlgBox.setWindowTitle(title)
 
@@ -99,11 +99,11 @@ class BCTextEditDialog(QDialog):
             return None
 
 
-class BCTextEdit(QWidget):
+class BCWTextEdit(QWidget):
     """A small text editor widget with a basic formatting toolbar"""
 
     def __init__(self, parent=None):
-        super(BCTextEdit, self).__init__(parent)
+        super(BCWTextEdit, self).__init__(parent)
 
         self.__toolBarItems = {}
         self.__textEdit = QTextEdit()
@@ -278,7 +278,7 @@ class BCTextEdit(QWidget):
                 policy.setHorizontalPolicy(QSizePolicy.Maximum)
 
                 if item['type'] == 'cbutton':
-                    qItem = BCColorButton(self.__toolBar)
+                    qItem = BCWColorButton(self.__toolBar)
 
                     qItem.setIcon(item['icon'])
                     qItem.colorChanged.connect(item['action'])
@@ -446,12 +446,12 @@ class BCTextEdit(QWidget):
         self.__updateStyleSheet()
 
 
-class BCSmallTextEdit(QFrame):
-    """A small widget that allows to open a BCTextEditDialog"""
+class BCWSmallTextEdit(QFrame):
+    """A small widget that allows to open a BCWTextEditDialog"""
     textChanged = Signal()
 
     def __init__(self, parent):
-        super(BCSmallTextEdit, self).__init__(parent)
+        super(BCWSmallTextEdit, self).__init__(parent)
 
         self.__title = ""
 
@@ -494,7 +494,7 @@ class BCSmallTextEdit(QFrame):
         layout.addWidget(self.__btnEdit)
 
     def __editText(self):
-        returned = BCTextEditDialog.edit(self.__title, self.__html, self.__fgColor, self.__bgColor)
+        returned = BCWTextEditDialog.edit(self.__title, self.__html, self.__fgColor, self.__bgColor)
         if not returned is None:
             self.setHtml(returned)
             self.textChanged.emit()

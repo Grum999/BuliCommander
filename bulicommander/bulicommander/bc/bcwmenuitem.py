@@ -45,10 +45,10 @@ from PyQt5.QtWidgets import (
 
 
 
-class BCMenuSlider(QWidgetAction):
+class BCWMenuSlider(QWidgetAction):
     """Encapsulate a slider as a menu item"""
     def __init__(self, label, parent=None):
-        super(BCMenuSlider, self).__init__(parent)
+        super(BCWMenuSlider, self).__init__(parent)
 
         self.__widget = QWidget()
         self.__layout = QVBoxLayout()
@@ -65,10 +65,10 @@ class BCMenuSlider(QWidgetAction):
         return self.__slider
 
 
-class BCMenuTitle(QWidgetAction):
+class BCWMenuTitle(QWidgetAction):
     """Encapsulate a QLabel as a menu item title"""
     def __init__(self, label, parent=None):
-        super(BCMenuTitle, self).__init__(parent)
+        super(BCWMenuTitle, self).__init__(parent)
 
         self.__widget = QWidget()
         self.__layout = QVBoxLayout()

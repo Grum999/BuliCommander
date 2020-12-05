@@ -146,6 +146,7 @@
       <addaction name="actionViewShowHiddenFiles"/>
       <addaction name="separator"/>
       <addaction name="actionViewDisplaySecondaryPanel"/>
+      <addaction name="actionViewDisplayQuickFilter"/>
       <addaction name="separator"/>
       <addaction name="actionViewSwapPanels"/>
      </widget>
@@ -157,6 +158,7 @@
       <addaction name="actionToolsStatistics"/>
       <addaction name="actionConsole"/>
       <addaction name="actionToolsExportFiles"/>
+      <addaction name="actionToolsConvertFiles"/>
      </widget>
      <widget class="QMenu" name="menuSettings">
       <property name="title">
@@ -1129,6 +1131,33 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="actionToolsConvertFiles">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/convert</normaloff>:/images/convert</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Convert files...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionViewDisplayQuickFilter">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/filter</normaloff>:/images/filter</iconset>
+   </property>
+   <property name="text">
+    <string>Display quick filter</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+F</string>
    </property>
   </action>
  </widget>

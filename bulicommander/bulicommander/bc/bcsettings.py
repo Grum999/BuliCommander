@@ -45,7 +45,7 @@ from .bcfile import (
         BCFile
     )
 
-from .bcpathbar import BCPathBar
+from .bcwpathbar import BCWPathBar
 from .bcsystray import BCSysTray
 from .bcutils import (
         bytesSizeToStr,
@@ -190,6 +190,7 @@ class BCSettingsKey(Enum):
     CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS =     'config.export.filesList.doc.pdf.thumbnails.border.radius'
     CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE =         'config.export.filesList.doc.pdf.thumbnails.background.active'
     CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL =            'config.export.filesList.doc.pdf.thumbnails.background.color'
+    CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD =            'config.export.filesList.doc.pdf.thumbnails.image.displayMode'
     CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE =             'config.export.filesList.doc.pdf.preview.mode'
 
     CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION =               'config.export.filesList.img.kra.resolution'
@@ -230,6 +231,7 @@ class BCSettingsKey(Enum):
     CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS =     'config.export.filesList.img.kra.thumbnails.border.radius'
     CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_ACTIVE =         'config.export.filesList.img.kra.thumbnails.background.active'
     CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL =            'config.export.filesList.img.kra.thumbnails.background.color'
+    CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD =            'config.export.filesList.img.kra.thumbnails.image.displayMode'
     CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE =             'config.export.filesList.img.kra.options.openFileInKrita'
     CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE =             'config.export.filesList.img.kra.preview.mode'
 
@@ -271,6 +273,7 @@ class BCSettingsKey(Enum):
     CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS =     'config.export.filesList.img.png.thumbnails.border.radius'
     CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_ACTIVE =         'config.export.filesList.img.png.thumbnails.background.active'
     CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL =            'config.export.filesList.img.png.thumbnails.background.color'
+    CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD =            'config.export.filesList.img.png.thumbnails.image.displayMode'
     CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE =             'config.export.filesList.img.png.options.openFileInKrita'
     CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE =             'config.export.filesList.img.png.preview.mode'
 
@@ -312,8 +315,28 @@ class BCSettingsKey(Enum):
     CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS =     'config.export.filesList.img.jpg.thumbnails.border.radius'
     CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_ACTIVE =         'config.export.filesList.img.jpg.thumbnails.background.active'
     CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL =            'config.export.filesList.img.jpg.thumbnails.background.color'
+    CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD =            'config.export.filesList.img.jpg.thumbnails.image.displayMode'
     CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE =             'config.export.filesList.img.jpg.options.openFileInKrita'
     CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE =             'config.export.filesList.img.jpg.preview.mode'
+
+    CONFIG_CONVERTFILES_GLB_SAVED =                          'config.convert.global.saved'
+    CONFIG_CONVERTFILES_GLB_FORMAT =                         'config.convert.global.format'
+    CONFIG_CONVERTFILES_GLB_TARGET_MODE =                    'config.convert.global.target.mode'
+    CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN =             'config.convert.global.target.filePattern'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_COMPRESSION =            'config.convert.img.png.compression'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_INDEXED =                'config.convert.img.png.indexed'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_INTERLACED =             'config.convert.img.png.interlaced'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_SAVEICCPROFILE =         'config.convert.img.png.saveIccProfile'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_FORCESRGB =              'config.convert.img.png.forceSRGB'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_ALPHA =                  'config.convert.img.png.alpha'
+    CONFIG_CONVERTFILES_IMGPNG_SAVE_BGCOLOR =                'config.convert.img.png.transparencyFillcolor'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_QUALITY =                'config.convert.img.jpg.quality'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_SMOOTHING =              'config.convert.img.jpg.smoothing'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_SUBSAMPLING =            'config.convert.img.jpg.subsampling'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_PROGRESSIVE =            'config.convert.img.jpg.progressive'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_OPTIMIZE =               'config.convert.img.jpg.optimize'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_SAVEICCPROFILE =         'config.convert.img.jpg.saveProfile'
+    CONFIG_CONVERTFILES_IMGJPG_SAVE_BGCOLOR =                'config.convert.img.jpg.transparencyFillcolor'
 
     CONFIG_SESSION_SAVE =                                    'config.session.save'
     CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY =          'config.defaultSession.panels.view.filesManagedOnly'
@@ -457,7 +480,7 @@ class BCSettings(object):
 
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_RESOLUTION.id():        (300.0,                    BCSettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in'])),
-            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION.id(): (0,                        BCSettingsFmt(int, [0,1])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR.id():       ('#ffffff',                BCSettingsFmt(str)),
@@ -493,11 +516,12 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS.id():(0.0,                    BCSettingsFmt(float)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD.id():     ('fit',                    BCSettingsFmt(str, ['fit', 'crop'])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
 
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION.id():        (300.0,                    BCSettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
-            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION.id(): (0,                        BCSettingsFmt(int, [0,1])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR.id():       ('#FFFFFF',                BCSettingsFmt(str)),
@@ -533,12 +557,13 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS.id():(0.0,                    BCSettingsFmt(float)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD.id():     ('fit',                    BCSettingsFmt(str, ['fit', 'crop'])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE.id():      (True,                     BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
 
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION.id():        (300.0,                    BCSettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
-            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION.id(): (0,                        BCSettingsFmt(int, [0,1])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR.id():       ('#FFFFFF',                BCSettingsFmt(str)),
@@ -574,12 +599,13 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS.id():(0.0,                    BCSettingsFmt(float)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD.id():     ('fit',                    BCSettingsFmt(str, ['fit', 'crop'])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE.id():      (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
 
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION.id():        (300.0,                    BCSettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_UNIT.id():              ('mm',                     BCSettingsFmt(str, ['mm','cm','in', 'px'])),
-            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)'])),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE.id():        ('A4',                     BCSettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION.id(): (0,                        BCSettingsFmt(int, [0,1])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR.id():       ('#FFFFFF',                BCSettingsFmt(str)),
@@ -615,8 +641,29 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS.id():(0.0,                    BCSettingsFmt(float)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_ACTIVE.id():  (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL.id():     ('#FF000000',              BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD.id():     ('fit',                    BCSettingsFmt(str, ['fit', 'crop'])),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE.id():      (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE.id():      (0,                        BCSettingsFmt(int, [0,1])),
+
+            BCSettingsKey.CONFIG_CONVERTFILES_GLB_SAVED.id():                   (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_GLB_FORMAT.id():                  ('kra',                    BCSettingsFmt(str, ['kra','png','jpeg'])),
+            BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE.id():             ('sdir',                   BCSettingsFmt(str, ['sdir', 'ddir'])),
+            BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN.id():      ('{file:baseName}.{targetExtension}', BCSettingsFmt(str)),
+
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_COMPRESSION.id():     (6,                        BCSettingsFmt(int, [0,1,2,3,4,5,6,7,8,9])),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INDEXED.id():         (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INTERLACED.id():      (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_SAVEICCPROFILE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_FORCESRGB.id():       (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_ALPHA.id():           (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_BGCOLOR.id():         ('#FFFFFF',                BCSettingsFmt(str)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_QUALITY.id():         (85,                       BCSettingsFmt(int, list(range(0, 101)))),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SMOOTHING.id():       (15,                       BCSettingsFmt(int, list(range(0, 101)))),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SUBSAMPLING.id():     ('4:2:0',                  BCSettingsFmt(str, ['4:2:0','4:2:2','4:4:0','4:4:4'])),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_PROGRESSIVE.id():     (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_OPTIMIZE.id():        (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SAVEICCPROFILE.id():  (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_BGCOLOR.id():         ('#FFFFFF',                BCSettingsFmt(str)),
 
             BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id():                           (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id():                       (False,                    BCSettingsFmt(bool)),
@@ -918,7 +965,7 @@ class BCSettingsDialogBox(QDialog):
 
         # --- NAV Category -----------------------------------------------------
         self.bcpbCNUserDefined.setPath(self.__uiController.settings().option(BCSettingsKey.CONFIG_HOME_DIR_UD.id()))
-        self.bcpbCNUserDefined.setOptions(BCPathBar.OPTION_SHOW_NONE)
+        self.bcpbCNUserDefined.setOptions(BCWPathBar.OPTION_SHOW_NONE)
 
         self.cbCNNavBarBtnHome.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HOME.id()))
         self.cbCNNavBarBtnViews.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_VIEWS.id()))

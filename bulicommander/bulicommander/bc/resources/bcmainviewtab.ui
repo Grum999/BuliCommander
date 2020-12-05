@@ -76,7 +76,7 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="BCPathBar" name="framePathBar">
+             <widget class="BCWPathBar" name="framePathBar">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -320,7 +320,7 @@
                              <number>0</number>
                             </property>
                             <item>
-                             <widget class="BCImagePreview" name="gvPreview">
+                             <widget class="BCWImagePreview" name="gvPreview">
                               <property name="statusTip">
                                <string>Double-click: zoom to fit/scale 1:1 | Drag: pan | Ctrl+Drag: select and zoom</string>
                               </property>
@@ -1854,9 +1854,9 @@ QSlider::handle:horizontal {
  </widget>
  <customwidgets>
   <customwidget>
-   <class>BCPathBar</class>
+   <class>BCWPathBar</class>
    <extends>QFrame</extends>
-   <header>bulicommander.bc.bcpathbar</header>
+   <header>bulicommander.bc.bcwpathbar</header>
    <container>1</container>
   </customwidget>
   <customwidget>
@@ -1865,9 +1865,9 @@ QSlider::handle:horizontal {
    <header>bulicommander.bc.bcmainviewtab</header>
   </customwidget>
   <customwidget>
-   <class>BCImagePreview</class>
+   <class>BCWImagePreview</class>
    <extends>QGraphicsView</extends>
-   <header>bulicommander.bc.bcimagepreview</header>
+   <header>bulicommander.bc.bcwimagepreview</header>
   </customwidget>
  </customwidgets>
  <resources>

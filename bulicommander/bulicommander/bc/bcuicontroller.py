@@ -43,13 +43,15 @@ from .bcfile import (
         BCBaseFile,
         BCDirectory,
         BCFile,
-        BCFileManagedFormat
+        BCFileManagedFormat,
+        BCFileManipulateName
     )
 from .bcfileoperation import (
         BCFileOperationUi,
         BCFileOperation
     )
 from .bcexportfiles import BCExportFilesDialogBox
+from .bcconvertfiles import BCConvertFilesDialogBox
 from .bchistory import BCHistory
 from .bcmainviewtab import (
         BCMainViewTab,
@@ -60,7 +62,7 @@ from .bcmainviewtab import (
     )
 from .bcmainwindow import BCMainWindow
 from .bcsystray import BCSysTray
-from .bcpathbar import BCPathBar
+from .bcwpathbar import BCWPathBar
 from .bcsettings import (
         BCSettings,
         BCSettingsDialogBox,
@@ -73,8 +75,8 @@ from .bcimportanimated import (
         BCImportDialogBox,
         BCImportAnimated
     )
-from .bcimagepreview import (
-        BCImagePreview
+from .bcwimagepreview import (
+        BCWImagePreview
     )
 from .bcsavedview import BCSavedView
 from .bctable import (
@@ -364,7 +366,7 @@ class BCUIController(QObject):
             widgetList = self.__window.getWidgets()
 
             for widget in widgetList:
-                if isinstance(widget, BCPathBar) or isinstance(widget, BreadcrumbsAddressBar):
+                if isinstance(widget, BCWPathBar) or isinstance(widget, BreadcrumbsAddressBar):
                     widget.updatePalette()
                 elif hasattr(widget, 'setPalette'):
                     # force palette to be applied to widget
@@ -528,22 +530,22 @@ class BCUIController(QObject):
         iconSavedView = buildIcon([(QPixmap(":/images/saved_view_file"), QIcon.Normal)])
         iconBookmark = buildIcon([(QPixmap(":/images/bookmark"), QIcon.Normal)])
 
-        returned = {'@home': (BCPathBar.QUICKREF_RESERVED_HOME, buildIcon([(QPixmap(":/images/home"), QIcon.Normal)]), 'Home'),
-                    '@last': (BCPathBar.QUICKREF_RESERVED_LAST_ALL, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened/saved documents'),
-                    '@last opened': (BCPathBar.QUICKREF_RESERVED_LAST_OPENED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened documents'),
-                    '@last saved': (BCPathBar.QUICKREF_RESERVED_LAST_SAVED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last saved documents'),
-                    '@history': (BCPathBar.QUICKREF_RESERVED_HISTORY, buildIcon([(QPixmap(":/images/history"), QIcon.Normal)]), 'History directories'),
-                    '@backup filter': (BCPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW, buildIcon([(QPixmap(":/images/filter"), QIcon.Normal)]), 'Backup files list'),
-                    '@file layer filter': (BCPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW, buildIcon([(QPixmap(":/images/large_view"), QIcon.Normal)]), 'Layer files list')
+        returned = {'@home': (BCWPathBar.QUICKREF_RESERVED_HOME, buildIcon([(QPixmap(":/images/home"), QIcon.Normal)]), 'Home'),
+                    '@last': (BCWPathBar.QUICKREF_RESERVED_LAST_ALL, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened/saved documents'),
+                    '@last opened': (BCWPathBar.QUICKREF_RESERVED_LAST_OPENED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened documents'),
+                    '@last saved': (BCWPathBar.QUICKREF_RESERVED_LAST_SAVED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last saved documents'),
+                    '@history': (BCWPathBar.QUICKREF_RESERVED_HISTORY, buildIcon([(QPixmap(":/images/history"), QIcon.Normal)]), 'History directories'),
+                    '@backup filter': (BCWPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW, buildIcon([(QPixmap(":/images/filter"), QIcon.Normal)]), 'Backup files list'),
+                    '@file layer filter': (BCWPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW, buildIcon([(QPixmap(":/images/large_view"), QIcon.Normal)]), 'Layer files list')
                     }
 
         if not self.__bookmark is None and self.__bookmark.length() > 0:
             for bookmark in self.__bookmark.list():
-                returned[f'@{bookmark[0].lower()}']=(BCPathBar.QUICKREF_BOOKMARK, iconBookmark, bookmark[0])
+                returned[f'@{bookmark[0].lower()}']=(BCWPathBar.QUICKREF_BOOKMARK, iconBookmark, bookmark[0])
 
         if not self.__savedView is None and self.__savedView.length() > 0:
             for savedView in self.__savedView.list():
-                returned[f'@{savedView[0].lower()}']=(BCPathBar.QUICKREF_SAVEDVIEW_LIST, iconSavedView, savedView[0])
+                returned[f'@{savedView[0].lower()}']=(BCWPathBar.QUICKREF_SAVEDVIEW_LIST, iconSavedView, savedView[0])
 
         return returned
 
@@ -676,6 +678,7 @@ class BCUIController(QObject):
     def updateMenuForPanel(self):
         """Update menu (enabled/disabled/checked/unchecked) according to current panel"""
         self.__window.actionViewThumbnail.setChecked(self.panel().viewThumbnail())
+        self.__window.actionViewDisplayQuickFilter.setChecked(self.panel().filterVisible())
 
         selectionInfo = self.panel().selectedFiles()
 
@@ -686,7 +689,14 @@ class BCUIController(QObject):
         self.__window.actionFileCopyToOtherPanel.setEnabled(selectionInfo[3]>0)
         self.__window.actionFileMoveToOtherPanel.setEnabled(selectionInfo[3]>0)
         self.__window.actionFileDelete.setEnabled(selectionInfo[3]>0)
-        self.__window.actionFileRename.setEnabled(selectionInfo[3]==1)
+
+        # ^ ==> xor logical operator
+        # Can do rename if:
+        #   - one or more files are selected [2]
+        # exclusive or
+        #   - one or more directory is selected [1]
+        #
+        self.__window.actionFileRename.setEnabled( (selectionInfo[2]>0) ^ (selectionInfo[1]>0))
 
         self.__window.actionFileCopyToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
         self.__window.actionFileMoveToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
@@ -823,9 +833,9 @@ class BCUIController(QObject):
 
             newFileName = None
             if bcFile.format() == BCFileManagedFormat.KRA:
-                newFileName = BCFile.formatFileName(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
+                newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
             else:
-                newFileName = BCFile.formatFileName(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
+                newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
 
             if isinstance(newFileName, str):
                 if newFileName != '' and not re.search("\.kra$", newFileName):
@@ -970,6 +980,21 @@ class BCUIController(QObject):
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setAllowRefresh(True)
 
+    def commandFileRename(self):
+        """Rename file(s)"""
+        selectedFiles = self.panel().selectedFiles()
+        renameAction = BCFileOperationUi.rename(self.__bcName, selectedFiles[0])
+        if renameAction is None:
+            return
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(False)
+
+        BCFileOperation.rename(self.__bcName, renameAction['files'], renameAction['rule'])
+
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].setAllowRefresh(True)
+
     def commandViewBringToFront(self):
         """Bring main window to front"""
         self.__window.setWindowState( (self.__window.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
@@ -1100,6 +1125,23 @@ class BCUIController(QObject):
 
         return mode
 
+    def commandViewDisplayQuickFilter(self, panel=None, mode=None):
+        """Set current view mode"""
+        if panel is None:
+            panel = self.panelId()
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        if mode is None or not isinstance(mode, bool):
+            mode = False
+
+        self.__window.actionViewDisplayQuickFilter.setChecked(mode)
+        self.__window.panels[panel].setFilterVisible(mode)
+
+        self.updateMenuForPanel()
+
+        return mode
+
     def commandPanelPreviewBackground(self, panel=None, mode=None):
         """Set current preview view mode"""
         if panel is None:
@@ -1107,8 +1149,8 @@ class BCUIController(QObject):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        if not mode in BCImagePreview.backgroundList():
-            mode = BCImagePreview.BG_CHECKER_BOARD
+        if not mode in BCWImagePreview.backgroundList():
+            mode = BCWImagePreview.BG_CHECKER_BOARD
 
         self.__window.panels[panel].setPreviewBackground(mode)
 
@@ -1760,6 +1802,10 @@ class BCUIController(QObject):
     def commandToolsExportFilesOpen(self):
         """Open window for tool 'Export file list'"""
         BCExportFilesDialogBox.open(f'{self.__bcName}::Export files list', self)
+
+    def commandToolsConvertFilesOpen(self):
+        """Open window for tool 'Convert files'"""
+        BCConvertFilesDialogBox.open(f'{self.__bcName}::Convert files', self)
 
     def commandSettingsOpen(self):
         """Open dialog box settings"""
