@@ -21,8 +21,8 @@ A simple dialog box to set new file (or directory) name\
 > Multiples files *OR* mulitples directories can be renamed at the same time, not the both
 > If files and directories are selected, function is not available
 
-The renaming functionnality provides a set of functions and keywords to build new file name.
-The 'language' tries to be as simple as possible, to let non developper being able to use it.
+The renaming functionnality provides a set of functions and keywords to build new file name.\
+The dedicated *expression language* tries to be as simple as possible, to let non developper being able to use it.
 
 Interface provides an editor with:
  - Highlighted syntax
@@ -97,7 +97,8 @@ Available *keyword* list:
 
 The convert tool allows to convert multiples KRA/PNG/JPEG files to KRA/PNG/JPEG files.
 - Target format PNG/JPEG provides similar options than Krita *export* option (modulo: EXIF/IPTC are not managed)
-- Target file name can be defined with markup (allowing to set, or not, the same base filename than original file)
+- Target file name can be defined from rules, allowing to set or not, the same base file name than original file\
+  => Use the same *expression language* than one defined for renaming files
 - If target already exist, file conversion is automatically skipped
 
 > **Note:**
@@ -176,3 +177,22 @@ Add possibility to define how image are drawn in thumbnail area:
 *Image crop mode*
 
 ![Export file list - image crop](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_exportlist_imgcrop.png)
+
+## Fix bug -  *cropped path bar*
+
+Tried to fix this annoying bug, it should be Ok now... I hope :-)
+
+*Cropped path bar*
+
+![Cropped path bar](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_bug-croppedpathbar.png)
+
+
+## Fix bug - *Invalid font*
+
+For an unknown reason, some user interface were defined with a local installed font instead of embedded Qt 'DejaVu Sans' font.\
+Fixed this problem.
+
+## Fix bug - *Invalid key configuration*
+
+A bad copy/paste to manage automated saved settings for *Export file list* tool and pouf, script was crashing when trying to export files to PNG/JPEG file format.\
+Fixed this problem.
