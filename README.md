@@ -69,8 +69,9 @@ Here a list of some functionalities:
   - File properties
   - Image properties (format, dimension, mode/depth, profile)
   - Krita image properties (About + Author)
-- File manipulation (copy, move, delete)
+- File manipulation (copy, move, delete, rename)
 - Export files as list
+- Convert files (KRA/PNG/JPEG)
 - Miscellaneous opening modes
   - Improved GIF/WEBP import file
 
@@ -78,7 +79,7 @@ Here a list of some functionalities:
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.4.0a](https://github.com/Grum999/BuliCommander/releases/download/0.4.0a/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.5.0a](https://github.com/Grum999/BuliCommander/releases/download/0.5.0a/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
@@ -96,7 +97,7 @@ When you want to execute *Buli Commander*, simply go to **Tools** -> **Scripts**
 
 
 ### Tested platforms
-Plugin has been tested with Krita 4.4.0 (appimage) on Linux Debian 10
+Plugin has been tested with Krita 4.4.1 (appimage) on Linux Debian 10
 
 Currently don't kwow if plugin works on Windows and MacOs.
 I think it should be Ok, because of use of python and PyQt high level and multi OS file system functions, but...
@@ -105,9 +106,23 @@ I think it should be Ok, because of use of python and PyQt high level and multi 
 ## Plugin's life
 
 ### What's new?
-_[2020-11-01] Version 0.4.0a_
+_[2020-12-06] Version 0.5.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.5.0a.md)*
 
-*[Show detailed release content](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.4.0a.md)*
+- Implement *Rename*
+- Implement tool *Convert files*
+- Implement context menu for directories tree
+- Implement shortcut for quick filter
+- Improve Krita image information - *Used fonts list*
+- Improve Krita image information - *Embedded palettes*
+- Improve Krita Export file list - *Square paper sizes*
+- Improve Krita Export file list - *Thumbnail mode*
+- Fix bug - *cropped path bar*
+- Fix bug - *Invalid font*
+- Fix bug - *Invalid key configuration*
+
+
+### What's new?
+_[2020-11-01] Version 0.4.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.4.0a.md)*
 
 - Implement *Auto close*
 - Implement *Auto open*
@@ -116,9 +131,7 @@ _[2020-11-01] Version 0.4.0a_
 - Improve notification system
 
 
-_[2020-09-27] Version 0.3.0a_
-
-*[Show detailed release content](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.3.0a.md)*
+_[2020-09-27] Version 0.3.0a_ *[>>Show detailed release content<<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.3.0a.md)*
 
 - Implement progress bar on background thumbnail load
 - Implement progress bar on directory file content analysis
@@ -129,9 +142,7 @@ _[2020-09-27] Version 0.3.0a_
 - Implement and improve copy/move/delete function
 
 
-_[2020-09-11] Version 0.2.0a_
-
-*[Show detailed release content](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.2.0a.md)*
+_[2020-09-11] Version 0.2.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.2.0a.md)*
 
 - ORA file preview use (if exists) merged image preview instead of thumbnail
 - Add BACKUP files list linked to a file
