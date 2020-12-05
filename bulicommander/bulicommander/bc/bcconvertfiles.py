@@ -113,8 +113,7 @@ class BCConvertFilesDialogBox(QDialog):
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcconvertfiles.ui')
         PyQt5.uic.loadUi(uiFileName, self)
 
-        self.bcwpbTargetDirectory.setOptions(BCWPathBar.OPTION_SHOW_QUICKFILTER)
-        #self.bcwpbTargetDirectory.setOptions(BCWPathBar.OPTION_SHOW_NONE)
+        self.bcwpbTargetDirectory.setOptions(BCWPathBar.OPTION_SHOW_NONE)
 
         self.setWindowTitle(self.__title)
 
