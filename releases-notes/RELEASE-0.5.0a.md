@@ -136,12 +136,12 @@ If a font is missing on system, font is highlighted.
 
 *Used font list (all OK) example*
 
-![Font list - ok](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_infopanel_font_ok.png)
+![Font list - ok](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_infopanel-font_ok.png)
 
 
 *Used font list (KO) example*
 
-![Font list - ko](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_infopanel_font_ko.png)
+![Font list - ko](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_infopanel-font_ko.png)
 
 
 ## Improve Krita image information - *Embedded palettes*
@@ -154,7 +154,7 @@ Information is "minimal":
 
 > Note: Palette preview is not provided
 
-![Embedded palette example](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_infopanel_embeddedpalettes.png)
+![Embedded palette example](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-5-0a_infopanel-embeddedpalettes.png)
 
 
 ## Improve Krita Export file list - *Square paper sizes*
