@@ -29,7 +29,6 @@ import os.path
 import shutil
 import sys
 import re
-import time
 
 import PyQt5.uic
 from PyQt5.Qt import *
@@ -88,7 +87,7 @@ class BCFileOperationUi(object):
             message+=' and'
 
         if nbDirectories > 0:
-            message+=f" {nbDirectories} director"
+            message+=f" {nbDirectories} directories"
             if nbDirectories > 1:
                 message+="ies"
             else:
@@ -254,7 +253,7 @@ class BCFileOperationUi(object):
                 '{file:baseName}_{counter:####}.{file:ext}',
                 '{file:baseName}_{date}-{time}.{file:ext}',
                 i18n('{file:baseName}-Copy {counter:####}.{file:ext}'),
-                i18n('{file:baseName}-Copy {date}_{time}.{file:ext}')
+                i18n('{file:baseName}-Copy {date}-{time}.{file:ext}')
             ])
         dlgMain.cbxNewName.setCurrentText(fileSrc.name())
 
@@ -318,7 +317,7 @@ class BCFileOperationUi(object):
         FILEDATA = Qt.UserRole + 1
 
         def patternChanged():
-            newFileName=BCFileManipulateName.calculateFileName(fileList[0], dlgMain.cePattern.toPlainText())
+            newFileName=BCFileManipulateName.calculateFileName(fileList[0], dlgMain.cePattern.toPlainText(), checkOnly=True)
             if not newFileName[1] is None:
                 # error
                 dlgMain.lblError.setText(newFileName[1])

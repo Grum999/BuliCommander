@@ -156,7 +156,7 @@
           <string notr="true">padding-left: 30px</string>
          </property>
          <property name="text">
-          <string>Se&amp;lected path</string>
+          <string>Selecte&amp;d path</string>
          </property>
          <attribute name="buttonGroup">
           <string notr="true">buttonGroupPerimeterSelection</string>
@@ -424,23 +424,7 @@
        <property name="bottomMargin">
         <number>0</number>
        </property>
-       <item row="2" column="0">
-        <widget class="QRadioButton" name="rbTargetDirectorySame">
-         <property name="styleSheet">
-          <string notr="true">padding-left: 30px</string>
-         </property>
-         <property name="text">
-          <string>Same director&amp;y</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">buttonGroupTargetResult</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="0" column="0" colspan="3">
+       <item row="0" column="0" colspan="5">
         <widget class="QLabel" name="label_12">
          <property name="font">
           <font>
@@ -459,6 +443,45 @@
          </property>
          <property name="margin">
           <number>4</number>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_45">
+         <property name="styleSheet">
+          <string notr="true">padding-left: 30px</string>
+         </property>
+         <property name="text">
+          <string>Pattern</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="5">
+        <widget class="QLabel" name="label_13">
+         <property name="font">
+          <font>
+           <family>DejaVu Sans</family>
+           <pointsize>10</pointsize>
+           <weight>75</weight>
+           <italic>false</italic>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Save converted files to</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0" colspan="5">
+        <widget class="QLabel" name="label_44">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Set converted file name as</string>
          </property>
         </widget>
        </item>
@@ -484,49 +507,26 @@
          </attribute>
         </widget>
        </item>
-       <item row="1" column="0" colspan="3">
-        <widget class="QLabel" name="label_13">
-         <property name="font">
-          <font>
-           <family>DejaVu Sans</family>
-           <pointsize>10</pointsize>
-           <weight>75</weight>
-           <italic>false</italic>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Convert files to</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0" colspan="3">
-        <widget class="QLabel" name="label_44">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Set file name as</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QLabel" name="label_45">
+       <item row="2" column="0" colspan="5">
+        <widget class="QRadioButton" name="rbTargetDirectorySame">
          <property name="styleSheet">
           <string notr="true">padding-left: 30px</string>
          </property>
          <property name="text">
-          <string>Pattern</string>
+          <string>Same &amp;directory</string>
          </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroupTargetResult</string>
+         </attribute>
         </widget>
        </item>
-       <item row="3" column="1" colspan="2">
+       <item row="3" column="1" colspan="4">
         <widget class="BCWPathBar" name="bcwpbTargetDirectory">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -534,7 +534,7 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
          <property name="frameShape">
@@ -545,14 +545,69 @@
          </property>
         </widget>
        </item>
-       <item row="5" column="1">
-        <widget class="QLineEdit" name="leTargetFilePattern">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define default name applied to new created document&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:baseName} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:name} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file path+base name without extension&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{file:ext} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The file extension&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system date (&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;yyyy-mm-dd&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:yyyy} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;year&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;month&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{date:dd} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;day&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;time &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;(&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hh:mm:ss&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:hh} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;hour (00-24)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:mm} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;minutes&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{time:ss} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current system &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;seconds&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image size (&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;widthxheight&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size:width} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;width&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{size:height} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The current image &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;height&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{counter} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{counter:####} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;A counter to file name&lt;/span&gt;&lt;/p&gt;&lt;hr/&gt;&lt;p&gt;&lt;span style=&quot; font-family:'monospace'; font-size:8pt; font-weight:600;&quot;&gt;{targetExtension} &lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Extension for current defined target file format&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <item row="5" column="1" colspan="4">
+        <widget class="BCWCodeEditor" name="ceTargetFilePattern"/>
+       </item>
+       <item row="6" column="1" colspan="4">
+        <widget class="QLabel" name="lblError">
+         <property name="font">
+          <font>
+           <family>DejaVu Sans Mono</family>
+           <pointsize>8</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>--</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="0" rowspan="2" colspan="2">
+       <item row="7" column="0">
+        <widget class="QLabel" name="lblResultPreview">
+         <property name="styleSheet">
+          <string notr="true">padding-left: 30px</string>
+         </property>
+         <property name="text">
+          <string>Files name preview</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1" colspan="4">
+        <widget class="QTreeView" name="tvResultPreview">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="font">
+          <font>
+           <family>DejaVu Sans Mono</family>
+          </font>
+         </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <property name="rootIsDecorated">
+          <bool>false</bool>
+         </property>
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
+         <property name="expandsOnDoubleClick">
+          <bool>false</bool>
+         </property>
+         <attribute name="headerShowSortIndicator" stdset="0">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="headerStretchLastSection">
+          <bool>false</bool>
+         </attribute>
+        </widget>
+       </item>
+       <item row="10" column="0" rowspan="2" colspan="5">
         <widget class="QWidget" name="wProgress" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
@@ -567,6 +622,18 @@
           </size>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
           <item>
            <widget class="BCWConsole" name="pteConsole">
             <property name="sizePolicy">
@@ -578,7 +645,7 @@
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>350</height>
+              <height>0</height>
              </size>
             </property>
             <property name="font">
@@ -599,51 +666,85 @@
            </widget>
           </item>
           <item>
-           <widget class="QProgressBar" name="pgbTargetResultExport">
-            <property name="enabled">
-             <bool>true</bool>
+           <widget class="QWidget" name="widget_2" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
-            <property name="maximum">
-             <number>10</number>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
             </property>
-            <property name="value">
-             <number>4</number>
-            </property>
-            <property name="textVisible">
-             <bool>true</bool>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="invertedAppearance">
-             <bool>false</bool>
-            </property>
-            <property name="textDirection">
-             <enum>QProgressBar::TopToBottom</enum>
-            </property>
-            <property name="format">
-             <string>File %v/%m [%p%]</string>
-            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_5">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QProgressBar" name="pgbTargetResultExport">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="maximum">
+                <number>10</number>
+               </property>
+               <property name="value">
+                <number>4</number>
+               </property>
+               <property name="textVisible">
+                <bool>true</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="invertedAppearance">
+                <bool>false</bool>
+               </property>
+               <property name="textDirection">
+                <enum>QProgressBar::TopToBottom</enum>
+               </property>
+               <property name="format">
+                <string>File %v/%m [%p%]</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="pbHideConsole">
+               <property name="toolTip">
+                <string>Hide console</string>
+               </property>
+               <property name="text">
+                <string>...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="dark_icons.qrc">
+                 <normaloff>:/images/visibility_off</normaloff>:/images/visibility_off</iconset>
+               </property>
+               <property name="autoRaise">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
          </layout>
         </widget>
-       </item>
-       <item row="6" column="0">
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::MinimumExpanding</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
        </item>
       </layout>
      </widget>
@@ -775,8 +876,15 @@
    <extends>QPlainTextEdit</extends>
    <header>bulicommander.bc.bcwconsole</header>
   </customwidget>
+  <customwidget>
+   <class>BCWCodeEditor</class>
+   <extends>QPlainTextEdit</extends>
+   <header>bulicommander.bc.bcwcodeeditor</header>
+  </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="dark_icons.qrc"/>
+ </resources>
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroupPerimeterSelection"/>

@@ -467,17 +467,19 @@ class BCFileManipulateNameLanguageDef(BCLanguageDef):
                                                                               'Keyword',
                                                                               # description
                                                                               'Return a counter value\n\n'
-                                                                              'Counter start from 1, and is incremented if a target file already match the same pattern')),
+                                                                              'Counter start from 1, and is incremented if a target file already match the same pattern\n\n'
+                                                                              '*Please note, due to technical reason, use of counter with many files is **slow***')),
                                                                    ('{counter:####}',
                                                                           BCTokenizerRule.formatDescription(
                                                                               'Keyword',
                                                                               # description
                                                                               'Return a counter value\n\n'
                                                                               'Counter start from 1, and is incremented if a target file already match the same pattern\n\n'
-                                                                              'Use hash character **`#`** to define minimum counter digits'))
+                                                                              'Use hash character **`#`** to define minimum counter digits\n\n'
+                                                                              '*Please note, due to technical reason, use of counter with many files is **slow***'))
                                                                   ],
                                                                   'k'),
-            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.ETEXT, r'\\\[|\\\]|\\,'),
+            BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.ETEXT, r'\\\[|\\\]|\\,|\\\{|\\\}'),
             BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.NUMBER, r'-\d+|^\d+'),
             BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.SEPARATOR, r',{1}?'),
             BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.FUNCC, r'\]{1}?'),
@@ -927,6 +929,8 @@ class BCFileManipulateName(object):
 
             regEx = f"^{regEx}$"
 
+            if not regExIsValid(regEx):
+                return fileName
 
             # a counter is defined, need to determinate counter value
             #nbFiles = len([foundFile for foundFile in os.listdir(file.path()) if os.path.isfile(os.path.join(file.path(), foundFile)) and not re.search(regEx, foundFile) is None]) + 1
@@ -949,7 +953,7 @@ class BCFileManipulateName(object):
         return fileName
 
     @staticmethod
-    def calculateFileName(file, pattern=None, keepInvalidCharacters=False):
+    def calculateFileName(file, pattern=None, keepInvalidCharacters=False, targetPath=None, checkOnly=False, tokenizer=None, kwCallBack=None):
         """Process file name manipulation
 
         Following keywords are supported (same than parseFileNameKw):
@@ -1290,20 +1294,59 @@ class BCFileManipulateName(object):
             elif token.type() == BCFileManipulateNameLanguageDef.TokenType.ETEXT:
                 return token.text().strip(r'\\')
             elif token.type() == BCFileManipulateNameLanguageDef.TokenType.KW:
-                return BCFileManipulateName.parseFileNameKw(file, token.text())
+                returned=BCFileManipulateName.parseFileNameKw(file, token.text(), targetPath)
+                if callable(kwCallBack):
+                    returned=kwCallBack(file, returned)
+                return returned
             elif token.type() in (BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR, BCFileManipulateNameLanguageDef.TokenType.FUNCO_NUM):
                 return processTokenFunc(token)
             else:
                 return ""
 
         # Rules to tokenize expression
-        if BCFileManipulateName.__tokenizer is None:
+        if isinstance(tokenizer, BCTokenizer):
+            cfnTokenizer=tokenizer
+        elif BCFileManipulateName.__tokenizer is None:
             BCFileManipulateName.__tokenizer = BCFileManipulateNameLanguageDef().tokenizer()
-
-        tokens = BCFileManipulateName.__tokenizer.tokenize(pattern)
+            cfnTokenizer=BCFileManipulateName.__tokenizer
+        else:
+            cfnTokenizer=BCFileManipulateName.__tokenizer
 
         returnedValue = ""
+        # need to pre-process pattern to manage counter...
+        # 1) replace {counter} keyword by a non-recognized keyword {excludeCounter}
+        # 2) replace all keywords by their value as string
+        #    Example:
+        #       {file:ext} ==> "kra"
+        # 3) tokenize
+        # 4) process tokens
+        # 5) restore {counter} keyword
+        # 6) replace all keywords(ie: {counter}) by their value as string
+        # 7) cleanup
+        #
+        # this is mandatory to be able to determinate counter value AFTER everything has been processed (functions applied)
+        #
+        # but doing this will need to re-tokenize pattern (and this is slow)
+        # so apply this method only if a counter have to be calculated
 
+        manageCounter=False
+
+        if not checkOnly:
+            if re.search(r"(?i)\{(counter(?::#+)?)\}", pattern):
+                manageCounter=True
+
+            if manageCounter:
+                # 1)
+                pattern=re.sub(r"(?i)\{(counter(?::#+)?)\}", "\x01exclude\\1\x01", pattern)
+                # 2)
+                pattern=re.sub(r"(?i)(\{[^}]+\})", r'"\1"', pattern)
+                pattern=BCFileManipulateName.parseFileNameKw(file, pattern, targetPath)
+                if callable(kwCallBack):
+                    pattern=kwCallBack(file, pattern)
+
+        # 3)
+        tokens = cfnTokenizer.tokenize(pattern)
+        # 4)
         # get first token (or None if no tokens)
         try:
             token=tokens.next()
@@ -1313,8 +1356,15 @@ class BCFileManipulateName(object):
         except Exception as e:
             return (None, str(e))
 
-        if not keepInvalidCharacters:
-            returnedValue=re.sub(r'[*\\/<>?:;"|]', '', returnedValue)
+        if manageCounter:
+            # 5)
+            returnedValue=re.sub("(?i)\x01excludecounter(:#+)?\x01", r"{counter\1}", returnedValue)
+            # 6)
+            returnedValue=BCFileManipulateName.parseFileNameKw(file, returnedValue, targetPath)
+
+            # 7) cleanup
+            if not keepInvalidCharacters:
+                returnedValue=re.sub(r'[*\\/<>?:;"|]', '', returnedValue)
         return (returnedValue, None)
 
 

@@ -400,6 +400,10 @@ class BCTokenizerRule(object):
         self.__setRegEx(regex)
         self.__setType(type)
 
+        if len(self.__error)>0:
+            NL="\n"
+            raise EInvalidValue(f'Token rule is not valid!{NL}{NL.join(self.__error)}')
+
         if isinstance(autoCompletion, str):
             self.__autoCompletion=[(autoCompletion, autoCompletion, '')]
         elif isinstance(autoCompletion, tuple) and len(autoCompletion)==2 and isinstance(autoCompletion[0], str) and isinstance(autoCompletion[1], str):
@@ -526,6 +530,15 @@ class BCTokenizer(object):
     note: the tokenizer doesn't verify the validity of tokenized text (this is
           made in a second time by a parser)
     """
+    ADD_RULE_LAST = 0
+    ADD_RULE_TYPE_BEFORE_FIRST = 1
+    ADD_RULE_TYPE_AFTER_FIRST = 2
+    ADD_RULE_TYPE_BEFORE_LAST = 3
+    ADD_RULE_TYPE_AFTER_LAST = 4
+
+    POP_RULE_LAST = 0
+    POP_RULE_FIRST = 1
+    POP_RULE_ALL = 2
 
     def __init__(self, rules=None):
         # internal storage for rules (list of BCTokenizerRule)
@@ -541,26 +554,129 @@ class BCTokenizer(object):
 
         # a cache to store tokenized code
         self.__cache={}
+        self.__cacheOrdered=[]
 
         if not rules is None:
             self.setRules(rules)
 
-    def __str__(self):
-        return ""
+    def __repr__(self):
+        NL='\n'
+        return f"<BCTokenizer(Cache={len(self.__cache)}, Rules={len(self.__rules)}{NL}{NL.join([str(rule) for rule in self.__rules])}{NL}RegEx={self.regEx()})>"
 
-    def add(self, rule):
-        """Add a tokenizer rule
+    def __searchAddIndex(self, mode, type):
+        """Search index for given `type` according to defined search `mode`"""
+        foundLastPStart=-1
+        foundLastPEnd=-1
+        reset=True
+        for index in range(len(self.__rules)):
+            if self.__rules[index].type() == type:
+                if reset:
+                    if mode==BCTokenizer.ADD_RULE_TYPE_BEFORE_FIRST:
+                        return index
+                    foundLastPStart=index
+                    reset=False
 
-        Given `rule` must be a <BCTokenizerRule>
+                foundLastPEnd=index
+
+            elif foundLastPEnd!=-1 and mode==BCTokenizer.ADD_RULE_TYPE_AFTER_FIRST:
+                return index
+            else:
+                reset=True
+
+        if mode==BCTokenizer.ADD_RULE_TYPE_BEFORE_LAST:
+            return foundLastPStart
+        elif mode==BCTokenizer.ADD_RULE_TYPE_AFTER_LAST:
+            return foundLastPEnd
+
+        return len(self.__rules)
+
+    def __searchRemoveIndex(self, mode, type):
+        """Search index for given `type` according to defined search `mode`"""
+        if mode == BCTokenizer.POP_RULE_LAST:
+            rng=range(len(self.__rules), -1, -1)
+        else:
+            rng=range(len(self.__rules))
+
+        for index in rng:
+            if self.__rules[index].type() == type:
+                return index
+
+        return None
+
+    def __setCache(self, hashValue, tokens=None):
+        """Update cache content
+
+        If no tokens is provided, consider to update existing hashValue
         """
-        if isinstance(rule, BCTokenizerRule):
-            if rule.type() != None:
-                self.__rules.append(rule)
+        if tokens==True:
+            # update cache timestamp
+            # ==> assume that hashvalue exists in cache!!
+            index=self.__cacheOrdered.index(hashValue)
+            self.__cacheOrdered.pop(self.__cacheOrdered.index(hashValue))
+            self.__cache[hashValue][0]=time.time()
+            self.__cacheOrdered.append(hashValue)
+            self.__cache[hashValue][1].resetIndex()
+        elif tokens==False:
+            # remove from cache
+            # ==> assume that hashvalue exists in cache!!
+            index=self.__cacheOrdered.index(hashValue)
+            self.__cacheOrdered.pop(self.__cacheOrdered.index(hashValue))
+            self.__cache.pop(hashValue)
+        else:
+            # add to cache
+            self.__cache[hashValue]=[time.time(), tokens, len(self.__cacheOrdered)]
+            self.__cacheOrdered.append(hashValue)
+            self.__cache[hashValue][1].resetIndex()
+
+    def addRule(self, rules, mode=None):
+        """Add tokenizer rule(s)
+
+        Given `rule` must be a <BCTokenizerRule> or a list of <BCTokenizerRule>
+        """
+        if mode is None:
+            mode = BCTokenizer.ADD_RULE_LAST
+
+        if isinstance(rules, list):
+            for rule in rules:
+                self.addRule(rule, mode)
+        elif isinstance(rules, BCTokenizerRule):
+            if rules.type() != None:
+                if mode == BCTokenizer.ADD_RULE_LAST:
+                    self.__rules.append(rules)
+                else:
+                    self.__rules.insert(self.__searchAddIndex(mode, rules.type()), rules)
+
                 self.__needUpdate = True
             else:
-                self.__invalidRules.append((rule, "The rule type is set to NONE: the NONE type is reserved"))
+                self.__invalidRules.append((rules, "The rule type is set to NONE: the NONE type is reserved"))
         else:
             raise Exception("Given `rule` must be a <BCTokenizerRule>")
+
+    def removeRule(self, rules, mode=None):
+        """Remove tokenizer rule(s)
+
+        Given `rule` must be a <BCTokenizerRule> or a list of <BCTokenizerRule>
+        """
+        if mode is None:
+            mode = BCTokenizer.POP_RULE_LAST
+
+        if isinstance(rules, list):
+            for rule in rules:
+                self.removeRule(rule)
+        elif isinstance(rules, BCTokenizerRule):
+            if rules.type() != None:
+                if mode == BCTokenizer.POP_RULE_ALL:
+                    while index:=self.__searchRemoveIndex(BCTokenizer.POP_RULE_LAST, rules.type()):
+                        self.__rules.pop(index)
+                elif index:=self.__searchRemoveIndex(mode, rules.type()):
+                    self.__rules.pop(index)
+
+                self.__needUpdate = True
+            else:
+                self.__invalidRules.append((rules, "The rule type is set to NONE: the NONE type is reserved"))
+        else:
+            raise Exception("Given `rule` must be a <BCTokenizerRule>")
+
 
     def rules(self):
         """return list of given (and valid) rules"""
@@ -572,8 +688,7 @@ class BCTokenizer(object):
             self.__rules = []
             self.__invalidRules = []
 
-            for rule in rules:
-                self.add(rule)
+            self.addRule(rules)
         else:
             raise Exception("Given `rules` must be a list of <BCTokenizerRule>")
 
@@ -590,6 +705,7 @@ class BCTokenizer(object):
                 return rule.regEx().pattern()
 
         if self.__needUpdate:
+            self.clearCache(True)
             self.__needUpdate = False
             self.__regEx=QRegularExpression('|'.join([ruleInsensitive(rule) for rule in self.__rules]), QRegularExpression.MultilineOption)
 
@@ -599,19 +715,27 @@ class BCTokenizer(object):
         """Clear cache content
 
         If `full`, clear everything
-        Otherwise, clear oldest values
+
+        Otherwise clear oldest values
+        - At least 5 items are kept in cache
+        - At most, 50 items are kept in cache
         """
         if full:
             self.__cache={}
+            self.__cacheOrdered=[]
         else:
             currentTime=time.time()
-            for key in list(self.__cache.keys()):
-                if len(self.__cache)<5:
-                    # keep at least, five items
-                    break
+            # keep at least, five items
+            for key in self.__cacheOrdered[:-5]:
                 if (currentTime - self.__cache[key][0]) > 120:
                     # older than than 2minutes, clear it
-                    self.__cache.pop(key)
+                    self.__setCache(key, False)
+
+            if len(self.__cacheOrdered)>250:
+                keys=self.__cacheOrdered[:-250]
+                for key in keys:
+                    self.__setCache(key, False)
+
 
     def tokenize(self, text):
         """Tokenize given text
@@ -636,8 +760,10 @@ class BCTokenizer(object):
         hashValue=textHash.hexdigest()
 
         if hashValue in self.__cache:
-            self.__cache[hashValue][0]=time.time()
-            self.__cache[hashValue][1].resetIndex()
+            # udpate
+            self.__setCache(hashValue, True)
+            # need to clear unused items in cache
+            self.clearCache(False)
             return self.__cache[hashValue][1]
 
         matchIterator = self.regEx().globalMatch(text)
@@ -673,10 +799,10 @@ class BCTokenizer(object):
                             # do not need to continue to check for another token type
                             break
 
-        self.__cache[hashValue]=[time.time(), BCTokens(text, returned)]
-        self.__cache[hashValue][1].resetIndex()
+        # add
+        self.__setCache(hashValue, BCTokens(text, returned))
 
-        # need to clear unused item in cache
+        # need to clear unused items in cache
         self.clearCache(False)
 
         return self.__cache[hashValue][1]
