@@ -39,6 +39,7 @@ from PyQt5.QtWidgets import (
 
 from .bcabout import BCAboutWindow
 from .bcbookmark import BCBookmark
+from .bcclipboard import BCClipboard
 from .bcfile import (
         BCBaseFile,
         BCDirectory,
@@ -153,6 +154,9 @@ class BCUIController(QObject):
         self.commandGoLastDocsSavedSet(self.__settings.option(BCSettingsKey.SESSION_LASTDOC_S_ITEMS.id()))
 
         BCFile.initialiseCache()
+        BCClipboard.initialiseCache()
+
+        self.__clipboard = BCClipboard()
 
         # overrides native Krita Open dialog...
         self.commandSettingsOpenOverrideKrita(self.__settings.option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()))
