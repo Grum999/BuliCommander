@@ -83,7 +83,7 @@ class BCClipboardItem(object):
         if self.persistent():
             return BCClipboard.persistentCacheDirectory()
         else:
-            return BCClipboard.flushedCacheDirectory()
+            return BCClipboard.sessionCacheDirectory()
 
     def dataContentForCache(self):
         """Return data that have to be saved in cache file
@@ -134,20 +134,20 @@ class BCClipboardItem(object):
             raise EInvalidType('Given `value` must be a <bool>')
 
         # TODO: need to move file:
-        #   persistentCacheDirectory<-->flushedCacheDirectory
+        #   persistentCacheDirectory<-->sessionCacheDirectory
 
         if value != self.__persistent:
             # do soomething only if state is changed
             filesToProcess=[]
             if self.__persistent:
-                # move from persistentCacheDirectory() to flushedCacheDirectory()
-                targetPath=BCClipboard.flushedCacheDirectory()
+                # move from persistentCacheDirectory() to sessionCacheDirectory()
+                targetPath=BCClipboard.sessionCacheDirectory()
                 for root, dirs, files in os.walk(BCClipboard.persistentCacheDirectory()):
                     filesToProcess+=[os.path.join(root, name) for name in files if search(fr'^{self.hash()}\..*', name)]
             else:
-                # move from flushedCacheDirectory() to persistentCacheDirectory()
-                targetPath=BCClipboard.flushedCacheDirectory()
-                for root, dirs, files in os.walk(BCClipboard.flushedCacheDirectory()):
+                # move from sessionCacheDirectory() to persistentCacheDirectory()
+                targetPath=BCClipboard.sessionCacheDirectory()
+                for root, dirs, files in os.walk(BCClipboard.sessionCacheDirectory()):
                     filesToProcess+=[os.path.join(root, name) for name in files if search(fr'^{self.hash()}\..*', name)]
 
             for file in filesToProcess:
@@ -494,7 +494,7 @@ class BCClipboardItemKra(BCClipboardItem):
             if self.persistent():
                 fileName = os.path.join(BCClipboard.persistentCacheDirectory(), f'{self.hash()}.png')
             else:
-                fileName = os.path.join(BCClipboard.flushedCacheDirectory(), f'{self.hash()}.png')
+                fileName = os.path.join(BCClipboard.sessionCacheDirectory(), f'{self.hash()}.png')
 
             saved &= BCClipboard.saveQImage(fileName, image)
 
@@ -502,7 +502,7 @@ class BCClipboardItemKra(BCClipboardItem):
         if self.persistent():
             fileName = os.path.join(BCClipboard.persistentCacheDirectory(), f'{self.hash()}.kra')
         else:
-            fileName = os.path.join(BCClipboard.flushedCacheDirectory(), f'{self.hash()}.kra')
+            fileName = os.path.join(BCClipboard.sessionCacheDirectory(), f'{self.hash()}.kra')
 
         with open(fileName, 'wb') as file:
             try:
@@ -550,7 +550,7 @@ class BCClipboard(QObject):
             os.makedirs(bcCachePath, exist_ok=True)
 
             os.makedirs(BCClipboard.persistentCacheDirectory(), exist_ok=True)
-            os.makedirs(BCClipboard.flushedCacheDirectory(), exist_ok=True)
+            os.makedirs(BCClipboard.sessionCacheDirectory(), exist_ok=True)
         except Exception as e:
             Debug.print('[BCClipboard.initialiseCache] Unable to create directory: {0}', str(e))
             return
@@ -565,11 +565,11 @@ class BCClipboard(QObject):
         return os.path.join(BCClipboard.__OPTION_CACHE_PATH, 'persistent')
 
     @staticmethod
-    def flushedCacheDirectory():
+    def sessionCacheDirectory():
         """Return path for non persistent clipboard data"""
         if BCClipboard.__OPTION_CACHE_PATH == '':
             raise EInvalidStatus("BCClipboard hasn't been initialized!")
-        return os.path.join(BCClipboard.__OPTION_CACHE_PATH, 'flushed')
+        return os.path.join(BCClipboard.__OPTION_CACHE_PATH, 'session')
 
     @staticmethod
     def optionCachePath():
@@ -637,7 +637,6 @@ class BCClipboard(QObject):
 
         # instance to application clipboard
         self.__clipboard = QGuiApplication.clipboard()
-        self.__clipboard.dataChanged.connect(self.__clipboardMimeContentChanged)
 
         # regular expressions used to parse HTML and find urls
         self.__reHtmlImg=QRegularExpression(r'(?im)<img(?:\s.*\s|\s+)(?:src="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg)[^"]*?)"|src=\'(?<url2>https?:\/\/[^\']+?\.(?:jpeg|jpg|png|gif|svg)[^\']*?)\')[^>]*?>')
@@ -647,10 +646,16 @@ class BCClipboard(QObject):
         self.__reTextUrl=QRegularExpression(r'(?im)(["\'])?(?<url>https?:\/\/[^\s]+\.(?:jpeg|jpg|png|svg|gif)(?:\?[^\s]*)?)\1?.*')
 
         self.__totalCacheSizeP=0
-        self.__totalCacheSizeF=0
+        self.__totalCacheSizeS=0
 
-        self.cacheFlush()
+        self.__totalCacheItemP=0
+        self.__totalCacheItemS=0
+
+        self.__enabled=False
+
+        self.cacheSessionFlush()
         self.__poolFromCache()
+        self.setEnabled(True)
 
     def __getHash(self, data):
         """Return hash for data"""
@@ -712,16 +717,18 @@ class BCClipboard(QObject):
                         self.__totalCacheSizeP+=self.__pool[hash].cacheSize()
 
     def __recalculateCacheSize(self):
-        """Return current cache size as a tuple(flushed, persistent)"""
+        """Recalculate cache size"""
         self.__totalCacheSizeP=0
-        self.__totalCacheSizeF=0
+        self.__totalCacheSizeS=0
+        self.__totalCacheItemP=0
+        self.__totalCacheItemS=0
         for hash in self.__pool:
             if self.__pool[hash].persistent():
                 self.__totalCacheSizeP+=self.__pool[hash].cacheSize()
+                self.__totalCacheItemP+=1
             else:
-                self.__totalCacheSizeF+=self.__pool[hash].cacheSize()
-
-        return (self.__totalCacheSizeP, self.__totalCacheSizeF)
+                self.__totalCacheSizeS+=self.__pool[hash].cacheSize()
+                self.__totalCacheItemS+=1
 
     def __addPool(self, item):
         """Add BCClipboardItem to pool"""
@@ -731,7 +738,7 @@ class BCClipboard(QObject):
             if item.persistent():
                 self.__totalCacheSizeP+=item.cacheSize()
             else:
-                self.__totalCacheSizeF+=item.cacheSize()
+                self.__totalCacheSizeS+=item.cacheSize()
 
             return True
         return False
@@ -833,6 +840,7 @@ class BCClipboard(QObject):
         return ([QUrl(url) for url in list(set(urls))], i18n('Text document'))
 
     def __clipboardMimeContentChanged(self):
+        """Clipboard content has been changed"""
         clipboardMimeContent = self.__clipboard.mimeData(QClipboard.Clipboard)
 
         if clipboardMimeContent is None:
@@ -909,38 +917,76 @@ class BCClipboard(QObject):
         """
         updated = False
 
-        if self.__totalCacheSizeF > BCClipboard.optionCacheMaxSize():
-            # build list of item from flush, ascending sort on timestamp
+        if self.__totalCacheSizeS > BCClipboard.optionCacheMaxSize():
+            # build list of item from session, ascending sort on timestamp
             hashList=sorted([hash for hash in self.__pool if self.__pool[hash].persistent()], key=lambda hash: self.__pool[hash].timestamp())
 
             for hash in hashList:
-                if self.__totalCacheSizeF < BCClipboard.optionCacheMaxSize():
+                if self.__totalCacheSizeS < BCClipboard.optionCacheMaxSize():
                     # cache size is now less than maximum size, exit
                     break
 
                 item = self.__pool.pop(hash)
-                self.__totalCacheSizeF-=item.cacheSize()
+                self.__totalCacheSizeS-=item.cacheSize()
                 updated=True
 
         if updated:
             self.updated.emit()
 
-    def cacheFlush(self):
-        """Flush (non persistent) pool content"""
+    def enabled(self):
+        """Return if clipboard management is enabled"""
+        return self.__enabled
+
+    def setEnabled(self, value):
+        """Set if clipboard management is enabled"""
+        if not isinstance(value, bool):
+            raise EInvalidType("Given `value` must be a <bool>")
+
+        if self.__enabled!=value:
+            self.__enabled=value
+            if self.__enabled:
+                self.__clipboard.dataChanged.connect(self.__clipboardMimeContentChanged)
+            else:
+                self.__clipboard.dataChanged.disconnect(self.__clipboardMimeContentChanged)
+
+    def cacheSessionFlush(self):
+        """Flush (session) pool content"""
         updated=False
-        for root, dirs, files in os.walk(BCClipboard.flushedCacheDirectory()):
+        for root, dirs, files in os.walk(BCClipboard.sessionCacheDirectory()):
             for fileName in files:
                 try:
                     os.remove(os.path.join(root, fileName))
                     updated=True
                 except Exception as e:
-                    Debug.print('[BCClipboard.cacheFlush] Unable to save file {0}: {1}', fileName, str(e))
+                    Debug.print('[BCClipboard.cacheSessionFlush] Unable to save file {0}: {1}', fileName, str(e))
 
         if updated:
+            self.__poolFromCache()
             self.updated.emit()
 
-    def cacheSize(self, recalculate=False):
-        """Return current cache size as a tuple(flushed, persistent)"""
+    def cachePersistentFlush(self):
+        """Flush (persistent) pool content"""
+        updated=False
+        for root, dirs, files in os.walk(BCClipboard.persistentCacheDirectory()):
+            for fileName in files:
+                try:
+                    os.remove(os.path.join(root, fileName))
+                    updated=True
+                except Exception as e:
+                    Debug.print('[BCClipboard.cachePersistentFlush] Unable to save file {0}: {1}', fileName, str(e))
+
+        if updated:
+            self.__poolFromCache()
+            self.updated.emit()
+
+    def cacheSizeP(self, recalculate=False):
+        """Return current cache size as a tuple(nb items, size)"""
         if recalculate:
             self.__recalculateCacheSize()
-        return (self.__totalCacheSizeP, self.__totalCacheSizeF)
+        return (self.__totalCacheItemP, self.__totalCacheSizeP)
+
+    def cacheSizeS(self, recalculate=False):
+        """Return current cache size as a tuple(nb items, size)"""
+        if recalculate:
+            self.__recalculateCacheSize()
+        return (self.__totalCacheItemS, self.__totalCacheSizeS)

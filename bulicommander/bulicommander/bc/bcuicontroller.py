@@ -200,6 +200,7 @@ class BCUIController(QObject):
         if self.__initialised:
             self.__bcStarted = True
             self.bcWindowShown.emit()
+            self.__clipboardActive()
             # already initialised, do nothing
             return
 
@@ -264,6 +265,11 @@ class BCUIController(QObject):
         self.commandInfoToClipBoardMaxWidthActive(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE.id()))
         self.commandInfoToClipBoardMinWidthActive(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE.id()))
 
+        self.commandSettingsClipboardCacheMode(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_GENERAL.id()))
+        self.commandSettingsClipboardCacheMaxSize(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MAXISZE.id()))
+        self.commandSettingsClipboardCachePersistent(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_PERSISTENT.id()))
+        self.commandSettingsClipboardUrlAutomaticDownload(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD.id()))
+
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setHistory(self.__history)
             self.__window.panels[panelId].setBookmark(self.__bookmark)
@@ -307,6 +313,7 @@ class BCUIController(QObject):
         self.__bcStarted = True
         self.__bcStarting = False
         self.bcWindowShown.emit()
+        self.__clipboardActive()
 
 
     def __extendedOpen(self, file):
@@ -438,6 +445,24 @@ class BCUIController(QObject):
             actionOpen=Krita.instance().action("file_open")
             actionOpen.disconnect()
             actionOpen.triggered.connect(lambda checked : self.start())
+
+
+    def __clipboardActive(self):
+        """Determinate, according to options, if clipboard is active or not"""
+        mode = self.commandSettingsClipboardCacheMode()
+
+        if mode == BCSettingsValues.CLIPBOARD_MODE_ALWAYS:
+            if self.__systray.visible():
+                self.__clipboard.setEnabled(self.commandSettingsClipboardCacheSystrayMode())
+            else:
+                self.__clipboard.setEnabled(True)
+        elif mode == BCSettingsValues.CLIPBOARD_MODE_ACTIVE:
+            if self.__systray.visible():
+                self.__clipboard.setEnabled(self.commandSettingsClipboardCacheSystrayMode())
+            else:
+                self.__clipboard.setEnabled(self.started())
+        else:
+            self.__clipboard.setEnabled(False)
 
 
     # endregion: initialisation methods ----------------------------------------
@@ -601,6 +626,10 @@ class BCUIController(QObject):
     def bcTitle(self):
         return self.__bcTitle
 
+    def clipboard(self):
+        """Return clipboard instance"""
+        return self.__clipboard
+
     # endregion: getter/setters ------------------------------------------------
 
 
@@ -722,6 +751,7 @@ class BCUIController(QObject):
 
         self.__bcStarted = False
         self.bcWindowClosed.emit()
+        self.__clipboardActive()
 
     def setAllowRefresh(self, allow):
         """change allow refresh for both panels"""
@@ -1815,6 +1845,37 @@ class BCUIController(QObject):
         """Open dialog box settings"""
         if BCSettingsDialogBox.open(f'{self.__bcName}::Settings', self):
             self.saveSettings()
+
+    def commandSettingsClipboardCacheMode(self, value=None):
+        """Define default mode for clipboard"""
+        if not value is None:
+            self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_GENERAL, value)
+            self.__clipboardActive()
+        return self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_GENERAL.id())
+
+    def commandSettingsClipboardCacheSystrayMode(self, value=None):
+        """Define default mode for clipboard"""
+        if not value is None:
+            self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_SYSTRAY, value)
+            self.__clipboardActive()
+        return self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_SYSTRAY.id())
+
+    def commandSettingsClipboardCacheMaxSize(self, value=None):
+        """Define default mode for clipboard"""
+        if not value is None:
+            self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MAXISZE, value)
+            BCClipboard.setOptionCacheMaxSize(value)
+        return self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MAXISZE.id())
+
+    def commandSettingsClipboardCachePersistent(self, value=False):
+        """Define default cache used clipboard items"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_PERSISTENT, value)
+        BCClipboard.setOptionCacheDefaultPersistent(value)
+
+    def commandSettingsClipboardUrlAutomaticDownload(self, value=True):
+        """Define default action on clipboard url"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD, value)
+        BCClipboard.setOptionUrlAutoload(value)
 
     def commandAboutBc(self):
         """Display 'About Buli Commander' dialog box"""

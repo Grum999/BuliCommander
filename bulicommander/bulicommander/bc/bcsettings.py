@@ -72,6 +72,10 @@ class BCSettingsValues(object):
     HOME_DIR_SYS =                                          'system'
     HOME_DIR_UD =                                           'user defined'
 
+    CLIPBOARD_MODE_ALWAYS =                                 'always'
+    CLIPBOARD_MODE_ACTIVE =                                 'active'
+    CLIPBOARD_MODE_MANUAL =                                 'manual'
+
 
 class BCSettingsFmt(object):
 
@@ -352,6 +356,12 @@ class BCSettingsKey(Enum):
     CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH =              'config.defaultSession.information.clipboard.maxWidth'
     CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE =       'config.defaultSession.information.clipboard.minWidthActive'
     CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE =       'config.defaultSession.information.clipboard.maxWidthActive'
+
+    CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_GENERAL =           'config.defaultSession.clipboard.cache.mode.general'
+    CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_SYSTRAY =           'config.defaultSession.clipboard.cache.mode.systray'
+    CONFIG_DSESSION_CLIPBOARD_CACHE_MAXISZE =                'config.defaultSession.clipboard.cache.maxSize'
+    CONFIG_DSESSION_CLIPBOARD_CACHE_PERSISTENT =             'config.defaultSession.clipboard.cache.persistent'
+    CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD =                 'config.defaultSession.clipboard.url.autoLoad'
 
     SESSION_INFO_TOCLIPBOARD_BORDER =                        'session.information.clipboard.border'
     SESSION_INFO_TOCLIPBOARD_HEADER =                        'session.information.clipboard.header'
@@ -685,6 +695,13 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE.id():(True,                     BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE.id():(False,                    BCSettingsFmt(bool)),
 
+            BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_GENERAL.id():    (BCSettingsValues.CLIPBOARD_MODE_ALWAYS,
+                                                                                                           BCSettingsFmt(str, [BCSettingsValues.CLIPBOARD_MODE_ALWAYS, BCSettingsValues.CLIPBOARD_MODE_ACTIVE, BCSettingsValues.CLIPBOARD_MODE_MANUAL])),
+            BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_SYSTRAY.id():    (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MAXISZE.id():         (1024000000,               BCSettingsFmt(int)),
+            BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_PERSISTENT.id():      (False,                    BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD.id():          (True,                     BCSettingsFmt(bool)),
+
             BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER.id():                 (3,                        BCSettingsFmt(int, [0,1,2,3])),
             BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER.id():                 (True,                     BCSettingsFmt(bool)),
             BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH.id():               (80,                       BCSettingsFmt(int)),
@@ -878,7 +895,8 @@ class BCSettingsDialogBox(QDialog):
     CATEGORY_GENERAL = 0
     CATEGORY_NAVIGATION = 1
     CATEGORY_IMAGES = 2
-    CATEGORY_CACHE = 3
+    CATEGORY_CLIPBOARD = 3
+    CATEGORY_CACHE = 4
 
     def __init__(self, title, uicontroller, parent=None):
         super(BCSettingsDialogBox, self).__init__(parent)
@@ -897,6 +915,8 @@ class BCSettingsDialogBox(QDialog):
         self.__itemCatNavigation.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_NAVIGATION)
         self.__itemCatImageFiles = QListWidgetItem(QIcon(":/images/large_view"), "Image files")
         self.__itemCatImageFiles.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_IMAGES)
+        self.__itemCatClipboard = QListWidgetItem(QIcon(":/images/clipboard"), "Clipboard")
+        self.__itemCatClipboard.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CLIPBOARD)
         self.__itemCatCachedImages = QListWidgetItem(QIcon(":/images/cached"), "Cached images")
         self.__itemCatCachedImages.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CACHE)
 
@@ -905,6 +925,8 @@ class BCSettingsDialogBox(QDialog):
         self.__replaceOpenDbAlertUser = True
 
         self.pbCCIClearCache.clicked.connect(self.__clearCache)
+        self.pbCCIClearCacheCS.clicked.connect(self.__clearCacheCS)
+        self.pbCCIClearCacheCP.clicked.connect(self.__clearCacheCP)
 
         self.bbOkCancel.accepted.connect(self.__applySettings)
 
@@ -960,6 +982,7 @@ class BCSettingsDialogBox(QDialog):
         self.lvCategory.addItem(self.__itemCatGeneral)
         self.lvCategory.addItem(self.__itemCatNavigation)
         self.lvCategory.addItem(self.__itemCatImageFiles)
+        self.lvCategory.addItem(self.__itemCatClipboard)
         self.lvCategory.addItem(self.__itemCatCachedImages)
         self.__setCategory(BCSettingsDialogBox.CATEGORY_GENERAL)
 
@@ -1000,7 +1023,6 @@ class BCSettingsDialogBox(QDialog):
         self.cbCGLaunchOpenBC.setEnabled(checkKritaVersion(5,0,0))
         self.cbCGLaunchOpenBC.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id()))
 
-        # not yet implemented...
         self.cbCGLaunchReplaceOpenDb.setEnabled(checkKritaVersion(5,0,0))
         self.cbCGLaunchReplaceOpenDb.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()))
         self.cbCGLaunchReplaceOpenDb.toggled.connect(self.__replaceOpenDbAlert)
@@ -1068,6 +1090,18 @@ class BCSettingsDialogBox(QDialog):
                 i18n('{file:name}-Copy {date}_{time}.kra')
             ])
         self.cbxCIFOthOptCreDocName.setCurrentText(self.__uiController.settings().option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
+
+        # --- Clipboard Category -----------------------------------------------------
+        value = self.__uiController.settings().option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_GENERAL.id())
+        if value == BCSettingsValues.CLIPBOARD_MODE_ALWAYS:
+            self.rbCCModeAlways.setChecked(True)
+        elif value == BCSettingsValues.CLIPBOARD_MODE_ACTIVE:
+            self.rbCCModeActive.setChecked(True)
+        elif value == BCSettingsValues.CLIPBOARD_MODE_MANUAL:
+            self.rbCCModeManual.setChecked(True)
+
+        self.cbCCAutomaticUrlDownload.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD.id()))
+        self.cbCCUsePersistent.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_PERSISTENT.id()))
 
 
     def __applySettings(self):
@@ -1138,6 +1172,17 @@ class BCSettingsDialogBox(QDialog):
         self.__uiController.commandSettingsFileNewFileNameKra(self.cbxCIFKraOptCreDocName.currentText())
         self.__uiController.commandSettingsFileNewFileNameOther(self.cbxCIFOthOptCreDocName.currentText())
 
+        # --- Clipboard Category -----------------------------------------------------
+        if self.rbCCModeAlways.isChecked():
+            self.__uiController.commandSettingsClipboardCacheMode(BCSettingsValues.CLIPBOARD_MODE_ALWAYS)
+        elif self.rbCCModeActive.isChecked():
+            self.__uiController.commandSettingsClipboardCacheMode(BCSettingsValues.CLIPBOARD_MODE_ACTIVE)
+        else:
+            self.__uiController.commandSettingsClipboardCacheMode(BCSettingsValues.CLIPBOARD_MODE_MANUAL)
+
+        self.__uiController.commandSettingsClipboardCachePersistent(self.cbCCUsePersistent.isChecked())
+        self.__uiController.commandSettingsClipboardUrlAutomaticDownload(self.cbCCAutomaticUrlDownload.isChecked())
+
 
     def __replaceOpenDbAlert(self, checked):
         """Tick has been changed for checkbox cbCGLaunchReplaceOpenDb<"Overrides Krita 'Open' function">
@@ -1195,13 +1240,26 @@ class BCSettingsDialogBox(QDialog):
             nbFiles+=len(files)
 
         if self.rbCGFileUnitBinary.isChecked():
-            self.__uiController.commandSettingsFileUnit(BCSettingsValues.FILE_UNIT_KIB)
             self.lblCCINbFileAndSize.setText(f'{nbFiles} files, {bytesSizeToStr(sizeFiles, BCSettingsValues.FILE_UNIT_KIB)}')
         else:
-            self.__uiController.commandSettingsFileUnit(BCSettingsValues.FILE_UNIT_KB)
             self.lblCCINbFileAndSize.setText(f'{nbFiles} files, {bytesSizeToStr(sizeFiles, BCSettingsValues.FILE_UNIT_KB)}')
 
         self.pbCCIClearCache.setEnabled(sizeFiles>0)
+
+
+        nbItemsS, sizeItemsS = self.__uiController.clipboard().cacheSizeS(True)
+        if self.rbCGFileUnitBinary.isChecked():
+            self.lblCCINbItemsAndSizeCS.setText(f'{nbItemsS} items, {bytesSizeToStr(sizeItemsS, BCSettingsValues.FILE_UNIT_KIB)}')
+        else:
+            self.lblCCINbItemsAndSizeCS.setText(f'{nbItemsS} items, {bytesSizeToStr(sizeItemsS, BCSettingsValues.FILE_UNIT_KB)}')
+        self.pbCCIClearCacheCS.setEnabled(sizeItemsS>0)
+
+        nbItemsP, sizeItemsP = self.__uiController.clipboard().cacheSizeP()
+        if self.rbCGFileUnitBinary.isChecked():
+            self.lblCCINbItemsAndSizeCP.setText(f'{nbItemsP} items, {bytesSizeToStr(sizeItemsP, BCSettingsValues.FILE_UNIT_KIB)}')
+        else:
+            self.lblCCINbItemsAndSizeCP.setText(f'{nbItemsP} items, {bytesSizeToStr(sizeItemsP, BCSettingsValues.FILE_UNIT_KB)}')
+        self.pbCCIClearCacheCP.setEnabled(sizeItemsP>0)
 
 
     def __clearCache(self):
@@ -1212,9 +1270,22 @@ class BCSettingsDialogBox(QDialog):
             self.__calculateCacheSize()
 
 
+    def __clearCacheCS(self):
+        """Clear clipboard session cache after user confirmation"""
+        if QMessageBox.question(self, i18n(f"{self.__title}::Clear Clipboard Cache (session)"), i18n(f"Current clipboard session cache content will be cleared ({self.lblCCINbItemsAndSizeCS.text()})\n\nDo you confirm action?"), QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
+            self.__uiController.clipboard().cacheSessionFlush()
+            self.__calculateCacheSize()
+
+
+    def __clearCacheCP(self):
+        """Clear clipboard persistent cache after user confirmation"""
+        if QMessageBox.question(self, i18n(f"{self.__title}::Clear Clipboard Cache (persistent)"), i18n(f"Persitent clipboard cache content will be cleared ({self.lblCCINbItemsAndSizeCP.text()})\n\nDo you confirm action?"), QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
+            self.__uiController.clipboard().cachePersistentFlush()
+            self.__calculateCacheSize()
+
+
     @staticmethod
     def open(title, uicontroller):
         """Open dialog box"""
         db = BCSettingsDialogBox(title, uicontroller)
         return db.exec()
-
