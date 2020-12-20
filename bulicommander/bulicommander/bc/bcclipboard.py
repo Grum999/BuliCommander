@@ -25,6 +25,7 @@ import datetime
 import hashlib
 import json
 import re
+import shutil
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -34,6 +35,12 @@ from PyQt5.QtCore import (
 from .bcutils import (
         Debug
     )
+from .bcfile import (
+        BCBaseFile,
+        BCFile,
+        BCFileThumbnailSize
+    )
+from .bcdownloader import BCDownloader
 
 from ..pktk.pktk import (
         EInvalidType,
@@ -41,10 +48,12 @@ from ..pktk.pktk import (
         EInvalidStatus
     )
 
-class BCClipboardItem(object):
+class BCClipboardItem(QObject):
     """An item stored in clipboard"""
+    persistentChanged = Signal(QObject)
 
     def __init__(self, hashValue, origin=None, timestamp=None):
+        super(BCClipboardItem, self).__init__(None)
         # item uid
         self.__hashValue = hashValue
         # Date/time at which item as been created/updated
@@ -60,6 +69,9 @@ class BCClipboardItem(object):
         self.__imageSize=QSize()
         # size in cache
         self.__cacheSize=-1
+
+        # BCFile of image in cache
+        self.__file=None
 
         self.setOrigin(origin)
 
@@ -137,27 +149,28 @@ class BCClipboardItem(object):
         #   persistentCacheDirectory<-->sessionCacheDirectory
 
         if value != self.__persistent:
-            # do soomething only if state is changed
+            # do something only if state is changed
             filesToProcess=[]
             if self.__persistent:
                 # move from persistentCacheDirectory() to sessionCacheDirectory()
                 targetPath=BCClipboard.sessionCacheDirectory()
                 for root, dirs, files in os.walk(BCClipboard.persistentCacheDirectory()):
-                    filesToProcess+=[os.path.join(root, name) for name in files if search(fr'^{self.hash()}\..*', name)]
+                    filesToProcess+=[os.path.join(root, name) for name in files if re.search(fr'^{self.hash()}\..*', name)]
             else:
                 # move from sessionCacheDirectory() to persistentCacheDirectory()
-                targetPath=BCClipboard.sessionCacheDirectory()
+                targetPath=BCClipboard.persistentCacheDirectory()
                 for root, dirs, files in os.walk(BCClipboard.sessionCacheDirectory()):
-                    filesToProcess+=[os.path.join(root, name) for name in files if search(fr'^{self.hash()}\..*', name)]
+                    filesToProcess+=[os.path.join(root, name) for name in files if re.search(fr'^{self.hash()}\..*', name)]
 
             for file in filesToProcess:
                 try:
-                    print('move', file, targetPath)
                     shutil.move(file, targetPath)
                 except Exception as e:
-                    Debug.print('[BCClipboardItem.setPersistent] Unable to move file {0} to {1}: {2}', fileName, targetPath, str(e))
+                    Debug.print('[BCClipboardItem.setPersistent] Unable to move file {0} to {1}: {2}', file, targetPath, str(e))
 
             self.__persistent=value
+            self.updateBcFile()
+            self.persistentChanged.emit(self)
 
     def saveToCache(self):
         """Save description to cache as a JSON file"""
@@ -195,9 +208,29 @@ class BCClipboardItem(object):
             self.calculateCacheSize()
         return self.__cacheSize
 
+    def file(self):
+        """A BCFile instance of file in cache
+
+        None if there's no file in cache
+        """
+        return self.__file
+
+    def setFile(self, fileName):
+        """Set BCFile from given file name"""
+        self.__file = BCFile(fileName)
+
+    def updateBcFile(self):
+        pass
+
 
 class BCClipboardItemUrl(BCClipboardItem):
     """An url stored in clipboard"""
+    downloadFinished = Signal(QObject)
+    downloadProgress = Signal(QObject)
+
+    URL_STATUS_NOTDOWNLOADED = 0
+    URL_STATUS_DOWNLOADING = 1
+    URL_STATUS_DOWNLOADED = 2
 
     @staticmethod
     def new(hash, options):
@@ -210,6 +243,7 @@ class BCClipboardItemUrl(BCClipboardItem):
             "timestamp"
             "url.url"
             "url.isValid"
+            "url.downloadSize"
         """
         url=None
         origin=None
@@ -225,6 +259,9 @@ class BCClipboardItemUrl(BCClipboardItem):
 
         if isinstance(options.get('imageSize.height', None), int) and isinstance(options.get('imageSize.width', None), int):
             returned.setImageSize(QSize(options['imageSize.width'], options['imageSize.height']))
+
+        if isinstance(options.get('url.downloadSize', None), int):
+            returned.setDownloadSize(options['url.downloadSize'])
 
         if isinstance(options.get('persistent', None), bool):
             returned.setPersistent(options['persistent'])
@@ -243,13 +280,53 @@ class BCClipboardItemUrl(BCClipboardItem):
         self.__loadedFileName=f'{self.hash()}{os.path.splitext(url.fileName())[1]}'
         self.__url=url
         self.__urlIsValid=True
-        self.__urlIsLoaded=os.path.exists(os.path.join(self.cachePath(), self.loadedFileName()))
+        self.__downloader=None
+        self.__pctDelta=0
+        self.__downloadSize=0
+        if self.urlIsLoaded():
+            self.__status=BCClipboardItemUrl.URL_STATUS_DOWNLOADED
+        else:
+            self.__status=BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED
 
         if saveInCache:
             self.saveToCache()
 
     def __repr__(self):
-        return f'{super(BCClipboardItemUrl, self).__repr__()[:-2]}, "{self.__url.url()}", {self.__urlIsValid}, {self.__urlIsLoaded})>'
+        return f'{super(BCClipboardItemUrl, self).__repr__()[:-2]}, "{self.__url.url()}", {self.__urlIsValid}, {self.urlIsLoaded()})>'
+
+    def __downloadFinished(self):
+        """Download has finished
+
+        Move file from download directory to cache directory
+        Update BCFile
+        Save current url properties to cache
+        Emit signal for clipboard url
+        """
+        try:
+            shutil.move(self.__downloader.target(), self.cachePath())
+        except Exception as e:
+            Debug.print('[BCClipboardItem.__downloadFinished] Unable to move file {0} to {1}: {2}', self.__downloader.target(), self.cachePath(), str(e))
+            self.__status=BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED
+            self.downloadFinished.emit(self)
+            return
+
+        self.__status=BCClipboardItemUrl.URL_STATUS_DOWNLOADED
+        self.updateBcFile()
+        if self.file():
+            self.setImageSize(self.file().imageSize())
+        self.saveToCache()
+        self.downloadFinished.emit(self)
+
+    def __downloadProgress(self, bytesReceived, bytesTotal):
+        """Download is in progress, emit signal for clipboard url"""
+        if self.__downloadSize==0:
+            self.__downloadSize=bytesTotal
+            self.saveToCache()
+        pct = self.__downloader.downloadProgress()[0]
+        if (pct - self.__pctDelta)>0.5:
+            # emit signal (to model) only if delta on download pct is greater than 0.5
+            self.__pctDelta=pct
+            self.downloadProgress.emit(self)
 
     def dataContentForCache(self):
         """Return data that have to be saved in cache
@@ -260,8 +337,9 @@ class BCClipboardItemUrl(BCClipboardItem):
 
         returned['url.url']=self.__url.url()
         returned['url.isValid']=self.__urlIsValid
-        returned['url.isLoaded']=self.__urlIsLoaded
+        returned['url.isLoaded']=self.urlIsLoaded()
         returned['url.loadedFileName']=self.__loadedFileName
+        returned['url.downloadSize']=self.__downloadSize
 
         return returned
 
@@ -281,11 +359,139 @@ class BCClipboardItemUrl(BCClipboardItem):
 
     def urlIsLoaded(self):
         """Return if url content is loaded or not"""
-        return self.__urlIsLoaded
+        fileName=os.path.join(self.cachePath(), self.loadedFileName())
+        exist=os.path.exists(fileName)
+
+        if exist and self.__downloadSize>0:
+            fileSize=os.path.getsize(fileName)
+            if fileSize!=self.__downloadSize:
+                # file size is not expected size
+                # delete file to force reload
+                try:
+                    os.remove(fileName)
+                except:
+                    pass
+                return False
+
+        return exist
+
+    def urlStatus(self):
+        """Return if url is downloaded, downloading, not downloaded"""
+        return self.__status
 
     def loadedFileName(self):
         """Return file name (without path) for expected loaded file"""
         return self.__loadedFileName
+
+    def updateBcFile(self):
+        """Update BCFile according to current clipboard item properties"""
+        imgCacheFileName = os.path.join(self.cachePath(), self.loadedFileName())
+        if os.path.exists(imgCacheFileName):
+            self.setFile(imgCacheFileName)
+            if self.__status != BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
+                self.__status=BCClipboardItemUrl.URL_STATUS_DOWNLOADED
+            if self.imageSize().width()==-1 or self.imageSize().height()==-1:
+                self.setImageSize(self.file().imageSize())
+                self.saveToCache()
+        else:
+            self.__status=BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED
+
+    def download(self):
+        """Start download"""
+        if self.__status==BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
+            self.__status=BCClipboardItemUrl.URL_STATUS_DOWNLOADING
+            self.__downloader=BCDownloader(self.__url, os.path.join(os.path.join(BCClipboard.downloadingCacheDirectory(), self.loadedFileName())))
+            self.__downloader.finished.connect(self.__downloadFinished)
+            self.__downloader.progress.connect(self.__downloadProgress)
+            self.__downloader.download()
+
+    def downloader(self):
+        """Return current downloader, if set"""
+        return self.__downloader
+
+    def downloadSize(self):
+        """Recturn expected download file size"""
+        return self.__downloadSize
+
+    def setDownloadSize(self, value):
+        """Set expected download file size"""
+        self.__downloadSize=value
+
+
+class BCClipboardItemFile(BCClipboardItem):
+    """An file name stored in clipboard"""
+
+    @staticmethod
+    def new(hash, options):
+        """Create a new FILE item from options
+
+        options is a dictionnary with the following key:
+            "origin"
+            "imageSize.height"
+            "imageSize.width"
+            "timestamp"
+            "fileName"
+        """
+        fileName=None
+        origin=None
+        timestamp=None
+        if isinstance(options.get('fileName', None), str):
+            fileName=options['fileName']
+        if isinstance(options.get('origin', None), str):
+            origin=options['origin']
+        if isinstance(options.get('timestamp', None), float):
+            timestamp=options['timestamp']
+
+        returned=BCClipboardItemFile(hash, fileName, origin, timestamp, False)
+
+        if isinstance(options.get('imageSize.height', None), int) and isinstance(options.get('imageSize.width', None), int):
+            returned.setImageSize(QSize(options['imageSize.width'], options['imageSize.height']))
+
+        if isinstance(options.get('persistent', None), bool):
+            returned.setPersistent(options['persistent'])
+        else:
+            # consider the new() static method is used to load from json dict
+            returned.setPersistent(True)
+
+        if not returned.fileExists():
+            return None
+
+        return returned
+
+    def __init__(self, hashValue, fileName, origin=None, timestamp=None, saveInCache=False):
+        super(BCClipboardItemFile, self).__init__(hashValue, origin, timestamp)
+
+        self.__fileName=fileName
+
+    def __repr__(self):
+        return f'{super(BCClipboardItemFile, self).__repr__()[:-2]}, "{self.__fileName}", {self.fileExists()})>'
+
+    def dataContentForCache(self):
+        """Return data that have to be saved in cache
+
+        return value is a dictionary key=value
+        """
+        returned=super(BCClipboardItemFile, self).dataContentForCache()
+
+        returned['fileName']=self.__fileName
+
+        return returned
+
+    def fileName(self):
+        """Return current fileName"""
+        return self.__fileName
+
+    def fileExists(self):
+        """Return if fileName exists or not"""
+        return os.path.exists(self.__fileName)
+
+    def updateBcFile(self):
+        """Update BCFile according to current clipboard item properties"""
+        if self.fileExists():
+            self.setFile(self.__fileName)
+        else:
+            # file doesn't exist...
+            return None
 
 
 class BCClipboardItemImg(BCClipboardItem):
@@ -322,7 +528,8 @@ class BCClipboardItemImg(BCClipboardItem):
             # consider the new() static method is used to load from json dict
             returned.setPersistent(True)
 
-        if not os.path.exists(os.path.join(returned.cachePath(), f'{hash}.png')):
+        imgCacheFileName = os.path.join(returned.cachePath(), f'{hash}.png')
+        if not os.path.exists(imgCacheFileName):
             # image file doesn't exist in cache, don't try to create item
             return None
 
@@ -331,10 +538,12 @@ class BCClipboardItemImg(BCClipboardItem):
     def __init__(self, hashValue, image, urlOrigin=None, origin=None, timestamp=None, saveInCache=True):
         super(BCClipboardItemImg, self).__init__(hashValue, origin, timestamp)
 
-        self.__urlOrigin = ''
+        self.__urlOrigin = None
 
         if isinstance(urlOrigin, QUrl):
-            self.__urlOrigin = urlOrigin.url()
+            self.__urlOrigin = urlOrigin
+        elif isinstance(urlOrigin, str):
+            self.__urlOrigin = QUrl(urlOrigin)
 
         if image:
             if not isinstance(image, QImage):
@@ -343,6 +552,8 @@ class BCClipboardItemImg(BCClipboardItem):
 
             if saveInCache:
                 self.saveToCache(image)
+
+        self.updateBcFile()
 
     def urlOrigin(self):
         """Return url from which image has been copied, if any"""
@@ -374,6 +585,12 @@ class BCClipboardItemImg(BCClipboardItem):
         super(BCClipboardItemImg, self).saveToCache()
 
         return BCClipboard.saveQImage(os.path.join(self.cachePath(), f'{self.hash()}.png'), image, False)
+
+    def updateBcFile(self):
+        """Update BCFile according to current clipboard item properties"""
+        imgCacheFileName = os.path.join(self.cachePath(), f'{self.hash()}.png')
+        if os.path.exists(imgCacheFileName):
+            self.setFile(imgCacheFileName)
 
 
 class BCClipboardItemSvg(BCClipboardItem):
@@ -469,8 +686,9 @@ class BCClipboardItemKra(BCClipboardItem):
             # consider the new() static method is used to load from json dict
             returned.setPersistent(True)
 
-        if not os.path.exists(os.path.join(returned.cachePath(), f'{hash}.kra')):
-            # svg file doesn't exist in cache, don't try to create item
+        imgCacheFileName = os.path.join(returned.cachePath(), f'{hash}.kra')
+        if not os.path.exists(imgCacheFileName):
+            # kra file doesn't exist in cache, don't try to create item
             return None
 
         return returned
@@ -485,6 +703,8 @@ class BCClipboardItemKra(BCClipboardItem):
 
         if kraData:
             self.saveToCache(kraData, image)
+
+        self.updateBcFile()
 
     def saveToCache(self, kraData, image):
         """Save kra information+image to cache"""
@@ -513,16 +733,32 @@ class BCClipboardItemKra(BCClipboardItem):
 
         return saved
 
+    def updateBcFile(self):
+        """Update BCFile according to current clipboard item properties"""
+        imgCacheFileName = os.path.join(self.cachePath(), f'{self.hash()}.png')
+        if os.path.exists(imgCacheFileName):
+            # prefer to use png file for thumbnail
+            self.setFile(imgCacheFileName)
+        else:
+            imgCacheFileName = os.path.join(self.cachePath(), f'{self.hash()}.kra')
+            if os.path.exists(imgCacheFileName):
+                # prefer to use png file for thumbnail
+                self.setFile(imgCacheFileName)
+
 
 class BCClipboard(QObject):
     """Manage clipboard content"""
-    updated = Signal()
+    updateAdded = Signal(list)
+    updateRemoved = Signal(list)
+    updateDownload = Signal(bool, QObject)
+    updatePersistent = Signal(QObject)
 
     __INITIALISED = False
     __OPTION_CACHE_PATH = ''
     __OPTION_CACHE_MAXSIZE = 1024000000 # 1GB
-    __OPTION_URL_AUTOLOAD = True
+    __OPTION_URL_AUTOLOAD = False
     __OPTION_CACHE_DEFAULT_PERSISTENT = False
+    __OPTION_URL_PARSE_TEXTHTML = True
 
     @staticmethod
     def initialiseCache(bcCachePath=None):
@@ -551,9 +787,20 @@ class BCClipboard(QObject):
 
             os.makedirs(BCClipboard.persistentCacheDirectory(), exist_ok=True)
             os.makedirs(BCClipboard.sessionCacheDirectory(), exist_ok=True)
+            os.makedirs(BCClipboard.downloadingCacheDirectory(), exist_ok=True)
         except Exception as e:
             Debug.print('[BCClipboard.initialiseCache] Unable to create directory: {0}', str(e))
             return
+
+        # cleanup downloading directory to ensure there's nothing left inside...
+        for root, dirs, files in os.walk(BCClipboard.downloadingCacheDirectory()):
+            for fileName in files:
+                try:
+                    os.remove(os.path.join(root, fileName))
+                    updated=True
+                except Exception as e:
+                    Debug.print('[BCClipboard.cacheDownloadFlush] Unable to delete file {0}: {1}', fileName, str(e))
+
 
         BCClipboard.__INITIALISED = True
 
@@ -570,6 +817,17 @@ class BCClipboard(QObject):
         if BCClipboard.__OPTION_CACHE_PATH == '':
             raise EInvalidStatus("BCClipboard hasn't been initialized!")
         return os.path.join(BCClipboard.__OPTION_CACHE_PATH, 'session')
+
+    @staticmethod
+    def downloadingCacheDirectory():
+        """Return path for downloading data
+
+        When a download is in progress, this allows to change cache/target (persistent/session)
+        without interupting current download
+        """
+        if BCClipboard.__OPTION_CACHE_PATH == '':
+            raise EInvalidStatus("BCClipboard hasn't been initialized!")
+        return os.path.join(BCClipboard.__OPTION_CACHE_PATH, 'downloading')
 
     @staticmethod
     def optionCachePath():
@@ -589,6 +847,18 @@ class BCClipboard(QObject):
         BCClipboard.__OPTION_CACHE_MAXSIZE = value
 
     @staticmethod
+    def optionUrlParseTextHtml():
+        """Return if text/html clipboard content are parsed to find urls"""
+        return BCClipboard.__OPTION_URL_PARSE_TEXTHTML
+
+    @staticmethod
+    def setOptionUrlParseTextHtml(value):
+        """Set if text/html clipboard content are parsed to find urls"""
+        if not isinstance(value, bool):
+            raise EInvalidType("Given `value` must be a <bool>")
+        BCClipboard.__OPTION_URL_PARSE_TEXTHTML = value
+
+    @staticmethod
     def optionUrlAutoload():
         """Return if url are loaded automatically or not"""
         return BCClipboard.__OPTION_URL_AUTOLOAD
@@ -598,7 +868,8 @@ class BCClipboard(QObject):
         """Set if url are loaded automatically or not"""
         if not isinstance(value, bool):
             raise EInvalidType("Given `value` must be a <bool>")
-        BCClipboard.__OPTION_URL_AUTOLOAD = value
+        if value != BCClipboard.__OPTION_URL_AUTOLOAD:
+            BCClipboard.__OPTION_URL_AUTOLOAD = value
 
     @staticmethod
     def optionCacheDefaultPersistent():
@@ -626,7 +897,7 @@ class BCClipboard(QObject):
         else:
             return image.save(fileName, b'png', 50)
 
-    def __init__(self):
+    def __init__(self, enabled=True):
         """Initialize object"""
         super(BCClipboard, self).__init__(None)
 
@@ -653,9 +924,46 @@ class BCClipboard(QObject):
 
         self.__enabled=False
 
+        # list of added hash
+        self.__updateAdd=[]
+        self.__updateRemove=[]
+
         self.cacheSessionFlush()
         self.__poolFromCache()
-        self.setEnabled(True)
+        self.setEnabled(enabled)
+
+    def __repr__(self):
+        return f"<BCClipboard({self.length()})>"
+
+    def __urlDownloadInProgress(self, clipboardUrlItem):
+        self.updateDownload.emit(False, clipboardUrlItem)
+
+    def __urlDownloadFinished(self, clipboardUrlItem):
+        clipboardUrlItem.downloadFinished.disconnect(self.__urlDownloadFinished)
+        clipboardUrlItem.downloadProgress.disconnect(self.__urlDownloadInProgress)
+        self.updateDownload.emit(True, clipboardUrlItem)
+
+    def __emitUpdateAdded(self):
+        """Emit update signal with list of hash to update
+
+        An empty list mean a complete update
+        """
+        items=self.__updateAdd.copy()
+        self.__updateAdd=[]
+        self.updateAdded.emit(items)
+
+    def __emitUpdateRemoved(self):
+        """Emit update signal with list of hash to update
+
+        An empty list mean a complete update
+        """
+        items=self.__updateRemove.copy()
+        self.__updateRemove=[]
+        self.updateRemoved.emit(items)
+
+    def __emitPersistentChanged(self, clipboardItem):
+        """persistent value has been modified in clipboard item, transmit signal to model"""
+        self.updatePersistent.emit(clipboardItem)
 
     def __getHash(self, data):
         """Return hash for data"""
@@ -705,6 +1013,14 @@ class BCClipboard(QObject):
                     item=None
                     if jsonAsDict['type']=='BCClipboardItemUrl':
                         item=BCClipboardItemUrl.new(hash, jsonAsDict)
+
+                        if BCClipboard.optionUrlAutoload() and not item.urlIsLoaded():
+                            item.downloadFinished.connect(self.__urlDownloadFinished)
+                            item.downloadProgress.connect(self.__urlDownloadInProgress)
+                            item.download()
+
+                    elif jsonAsDict['type']=='BCClipboardItemFile':
+                        item=BCClipboardItemFile.new(hash, jsonAsDict)
                     elif jsonAsDict['type']=='BCClipboardItemKra':
                         item=BCClipboardItemKra.new(hash, jsonAsDict)
                     elif jsonAsDict['type']=='BCClipboardItemSvg':
@@ -713,6 +1029,7 @@ class BCClipboard(QObject):
                         item=BCClipboardItemImg.new(hash, jsonAsDict)
 
                     if item:
+                        item.persistentChanged.connect(self.__emitPersistentChanged)
                         self.__pool[hash]=item
                         self.__totalCacheSizeP+=self.__pool[hash].cacheSize()
 
@@ -733,6 +1050,8 @@ class BCClipboard(QObject):
     def __addPool(self, item):
         """Add BCClipboardItem to pool"""
         if isinstance(item, BCClipboardItem):
+            item.persistentChanged.connect(self.__emitPersistentChanged)
+            self.__updateAdd.append(item.hash())
             self.__pool[item.hash()]=item
 
             if item.persistent():
@@ -754,8 +1073,20 @@ class BCClipboard(QObject):
                 hashValue=self.__getHash(url.url().encode())
                 if self.__inPool(hashValue):
                     returned|=self.__updateTimeStamp(hashValue, origin)
+                elif url.scheme()=='file':
+                    clipboardItem=BCClipboardItemFile(hashValue, url.url(), origin)
+
+                    returned|=self.__addPool(clipboardItem)
+
                 else:
-                    returned|=self.__addPool(BCClipboardItemUrl(hashValue, url, origin))
+                    clipboardItem=BCClipboardItemUrl(hashValue, url, origin)
+
+                    if BCClipboard.optionUrlAutoload() and not clipboardItem.urlIsLoaded():
+                        clipboardItem.downloadFinished.connect(self.__urlDownloadFinished)
+                        clipboardItem.downloadProgress.connect(self.__urlDownloadInProgress)
+                        clipboardItem.download()
+
+                    returned|=self.__addPool(clipboardItem)
         return returned
 
     def __addPoolSvg(self, svgData, image=None, origin=None):
@@ -841,17 +1172,17 @@ class BCClipboard(QObject):
 
     def __clipboardMimeContentChanged(self):
         """Clipboard content has been changed"""
+        #print('------------------------ Clipboard content changed ------------------------')
         clipboardMimeContent = self.__clipboard.mimeData(QClipboard.Clipboard)
 
         if clipboardMimeContent is None:
             return
 
-        print('------------------------ Clipboard content changed ------------------------')
-        print(clipboardMimeContent.formats())
+        #print(clipboardMimeContent.formats())
 
         if clipboardMimeContent.hasUrls():
             if self.__addPoolUrls(clipboardMimeContent.urls(), 'URI list'):
-                self.updated.emit()
+                self.__emitUpdateAdded()
             # don't need to process other mime type
             return
 
@@ -867,7 +1198,6 @@ class BCClipboard(QObject):
                 # image is valid
                 ptr.setsize(image.byteCount())
                 imageHash = self.__getHash(ptr)
-                print(f'Image({imageHash}): {image.width()}x{image.height()} - {image.bitPlaneCount()}bits/channels - {image.depth()}bpp - {image.format():04x}', )
             else:
                 # image is not valid
                 image = None
@@ -878,7 +1208,7 @@ class BCClipboard(QObject):
                 updated = self.__addPoolSvg(rawData, image)
 
                 if updated:
-                    self.updated.emit()
+                    self.__emitUpdateAdded()
                     return
 
         if image and clipboardMimeContent.hasFormat('application/x-krita-node'):
@@ -891,14 +1221,15 @@ class BCClipboard(QObject):
             rawData=clipboardMimeContent.html()
             if rawData:
                 if image is None:
-                    urls, origin = self.__parseHtmlForUrl(rawData)
-                    if urls:
-                        updated = self.__addPoolUrls(urls, origin)
+                    if BCClipboard.optionUrlParseTextHtml():
+                        urls, origin = self.__parseHtmlForUrl(rawData)
+                        if urls:
+                            updated = self.__addPoolUrls(urls, origin)
                 else:
                     # an image has been found, parse html to eventually determinate origin of content
                     urlOrigin, origin = self.__parseHtmlForOrigin(rawData)
                     updated = self.__addPoolImage(imageHash, image, urlOrigin, origin)
-        elif image is None and clipboardMimeContent.hasText():
+        elif image is None and clipboardMimeContent.hasText() and BCClipboard.optionUrlParseTextHtml():
             rawData=clipboardMimeContent.text()
             if rawData:
                 urls, origin = self.__parseTextForUrl(rawData)
@@ -908,7 +1239,7 @@ class BCClipboard(QObject):
             updated = self.__addPoolImage(imageHash, image)
 
         if updated:
-            self.updated.emit()
+            self.__emitUpdateAdded()
 
     def __cacheCleanup(self):
         """Cleanup cache files: remove older items
@@ -926,12 +1257,37 @@ class BCClipboard(QObject):
                     # cache size is now less than maximum size, exit
                     break
 
+                self.__updateRemove.append(hash)
                 item = self.__pool.pop(hash)
                 self.__totalCacheSizeS-=item.cacheSize()
                 updated=True
 
         if updated:
-            self.updated.emit()
+            if len(self.__pool)==0:
+                self.__updateRemove=[]
+            self.__emitUpdateRemoved()
+
+    def startDownload(self):
+        """Start download for all url for which download is not started/done"""
+        for item in self.__pool.keys():
+            if self.__pool[item].type() == 'BCClipboardItemUrl' and self.__pool[item].urlStatus() == BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
+                self.__pool[item].downloadFinished.connect(self.__urlDownloadFinished)
+                self.__pool[item].downloadProgress.connect(self.__urlDownloadInProgress)
+                self.__pool[item].download()
+
+    def length(self):
+        """Return number of item in pool"""
+        return len(self.__pool)
+
+    def hashList(self):
+        """Return list of hash; no sort"""
+        return list(self.__pool.keys())
+
+    def get(self, hash):
+        """Return clipboad item from hash, or None if nothing is found"""
+        if hash in self.__pool:
+            return self.__pool[hash]
+        return None
 
     def enabled(self):
         """Return if clipboard management is enabled"""
@@ -958,11 +1314,12 @@ class BCClipboard(QObject):
                     os.remove(os.path.join(root, fileName))
                     updated=True
                 except Exception as e:
-                    Debug.print('[BCClipboard.cacheSessionFlush] Unable to save file {0}: {1}', fileName, str(e))
+                    Debug.print('[BCClipboard.cacheSessionFlush] Unable to delete file {0}: {1}', fileName, str(e))
 
         if updated:
             self.__poolFromCache()
-            self.updated.emit()
+            self.__updateAdd=[]
+            self.__emitUpdateAdded()
 
     def cachePersistentFlush(self):
         """Flush (persistent) pool content"""
@@ -973,11 +1330,12 @@ class BCClipboard(QObject):
                     os.remove(os.path.join(root, fileName))
                     updated=True
                 except Exception as e:
-                    Debug.print('[BCClipboard.cachePersistentFlush] Unable to save file {0}: {1}', fileName, str(e))
+                    Debug.print('[BCClipboard.cachePersistentFlush] Unable to delete file {0}: {1}', fileName, str(e))
 
         if updated:
             self.__poolFromCache()
-            self.updated.emit()
+            self.__updateAdd=[]
+            self.__emitUpdateAdded()
 
     def cacheSizeP(self, recalculate=False):
         """Return current cache size as a tuple(nb items, size)"""
@@ -990,3 +1348,217 @@ class BCClipboard(QObject):
         if recalculate:
             self.__recalculateCacheSize()
         return (self.__totalCacheItemS, self.__totalCacheSizeS)
+
+
+class BCClipboardModel(QAbstractTableModel):
+    """A model provided by clipboard"""
+
+    COLNUM_ICON = 0
+    COLNUM_PERSISTENT = 1
+    COLNUM_TYPE = 2
+    COLNUM_DATE = 3
+    COLNUM_SIZE = 4
+    COLNUM_URL = 5
+    COLNUM_FULLNFO = 6
+    COLNUM_LAST = 6
+
+    ROLE_HASH = Qt.UserRole + 1
+    ROLE_PCT = Qt.UserRole + 2
+    ROLE_ITEM = Qt.UserRole + 3
+
+    __PIN_ICON_SIZE = QSize(22, 22)
+
+    HEADERS = ['', '', i18n("Type"), i18n("Date"), i18n("Size"), i18n("Url"), i18n("Nfo")]
+
+    def __init__(self, clipboard, parent=None):
+        """Initialise list"""
+        super(BCClipboardModel, self).__init__(parent)
+        if not isinstance(clipboard, BCClipboard):
+            raise EInvalidType('Given `clipboard` must be a <BCClipboard>')
+        self.__clipboard=clipboard
+        self.__clipboard.updateAdded.connect(self.__dataUpdatedAdd)
+        self.__clipboard.updateRemoved.connect(self.__dataUpdateRemove)
+        self.__clipboard.updateDownload.connect(self.__dataUpdateDownload)
+        self.__clipboard.updatePersistent.connect(self.__dataUpdatePersistent)
+        self.__items=self.__clipboard.hashList()
+        self.__iconSize=QSize(12, 12)
+        self.__thumbSize=BCFileThumbnailSize.SMALL
+
+
+    def __repr__(self):
+        return f'<BCClipboardModel()>'
+
+    def __hashRow(self, hash):
+        """Return row number for a given hash; return -1 if not found"""
+        try:
+            return self.__items.index(hash)
+        except Exception as e:
+            return -1
+
+    def __dataUpdatedAdd(self, items):
+        # if nb items is the same, just update... ?
+        #self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(self.__clipboard.length()-1, BCClipboardModel.COLNUM_LAST) )
+        print('TODO: need to update only for added items')
+        self.__items=self.__clipboard.hashList()
+        self.modelReset.emit()
+
+    def __dataUpdateRemove(self, items):
+        # if nb items is the same, just update... ?
+        #self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(self.__clipboard.length()-1, BCClipboardModel.COLNUM_LAST) )
+        print('TODO: need to update only for removed items')
+        self.__items=self.__clipboard.hashList()
+        self.modelReset.emit()
+
+    def __dataUpdatePersistent(self, item):
+        index=self.createIndex(self.__hashRow(item.hash()), BCClipboardModel.COLNUM_PERSISTENT)
+        self.dataChanged.emit(index, index, [Qt.DecorationRole])
+
+    def __dataUpdateDownload(self, downloadFinished, item):
+        row=self.__hashRow(item.hash())
+        if downloadFinished:
+            indexS=self.createIndex(row, BCClipboardModel.COLNUM_ICON)
+            indexE=self.createIndex(row, BCClipboardModel.COLNUM_LAST)
+            self.dataChanged.emit(indexS, indexE, [Qt.DecorationRole])
+        else:
+            index=self.createIndex(row, BCClipboardModel.COLNUM_URL)
+            self.dataChanged.emit(index, index, [Qt.DisplayRole])
+
+    def columnCount(self, parent=QModelIndex()):
+        """Return total number of column"""
+        return BCClipboardModel.COLNUM_LAST+1
+
+    def rowCount(self, parent=QModelIndex()):
+        """Return total number of rows"""
+        return self.__clipboard.length()
+
+    def data(self, index, role=Qt.DisplayRole):
+        """Return data for index+role"""
+        column = index.column()
+        row=index.row()
+        if role == Qt.DecorationRole:
+            if column==BCClipboardModel.COLNUM_ICON:
+                hash=self.__items[row]
+                item = self.__clipboard.get(hash)
+                if isinstance(item.file(), BCBaseFile):
+                    return item.file().thumbnail(self.__thumbSize, thumbType=BCBaseFile.THUMBTYPE_ICON)
+                elif item.type() == 'BCClipboardItemUrl':
+                    return QIcon(':/images/url')
+                else:
+                    return QIcon(':/images/warning')
+            elif column==BCClipboardModel.COLNUM_PERSISTENT:
+                hash=self.__items[row]
+                item = self.__clipboard.get(hash)
+                if item.persistent():
+                    return QIcon(':/images/pinned').pixmap(BCClipboardModel.__PIN_ICON_SIZE)
+        elif role == Qt.DisplayRole:
+            hash=self.__items[row]
+            item = self.__clipboard.get(hash)
+            if item:
+                if column==BCClipboardModel.COLNUM_TYPE:
+                    if item.type() == 'BCClipboardItemFile':
+                        return i18n('File')
+                    elif item.type() == 'BCClipboardItemUrl':
+                        return i18n('Url')
+                    elif item.type() == 'BCClipboardItemImg':
+                        return i18n('Image (Raster)')
+                    elif item.type() == 'BCClipboardItemSvg':
+                        return i18n('Image (Vector)')
+                    elif item.type() == 'BCClipboardItemKra':
+                        if item.origin() == 'application/x-krita-selection':
+                            return i18n('Krita selection')
+                        elif item.origin() == 'application/x-krita-node':
+                            return i18n('Krita layer')
+                    else:
+                        return i18n('Invalid')
+                elif column==BCClipboardModel.COLNUM_DATE:
+                    return f'{datetime.datetime.fromtimestamp(item.timestamp()):%Y-%m-%d %H:%M:%S}'
+                elif column==BCClipboardModel.COLNUM_SIZE:
+                    if item.type() == 'BCClipboardItemUrl':
+                        if item.urlStatus() == BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
+                            return i18n('Downloading...')
+                        elif item.urlStatus() == BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
+                            return i18n('Not downloaded')
+
+                    size = item.imageSize()
+                    if size and size.width()>-1 and size.height()>-1:
+                        return f'{size.width()}x{size.height()}'
+
+                    # no size? not downloaded/not in cache?
+                    return None
+                elif column==BCClipboardModel.COLNUM_URL:
+                    if item.type() == 'BCClipboardItemUrl':
+                        if item.origin() == 'URI list':
+                            return item.url().path()
+                        else:
+                            return item.url().url()
+                    elif item.type() == 'BCClipboardItemImg' and item.urlOrigin():
+                        return item.urlOrigin().url()
+                    return ''
+        elif role == BCClipboardModel.ROLE_HASH:
+            return self.__items[row]
+        elif role == BCClipboardModel.ROLE_PCT:
+            item = self.__clipboard.get(self.__items[row])
+            if item.type() == 'BCClipboardItemUrl':
+                if item.urlStatus() == BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
+                    return item.downloader().downloadProgress()[0]
+            return -1
+        elif role == BCClipboardModel.ROLE_ITEM:
+            hash=self.__items[row]
+            return self.__clipboard.get(hash)
+        elif role == Qt.SizeHintRole and column == BCClipboardModel.COLNUM_ICON:
+            # calculate only for 1st cell
+            return self.__iconSize
+        return None
+
+    def roleNames(self):
+        return {
+            BCClipboardModel.ROLE_HASH: b'hash'
+        }
+
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return BCClipboardModel.HEADERS[section]
+        return None
+
+    def setIconSize(self, value):
+        self.__iconSize=QSize(value, value)
+        self.__thumbSize=BCFileThumbnailSize.fromValue(value)
+        topLeft=self.createIndex(0, BCClipboardModel.COLNUM_ICON)
+        self.dataChanged.emit(topLeft, topLeft, [Qt.SizeHintRole])
+
+
+class BCClipboardDelegate(QStyledItemDelegate):
+    """Extend QStyledItemDelegate class to build an improved IN CACHE informations
+    (display download progress)
+    """
+    def __init__(self, parent=None):
+        """Constructor, nothingspecial"""
+        super(BCClipboardDelegate, self).__init__(parent)
+
+    def paint(self, painter, option, index):
+        """Paint list item"""
+        pct=index.data(BCClipboardModel.ROLE_PCT)
+        if pct == -1:
+            # not progress bar to display
+            QStyledItemDelegate.paint(self, painter, option, index)
+            return
+
+        self.initStyleOption(option, index)
+
+        rectTxt = QRect(option.rect.left() + 4, option.rect.top()+1, option.rect.width()-4, option.rect.height()-2)
+        rectTextH = QRect(option.rect.left() + 4, option.rect.top()+1, round(option.rect.width() * pct/100, 2)-4, option.rect.height()-2)
+        rectPct = QRect(option.rect.left(), option.rect.top()+1, round(option.rect.width() * pct/100, 2), option.rect.height()-2)
+
+        palette = QApplication.palette()
+
+        painter.save()
+
+        painter.setPen(QPen(palette.text().color()))
+        painter.drawText(rectTxt, Qt.AlignLeft|Qt.AlignVCenter, index.data())
+
+        painter.fillRect(rectPct, palette.highlight())
+
+        painter.setPen(QPen(palette.highlightedText().color()))
+        painter.drawText(rectTextH, Qt.AlignLeft|Qt.AlignVCenter, index.data())
+
+        painter.restore()

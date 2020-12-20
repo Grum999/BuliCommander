@@ -3,6 +3,9 @@
     <file alias="buli-rounded-border">png/buli-powered-64x64-rounded-border.png</file>
   </qresource>
   <qresource prefix="images">
+    <file alias="pinned">svg/dark/32dp/pinned.svg</file>
+    <file alias="url">svg/dark/32dp/url.svg</file>
+    <file alias="clipboard_new">svg/dark/32dp/clipboard_new.svg</file>
     <file alias="tree_expand">svg/dark/32dp/list_tree_expand.svg</file>
     <file alias="tree_collapse">svg/dark/32dp/list_tree_collapse.svg</file>
     <file alias="convert">svg/dark/32dp/convert.svg</file>

@@ -139,7 +139,17 @@ class BCMainWindow(QMainWindow):
         self.actionFileMoveToOtherPanel.triggered.connect(self.__menuFileMoveConfirm)
         self.actionFileRename.triggered.connect(self.__menuFileRename)
         self.actionFileDelete.triggered.connect(self.__menuFileDeleteConfirm)
-        self.actionQuit.triggered.connect(self.__uiController.commandQuit)
+        self.actionFileQuit.triggered.connect(self.__uiController.commandQuit)
+
+        # Menu CLIPBPOARD
+        self.actionClipboardPasteAsNewLayer.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardPasteAsNewDocument.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardOpen.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardSaveAs.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardSetPersistent.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardSetNotPersistent.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardQuit.triggered.connect(self.__uiController.commandQuit)
+
 
         # Menu EDIT
         self.actionSelectAll.triggered.connect(self.__menuSelectAll_clicked)
@@ -191,19 +201,19 @@ class BCMainWindow(QMainWindow):
 
     def __menuHistoryShow(self):
         """Build menu history"""
-        self.__uiController.panel().showMenuHistory(self.menuGoHistory)
+        self.__uiController.panel().filesShowMenuHistory(self.menuGoHistory)
 
     def __menuLastDocumentsShow(self):
         """Build menu last documents"""
-        self.__uiController.panel().showMenuLastDocuments(self.menuGoLastDocuments)
+        self.__uiController.panel().filesShowMenuLastDocuments(self.menuGoLastDocuments)
 
     def __menuBookmarkShow(self):
         """Build menu history"""
-        self.__uiController.panel().showMenuBookmarks(self.menuGoBookmark)
+        self.__uiController.panel().filesShowMenuBookmarks(self.menuGoBookmark)
 
     def __menuSavedViewsShow(self):
         """Build menu history"""
-        self.__uiController.panel().showMenuSavedViews(self.menuGoSavedViews)
+        self.__uiController.panel().filesShowMenuSavedViews(self.menuGoSavedViews)
 
     # endregion: initialisation methods ----------------------------------------
 
@@ -415,6 +425,3 @@ class BCMainWindow(QMainWindow):
         return appendWithSubWidget(self)
 
     # endregion: methods -------------------------------------------------------
-
-
-

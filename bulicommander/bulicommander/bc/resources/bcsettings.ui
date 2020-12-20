@@ -112,8 +112,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>980</width>
-              <height>784</height>
+              <width>495</width>
+              <height>473</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout">
@@ -439,8 +439,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>980</width>
-              <height>784</height>
+              <width>518</width>
+              <height>716</height>
              </rect>
             </property>
             <layout class="QFormLayout" name="formLayout_4">
@@ -1143,28 +1143,31 @@
          <property name="bottomMargin">
           <number>0</number>
          </property>
-         <item row="5" column="0">
-          <widget class="QCheckBox" name="cbCCAutomaticUrlDownload">
+         <item row="3" column="0">
+          <widget class="QRadioButton" name="rbCCModeManual">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When an image url is found in clipboard, automatically download image content and save it in clipboard cache&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Clipboard content is catched on user request&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>Automatically download from url</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QRadioButton" name="rbCCModeActive">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Clipboard content is catched only if &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; is opened&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Whe&amp;n active</string>
+            <string>Man&amp;ually</string>
            </property>
            <attribute name="buttonGroup">
             <string notr="true">buttonGroupClpMode</string>
            </attribute>
           </widget>
+         </item>
+         <item row="8" column="0">
+          <spacer name="verticalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
          </item>
          <item row="4" column="0">
           <widget class="QLabel" name="label_22">
@@ -1186,29 +1189,13 @@
            </property>
           </widget>
          </item>
-         <item row="7" column="0">
-          <spacer name="verticalSpacer_3">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item row="1" column="0">
-          <widget class="QRadioButton" name="rbCCModeAlways">
+         <item row="2" column="0">
+          <widget class="QRadioButton" name="rbCCModeActive">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Clipboard content is always catched, even if &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; is not opened&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Clipboard content is catched only if &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; is opened&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>A&amp;lways</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+            <string>Whe&amp;n active</string>
            </property>
            <attribute name="buttonGroup">
             <string notr="true">buttonGroupClpMode</string>
@@ -1235,26 +1222,49 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="QRadioButton" name="rbCCModeManual">
+         <item row="6" column="0">
+          <widget class="QCheckBox" name="cbCCAutomaticUrlDownload">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Clipboard content is catched on user request&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When an image URL is found in clipboard, automatically download image content and save it in clipboard cache&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>Man&amp;ually</string>
+            <string>Automatically download from URLs</string>
            </property>
-           <attribute name="buttonGroup">
-            <string notr="true">buttonGroupClpMode</string>
-           </attribute>
           </widget>
          </item>
-         <item row="6" column="0">
+         <item row="7" column="0">
           <widget class="QCheckBox" name="cbCCUsePersistent">
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Clipboard manage 2 types of cache:&lt;/p&gt;&lt;p&gt;- Session cache: cache content is erased each time a new session is started (ie: Krita is restarted)&lt;/p&gt;&lt;p&gt;- Persistent cache: cache content is kept across sessions and user have to made cleanup manually&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;When checked, clipboard content is automatically stored in persistent cache&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Use persistent cache</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QRadioButton" name="rbCCModeAlways">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Clipboard content is always catched, even if &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; is not opened&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>A&amp;lways</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroupClpMode</string>
+           </attribute>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QCheckBox" name="cbCCParseTextHtml">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Parse &lt;span style=&quot; font-style:italic;&quot;&gt;text/HTML &lt;/span&gt;clipboard content to search image URL&lt;/p&gt;&lt;p&gt;All URLs found are added to clipboard manager&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Parse Text&amp;HTML content for URLs</string>
            </property>
           </widget>
          </item>
@@ -1610,9 +1620,9 @@
  </connections>
  <buttongroups>
   <buttongroup name="buttonGroupImgDefaultOther"/>
+  <buttongroup name="buttonGroupClpMode"/>
   <buttongroup name="buttonGroupGenSysTray"/>
   <buttongroup name="buttonGroupNavHomeDir"/>
   <buttongroup name="buttonGroupImgDefaultKrita"/>
-  <buttongroup name="buttonGroupClpMode"/>
  </buttongroups>
 </ui>

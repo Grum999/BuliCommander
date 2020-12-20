@@ -156,7 +156,7 @@ class BCUIController(QObject):
         BCFile.initialiseCache()
         BCClipboard.initialiseCache()
 
-        self.__clipboard = BCClipboard()
+        self.__clipboard = BCClipboard(False)
 
         # overrides native Krita Open dialog...
         self.commandSettingsOpenOverrideKrita(self.__settings.option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()))
@@ -200,6 +200,7 @@ class BCUIController(QObject):
         if self.__initialised:
             self.__bcStarted = True
             self.bcWindowShown.emit()
+            self.updateMenuForPanel()
             self.__clipboardActive()
             # already initialised, do nothing
             return
@@ -269,26 +270,27 @@ class BCUIController(QObject):
         self.commandSettingsClipboardCacheMaxSize(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MAXISZE.id()))
         self.commandSettingsClipboardCachePersistent(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_PERSISTENT.id()))
         self.commandSettingsClipboardUrlAutomaticDownload(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD.id()))
+        self.commandSettingsClipboardUrlParseTextHtml(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_PARSE_TEXTHTML.id()))
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setHistory(self.__history)
-            self.__window.panels[panelId].setBookmark(self.__bookmark)
-            self.__window.panels[panelId].setSavedView(self.__savedView)
-            self.__window.panels[panelId].setLastDocumentsOpened(self.__lastDocumentsOpened)
-            self.__window.panels[panelId].setLastDocumentsSaved(self.__lastDocumentsSaved)
-            self.__window.panels[panelId].setBackupFilterDView(self.__backupFilterDView)
-            self.__window.panels[panelId].setFileLayerFilterDView(self.__fileLayerFilterDView)
+            self.__window.panels[panelId].setFilesHistory(self.__history)
+            self.__window.panels[panelId].setFilesBookmark(self.__bookmark)
+            self.__window.panels[panelId].setFilesSavedView(self.__savedView)
+            self.__window.panels[panelId].setFilesLastDocumentsOpened(self.__lastDocumentsOpened)
+            self.__window.panels[panelId].setFilesLastDocumentsSaved(self.__lastDocumentsSaved)
+            self.__window.panels[panelId].setFilesBackupFilterDView(self.__backupFilterDView)
+            self.__window.panels[panelId].setFilesLayerFilterDView(self.__fileLayerFilterDView)
 
             self.commandPanelTabActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId)))
             self.commandPanelTabPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId)))
 
-            self.commandPanelTabFilesLayout(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_LAYOUT.id(panelId=panelId)))
-            self.commandPanelTabFilesActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId)))
-            self.commandPanelTabFilesPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_FILES.id(panelId=panelId)))
+            self.commandPanelFilesTabLayout(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_LAYOUT.id(panelId=panelId)))
+            self.commandPanelFilesTabActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId)))
+            self.commandPanelFilesTabPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_FILES.id(panelId=panelId)))
 
-            self.commandPanelTabFilesNfoActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId)))
-            self.commandPanelTabFilesSplitterFilesPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId)))
-            self.commandPanelTabFilesSplitterPreviewPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId)))
+            self.commandPanelFilesTabNfoActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId)))
+            self.commandPanelFilesTabSplitterFilesPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId)))
+            self.commandPanelFilesTabSplitterPreviewPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId)))
 
             self.commandPanelPath(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_CURRENTPATH.id(panelId=panelId)))
 
@@ -299,10 +301,10 @@ class BCUIController(QObject):
 
             self.commandPanelPreviewBackground(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_PREVIEW_BACKGROUND.id(panelId=panelId)))
 
-            self.__window.panels[panelId].setColumnSort(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSORT.id(panelId=panelId)))
-            self.__window.panels[panelId].setColumnOrder(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNORDER.id(panelId=panelId)))
-            self.__window.panels[panelId].setColumnSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSIZE.id(panelId=panelId)))
-            self.__window.panels[panelId].setIconSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_ICONSIZE.id(panelId=panelId)))
+            self.__window.panels[panelId].setFilesColumnSort(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSORT.id(panelId=panelId)))
+            self.__window.panels[panelId].setFilesColumnOrder(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNORDER.id(panelId=panelId)))
+            self.__window.panels[panelId].setFilesColumnSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSIZE.id(panelId=panelId)))
+            self.__window.panels[panelId].setFilesIconSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_ICONSIZE.id(panelId=panelId)))
 
         self.__window.initMenu()
 
@@ -313,6 +315,7 @@ class BCUIController(QObject):
         self.__bcStarted = True
         self.__bcStarting = False
         self.bcWindowShown.emit()
+        self.updateMenuForPanel()
         self.__clipboardActive()
 
 
@@ -665,29 +668,29 @@ class BCUIController(QObject):
                 self.__settings.setOption(BCSettingsKey.CONFIG_FILE_UNIT, BCSettingsValues.FILE_UNIT_KIB)
 
             for panelId in self.__window.panels:
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].tabFilesLayout().value)
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CURRENTPATH.id(panelId=panelId), self.__window.panels[panelId].path())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].filesTabLayout().value)
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CURRENTPATH.id(panelId=panelId), self.__window.panels[panelId].filesPath())
 
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_THUMBNAIL.id(panelId=panelId), self.__window.panels[panelId].viewThumbnail())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_THUMBNAIL.id(panelId=panelId), self.__window.panels[panelId].filesViewThumbnail())
 
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVISIBLE.id(panelId=panelId), self.__window.panels[panelId].filterVisible())
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVALUE.id(panelId=panelId), self.__window.panels[panelId].filter())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVISIBLE.id(panelId=panelId), self.__window.panels[panelId].filesFilterVisible())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVALUE.id(panelId=panelId), self.__window.panels[panelId].filesFilter())
 
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSORT.id(panelId=panelId), self.__window.panels[panelId].columnSort())
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].columnOrder())
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSIZE.id(panelId=panelId), self.__window.panels[panelId].columnSize())
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_ICONSIZE.id(panelId=panelId), self.__window.panels[panelId].iconSize())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSORT.id(panelId=panelId), self.__window.panels[panelId].filesColumnSort())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].filesColumnOrder())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSIZE.id(panelId=panelId), self.__window.panels[panelId].filesColumnSize())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_ICONSIZE.id(panelId=panelId), self.__window.panels[panelId].filesIconSize())
 
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_PREVIEW_BACKGROUND.id(panelId=panelId), self.__window.panels[panelId].previewBackground())
 
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId), [tab.value for tab in self.__window.panels[panelId].tabOrder()])
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_POSITIONTAB_FILES.id(panelId=panelId), [tab.value for tab in self.__window.panels[panelId].tabFilesOrder()])
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_POSITIONTAB_FILES.id(panelId=panelId), [tab.value for tab in self.__window.panels[panelId].filesTabOrder()])
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId), self.__window.panels[panelId].tabActive().value)
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId), self.__window.panels[panelId].tabFilesActive().value)
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId), self.__window.panels[panelId].tabFilesNfoActive().value)
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId), self.__window.panels[panelId].filesTabActive().value)
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId), self.__window.panels[panelId].filesTabNfoActive().value)
 
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId), self.__window.panels[panelId].tabFilesSplitterFilesPosition())
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId), self.__window.panels[panelId].tabFilesSplitterPreviewPosition())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId), self.__window.panels[panelId].filesTabSplitterFilesPosition())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId), self.__window.panels[panelId].filesTabSplitterPreviewPosition())
 
             if self.__settings.option(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT.id()):
                 self.__settings.setOption(BCSettingsKey.SESSION_HISTORY_ITEMS, self.__history.list())
@@ -710,35 +713,81 @@ class BCUIController(QObject):
 
     def updateMenuForPanel(self):
         """Update menu (enabled/disabled/checked/unchecked) according to current panel"""
-        self.__window.actionViewThumbnail.setChecked(self.panel().viewThumbnail())
-        self.__window.actionViewDisplayQuickFilter.setChecked(self.panel().filterVisible())
+        print("updateMenuForPanel", self.panel().tabActive())
+        self.__window.actionViewThumbnail.setChecked(self.panel().filesViewThumbnail())
+        self.__window.actionViewDisplayQuickFilter.setChecked(self.panel().filesFilterVisible())
 
-        selectionInfo = self.panel().selectedFiles()
+        if self.panel().tabActive() == BCMainViewTabTabs.FILES:
+            self.__window.menuFile.menuAction().setVisible(True)
+            self.__window.menuClipboard.menuAction().setVisible(False)
+            self.__window.menuDocument.menuAction().setVisible(False)
+            self.__window.menuGo.menuAction().setVisible(True)
 
-        self.__window.actionFileOpen.setEnabled(selectionInfo[4]>0)
-        self.__window.actionFileOpenCloseBC.setEnabled(selectionInfo[4]>0)
-        self.__window.actionFileOpenAsNewDocument.setEnabled(selectionInfo[4]>0)
-        self.__window.actionFileOpenAsNewDocumentCloseBC.setEnabled(selectionInfo[4]>0)
-        self.__window.actionFileCopyToOtherPanel.setEnabled(selectionInfo[3]>0)
-        self.__window.actionFileMoveToOtherPanel.setEnabled(selectionInfo[3]>0)
-        self.__window.actionFileDelete.setEnabled(selectionInfo[3]>0)
+            selectionInfo = self.panel().selectedFiles()
 
-        # ^ ==> xor logical operator
-        # Can do rename if:
-        #   - one or more files are selected [2]
-        # exclusive or
-        #   - one or more directory is selected [1]
-        #
-        self.__window.actionFileRename.setEnabled( (selectionInfo[2]>0) ^ (selectionInfo[1]>0))
+            self.__window.actionFileOpen.setEnabled(selectionInfo[4]>0)
+            self.__window.actionFileOpenCloseBC.setEnabled(selectionInfo[4]>0)
+            self.__window.actionFileOpenAsNewDocument.setEnabled(selectionInfo[4]>0)
+            self.__window.actionFileOpenAsNewDocumentCloseBC.setEnabled(selectionInfo[4]>0)
+            self.__window.actionFileCopyToOtherPanel.setEnabled(selectionInfo[3]>0)
+            self.__window.actionFileMoveToOtherPanel.setEnabled(selectionInfo[3]>0)
+            self.__window.actionFileDelete.setEnabled(selectionInfo[3]>0)
 
-        self.__window.actionFileCopyToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
-        self.__window.actionFileMoveToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
-        self.__window.actionFileDeleteNoConfirm.setEnabled(selectionInfo[3]>0)
+            # ^ ==> xor logical operator
+            # Can do rename if:
+            #   - one or more files are selected [2]
+            # exclusive or
+            #   - one or more directory is selected [1]
+            #
+            self.__window.actionFileRename.setEnabled( (selectionInfo[2]>0) ^ (selectionInfo[1]>0))
 
-        self.__window.actionViewShowBackupFiles.setEnabled(self.optionViewFileManagedOnly())
+            self.__window.actionFileCopyToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
+            self.__window.actionFileMoveToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
+            self.__window.actionFileDeleteNoConfirm.setEnabled(selectionInfo[3]>0)
 
-        self.__window.actionGoBack.setEnabled(self.panel().goBackEnabled())
-        self.__window.actionGoUp.setEnabled(self.panel().goUpEnabled())
+            self.__window.actionViewThumbnail.setEnabled(True)
+            self.__window.actionViewShowImageFileOnly.setEnabled(True)
+            self.__window.actionViewShowBackupFiles.setEnabled(self.optionViewFileManagedOnly())
+            self.__window.actionViewShowHiddenFiles.setEnabled(True)
+            self.__window.actionViewDisplaySecondaryPanel.setEnabled(True)
+            self.__window.actionViewDisplayQuickFilter.setEnabled(True)
+
+            self.__window.actionGoBack.setEnabled(self.panel().filesGoBackEnabled())
+            self.__window.actionGoUp.setEnabled(self.panel().filesGoUpEnabled())
+
+            self.__window.actionToolsExportFiles.setEnabled(True)
+            self.__window.actionToolsConvertFiles.setEnabled(True)
+        elif self.panel().tabActive() == BCMainViewTabTabs.CLIPBOARD:
+            self.__window.menuFile.menuAction().setVisible(False)
+            self.__window.menuClipboard.menuAction().setVisible(True)
+            self.__window.menuDocument.menuAction().setVisible(False)
+            self.__window.menuGo.menuAction().setVisible(False)
+
+            self.__window.actionViewThumbnail.setEnabled(False)
+            self.__window.actionViewShowImageFileOnly.setEnabled(False)
+            self.__window.actionViewShowBackupFiles.setEnabled(False)
+            self.__window.actionViewShowHiddenFiles.setEnabled(False)
+            self.__window.actionViewDisplaySecondaryPanel.setEnabled(True)
+            self.__window.actionViewDisplayQuickFilter.setEnabled(False)
+
+            self.__window.actionToolsExportFiles.setEnabled(False)
+            self.__window.actionToolsConvertFiles.setEnabled(False)
+        elif self.panel().tabActive() == BCMainViewTabTabs.DOCUMENTS:
+            self.__window.menuFile.menuAction().setVisible(False)
+            self.__window.menuClipboard.menuAction().setVisible(False)
+            self.__window.menuDocument.menuAction().setVisible(False)
+            self.__window.menuGo.menuAction().setVisible(False)
+
+            self.__window.actionViewThumbnail.setEnabled(False)
+            self.__window.actionViewShowImageFileOnly.setEnabled(False)
+            self.__window.actionViewShowBackupFiles.setEnabled(False)
+            self.__window.actionViewShowHiddenFiles.setEnabled(False)
+            self.__window.actionViewDisplaySecondaryPanel.setEnabled(True)
+            self.__window.actionViewDisplayQuickFilter.setEnabled(False)
+
+            self.__window.actionToolsExportFiles.setEnabled(False)
+            self.__window.actionToolsConvertFiles.setEnabled(False)
+
 
     def close(self):
         """When window is about to be closed, execute some cleanup/backup/stuff before exiting BuliCommander"""
@@ -950,7 +999,7 @@ class BCUIController(QObject):
     def commandFileCreateDir(self, targetPath=None):
         """Create directory for given path"""
         if targetPath is None:
-            targetPath = self.panel().path()
+            targetPath = self.panel().filesPath()
 
         newPath = BCFileOperationUi.createDir(self.__bcName, targetPath)
         if not newPath is None:
@@ -980,7 +1029,7 @@ class BCUIController(QObject):
 
     def commandFileCopy(self, confirm=True):
         """Copy file(s)"""
-        targetPath = self.panel(False).path()
+        targetPath = self.panel(False).filesPath()
         selectedFiles = self.panel().selectedFiles()
         if confirm:
             choice = BCFileOperationUi.copy(self.__bcName, selectedFiles[2], selectedFiles[1], selectedFiles[5], targetPath)
@@ -998,7 +1047,7 @@ class BCUIController(QObject):
 
     def commandFileMove(self, confirm=True):
         """Move file(s)"""
-        targetPath = self.panel(False).path()
+        targetPath = self.panel(False).filesPath()
         selectedFiles = self.panel().selectedFiles()
         if confirm:
             choice = BCFileOperationUi.move(self.__bcName, selectedFiles[2], selectedFiles[1], selectedFiles[5], targetPath)
@@ -1153,7 +1202,7 @@ class BCUIController(QObject):
             mode = False
 
         self.__window.actionViewThumbnail.setChecked(mode)
-        self.__window.panels[panel].setViewThumbnail(mode)
+        self.__window.panels[panel].setFilesViewThumbnail(mode)
 
         self.updateMenuForPanel()
 
@@ -1170,7 +1219,7 @@ class BCUIController(QObject):
             mode = False
 
         self.__window.actionViewDisplayQuickFilter.setChecked(mode)
-        self.__window.panels[panel].setFilterVisible(mode)
+        self.__window.panels[panel].setFilesFilterVisible(mode)
 
         self.updateMenuForPanel()
 
@@ -1245,11 +1294,11 @@ class BCUIController(QObject):
             self.__window.actionViewShowHiddenFiles.setChecked(value)
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setHiddenPath(value)
+            self.__window.panels[panelId].setFilesHiddenPath(value)
 
         return value
 
-    def commandPanelTabFilesLayout(self, panel, value):
+    def commandPanelFilesTabLayout(self, panel, value):
         """Set panel layout"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
@@ -1257,11 +1306,11 @@ class BCUIController(QObject):
         if isinstance(value, str):
             value = BCMainViewTabFilesLayout(value)
 
-        self.__window.panels[panel].setTabFilesLayout(value)
+        self.__window.panels[panel].setFilesTabLayout(value)
 
         return value
 
-    def commandPanelTabFilesActive(self, panel, value):
+    def commandPanelFilesTabActive(self, panel, value):
         """Set active tab for files tab for given panel"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
@@ -1269,16 +1318,16 @@ class BCUIController(QObject):
         if isinstance(value, str):
             value = BCMainViewTabFilesTabs(value)
 
-        self.__window.panels[panel].setTabFilesActive(value)
+        self.__window.panels[panel].setFilesTabActive(value)
 
         return value
 
-    def commandPanelTabFilesPosition(self, panel, value):
+    def commandPanelFilesTabPosition(self, panel, value):
         """Set tabs positions for given panel"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        self.__window.panels[panel].setTabFilesOrder(value)
+        self.__window.panels[panel].setFilesTabOrder(value)
 
         return value
 
@@ -1303,7 +1352,7 @@ class BCUIController(QObject):
 
         return value
 
-    def commandPanelTabFilesNfoActive(self, panel, value):
+    def commandPanelFilesTabNfoActive(self, panel, value):
         """Set active tab for given panel"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
@@ -1311,11 +1360,11 @@ class BCUIController(QObject):
         if isinstance(value, str):
             value = BCMainViewTabFilesNfoTabs(value)
 
-        self.__window.panels[panel].setTabFilesNfoActive(value)
+        self.__window.panels[panel].setFilesTabNfoActive(value)
 
         return value
 
-    def commandPanelTabFilesSplitterFilesPosition(self, panel, positions=None):
+    def commandPanelFilesTabSplitterFilesPosition(self, panel, positions=None):
         """Set splitter position for tab files for given panel
 
         Given `positions` is a list [<panel0 size>,<panel1 size>]
@@ -1324,9 +1373,9 @@ class BCUIController(QObject):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].setTabFilesSplitterFilesPosition(positions)
+        return self.__window.panels[panel].setFilesTabSplitterFilesPosition(positions)
 
-    def commandPanelTabFilesSplitterPreviewPosition(self, panel, positions=None):
+    def commandPanelFilesTabSplitterPreviewPosition(self, panel, positions=None):
         """Set splitter position for tab preview for given panel
 
         Given `positions` is a list [<panel0 size>,<panel1 size>]
@@ -1335,14 +1384,14 @@ class BCUIController(QObject):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].setTabFilesSplitterPreviewPosition(positions)
+        return self.__window.panels[panel].setFilesTabSplitterPreviewPosition(positions)
 
     def commandPanelPath(self, panel, path=None):
         """Define path for given panel"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        returned = self.__window.panels[panel].setPath(path)
+        returned = self.__window.panels[panel].setFilesPath(path)
         self.updateMenuForPanel()
         return returned
 
@@ -1351,21 +1400,21 @@ class BCUIController(QObject):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].selectAll()
+        return self.__window.panels[panel].filesSelectAll()
 
     def commandPanelSelectNone(self, panel):
         """Clear selection"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].selectNone()
+        return self.__window.panels[panel].filesSelectNone()
 
     def commandPanelSelectInvert(self, panel):
         """Clear selection"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].selectInvert()
+        return self.__window.panels[panel].filesSelectInvert()
 
     def commandPanelFilterVisible(self, panel, visible=None):
         """Display the filter
@@ -1377,14 +1426,14 @@ class BCUIController(QObject):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].setFilterVisible(visible)
+        return self.__window.panels[panel].setFilesFilterVisible(visible)
 
     def commandPanelFilterValue(self, panel, value=None):
         """Set current filter value"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].setFilter(value)
+        return self.__window.panels[panel].setFilesFilter(value)
 
     def commandGoTo(self, panel, path=None):
         """Go back to given path/bookmark/saved view"""
@@ -1397,7 +1446,7 @@ class BCUIController(QObject):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].setPath(path)
+        return self.__window.panels[panel].setFilesPath(path)
 
     def commandGoBack(self, panel):
         """Go back to previous directory"""
@@ -1410,7 +1459,7 @@ class BCUIController(QObject):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].goToBackPath()
+        return self.__window.panels[panel].filesGoToBackPath()
 
     def commandGoUp(self, panel):
         """Go to parent directory"""
@@ -1423,7 +1472,7 @@ class BCUIController(QObject):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].goToUpPath()
+        return self.__window.panels[panel].filesGoToUpPath()
 
     def commandGoHome(self, panel):
         """Go to parent directory"""
@@ -1742,72 +1791,72 @@ class BCUIController(QObject):
         for panelId in self.__window.panels:
             self.commandViewThumbnail(panelId, self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_THUMBNAIL.id()))
 
-            self.commandPanelTabFilesLayout(panelId, self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_LAYOUT.id()))
-            self.commandPanelTabFilesActive(panelId, BCMainViewTabFilesTabs.INFORMATIONS)
-            self.commandPanelTabFilesPosition(panelId, [BCMainViewTabFilesTabs.INFORMATIONS, BCMainViewTabFilesTabs.DIRECTORIES_TREE])
+            self.commandPanelFilesTabLayout(panelId, self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_LAYOUT.id()))
+            self.commandPanelFilesTabActive(panelId, BCMainViewTabFilesTabs.INFORMATIONS)
+            self.commandPanelFilesTabPosition(panelId, [BCMainViewTabFilesTabs.INFORMATIONS, BCMainViewTabFilesTabs.DIRECTORIES_TREE])
 
             self.commandPanelTabActive(panelId, BCMainViewTabTabs.FILES)
             self.commandPanelTabPosition(panelId, [BCMainViewTabTabs.FILES, BCMainViewTabTabs.DOCUMENTS])
 
-            self.commandPanelTabFilesNfoActive(panelId, BCMainViewTabFilesNfoTabs.GENERIC)
+            self.commandPanelFilesTabNfoActive(panelId, BCMainViewTabFilesNfoTabs.GENERIC)
 
-            self.commandPanelTabFilesSplitterFilesPosition(panelId)
-            self.commandPanelTabFilesSplitterPreviewPosition(panelId)
+            self.commandPanelFilesTabSplitterFilesPosition(panelId)
+            self.commandPanelFilesTabSplitterPreviewPosition(panelId)
 
             self.__window.panels[panelId].setAllowRefresh(True)
 
-            self.__window.panels[panelId].setColumnSort([1, True])
-            self.__window.panels[panelId].setColumnOrder([0,1,2,3,4,5,6,7,8])
-            self.__window.panels[panelId].setColumnSize([0,0,0,0,0,0,0,0,0])
-            self.__window.panels[panelId].setIconSize(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_ICONSIZE.id()))
+            self.__window.panels[panelId].setFilesColumnSort([1, True])
+            self.__window.panels[panelId].setFilesColumnOrder([0,1,2,3,4,5,6,7,8])
+            self.__window.panels[panelId].setFilesColumnSize([0,0,0,0,0,0,0,0,0])
+            self.__window.panels[panelId].setFilesIconSize(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_ICONSIZE.id()))
 
     def commandSettingsNavBarBtnHome(self, visible=True):
         """Set button home visible/hidden"""
         self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HOME, visible)
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].showHome(visible)
+            self.__window.panels[panelId].filesShowHome(visible)
 
     def commandSettingsNavBarBtnViews(self, visible=True):
         """Set button views visible/hidden"""
         self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_VIEWS, visible)
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].showSavedView(visible)
+            self.__window.panels[panelId].filesShowSavedView(visible)
 
     def commandSettingsNavBarBtnBookmarks(self, visible=True):
         """Set button bookmarks visible/hidden"""
         self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BOOKMARKS, visible)
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].showBookmark(visible)
+            self.__window.panels[panelId].filesShowBookmark(visible)
 
     def commandSettingsNavBarBtnHistory(self, visible=True):
         """Set button history visible/hidden"""
         self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HISTORY, visible)
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].showHistory(visible)
+            self.__window.panels[panelId].filesShowHistory(visible)
 
     def commandSettingsNavBarBtnLastDocuments(self, visible=True):
         """Set button history visible/hidden"""
         self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_LASTDOCUMENTS, visible)
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].showLastDocuments(visible)
+            self.__window.panels[panelId].filesShowLastDocuments(visible)
 
     def commandSettingsNavBarBtnGoBack(self, visible=True):
         """Set button go back visible/hidden"""
         self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BACK, visible)
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].showGoBack(visible)
+            self.__window.panels[panelId].filesShowGoBack(visible)
 
     def commandSettingsNavBarBtnGoUp(self, visible=True):
         """Set button go up visible/hidden"""
         self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_UP, visible)
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].showGoUp(visible)
+            self.__window.panels[panelId].filesShowGoUp(visible)
 
     def commandSettingsNavBarBtnQuickFilter(self, visible=True):
         """Set button quick filter visible/hidden"""
         self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_QUICKFILTER, visible)
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].showQuickFilter(visible)
+            self.__window.panels[panelId].filesShowQuickFilter(visible)
 
     def commandInfoToClipBoardBorder(self, border=BCTableSettingsText.BORDER_DOUBLE):
         """Set border for information panel content to clipboard"""
@@ -1876,6 +1925,13 @@ class BCUIController(QObject):
         """Define default action on clipboard url"""
         self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD, value)
         BCClipboard.setOptionUrlAutoload(value)
+        if value:
+            self.__clipboard.startDownload()
+
+    def commandSettingsClipboardUrlParseTextHtml(self, value=True):
+        """Define default action on clipboard url"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_PARSE_TEXTHTML, value)
+        BCClipboard.setOptionUrlParseTextHtml(value)
 
     def commandAboutBc(self):
         """Display 'About Buli Commander' dialog box"""

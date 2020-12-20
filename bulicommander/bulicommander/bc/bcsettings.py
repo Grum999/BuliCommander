@@ -362,6 +362,7 @@ class BCSettingsKey(Enum):
     CONFIG_DSESSION_CLIPBOARD_CACHE_MAXISZE =                'config.defaultSession.clipboard.cache.maxSize'
     CONFIG_DSESSION_CLIPBOARD_CACHE_PERSISTENT =             'config.defaultSession.clipboard.cache.persistent'
     CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD =                 'config.defaultSession.clipboard.url.autoLoad'
+    CONFIG_DSESSION_CLIPBOARD_URL_PARSE_TEXTHTML =           'config.defaultSession.clipboard.url.parseTextHtml'
 
     SESSION_INFO_TOCLIPBOARD_BORDER =                        'session.information.clipboard.border'
     SESSION_INFO_TOCLIPBOARD_HEADER =                        'session.information.clipboard.header'
@@ -701,6 +702,7 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MAXISZE.id():         (1024000000,               BCSettingsFmt(int)),
             BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_PERSISTENT.id():      (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD.id():          (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_PARSE_TEXTHTML.id():    (True,                     BCSettingsFmt(bool)),
 
             BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER.id():                 (3,                        BCSettingsFmt(int, [0,1,2,3])),
             BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER.id():                 (True,                     BCSettingsFmt(bool)),
@@ -1100,6 +1102,7 @@ class BCSettingsDialogBox(QDialog):
         elif value == BCSettingsValues.CLIPBOARD_MODE_MANUAL:
             self.rbCCModeManual.setChecked(True)
 
+        self.cbCCParseTextHtml.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_PARSE_TEXTHTML.id()))
         self.cbCCAutomaticUrlDownload.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD.id()))
         self.cbCCUsePersistent.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_PERSISTENT.id()))
 
@@ -1182,6 +1185,7 @@ class BCSettingsDialogBox(QDialog):
 
         self.__uiController.commandSettingsClipboardCachePersistent(self.cbCCUsePersistent.isChecked())
         self.__uiController.commandSettingsClipboardUrlAutomaticDownload(self.cbCCAutomaticUrlDownload.isChecked())
+        self.__uiController.commandSettingsClipboardUrlParseTextHtml(self.cbCCParseTextHtml.isChecked())
 
 
     def __replaceOpenDbAlert(self, checked):

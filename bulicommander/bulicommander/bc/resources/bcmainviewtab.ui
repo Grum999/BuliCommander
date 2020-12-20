@@ -300,7 +300,7 @@
                            <string notr="true"/>
                           </property>
                           <property name="currentIndex">
-                           <number>1</number>
+                           <number>0</number>
                           </property>
                           <widget class="QWidget" name="pgPreviewImg">
                            <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -852,7 +852,7 @@ QSlider::handle:horizontal {
                                     <x>0</x>
                                     <y>0</y>
                                     <width>773</width>
-                                    <height>638</height>
+                                    <height>639</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1080,7 +1080,7 @@ QSlider::handle:horizontal {
                                     <x>0</x>
                                     <y>0</y>
                                     <width>773</width>
-                                    <height>638</height>
+                                    <height>639</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1337,7 +1337,7 @@ QSlider::handle:horizontal {
                                     <x>0</x>
                                     <y>0</y>
                                     <width>773</width>
-                                    <height>638</height>
+                                    <height>639</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1675,12 +1675,12 @@ QSlider::handle:horizontal {
               <property name="font">
                <font>
                 <pointsize>7</pointsize>
-                <weight>50</weight>
-                <bold>false</bold>
+                <weight>75</weight>
+                <bold>true</bold>
                </font>
               </property>
               <property name="value">
-               <number>0</number>
+               <number>50</number>
               </property>
              </widget>
             </item>
@@ -1826,25 +1826,173 @@ QSlider::handle:horizontal {
         <attribute name="title">
          <string>Clipboard</string>
         </attribute>
-        <widget class="QLabel" name="label_19">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>10</y>
-           <width>261</width>
-           <height>24</height>
-          </rect>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Not yet implemented...</string>
-         </property>
-        </widget>
+        <layout class="QVBoxLayout" name="verticalLayout_10">
+         <item>
+          <widget class="QSplitter" name="splitterClipboard">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <widget class="BCMainViewClipboard" name="treeViewClipboard">
+            <property name="font">
+             <font>
+              <family>DejaVu Sans Mono</family>
+             </font>
+            </property>
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+            <property name="showDropIndicator" stdset="0">
+             <bool>false</bool>
+            </property>
+            <property name="alternatingRowColors">
+             <bool>true</bool>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::ExtendedSelection</enum>
+            </property>
+            <property name="rootIsDecorated">
+             <bool>false</bool>
+            </property>
+            <property name="uniformRowHeights">
+             <bool>true</bool>
+            </property>
+            <property name="itemsExpandable">
+             <bool>false</bool>
+            </property>
+            <property name="sortingEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="allColumnsShowFocus">
+             <bool>true</bool>
+            </property>
+            <property name="expandsOnDoubleClick">
+             <bool>false</bool>
+            </property>
+           </widget>
+           <widget class="QStackedWidget" name="swPreviewClipboard">
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="currentIndex">
+             <number>1</number>
+            </property>
+            <widget class="QWidget" name="pgPreviewImgClipboard">
+             <layout class="QVBoxLayout" name="verticalLayout_8">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="BCWImagePreview" name="gvPreviewClipboard">
+                <property name="statusTip">
+                 <string>Double-click: zoom to fit/scale 1:1 | Drag: pan | Ctrl+Drag: select and zoom</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QWidget" name="widget_4" native="true">
+                <layout class="QHBoxLayout" name="horizontalLayout_11">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>3</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>3</number>
+                 </property>
+                 <item>
+                  <widget class="QLabel" name="lblZoomClipboard">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <horstretch>1</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>18</height>
+                    </size>
+                   </property>
+                   <property name="baseSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>8</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>100.00%</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="pgPreviewNoneClipboard">
+             <layout class="QVBoxLayout" name="verticalLayout_9">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="lblNoPreviewClipboard">
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="autoFillBackground">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>No image selected</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </widget>
      </item>
@@ -1868,6 +2016,11 @@ QSlider::handle:horizontal {
    <class>BCWImagePreview</class>
    <extends>QGraphicsView</extends>
    <header>bulicommander.bc.bcwimagepreview</header>
+  </customwidget>
+  <customwidget>
+   <class>BCMainViewClipboard</class>
+   <extends>QTreeView</extends>
+   <header>bulicommander.bc.bcmainviewtab</header>
   </customwidget>
  </customwidgets>
  <resources>
