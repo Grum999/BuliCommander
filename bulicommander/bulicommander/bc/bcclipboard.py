@@ -458,10 +458,15 @@ class BCClipboardItemFile(BCClipboardItem):
 
         return returned
 
-    def __init__(self, hashValue, fileName, origin=None, timestamp=None, saveInCache=False):
+    def __init__(self, hashValue, fileName, origin=None, timestamp=None, saveInCache=True):
         super(BCClipboardItemFile, self).__init__(hashValue, origin, timestamp)
 
         self.__fileName=fileName
+
+        if saveInCache:
+            self.saveToCache()
+
+        self.updateBcFile()
 
     def __repr__(self):
         return f'{super(BCClipboardItemFile, self).__repr__()[:-2]}, "{self.__fileName}", {self.fileExists()})>'
@@ -489,6 +494,9 @@ class BCClipboardItemFile(BCClipboardItem):
         """Update BCFile according to current clipboard item properties"""
         if self.fileExists():
             self.setFile(self.__fileName)
+            if self.imageSize().width()==-1 or self.imageSize().height()==-1:
+                self.setImageSize(self.file().imageSize())
+                self.saveToCache()
         else:
             # file doesn't exist...
             return None
@@ -1074,7 +1082,7 @@ class BCClipboard(QObject):
                 if self.__inPool(hashValue):
                     returned|=self.__updateTimeStamp(hashValue, origin)
                 elif url.scheme()=='file':
-                    clipboardItem=BCClipboardItemFile(hashValue, url.url(), origin)
+                    clipboardItem=BCClipboardItemFile(hashValue, url.path(), origin)
 
                     returned|=self.__addPool(clipboardItem)
 
@@ -1352,6 +1360,7 @@ class BCClipboard(QObject):
 
 class BCClipboardModel(QAbstractTableModel):
     """A model provided by clipboard"""
+    updateWidth = Signal()
 
     COLNUM_ICON = 0
     COLNUM_PERSISTENT = 1
@@ -1366,7 +1375,8 @@ class BCClipboardModel(QAbstractTableModel):
     ROLE_PCT = Qt.UserRole + 2
     ROLE_ITEM = Qt.UserRole + 3
 
-    __PIN_ICON_SIZE = QSize(22, 22)
+    __PIN_ICON_WIDTH = 30
+    PIN_ICON_SIZE = QSize(22, 22)
 
     HEADERS = ['', '', i18n("Type"), i18n("Date"), i18n("Size"), i18n("Url"), i18n("Nfo")]
 
@@ -1384,7 +1394,6 @@ class BCClipboardModel(QAbstractTableModel):
         self.__iconSize=QSize(12, 12)
         self.__thumbSize=BCFileThumbnailSize.SMALL
 
-
     def __repr__(self):
         return f'<BCClipboardModel()>'
 
@@ -1401,6 +1410,7 @@ class BCClipboardModel(QAbstractTableModel):
         print('TODO: need to update only for added items')
         self.__items=self.__clipboard.hashList()
         self.modelReset.emit()
+        self.updateWidth.emit()
 
     def __dataUpdateRemove(self, items):
         # if nb items is the same, just update... ?
@@ -1445,11 +1455,6 @@ class BCClipboardModel(QAbstractTableModel):
                     return QIcon(':/images/url')
                 else:
                     return QIcon(':/images/warning')
-            elif column==BCClipboardModel.COLNUM_PERSISTENT:
-                hash=self.__items[row]
-                item = self.__clipboard.get(hash)
-                if item.persistent():
-                    return QIcon(':/images/pinned').pixmap(BCClipboardModel.__PIN_ICON_SIZE)
         elif role == Qt.DisplayRole:
             hash=self.__items[row]
             item = self.__clipboard.get(hash)
@@ -1484,16 +1489,20 @@ class BCClipboardModel(QAbstractTableModel):
                         return f'{size.width()}x{size.height()}'
 
                     # no size? not downloaded/not in cache?
-                    return None
+                    return ''
                 elif column==BCClipboardModel.COLNUM_URL:
+                    if item.type() == 'BCClipboardItemFile':
+                        return item.fileName()
                     if item.type() == 'BCClipboardItemUrl':
-                        if item.origin() == 'URI list':
-                            return item.url().path()
-                        else:
-                            return item.url().url()
+                        return item.url().url()
                     elif item.type() == 'BCClipboardItemImg' and item.urlOrigin():
                         return item.urlOrigin().url()
                     return ''
+                elif column==BCClipboardModel.COLNUM_PERSISTENT:
+                    if item.persistent():
+                        return 'T'
+                    else:
+                        return 'F'
         elif role == BCClipboardModel.ROLE_HASH:
             return self.__items[row]
         elif role == BCClipboardModel.ROLE_PCT:
@@ -1505,9 +1514,12 @@ class BCClipboardModel(QAbstractTableModel):
         elif role == BCClipboardModel.ROLE_ITEM:
             hash=self.__items[row]
             return self.__clipboard.get(hash)
-        elif role == Qt.SizeHintRole and column == BCClipboardModel.COLNUM_ICON:
-            # calculate only for 1st cell
-            return self.__iconSize
+        elif role == Qt.SizeHintRole:
+            if column == BCClipboardModel.COLNUM_ICON:
+                # calculate only for 1st cell
+                return self.__iconSize
+            elif column==BCClipboardModel.COLNUM_PERSISTENT:
+                return BCClipboardModel.__PIN_ICON_WIDTH
         return None
 
     def roleNames(self):
@@ -1537,28 +1549,47 @@ class BCClipboardDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         """Paint list item"""
-        pct=index.data(BCClipboardModel.ROLE_PCT)
-        if pct == -1:
-            # not progress bar to display
-            QStyledItemDelegate.paint(self, painter, option, index)
-            return
+        if index.column()==BCClipboardModel.COLNUM_URL:
+            pct=index.data(BCClipboardModel.ROLE_PCT)
+            if pct == -1:
+                # not progress bar to display
+                QStyledItemDelegate.paint(self, painter, option, index)
+                return
 
-        self.initStyleOption(option, index)
+            self.initStyleOption(option, index)
 
-        rectTxt = QRect(option.rect.left() + 4, option.rect.top()+1, option.rect.width()-4, option.rect.height()-2)
-        rectTextH = QRect(option.rect.left() + 4, option.rect.top()+1, round(option.rect.width() * pct/100, 2)-4, option.rect.height()-2)
-        rectPct = QRect(option.rect.left(), option.rect.top()+1, round(option.rect.width() * pct/100, 2), option.rect.height()-2)
+            rectTxt = QRect(option.rect.left() + 4, option.rect.top()+1, option.rect.width()-4, option.rect.height()-2)
+            rectTextH = QRect(option.rect.left() + 4, option.rect.top()+1, round(option.rect.width() * pct/100, 2)-4, option.rect.height()-2)
+            rectPct = QRect(option.rect.left(), option.rect.top()+1, round(option.rect.width() * pct/100, 2), option.rect.height()-2)
 
-        palette = QApplication.palette()
+            palette = QApplication.palette()
 
-        painter.save()
+            painter.save()
 
-        painter.setPen(QPen(palette.text().color()))
-        painter.drawText(rectTxt, Qt.AlignLeft|Qt.AlignVCenter, index.data())
+            painter.setPen(QPen(palette.text().color()))
+            painter.drawText(rectTxt, Qt.AlignLeft|Qt.AlignVCenter, index.data())
 
-        painter.fillRect(rectPct, palette.highlight())
+            painter.fillRect(rectPct, palette.highlight())
 
-        painter.setPen(QPen(palette.highlightedText().color()))
-        painter.drawText(rectTextH, Qt.AlignLeft|Qt.AlignVCenter, index.data())
+            painter.setPen(QPen(palette.highlightedText().color()))
+            painter.drawText(rectTextH, Qt.AlignLeft|Qt.AlignVCenter, index.data())
 
-        painter.restore()
+            painter.restore()
+        elif index.column()==BCClipboardModel.COLNUM_PERSISTENT:
+            self.initStyleOption(option, index)
+
+            item=index.data(BCClipboardModel.ROLE_ITEM)
+
+            painter.save()
+
+            if (option.state & QStyle.State_Selected) == QStyle.State_Selected:
+                painter.fillRect(option.rect, option.palette.color(QPalette.Highlight))
+
+            iconPosition=QPoint(option.rect.left() + 4, option.rect.top())
+
+            if item.persistent():
+                painter.drawPixmap(iconPosition, QIcon.fromTheme('lock').pixmap(BCClipboardModel.PIN_ICON_SIZE))
+            else:
+                painter.drawPixmap(iconPosition, QIcon.fromTheme('unlock').pixmap(BCClipboardModel.PIN_ICON_SIZE))
+
+            painter.restore()

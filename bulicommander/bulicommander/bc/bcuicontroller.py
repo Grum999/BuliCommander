@@ -140,7 +140,7 @@ class BCUIController(QObject):
         self.__settings = BCSettings('bulicommander')
 
         self.__systray=BCSysTray(self)
-        self.commandSettingsSysTrayMode(self.__settings.option(BCSettingsKey.CONFIG_SYSTRAY_MODE.id()))
+        self.commandSettingsSysTrayMode(self.__settings.option(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE.id()))
 
         # store a global reference to activeWindow to be able to work with
         # activeWindow signals
@@ -150,8 +150,8 @@ class BCUIController(QObject):
         self.__initialised = False
 
         # load last documents
-        self.commandGoLastDocsOpenedSet(self.__settings.option(BCSettingsKey.SESSION_LASTDOC_O_ITEMS.id()))
-        self.commandGoLastDocsSavedSet(self.__settings.option(BCSettingsKey.SESSION_LASTDOC_S_ITEMS.id()))
+        self.commandGoLastDocsOpenedSet(self.__settings.option(BCSettingsKey.SESSION_FILES_LASTDOC_O_ITEMS.id()))
+        self.commandGoLastDocsSavedSet(self.__settings.option(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS.id()))
 
         BCFile.initialiseCache()
         BCClipboard.initialiseCache()
@@ -159,9 +159,9 @@ class BCUIController(QObject):
         self.__clipboard = BCClipboard(False)
 
         # overrides native Krita Open dialog...
-        self.commandSettingsOpenOverrideKrita(self.__settings.option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()))
+        self.commandSettingsOpenOverrideKrita(self.__settings.option(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA.id()))
 
-        if kritaIsStarting and self.__settings.option(BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id()):
+        if kritaIsStarting and self.__settings.option(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP.id()):
             self.start()
 
 
@@ -221,18 +221,18 @@ class BCUIController(QObject):
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setAllowRefresh(False)
 
-        self.commandSettingsFileDefaultActionKra(self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_KRA.id()))
-        self.commandSettingsFileDefaultActionOther(self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER.id()))
-        self.commandSettingsFileNewFileNameKra(self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
-        self.commandSettingsFileNewFileNameOther(self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
-        self.commandSettingsFileUnit(self.__settings.option(BCSettingsKey.CONFIG_FILE_UNIT.id()))
-        self.commandSettingsHistoryMaxSize(self.__settings.option(BCSettingsKey.CONFIG_HISTORY_MAXITEMS.id()))
-        self.commandSettingsHistoryKeepOnExit(self.__settings.option(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT.id()))
-        self.commandSettingsLastDocsMaxSize(self.__settings.option(BCSettingsKey.CONFIG_LASTDOC_MAXITEMS.id()))
+        self.commandSettingsFileDefaultActionKra(self.__settings.option(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_KRA.id()))
+        self.commandSettingsFileDefaultActionOther(self.__settings.option(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_OTHER.id()))
+        self.commandSettingsFileNewFileNameKra(self.__settings.option(BCSettingsKey.CONFIG_FILES_NEWFILENAME_KRA.id()))
+        self.commandSettingsFileNewFileNameOther(self.__settings.option(BCSettingsKey.CONFIG_FILES_NEWFILENAME_OTHER.id()))
+        self.commandSettingsFileUnit(self.__settings.option(BCSettingsKey.CONFIG_GLB_FILE_UNIT.id()))
+        self.commandSettingsHistoryMaxSize(self.__settings.option(BCSettingsKey.CONFIG_FILES_HISTORY_MAXITEMS.id()))
+        self.commandSettingsHistoryKeepOnExit(self.__settings.option(BCSettingsKey.CONFIG_FILES_HISTORY_KEEPONEXIT.id()))
+        self.commandSettingsLastDocsMaxSize(self.__settings.option(BCSettingsKey.CONFIG_FILES_LASTDOC_MAXITEMS.id()))
         self.commandSettingsSaveSessionOnExit(self.__settings.option(BCSettingsKey.CONFIG_SESSION_SAVE.id()))
-        self.commandSettingsSysTrayMode(self.__settings.option(BCSettingsKey.CONFIG_SYSTRAY_MODE.id()))
-        self.commandSettingsOpenAtStartup(self.__settings.option(BCSettingsKey.CONFIG_OPEN_ATSTARTUP.id()))
-        self.commandSettingsOpenOverrideKrita(self.__settings.option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()))
+        self.commandSettingsSysTrayMode(self.__settings.option(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE.id()))
+        self.commandSettingsOpenAtStartup(self.__settings.option(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP.id()))
+        self.commandSettingsOpenOverrideKrita(self.__settings.option(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA.id()))
 
         self.commandViewMainWindowGeometry(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY.id()))
         self.commandViewMainWindowMaximized(self.__settings.option(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED.id()))
@@ -244,20 +244,20 @@ class BCUIController(QObject):
         self.commandViewShowHiddenFiles(self.__settings.option(BCSettingsKey.SESSION_PANELS_VIEW_FILES_HIDDEN.id()))
 
         # load history
-        self.commandGoHistorySet(self.__settings.option(BCSettingsKey.SESSION_HISTORY_ITEMS.id()))
+        self.commandGoHistorySet(self.__settings.option(BCSettingsKey.SESSION_FILES_HISTORY_ITEMS.id()))
         # load bookmarks
-        self.commandGoBookmarkSet(self.__settings.option(BCSettingsKey.SESSION_BOOKMARK_ITEMS.id()))
+        self.commandGoBookmarkSet(self.__settings.option(BCSettingsKey.SESSION_FILES_BOOKMARK_ITEMS.id()))
         # load saved views
-        self.commandGoSavedViewSet(self.__settings.option(BCSettingsKey.SESSION_SAVEDVIEWS_ITEMS.id()))
+        self.commandGoSavedViewSet(self.__settings.option(BCSettingsKey.SESSION_FILES_SAVEDVIEWS_ITEMS.id()))
 
-        self.commandSettingsNavBarBtnHome(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HOME.id()))
-        self.commandSettingsNavBarBtnViews(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_VIEWS.id()))
-        self.commandSettingsNavBarBtnBookmarks(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BOOKMARKS.id()))
-        self.commandSettingsNavBarBtnHistory(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HISTORY.id()))
-        self.commandSettingsNavBarBtnLastDocuments(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_LASTDOCUMENTS.id()))
-        self.commandSettingsNavBarBtnGoBack(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BACK.id()))
-        self.commandSettingsNavBarBtnGoUp(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_UP.id()))
-        self.commandSettingsNavBarBtnQuickFilter(self.__settings.option(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_QUICKFILTER.id()))
+        self.commandSettingsNavBarBtnHome(self.__settings.option(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_HOME.id()))
+        self.commandSettingsNavBarBtnViews(self.__settings.option(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_VIEWS.id()))
+        self.commandSettingsNavBarBtnBookmarks(self.__settings.option(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_BOOKMARKS.id()))
+        self.commandSettingsNavBarBtnHistory(self.__settings.option(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_HISTORY.id()))
+        self.commandSettingsNavBarBtnLastDocuments(self.__settings.option(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_LASTDOCUMENTS.id()))
+        self.commandSettingsNavBarBtnGoBack(self.__settings.option(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_BACK.id()))
+        self.commandSettingsNavBarBtnGoUp(self.__settings.option(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_UP.id()))
+        self.commandSettingsNavBarBtnQuickFilter(self.__settings.option(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_QUICKFILTER.id()))
 
         self.commandInfoToClipBoardBorder(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER.id()))
         self.commandInfoToClipBoardHeader(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER.id()))
@@ -266,11 +266,11 @@ class BCUIController(QObject):
         self.commandInfoToClipBoardMaxWidthActive(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE.id()))
         self.commandInfoToClipBoardMinWidthActive(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE.id()))
 
-        self.commandSettingsClipboardCacheMode(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_GENERAL.id()))
-        self.commandSettingsClipboardCacheMaxSize(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MAXISZE.id()))
-        self.commandSettingsClipboardCachePersistent(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_PERSISTENT.id()))
-        self.commandSettingsClipboardUrlAutomaticDownload(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD.id()))
-        self.commandSettingsClipboardUrlParseTextHtml(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_PARSE_TEXTHTML.id()))
+        self.commandSettingsClipboardCacheMode(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_GENERAL.id()))
+        self.commandSettingsClipboardCacheMaxSize(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MAXISZE.id()))
+        self.commandSettingsClipboardCachePersistent(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_PERSISTENT.id()))
+        self.commandSettingsClipboardUrlAutomaticDownload(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_URL_AUTOLOAD.id()))
+        self.commandSettingsClipboardUrlParseTextHtml(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_URL_PARSE_TEXTHTML.id()))
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setFilesHistory(self.__history)
@@ -284,27 +284,33 @@ class BCUIController(QObject):
             self.commandPanelTabActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId)))
             self.commandPanelTabPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId)))
 
-            self.commandPanelFilesTabLayout(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_LAYOUT.id(panelId=panelId)))
+            self.commandPanelFilesTabLayout(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILES_LAYOUT.id(panelId=panelId)))
             self.commandPanelFilesTabActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId)))
             self.commandPanelFilesTabPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_FILES.id(panelId=panelId)))
 
             self.commandPanelFilesTabNfoActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId)))
+            self.commandPanelFilesTabSplitterClipboardPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_SPLITTER_CLIPBOARD_POSITION.id(panelId=panelId)))
             self.commandPanelFilesTabSplitterFilesPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId)))
             self.commandPanelFilesTabSplitterPreviewPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId)))
 
-            self.commandPanelPath(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_CURRENTPATH.id(panelId=panelId)))
+            self.commandPanelPath(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId)))
 
-            self.commandPanelFilterValue(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVALUE.id(panelId=panelId)))
-            self.commandPanelFilterVisible(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVISIBLE.id(panelId=panelId)))
+            self.commandPanelFilterValue(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId)))
+            self.commandPanelFilterVisible(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId)))
 
-            self.commandViewThumbnail(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_THUMBNAIL.id(panelId=panelId)))
+            self.commandViewThumbnail(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILES_THUMBNAIL.id(panelId=panelId)))
 
             self.commandPanelPreviewBackground(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_PREVIEW_BACKGROUND.id(panelId=panelId)))
 
-            self.__window.panels[panelId].setFilesColumnSort(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSORT.id(panelId=panelId)))
-            self.__window.panels[panelId].setFilesColumnOrder(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNORDER.id(panelId=panelId)))
-            self.__window.panels[panelId].setFilesColumnSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSIZE.id(panelId=panelId)))
-            self.__window.panels[panelId].setFilesIconSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_ICONSIZE.id(panelId=panelId)))
+            self.__window.panels[panelId].setFilesColumnSort(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId)))
+            self.__window.panels[panelId].setFilesColumnOrder(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId)))
+            self.__window.panels[panelId].setFilesColumnSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId)))
+            self.__window.panels[panelId].setFilesIconSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE.id(panelId=panelId)))
+
+            self.__window.panels[panelId].setClipboardColumnSort(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSORT.id(panelId=panelId)))
+            self.__window.panels[panelId].setClipboardColumnOrder(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNORDER.id(panelId=panelId)))
+            self.__window.panels[panelId].setClipboardColumnSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSIZE.id(panelId=panelId)))
+            self.__window.panels[panelId].setClipboardIconSize(self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_ICONSIZE.id(panelId=panelId)))
 
         self.__window.initMenu()
 
@@ -439,7 +445,7 @@ class BCUIController(QObject):
 
     def __overrideOpenKrita(self):
         """Overrides the native "Open" Krita dialogcommand with BuliCommander"""
-        if checkKritaVersion(5,0,0) and self.__settings.option(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA.id()):
+        if checkKritaVersion(5,0,0) and self.__settings.option(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA.id()):
             # override the native "Open" Krita command with Buli Commander
             # notes:
             #   - once it's applied, to reactivate native Open Dialog file
@@ -590,8 +596,8 @@ class BCUIController(QObject):
 
         if refId == 'home':
             path = ''
-            if self.__settings.option(BCSettingsKey.CONFIG_HOME_DIR_MODE.id()) == BCSettingsValues.HOME_DIR_UD:
-                path = self.__settings.option(BCSettingsKey.CONFIG_HOME_DIR_UD.id())
+            if self.__settings.option(BCSettingsKey.CONFIG_FILES_HOME_DIR_MODE.id()) == BCSettingsValues.HOME_DIR_UD:
+                path = self.__settings.option(BCSettingsKey.CONFIG_FILES_HOME_DIR_UD.id())
 
             if path == '' or not os.path.isdir(path):
                 path = QDir.homePath()
@@ -663,23 +669,28 @@ class BCUIController(QObject):
 
             # normally shouldn't be necessary
             if getBytesSizeToStrUnit() == 'auto':
-                self.__settings.setOption(BCSettingsKey.CONFIG_FILE_UNIT, BCSettingsValues.FILE_UNIT_KB)
+                self.__settings.setOption(BCSettingsKey.CONFIG_GLB_FILE_UNIT, BCSettingsValues.FILE_UNIT_KB)
             else:
-                self.__settings.setOption(BCSettingsKey.CONFIG_FILE_UNIT, BCSettingsValues.FILE_UNIT_KIB)
+                self.__settings.setOption(BCSettingsKey.CONFIG_GLB_FILE_UNIT, BCSettingsValues.FILE_UNIT_KIB)
 
             for panelId in self.__window.panels:
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].filesTabLayout().value)
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CURRENTPATH.id(panelId=panelId), self.__window.panels[panelId].filesPath())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILES_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].filesTabLayout().value)
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId), self.__window.panels[panelId].filesPath())
 
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_THUMBNAIL.id(panelId=panelId), self.__window.panels[panelId].filesViewThumbnail())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILES_THUMBNAIL.id(panelId=panelId), self.__window.panels[panelId].filesViewThumbnail())
 
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVISIBLE.id(panelId=panelId), self.__window.panels[panelId].filesFilterVisible())
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILTERVALUE.id(panelId=panelId), self.__window.panels[panelId].filesFilter())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId), self.__window.panels[panelId].filesFilterVisible())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId), self.__window.panels[panelId].filesFilter())
 
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSORT.id(panelId=panelId), self.__window.panels[panelId].filesColumnSort())
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].filesColumnOrder())
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_COLUMNSIZE.id(panelId=panelId), self.__window.panels[panelId].filesColumnSize())
-                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_ICONSIZE.id(panelId=panelId), self.__window.panels[panelId].filesIconSize())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId), self.__window.panels[panelId].filesColumnSort())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].filesColumnOrder())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId), self.__window.panels[panelId].filesColumnSize())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE.id(panelId=panelId), self.__window.panels[panelId].filesIconSize())
+
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSORT.id(panelId=panelId), self.__window.panels[panelId].clipboardColumnSort())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].clipboardColumnOrder())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSIZE.id(panelId=panelId), self.__window.panels[panelId].clipboardColumnSize())
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_ICONSIZE.id(panelId=panelId), self.__window.panels[panelId].clipboardIconSize())
 
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_PREVIEW_BACKGROUND.id(panelId=panelId), self.__window.panels[panelId].previewBackground())
 
@@ -689,18 +700,19 @@ class BCUIController(QObject):
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId), self.__window.panels[panelId].filesTabActive().value)
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId), self.__window.panels[panelId].filesTabNfoActive().value)
 
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_CLIPBOARD_POSITION.id(panelId=panelId), self.__window.panels[panelId].clipboardTabSplitterPosition())
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId), self.__window.panels[panelId].filesTabSplitterFilesPosition())
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId), self.__window.panels[panelId].filesTabSplitterPreviewPosition())
 
-            if self.__settings.option(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT.id()):
-                self.__settings.setOption(BCSettingsKey.SESSION_HISTORY_ITEMS, self.__history.list())
+            if self.__settings.option(BCSettingsKey.CONFIG_FILES_HISTORY_KEEPONEXIT.id()):
+                self.__settings.setOption(BCSettingsKey.SESSION_FILES_HISTORY_ITEMS, self.__history.list())
             else:
-                self.__settings.setOption(BCSettingsKey.SESSION_HISTORY_ITEMS, [])
+                self.__settings.setOption(BCSettingsKey.SESSION_FILES_HISTORY_ITEMS, [])
 
-            self.__settings.setOption(BCSettingsKey.SESSION_BOOKMARK_ITEMS, self.__bookmark.list())
-            self.__settings.setOption(BCSettingsKey.SESSION_SAVEDVIEWS_ITEMS, self.__savedView.list())
-            self.__settings.setOption(BCSettingsKey.SESSION_LASTDOC_O_ITEMS, self.__lastDocumentsOpened.list())
-            self.__settings.setOption(BCSettingsKey.SESSION_LASTDOC_S_ITEMS, self.__lastDocumentsSaved.list())
+            self.__settings.setOption(BCSettingsKey.SESSION_FILES_BOOKMARK_ITEMS, self.__bookmark.list())
+            self.__settings.setOption(BCSettingsKey.SESSION_FILES_SAVEDVIEWS_ITEMS, self.__savedView.list())
+            self.__settings.setOption(BCSettingsKey.SESSION_FILES_LASTDOC_O_ITEMS, self.__lastDocumentsOpened.list())
+            self.__settings.setOption(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS, self.__lastDocumentsSaved.list())
 
             self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER, self.__tableSettings.border())
             self.__settings.setOption(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER, self.__tableSettings.headerActive())
@@ -723,7 +735,7 @@ class BCUIController(QObject):
             self.__window.menuDocument.menuAction().setVisible(False)
             self.__window.menuGo.menuAction().setVisible(True)
 
-            selectionInfo = self.panel().selectedFiles()
+            selectionInfo = self.panel().filesSelected()
 
             self.__window.actionFileOpen.setEnabled(selectionInfo[4]>0)
             self.__window.actionFileOpenCloseBC.setEnabled(selectionInfo[4]>0)
@@ -834,15 +846,15 @@ class BCUIController(QObject):
 
     def optionFileDefaultActionKra(self):
         """Return current option value"""
-        return self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_KRA.id())
+        return self.__settings.option(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_KRA.id())
 
     def optionFileDefaultActionOther(self):
         """Return current option value"""
-        return self.__settings.option(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER.id())
+        return self.__settings.option(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_OTHER.id())
 
     def optionHistoryMaxSize(self):
         """Return current option value"""
-        return self.__settings.option(BCSettingsKey.CONFIG_HISTORY_MAXITEMS.id())
+        return self.__settings.option(BCSettingsKey.CONFIG_FILES_HISTORY_MAXITEMS.id())
 
     def commandQuit(self):
         """Close Buli Commander"""
@@ -851,7 +863,7 @@ class BCUIController(QObject):
     def commandFileOpen(self, file=None):
         """Open file"""
         if file is None:
-            selectionInfo = self.panel().selectedFiles()
+            selectionInfo = self.panel().filesSelected()
             if selectionInfo[4] > 0:
                 nbOpened = 0
                 for file in selectionInfo[0]:
@@ -892,7 +904,7 @@ class BCUIController(QObject):
     def commandFileOpenAsNew(self, file=None):
         """Open file as new document"""
         if file is None:
-            selectionInfo = self.panel().selectedFiles()
+            selectionInfo = self.panel().filesSelected()
             if selectionInfo[4] > 0:
                 nbOpened = 0
                 for file in selectionInfo[0]:
@@ -916,9 +928,9 @@ class BCUIController(QObject):
 
             newFileName = None
             if bcFile.format() == BCFileManagedFormat.KRA:
-                newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA.id()))
+                newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILES_NEWFILENAME_KRA.id()))
             else:
-                newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER.id()))
+                newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILES_NEWFILENAME_OTHER.id()))
 
             if isinstance(newFileName, str):
                 if newFileName != '' and not re.search("\.kra$", newFileName):
@@ -1013,7 +1025,7 @@ class BCUIController(QObject):
     def commandFileDelete(self, confirm=True):
         """Delete file(s)"""
 
-        selectedFiles = self.panel().selectedFiles()
+        selectedFiles = self.panel().filesSelected()
         if confirm:
             choice = BCFileOperationUi.delete(self.__bcName, selectedFiles[2], selectedFiles[1], selectedFiles[5])
             if not choice:
@@ -1030,7 +1042,7 @@ class BCUIController(QObject):
     def commandFileCopy(self, confirm=True):
         """Copy file(s)"""
         targetPath = self.panel(False).filesPath()
-        selectedFiles = self.panel().selectedFiles()
+        selectedFiles = self.panel().filesSelected()
         if confirm:
             choice = BCFileOperationUi.copy(self.__bcName, selectedFiles[2], selectedFiles[1], selectedFiles[5], targetPath)
             if not choice:
@@ -1048,7 +1060,7 @@ class BCUIController(QObject):
     def commandFileMove(self, confirm=True):
         """Move file(s)"""
         targetPath = self.panel(False).filesPath()
-        selectedFiles = self.panel().selectedFiles()
+        selectedFiles = self.panel().filesSelected()
         if confirm:
             choice = BCFileOperationUi.move(self.__bcName, selectedFiles[2], selectedFiles[1], selectedFiles[5], targetPath)
             if not choice:
@@ -1065,7 +1077,7 @@ class BCUIController(QObject):
 
     def commandFileRename(self):
         """Rename file(s)"""
-        selectedFiles = self.panel().selectedFiles()
+        selectedFiles = self.panel().filesSelected()
         renameAction = BCFileOperationUi.rename(self.__bcName, selectedFiles[0])
         if renameAction is None:
             return
@@ -1363,6 +1375,17 @@ class BCUIController(QObject):
         self.__window.panels[panel].setFilesTabNfoActive(value)
 
         return value
+
+    def commandPanelFilesTabSplitterClipboardPosition(self, panel, positions=None):
+        """Set splitter position for tab clipboard for given panel
+
+        Given `positions` is a list [<panel0 size>,<panel1 size>]
+        If value is None, will define a default 50%-50%
+        """
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].setClipboardTabSplitterPosition(positions)
 
     def commandPanelFilesTabSplitterFilesPosition(self, panel, positions=None):
         """Set splitter position for tab files for given panel
@@ -1693,25 +1716,25 @@ class BCUIController(QObject):
     def commandSettingsHistoryMaxSize(self, value=25):
         """Set maximum size history for history content"""
         self.__history.setMaxItems(value)
-        self.__settings.setOption(BCSettingsKey.CONFIG_HISTORY_MAXITEMS, self.__history.maxItems())
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_HISTORY_MAXITEMS, self.__history.maxItems())
 
     def commandSettingsHistoryKeepOnExit(self, value=True):
         """When True, current history is saved when BuliCommander is exited"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_HISTORY_KEEPONEXIT, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_HISTORY_KEEPONEXIT, value)
 
     def commandSettingsLastDocsMaxSize(self, value=25):
         """Set maximum size for last documents list"""
         self.__lastDocumentsOpened.setMaxItems(value)
         self.__lastDocumentsSaved.setMaxItems(value)
-        self.__settings.setOption(BCSettingsKey.CONFIG_LASTDOC_MAXITEMS, self.__lastDocumentsOpened.maxItems())
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_LASTDOC_MAXITEMS, self.__lastDocumentsOpened.maxItems())
 
     def commandSettingsFileDefaultActionKra(self, value=BCSettingsValues.FILE_DEFAULTACTION_OPEN_AND_CLOSE):
         """Set default action for kra file"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_KRA, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_KRA, value)
 
     def commandSettingsFileDefaultActionOther(self, value=BCSettingsValues.FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE):
         """Set default action for kra file"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_DEFAULTACTION_OTHER, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_OTHER, value)
 
     def commandSettingsFileNewFileNameKra(self, value=None):
         """Set default file name applied when a Krita file is opened as a new document"""
@@ -1723,7 +1746,7 @@ class BCUIController(QObject):
         if value.lower().strip() == '<none>':
             value = "<None>"
 
-        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_NEWFILENAME_KRA, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_NEWFILENAME_KRA, value)
 
     def commandSettingsFileNewFileNameOther(self, value=None):
         """Set default file name applied when a non Krita file is opened as a new document"""
@@ -1735,36 +1758,36 @@ class BCUIController(QObject):
         if value.lower().strip() == '<none>':
             value = "<None>"
 
-        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_NEWFILENAME_OTHER, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_NEWFILENAME_OTHER, value)
 
     def commandSettingsFileUnit(self, value=BCSettingsValues.FILE_UNIT_KIB):
         """Set used file unit"""
         setBytesSizeToStrUnit(value)
-        self.__settings.setOption(BCSettingsKey.CONFIG_FILE_UNIT, getBytesSizeToStrUnit())
+        self.__settings.setOption(BCSettingsKey.CONFIG_GLB_FILE_UNIT, getBytesSizeToStrUnit())
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].updateFileSizeUnit()
 
     def commandSettingsHomeDirMode(self, value=BCSettingsValues.HOME_DIR_SYS):
         """Set mode for home directory"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_HOME_DIR_MODE, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_HOME_DIR_MODE, value)
 
     def commandSettingsHomeDirUserDefined(self, value=''):
         """Set user defined directory for home"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_HOME_DIR_UD, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_HOME_DIR_UD, value)
 
     def commandSettingsSysTrayMode(self, value=BCSysTray.SYSTRAY_MODE_WHENACTIVE):
         """Set mode for systray notifier"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_SYSTRAY_MODE, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE, value)
         self.__systray.setVisibleMode(value)
 
     def commandSettingsOpenAtStartup(self, value=False):
         """Set option to start BC at Krita's startup"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_OPEN_ATSTARTUP, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP, value)
 
     def commandSettingsOpenOverrideKrita(self, value=False):
         """Set option to override krita's open command"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_OPEN_OVERRIDEKRITA, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA, value)
         self.__overrideOpenKrita()
 
     def commandSettingsSaveSessionOnExit(self, saveSession=None):
@@ -1789,17 +1812,18 @@ class BCUIController(QObject):
         self.commandViewShowHiddenFiles(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_HIDDEN.id()))
 
         for panelId in self.__window.panels:
-            self.commandViewThumbnail(panelId, self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_THUMBNAIL.id()))
+            self.commandViewThumbnail(panelId, self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_THUMBNAIL.id()))
 
-            self.commandPanelFilesTabLayout(panelId, self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_LAYOUT.id()))
+            self.commandPanelFilesTabLayout(panelId, self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_LAYOUT.id()))
             self.commandPanelFilesTabActive(panelId, BCMainViewTabFilesTabs.INFORMATIONS)
             self.commandPanelFilesTabPosition(panelId, [BCMainViewTabFilesTabs.INFORMATIONS, BCMainViewTabFilesTabs.DIRECTORIES_TREE])
 
             self.commandPanelTabActive(panelId, BCMainViewTabTabs.FILES)
-            self.commandPanelTabPosition(panelId, [BCMainViewTabTabs.FILES, BCMainViewTabTabs.DOCUMENTS])
+            self.commandPanelTabPosition(panelId, [BCMainViewTabTabs.FILES, BCMainViewTabTabs.DOCUMENTS, BCMainViewTabTabs.CLIPBOARD])
 
             self.commandPanelFilesTabNfoActive(panelId, BCMainViewTabFilesNfoTabs.GENERIC)
 
+            self.commandPanelFilesTabSplitterClipboardPosition(panelId)
             self.commandPanelFilesTabSplitterFilesPosition(panelId)
             self.commandPanelFilesTabSplitterPreviewPosition(panelId)
 
@@ -1808,53 +1832,57 @@ class BCUIController(QObject):
             self.__window.panels[panelId].setFilesColumnSort([1, True])
             self.__window.panels[panelId].setFilesColumnOrder([0,1,2,3,4,5,6,7,8])
             self.__window.panels[panelId].setFilesColumnSize([0,0,0,0,0,0,0,0,0])
-            self.__window.panels[panelId].setFilesIconSize(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_ICONSIZE.id()))
+            self.__window.panels[panelId].setFilesIconSize(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE.id()))
+
+            self.__window.panels[panelId].setClipboardColumnSort([3, False])
+            self.__window.panels[panelId].setClipboardColumnOrder([0,1,2,3,4,5,6])
+            self.__window.panels[panelId].setClipboardIconSize(self.__settings.option(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_CLIPBOARD_ICONSIZE.id()))
 
     def commandSettingsNavBarBtnHome(self, visible=True):
         """Set button home visible/hidden"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HOME, visible)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_HOME, visible)
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesShowHome(visible)
 
     def commandSettingsNavBarBtnViews(self, visible=True):
         """Set button views visible/hidden"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_VIEWS, visible)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_VIEWS, visible)
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesShowSavedView(visible)
 
     def commandSettingsNavBarBtnBookmarks(self, visible=True):
         """Set button bookmarks visible/hidden"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BOOKMARKS, visible)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_BOOKMARKS, visible)
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesShowBookmark(visible)
 
     def commandSettingsNavBarBtnHistory(self, visible=True):
         """Set button history visible/hidden"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_HISTORY, visible)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_HISTORY, visible)
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesShowHistory(visible)
 
     def commandSettingsNavBarBtnLastDocuments(self, visible=True):
         """Set button history visible/hidden"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_LASTDOCUMENTS, visible)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_LASTDOCUMENTS, visible)
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesShowLastDocuments(visible)
 
     def commandSettingsNavBarBtnGoBack(self, visible=True):
         """Set button go back visible/hidden"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_BACK, visible)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_BACK, visible)
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesShowGoBack(visible)
 
     def commandSettingsNavBarBtnGoUp(self, visible=True):
         """Set button go up visible/hidden"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_UP, visible)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_UP, visible)
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesShowGoUp(visible)
 
     def commandSettingsNavBarBtnQuickFilter(self, visible=True):
         """Set button quick filter visible/hidden"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_NAVBAR_BUTTONS_QUICKFILTER, visible)
+        self.__settings.setOption(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_QUICKFILTER, visible)
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesShowQuickFilter(visible)
 
@@ -1898,39 +1926,39 @@ class BCUIController(QObject):
     def commandSettingsClipboardCacheMode(self, value=None):
         """Define default mode for clipboard"""
         if not value is None:
-            self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_GENERAL, value)
+            self.__settings.setOption(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_GENERAL, value)
             self.__clipboardActive()
-        return self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_GENERAL.id())
+        return self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_GENERAL.id())
 
     def commandSettingsClipboardCacheSystrayMode(self, value=None):
         """Define default mode for clipboard"""
         if not value is None:
-            self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_SYSTRAY, value)
+            self.__settings.setOption(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_SYSTRAY, value)
             self.__clipboardActive()
-        return self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MODE_SYSTRAY.id())
+        return self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_SYSTRAY.id())
 
     def commandSettingsClipboardCacheMaxSize(self, value=None):
         """Define default mode for clipboard"""
         if not value is None:
-            self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MAXISZE, value)
+            self.__settings.setOption(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MAXISZE, value)
             BCClipboard.setOptionCacheMaxSize(value)
-        return self.__settings.option(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_MAXISZE.id())
+        return self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MAXISZE.id())
 
     def commandSettingsClipboardCachePersistent(self, value=False):
         """Define default cache used clipboard items"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_CACHE_PERSISTENT, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_PERSISTENT, value)
         BCClipboard.setOptionCacheDefaultPersistent(value)
 
     def commandSettingsClipboardUrlAutomaticDownload(self, value=True):
         """Define default action on clipboard url"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_AUTOLOAD, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_CLIPBOARD_URL_AUTOLOAD, value)
         BCClipboard.setOptionUrlAutoload(value)
         if value:
             self.__clipboard.startDownload()
 
     def commandSettingsClipboardUrlParseTextHtml(self, value=True):
         """Define default action on clipboard url"""
-        self.__settings.setOption(BCSettingsKey.CONFIG_DSESSION_CLIPBOARD_URL_PARSE_TEXTHTML, value)
+        self.__settings.setOption(BCSettingsKey.CONFIG_CLIPBOARD_URL_PARSE_TEXTHTML, value)
         BCClipboard.setOptionUrlParseTextHtml(value)
 
     def commandAboutBc(self):
