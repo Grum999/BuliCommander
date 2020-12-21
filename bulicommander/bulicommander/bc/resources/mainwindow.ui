@@ -1190,7 +1190,7 @@
      <normaloff>:/images/clipboard</normaloff>:/images/clipboard</iconset>
    </property>
    <property name="text">
-    <string>Paste as new layer</string>
+    <string>Paste as new &amp;layer</string>
    </property>
    <property name="toolTip">
     <string>Paste image into a new layer</string>
@@ -1208,7 +1208,7 @@
      <normaloff>:/images/clipboard_new</normaloff>:/images/clipboard_new</iconset>
    </property>
    <property name="text">
-    <string>Paste as new document</string>
+    <string>Past&amp;e as new document</string>
    </property>
    <property name="iconText">
     <string>Paste image into a new document</string>
@@ -1223,10 +1223,12 @@
   <action name="actionClipboardOpen">
    <property name="icon">
     <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/folder_open</normaloff>:/images/folder_open</iconset>
+     <normaloff>:/images/folder_open</normaloff>
+     <disabledoff>:/images_d/folder_open</disabledoff>
+     <disabledon>:/images_d/folder_open</disabledon>:/images/folder_open</iconset>
    </property>
    <property name="text">
-    <string>Open</string>
+    <string>&amp;Open</string>
    </property>
    <property name="toolTip">
     <string>Open image stored in cache </string>
@@ -1240,7 +1242,8 @@
   </action>
   <action name="actionClipboardSaveAs">
    <property name="icon">
-    <iconset theme="document-save-as"/>
+    <iconset theme="document-save-as">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Copy to other panel</string>
@@ -1248,10 +1251,11 @@
   </action>
   <action name="actionClipboardSetPersistent">
    <property name="icon">
-    <iconset theme="lock"/>
+    <iconset theme="lock">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Set persistent</string>
+    <string>&amp;Set persistent</string>
    </property>
    <property name="toolTip">
     <string>Set clipboard content as persistent</string>
@@ -1259,19 +1263,26 @@
    <property name="statusTip">
     <string>Set clipboard content to be available on next Krita session</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
   </action>
   <action name="actionClipboardSetNotPersistent">
    <property name="icon">
-    <iconset theme="unlock"/>
+    <iconset theme="unlock">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Set not persistent</string>
+    <string>Set &amp;not persistent</string>
    </property>
    <property name="toolTip">
     <string>Set clipboard content as not persistent</string>
    </property>
    <property name="statusTip">
     <string>Set clipboard content to be available only for current Krita session</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+P</string>
    </property>
   </action>
   <action name="actionClipboardQuit">
@@ -1280,7 +1291,7 @@
      <normaloff>:/images/exit</normaloff>:/images/exit</iconset>
    </property>
    <property name="text">
-    <string>Quit</string>
+    <string>&amp;Quit</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
@@ -1288,7 +1299,7 @@
   </action>
   <action name="actionClipboardPushBack">
    <property name="text">
-    <string>Push back to clipboard</string>
+    <string>&amp;Push back to clipboard</string>
    </property>
    <property name="toolTip">
     <string>Copy current item to clipboard</string>
@@ -1296,10 +1307,13 @@
    <property name="statusTip">
     <string>Original data content is pushed back to clipboard</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
   </action>
   <action name="actionClipboardStopDownload">
    <property name="text">
-    <string>Stop download</string>
+    <string>Stop &amp;download</string>
    </property>
    <property name="toolTip">
     <string>Stop download on selected URLs</string>
@@ -1310,7 +1324,7 @@
   </action>
   <action name="actionClipboardStartDownload">
    <property name="text">
-    <string>Start download</string>
+    <string>Sta&amp;rt download</string>
    </property>
    <property name="toolTip">
     <string>Start download on selected URLs</string>

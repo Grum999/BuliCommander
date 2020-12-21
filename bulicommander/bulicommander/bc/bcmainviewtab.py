@@ -81,6 +81,7 @@ from .bcclipboard import (
         BCClipboard,
         BCClipboardModel,
         BCClipboardDelegate,
+        BCClipboardItem,
         BCClipboardItemUrl
     )
 from .bcfile import (
@@ -732,7 +733,7 @@ class BCMainViewClipboard(QTreeView):
         self.resizeColumnToContents(BCClipboardModel.COLNUM_TYPE)
         self.resizeColumnToContents(BCClipboardModel.COLNUM_DATE)
         self.resizeColumnToContents(BCClipboardModel.COLNUM_SIZE)
-        self.resizeColumnToContents(BCClipboardModel.COLNUM_URL)
+        self.resizeColumnToContents(BCClipboardModel.COLNUM_SRC)
         self.resizeColumnToContents(BCClipboardModel.COLNUM_FULLNFO)
 
     def setClipboard(self, clipboard):
@@ -755,7 +756,7 @@ class BCMainViewClipboard(QTreeView):
         header.setSectionHidden(BCClipboardModel.COLNUM_FULLNFO, True)
 
         delegate=BCClipboardDelegate(self)
-        self.setItemDelegateForColumn(BCClipboardModel.COLNUM_URL, delegate)
+        self.setItemDelegateForColumn(BCClipboardModel.COLNUM_SRC, delegate)
         self.setItemDelegateForColumn(BCClipboardModel.COLNUM_PERSISTENT, delegate)
 
         self.__model.updateWidth.connect(self.__resizeColumns)
@@ -925,7 +926,10 @@ class BCMainViewTab(QFrame):
         self.__actionFilesApplyIconSize.slider().setPageStep(1)
         self.__actionFilesApplyIconSize.slider().setSingleStep(1)
 
-        # -- files tab variables --
+        # -- clipboard tab variables --
+        self.__clipboardAllowRefresh = False
+        self.__clipboardBlockedRefresh = 0
+
         self.__clipboardTabLayout = BCMainViewTabClipboardLayout.TOP
 
         self.__clipboardSelected = []
@@ -1022,7 +1026,7 @@ class BCMainViewTab(QFrame):
                 self.__filesFsWatcher.removePaths(self.__filesFsWatcherTmpList)
             expand(self.__filesDirTreeModel.index(self.filesPath()))
 
-            self.refresh()
+            self.filesRefresh()
             self.__filesFsWatcher.addPath(self.filesPath())
             self.__filesFsWatcherTmpList=self.__filesFsWatcher.directories()
             self.filesPathChanged.emit(value)
@@ -1034,7 +1038,7 @@ class BCMainViewTab(QFrame):
                 self.__filesFsWatcher.removePaths(self.__filesFsWatcherTmpList)
                 self.__filesFsWatcherTmpList=self.__filesFsWatcher.directories()
 
-            self.refresh()
+            self.filesRefresh()
             self.filesPathChanged.emit(value)
 
         @pyqtSlot('QString')
@@ -1047,7 +1051,7 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot('QString')
         def filesFilter_Changed(value):
-            self.refreshFilter(value)
+            self.filesRefreshFilter(value)
             self.filesFilterChanged.emit(value)
 
         @pyqtSlot('QString')
@@ -1067,7 +1071,7 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot('QString')
         def filesDirectory_changed(value):
-            self.refresh()
+            self.filesRefresh()
 
         @pyqtSlot('QString')
         def filesIconSize_changed(value):
@@ -2630,6 +2634,19 @@ class BCMainViewTab(QFrame):
 
     # -- PRIVATE CLIPBOARD -----------------------------------------------------
 
+    def __clipboardRefresh(self):
+        """update clipboard list"""
+        if not self.isVisible():
+            # if panel is not visible, do not update file list
+            self.__clipboardAllowRefresh = False
+            self.__clipboardBlockedRefresh+=1
+            return
+
+        # sort files according to columns + add to treeview
+        self.__clipboardSelectionChanged()
+        self.__filesBlockedRefresh=0
+
+
     def __clipboardHidePreview(self, msg=None):
         """Hide preview and display message"""
         if msg is None:
@@ -2651,6 +2668,10 @@ class BCMainViewTab(QFrame):
 
     def __clipboardSelectionChanged(self, selection=None):
         """Made update according to current selection"""
+        if not self.__clipboardAllowRefresh:
+            self.__clipboardBlockedRefresh+=1
+            return
+
         self.__clipboardSelected = self.treeViewClipboard.selectedItems()
         self.__clipboardSelectedNbTotal=len(self.__clipboardSelected)
         self.__clipboardSelectedNbUrl=0
@@ -2782,10 +2803,15 @@ class BCMainViewTab(QFrame):
 
     # -- PUBLIC GLOBAL ---------------------------------------------------------
 
+    def setAllowRefresh(self, value):
+        """Allow refresh for all panels"""
+        self.filesSetAllowRefresh(value)
+        self.clipboardSetAllowRefresh(value)
+
 
     def setVisible(self, value):
         super(BCMainViewTab, self).setVisible(value)
-        self.setAllowRefresh(value)
+        self.filesSetAllowRefresh(value)
 
 
     def close(self):
@@ -2796,54 +2822,6 @@ class BCMainViewTab(QFrame):
         self.treeViewFiles.clear()
         self.treeViewFiles.endUpdate()
         super(BCMainViewTab, self).close()
-
-
-    def refresh(self, resetQuery=True):
-        """Update current file list"""
-        if not self.__filesAllowRefresh:
-            self.__filesBlockedRefresh+=1
-            return
-
-        if resetQuery:
-            self.__filesQuery = None
-
-        self.__filesRefresh(None)
-
-
-    def refreshFilter(self, filter=None):
-        """Refresh current filter"""
-        if filter==None:
-            filter=self.filesFilter()
-        self.__filesApplyFilter(filter)
-
-
-    def allowRefresh(self):
-        """Return current status for refresh, if allowed or not"""
-        return self.__filesAllowRefresh
-
-
-    def setAllowRefresh(self, value):
-        """Define if refreshing is allowed or not
-
-        By default, refresh is allowed
-        But when multiple options are modified (show/hide hidden files, file perimeter, ...) rather
-        than recalculating file content systematically, it's simpler to deactivate refresh, do stuff,
-        and reactivate it.
-
-        When reactivated, a refresh is applied automatically if some have been blocked
-        """
-        if not isinstance(value, bool):
-            raise EInvalidType("Given `value` must be a <bool>")
-
-
-        if self.__filesAllowRefresh == value:
-            # does nothing in is case
-            return
-
-        self.__filesAllowRefresh = value
-
-        if self.__filesAllowRefresh and self.__filesBlockedRefresh > 0:
-            self.refresh()
 
 
     def uiController(self):
@@ -2997,6 +2975,54 @@ class BCMainViewTab(QFrame):
 
 
     # -- PUBLIC FILES ----------------------------------------------------------
+
+    def filesRefresh(self, resetQuery=True):
+        """Update current file list"""
+        if not self.__filesAllowRefresh:
+            self.__filesBlockedRefresh+=1
+            return
+
+        if resetQuery:
+            self.__filesQuery = None
+
+        self.__filesRefresh(None)
+
+
+    def filesRefreshFilter(self, filter=None):
+        """Refresh current filter"""
+        if filter==None:
+            filter=self.filesFilter()
+        self.__filesApplyFilter(filter)
+
+
+    def filesAllowRefresh(self):
+        """Return current status for refresh, if allowed or not"""
+        return self.__filesAllowRefresh
+
+
+    def filesSetAllowRefresh(self, value):
+        """Define if refreshing is allowed or not
+
+        By default, refresh is allowed
+        But when multiple options are modified (show/hide hidden files, file perimeter, ...) rather
+        than recalculating file content systematically, it's simpler to deactivate refresh, do stuff,
+        and reactivate it.
+
+        When reactivated, a refresh is applied automatically if some have been blocked
+        """
+        if not isinstance(value, bool):
+            raise EInvalidType("Given `value` must be a <bool>")
+
+
+        if self.__filesAllowRefresh == value:
+            # does nothing in is case
+            return
+
+        self.__filesAllowRefresh = value
+
+        if self.__filesAllowRefresh and self.__filesBlockedRefresh > 0:
+            self.filesRefresh()
+
 
     def filesCurrentAnimatedFrame(self):
         """Return current animated frame number"""
@@ -3330,7 +3356,7 @@ class BCMainViewTab(QFrame):
             self.__filesDirTreeModel.setFilter(QDir.AllDirs|QDir.Drives|QDir.NoSymLinks|QDir.NoDotAndDotDot)
 
         self.framePathBar.setHiddenPath(value)
-        self.refresh()
+        self.filesRefresh()
 
 
     def filesSelectAll(self):
@@ -3567,6 +3593,44 @@ class BCMainViewTab(QFrame):
         self.framePathBar.menuLastDocumentsShow(menu)
 
     # -- PUBLIC CLIPBOARD ----------------------------------------------------------
+
+    def clipboardRefresh(self):
+        """Update current clipboard list"""
+        if not self.__clipboardAllowRefresh:
+            self.__clipboardBlockedRefresh+=1
+            return
+
+        self.__clipboardRefresh()
+
+
+    def clipboardAllowRefresh(self):
+        """Return current status for refresh, if allowed or not"""
+        return self.__clipboardAllowRefresh
+
+
+    def clipboardSetAllowRefresh(self, value):
+        """Define if refreshing is allowed or not
+
+        By default, refresh is allowed
+        But when multiple options are modified (show/hide hidden files, file perimeter, ...) rather
+        than recalculating file content systematically, it's simpler to deactivate refresh, do stuff,
+        and reactivate it.
+
+        When reactivated, a refresh is applied automatically if some have been blocked
+        """
+        if not isinstance(value, bool):
+            raise EInvalidType("Given `value` must be a <bool>")
+
+
+        if self.__clipboardAllowRefresh == value:
+            # does nothing in is case
+            return
+
+        self.__clipboardAllowRefresh = value
+
+        if self.__clipboardAllowRefresh and self.__clipboardBlockedRefresh > 0:
+            self.clipboardRefresh()
+
 
     def clipboardTabLayout(self):
         """return current layout for clipboard panel"""

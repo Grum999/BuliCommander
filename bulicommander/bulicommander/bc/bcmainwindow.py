@@ -142,12 +142,12 @@ class BCMainWindow(QMainWindow):
         self.actionFileQuit.triggered.connect(self.__uiController.commandQuit)
 
         # Menu CLIPBPOARD
-        self.actionClipboardPushBack.triggered.connect(self.__actionNotYetImplemented)
-        self.actionClipboardPasteAsNewLayer.triggered.connect(self.__actionNotYetImplemented)
-        self.actionClipboardPasteAsNewDocument.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardPushBack.triggered.connect(self.__menuClipboardPushBackClipboard)
+        self.actionClipboardPasteAsNewLayer.triggered.connect(self.__menuClipboardPasteAsNewLayer)
+        self.actionClipboardPasteAsNewDocument.triggered.connect(self.__menuClipboardPasteAsNewDocument)
         self.actionClipboardOpen.triggered.connect(self.__actionNotYetImplemented)
-        self.actionClipboardSetPersistent.triggered.connect(self.__actionNotYetImplemented)
-        self.actionClipboardSetNotPersistent.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardSetPersistent.triggered.connect(self.__menuClipboardSetPersistent)
+        self.actionClipboardSetNotPersistent.triggered.connect(self.__menuClipboardSetNotPersistent)
         self.actionClipboardStartDownload.triggered.connect(self.__actionNotYetImplemented)
         self.actionClipboardStopDownload.triggered.connect(self.__actionNotYetImplemented)
         self.actionClipboardQuit.triggered.connect(self.__uiController.commandQuit)
@@ -277,6 +277,26 @@ class BCMainWindow(QMainWindow):
     def __menuFileRename(self):
         """Rename file(s)"""
         self.__uiController.commandFileRename()
+
+    def __menuClipboardPushBackClipboard(self):
+        """Push back content to clipboard"""
+        self.__uiController.commandClipboardPushBackClipboard()
+
+    def __menuClipboardPasteAsNewLayer(self):
+        """Paste content as new layer"""
+        self.__uiController.commandClipboardPasteAsNewLayer()
+
+    def __menuClipboardPasteAsNewDocument(self):
+        """Paste content as new document"""
+        self.__uiController.commandClipboardPasteAsNewDocument()
+
+    def __menuClipboardSetPersistent(self):
+        """Set clipboard item persistent"""
+        self.__uiController.commandClipboardSetPersistent(None, True)
+
+    def __menuClipboardSetNotPersistent(self):
+        """Set clipboard item not persistent"""
+        self.__uiController.commandClipboardSetPersistent(None, False)
 
     def __menuSelectAll_clicked(self, action):
         """Select all files"""

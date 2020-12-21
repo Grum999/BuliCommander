@@ -39,7 +39,10 @@ from PyQt5.QtWidgets import (
 
 from .bcabout import BCAboutWindow
 from .bcbookmark import BCBookmark
-from .bcclipboard import BCClipboard
+from .bcclipboard import (
+        BCClipboard,
+        BCClipboardItem
+    )
 from .bcfile import (
         BCBaseFile,
         BCDirectory,
@@ -220,7 +223,7 @@ class BCUIController(QObject):
         self.__window.initMainView()
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(False)
+            self.__window.panels[panelId].filesSetAllowRefresh(False)
 
         self.commandSettingsFileDefaultActionKra(self.__settings.option(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_KRA.id()))
         self.commandSettingsFileDefaultActionOther(self.__settings.option(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_OTHER.id()))
@@ -272,6 +275,7 @@ class BCUIController(QObject):
         self.commandSettingsClipboardCachePersistent(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_PERSISTENT.id()))
         self.commandSettingsClipboardUrlAutomaticDownload(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_URL_AUTOLOAD.id()))
         self.commandSettingsClipboardUrlParseTextHtml(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_URL_PARSE_TEXTHTML.id()))
+        self.commandSettingsClipboardPasteAsNewDocument(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC.id()))
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setFilesHistory(self.__history)
@@ -318,7 +322,7 @@ class BCUIController(QObject):
         self.__window.initMenu()
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(True)
+            self.__window.panels[panelId].filesSetAllowRefresh(True)
 
         self.__initialised = True
         self.__bcStarted = True
@@ -797,7 +801,12 @@ class BCUIController(QObject):
             if selectionInfo[1]==1:
                 # nb item selected(1)
                 self.__window.actionClipboardPushBack.setEnabled(True)
-                self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
+
+                if Krita.instance().activeDocument():
+                    self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
+                else:
+                    self.__window.actionClipboardPasteAsNewLayer.setEnabled(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC.id()))
+
                 self.__window.actionClipboardPasteAsNewDocument.setEnabled(True)
                 self.__window.actionClipboardOpen.setEnabled(True)
 
@@ -822,8 +831,13 @@ class BCUIController(QObject):
                     self.__window.actionClipboardStopDownload.setEnabled(False)
             elif selectionInfo[1]>1:
                 # multiple items selected
-                self.__window.actionClipboardPushBack.setEnabled(False)
-                self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
+                self.__window.actionClipboardPushBack.setEnabled(True)
+
+                if Krita.instance().activeDocument():
+                    self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
+                else:
+                    self.__window.actionClipboardPasteAsNewLayer.setEnabled(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC.id()))
+
                 self.__window.actionClipboardPasteAsNewDocument.setEnabled(True)
                 self.__window.actionClipboardOpen.setEnabled(True)
 
@@ -831,7 +845,7 @@ class BCUIController(QObject):
                     # nb item persistent(11)
                     self.__window.actionClipboardSetPersistent.setEnabled(True)
                     self.__window.actionClipboardSetNotPersistent.setEnabled(False)
-                elif selectionInfo[11]==self.__clipboard.length():
+                elif selectionInfo[11]==selectionInfo[1]:
                     self.__window.actionClipboardSetPersistent.setEnabled(False)
                     self.__window.actionClipboardSetNotPersistent.setEnabled(True)
                 else:
@@ -904,10 +918,10 @@ class BCUIController(QObject):
         self.bcWindowClosed.emit()
         self.__clipboardActive()
 
-    def setAllowRefresh(self, allow):
+    def filesSetAllowRefresh(self, allow):
         """change allow refresh for both panels"""
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(allow)
+            self.__window.panels[panelId].filesSetAllowRefresh(allow)
 
     def optionViewDisplaySecondaryPanel(self):
         """Return current option value"""
@@ -990,7 +1004,7 @@ class BCUIController(QObject):
             return True
         return False
 
-    def commandFileOpenAsNew(self, file=None):
+    def commandFileOpenAsNew(self, file=None, newFileNameFromSettings=True):
         """Open file as new document"""
         if file is None:
             selectionInfo = self.panel().filesSelected()
@@ -1016,10 +1030,11 @@ class BCUIController(QObject):
             bcFile = BCFile(file)
 
             newFileName = None
-            if bcFile.format() == BCFileManagedFormat.KRA:
-                newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILES_NEWFILENAME_KRA.id()))
-            else:
-                newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILES_NEWFILENAME_OTHER.id()))
+            if newFileNameFromSettings:
+                if bcFile.format() == BCFileManagedFormat.KRA:
+                    newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILES_NEWFILENAME_KRA.id()))
+                else:
+                    newFileName =BCFileManipulateName.parseFileNameKw(bcFile, self.__settings.option(BCSettingsKey.CONFIG_FILES_NEWFILENAME_OTHER.id()))
 
             if isinstance(newFileName, str):
                 if newFileName != '' and not re.search("\.kra$", newFileName):
@@ -1121,12 +1136,12 @@ class BCUIController(QObject):
                 return
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(False)
+            self.__window.panels[panelId].filesSetAllowRefresh(False)
 
         BCFileOperation.delete(self.__bcName, selectedFiles[5])
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(True)
+            self.__window.panels[panelId].filesSetAllowRefresh(True)
 
     def commandFileCopy(self, confirm=True):
         """Copy file(s)"""
@@ -1139,12 +1154,12 @@ class BCUIController(QObject):
             targetPath = BCFileOperationUi.path()
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(False)
+            self.__window.panels[panelId].filesSetAllowRefresh(False)
 
         BCFileOperation.copy(self.__bcName, selectedFiles[5], targetPath)
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(True)
+            self.__window.panels[panelId].filesSetAllowRefresh(True)
 
     def commandFileMove(self, confirm=True):
         """Move file(s)"""
@@ -1157,12 +1172,12 @@ class BCUIController(QObject):
             targetPath = BCFileOperationUi.path()
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(False)
+            self.__window.panels[panelId].filesSetAllowRefresh(False)
 
         BCFileOperation.move(self.__bcName, selectedFiles[5], targetPath)
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(True)
+            self.__window.panels[panelId].filesSetAllowRefresh(True)
 
     def commandFileRename(self):
         """Rename file(s)"""
@@ -1172,12 +1187,89 @@ class BCUIController(QObject):
             return
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(False)
+            self.__window.panels[panelId].filesSetAllowRefresh(False)
 
         BCFileOperation.rename(self.__bcName, renameAction['files'], renameAction['rule'])
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(True)
+            self.__window.panels[panelId].filesSetAllowRefresh(True)
+
+    def commandClipboardPushBackClipboard(self, items=None):
+        """Push back items to clipboard"""
+        if items is None:
+            selectionInfo = self.panel().clipboardSelected()
+            if selectionInfo[1]>0:
+                self.commandClipboardPushBackClipboard(selectionInfo[0])
+        else:
+            self.__clipboard.pushBackToClipboard(items)
+
+    def commandClipboardPasteAsNewLayer(self, items=None):
+        """Push back items to clipboard and paste them as new layers"""
+        if Krita.instance().activeDocument() is None:
+            if self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC.id()):
+                self.commandClipboardPasteAsNewDocument(items)
+            return
+
+        if items is None:
+            selectionInfo = self.panel().clipboardSelected()
+            if selectionInfo[1]>0:
+                for item in selectionInfo[0]:
+                    self.commandClipboardPasteAsNewLayer(item)
+        elif isinstance(items, BCClipboardItem):
+            if items.type() in ('BCClipboardItemUrl', 'BCClipboardItemFile'):
+                image=QImage(items.fileName())
+                if image:
+                    document=Krita.instance().activeDocument()
+                    activeNode=document.activeNode()
+
+                    if items.type()=='BCClipboardItemUrl':
+                        layerName=items.url().url()
+                    else:
+                        layerName=items.fileName()
+
+                    newLayer=document.createNode(i18n(f'Pasted from {layerName}'), 'paintlayer')
+
+                    EKritaNode.fromQImage(newLayer, image)
+
+                    if activeNode.type()=='grouplayer':
+                        activeNode.addChildNode(newLayer, None)
+                    else:
+                        activeNode.parentNode().addChildNode(newLayer, EKritaNode.above(activeNode))
+            else:
+                self.__clipboard.pushBackToClipboard(items)
+                Krita.instance().action('edit_paste').trigger()
+
+    def commandClipboardPasteAsNewDocument(self, items=None):
+        """Push back items to clipboard and paste them as new document"""
+        if items is None:
+            selectionInfo = self.panel().clipboardSelected()
+            if selectionInfo[1]>0:
+                for item in selectionInfo[0]:
+                    self.commandClipboardPasteAsNewDocument(item)
+        elif isinstance(items, BCClipboardItem):
+            if (items.type()=='BCClipboardItemKra' and items.origin()=='application/x-krita-node') or (items.type() in ('BCClipboardItemUrl', 'BCClipboardItemFile', 'BCClipboardItemImg', 'BCClipboardItemSvg')):
+                self.commandFileOpenAsNew(items.fileName(), False)
+            else:
+                # krita selection...
+                self.__clipboard.pushBackToClipboard(items)
+                Krita.instance().action('paste_new').trigger()
+
+    def commandClipboardSetPersistent(self, item=None, persistent=True):
+        """Set item as persistent/non-persistent"""
+        if not isinstance(persistent, bool):
+            raise EInvalidType("Given `persistent` must be a <bool>")
+
+        if item is None:
+            selectionInfo = self.panel().clipboardSelected()
+            if selectionInfo[1]>0:
+                for panelId in self.__window.panels:
+                    self.__window.panels[panelId].clipboardSetAllowRefresh(False)
+                for item in selectionInfo[0]:
+                    self.commandClipboardSetPersistent(item, persistent)
+                for panelId in self.__window.panels:
+                    self.__window.panels[panelId].clipboardSetAllowRefresh(True)
+        elif isinstance(item, BCClipboardItem):
+            item.setPersistent(persistent)
 
     def commandViewBringToFront(self):
         """Bring main window to front"""
@@ -1355,7 +1447,7 @@ class BCUIController(QObject):
             self.__window.actionViewShowImageFileOnly.setChecked(value)
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].refresh()
+            self.__window.panels[panelId].filesRefresh()
 
         self.updateMenuForPanel()
 
@@ -1376,7 +1468,7 @@ class BCUIController(QObject):
             self.__window.actionViewShowBackupFiles.setChecked(value)
 
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].refresh()
+            self.__window.panels[panelId].filesRefresh()
 
         return value
 
@@ -1702,7 +1794,7 @@ class BCUIController(QObject):
         """Clear saved views content"""
         cleared, name = self.__savedView.uiClearContent(name)
         if cleared:
-            self.panel().refresh(False)
+            self.panel().filesRefresh(False)
 
     def commandGoSavedViewAppend(self, name, files):
         """append files to saved view"""
@@ -1716,7 +1808,7 @@ class BCUIController(QObject):
         """remove files from saved view"""
         removed, name = self.__savedView.uiRemoveContent(name, files)
         if removed:
-            self.panel().refresh(False)
+            self.panel().filesRefresh(False)
         return removed
 
     def commandGoSavedViewCreate(self, name, files):
@@ -1903,7 +1995,7 @@ class BCUIController(QObject):
     def commandSettingsResetSessionToDefault(self):
         """Reset session configuration to default"""
         for panelId in self.__window.panels:
-            self.__window.panels[panelId].setAllowRefresh(False)
+            self.__window.panels[panelId].filesSetAllowRefresh(False)
 
         self.commandViewDisplaySecondaryPanel(True)
         self.commandViewHighlightPanel(0)
@@ -1928,7 +2020,7 @@ class BCUIController(QObject):
             self.commandPanelFilesTabSplitterFilesPosition(panelId)
             self.commandPanelFilesTabSplitterPreviewPosition(panelId)
 
-            self.__window.panels[panelId].setAllowRefresh(True)
+            self.__window.panels[panelId].filesSetAllowRefresh(True)
 
             self.__window.panels[panelId].setFilesColumnSort([1, True])
             self.__window.panels[panelId].setFilesColumnOrder([0,1,2,3,4,5,6,7,8])
@@ -2061,6 +2153,10 @@ class BCUIController(QObject):
         """Define default action on clipboard url"""
         self.__settings.setOption(BCSettingsKey.CONFIG_CLIPBOARD_URL_PARSE_TEXTHTML, value)
         BCClipboard.setOptionUrlParseTextHtml(value)
+
+    def commandSettingsClipboardPasteAsNewDocument(self, value=False):
+        """Replace default action <paste as new layer> by <paste as new document> when there no active document"""
+        self.__settings.setOption(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC, value)
 
     def commandAboutBc(self):
         """Display 'About Buli Commander' dialog box"""

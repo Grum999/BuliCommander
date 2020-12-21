@@ -143,7 +143,7 @@ class BCSettingsKey(Enum):
     CONFIG_CLIPBOARD_CACHE_PERSISTENT =                      'config.clipboard.cache.persistent'
     CONFIG_CLIPBOARD_URL_AUTOLOAD =                          'config.clipboard.url.autoLoad'
     CONFIG_CLIPBOARD_URL_PARSE_TEXTHTML =                    'config.clipboard.url.parseTextHtml'
-
+    CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC =                   'config.clipboard.paste.mode.asNewDocument'
 
     CONFIG_EXPORTFILESLIST_GLB_SAVED =                       'config.export.filesList.global.saved'
     CONFIG_EXPORTFILESLIST_GLB_PROPERTIES =                  'config.export.filesList.global.properties'
@@ -710,6 +710,7 @@ class BCSettings(object):
             BCSettingsKey.CONFIG_CLIPBOARD_CACHE_PERSISTENT.id():               (False,                    BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_CLIPBOARD_URL_AUTOLOAD.id():                   (True,                     BCSettingsFmt(bool)),
             BCSettingsKey.CONFIG_CLIPBOARD_URL_PARSE_TEXTHTML.id():             (True,                     BCSettingsFmt(bool)),
+            BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC.id():            (False,                     BCSettingsFmt(bool)),
 
             BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER.id():                 (3,                        BCSettingsFmt(int, [0,1,2,3])),
             BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER.id():                 (True,                     BCSettingsFmt(bool)),
@@ -1116,6 +1117,7 @@ class BCSettingsDialogBox(QDialog):
         elif value == BCSettingsValues.CLIPBOARD_MODE_MANUAL:
             self.rbCCModeManual.setChecked(True)
 
+        self.cbCCAsNewDocument.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC.id()))
         self.cbCCParseTextHtml.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_CLIPBOARD_URL_PARSE_TEXTHTML.id()))
         self.cbCCAutomaticUrlDownload.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_CLIPBOARD_URL_AUTOLOAD.id()))
         self.cbCCUsePersistent.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_PERSISTENT.id()))
@@ -1197,6 +1199,7 @@ class BCSettingsDialogBox(QDialog):
         else:
             self.__uiController.commandSettingsClipboardCacheMode(BCSettingsValues.CLIPBOARD_MODE_MANUAL)
 
+        self.__uiController.commandSettingsClipboardPasteAsNewDocument(self.cbCCAsNewDocument.isChecked())
         self.__uiController.commandSettingsClipboardCachePersistent(self.cbCCUsePersistent.isChecked())
         self.__uiController.commandSettingsClipboardUrlAutomaticDownload(self.cbCCAutomaticUrlDownload.isChecked())
         self.__uiController.commandSettingsClipboardUrlParseTextHtml(self.cbCCParseTextHtml.isChecked())

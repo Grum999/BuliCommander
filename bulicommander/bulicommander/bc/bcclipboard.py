@@ -232,6 +232,14 @@ class BCClipboardItem(QObject):
         else:
             return f'{self.hash()}.png'
 
+    def contentBackToClipboard(self):
+        """return content to push back into clipboard
+
+        returned content is a list of tuple (data, mime-type)
+        """
+        return None
+
+
 class BCClipboardItemUrl(BCClipboardItem):
     """An url stored in clipboard"""
     downloadFinished = Signal(QObject)
@@ -426,6 +434,18 @@ class BCClipboardItemUrl(BCClipboardItem):
         """Set expected download file size"""
         self.__downloadSize=value
 
+    def contentBackToClipboard(self):
+        """Push item back into clipboard"""
+        returned=[(self.url(), 'text/uri-list'), (self.url().url(), 'text/plain')]
+
+        with open(self.fileName(), 'rb') as fHandle:
+            data=fHandle.read()
+
+        if data:
+            returned.append((data, QMimeDatabase().mimeTypeForFile(self.fileName()).name()))
+
+        return returned
+
 
 class BCClipboardItemFile(BCClipboardItem):
     """A file name stored in clipboard"""
@@ -509,6 +529,16 @@ class BCClipboardItemFile(BCClipboardItem):
         else:
             # file doesn't exist...
             return None
+
+    def contentBackToClipboard(self):
+        """Push item back into clipboard"""
+        returned=[(QUrl(f'file://{self.fileName()}'), 'text/uri-list'), (self.fileName(), 'text/plain')]
+        data=None
+        with open(self.fileName(), 'rb') as fHandle:
+            data=fHandle.read()
+
+        if data:
+            returned.append((data, QMimeDatabase().mimeTypeForFile(self.fileName()).name()))
 
 
 class BCClipboardItemImg(BCClipboardItem):
@@ -606,6 +636,21 @@ class BCClipboardItemImg(BCClipboardItem):
         if os.path.exists(imgCacheFileName):
             self.setFile(imgCacheFileName)
 
+    def contentBackToClipboard(self):
+        """Push item back into clipboard"""
+        returned=[]
+        data=None
+        with open(self.fileName(), 'rb') as fHandle:
+            data=fHandle.read()
+
+        if data:
+            returned.append((data, 'image/png'))
+
+        if self.urlOrigin():
+            returned.append((self.urlOrigin(), 'text/uri-list'))
+
+        return returned
+
 
 class BCClipboardItemSvg(BCClipboardItem):
     """A SVG image stored in clipboard"""
@@ -671,6 +716,18 @@ class BCClipboardItemSvg(BCClipboardItem):
             return os.path.join(self.cachePath(), f'{self.hash()}.svg')
         else:
             return f'{self.hash()}.svg'
+
+    def contentBackToClipboard(self):
+        """Push item back into clipboard"""
+        returned=[]
+        data=None
+        with open(self.fileName(), 'rb') as fHandle:
+            data=fHandle.read()
+
+        if data:
+            returned.append((data, 'image/svg'))
+
+        return returned
 
 
 class BCClipboardItemKra(BCClipboardItem):
@@ -757,6 +814,26 @@ class BCClipboardItemKra(BCClipboardItem):
             return os.path.join(self.cachePath(), f'{self.hash()}.kra')
         else:
             return f'{self.hash()}.kra'
+
+    def contentBackToClipboard(self):
+        """Push item back into clipboard"""
+        returned=[]
+        data=None
+        with open(self.fileName(), 'rb') as fHandle:
+            data=fHandle.read()
+
+        if data:
+            returned.append((data, self.origin()))
+
+        fileName = os.path.join(self.cachePath(), f'{self.hash()}.png')
+        if os.path.exists(fileName):
+            with open(fileName, 'rb') as fHandle:
+                data=fHandle.read()
+            if data:
+                returned.append((data, 'image/png'))
+
+        return returned
+
 
 class BCClipboard(QObject):
     """Manage clipboard content"""
@@ -936,6 +1013,7 @@ class BCClipboard(QObject):
         self.__totalCacheItemS=0
 
         self.__enabled=False
+        self.__temporaryDisabled=False
 
         # list of added hash
         self.__updateAdd=[]
@@ -1189,13 +1267,16 @@ class BCClipboard(QObject):
 
     def __clipboardMimeContentChanged(self):
         """Clipboard content has been changed"""
-        #print('------------------------ Clipboard content changed ------------------------')
+        print('------------------------ Clipboard content changed ------------------------')
         clipboardMimeContent = self.__clipboard.mimeData(QClipboard.Clipboard)
 
         if clipboardMimeContent is None:
             return
 
-        #print(clipboardMimeContent.formats())
+        print(self.__temporaryDisabled, clipboardMimeContent.formats())
+
+        if self.__temporaryDisabled:
+            return
 
         if clipboardMimeContent.hasUrls():
             if self.__addPoolUrls(clipboardMimeContent.urls(), 'URI list'):
@@ -1366,6 +1447,52 @@ class BCClipboard(QObject):
             self.__recalculateCacheSize()
         return (self.__totalCacheItemS, self.__totalCacheSizeS)
 
+    def pushBackToClipboard(self, data):
+        """Push back data to clipboard
+
+        Given `data` can be:
+        - BCClipboardItemUrl or list of BCClipboardItemUrl
+        - BCClipboardItemFile or list of BCClipboardItemFile
+        - BCClipboardItemImg
+        - BCClipboardItemSvg
+        - BCClipboardItemKra
+        """
+        def processItem(item):
+            contentList=item.contentBackToClipboard()
+            for content in contentList:
+                if content[1]=='text/uri-list':
+                    qurlList.append(content[0])
+                elif content[1]=='text/plain':
+                    textList.append(content[0])
+                else:
+                    mimeContent.setData(content[1], content[0])
+
+        print('pushBackToClipboard', data)
+        mimeContent=QMimeData()
+        qurlList=[]
+        textList=[]
+        if isinstance(data, list):
+            if len(data)==1:
+                processItem(data[0])
+            else:
+                for item in data:
+                    processItem(item)
+        else:
+            processItem(data)
+
+        if len(qurlList)>0:
+            print('qurlList', qurlList)
+            mimeContent.setUrls(qurlList)
+
+        if len(textList)>0:
+            print('textList', textList)
+            mimeContent.setText(os.linesep.join(textList))
+
+        if len(mimeContent.formats())>0:
+            self.__temporaryDisabled=True
+            self.__clipboard.setMimeData(mimeContent)
+            self.__temporaryDisabled=False
+
 
 class BCClipboardModel(QAbstractTableModel):
     """A model provided by clipboard"""
@@ -1376,7 +1503,7 @@ class BCClipboardModel(QAbstractTableModel):
     COLNUM_TYPE = 2
     COLNUM_DATE = 3
     COLNUM_SIZE = 4
-    COLNUM_URL = 5
+    COLNUM_SRC = 5
     COLNUM_FULLNFO = 6
     COLNUM_LAST = 6
 
@@ -1387,7 +1514,7 @@ class BCClipboardModel(QAbstractTableModel):
     __PIN_ICON_WIDTH = 30
     PIN_ICON_SIZE = QSize(22, 22)
 
-    HEADERS = ['', '', i18n("Type"), i18n("Date"), i18n("Size"), i18n("Url"), i18n("Nfo")]
+    HEADERS = ['', '', i18n("Type"), i18n("Date"), i18n("Size"), i18n("Source"), i18n("Nfo")]
 
     def __init__(self, clipboard, parent=None):
         """Initialise list"""
@@ -1439,7 +1566,7 @@ class BCClipboardModel(QAbstractTableModel):
             indexE=self.createIndex(row, BCClipboardModel.COLNUM_LAST)
             self.dataChanged.emit(indexS, indexE, [Qt.DecorationRole])
         else:
-            index=self.createIndex(row, BCClipboardModel.COLNUM_URL)
+            index=self.createIndex(row, BCClipboardModel.COLNUM_SRC)
             self.dataChanged.emit(index, index, [Qt.DisplayRole])
 
     def columnCount(self, parent=QModelIndex()):
@@ -1499,7 +1626,7 @@ class BCClipboardModel(QAbstractTableModel):
 
                     # no size? not downloaded/not in cache?
                     return ''
-                elif column==BCClipboardModel.COLNUM_URL:
+                elif column==BCClipboardModel.COLNUM_SRC:
                     if item.type() == 'BCClipboardItemFile':
                         return item.fileName()
                     if item.type() == 'BCClipboardItemUrl':
@@ -1558,7 +1685,7 @@ class BCClipboardDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         """Paint list item"""
-        if index.column()==BCClipboardModel.COLNUM_URL:
+        if index.column()==BCClipboardModel.COLNUM_SRC:
             pct=index.data(BCClipboardModel.ROLE_PCT)
             if pct == -1:
                 # not progress bar to display
