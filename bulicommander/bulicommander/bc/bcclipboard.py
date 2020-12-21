@@ -52,7 +52,7 @@ class BCClipboardItem(QObject):
     """An item stored in clipboard"""
     persistentChanged = Signal(QObject)
 
-    def __init__(self, hashValue, origin=None, timestamp=None):
+    def __init__(self, hashValue, origin=None, timestamp=None, persistent=None):
         super(BCClipboardItem, self).__init__(None)
         # item uid
         self.__hashValue = hashValue
@@ -64,7 +64,10 @@ class BCClipboardItem(QObject):
         # origin of data
         self.__origin = ''
         # define if data are persistent or not
-        self.__persistent = BCClipboard.optionCacheDefaultPersistent()
+        if isinstance(persistent, bool):
+            self.__persistent=persistent
+        else:
+            self.__persistent = BCClipboard.optionCacheDefaultPersistent()
         # image size
         self.__imageSize=QSize()
         # size in cache
@@ -248,14 +251,17 @@ class BCClipboardItemUrl(BCClipboardItem):
         url=None
         origin=None
         timestamp=None
+        persistent=True
         if isinstance(options.get('url.url', None), str):
             url=QUrl(options['url.url'])
         if isinstance(options.get('origin', None), str):
             origin=options['origin']
         if isinstance(options.get('timestamp', None), float):
             timestamp=options['timestamp']
+        if isinstance(options.get('persistent', None), bool):
+            persistent=options['persistent']
 
-        returned=BCClipboardItemUrl(hash, url, origin, timestamp, False)
+        returned=BCClipboardItemUrl(hash, url, origin, timestamp, False, persistent)
 
         if isinstance(options.get('imageSize.height', None), int) and isinstance(options.get('imageSize.width', None), int):
             returned.setImageSize(QSize(options['imageSize.width'], options['imageSize.height']))
@@ -263,16 +269,10 @@ class BCClipboardItemUrl(BCClipboardItem):
         if isinstance(options.get('url.downloadSize', None), int):
             returned.setDownloadSize(options['url.downloadSize'])
 
-        if isinstance(options.get('persistent', None), bool):
-            returned.setPersistent(options['persistent'])
-        else:
-            # consider the new() static method is used to load from json dict
-            returned.setPersistent(True)
-
         return returned
 
-    def __init__(self, hashValue, url, origin=None, timestamp=None, saveInCache=True):
-        super(BCClipboardItemUrl, self).__init__(hashValue, origin, timestamp)
+    def __init__(self, hashValue, url, origin=None, timestamp=None, saveInCache=True, persistent=None):
+        super(BCClipboardItemUrl, self).__init__(hashValue, origin, timestamp, persistent)
 
         if not isinstance(url, QUrl):
             raise EInvalidType('Given `url` must be a QUrl')
@@ -435,31 +435,28 @@ class BCClipboardItemFile(BCClipboardItem):
         fileName=None
         origin=None
         timestamp=None
+        persistent=True
         if isinstance(options.get('fileName', None), str):
             fileName=options['fileName']
         if isinstance(options.get('origin', None), str):
             origin=options['origin']
         if isinstance(options.get('timestamp', None), float):
             timestamp=options['timestamp']
+        if isinstance(options.get('persistent', None), bool):
+            persistent=options['persistent']
 
-        returned=BCClipboardItemFile(hash, fileName, origin, timestamp, False)
+        returned=BCClipboardItemFile(hash, fileName, origin, timestamp, False, persistent)
 
         if isinstance(options.get('imageSize.height', None), int) and isinstance(options.get('imageSize.width', None), int):
             returned.setImageSize(QSize(options['imageSize.width'], options['imageSize.height']))
-
-        if isinstance(options.get('persistent', None), bool):
-            returned.setPersistent(options['persistent'])
-        else:
-            # consider the new() static method is used to load from json dict
-            returned.setPersistent(True)
 
         if not returned.fileExists():
             return None
 
         return returned
 
-    def __init__(self, hashValue, fileName, origin=None, timestamp=None, saveInCache=True):
-        super(BCClipboardItemFile, self).__init__(hashValue, origin, timestamp)
+    def __init__(self, hashValue, fileName, origin=None, timestamp=None, saveInCache=True, persistent=None):
+        super(BCClipboardItemFile, self).__init__(hashValue, origin, timestamp, persistent)
 
         self.__fileName=fileName
 
@@ -518,23 +515,20 @@ class BCClipboardItemImg(BCClipboardItem):
         urlOrigin=None
         origin=None
         timestamp=None
+        persistent=True
         if isinstance(options.get('urlOrigin', None), str) and options['urlOrigin']!='':
             urlOrigin=QUrl(options['urlOrigin'])
         if isinstance(options.get('origin', None), str):
             origin=options['origin']
         if isinstance(options.get('timestamp', None), float):
             timestamp=options['timestamp']
+        if isinstance(options.get('persistent', None), bool):
+            persistent=options['persistent']
 
-        returned=BCClipboardItemImg(hash, None, urlOrigin, origin, timestamp, False)
+        returned=BCClipboardItemImg(hash, None, urlOrigin, origin, timestamp, False, persistent)
 
         if isinstance(options.get('imageSize.height', None), int) and isinstance(options['imageSize.width'], int):
             returned.setImageSize(QSize(options['imageSize.width'], options['imageSize.height']))
-
-        if isinstance(options.get('persistent', None), bool):
-            returned.setPersistent(options['persistent'])
-        else:
-            # consider the new() static method is used to load from json dict
-            returned.setPersistent(True)
 
         imgCacheFileName = os.path.join(returned.cachePath(), f'{hash}.png')
         if not os.path.exists(imgCacheFileName):
@@ -543,8 +537,8 @@ class BCClipboardItemImg(BCClipboardItem):
 
         return returned
 
-    def __init__(self, hashValue, image, urlOrigin=None, origin=None, timestamp=None, saveInCache=True):
-        super(BCClipboardItemImg, self).__init__(hashValue, origin, timestamp)
+    def __init__(self, hashValue, image, urlOrigin=None, origin=None, timestamp=None, saveInCache=True, persistent=None):
+        super(BCClipboardItemImg, self).__init__(hashValue, origin, timestamp, persistent)
 
         self.__urlOrigin = None
 
@@ -616,21 +610,18 @@ class BCClipboardItemSvg(BCClipboardItem):
         """
         origin=None
         timestamp=None
+        persistent=True
         if isinstance(options.get('origin', None), str):
             origin=options['origin']
         if isinstance(options.get('timestamp', None), float):
             timestamp=options['timestamp']
+        if isinstance(options.get('persistent', None), bool):
+            persistent=options['persistent']
 
-        returned=BCClipboardItemSvg(hash, None, None, origin, timestamp, False)
+        returned=BCClipboardItemSvg(hash, None, None, origin, timestamp, False, persistent)
 
         if isinstance(options.get('imageSize.height', None), int) and isinstance(options.get('imageSize.width', None), int):
             returned.setImageSize(QSize(options['imageSize.width'], options['imageSize.height']))
-
-        if isinstance(options.get('persistent', None), bool):
-            returned.setPersistent(options['persistent'])
-        else:
-            # consider the new() static method is used to load from json dict
-            returned.setPersistent(True)
 
         if not os.path.exists(os.path.join(returned.cachePath(), f'{hash}.svg')):
             # svg file doesn't exist in cache, don't try to create item
@@ -638,8 +629,8 @@ class BCClipboardItemSvg(BCClipboardItem):
 
         return returned
 
-    def __init__(self, hashValue, svgData, image=None, origin=None, timestamp=None, saveInCache=True):
-        super(BCClipboardItemSvg, self).__init__(hashValue, origin, timestamp)
+    def __init__(self, hashValue, svgData, image=None, origin=None, timestamp=None, saveInCache=True, persistent=None):
+        super(BCClipboardItemSvg, self).__init__(hashValue, origin, timestamp, persistent)
         if image and not isinstance(image, QImage):
             raise EInvalidType('Given `image` must be a QImage')
 
@@ -678,21 +669,18 @@ class BCClipboardItemKra(BCClipboardItem):
         """
         origin=None
         timestamp=None
+        persistent=True
         if isinstance(options.get('origin', None), str):
             origin=options['origin']
         if isinstance(options.get('timestamp', None), float):
             timestamp=options['timestamp']
+        if isinstance(options.get('persistent', None), bool):
+            persistent=options['persistent']
 
-        returned=BCClipboardItemKra(hash, None, None, origin, timestamp, False)
+        returned=BCClipboardItemKra(hash, None, None, origin, timestamp, False, persistent)
 
         if isinstance(options.get('imageSize.height', None), int) and isinstance(options.get('imageSize.width', None), int):
             returned.setImageSize(QSize(options['imageSize.width'], options['imageSize.height']))
-
-        if isinstance(options.get('persistent', None), bool):
-            returned.setPersistent(options['persistent'])
-        else:
-            # consider the new() static method is used to load from json dict
-            returned.setPersistent(True)
 
         imgCacheFileName = os.path.join(returned.cachePath(), f'{hash}.kra')
         if not os.path.exists(imgCacheFileName):
@@ -701,8 +689,8 @@ class BCClipboardItemKra(BCClipboardItem):
 
         return returned
 
-    def __init__(self, hashValue, kraData, image=None, origin=None, timestamp=None, saveInCache=True):
-        super(BCClipboardItemKra, self).__init__(hashValue, origin, timestamp)
+    def __init__(self, hashValue, kraData, image=None, origin=None, timestamp=None, saveInCache=True, persistent=None):
+        super(BCClipboardItemKra, self).__init__(hashValue, origin, timestamp, persistent)
         if image and not isinstance(image, QImage):
             raise EInvalidType('Given `image` must be a QImage')
 
@@ -1292,7 +1280,7 @@ class BCClipboard(QObject):
         return list(self.__pool.keys())
 
     def get(self, hash):
-        """Return clipboad item from hash, or None if nothing is found"""
+        """Return clipboard item from hash, or None if nothing is found"""
         if hash in self.__pool:
             return self.__pool[hash]
         return None
