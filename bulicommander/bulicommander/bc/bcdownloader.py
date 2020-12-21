@@ -21,6 +21,7 @@
 
 
 import time
+import os.path
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -29,7 +30,8 @@ from PyQt5.QtCore import (
 
 from .bcutils import (
         bytesSizeToStr,
-        BCTimer
+        BCTimer,
+        Debug
     )
 
 from ..pktk.pktk import (
@@ -41,13 +43,12 @@ from ..pktk.pktk import (
 
 
 class BCDownloader(QObject):
-    finished = Signal()
+    finished = Signal(int)
     progress = Signal(int, int)
 
     def __init__(self, url, target, parent=None):
         super(BCDownloader, self).__init__(parent)
         self.__manager = QNetworkAccessManager()
-        self.__manager.finished.connect(self.__onFinished)
         self.__url=url
         self.__target=target
         self.__reply = None
@@ -62,7 +63,11 @@ class BCDownloader(QObject):
 
     def __flush(self):
         """Flush received data to file"""
-        if self.__reply and self.__reply.bytesAvailable()>0:
+        error=0
+        if self.__reply:
+            error=self.__reply.error()
+
+        if self.__reply and self.__reply.bytesAvailable()>0 and error==0:
             if self.__fHandle:
                 try:
                     self.__fHandle.write(self.__reply.read(self.__reply.bytesAvailable()))
@@ -73,17 +78,11 @@ class BCDownloader(QObject):
             if self.__fHandle:
                 self.__fHandle.close()
                 self.__fHandle=None
+
+            self.__reply.downloadProgress.disconnect(self.__onProgress)
             self.__reply.deleteLater()
             self.__reply=None
-
-    def __onFinished(self, reply):
-        """Download is finished"""
-        error = reply.error()
-        if error == QNetworkReply.NoError:
-            self.__flush()
-        else:
-            print("Error occured: ", error, reply.errorString())
-        self.finished.emit()
+            self.finished.emit(error)
 
     def __onProgress(self, bytesReceived, bytesTotal):
         """Received data from host, flush buffer and emit singal"""
@@ -105,6 +104,15 @@ class BCDownloader(QObject):
             Debug.print('[BCDownloader.download] unable to open target file {0}: {1}', self.__target, e)
 
         self.__reply.downloadProgress.connect(self.__onProgress)
+
+        return True
+
+    def downloadStop(self):
+        """Stop download"""
+        if self.__reply:
+            self.__reply.abort()
+            self.__startTime=0
+            self.__endTime=0
 
         return True
 

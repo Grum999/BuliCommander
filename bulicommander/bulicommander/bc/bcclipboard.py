@@ -33,6 +33,7 @@ from PyQt5.QtCore import (
     )
 
 from .bcutils import (
+        bytesSizeToStr,
         Debug
     )
 from .bcfile import (
@@ -309,7 +310,7 @@ class BCClipboardItemUrl(BCClipboardItem):
     def __repr__(self):
         return f'{super(BCClipboardItemUrl, self).__repr__()[:-2]}, "{self.__url.url()}", {self.__urlIsValid}, {self.urlIsLoaded()})>'
 
-    def __downloadFinished(self):
+    def __downloadFinished(self, error=0):
         """Download has finished
 
         Move file from download directory to cache directory
@@ -317,20 +318,44 @@ class BCClipboardItemUrl(BCClipboardItem):
         Save current url properties to cache
         Emit signal for clipboard url
         """
-        try:
-            shutil.move(self.__downloader.target(), self.cachePath())
-        except Exception as e:
-            Debug.print('[BCClipboardItem.__downloadFinished] Unable to move file {0} to {1}: {2}', self.__downloader.target(), self.cachePath(), str(e))
-            self.__status=BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED
-            self.downloadFinished.emit(self)
-            return
+        if error==0:
+            try:
+                shutil.move(self.__downloader.target(), self.cachePath())
+            except Exception as e:
+                Debug.print('[BCClipboardItem.__downloadFinished] Unable to move file {0} to {1}: {2}', self.__downloader.target(), self.cachePath(), str(e))
+                self.__status=BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED
+                self.downloadFinished.emit(self)
+                return
 
-        self.__status=BCClipboardItemUrl.URL_STATUS_DOWNLOADED
-        self.updateBcFile()
-        if self.file():
-            self.setImageSize(self.file().imageSize())
-        self.saveToCache()
+            self.__status=BCClipboardItemUrl.URL_STATUS_DOWNLOADED
+            self.updateBcFile()
+            if self.file():
+                self.setImageSize(self.file().imageSize())
+            self.saveToCache()
+        else:
+            # operation cancelled (error=5) or download error
+            # maybe need to manage this a little bit more...
+            if os.path.exists(self.__downloader.target()):
+                try:
+                    os.remove(self.__downloader.target())
+                except:
+                    Debug.print('[BCDownloader.downloadStop] unable to remove target file {0}: {1}', self.__downloader.target(), e)
+
+            self.__status=BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED
+            self.setImageSize(QSize(-1,-1))
+            self.saveToCache()
+
         self.downloadFinished.emit(self)
+        try:
+            self.__downloader.finished.disconnect()
+        except:
+            pass
+
+        try:
+            self.__downloader.progress.disconnect()
+        except:
+            pass
+        self.__downloader=None
 
     def __downloadProgress(self, bytesReceived, bytesTotal):
         """Download is in progress, emit signal for clipboard url"""
@@ -416,11 +441,17 @@ class BCClipboardItemUrl(BCClipboardItem):
     def download(self):
         """Start download"""
         if self.__status==BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
+            self.__pctDelta=0
             self.__status=BCClipboardItemUrl.URL_STATUS_DOWNLOADING
             self.__downloader=BCDownloader(self.__url, os.path.join(BCClipboard.downloadingCacheDirectory(), self.fileName(False)))
             self.__downloader.finished.connect(self.__downloadFinished)
             self.__downloader.progress.connect(self.__downloadProgress)
             self.__downloader.download()
+
+    def downloadStop(self):
+        """Stop download"""
+        if self.__status==BCClipboardItemUrl.URL_STATUS_DOWNLOADING and self.__downloader:
+            self.__downloader.downloadStop()
 
     def downloader(self):
         """Return current downloader, if set"""
@@ -438,11 +469,12 @@ class BCClipboardItemUrl(BCClipboardItem):
         """Push item back into clipboard"""
         returned=[(self.url(), 'text/uri-list'), (self.url().url(), 'text/plain')]
 
-        with open(self.fileName(), 'rb') as fHandle:
-            data=fHandle.read()
+        if os.path.exists(self.fileName()):
+            with open(self.fileName(), 'rb') as fHandle:
+                data=fHandle.read()
 
-        if data:
-            returned.append((data, QMimeDatabase().mimeTypeForFile(self.fileName()).name()))
+            if data:
+                returned.append((data, QMimeDatabase().mimeTypeForFile(self.fileName()).name()))
 
         return returned
 
@@ -533,12 +565,16 @@ class BCClipboardItemFile(BCClipboardItem):
     def contentBackToClipboard(self):
         """Push item back into clipboard"""
         returned=[(QUrl(f'file://{self.fileName()}'), 'text/uri-list'), (self.fileName(), 'text/plain')]
-        data=None
-        with open(self.fileName(), 'rb') as fHandle:
-            data=fHandle.read()
 
-        if data:
-            returned.append((data, QMimeDatabase().mimeTypeForFile(self.fileName()).name()))
+        if os.path.exists(self.fileName()):
+            data=None
+            with open(self.fileName(), 'rb') as fHandle:
+                data=fHandle.read()
+
+            if data:
+                returned.append((data, QMimeDatabase().mimeTypeForFile(self.fileName()).name()))
+
+        return returned
 
 
 class BCClipboardItemImg(BCClipboardItem):
@@ -639,12 +675,13 @@ class BCClipboardItemImg(BCClipboardItem):
     def contentBackToClipboard(self):
         """Push item back into clipboard"""
         returned=[]
-        data=None
-        with open(self.fileName(), 'rb') as fHandle:
-            data=fHandle.read()
+        if os.path.exists(self.fileName()):
+            data=None
+            with open(self.fileName(), 'rb') as fHandle:
+                data=fHandle.read()
 
-        if data:
-            returned.append((data, 'image/png'))
+            if data:
+                returned.append((data, 'image/png'))
 
         if self.urlOrigin():
             returned.append((self.urlOrigin(), 'text/uri-list'))
@@ -720,12 +757,14 @@ class BCClipboardItemSvg(BCClipboardItem):
     def contentBackToClipboard(self):
         """Push item back into clipboard"""
         returned=[]
-        data=None
-        with open(self.fileName(), 'rb') as fHandle:
-            data=fHandle.read()
 
-        if data:
-            returned.append((data, 'image/svg'))
+        if os.path.exists(self.fileName()):
+            data=None
+            with open(self.fileName(), 'rb') as fHandle:
+                data=fHandle.read()
+
+            if data:
+                returned.append((data, 'image/svg'))
 
         return returned
 
@@ -818,12 +857,14 @@ class BCClipboardItemKra(BCClipboardItem):
     def contentBackToClipboard(self):
         """Push item back into clipboard"""
         returned=[]
-        data=None
-        with open(self.fileName(), 'rb') as fHandle:
-            data=fHandle.read()
 
-        if data:
-            returned.append((data, self.origin()))
+        if os.path.exists(self.fileName()):
+            data=None
+            with open(self.fileName(), 'rb') as fHandle:
+                data=fHandle.read()
+
+            if data:
+                returned.append((data, self.origin()))
 
         fileName = os.path.join(self.cachePath(), f'{self.hash()}.png')
         if os.path.exists(fileName):
@@ -1030,8 +1071,6 @@ class BCClipboard(QObject):
         self.updateDownload.emit(False, clipboardUrlItem)
 
     def __urlDownloadFinished(self, clipboardUrlItem):
-        clipboardUrlItem.downloadFinished.disconnect(self.__urlDownloadFinished)
-        clipboardUrlItem.downloadProgress.disconnect(self.__urlDownloadInProgress)
         self.updateDownload.emit(True, clipboardUrlItem)
         self.updated.emit()
 
@@ -1109,9 +1148,10 @@ class BCClipboard(QObject):
                     if jsonAsDict['type']=='BCClipboardItemUrl':
                         item=BCClipboardItemUrl.new(hash, jsonAsDict)
 
+                        item.downloadFinished.connect(self.__urlDownloadFinished)
+                        item.downloadProgress.connect(self.__urlDownloadInProgress)
+
                         if BCClipboard.optionUrlAutoload() and not item.urlIsLoaded():
-                            item.downloadFinished.connect(self.__urlDownloadFinished)
-                            item.downloadProgress.connect(self.__urlDownloadInProgress)
                             item.download()
 
                     elif jsonAsDict['type']=='BCClipboardItemFile':
@@ -1176,9 +1216,10 @@ class BCClipboard(QObject):
                 else:
                     clipboardItem=BCClipboardItemUrl(hashValue, url, origin)
 
+                    clipboardItem.downloadFinished.connect(self.__urlDownloadFinished)
+                    clipboardItem.downloadProgress.connect(self.__urlDownloadInProgress)
+
                     if BCClipboard.optionUrlAutoload() and not clipboardItem.urlIsLoaded():
-                        clipboardItem.downloadFinished.connect(self.__urlDownloadFinished)
-                        clipboardItem.downloadProgress.connect(self.__urlDownloadInProgress)
                         clipboardItem.download()
 
                     returned|=self.__addPool(clipboardItem)
@@ -1267,13 +1308,13 @@ class BCClipboard(QObject):
 
     def __clipboardMimeContentChanged(self):
         """Clipboard content has been changed"""
-        print('------------------------ Clipboard content changed ------------------------')
+        #print('------------------------ Clipboard content changed ------------------------')
         clipboardMimeContent = self.__clipboard.mimeData(QClipboard.Clipboard)
 
         if clipboardMimeContent is None:
             return
 
-        print(self.__temporaryDisabled, clipboardMimeContent.formats())
+        #print(self.__temporaryDisabled, clipboardMimeContent.formats())
 
         if self.__temporaryDisabled:
             return
@@ -1365,13 +1406,33 @@ class BCClipboard(QObject):
                 self.__updateRemove=[]
             self.__emitUpdateRemoved()
 
-    def startDownload(self):
+    def startDownload(self, items=None):
         """Start download for all url for which download is not started/done"""
-        for item in self.__pool.keys():
-            if self.__pool[item].type() == 'BCClipboardItemUrl' and self.__pool[item].urlStatus() == BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
-                self.__pool[item].downloadFinished.connect(self.__urlDownloadFinished)
-                self.__pool[item].downloadProgress.connect(self.__urlDownloadInProgress)
-                self.__pool[item].download()
+        keys=[]
+        if items is None:
+            keys=self.__pool.keys()
+        elif isinstance(items, BCClipboardItemUrl):
+            keys=[items.hash()]
+        elif isinstance(items, list):
+            keys=[item.hash() for item in items if isinstance(item, BCClipboardItemUrl)]
+
+        for itemKey in keys:
+            if self.__pool[itemKey].type() == 'BCClipboardItemUrl' and self.__pool[itemKey].urlStatus() == BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
+                self.__pool[itemKey].download()
+
+    def stopDownload(self, items=None):
+        """Stop download for all url for which download is started"""
+        keys=[]
+        if items is None:
+            keys=self.__pool.keys()
+        elif isinstance(items, BCClipboardItemUrl):
+            keys=[items.hash()]
+        elif isinstance(items, list):
+            keys=[item.hash() for item in items if isinstance(item, BCClipboardItemUrl)]
+
+        for itemKey in keys:
+            if self.__pool[itemKey].type() == 'BCClipboardItemUrl' and self.__pool[itemKey].urlStatus() == BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
+                self.__pool[itemKey].downloadStop()
 
     def length(self):
         """Return number of item in pool"""
@@ -1467,7 +1528,6 @@ class BCClipboard(QObject):
                 else:
                     mimeContent.setData(content[1], content[0])
 
-        print('pushBackToClipboard', data)
         mimeContent=QMimeData()
         qurlList=[]
         textList=[]
@@ -1481,11 +1541,9 @@ class BCClipboard(QObject):
             processItem(data)
 
         if len(qurlList)>0:
-            print('qurlList', qurlList)
             mimeContent.setUrls(qurlList)
 
         if len(textList)>0:
-            print('textList', textList)
             mimeContent.setText(os.linesep.join(textList))
 
         if len(mimeContent.formats())>0:
@@ -1564,7 +1622,7 @@ class BCClipboardModel(QAbstractTableModel):
         if downloadFinished:
             indexS=self.createIndex(row, BCClipboardModel.COLNUM_ICON)
             indexE=self.createIndex(row, BCClipboardModel.COLNUM_LAST)
-            self.dataChanged.emit(indexS, indexE, [Qt.DecorationRole])
+            self.dataChanged.emit(indexS, indexE, [Qt.DisplayRole])
         else:
             index=self.createIndex(row, BCClipboardModel.COLNUM_SRC)
             self.dataChanged.emit(index, index, [Qt.DisplayRole])

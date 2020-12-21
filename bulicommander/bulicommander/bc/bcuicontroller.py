@@ -41,7 +41,8 @@ from .bcabout import BCAboutWindow
 from .bcbookmark import BCBookmark
 from .bcclipboard import (
         BCClipboard,
-        BCClipboardItem
+        BCClipboardItem,
+        BCClipboardItemUrl
     )
 from .bcfile import (
         BCBaseFile,
@@ -733,7 +734,7 @@ class BCUIController(QObject):
 
     def updateMenuForPanel(self):
         """Update menu (enabled/disabled/checked/unchecked) according to current panel"""
-        print("updateMenuForPanel", self.panel().tabActive())
+        #print("updateMenuForPanel", self.panel().tabActive())
         self.__window.actionViewThumbnail.setChecked(self.panel().filesViewThumbnail())
         self.__window.actionViewDisplayQuickFilter.setChecked(self.panel().filesFilterVisible())
 
@@ -745,12 +746,14 @@ class BCUIController(QObject):
 
             selectionInfo = self.panel().filesSelected()
 
+            oppositeTargetReady=self.panel(False).targetDirectoryReady()
+
             self.__window.actionFileOpen.setEnabled(selectionInfo[4]>0)
             self.__window.actionFileOpenCloseBC.setEnabled(selectionInfo[4]>0)
             self.__window.actionFileOpenAsNewDocument.setEnabled(selectionInfo[4]>0)
             self.__window.actionFileOpenAsNewDocumentCloseBC.setEnabled(selectionInfo[4]>0)
-            self.__window.actionFileCopyToOtherPanel.setEnabled(selectionInfo[3]>0)
-            self.__window.actionFileMoveToOtherPanel.setEnabled(selectionInfo[3]>0)
+            self.__window.actionFileCopyToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3]>0))
+            self.__window.actionFileMoveToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3]>0))
             self.__window.actionFileDelete.setEnabled(selectionInfo[3]>0)
 
             # ^ ==> xor logical operator
@@ -874,7 +877,6 @@ class BCUIController(QObject):
                 self.__window.actionClipboardSetNotPersistent.setEnabled(False)
                 self.__window.actionClipboardStartDownload.setEnabled(False)
                 self.__window.actionClipboardStopDownload.setEnabled(False)
-
 
             self.__window.actionViewThumbnail.setEnabled(False)
             self.__window.actionViewShowImageFileOnly.setEnabled(False)
@@ -1254,6 +1256,45 @@ class BCUIController(QObject):
                 self.__clipboard.pushBackToClipboard(items)
                 Krita.instance().action('paste_new').trigger()
 
+    def commandClipboardOpen(self, items=None):
+        """Open selected items from clipboard
+
+        If item is a file, open file
+        Otherwise, open file as a new document
+        """
+        if items is None:
+            selectionInfo = self.panel().clipboardSelected()
+            if selectionInfo[1]>0:
+                for item in selectionInfo[0]:
+                    self.commandClipboardOpen(item)
+        elif isinstance(items, BCClipboardItem):
+            if items.type() == 'BCClipboardItemFile':
+                self.commandFileOpen(items.fileName())
+            else:
+                self.commandClipboardPasteAsNewDocument(items)
+
+    def commandClipboardStartDownload(self, items=None):
+        """Start download for selected items (that can be donwloaded)"""
+        if items is None:
+            selectionInfo = self.panel().clipboardSelected()
+            if selectionInfo[1]>0:
+                self.__clipboard.startDownload(selectionInfo[0])
+        elif isinstance(items, BCClipboardItem):
+            self.__clipboard.startDownload(items)
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].clipboardRefresh()
+
+    def commandClipboardStopDownload(self, items=None):
+        """Stop download for selected items that currently are downloading"""
+        if items is None:
+            selectionInfo = self.panel().clipboardSelected()
+            if selectionInfo[1]>0:
+                self.__clipboard.stopDownload(selectionInfo[0])
+        elif isinstance(items, BCClipboardItem):
+            self.__clipboard.stopDownload(items)
+        for panelId in self.__window.panels:
+            self.__window.panels[panelId].clipboardRefresh()
+
     def commandClipboardSetPersistent(self, item=None, persistent=True):
         """Set item as persistent/non-persistent"""
         if not isinstance(persistent, bool):
@@ -1305,6 +1346,8 @@ class BCUIController(QObject):
         if not displaySecondary:
             # when the right panel is hidden, ensure the left is highlighted
             self.__window.panels[0].setHighlighted(True)
+
+        self.updateMenuForPanel()
 
         return displaySecondary
 

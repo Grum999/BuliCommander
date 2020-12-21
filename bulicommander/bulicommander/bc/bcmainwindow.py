@@ -145,11 +145,11 @@ class BCMainWindow(QMainWindow):
         self.actionClipboardPushBack.triggered.connect(self.__menuClipboardPushBackClipboard)
         self.actionClipboardPasteAsNewLayer.triggered.connect(self.__menuClipboardPasteAsNewLayer)
         self.actionClipboardPasteAsNewDocument.triggered.connect(self.__menuClipboardPasteAsNewDocument)
-        self.actionClipboardOpen.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardOpen.triggered.connect(self.__menuClipboardOpen)
         self.actionClipboardSetPersistent.triggered.connect(self.__menuClipboardSetPersistent)
         self.actionClipboardSetNotPersistent.triggered.connect(self.__menuClipboardSetNotPersistent)
-        self.actionClipboardStartDownload.triggered.connect(self.__actionNotYetImplemented)
-        self.actionClipboardStopDownload.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardStartDownload.triggered.connect(self.__menuClipboardStartDownload)
+        self.actionClipboardStopDownload.triggered.connect(self.__menuClipboardStopDownload)
         self.actionClipboardQuit.triggered.connect(self.__uiController.commandQuit)
 
 
@@ -290,6 +290,10 @@ class BCMainWindow(QMainWindow):
         """Paste content as new document"""
         self.__uiController.commandClipboardPasteAsNewDocument()
 
+    def __menuClipboardOpen(self):
+        """Open document"""
+        self.__uiController.commandClipboardOpen()
+
     def __menuClipboardSetPersistent(self):
         """Set clipboard item persistent"""
         self.__uiController.commandClipboardSetPersistent(None, True)
@@ -297,6 +301,14 @@ class BCMainWindow(QMainWindow):
     def __menuClipboardSetNotPersistent(self):
         """Set clipboard item not persistent"""
         self.__uiController.commandClipboardSetPersistent(None, False)
+
+    def __menuClipboardStartDownload(self):
+        """Start download for selected items"""
+        self.__uiController.commandClipboardStartDownload()
+
+    def __menuClipboardStopDownload(self):
+        """Stop download for selected items"""
+        self.__uiController.commandClipboardStopDownload()
 
     def __menuSelectAll_clicked(self, action):
         """Select all files"""

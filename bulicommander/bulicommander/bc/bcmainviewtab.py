@@ -332,6 +332,8 @@ class BCMainViewFiles(QTreeView):
         self.__iconPool.signals.processed.connect(self.__updateIconsProcessed)
         self.__iconPool.signals.finished.connect(self.__updateIconsFinished)
 
+        self.setAutoScroll(False)
+
     def __initHeaders(self):
         """Initialise treeview header & model"""
         self.__model = QStandardItemModel(0, self.COLNUM_LAST+1, self)
@@ -718,6 +720,7 @@ class BCMainViewClipboard(QTreeView):
         self.__proxyModel = None
         self.__iconSize = BCIconSizes([16, 24, 32, 48, 64, 96, 128, 256, 512])
         self.clicked.connect(self.__itemClicked)
+        self.setAutoScroll(False)
 
     def __itemClicked(self, index):
         """A cell has been clicked, check if it's a persistent column"""
@@ -927,6 +930,7 @@ class BCMainViewTab(QFrame):
         self.__actionFilesApplyIconSize.slider().setSingleStep(1)
 
         # -- clipboard tab variables --
+        self.__currentDownloadingItemTracked=None
         self.__clipboardAllowRefresh = False
         self.__clipboardBlockedRefresh = 0
 
@@ -2634,6 +2638,15 @@ class BCMainViewTab(QFrame):
 
     # -- PRIVATE CLIPBOARD -----------------------------------------------------
 
+    def __clipboardUpdateDownloadInformation(self, item):
+        """Update downloading information for selected item"""
+        if isinstance(item, BCClipboardItemUrl):
+            if item.urlStatus() == BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
+                dProgress=item.downloader().downloadProgress()
+                NL="\n"
+                self.lblClipboardNoPreview.setText(i18n(f'Image currently downloading at {bytesSizeToStr(item.downloader().downloadRate())}/s{NL}{round(dProgress[0],2)}% [{bytesSizeToStr(dProgress[1])} of {bytesSizeToStr(dProgress[2])}]{NL}{item.url().url()}'))
+
+
     def __clipboardRefresh(self):
         """update clipboard list"""
         if not self.isVisible():
@@ -2671,6 +2684,13 @@ class BCMainViewTab(QFrame):
         if not self.__clipboardAllowRefresh:
             self.__clipboardBlockedRefresh+=1
             return
+
+        if self.__currentDownloadingItemTracked:
+            try:
+                self.__currentDownloadingItemTracked.downloadProgress.disconnect(self.__clipboardUpdateDownloadInformation)
+            except:
+                pass
+            self.__currentDownloadingItemTracked=None
 
         self.__clipboardSelected = self.treeViewClipboard.selectedItems()
         self.__clipboardSelectedNbTotal=len(self.__clipboardSelected)
@@ -2723,6 +2743,9 @@ class BCMainViewTab(QFrame):
                     return
                 elif item.urlStatus()==BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
                     self.__clipboardHidePreview("Image currently downloading")
+                    self.__currentDownloadingItemTracked=item
+                    self.__currentDownloadingItemTracked.downloadProgress.connect(self.__clipboardUpdateDownloadInformation)
+                    self.__clipboardUpdateDownloadInformation(self.__currentDownloadingItemTracked)
                     return
 
             if item.file():
@@ -2928,8 +2951,7 @@ class BCMainViewTab(QFrame):
         """return true if current panel can be a target for file operation (copy,
         move, ...)
         """
-        print('TODO: targetDirectoryReady Need to implement rule')
-        return True
+        return ((self.tabActive() == BCMainViewTabTabs.FILES) and self.isVisible())
 
 
     def previewBackground(self):
