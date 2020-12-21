@@ -929,6 +929,7 @@ class BCMainViewTab(QFrame):
         self.__clipboardTabLayout = BCMainViewTabClipboardLayout.TOP
 
         self.__clipboardSelected = []
+        self.__clipboardSelectedNbTotal=0
         self.__clipboardSelectedNbUrl=0
         self.__clipboardSelectedNbFiles=0
         self.__clipboardSelectedNbImagesRaster=0
@@ -2651,6 +2652,7 @@ class BCMainViewTab(QFrame):
     def __clipboardSelectionChanged(self, selection=None):
         """Made update according to current selection"""
         self.__clipboardSelected = self.treeViewClipboard.selectedItems()
+        self.__clipboardSelectedNbTotal=len(self.__clipboardSelected)
         self.__clipboardSelectedNbUrl=0
         self.__clipboardSelectedNbFiles=0
         self.__clipboardSelectedNbImagesRaster=0
@@ -2690,6 +2692,31 @@ class BCMainViewTab(QFrame):
         if not self.__uiController is None:
             self.__uiController.updateMenuForPanel()
 
+        if self.__clipboardSelectedNbTotal == 1:
+            # ------------------------------ File ------------------------------
+            item = self.__clipboardSelected[0]
+
+            if item.type() == 'BCClipboardItemUrl':
+                if item.urlStatus()==BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
+                    self.__clipboardHidePreview("Image not yet downloaded")
+                    return
+                elif item.urlStatus()==BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
+                    self.__clipboardHidePreview("Image currently downloading")
+                    return
+
+            if item.file():
+                self.__clipboardShowPreview(item.file().image())
+                if not self.gvClipboardPreview.hasImage():
+                    self.__clipboardHidePreview("Unable to read image")
+            else:
+                self.__clipboardHidePreview("Unable to read image")
+        else:
+            # image
+            if self.__clipboardSelectedNbTotal>1:
+                self.__clipboardHidePreview("No preview for multiple selection")
+            else:
+                self.__clipboardHidePreview("Nothing selected")
+
 
     def __clipboardUpdateStats(self):
         """Update current status bar with clipboard statistics"""
@@ -2700,7 +2727,7 @@ class BCMainViewTab(QFrame):
             text.append("There's nothing in clipboard that can be managed here")
             statusText.append("Clipboard content can't be analyzed/used by clipboard manager")
         else:
-            text.append(f"{len(self.__clipboardSelected)} out of {self.__uiController.clipboard().length()}")
+            text.append(f"{self.__clipboardSelectedNbTotal} out of {self.__uiController.clipboard().length()}")
 
             if self.__clipboardSelectedNbPersistent>0:
                 text.append(f"Persistent: {self.__clipboardSelectedNbPersistent}")
@@ -3702,7 +3729,7 @@ class BCMainViewTab(QFrame):
         [11] nb persistent
         """
         return (self.__clipboardSelected,
-                len(self.__clipboardSelected),
+                self.__clipboardSelectedNbTotal,
                 self.__clipboardSelectedNbUrl,
                 self.__clipboardSelectedNbFiles,
                 self.__clipboardSelectedNbImagesRaster,

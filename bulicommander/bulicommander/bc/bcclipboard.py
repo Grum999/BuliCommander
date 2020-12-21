@@ -225,6 +225,12 @@ class BCClipboardItem(QObject):
     def updateBcFile(self):
         pass
 
+    def fileName(self, full=True):
+        """Return current fileName"""
+        if full:
+            return os.path.join(self.cachePath(), f'{self.hash()}.png')
+        else:
+            return f'{self.hash()}.png'
 
 class BCClipboardItemUrl(BCClipboardItem):
     """An url stored in clipboard"""
@@ -277,7 +283,7 @@ class BCClipboardItemUrl(BCClipboardItem):
         if not isinstance(url, QUrl):
             raise EInvalidType('Given `url` must be a QUrl')
 
-        self.__loadedFileName=f'{self.hash()}{os.path.splitext(url.fileName())[1]}'
+        self.__fileName=f'{self.hash()}{os.path.splitext(url.fileName())[1]}'
         self.__url=url
         self.__urlIsValid=True
         self.__downloader=None
@@ -285,6 +291,7 @@ class BCClipboardItemUrl(BCClipboardItem):
         self.__downloadSize=0
         if self.urlIsLoaded():
             self.__status=BCClipboardItemUrl.URL_STATUS_DOWNLOADED
+            self.updateBcFile()
         else:
             self.__status=BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED
 
@@ -338,7 +345,7 @@ class BCClipboardItemUrl(BCClipboardItem):
         returned['url.url']=self.__url.url()
         returned['url.isValid']=self.__urlIsValid
         returned['url.isLoaded']=self.urlIsLoaded()
-        returned['url.loadedFileName']=self.__loadedFileName
+        returned['url.loadedFileName']=self.__fileName
         returned['url.downloadSize']=self.__downloadSize
 
         return returned
@@ -359,9 +366,8 @@ class BCClipboardItemUrl(BCClipboardItem):
 
     def urlIsLoaded(self):
         """Return if url content is loaded or not"""
-        fileName=os.path.join(self.cachePath(), self.loadedFileName())
+        fileName=self.fileName(True)
         exist=os.path.exists(fileName)
-
         if exist and self.__downloadSize>0:
             fileSize=os.path.getsize(fileName)
             if fileSize!=self.__downloadSize:
@@ -379,13 +385,16 @@ class BCClipboardItemUrl(BCClipboardItem):
         """Return if url is downloaded, downloading, not downloaded"""
         return self.__status
 
-    def loadedFileName(self):
-        """Return file name (without path) for expected loaded file"""
-        return self.__loadedFileName
+    def fileName(self, full=True):
+        """Return file name for expected loaded file"""
+        if full:
+            return os.path.join(self.cachePath(), self.__fileName)
+        else:
+            return self.__fileName
 
     def updateBcFile(self):
         """Update BCFile according to current clipboard item properties"""
-        imgCacheFileName = os.path.join(self.cachePath(), self.loadedFileName())
+        imgCacheFileName = self.fileName(True)
         if os.path.exists(imgCacheFileName):
             self.setFile(imgCacheFileName)
             if self.__status != BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
@@ -400,7 +409,7 @@ class BCClipboardItemUrl(BCClipboardItem):
         """Start download"""
         if self.__status==BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
             self.__status=BCClipboardItemUrl.URL_STATUS_DOWNLOADING
-            self.__downloader=BCDownloader(self.__url, os.path.join(os.path.join(BCClipboard.downloadingCacheDirectory(), self.loadedFileName())))
+            self.__downloader=BCDownloader(self.__url, os.path.join(BCClipboard.downloadingCacheDirectory(), self.fileName(False)))
             self.__downloader.finished.connect(self.__downloadFinished)
             self.__downloader.progress.connect(self.__downloadProgress)
             self.__downloader.download()
@@ -419,7 +428,7 @@ class BCClipboardItemUrl(BCClipboardItem):
 
 
 class BCClipboardItemFile(BCClipboardItem):
-    """An file name stored in clipboard"""
+    """A file name stored in clipboard"""
 
     @staticmethod
     def new(hash, options):
@@ -479,9 +488,12 @@ class BCClipboardItemFile(BCClipboardItem):
 
         return returned
 
-    def fileName(self):
+    def fileName(self, full=True):
         """Return current fileName"""
-        return self.__fileName
+        if full:
+            return self.__fileName
+        else:
+            return os.path.basename(self.__fileName)
 
     def fileExists(self):
         """Return if fileName exists or not"""
@@ -590,7 +602,7 @@ class BCClipboardItemImg(BCClipboardItem):
 
     def updateBcFile(self):
         """Update BCFile according to current clipboard item properties"""
-        imgCacheFileName = os.path.join(self.cachePath(), f'{self.hash()}.png')
+        imgCacheFileName = self.fileName(True)
         if os.path.exists(imgCacheFileName):
             self.setFile(imgCacheFileName)
 
@@ -644,14 +656,21 @@ class BCClipboardItemSvg(BCClipboardItem):
         if isinstance(image, QImage):
             saved&=BCClipboard.saveQImage(os.path.join(self.cachePath(), f'{self.hash()}.png'), image)
 
-        with open(os.path.join(self.cachePath(), f'{self.hash()}.svg'), 'wb') as file:
+        with open(self.fileName(True), 'wb') as file:
             try:
                 file.write(svgData)
             except Exception as e:
-                Debug.print('[BCClipboardItemSvg.saveToCache] Unable to save file {0}: {1}', fileName, str(e))
+                Debug.print('[BCClipboardItemSvg.saveToCache] Unable to save file {0}: {1}', self.fileName(True), str(e))
                 saved=False
 
         return saved
+
+    def fileName(self, full=True):
+        """Return current fileName"""
+        if full:
+            return os.path.join(self.cachePath(), f'{self.hash()}.svg')
+        else:
+            return f'{self.hash()}.svg'
 
 
 class BCClipboardItemKra(BCClipboardItem):
@@ -707,19 +726,10 @@ class BCClipboardItemKra(BCClipboardItem):
         saved = super(BCClipboardItemKra, self).saveToCache()
 
         if isinstance(image, QImage):
-            if self.persistent():
-                fileName = os.path.join(BCClipboard.persistentCacheDirectory(), f'{self.hash()}.png')
-            else:
-                fileName = os.path.join(BCClipboard.sessionCacheDirectory(), f'{self.hash()}.png')
-
+            fileName = os.path.join(self.cachePath(), f'{self.hash()}.png')
             saved &= BCClipboard.saveQImage(fileName, image)
 
-
-        if self.persistent():
-            fileName = os.path.join(BCClipboard.persistentCacheDirectory(), f'{self.hash()}.kra')
-        else:
-            fileName = os.path.join(BCClipboard.sessionCacheDirectory(), f'{self.hash()}.kra')
-
+        fileName = self.fileName(True)
         with open(fileName, 'wb') as file:
             try:
                 file.write(kraData)
@@ -741,6 +751,12 @@ class BCClipboardItemKra(BCClipboardItem):
                 # prefer to use png file for thumbnail
                 self.setFile(imgCacheFileName)
 
+    def fileName(self, full=True):
+        """Return current fileName"""
+        if full:
+            return os.path.join(self.cachePath(), f'{self.hash()}.kra')
+        else:
+            return f'{self.hash()}.kra'
 
 class BCClipboard(QObject):
     """Manage clipboard content"""
@@ -881,7 +897,7 @@ class BCClipboard(QObject):
         BCClipboard.__OPTION_CACHE_DEFAULT_PERSISTENT = value
 
     @staticmethod
-    def saveQImage(fileName, image, resize=True):
+    def saveQImage(fileName, image, resize=False):
         """Save QImage as png content
 
         Use a method to ensure all image are saved using the same parameters
