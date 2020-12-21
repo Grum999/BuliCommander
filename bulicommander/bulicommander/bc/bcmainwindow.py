@@ -118,8 +118,8 @@ class BCMainWindow(QMainWindow):
 
         self.mainViewTab0.highlightedStatusChanged.connect(panel_HighlightStatusChanged)
         self.mainViewTab1.highlightedStatusChanged.connect(panel_HighlightStatusChanged)
-        self.mainViewTab0.pathChanged.connect(panel_pathChanged)
-        self.mainViewTab1.pathChanged.connect(panel_pathChanged)
+        self.mainViewTab0.filesPathChanged.connect(panel_pathChanged)
+        self.mainViewTab1.filesPathChanged.connect(panel_pathChanged)
         #self.mainViewTab0.tabFilesLayoutChanged.connect(panel_TabFilesLayoutChanged)
         #self.mainViewTab1.tabFilesLayoutChanged.connect(panel_TabFilesLayoutChanged)
         #self.splitterMainView.splitterMoved.connect(splitterMainView_Moved)
@@ -142,12 +142,14 @@ class BCMainWindow(QMainWindow):
         self.actionFileQuit.triggered.connect(self.__uiController.commandQuit)
 
         # Menu CLIPBPOARD
+        self.actionClipboardPushBack.triggered.connect(self.__actionNotYetImplemented)
         self.actionClipboardPasteAsNewLayer.triggered.connect(self.__actionNotYetImplemented)
         self.actionClipboardPasteAsNewDocument.triggered.connect(self.__actionNotYetImplemented)
         self.actionClipboardOpen.triggered.connect(self.__actionNotYetImplemented)
-        self.actionClipboardSaveAs.triggered.connect(self.__actionNotYetImplemented)
         self.actionClipboardSetPersistent.triggered.connect(self.__actionNotYetImplemented)
         self.actionClipboardSetNotPersistent.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardStartDownload.triggered.connect(self.__actionNotYetImplemented)
+        self.actionClipboardStopDownload.triggered.connect(self.__actionNotYetImplemented)
         self.actionClipboardQuit.triggered.connect(self.__uiController.commandQuit)
 
 

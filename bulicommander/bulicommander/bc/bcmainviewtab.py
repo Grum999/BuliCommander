@@ -78,8 +78,10 @@ from .bcwmenuitem import (
     )
 from .bcbookmark import BCBookmark
 from .bcclipboard import (
+        BCClipboard,
         BCClipboardModel,
-        BCClipboardDelegate
+        BCClipboardDelegate,
+        BCClipboardItemUrl
     )
 from .bcfile import (
         BCBaseFile,
@@ -128,6 +130,30 @@ from ..pktk.pktk import (
 # -----------------------------------------------------------------------------
 class BCMainViewTabFilesLayout(Enum):
     FULL = 'full'
+    TOP = 'top'
+    LEFT = 'left'
+    BOTTOM = 'bottom'
+    RIGHT = 'right'
+
+    def next(self):
+        """Return next layout, if already to last layout, loop to first layout"""
+        cls = self.__class__
+        members = list(cls)
+        index = members.index(self) + 1
+        if index >= len(members):
+            index = 0
+        return members[index]
+
+    def prev(self):
+        """Return previous layout, if already to first layout, loop to last layout"""
+        cls = self.__class__
+        members = list(cls)
+        index = members.index(self) - 1
+        if index < 0:
+            index = len(members) - 1
+        return members[index]
+
+class BCMainViewTabClipboardLayout(Enum):
     TOP = 'top'
     LEFT = 'left'
     BOTTOM = 'bottom'
@@ -257,7 +283,6 @@ class BCIconSizes(object):
 
 class BCMainViewFiles(QTreeView):
     """Tree view files"""
-
     focused = Signal()
     iconStartLoad = Signal(int)
     iconProcessed = Signal()
@@ -684,6 +709,7 @@ class BCMainViewFiles(QTreeView):
 
 class BCMainViewClipboard(QTreeView):
     """Tree view clipboard"""
+    focused = Signal()
 
     def __init__(self, parent=None):
         super(BCMainViewClipboard, self).__init__(parent)
@@ -734,7 +760,10 @@ class BCMainViewClipboard(QTreeView):
 
         self.__model.updateWidth.connect(self.__resizeColumns)
 
-
+    def focusInEvent(self, event):
+        super(BCMainViewClipboard, self).focusInEvent(event)
+        Debug.print('[BCMainViewClipboard.focusInEvent]')
+        self.focused.emit()
 
     def wheelEvent(self, event):
         if event.modifiers() & Qt.ControlModifier:
@@ -790,27 +819,37 @@ class BCMainViewClipboard(QTreeView):
     def selectedItems(self):
         """Return a list of selected clipboard items"""
         returned=[]
-        for item in self.selectionModel().selectedRows(self.COLNUM_ICON):
-            returned.append(item.data(BCClipboard.ROLE_ITEM))
+        if self.selectionModel():
+            for item in self.selectionModel().selectedRows(BCClipboardModel.COLNUM_ICON):
+                returned.append(item.data(BCClipboardModel.ROLE_ITEM))
 
         return returned
+
+    def invertSelection(self):
+        """Invert current selection"""
+        first = self.__proxyModel.index(0, 0)
+        last = self.__proxyModel.index(self.__proxyModel.rowCount() - 1, BCClipboardModel.COLNUM_LAST)
+
+        self.selectionModel().select(QItemSelection(first, last), QItemSelectionModel.Toggle)
 
 
 # -----------------------------------------------------------------------------
 class BCMainViewTab(QFrame):
     """Buli Commander main view tab panel (left or right)"""
-
     highlightedStatusChanged = Signal(QTabWidget)
     tabFilesLayoutChanged = Signal(QTabWidget)
-    pathChanged = Signal(str)
-    filterChanged = Signal(str)
+    tabClipboardLayoutChanged = Signal(QTabWidget)
+    filesPathChanged = Signal(str)
+    filesFilterChanged = Signal(str)
 
     def __init__(self, parent=None):
         super(BCMainViewTab, self).__init__(parent)
 
-        self.__tabFilesLayout = BCMainViewTabFilesLayout.TOP
         self.__isHighlighted = False
         self.__uiController = None
+
+        # -- files tab variables --
+        self.__filesTabLayout = BCMainViewTabFilesLayout.TOP
 
         self.__filesAllowRefresh = False
         self.__filesBlockedRefresh = 0
@@ -845,32 +884,6 @@ class BCMainViewTab(QFrame):
                 'freeDiskSize': 0
             }
 
-        self.__actionApplyTabFilesLayoutFull = QAction(QIcon(":/images/dashboard_full"), i18n('Full mode'), self)
-        self.__actionApplyTabFilesLayoutFull.setCheckable(True)
-        self.__actionApplyTabFilesLayoutFull.setProperty('layout', BCMainViewTabFilesLayout.FULL)
-
-        self.__actionApplyTabFilesLayoutTop = QAction(QIcon(":/images/dashboard_tb"), i18n('Top/Bottom'), self)
-        self.__actionApplyTabFilesLayoutTop.setCheckable(True)
-        self.__actionApplyTabFilesLayoutTop.setProperty('layout', BCMainViewTabFilesLayout.TOP)
-
-        self.__actionApplyTabFilesLayoutLeft = QAction(QIcon(":/images/dashboard_lr"), i18n('Left/Right'), self)
-        self.__actionApplyTabFilesLayoutLeft.setCheckable(True)
-        self.__actionApplyTabFilesLayoutLeft.setProperty('layout', BCMainViewTabFilesLayout.LEFT)
-
-        self.__actionApplyTabFilesLayoutBottom = QAction(QIcon(":/images/dashboard_bt"), i18n('Bottom/Top'), self)
-        self.__actionApplyTabFilesLayoutBottom.setCheckable(True)
-        self.__actionApplyTabFilesLayoutBottom.setProperty('layout', BCMainViewTabFilesLayout.BOTTOM)
-
-        self.__actionApplyTabFilesLayoutRight = QAction(QIcon(":/images/dashboard_rl"), i18n('Right/Left'), self)
-        self.__actionApplyTabFilesLayoutRight.setCheckable(True)
-        self.__actionApplyTabFilesLayoutRight.setProperty('layout', BCMainViewTabFilesLayout.RIGHT)
-
-        self.__actionApplyIconSize = BCWMenuSlider(i18n("Icon size"))
-        self.__actionApplyIconSize.slider().setMinimum(0)
-        self.__actionApplyIconSize.slider().setMaximum(8)
-        self.__actionApplyIconSize.slider().setPageStep(1)
-        self.__actionApplyIconSize.slider().setSingleStep(1)
-
         self.__filesSelected = []
         self.__filesSelectedNbDir = 0
         self.__filesSelectedNbFile = 0
@@ -883,6 +896,74 @@ class BCMainViewTab(QFrame):
 
         self.__filesDirTreeModel = QFileSystemModel()
 
+        self.__filesFsWatcher = QFileSystemWatcher()
+        self.__filesFsWatcherTmpList = []
+
+        self.__actionFilesApplyTabLayoutFull = QAction(QIcon(":/images/dashboard_full"), i18n('Full mode'), self)
+        self.__actionFilesApplyTabLayoutFull.setCheckable(True)
+        self.__actionFilesApplyTabLayoutFull.setProperty('layout', BCMainViewTabFilesLayout.FULL)
+
+        self.__actionFilesApplyTabLayoutTop = QAction(QIcon(":/images/dashboard_tb"), i18n('Top/Bottom'), self)
+        self.__actionFilesApplyTabLayoutTop.setCheckable(True)
+        self.__actionFilesApplyTabLayoutTop.setProperty('layout', BCMainViewTabFilesLayout.TOP)
+
+        self.__actionFilesApplyTabLayoutLeft = QAction(QIcon(":/images/dashboard_lr"), i18n('Left/Right'), self)
+        self.__actionFilesApplyTabLayoutLeft.setCheckable(True)
+        self.__actionFilesApplyTabLayoutLeft.setProperty('layout', BCMainViewTabFilesLayout.LEFT)
+
+        self.__actionFilesApplyTabLayoutBottom = QAction(QIcon(":/images/dashboard_bt"), i18n('Bottom/Top'), self)
+        self.__actionFilesApplyTabLayoutBottom.setCheckable(True)
+        self.__actionFilesApplyTabLayoutBottom.setProperty('layout', BCMainViewTabFilesLayout.BOTTOM)
+
+        self.__actionFilesApplyTabLayoutRight = QAction(QIcon(":/images/dashboard_rl"), i18n('Right/Left'), self)
+        self.__actionFilesApplyTabLayoutRight.setCheckable(True)
+        self.__actionFilesApplyTabLayoutRight.setProperty('layout', BCMainViewTabFilesLayout.RIGHT)
+
+        self.__actionFilesApplyIconSize = BCWMenuSlider(i18n("Icon size"))
+        self.__actionFilesApplyIconSize.slider().setMinimum(0)
+        self.__actionFilesApplyIconSize.slider().setMaximum(8)
+        self.__actionFilesApplyIconSize.slider().setPageStep(1)
+        self.__actionFilesApplyIconSize.slider().setSingleStep(1)
+
+        # -- files tab variables --
+        self.__clipboardTabLayout = BCMainViewTabClipboardLayout.TOP
+
+        self.__clipboardSelected = []
+        self.__clipboardSelectedNbUrl=0
+        self.__clipboardSelectedNbFiles=0
+        self.__clipboardSelectedNbImagesRaster=0
+        self.__clipboardSelectedNbImagesSvg=0
+        self.__clipboardSelectedNbImagesKraNode=0
+        self.__clipboardSelectedNbImagesKraSelection=0
+        self.__clipboardSelectedNbUrlDownloaded=0
+        self.__clipboardSelectedNbUrlDownloading=0
+        self.__clipboardSelectedNbUrlNotDownloaded=0
+
+
+        self.__actionClipboardApplyTabLayoutTop = QAction(QIcon(":/images/dashboard_tb"), i18n('Top/Bottom'), self)
+        self.__actionClipboardApplyTabLayoutTop.setCheckable(True)
+        self.__actionClipboardApplyTabLayoutTop.setProperty('layout', BCMainViewTabClipboardLayout.TOP)
+
+        self.__actionClipboardApplyTabLayoutLeft = QAction(QIcon(":/images/dashboard_lr"), i18n('Left/Right'), self)
+        self.__actionClipboardApplyTabLayoutLeft.setCheckable(True)
+        self.__actionClipboardApplyTabLayoutLeft.setProperty('layout', BCMainViewTabClipboardLayout.LEFT)
+
+        self.__actionClipboardApplyTabLayoutBottom = QAction(QIcon(":/images/dashboard_bt"), i18n('Bottom/Top'), self)
+        self.__actionClipboardApplyTabLayoutBottom.setCheckable(True)
+        self.__actionClipboardApplyTabLayoutBottom.setProperty('layout', BCMainViewTabClipboardLayout.BOTTOM)
+
+        self.__actionClipboardApplyTabLayoutRight = QAction(QIcon(":/images/dashboard_rl"), i18n('Right/Left'), self)
+        self.__actionClipboardApplyTabLayoutRight.setCheckable(True)
+        self.__actionClipboardApplyTabLayoutRight.setProperty('layout', BCMainViewTabClipboardLayout.RIGHT)
+
+        self.__actionClipboardApplyIconSize = BCWMenuSlider(i18n("Icon size"))
+        self.__actionClipboardApplyIconSize.slider().setMinimum(0)
+        self.__actionClipboardApplyIconSize.slider().setMaximum(8)
+        self.__actionClipboardApplyIconSize.slider().setPageStep(1)
+        self.__actionClipboardApplyIconSize.slider().setSingleStep(1)
+
+
+        # -----
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcmainviewtab.ui')
         loadXmlUi(uiFileName, self)
 
@@ -896,22 +977,28 @@ class BCMainViewTab(QFrame):
             self.lblPerm.setText('-')
             self.lblOwner.setText('-')
 
-        self.__filesFsWatcher = QFileSystemWatcher()
-        self.__filesFsWatcherTmpList = []
-
         self.__filesSelectionChanged(None)
+        self.__clipboardSelectionChanged(None)
 
         self.__initialise()
 
 
     def __initialise(self):
         @pyqtSlot('QString')
-        def tabFilesLayoutModel_Clicked(value):
+        def filesTabLayoutModel_Clicked(value):
             self.setFilesTabLayout(value.property('layout'))
 
         @pyqtSlot('QString')
-        def tabFilesLayoutReset_Clicked(value):
+        def clipboardTabLayoutModel_Clicked(value):
+            self.setClipboardTabLayout(value.property('layout'))
+
+        @pyqtSlot('QString')
+        def filesTabLayoutReset_Clicked(value):
             self.setFilesTabLayout(BCMainViewTabFilesLayout.TOP)
+
+        @pyqtSlot('QString')
+        def clipboardTabLayoutReset_Clicked(value):
+            self.setClipboardTabLayout(BCMainViewTabClipboardLayout.TOP)
 
         @pyqtSlot('QString')
         def children_Clicked(value=None):
@@ -922,7 +1009,7 @@ class BCMainViewTab(QFrame):
                 self.__uiController.updateMenuForPanel()
 
         @pyqtSlot('QString')
-        def path_Changed(value):
+        def filesPath_Changed(value):
             def expand(item):
                 self.tvDirectoryTree.setCurrentIndex(item)
                 while item != self.tvDirectoryTree.rootIndex():
@@ -937,53 +1024,65 @@ class BCMainViewTab(QFrame):
             self.refresh()
             self.__filesFsWatcher.addPath(self.filesPath())
             self.__filesFsWatcherTmpList=self.__filesFsWatcher.directories()
-            self.pathChanged.emit(value)
+            self.filesPathChanged.emit(value)
 
         @pyqtSlot('QString')
-        def view_Changed(value):
+        def filesView_Changed(value):
             self.__filesFsWatcherTmpList=self.__filesFsWatcher.directories()
             if len(self.__filesFsWatcherTmpList) > 0:
                 self.__filesFsWatcher.removePaths(self.__filesFsWatcherTmpList)
                 self.__filesFsWatcherTmpList=self.__filesFsWatcher.directories()
 
             self.refresh()
-            self.pathChanged.emit(value)
+            self.filesPathChanged.emit(value)
 
         @pyqtSlot('QString')
-        def tvselectedpath_changed(value):
+        def filesTvSelectedPath_changed(value):
             self.setFilesPath(self.__filesDirTreeModel.filePath(self.tvDirectoryTree.currentIndex()))
 
         @pyqtSlot('QString')
-        def tvselectedpath_expandedCollapsed(value):
+        def filesTvSelectedPath_expandedCollapsed(value):
             self.tvDirectoryTree.resizeColumnToContents(0)
 
         @pyqtSlot('QString')
-        def filter_Changed(value):
+        def filesFilter_Changed(value):
             self.refreshFilter(value)
-            self.filterChanged.emit(value)
+            self.filesFilterChanged.emit(value)
 
         @pyqtSlot('QString')
-        def gvPreview_ZoomChanged(value):
-            self.lblZoom.setText(f"View at {value:.2f}%")
+        def filesPreview_ZoomChanged(value):
+            self.lblFilesPreviewZoom.setText(f"View at {value:.2f}%")
 
         @pyqtSlot('QString')
-        def filterVisibility_Changed(value):
+        def clipboardPreview_ZoomChanged(value):
+            self.lblClipboardPreviewZoom.setText(f"View at {value:.2f}%")
+
+        @pyqtSlot('QString')
+        def filesFilterVisibility_Changed(value):
             if value:
                 self.__filesApplyFilter(self.filesFilter())
             else:
                 self.__filesApplyFilter('')
 
         @pyqtSlot('QString')
-        def directory_changed(value):
+        def filesDirectory_changed(value):
             self.refresh()
 
         @pyqtSlot('QString')
-        def iconSize_changed(value):
+        def filesIconSize_changed(value):
             self.treeViewFiles.setIconSizeIndex(value)
 
         @pyqtSlot('QString')
-        def iconSize_update():
-            self.__actionApplyIconSize.slider().setValue(self.treeViewFiles.iconSizeIndex())
+        def clipboardIconSize_changed(value):
+            self.treeViewClipboard.setIconSizeIndex(value)
+
+        @pyqtSlot('QString')
+        def filesIconSize_update():
+            self.__actionFilesApplyIconSize.slider().setValue(self.treeViewFiles.iconSizeIndex())
+
+        @pyqtSlot('QString')
+        def clipboardIconSize_update():
+            self.__actionClipboardApplyIconSize.slider().setValue(self.treeViewClipboard.iconSizeIndex())
 
         @pyqtSlot(int)
         def treeViewFiles_iconStartLoad(nbIcons):
@@ -997,37 +1096,36 @@ class BCMainViewTab(QFrame):
         def treeViewFiles_iconProcessed():
             self.__filesProgressSetNext()
 
+        # -- files --
+
         # hide progress bar
         self.__filesProgressStop()
 
-        self.__filesFsWatcher.directoryChanged.connect(directory_changed)
+        self.__filesFsWatcher.directoryChanged.connect(filesDirectory_changed)
 
-        self.__actionApplyTabFilesLayoutFull.triggered.connect(children_Clicked)
-        self.__actionApplyTabFilesLayoutTop.triggered.connect(children_Clicked)
-        self.__actionApplyTabFilesLayoutLeft.triggered.connect(children_Clicked)
-        self.__actionApplyTabFilesLayoutBottom.triggered.connect(children_Clicked)
-        self.__actionApplyTabFilesLayoutRight.triggered.connect(children_Clicked)
-
-        self.__actionApplyIconSize.slider().valueChanged.connect(iconSize_changed)
-
+        self.__actionFilesApplyTabLayoutFull.triggered.connect(children_Clicked)
+        self.__actionFilesApplyTabLayoutTop.triggered.connect(children_Clicked)
+        self.__actionFilesApplyTabLayoutLeft.triggered.connect(children_Clicked)
+        self.__actionFilesApplyTabLayoutBottom.triggered.connect(children_Clicked)
+        self.__actionFilesApplyTabLayoutRight.triggered.connect(children_Clicked)
+        self.__actionFilesApplyIconSize.slider().valueChanged.connect(filesIconSize_changed)
 
         # create menu for layout model button
-        menu = QMenu(self.btTabFilesLayoutModel)
-        menu.addAction(self.__actionApplyTabFilesLayoutFull)
-        menu.addAction(self.__actionApplyTabFilesLayoutTop)
-        menu.addAction(self.__actionApplyTabFilesLayoutLeft)
-        menu.addAction(self.__actionApplyTabFilesLayoutBottom)
-        menu.addAction(self.__actionApplyTabFilesLayoutRight)
+        menu = QMenu(self.btFilesTabLayoutModel)
+        menu.addAction(self.__actionFilesApplyTabLayoutFull)
+        menu.addAction(self.__actionFilesApplyTabLayoutTop)
+        menu.addAction(self.__actionFilesApplyTabLayoutLeft)
+        menu.addAction(self.__actionFilesApplyTabLayoutBottom)
+        menu.addAction(self.__actionFilesApplyTabLayoutRight)
         menu.addSeparator()
-        menu.addAction(self.__actionApplyIconSize)
-        menu.triggered.connect(tabFilesLayoutModel_Clicked)
-        menu.aboutToShow.connect(iconSize_update)
+        menu.addAction(self.__actionFilesApplyIconSize)
+        menu.triggered.connect(filesTabLayoutModel_Clicked)
+        menu.aboutToShow.connect(filesIconSize_update)
 
-        self.btTabFilesLayoutModel.setMenu(menu)
-        self.btTabFilesLayoutModel.clicked.connect(tabFilesLayoutReset_Clicked)
+        self.btFilesTabLayoutModel.setMenu(menu)
+        self.btFilesTabLayoutModel.clicked.connect(filesTabLayoutReset_Clicked)
 
         self.splitterFiles.setSizes([1000, 1000])
-        #self.splitterFiles.splitterMoved.connect(splitterFiles_Moved)
 
         self.twInfo.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
 
@@ -1036,15 +1134,17 @@ class BCMainViewTab(QFrame):
         self.tabFilesDetails.tabBarClicked.connect(children_Clicked)
         self.tvDirectoryTree.activated.connect(children_Clicked)
         self.twInfo.currentChanged.connect(children_Clicked)
-        self.btTabFilesLayoutModel.clicked.connect(children_Clicked)
+        self.btFilesTabLayoutModel.clicked.connect(children_Clicked)
         self.framePathBar.clicked.connect(children_Clicked)
-        self.framePathBar.pathChanged.connect(path_Changed)
-        self.framePathBar.viewChanged.connect(view_Changed)
-        self.framePathBar.filterChanged.connect(filter_Changed)
-        self.framePathBar.filterVisibilityChanged.connect(filterVisibility_Changed)
+        self.framePathBar.pathChanged.connect(filesPath_Changed)
+        self.framePathBar.viewChanged.connect(filesView_Changed)
+        self.framePathBar.filterChanged.connect(filesFilter_Changed)
+        self.framePathBar.filterVisibilityChanged.connect(filesFilterVisibility_Changed)
         self.framePathBar.setPanel(self)
         self.treeViewFiles.focused.connect(children_Clicked)
         self.treeViewFiles.header().sectionClicked.connect(children_Clicked)
+        self.treeViewClipboard.focused.connect(children_Clicked)
+        self.treeViewClipboard.header().sectionClicked.connect(children_Clicked)
 
         self.treeViewFiles.header().setSectionsClickable(True)
         self.treeViewFiles.header().sectionClicked.connect(self.__filesSort)
@@ -1067,8 +1167,8 @@ class BCMainViewTab(QFrame):
 
         # Allow zooming with right mouse button.
         # Drag for zoom box, doubleclick to view full image.
-        self.gvPreview.setCacheMode(QGraphicsView.CacheBackground)
-        self.gvPreview.zoomChanged.connect(gvPreview_ZoomChanged)
+        self.gvFilesPreview.setCacheMode(QGraphicsView.CacheBackground)
+        self.gvFilesPreview.zoomChanged.connect(filesPreview_ZoomChanged)
         self.hsAnimatedFrameNumber.valueChanged.connect(self.__filesAnimatedFrameChange)
         self.tbPlayPause.clicked.connect(self.__filesPlayPauseAnimation)
         self.__filesHidePreview()
@@ -1078,34 +1178,76 @@ class BCMainViewTab(QFrame):
         self.__filesDirTreeModel.setRootPath(QDir.currentPath())
         self.__filesDirTreeModel.setFilter(QDir.AllDirs|QDir.Dirs|QDir.Drives|QDir.NoSymLinks|QDir.NoDotAndDotDot)
         self.tvDirectoryTree.setModel(self.__filesDirTreeModel)
-        self.tvDirectoryTree.selectionModel().selectionChanged.connect(tvselectedpath_changed)
-        self.tvDirectoryTree.expanded.connect(tvselectedpath_expandedCollapsed)
-        self.tvDirectoryTree.collapsed.connect(tvselectedpath_expandedCollapsed)
+        self.tvDirectoryTree.selectionModel().selectionChanged.connect(filesTvSelectedPath_changed)
+        self.tvDirectoryTree.expanded.connect(filesTvSelectedPath_expandedCollapsed)
+        self.tvDirectoryTree.collapsed.connect(filesTvSelectedPath_expandedCollapsed)
         self.tvDirectoryTree.contextMenuEvent = self.__filesContextMenuDirectoryTree
         self.tvDirectoryTree.hideColumn(1) # gide 'size'
         self.tvDirectoryTree.hideColumn(2) # gide 'type'
 
+        # -- clipboard --
+        self.__actionClipboardApplyTabLayoutTop.triggered.connect(children_Clicked)
+        self.__actionClipboardApplyTabLayoutLeft.triggered.connect(children_Clicked)
+        self.__actionClipboardApplyTabLayoutBottom.triggered.connect(children_Clicked)
+        self.__actionClipboardApplyTabLayoutRight.triggered.connect(children_Clicked)
+        self.__actionClipboardApplyIconSize.slider().valueChanged.connect(clipboardIconSize_changed)
+
+
+        # create menu for layout model button
+        menuC = QMenu(self.btClipboardTabLayoutModel)
+        menuC.addAction(self.__actionClipboardApplyTabLayoutTop)
+        menuC.addAction(self.__actionClipboardApplyTabLayoutLeft)
+        menuC.addAction(self.__actionClipboardApplyTabLayoutBottom)
+        menuC.addAction(self.__actionClipboardApplyTabLayoutRight)
+        menuC.addSeparator()
+        menuC.addAction(self.__actionClipboardApplyIconSize)
+        menuC.triggered.connect(clipboardTabLayoutModel_Clicked)
+        menuC.aboutToShow.connect(clipboardIconSize_update)
+
+        self.btClipboardTabLayoutModel.setMenu(menuC)
+        self.btClipboardTabLayoutModel.clicked.connect(clipboardTabLayoutReset_Clicked)
+        self.btClipboardTabLayoutModel.clicked.connect(children_Clicked)
+
+        # Allow zooming with right mouse button.
+        # Drag for zoom box, doubleclick to view full image.
+        self.gvClipboardPreview.setCacheMode(QGraphicsView.CacheBackground)
+        self.gvClipboardPreview.zoomChanged.connect(clipboardPreview_ZoomChanged)
+        self.__clipboardHidePreview()
+
+
         self.__filesRefreshTabLayout()
+        self.__clipboardRefreshTabLayout()
+
+
+    def __refreshPanelHighlighted(self):
+        """Refresh panel highlighted and emit signal"""
+        Debug.print('[BCMainViewTab.__refreshPanelHighlighted] value: {0} // {1}', self.__isHighlighted, self.filesPath())
+
+        self.framePathBar.setHighlighted(self.__isHighlighted)
+        if self.__isHighlighted:
+            self.highlightedStatusChanged.emit(self)
+
+
 
     # -- PRIVATE FILES ---------------------------------------------------------
 
     def __filesHidePreview(self, msg=None):
         """Hide preview and display message"""
         if msg is None:
-            self.lblNoPreview.setText("No image selected")
+            self.lblFilesNoPreview.setText("No image selected")
         elif isinstance(msg, str):
-            self.lblNoPreview.setText(msg)
+            self.lblFilesNoPreview.setText(msg)
         else:
-            self.lblNoPreview.setPixmap(msg)
+            self.lblFilesNoPreview.setPixmap(msg)
 
-        self.swPreview.setCurrentIndex(1)
+        self.swFilesPreview.setCurrentIndex(1)
 
 
     def __filesShowPreview(self, img=None):
         """Hide preview and display message"""
-        self.swPreview.setCurrentIndex(0)
-        self.gvPreview.setImage(img)
-        self.lblNoPreview.setText("...")
+        self.swFilesPreview.setCurrentIndex(0)
+        self.gvFilesPreview.setImage(img)
+        self.lblFilesNoPreview.setText("...")
 
 
     def __filesSort(self, index=None):
@@ -1341,75 +1483,66 @@ class BCMainViewTab(QFrame):
 
     def __filesRefreshTabLayout(self):
         """Refresh layout according to current configuration"""
-        if self.__tabFilesLayout == BCMainViewTabFilesLayout.FULL:
+        if self.__filesTabLayout == BCMainViewTabFilesLayout.FULL:
             self.tabFilesDetails.setVisible(False)
-            self.__actionApplyTabFilesLayoutFull.setChecked(True)
-            self.__actionApplyTabFilesLayoutTop.setChecked(False)
-            self.__actionApplyTabFilesLayoutLeft.setChecked(False)
-            self.__actionApplyTabFilesLayoutBottom.setChecked(False)
-            self.__actionApplyTabFilesLayoutRight.setChecked(False)
+            self.__actionFilesApplyTabLayoutFull.setChecked(True)
+            self.__actionFilesApplyTabLayoutTop.setChecked(False)
+            self.__actionFilesApplyTabLayoutLeft.setChecked(False)
+            self.__actionFilesApplyTabLayoutBottom.setChecked(False)
+            self.__actionFilesApplyTabLayoutRight.setChecked(False)
         else:
-            self.__actionApplyTabFilesLayoutFull.setChecked(False)
+            self.__actionFilesApplyTabLayoutFull.setChecked(False)
 
             self.tabFilesDetails.setVisible(True)
-            if self.__tabFilesLayout == BCMainViewTabFilesLayout.TOP:
+            if self.__filesTabLayout == BCMainViewTabFilesLayout.TOP:
                 self.splitterFiles.setOrientation(Qt.Vertical)
                 self.splitterFiles.insertWidget(0, self.stackFiles)
                 self.splitterPreview.setOrientation(Qt.Horizontal)
                 self.splitterPreview.insertWidget(0, self.frameFileInformation)
                 #self.tabFilesDetailsInformations.layout().setDirection(QBoxLayout.LeftToRight)
 
-                self.__actionApplyTabFilesLayoutTop.setChecked(True)
-                self.__actionApplyTabFilesLayoutLeft.setChecked(False)
-                self.__actionApplyTabFilesLayoutBottom.setChecked(False)
-                self.__actionApplyTabFilesLayoutRight.setChecked(False)
+                self.__actionFilesApplyTabLayoutTop.setChecked(True)
+                self.__actionFilesApplyTabLayoutLeft.setChecked(False)
+                self.__actionFilesApplyTabLayoutBottom.setChecked(False)
+                self.__actionFilesApplyTabLayoutRight.setChecked(False)
 
-            elif self.__tabFilesLayout == BCMainViewTabFilesLayout.LEFT:
+            elif self.__filesTabLayout == BCMainViewTabFilesLayout.LEFT:
                 self.splitterFiles.setOrientation(Qt.Horizontal)
                 self.splitterFiles.insertWidget(0, self.stackFiles)
                 self.splitterPreview.setOrientation(Qt.Vertical)
                 self.splitterPreview.insertWidget(0, self.frameFileInformation)
                 #self.tabFilesDetailsInformations.layout().setDirection(QBoxLayout.TopToBottom)
 
-                self.__actionApplyTabFilesLayoutTop.setChecked(False)
-                self.__actionApplyTabFilesLayoutLeft.setChecked(True)
-                self.__actionApplyTabFilesLayoutBottom.setChecked(False)
-                self.__actionApplyTabFilesLayoutRight.setChecked(False)
+                self.__actionFilesApplyTabLayoutTop.setChecked(False)
+                self.__actionFilesApplyTabLayoutLeft.setChecked(True)
+                self.__actionFilesApplyTabLayoutBottom.setChecked(False)
+                self.__actionFilesApplyTabLayoutRight.setChecked(False)
 
-            elif self.__tabFilesLayout == BCMainViewTabFilesLayout.BOTTOM:
+            elif self.__filesTabLayout == BCMainViewTabFilesLayout.BOTTOM:
                 self.splitterFiles.setOrientation(Qt.Vertical)
                 self.splitterFiles.insertWidget(1, self.stackFiles)
                 self.splitterPreview.setOrientation(Qt.Horizontal)
                 self.splitterPreview.insertWidget(0, self.frameFileInformation)
                 #self.tabFilesDetailsInformations.layout().setDirection(QBoxLayout.LeftToRight)
 
-                self.__actionApplyTabFilesLayoutTop.setChecked(False)
-                self.__actionApplyTabFilesLayoutLeft.setChecked(False)
-                self.__actionApplyTabFilesLayoutBottom.setChecked(True)
-                self.__actionApplyTabFilesLayoutRight.setChecked(False)
+                self.__actionFilesApplyTabLayoutTop.setChecked(False)
+                self.__actionFilesApplyTabLayoutLeft.setChecked(False)
+                self.__actionFilesApplyTabLayoutBottom.setChecked(True)
+                self.__actionFilesApplyTabLayoutRight.setChecked(False)
 
-            elif self.__tabFilesLayout == BCMainViewTabFilesLayout.RIGHT:
+            elif self.__filesTabLayout == BCMainViewTabFilesLayout.RIGHT:
                 self.splitterFiles.setOrientation(Qt.Horizontal)
                 self.splitterFiles.insertWidget(1, self.stackFiles)
                 self.splitterPreview.setOrientation(Qt.Vertical)
                 self.splitterPreview.insertWidget(0, self.frameFileInformation)
                 #self.tabFilesDetailsInformations.layout().setDirection(QBoxLayout.TopToBottom)
 
-                self.__actionApplyTabFilesLayoutTop.setChecked(False)
-                self.__actionApplyTabFilesLayoutLeft.setChecked(False)
-                self.__actionApplyTabFilesLayoutBottom.setChecked(False)
-                self.__actionApplyTabFilesLayoutRight.setChecked(True)
+                self.__actionFilesApplyTabLayoutTop.setChecked(False)
+                self.__actionFilesApplyTabLayoutLeft.setChecked(False)
+                self.__actionFilesApplyTabLayoutBottom.setChecked(False)
+                self.__actionFilesApplyTabLayoutRight.setChecked(True)
 
         self.tabFilesLayoutChanged.emit(self)
-
-
-    def __filesRefreshPanelHighlighted(self):
-        """Refresh panel highlighted and emit signal"""
-        Debug.print('[BCMainViewTab.__filesRefreshPanelHighlighted] value: {0} // {1}', self.__isHighlighted, self.filesPath())
-
-        self.framePathBar.setHighlighted(self.__isHighlighted)
-        if self.__isHighlighted:
-            self.highlightedStatusChanged.emit(self)
 
 
     def __filesDoubleClick(self, item):
@@ -1955,7 +2088,7 @@ class BCMainViewTab(QFrame):
                     self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
 
                 self.__filesShowPreview(file.image())
-                if not self.gvPreview.hasImage():
+                if not self.gvFilesPreview.hasImage():
                     self.__filesHidePreview("Unable to read image")
 
             else:
@@ -1971,7 +2104,7 @@ class BCMainViewTab(QFrame):
                 self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
 
                 #self.__filesHidePreview("Not a recognized image file")
-                qSize=self.swPreview.size()
+                qSize=self.swFilesPreview.size()
                 size=min(qSize.width(), qSize.height()) - 16
                 self.__filesHidePreview(file.icon().pixmap(QSize(size, size)))
         else:
@@ -2116,7 +2249,7 @@ class BCMainViewTab(QFrame):
         if not self.__filesImgReaderAnimated is None:
             if self.__filesImgReaderAnimated.state() != QMovie.Running:
                 self.__filesImgReaderAnimated.jumpToFrame(self.__filesCurrentAnimatedFrame - 1)
-            self.gvPreview.setImage(self.__filesImgReaderAnimated.currentImage(), False)
+            self.gvFilesPreview.setImage(self.__filesImgReaderAnimated.currentImage(), False)
 
 
     def __filesPlayPauseAnimation(self, value):
@@ -2494,6 +2627,132 @@ class BCMainViewTab(QFrame):
                     self.__filesFsWatcher.addPath(path)
 
 
+    # -- PRIVATE CLIPBOARD -----------------------------------------------------
+
+    def __clipboardHidePreview(self, msg=None):
+        """Hide preview and display message"""
+        if msg is None:
+            self.lblClipboardNoPreview.setText("No image selected")
+        elif isinstance(msg, str):
+            self.lblClipboardNoPreview.setText(msg)
+        else:
+            self.lblClipboardNoPreview.setPixmap(msg)
+
+        self.swClipboardPreview.setCurrentIndex(1)
+
+
+    def __clipboardShowPreview(self, img=None):
+        """Hide preview and display message"""
+        self.swClipboardPreview.setCurrentIndex(0)
+        self.gvClipboardPreview.setImage(img)
+        self.lblClipboardNoPreview.setText("...")
+
+
+    def __clipboardSelectionChanged(self, selection=None):
+        """Made update according to current selection"""
+        self.__clipboardSelected = self.treeViewClipboard.selectedItems()
+        self.__clipboardSelectedNbUrl=0
+        self.__clipboardSelectedNbFiles=0
+        self.__clipboardSelectedNbImagesRaster=0
+        self.__clipboardSelectedNbImagesSvg=0
+        self.__clipboardSelectedNbImagesKraNode=0
+        self.__clipboardSelectedNbImagesKraSelection=0
+        self.__clipboardSelectedNbPersistent=0
+        self.__clipboardSelectedNbUrlDownloaded=0
+        self.__clipboardSelectedNbUrlDownloading=0
+        self.__clipboardSelectedNbUrlNotDownloaded=0
+
+        for item in self.__clipboardSelected:
+            if item.persistent():
+                self.__clipboardSelectedNbPersistent+=1
+
+            if item.type() == 'BCClipboardItemUrl':
+                self.__clipboardSelectedNbUrl+=1
+                if item.urlStatus()==BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
+                    self.__clipboardSelectedNbUrlNotDownloaded+=1
+                elif item.urlStatus()==BCClipboardItemUrl.URL_STATUS_DOWNLOADED:
+                    self.__clipboardSelectedNbUrlDownloaded+=1
+                if item.urlStatus()==BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
+                    self.__clipboardSelectedNbUrlDownloading+=1
+            elif item.type() == 'BCClipboardItemFile':
+                self.__clipboardSelectedNbFiles+=1
+            elif item.type() == 'BCClipboardItemImg':
+                self.__clipboardSelectedNbImagesRaster+=1
+            elif item.type() == 'BCClipboardItemSvg':
+                self.__clipboardSelectedNbImagesSvg+=1
+            elif item.type() == 'BCClipboardItemKra':
+                if item.origin()=='application/x-krita-node':
+                    self.__clipboardSelectedNbImagesKraNode+=1
+                elif item.origin()=='application/x-krita-selection':
+                    self.__clipboardSelectedNbImagesKraSelection+=1
+
+        self.__clipboardUpdateStats()
+        if not self.__uiController is None:
+            self.__uiController.updateMenuForPanel()
+
+
+    def __clipboardUpdateStats(self):
+        """Update current status bar with clipboard statistics"""
+        statusText = []
+        text = []
+
+        if not self.__uiController or self.__uiController.clipboard().length()==0:
+            text.append("There's nothing in clipboard that can be managed here")
+            statusText.append("Clipboard content can't be analyzed/used by clipboard manager")
+        else:
+            text.append(f"{len(self.__clipboardSelected)} out of {self.__uiController.clipboard().length()}")
+
+            if self.__clipboardSelectedNbPersistent>0:
+                text.append(f"Persistent: {self.__clipboardSelectedNbPersistent}")
+
+            if self.__clipboardSelectedNbUrlDownloading>0:
+                text.append(f"Downloading: {self.__clipboardSelectedNbUrlDownloading}")
+
+        self.lblClipboardNfo.setText(', '.join(text))
+        self.lblClipboardNfo.setStatusTip(', '.join(statusText))
+
+
+    def __clipboardRefreshTabLayout(self):
+        """Refresh layout according to current configuration"""
+        if self.__clipboardTabLayout == BCMainViewTabClipboardLayout.TOP:
+            self.splitterClipboard.setOrientation(Qt.Vertical)
+            self.splitterClipboard.insertWidget(0, self.treeViewClipboard)
+
+            self.__actionClipboardApplyTabLayoutTop.setChecked(True)
+            self.__actionClipboardApplyTabLayoutLeft.setChecked(False)
+            self.__actionClipboardApplyTabLayoutBottom.setChecked(False)
+            self.__actionClipboardApplyTabLayoutRight.setChecked(False)
+
+        elif self.__clipboardTabLayout == BCMainViewTabClipboardLayout.LEFT:
+            self.splitterClipboard.setOrientation(Qt.Horizontal)
+            self.splitterClipboard.insertWidget(0, self.treeViewClipboard)
+
+            self.__actionClipboardApplyTabLayoutTop.setChecked(False)
+            self.__actionClipboardApplyTabLayoutLeft.setChecked(True)
+            self.__actionClipboardApplyTabLayoutBottom.setChecked(False)
+            self.__actionClipboardApplyTabLayoutRight.setChecked(False)
+
+        elif self.__clipboardTabLayout == BCMainViewTabClipboardLayout.BOTTOM:
+            self.splitterClipboard.setOrientation(Qt.Vertical)
+            self.splitterClipboard.insertWidget(1, self.treeViewClipboard)
+
+            self.__actionClipboardApplyTabLayoutTop.setChecked(False)
+            self.__actionClipboardApplyTabLayoutLeft.setChecked(False)
+            self.__actionClipboardApplyTabLayoutBottom.setChecked(True)
+            self.__actionClipboardApplyTabLayoutRight.setChecked(False)
+
+        elif self.__clipboardTabLayout == BCMainViewTabClipboardLayout.RIGHT:
+            self.splitterClipboard.setOrientation(Qt.Horizontal)
+            self.splitterClipboard.insertWidget(1, self.treeViewClipboard)
+
+            self.__actionClipboardApplyTabLayoutTop.setChecked(False)
+            self.__actionClipboardApplyTabLayoutLeft.setChecked(False)
+            self.__actionClipboardApplyTabLayoutBottom.setChecked(False)
+            self.__actionClipboardApplyTabLayoutRight.setChecked(True)
+
+        self.tabClipboardLayoutChanged.emit(self)
+
+
     # -- PUBLIC GLOBAL ---------------------------------------------------------
 
 
@@ -2570,8 +2829,12 @@ class BCMainViewTab(QFrame):
         #if not (uiController is None or isinstance(uiController, BCUIController)):
         #    raise EInvalidType('Given `uiController` must be a <BCUIController>')
         self.__uiController = uiController
-        self.treeViewClipboard.setClipboard(self.__uiController.clipboard())
         self.framePathBar.setUiController(uiController)
+
+        self.treeViewClipboard.setClipboard(self.__uiController.clipboard())
+        self.treeViewClipboard.selectionModel().selectionChanged.connect(self.__clipboardSelectionChanged)
+        self.__uiController.clipboard().updated.connect(self.__clipboardSelectionChanged)
+        self.__clipboardUpdateStats()
 
 
     def isHighlighted(self):
@@ -2590,7 +2853,7 @@ class BCMainViewTab(QFrame):
             raise EInvalidType("Given `value` must be a <bool>")
         elif self.__isHighlighted != value:
             self.__isHighlighted = value
-            self.__filesRefreshPanelHighlighted()
+            self.__refreshPanelHighlighted()
 
 
     def tabIndex(self, id):
@@ -2667,19 +2930,43 @@ class BCMainViewTab(QFrame):
     def previewBackground(self):
         """Return current background for preview"""
         # TODO: do it for clipboard
-        return self.gvPreview.backgroundType()
+        return self.gvFilesPreview.backgroundType()
 
 
     def setPreviewBackground(self, value):
         """Set current background for preview"""
         # TODO: do it for clipboard
-        self.gvPreview.setBackgroundType(value)
+        self.gvFilesPreview.setBackgroundType(value)
 
 
     def updateFileSizeUnit(self):
         """Update widget if file size unit has been modified"""
         self.treeViewFiles.updateFileSizeUnit()
         self.__filesSelectionChanged(None)
+
+
+    def selectAll(self):
+        """Select all items in current tab"""
+        if self.tabActive()==BCMainViewTabTabs.FILES:
+            self.treeViewFiles.selectAll()
+        elif self.tabActive()==BCMainViewTabTabs.CLIPBOARD:
+            self.treeViewClipboard.selectAll()
+
+
+    def selectNone(self):
+        """Unselect all items in current tab"""
+        if self.tabActive()==BCMainViewTabTabs.FILES:
+            self.treeViewFiles.clearSelection()
+        elif self.tabActive()==BCMainViewTabTabs.CLIPBOARD:
+            self.treeViewClipboard.clearSelection()
+
+
+    def selectInvert(self):
+        """Invert selection all items in current tab"""
+        if self.tabActive()==BCMainViewTabTabs.FILES:
+            self.treeViewFiles.invertSelection()
+        elif self.tabActive()==BCMainViewTabTabs.CLIPBOARD:
+            self.treeViewClipboard.invertSelection()
 
 
     # -- PUBLIC FILES ----------------------------------------------------------
@@ -2730,7 +3017,7 @@ class BCMainViewTab(QFrame):
 
     def filesTabLayout(self):
         """return current layout for file panel"""
-        return self.__tabFilesLayout
+        return self.__filesTabLayout
 
 
     def setFilesTabLayout(self, layout):
@@ -2742,8 +3029,8 @@ class BCMainViewTab(QFrame):
         elif not isinstance(layout, BCMainViewTabFilesLayout):
             raise EInvalidType("Given `layout` must be a <BCMainViewTabFilesLayout>")
 
-        if self.__tabFilesLayout != layout:
-            self.__tabFilesLayout = layout
+        if self.__filesTabLayout != layout:
+            self.__filesTabLayout = layout
             self.__filesRefreshTabLayout()
 
 
@@ -3123,7 +3410,7 @@ class BCMainViewTab(QFrame):
     def setFilesIconSize(self, value=None):
         """Set current icon size"""
         self.treeViewFiles.setIconSizeIndex(value)
-        self.__actionApplyIconSize.slider().setValue(value)
+        self.__actionFilesApplyIconSize.slider().setValue(value)
 
 
     def filesViewThumbnail(self):
@@ -3254,6 +3541,25 @@ class BCMainViewTab(QFrame):
 
     # -- PUBLIC CLIPBOARD ----------------------------------------------------------
 
+    def clipboardTabLayout(self):
+        """return current layout for clipboard panel"""
+        return self.__clipboardTabLayout
+
+
+    def setClipboardTabLayout(self, layout):
+        """Set new layout for clipboard panel"""
+        if layout is None:
+            return
+        if isinstance(layout, str):
+            layout = BCMainViewTabClipboardLayout(layout)
+        elif not isinstance(layout, BCMainViewTabClipboardLayout):
+            raise EInvalidType("Given `layout` must be a <BCMainViewTabClipboardLayout>")
+
+        if self.__clipboardTabLayout != layout:
+            self.__clipboardTabLayout = layout
+            self.__clipboardRefreshTabLayout()
+
+
     def clipboardSelectAll(self):
         """Select all items"""
         self.treeViewClipboard.selectAll()
@@ -3376,4 +3682,34 @@ class BCMainViewTab(QFrame):
     def setClipboardIconSize(self, value=None):
         """Set current icon size"""
         self.treeViewClipboard.setIconSizeIndex(value)
-        #self.__actionApplyIconSize.slider().setValue(value)
+        #self.__actionFilesApplyIconSize.slider().setValue(value)
+
+    def clipboardSelected(self):
+        """Return information about selected clipboard items
+
+        Information is provided as a tuple:
+        [0] list of BCClipboardItem
+        [1] nb selected
+        [2] nb url
+        [3] nb files
+        [4] nb image (raster)
+        [5] nb image (svg)
+        [6] nb kra-nodes
+        [7] nb kra-selection
+        [8] nb url downloaded
+        [9] nb url not downloaded
+        [10] nb url downloading
+        [11] nb persistent
+        """
+        return (self.__clipboardSelected,
+                len(self.__clipboardSelected),
+                self.__clipboardSelectedNbUrl,
+                self.__clipboardSelectedNbFiles,
+                self.__clipboardSelectedNbImagesRaster,
+                self.__clipboardSelectedNbImagesSvg,
+                self.__clipboardSelectedNbImagesKraNode,
+                self.__clipboardSelectedNbImagesKraSelection,
+                self.__clipboardSelectedNbUrlDownloaded,
+                self.__clipboardSelectedNbUrlNotDownloaded,
+                self.__clipboardSelectedNbUrlDownloading,
+                self.__clipboardSelectedNbPersistent)

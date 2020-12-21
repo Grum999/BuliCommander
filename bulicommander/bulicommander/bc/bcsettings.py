@@ -393,6 +393,7 @@ class BCSettingsKey(Enum):
     SESSION_PANEL_VIEW_FILES_COLUMNSIZE =                    'session.panels.panel-{panelId}.view.files.columnSize'
     SESSION_PANEL_VIEW_FILES_THUMBNAIL =                     'session.panels.panel-{panelId}.view.files.thumbnail'
     SESSION_PANEL_VIEW_FILES_ICONSIZE =                      'session.panels.panel-{panelId}.view.files.iconSize'
+    SESSION_PANEL_VIEW_CLIPBOARD_LAYOUT =                    'session.panels.panel-{panelId}.view.clipboard.layout'
     SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSORT =                'session.panels.panel-{panelId}.view.clipboard.columnSort'
     SESSION_PANEL_VIEW_CLIPBOARD_COLUMNORDER =               'session.panels.panel-{panelId}.view.clipboard.columnOrder'
     SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSIZE =                'session.panels.panel-{panelId}.view.clipboard.columnSize'
@@ -744,6 +745,7 @@ class BCSettings(object):
             self.__rules[BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId)] =   ([0,0,0,0,0,0,0,0,0],         BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int))
             self.__rules[BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE.id(panelId=panelId)] =     (0,                           BCSettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8]))
 
+            self.__rules[BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_LAYOUT.id(panelId=panelId)] =       ('top',                   BCSettingsFmt(str, ['top','left','right','bottom']))
             self.__rules[BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSORT.id(panelId=panelId)] =   ([3,False],               BCSettingsFmt(int, [0,1,2,3,4,5,6]), BCSettingsFmt(bool))
             self.__rules[BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNORDER.id(panelId=panelId)] =  ([0,1,2,3,4,5,6],         BCSettingsFmt(int, [0,1,2,3,4,5,6]), BCSettingsFmt(int, [0,1,2,3,4,5,6]), BCSettingsFmt(int, [0,1,2,3,4,5,6]), BCSettingsFmt(int, [0,1,2,3,4,5,6]), BCSettingsFmt(int, [0,1,2,3,4,5,6]), BCSettingsFmt(int, [0,1,2,3,4,5,6]), BCSettingsFmt(int, [0,1,2,3,4,5,6]))
             self.__rules[BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSIZE.id(panelId=panelId)] =   ([0,0,0,0,0,0,0],         BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int), BCSettingsFmt(int))

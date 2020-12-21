@@ -56,6 +56,7 @@ from .bcconvertfiles import BCConvertFilesDialogBox
 from .bchistory import BCHistory
 from .bcmainviewtab import (
         BCMainViewTab,
+        BCMainViewTabClipboardLayout,
         BCMainViewTabFilesLayout,
         BCMainViewTabFilesNfoTabs,
         BCMainViewTabFilesTabs,
@@ -283,6 +284,8 @@ class BCUIController(QObject):
 
             self.commandPanelTabActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId)))
             self.commandPanelTabPosition(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId)))
+
+            self.commandPanelClipboardTabLayout(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_LAYOUT.id(panelId=panelId)))
 
             self.commandPanelFilesTabLayout(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_VIEW_FILES_LAYOUT.id(panelId=panelId)))
             self.commandPanelFilesTabActive(panelId, self.__settings.option(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId)))
@@ -687,6 +690,7 @@ class BCUIController(QObject):
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId), self.__window.panels[panelId].filesColumnSize())
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE.id(panelId=panelId), self.__window.panels[panelId].filesIconSize())
 
+                self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].clipboardTabLayout().value)
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSORT.id(panelId=panelId), self.__window.panels[panelId].clipboardColumnSort())
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].clipboardColumnOrder())
                 self.__settings.setOption(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSIZE.id(panelId=panelId), self.__window.panels[panelId].clipboardColumnSize())
@@ -757,6 +761,10 @@ class BCUIController(QObject):
             self.__window.actionFileMoveToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
             self.__window.actionFileDeleteNoConfirm.setEnabled(selectionInfo[3]>0)
 
+            self.__window.actionSelectAll.setEnabled(True)
+            self.__window.actionSelectNone.setEnabled(True)
+            self.__window.actionSelectInvert.setEnabled(True)
+
             self.__window.actionViewThumbnail.setEnabled(True)
             self.__window.actionViewShowImageFileOnly.setEnabled(True)
             self.__window.actionViewShowBackupFiles.setEnabled(self.optionViewFileManagedOnly())
@@ -775,6 +783,85 @@ class BCUIController(QObject):
             self.__window.menuDocument.menuAction().setVisible(False)
             self.__window.menuGo.menuAction().setVisible(False)
 
+            selectionInfo = self.panel().clipboardSelected()
+
+            if self.__clipboard.length()==0:
+                self.__window.actionSelectAll.setEnabled(False)
+                self.__window.actionSelectNone.setEnabled(False)
+                self.__window.actionSelectInvert.setEnabled(False)
+            else:
+                self.__window.actionSelectAll.setEnabled(True)
+                self.__window.actionSelectNone.setEnabled(True)
+                self.__window.actionSelectInvert.setEnabled(True)
+
+            if selectionInfo[1]==1:
+                # nb item selected(1)
+                self.__window.actionClipboardPushBack.setEnabled(True)
+                self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
+                self.__window.actionClipboardPasteAsNewDocument.setEnabled(True)
+                self.__window.actionClipboardOpen.setEnabled(True)
+
+                if selectionInfo[11]==1:
+                    # nb item persistent(11)
+                    self.__window.actionClipboardSetPersistent.setEnabled(False)
+                    self.__window.actionClipboardSetNotPersistent.setEnabled(True)
+                else:
+                    self.__window.actionClipboardSetPersistent.setEnabled(True)
+                    self.__window.actionClipboardSetNotPersistent.setEnabled(False)
+
+                if selectionInfo[9]==1:
+                    # nb item not downloaded(9)
+                    self.__window.actionClipboardStartDownload.setEnabled(True)
+                    self.__window.actionClipboardStopDownload.setEnabled(False)
+                elif selectionInfo[10]==1:
+                    # nb item downloading(10)
+                    self.__window.actionClipboardStartDownload.setEnabled(False)
+                    self.__window.actionClipboardStopDownload.setEnabled(True)
+                else:
+                    self.__window.actionClipboardStartDownload.setEnabled(False)
+                    self.__window.actionClipboardStopDownload.setEnabled(False)
+            elif selectionInfo[1]>1:
+                # multiple items selected
+                self.__window.actionClipboardPushBack.setEnabled(False)
+                self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
+                self.__window.actionClipboardPasteAsNewDocument.setEnabled(True)
+                self.__window.actionClipboardOpen.setEnabled(True)
+
+                if selectionInfo[11]==0:
+                    # nb item persistent(11)
+                    self.__window.actionClipboardSetPersistent.setEnabled(True)
+                    self.__window.actionClipboardSetNotPersistent.setEnabled(False)
+                elif selectionInfo[11]==self.__clipboard.length():
+                    self.__window.actionClipboardSetPersistent.setEnabled(False)
+                    self.__window.actionClipboardSetNotPersistent.setEnabled(True)
+                else:
+                    # a mix...
+                    self.__window.actionClipboardSetPersistent.setEnabled(True)
+                    self.__window.actionClipboardSetNotPersistent.setEnabled(True)
+
+                if selectionInfo[9]==0:
+                    # nb item not downloaded(9)
+                    self.__window.actionClipboardStartDownload.setEnabled(False)
+                else:
+                    self.__window.actionClipboardStartDownload.setEnabled(True)
+
+                if selectionInfo[10]==0:
+                    # nb item downloading(10)
+                    self.__window.actionClipboardStopDownload.setEnabled(False)
+                else:
+                    self.__window.actionClipboardStopDownload.setEnabled(True)
+            else:
+                # nothing selected
+                self.__window.actionClipboardPushBack.setEnabled(False)
+                self.__window.actionClipboardPasteAsNewLayer.setEnabled(False)
+                self.__window.actionClipboardPasteAsNewDocument.setEnabled(False)
+                self.__window.actionClipboardOpen.setEnabled(False)
+                self.__window.actionClipboardSetPersistent.setEnabled(False)
+                self.__window.actionClipboardSetNotPersistent.setEnabled(False)
+                self.__window.actionClipboardStartDownload.setEnabled(False)
+                self.__window.actionClipboardStopDownload.setEnabled(False)
+
+
             self.__window.actionViewThumbnail.setEnabled(False)
             self.__window.actionViewShowImageFileOnly.setEnabled(False)
             self.__window.actionViewShowBackupFiles.setEnabled(False)
@@ -790,6 +877,10 @@ class BCUIController(QObject):
             self.__window.menuDocument.menuAction().setVisible(False)
             self.__window.menuGo.menuAction().setVisible(False)
 
+            self.__window.actionSelectAll.setEnabled(False)
+            self.__window.actionSelectNone.setEnabled(False)
+            self.__window.actionSelectInvert.setEnabled(False)
+
             self.__window.actionViewThumbnail.setEnabled(False)
             self.__window.actionViewShowImageFileOnly.setEnabled(False)
             self.__window.actionViewShowBackupFiles.setEnabled(False)
@@ -799,7 +890,6 @@ class BCUIController(QObject):
 
             self.__window.actionToolsExportFiles.setEnabled(False)
             self.__window.actionToolsConvertFiles.setEnabled(False)
-
 
     def close(self):
         """When window is about to be closed, execute some cleanup/backup/stuff before exiting BuliCommander"""
@@ -818,7 +908,6 @@ class BCUIController(QObject):
         """change allow refresh for both panels"""
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setAllowRefresh(allow)
-
 
     def optionViewDisplaySecondaryPanel(self):
         """Return current option value"""
@@ -1310,6 +1399,18 @@ class BCUIController(QObject):
 
         return value
 
+    def commandPanelClipboardTabLayout(self, panel, value):
+        """Set panel layout"""
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        if isinstance(value, str):
+            value = BCMainViewTabClipboardLayout(value)
+
+        self.__window.panels[panel].setClipboardTabLayout(value)
+
+        return value
+
     def commandPanelFilesTabLayout(self, panel, value):
         """Set panel layout"""
         if not panel in self.__window.panels:
@@ -1423,21 +1524,21 @@ class BCUIController(QObject):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].filesSelectAll()
+        return self.__window.panels[panel].selectAll()
 
     def commandPanelSelectNone(self, panel):
         """Clear selection"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].filesSelectNone()
+        return self.__window.panels[panel].selectNone()
 
     def commandPanelSelectInvert(self, panel):
         """Clear selection"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].filesSelectInvert()
+        return self.__window.panels[panel].selectInvert()
 
     def commandPanelFilterVisible(self, panel, visible=None):
         """Display the filter

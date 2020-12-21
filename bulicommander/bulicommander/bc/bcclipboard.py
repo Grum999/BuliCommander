@@ -744,6 +744,7 @@ class BCClipboardItemKra(BCClipboardItem):
 
 class BCClipboard(QObject):
     """Manage clipboard content"""
+    updated = Signal()
     updateAdded = Signal(list)
     updateRemoved = Signal(list)
     updateDownload = Signal(bool, QObject)
@@ -938,6 +939,7 @@ class BCClipboard(QObject):
         clipboardUrlItem.downloadFinished.disconnect(self.__urlDownloadFinished)
         clipboardUrlItem.downloadProgress.disconnect(self.__urlDownloadInProgress)
         self.updateDownload.emit(True, clipboardUrlItem)
+        self.updated.emit()
 
     def __emitUpdateAdded(self):
         """Emit update signal with list of hash to update
@@ -947,6 +949,7 @@ class BCClipboard(QObject):
         items=self.__updateAdd.copy()
         self.__updateAdd=[]
         self.updateAdded.emit(items)
+        self.updated.emit()
 
     def __emitUpdateRemoved(self):
         """Emit update signal with list of hash to update
@@ -956,10 +959,12 @@ class BCClipboard(QObject):
         items=self.__updateRemove.copy()
         self.__updateRemove=[]
         self.updateRemoved.emit(items)
+        self.updated.emit()
 
     def __emitPersistentChanged(self, clipboardItem):
         """persistent value has been modified in clipboard item, transmit signal to model"""
         self.updatePersistent.emit(clipboardItem)
+        self.updated.emit()
 
     def __getHash(self, data):
         """Return hash for data"""
