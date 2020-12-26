@@ -2552,7 +2552,7 @@ class BCMainViewTab(QFrame):
             if item.urlStatus() == BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
                 dProgress=item.downloader().downloadProgress()
                 NL="\n"
-                self.lblClipboardNoPreview.setText(i18n(f'Image currently downloading at {bytesSizeToStr(item.downloader().downloadRate())}/s{NL}{round(dProgress[0],2)}% [{bytesSizeToStr(dProgress[1])} of {bytesSizeToStr(dProgress[2])}]{NL}{item.url().url()}'))
+                self.wClipboardPreview.setText(i18n(f'Image currently downloading at {bytesSizeToStr(item.downloader().downloadRate())}/s{NL}{round(dProgress[0],2)}% [{bytesSizeToStr(dProgress[1])} of {bytesSizeToStr(dProgress[2])}]{NL}{item.url().url()}'))
 
 
     def __clipboardRefresh(self):

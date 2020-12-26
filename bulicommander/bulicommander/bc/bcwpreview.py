@@ -110,6 +110,11 @@ class BCWPreview(QWidget):
         self.lblNoPreview.setText("...")
 
 
+    def setText(self, msg):
+        """Set hidden text preview"""
+        self.lblNoPreview.setText(msg)
+
+
     def __animatedFrameChange(self, value):
         """Slider for animated frame has been moved"""
         self.__currentAnimatedFrame = value
