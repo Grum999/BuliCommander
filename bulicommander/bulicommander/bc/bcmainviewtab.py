@@ -120,6 +120,9 @@ from .bcutils import (
         stripTags,
         loadXmlUi
     )
+from .bcwpreview import (
+        BCWPreview
+    )
 
 from ..pktk.pktk import (
         EInvalidType,
@@ -894,10 +897,6 @@ class BCMainViewTab(QFrame):
         self.__filesSelectedNbTotal = 0
         self.__filesSelectedNbReadable = 0
 
-        self.__filesCurrentAnimatedFrame = 0
-        self.__filesMaxAnimatedFrame = 0
-        self.__filesImgReaderAnimated = None
-
         self.__filesDirTreeModel = QFileSystemModel()
 
         self.__filesFsWatcher = QFileSystemWatcher()
@@ -1059,14 +1058,6 @@ class BCMainViewTab(QFrame):
             self.filesFilterChanged.emit(value)
 
         @pyqtSlot('QString')
-        def filesPreview_ZoomChanged(value):
-            self.lblFilesPreviewZoom.setText(f"View at {value:.2f}%")
-
-        @pyqtSlot('QString')
-        def clipboardPreview_ZoomChanged(value):
-            self.lblClipboardPreviewZoom.setText(f"View at {value:.2f}%")
-
-        @pyqtSlot('QString')
         def filesFilterVisibility_Changed(value):
             if value:
                 self.__filesApplyFilter(self.filesFilter())
@@ -1174,16 +1165,6 @@ class BCMainViewTab(QFrame):
         self.treeViewFiles.resizeColumns(False)
         self.treeViewFiles.endUpdate()
 
-        # Allow zooming with right mouse button.
-        # Drag for zoom box, doubleclick to view full image.
-        self.gvFilesPreview.setCacheMode(QGraphicsView.CacheBackground)
-        self.gvFilesPreview.zoomChanged.connect(filesPreview_ZoomChanged)
-        self.hsAnimatedFrameNumber.valueChanged.connect(self.__filesAnimatedFrameChange)
-        self.tbPlayPause.clicked.connect(self.__filesPlayPauseAnimation)
-        self.__filesHidePreview()
-
-        self.wAnimated.setVisible(False)
-
         self.__filesDirTreeModel.setRootPath(QDir.currentPath())
         self.__filesDirTreeModel.setFilter(QDir.AllDirs|QDir.Dirs|QDir.Drives|QDir.NoSymLinks|QDir.NoDotAndDotDot)
         self.tvDirectoryTree.setModel(self.__filesDirTreeModel)
@@ -1217,13 +1198,7 @@ class BCMainViewTab(QFrame):
         self.btClipboardTabLayoutModel.clicked.connect(clipboardTabLayoutReset_Clicked)
         self.btClipboardTabLayoutModel.clicked.connect(children_Clicked)
 
-        # Allow zooming with right mouse button.
-        # Drag for zoom box, doubleclick to view full image.
-        self.gvClipboardPreview.setCacheMode(QGraphicsView.CacheBackground)
-        self.gvClipboardPreview.zoomChanged.connect(clipboardPreview_ZoomChanged)
-        self.__clipboardHidePreview()
-
-
+        # -----
         self.__filesRefreshTabLayout()
         self.__clipboardRefreshTabLayout()
 
@@ -1239,25 +1214,6 @@ class BCMainViewTab(QFrame):
 
 
     # -- PRIVATE FILES ---------------------------------------------------------
-
-    def __filesHidePreview(self, msg=None):
-        """Hide preview and display message"""
-        if msg is None:
-            self.lblFilesNoPreview.setText("No image selected")
-        elif isinstance(msg, str):
-            self.lblFilesNoPreview.setText(msg)
-        else:
-            self.lblFilesNoPreview.setPixmap(msg)
-
-        self.swFilesPreview.setCurrentIndex(1)
-
-
-    def __filesShowPreview(self, img=None):
-        """Hide preview and display message"""
-        self.swFilesPreview.setCurrentIndex(0)
-        self.gvFilesPreview.setImage(img)
-        self.lblFilesNoPreview.setText("...")
-
 
     def __filesSort(self, index=None):
         """Sort files according to column index"""
@@ -1714,12 +1670,7 @@ class BCMainViewTab(QFrame):
         cleanupNfoImageRows()
         cleanupNfoFileRows()
         # reset animation values
-        self.wAnimated.setVisible(False)
-        self.__filesCurrentAnimatedFrame=0
-        self.__filesMaxAnimatedFrame=0
-        if not self.__filesImgReaderAnimated is None:
-            self.__filesImgReaderAnimated.stop()
-            self.__filesImgReaderAnimated = None
+        self.wFilesPreview.hideAnimatedFrames()
 
         # ------------------- !!!!! Here start the noodle spaghetti !!!!! -------------------
         if self.__filesSelectedNbTotal == 1:
@@ -1916,20 +1867,7 @@ class BCMainViewTab(QFrame):
                 elif file.format() in [BCFileManagedFormat.GIF,
                                        BCFileManagedFormat.WEBP]:
                     if imgNfo['imageCount'] > 1:
-                        try:
-                            self.__filesImgReaderAnimated = QMovie(file.fullPathName())
-                            self.__filesImgReaderAnimated.setCacheMode(QMovie.CacheAll)
-                            self.tbPlayPause.setIcon(QIcon(":/images/play"))
-                            self.wAnimated.setVisible(True)
-                            self.lblAnimatedFrameNumber.setText(f"1/{imgNfo['imageCount']}")
-                            self.hsAnimatedFrameNumber.setMaximum(imgNfo['imageCount'])
-                            self.hsAnimatedFrameNumber.setValue(1)
-                            self.__filesMaxAnimatedFrame=imgNfo['imageCount']
-                            self.setFilesCurrentAnimatedFrame(1)
-                            self.__filesAnimatedFrameChange(1)
-                        except Exception as e:
-                            Debug.print('[BCMainViewTab.__filesSelectionChanged] Unable to read animated GIF {0}: {1}', file.fullPathName(), e)
-                            self.__filesImgReaderAnimated = None
+                        self.wFilesPreview.showAnimatedFrames(file.fullPathName(), imgNfo['imageCount'])
 
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'Yes')
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Frames:&nbsp;&nbsp;&nbsp;{imgNfo['imageCount']}</i>")
@@ -2096,9 +2034,9 @@ class BCMainViewTab(QFrame):
                     self.twInfo.setTabEnabled(3, False)
                     self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
 
-                self.__filesShowPreview(file.image())
-                if not self.gvFilesPreview.hasImage():
-                    self.__filesHidePreview("Unable to read image")
+                self.wFilesPreview.showPreview(file.image())
+                if not self.wFilesPreview.hasImage():
+                    self.wFilesPreview.hidePreview("Unable to read image")
 
             else:
                 self.lblImgSize.setText('-')
@@ -2112,10 +2050,10 @@ class BCMainViewTab(QFrame):
                 self.twInfo.setTabEnabled(3, False)
                 self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
 
-                #self.__filesHidePreview("Not a recognized image file")
-                qSize=self.swFilesPreview.size()
+                #self.wFilesPreview.hidePreview("Not a recognized image file")
+                qSize=self.wFilesPreview.size()
                 size=min(qSize.width(), qSize.height()) - 16
-                self.__filesHidePreview(file.icon().pixmap(QSize(size, size)))
+                self.wFilesPreview.hidePreview(file.icon().pixmap(QSize(size, size)))
         else:
             # file
             self.lblPath.setText('-')
@@ -2150,9 +2088,9 @@ class BCMainViewTab(QFrame):
             self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
 
             if self.__filesSelectedNbTotal>1:
-                self.__filesHidePreview("No preview for multiple selection")
+                self.wFilesPreview.hidePreview("No preview for multiple selection")
             else:
-                self.__filesHidePreview("No image selected")
+                self.wFilesPreview.hidePreview("No image selected")
 
 
     def __filesUpdateStats(self):
@@ -2247,36 +2185,6 @@ class BCMainViewTab(QFrame):
                 self.__filesCurrentStats['nbFilteredTotal'] = self.__filesCurrentStats['nbFilteredDir'] + self.__filesCurrentStats['nbFilteredFiles']
 
         self.__filesUpdateStats()
-
-
-    def __filesAnimatedFrameChange(self, value):
-        """Slider for animated frame has been moved"""
-        self.__filesCurrentAnimatedFrame = value
-        nbZ=len(str(self.__filesMaxAnimatedFrame))
-        self.lblAnimatedFrameNumber.setText(f'Frame {self.__filesCurrentAnimatedFrame:>0{nbZ}}/{self.__filesMaxAnimatedFrame} ')
-
-        if not self.__filesImgReaderAnimated is None:
-            if self.__filesImgReaderAnimated.state() != QMovie.Running:
-                self.__filesImgReaderAnimated.jumpToFrame(self.__filesCurrentAnimatedFrame - 1)
-            self.gvFilesPreview.setImage(self.__filesImgReaderAnimated.currentImage(), False)
-
-
-    def __filesPlayPauseAnimation(self, value):
-        """Play/pause current animation"""
-        if not self.__filesImgReaderAnimated is None:
-            if self.__filesImgReaderAnimated.state() == QMovie.Running:
-                self.__filesImgReaderAnimated.setPaused(True)
-                self.tbPlayPause.setIcon(QIcon(":/images/play"))
-                self.__filesImgReaderAnimated.frameChanged.disconnect(self.setCurrentAnimatedFrame)
-            elif self.__filesImgReaderAnimated.state() == QMovie.Paused:
-                self.__filesImgReaderAnimated.frameChanged.connect(self.setCurrentAnimatedFrame)
-                self.__filesImgReaderAnimated.setPaused(False)
-                self.tbPlayPause.setIcon(QIcon(":/images/pause"))
-            else:
-                # not running
-                self.__filesImgReaderAnimated.frameChanged.connect(self.setCurrentAnimatedFrame)
-                self.__filesImgReaderAnimated.start()
-                self.tbPlayPause.setIcon(QIcon(":/images/pause"))
 
 
     def __filesProgressStart(self, maxValue, text=None):
@@ -2660,25 +2568,6 @@ class BCMainViewTab(QFrame):
         self.__filesBlockedRefresh=0
 
 
-    def __clipboardHidePreview(self, msg=None):
-        """Hide preview and display message"""
-        if msg is None:
-            self.lblClipboardNoPreview.setText("No image selected")
-        elif isinstance(msg, str):
-            self.lblClipboardNoPreview.setText(msg)
-        else:
-            self.lblClipboardNoPreview.setPixmap(msg)
-
-        self.swClipboardPreview.setCurrentIndex(1)
-
-
-    def __clipboardShowPreview(self, img=None):
-        """Hide preview and display message"""
-        self.swClipboardPreview.setCurrentIndex(0)
-        self.gvClipboardPreview.setImage(img)
-        self.lblClipboardNoPreview.setText("...")
-
-
     def __clipboardSelectionChanged(self, selection=None):
         """Made update according to current selection"""
         if not self.__clipboardAllowRefresh:
@@ -2733,33 +2622,40 @@ class BCMainViewTab(QFrame):
         if not self.__uiController is None:
             self.__uiController.updateMenuForPanel()
 
+        self.wClipboardPreview.hideAnimatedFrames()
+
         if self.__clipboardSelectedNbTotal == 1:
             # ------------------------------ File ------------------------------
             item = self.__clipboardSelected[0]
 
             if item.type() == 'BCClipboardItemUrl':
                 if item.urlStatus()==BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
-                    self.__clipboardHidePreview("Image not yet downloaded")
+                    self.wClipboardPreview.hidePreview("Image not yet downloaded")
                     return
                 elif item.urlStatus()==BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
-                    self.__clipboardHidePreview("Image currently downloading")
+                    self.wClipboardPreview.hidePreview("Image currently downloading")
                     self.__currentDownloadingItemTracked=item
                     self.__currentDownloadingItemTracked.downloadProgress.connect(self.__clipboardUpdateDownloadInformation)
                     self.__clipboardUpdateDownloadInformation(self.__currentDownloadingItemTracked)
                     return
 
             if item.file():
-                self.__clipboardShowPreview(item.file().image())
-                if not self.gvClipboardPreview.hasImage():
-                    self.__clipboardHidePreview("Unable to read image")
+                self.wClipboardPreview.showPreview(item.file().image())
+                if not self.wClipboardPreview.hasImage():
+                    self.wClipboardPreview.hidePreview("Unable to read image")
+                else:
+                    imgNfo = item.file().getMetaInformation()
+
+                    if 'imageCount' in imgNfo and imgNfo['imageCount'] > 1:
+                        self.wClipboardPreview.showAnimatedFrames(item.file().fullPathName(), imgNfo['imageCount'])
             else:
-                self.__clipboardHidePreview("Unable to read image")
+                self.wClipboardPreview.hidePreview("Unable to read image")
         else:
             # image
             if self.__clipboardSelectedNbTotal>1:
-                self.__clipboardHidePreview("No preview for multiple selection")
+                self.wClipboardPreview.hidePreview("No preview for multiple selection")
             else:
-                self.__clipboardHidePreview("Nothing selected")
+                self.wClipboardPreview.hidePreview("Nothing selected")
 
 
     def __clipboardUpdateStats(self):
@@ -2825,6 +2721,16 @@ class BCMainViewTab(QFrame):
 
 
     # -- PUBLIC GLOBAL ---------------------------------------------------------
+
+    def preview(self):
+        """Return current preview object, according to active panel, otherwise return None"""
+        if self.tabActive() == BCMainViewTabTabs.FILES:
+            return self.wFilesPreview
+        elif self.tabActive() == BCMainViewTabTabs.CLIPBOARD:
+            return self.wClipboardPreview
+        else:
+            return None
+
 
     def setAllowRefresh(self, value):
         """Allow refresh for all panels"""
@@ -2957,13 +2863,13 @@ class BCMainViewTab(QFrame):
     def previewBackground(self):
         """Return current background for preview"""
         # TODO: do it for clipboard
-        return self.gvFilesPreview.backgroundType()
+        return self.wFilesPreview.backgroundType()
 
 
     def setPreviewBackground(self, value):
         """Set current background for preview"""
         # TODO: do it for clipboard
-        self.gvFilesPreview.setBackgroundType(value)
+        self.wFilesPreview.setBackgroundType(value)
 
 
     def updateFileSizeUnit(self):
@@ -3044,50 +2950,6 @@ class BCMainViewTab(QFrame):
 
         if self.__filesAllowRefresh and self.__filesBlockedRefresh > 0:
             self.filesRefresh()
-
-
-    def filesCurrentAnimatedFrame(self):
-        """Return current animated frame number"""
-        return self.__filesCurrentAnimatedFrame
-
-
-    def setFilesCurrentAnimatedFrame(self, value):
-        """set current animated frame number"""
-        if value > 0 and value <= self.__filesMaxAnimatedFrame and value!=self.__filesCurrentAnimatedFrame:
-            self.__filesCurrentAnimatedFrame = value
-            self.hsAnimatedFrameNumber.setValue(self.__filesCurrentAnimatedFrame)
-
-
-    def filesGotoNextAnimatedFrame(self, loop=True):
-        """go to next animated frame number
-
-        if last frame is reached, according to `loop` value:
-            - if True, go to first frame
-            - if False, stop
-        """
-        if self.__filesCurrentAnimatedFrame < self.__filesMaxAnimatedFrame:
-            self.__filesCurrentAnimatedFrame+=1
-        elif loop:
-            self.__filesCurrentAnimatedFrame = 1
-        else:
-            return
-        self.hsAnimatedFrameNumber.setValue(self.__filesCurrentAnimatedFrame)
-
-
-    def filesGotoPrevAnimatedFrame(self, loop=True):
-        """go to previous animated frame number
-
-        if first frame is reached, according to `loop` value:
-            - if True, go to first frame
-            - if False, stop
-        """
-        if self.__filesCurrentAnimatedFrame > 1:
-            self.__filesCurrentAnimatedFrame-=1
-        elif loop:
-            self.__filesCurrentAnimatedFrame = self.__filesMaxAnimatedFrame
-        else:
-            return
-        self.hsAnimatedFrameNumber.setValue(self.__filesCurrentAnimatedFrame)
 
 
     def filesTabLayout(self):

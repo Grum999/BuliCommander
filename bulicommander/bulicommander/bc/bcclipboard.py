@@ -1041,11 +1041,11 @@ class BCClipboard(QObject):
         self.__clipboard = QGuiApplication.clipboard()
 
         # regular expressions used to parse HTML and find urls
-        self.__reHtmlImg=QRegularExpression(r'(?im)<img(?:\s.*\s|\s+)(?:src="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg)[^"]*?)"|src=\'(?<url2>https?:\/\/[^\']+?\.(?:jpeg|jpg|png|gif|svg)[^\']*?)\')[^>]*?>')
-        self.__reHtmlLink=QRegularExpression(r'(?im)<a(?:\s.*\s|\s+)(?:href="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg)[^"]*?)"|href=\'(?<url2>https?:\/\/[^\']+?\.(?:jpeg|jpg|png|gif|svg)[^\']*?)\')[^>]*?>')
+        self.__reHtmlImg=QRegularExpression(r'(?im)<img(?:\s.*\s|\s+)(?:src="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg|webp)[^"]*?)"|src=\'(?<url2>https?:\/\/[^\']+?\.(?:jpeg|jpg|png|gif|svg|webp)[^\']*?)\')[^>]*?>')
+        self.__reHtmlLink=QRegularExpression(r'(?im)<a(?:\s.*\s|\s+)(?:href="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg|webp)[^"]*?)"|href=\'(?<url2>https?:\/\/[^\']+?\.(?:jpeg|jpg|png|gif|svg|webp)[^\']*?)\')[^>]*?>')
 
         # regular expression used to parse PLAIN TEXT and find urls
-        self.__reTextUrl=QRegularExpression(r'(?im)(["\'])?(?<url>https?:\/\/[^\s]+\.(?:jpeg|jpg|png|svg|gif)(?:\?[^\s]*)?)\1?.*')
+        self.__reTextUrl=QRegularExpression(r'(?im)(["\'])?(?<url>https?:\/\/[^\s]+\.(?:jpeg|jpg|png|svg|gif|webp)(?:\?[^\s]*)?)\1?.*')
 
         self.__totalCacheSizeP=0
         self.__totalCacheSizeS=0

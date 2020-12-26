@@ -1185,7 +1185,7 @@
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Parse &lt;span style=&quot; font-style:italic;&quot;&gt;text/HTML &lt;/span&gt;clipboard content to search image URL&lt;/p&gt;&lt;p&gt;All URLs found are added to clipboard manager&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>Parse Text&amp;HTML content for URLs</string>
+            <string>Parse Text and HTML content for URLs</string>
            </property>
           </widget>
          </item>
