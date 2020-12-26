@@ -1166,7 +1166,7 @@
     <string>&amp;Convert files...</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+C</string>
+    <string>Ctrl+Shift+C</string>
    </property>
   </action>
   <action name="actionViewDisplayQuickFilter">
@@ -1242,9 +1242,6 @@
    <property name="statusTip">
     <string>Open image from file stored in cache </string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+O</string>
-   </property>
   </action>
   <action name="actionClipboardSaveAs">
    <property name="icon">
@@ -1299,9 +1296,6 @@
    <property name="text">
     <string>&amp;Quit</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+Q</string>
-   </property>
   </action>
   <action name="actionClipboardPushBack">
    <property name="icon">
@@ -1341,6 +1335,9 @@
    <property name="statusTip">
     <string>Stop download on selected URLs currently downloading content</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+D</string>
+   </property>
   </action>
   <action name="actionClipboardStartDownload">
    <property name="icon">
@@ -1358,6 +1355,9 @@
    </property>
    <property name="statusTip">
     <string>Start download on selected URLs for which content is not yet downloaded</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
  </widget>

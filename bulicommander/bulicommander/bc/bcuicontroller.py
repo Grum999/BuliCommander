@@ -739,6 +739,11 @@ class BCUIController(QObject):
         self.__window.actionViewDisplayQuickFilter.setChecked(self.panel().filesFilterVisible())
 
         if self.panel().tabActive() == BCMainViewTabTabs.FILES:
+            self.__window.actionClipboardQuit.setShortcut(QKeySequence())
+            self.__window.actionClipboardOpen.setShortcut(QKeySequence())
+            self.__window.actionFileQuit.setShortcut("CTRL+Q")
+            self.__window.actionFileOpen.setShortcut("CTRL+O")
+
             self.__window.menuFile.menuAction().setVisible(True)
             self.__window.menuClipboard.menuAction().setVisible(False)
             self.__window.menuDocument.menuAction().setVisible(False)
@@ -785,6 +790,11 @@ class BCUIController(QObject):
             self.__window.actionToolsExportFiles.setEnabled(True)
             self.__window.actionToolsConvertFiles.setEnabled(True)
         elif self.panel().tabActive() == BCMainViewTabTabs.CLIPBOARD:
+            self.__window.actionFileQuit.setShortcut(QKeySequence())
+            self.__window.actionFileOpen.setShortcut(QKeySequence())
+            self.__window.actionClipboardQuit.setShortcut("CTRL+Q")
+            self.__window.actionClipboardOpen.setShortcut("CTRL+O")
+
             self.__window.menuFile.menuAction().setVisible(False)
             self.__window.menuClipboard.menuAction().setVisible(True)
             self.__window.menuDocument.menuAction().setVisible(False)
@@ -888,6 +898,11 @@ class BCUIController(QObject):
             self.__window.actionToolsExportFiles.setEnabled(False)
             self.__window.actionToolsConvertFiles.setEnabled(False)
         elif self.panel().tabActive() == BCMainViewTabTabs.DOCUMENTS:
+            self.__window.actionFileQuit.setShortcut(QKeySequence())
+            self.__window.actionFileOpen.setShortcut(QKeySequence())
+            self.__window.actionClipboardQuit.setShortcut(QKeySequence())
+            self.__window.actionClipboardOpen.setShortcut(QKeySequence())
+
             self.__window.menuFile.menuAction().setVisible(False)
             self.__window.menuClipboard.menuAction().setVisible(False)
             self.__window.menuDocument.menuAction().setVisible(False)
