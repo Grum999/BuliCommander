@@ -149,9 +149,7 @@ class BCClipboardItem(QObject):
         if not isinstance(value, bool):
             raise EInvalidType('Given `value` must be a <bool>')
 
-        # TODO: need to move file:
-        #   persistentCacheDirectory<-->sessionCacheDirectory
-
+        # move file: persistentCacheDirectory<-->sessionCacheDirectory
         if value != self.__persistent:
             # do something only if state is changed
             filesToProcess=[]
@@ -435,7 +433,7 @@ class BCClipboardItemUrl(BCClipboardItem):
             if self.imageSize().width()==-1 or self.imageSize().height()==-1:
                 self.setImageSize(self.file().imageSize())
                 self.saveToCache()
-        else:
+        elif self.__status != BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
             self.__status=BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED
 
     def download(self):
