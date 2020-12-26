@@ -330,6 +330,7 @@ class BCClipboardItemUrl(BCClipboardItem):
             if self.file():
                 self.setImageSize(self.file().imageSize())
             self.saveToCache()
+            self.calculateCacheSize()
         else:
             # operation cancelled (error=5) or download error
             # maybe need to manage this a little bit more...
@@ -342,6 +343,7 @@ class BCClipboardItemUrl(BCClipboardItem):
             self.__status=BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED
             self.setImageSize(QSize(-1,-1))
             self.saveToCache()
+            self.calculateCacheSize()
 
         self.downloadFinished.emit(self)
         try:
@@ -1051,6 +1053,18 @@ class BCClipboard(QObject):
         self.__totalCacheItemP=0
         self.__totalCacheItemS=0
 
+        self.__stats={
+                'persistent': 0,
+                'session': 0,
+                'downloading': 0,
+
+                'urls': 0,
+                'files': 0,
+                'images': 0,
+                'kraNodes': 0,
+                'kraSelection': 0
+            }
+
         self.__enabled=False
         self.__temporaryDisabled=False
 
@@ -1172,6 +1186,21 @@ class BCClipboard(QObject):
         self.__totalCacheSizeS=0
         self.__totalCacheItemP=0
         self.__totalCacheItemS=0
+
+
+        self.__stats={
+                'persistent': 0,
+                'session': 0,
+                'downloading': 0,
+
+                'urls': 0,
+                'files': 0,
+                'images': 0,
+                'kraNodes': 0,
+                'kraSelection': 0
+            }
+
+
         for hash in self.__pool:
             if self.__pool[hash].persistent():
                 self.__totalCacheSizeP+=self.__pool[hash].cacheSize()
@@ -1179,6 +1208,23 @@ class BCClipboard(QObject):
             else:
                 self.__totalCacheSizeS+=self.__pool[hash].cacheSize()
                 self.__totalCacheItemS+=1
+
+            if self.__pool[hash].type()=='BCClipboardItemUrl':
+                self.__stats['urls']+=1
+            elif self.__pool[hash].type()=='BCClipboardItemFile':
+                self.__stats['files']+=1
+            elif self.__pool[hash].type()=='BCClipboardItemImg':
+                self.__stats['images']+=1
+            elif self.__pool[hash].type()=='BCClipboardItemSvg':
+                self.__stats['images']+=1
+            elif self.__pool[hash].type()=='BCClipboardItemKra':
+                if self.__pool[hash].origin()=='application/x-krita-node':
+                    self.__stats['kraNodes']+=1
+                else:
+                    self.__stats['kraSelection']+=1
+
+        self.__stats['persistent']=self.__totalCacheItemP
+        self.__stats['session']=self.__totalCacheItemS
 
     def __addPool(self, item):
         """Add BCClipboardItem to pool"""
@@ -1549,6 +1595,9 @@ class BCClipboard(QObject):
             self.__clipboard.setMimeData(mimeContent)
             self.__temporaryDisabled=False
 
+    def stats(self):
+        """Return statistics"""
+        return self.__stats
 
 class BCClipboardModel(QAbstractTableModel):
     """A model provided by clipboard"""
@@ -1570,7 +1619,7 @@ class BCClipboardModel(QAbstractTableModel):
     __PIN_ICON_WIDTH = 30
     PIN_ICON_SIZE = QSize(22, 22)
 
-    HEADERS = ['', '', i18n("Type"), i18n("Date"), i18n("Size"), i18n("Source"), i18n("Nfo")]
+    HEADERS = ['', '', i18n("Type"), i18n("Date"), i18n("Image size"), i18n("Source"), i18n("Nfo")]
 
     def __init__(self, clipboard, parent=None):
         """Initialise list"""

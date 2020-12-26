@@ -2660,23 +2660,59 @@ class BCMainViewTab(QFrame):
 
     def __clipboardUpdateStats(self):
         """Update current status bar with clipboard statistics"""
-        statusText = []
-        text = []
+        if self.__uiController:
+            cacheP=self.__uiController.clipboard().cacheSizeP(True)
+            cacheS=self.__uiController.clipboard().cacheSizeS()
+            stats=self.__uiController.clipboard().stats()
+        else:
+            cacheP=(0, 0)
+            cacheS=(0, 0)
+            stats=None
+
+        statusTextItems = []
+        textItems = []
 
         if not self.__uiController or self.__uiController.clipboard().length()==0:
-            text.append("There's nothing in clipboard that can be managed here")
-            statusText.append("Clipboard content can't be analyzed/used by clipboard manager")
+            textItems.append("There's nothing in clipboard that can be managed here")
+            statusTextItems.append("Clipboard content can't be analyzed/used by clipboard manager")
         else:
-            text.append(f"{self.__clipboardSelectedNbTotal} out of {self.__uiController.clipboard().length()}")
+            textItems.append(f"{self.__clipboardSelectedNbTotal} out of {self.__uiController.clipboard().length()}")
 
-            if self.__clipboardSelectedNbPersistent>0:
-                text.append(f"Persistent: {self.__clipboardSelectedNbPersistent}")
 
-            if self.__clipboardSelectedNbUrlDownloading>0:
-                text.append(f"Downloading: {self.__clipboardSelectedNbUrlDownloading}")
+            if stats:
+                if self.__clipboardSelectedNbPersistent>0:
+                    textItems.append(f"Persistent: {self.__clipboardSelectedNbPersistent} out of {stats['persistent']}")
+                statusTextItems.append(f"Persistent: {stats['persistent']}")
 
-        self.lblClipboardNfo.setText(', '.join(text))
-        self.lblClipboardNfo.setStatusTip(', '.join(statusText))
+                if self.__clipboardSelectedNbUrlDownloading>0:
+                    textItems.append(f"Downloading: {self.__clipboardSelectedNbUrlDownloading} out of {stats['downloading']}")
+                statusTextItems.append(f"Downloading: {stats['downloading']}")
+
+                if self.__clipboardSelectedNbUrl>0:
+                    textItems.append(f"URLs: {self.__clipboardSelectedNbUrl} out of {stats['urls']}")
+                statusTextItems.append(f"URLs: {stats['urls']}")
+
+                if (self.__clipboardSelectedNbImagesRaster+self.__clipboardSelectedNbImagesSvg)>0:
+                    textItems.append(f"Images: {self.__clipboardSelectedNbImagesRaster+self.__clipboardSelectedNbImagesSvg} out of {stats['images']}")
+                statusTextItems.append(f"Images: {stats['images']}")
+
+                if self.__clipboardSelectedNbImagesKraNode>0:
+                    textItems.append(f"Krita layers: {self.__clipboardSelectedNbImagesKraNode} out of {stats['kraNodes']}")
+                statusTextItems.append(f"Krita layers: {stats['kraNodes']}")
+
+                if self.__clipboardSelectedNbImagesKraSelection>0:
+                    textItems.append(f"Krita selections: {self.__clipboardSelectedNbImagesKraSelection} out of {stats['kraSelection']}")
+                statusTextItems.append(f"Krita selections: {stats['kraSelection']}")
+
+                if self.__clipboardSelectedNbFiles>0:
+                    textItems.append(f"Files: {self.__clipboardSelectedNbFiles} out of {stats['files']}")
+                statusTextItems.append(f"Files: {stats['files']}")
+
+        self.lblClipboardNfo.setText(', '.join(textItems))
+        self.lblClipboardNfo.setStatusTip(', '.join(statusTextItems))
+
+        self.lblClipboardCache.setText(i18n(f'Items: {cacheP[0] + cacheS[0]}, Size: {bytesSizeToStr(cacheP[1] + cacheS[1])}'))
+        self.lblClipboardCache.setStatusTip(i18n(f'Cache content - Session: {bytesSizeToStr(cacheS[1])} in {cacheS[0]} items / Persistent: {bytesSizeToStr(cacheP[1])} in {cacheP[0]} items'))
 
 
     def __clipboardRefreshTabLayout(self):

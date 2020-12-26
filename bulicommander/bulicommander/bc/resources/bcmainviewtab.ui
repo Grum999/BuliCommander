@@ -1672,7 +1672,7 @@
             <item>
              <widget class="QLabel" name="lblClipboardNfo">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -1698,6 +1698,26 @@
               </property>
               <property name="text">
                <string>- - -</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line_5">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="lblClipboardCache">
+              <property name="font">
+               <font>
+                <family>DejaVu Sans Mono</family>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>- -</string>
               </property>
              </widget>
             </item>
