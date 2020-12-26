@@ -22,7 +22,7 @@
         <enum>QTabWidget::West</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <property name="movable">
         <bool>true</bool>
@@ -295,249 +295,7 @@
                        </property>
                        <layout class="QHBoxLayout" name="horizontalLayout_8">
                         <item>
-                         <widget class="QStackedWidget" name="swPreview">
-                          <property name="styleSheet">
-                           <string notr="true"/>
-                          </property>
-                          <property name="currentIndex">
-                           <number>1</number>
-                          </property>
-                          <widget class="QWidget" name="pgPreviewImg">
-                           <layout class="QVBoxLayout" name="verticalLayout_6">
-                            <property name="spacing">
-                             <number>0</number>
-                            </property>
-                            <property name="leftMargin">
-                             <number>0</number>
-                            </property>
-                            <property name="topMargin">
-                             <number>0</number>
-                            </property>
-                            <property name="rightMargin">
-                             <number>0</number>
-                            </property>
-                            <property name="bottomMargin">
-                             <number>0</number>
-                            </property>
-                            <item>
-                             <widget class="BCWImagePreview" name="gvPreview">
-                              <property name="statusTip">
-                               <string>Double-click: zoom to fit/scale 1:1 | Drag: pan | Ctrl+Drag: select and zoom</string>
-                              </property>
-                             </widget>
-                            </item>
-                            <item>
-                             <widget class="QWidget" name="widget_3" native="true">
-                              <layout class="QHBoxLayout" name="horizontalLayout_9">
-                               <property name="leftMargin">
-                                <number>0</number>
-                               </property>
-                               <property name="topMargin">
-                                <number>3</number>
-                               </property>
-                               <property name="rightMargin">
-                                <number>0</number>
-                               </property>
-                               <property name="bottomMargin">
-                                <number>3</number>
-                               </property>
-                               <item>
-                                <widget class="QLabel" name="lblZoom">
-                                 <property name="sizePolicy">
-                                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                                   <horstretch>1</horstretch>
-                                   <verstretch>0</verstretch>
-                                  </sizepolicy>
-                                 </property>
-                                 <property name="minimumSize">
-                                  <size>
-                                   <width>0</width>
-                                   <height>18</height>
-                                  </size>
-                                 </property>
-                                 <property name="baseSize">
-                                  <size>
-                                   <width>0</width>
-                                   <height>0</height>
-                                  </size>
-                                 </property>
-                                 <property name="font">
-                                  <font>
-                                   <pointsize>8</pointsize>
-                                  </font>
-                                 </property>
-                                 <property name="text">
-                                  <string>100.00%</string>
-                                 </property>
-                                 <property name="alignment">
-                                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                                 </property>
-                                </widget>
-                               </item>
-                               <item>
-                                <widget class="QWidget" name="wAnimated" native="true">
-                                 <property name="sizePolicy">
-                                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                                   <horstretch>3</horstretch>
-                                   <verstretch>0</verstretch>
-                                  </sizepolicy>
-                                 </property>
-                                 <property name="baseSize">
-                                  <size>
-                                   <width>0</width>
-                                   <height>0</height>
-                                  </size>
-                                 </property>
-                                 <layout class="QHBoxLayout" name="horizontalLayout_10">
-                                  <property name="spacing">
-                                   <number>0</number>
-                                  </property>
-                                  <property name="leftMargin">
-                                   <number>0</number>
-                                  </property>
-                                  <property name="topMargin">
-                                   <number>0</number>
-                                  </property>
-                                  <property name="rightMargin">
-                                   <number>0</number>
-                                  </property>
-                                  <property name="bottomMargin">
-                                   <number>0</number>
-                                  </property>
-                                  <item>
-                                   <widget class="QLabel" name="lblAnimatedFrameNumber">
-                                    <property name="minimumSize">
-                                     <size>
-                                      <width>0</width>
-                                      <height>18</height>
-                                     </size>
-                                    </property>
-                                    <property name="font">
-                                     <font>
-                                      <pointsize>8</pointsize>
-                                     </font>
-                                    </property>
-                                    <property name="text">
-                                     <string>Frame 0/000  </string>
-                                    </property>
-                                    <property name="alignment">
-                                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                                    </property>
-                                   </widget>
-                                  </item>
-                                  <item>
-                                   <widget class="QSlider" name="hsAnimatedFrameNumber">
-                                    <property name="minimumSize">
-                                     <size>
-                                      <width>0</width>
-                                      <height>0</height>
-                                     </size>
-                                    </property>
-                                    <property name="maximumSize">
-                                     <size>
-                                      <width>16777215</width>
-                                      <height>18</height>
-                                     </size>
-                                    </property>
-                                    <property name="styleSheet">
-                                     <string notr="true">QSlider::groove:horizontal {
-    height: 8px;
-    margin: 0px;
-    }
-QSlider::handle:horizontal {
-    height: 40px;
-    width: 40px;
-    margin: -15px 0px;
-    }</string>
-                                    </property>
-                                    <property name="minimum">
-                                     <number>1</number>
-                                    </property>
-                                    <property name="pageStep">
-                                     <number>10</number>
-                                    </property>
-                                    <property name="orientation">
-                                     <enum>Qt::Horizontal</enum>
-                                    </property>
-                                    <property name="invertedAppearance">
-                                     <bool>false</bool>
-                                    </property>
-                                    <property name="invertedControls">
-                                     <bool>false</bool>
-                                    </property>
-                                    <property name="tickPosition">
-                                     <enum>QSlider::NoTicks</enum>
-                                    </property>
-                                    <property name="tickInterval">
-                                     <number>5</number>
-                                    </property>
-                                   </widget>
-                                  </item>
-                                  <item>
-                                   <widget class="QToolButton" name="tbPlayPause">
-                                    <property name="maximumSize">
-                                     <size>
-                                      <width>18</width>
-                                      <height>18</height>
-                                     </size>
-                                    </property>
-                                    <property name="text">
-                                     <string/>
-                                    </property>
-                                    <property name="icon">
-                                     <iconset resource="dark_icons.qrc">
-                                      <normaloff>:/images/play</normaloff>:/images/play</iconset>
-                                    </property>
-                                    <property name="autoRaise">
-                                     <bool>true</bool>
-                                    </property>
-                                   </widget>
-                                  </item>
-                                 </layout>
-                                </widget>
-                               </item>
-                              </layout>
-                             </widget>
-                            </item>
-                           </layout>
-                          </widget>
-                          <widget class="QWidget" name="pgPreviewNone">
-                           <layout class="QVBoxLayout" name="verticalLayout_7">
-                            <property name="leftMargin">
-                             <number>0</number>
-                            </property>
-                            <property name="topMargin">
-                             <number>0</number>
-                            </property>
-                            <property name="rightMargin">
-                             <number>0</number>
-                            </property>
-                            <property name="bottomMargin">
-                             <number>0</number>
-                            </property>
-                            <item>
-                             <widget class="QLabel" name="lblNoPreview">
-                              <property name="font">
-                               <font>
-                                <pointsize>12</pointsize>
-                                <weight>75</weight>
-                                <bold>true</bold>
-                               </font>
-                              </property>
-                              <property name="autoFillBackground">
-                               <bool>false</bool>
-                              </property>
-                              <property name="text">
-                               <string>No image selected</string>
-                              </property>
-                              <property name="alignment">
-                               <set>Qt::AlignCenter</set>
-                              </property>
-                             </widget>
-                            </item>
-                           </layout>
-                          </widget>
-                         </widget>
+                         <widget class="BCWPreview" name="wFilesPreview" native="true"/>
                         </item>
                        </layout>
                       </widget>
@@ -630,7 +388,7 @@ QSlider::handle:horizontal {
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>773</width>
+                                    <width>1494</width>
                                     <height>639</height>
                                    </rect>
                                   </property>
@@ -851,8 +609,8 @@ QSlider::handle:horizontal {
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>773</width>
-                                    <height>638</height>
+                                    <width>1494</width>
+                                    <height>639</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1079,8 +837,8 @@ QSlider::handle:horizontal {
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>773</width>
-                                    <height>638</height>
+                                    <width>1494</width>
+                                    <height>639</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1336,8 +1094,8 @@ QSlider::handle:horizontal {
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>773</width>
-                                    <height>638</height>
+                                    <width>1494</width>
+                                    <height>639</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1675,12 +1433,12 @@ QSlider::handle:horizontal {
               <property name="font">
                <font>
                 <pointsize>7</pointsize>
-                <weight>50</weight>
-                <bold>false</bold>
+                <weight>75</weight>
+                <bold>true</bold>
                </font>
               </property>
               <property name="value">
-               <number>0</number>
+               <number>50</number>
               </property>
              </widget>
             </item>
@@ -1733,7 +1491,7 @@ QSlider::handle:horizontal {
              </widget>
             </item>
             <item>
-             <widget class="QToolButton" name="btTabFilesLayoutModel">
+             <widget class="QToolButton" name="btFilesTabLayoutModel">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -1826,25 +1584,207 @@ QSlider::handle:horizontal {
         <attribute name="title">
          <string>Clipboard</string>
         </attribute>
-        <widget class="QLabel" name="label_19">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>10</y>
-           <width>261</width>
-           <height>24</height>
-          </rect>
+        <layout class="QVBoxLayout" name="verticalLayout_10">
+         <property name="leftMargin">
+          <number>2</number>
          </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+         <property name="topMargin">
+          <number>2</number>
          </property>
-         <property name="text">
-          <string>Not yet implemented...</string>
+         <property name="rightMargin">
+          <number>2</number>
          </property>
-        </widget>
+         <property name="bottomMargin">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QWidget" name="widget_5" native="true">
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QSplitter" name="splitterClipboard">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="BCMainViewClipboard" name="treeViewClipboard">
+               <property name="font">
+                <font>
+                 <family>DejaVu Sans Mono</family>
+                </font>
+               </property>
+               <property name="editTriggers">
+                <set>QAbstractItemView::NoEditTriggers</set>
+               </property>
+               <property name="showDropIndicator" stdset="0">
+                <bool>false</bool>
+               </property>
+               <property name="alternatingRowColors">
+                <bool>true</bool>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::ExtendedSelection</enum>
+               </property>
+               <property name="rootIsDecorated">
+                <bool>false</bool>
+               </property>
+               <property name="uniformRowHeights">
+                <bool>true</bool>
+               </property>
+               <property name="itemsExpandable">
+                <bool>false</bool>
+               </property>
+               <property name="sortingEnabled">
+                <bool>true</bool>
+               </property>
+               <property name="allColumnsShowFocus">
+                <bool>true</bool>
+               </property>
+               <property name="expandsOnDoubleClick">
+                <bool>false</bool>
+               </property>
+              </widget>
+              <widget class="BCWPreview" name="wClipboardPreview" native="true"/>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" name="wBottom_2" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_12">
+            <property name="leftMargin">
+             <number>8</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>8</number>
+            </property>
+            <property name="bottomMargin">
+             <number>2</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="lblClipboardNfo">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <family>DejaVu Sans Mono</family>
+                <pointsize>9</pointsize>
+                <italic>false</italic>
+               </font>
+              </property>
+              <property name="toolTip">
+               <string>Number of files, size of files</string>
+              </property>
+              <property name="toolTipDuration">
+               <number>2500</number>
+              </property>
+              <property name="statusTip">
+               <string>Number of files, size of files</string>
+              </property>
+              <property name="whatsThis">
+               <string>Number of files, size of files</string>
+              </property>
+              <property name="text">
+               <string>- - -</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line_5">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="lblClipboardCache">
+              <property name="font">
+               <font>
+                <family>DejaVu Sans Mono</family>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>- -</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line_2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="btClipboardTabLayoutModel">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>48</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="baseSize">
+               <size>
+                <width>32</width>
+                <height>32</height>
+               </size>
+              </property>
+              <property name="cursor">
+               <cursorShape>PointingHandCursor</cursorShape>
+              </property>
+              <property name="toolTip">
+               <string>Reset default layout</string>
+              </property>
+              <property name="statusTip">
+               <string>Reset default layout</string>
+              </property>
+              <property name="whatsThis">
+               <string>Reset default layout</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset resource="dark_icons.qrc">
+                <normaloff>:/images/dashboard</normaloff>:/images/dashboard</iconset>
+              </property>
+              <property name="popupMode">
+               <enum>QToolButton::MenuButtonPopup</enum>
+              </property>
+              <property name="toolButtonStyle">
+               <enum>Qt::ToolButtonIconOnly</enum>
+              </property>
+              <property name="autoRaise">
+               <bool>true</bool>
+              </property>
+              <property name="arrowType">
+               <enum>Qt::NoArrow</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </widget>
      </item>
@@ -1865,9 +1805,15 @@ QSlider::handle:horizontal {
    <header>bulicommander.bc.bcmainviewtab</header>
   </customwidget>
   <customwidget>
-   <class>BCWImagePreview</class>
-   <extends>QGraphicsView</extends>
-   <header>bulicommander.bc.bcwimagepreview</header>
+   <class>BCMainViewClipboard</class>
+   <extends>QTreeView</extends>
+   <header>bulicommander.bc.bcmainviewtab</header>
+  </customwidget>
+  <customwidget>
+   <class>BCWPreview</class>
+   <extends>QWidget</extends>
+   <header>bulicommander.bc.bcwpreview</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

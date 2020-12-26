@@ -39,17 +39,7 @@ from ..pktk.pktk import (
         EInvalidValue
     )
 
-class BCTimer(object):
-
-    @staticmethod
-    def sleep(value):
-        """Do a sleep of `value` milliseconds
-
-        use of python timer.sleep() method seems to be not recommanded in a Qt application.. ??
-        """
-        loop = QEventLoop()
-        QTimer.singleShot(value, loop.quit)
-        loop.exec()
+from .bcutils import BCTimer
 
 
 class BCWorkerSignals(QObject):

@@ -10,7 +10,7 @@
    viewBox="0 0 16 16"
    version="1.1"
    id="svg5"
-   sodipodi:docname="text.svg"
+   sodipodi:docname="pinned.svg"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
    width="32"
    height="32">
@@ -22,7 +22,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -39,16 +39,17 @@
      inkscape:window-height="2056"
      id="namedview7"
      showgrid="false"
-     inkscape:zoom="22.627417"
-     inkscape:cx="15.790224"
-     inkscape:cy="15.956349"
-     inkscape:window-x="1920"
-     inkscape:window-y="0"
+     inkscape:zoom="11.313709"
+     inkscape:cx="27.411938"
+     inkscape:cy="3.0883444"
+     inkscape:window-x="3505"
+     inkscape:window-y="26"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg5"
      inkscape:snap-bbox="true"
      inkscape:bbox-nodes="true"
-     inkscape:snap-page="true" />
+     inkscape:snap-page="true"
+     inkscape:snap-bbox-edge-midpoints="true" />
   <defs
      id="defs3051">
     <style
@@ -60,9 +61,9 @@
       </style>
   </defs>
   <path
-     inkscape:connector-curvature="0"
-     style="color:#232629;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1"
-     d="M 7.3828124,3 3,13 H 4.3574218 L 5.546875,10.271484 h 4.927734 L 11.626953,13 h 1.373046 L 8.748047,3 Z M 8.0625,4.207031 c 0.11325,0.342 0.711625,1.8933903 1.7968751,4.6503906 L 10.083985,9.3632808 H 5.9414062 Z"
+     id="path354"
      class="ColorScheme-Text"
-     id="path4" />
+     d="M 10,1.000002 C 9.318812,1.6811912 8.930382,2.8976023 9.722656,4.2265635 L 6.003906,6.7148447 C 5.541552,6.5282888 5.045264,6.3891846 4.554688,6.3867203 3.917024,6.3835203 3.546876,6.4531293 3,7.0000018 L 5,9.4623647 2,13 1,15 3,14 6.585576,11.000002 9,12.999999 C 9.968594,12.031406 9.719156,11.055706 9.285156,9.996096 L 11.773438,6.277345 C 13.102399,7.0696186 14.31881,6.6811907 15,6.0000022 Z"
+     style="color:#232629;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1"
+     inkscape:connector-curvature="0" />
 </svg>

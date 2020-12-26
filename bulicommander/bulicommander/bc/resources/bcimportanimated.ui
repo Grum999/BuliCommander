@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>200</height>
+    <width>950</width>
+    <height>250</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>780</width>
-    <height>200</height>
+    <width>950</width>
+    <height>250</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>950</width>
+    <width>1920</width>
     <height>250</height>
    </size>
   </property>
@@ -223,7 +223,7 @@
         <string>Use default importer plugin from Krita</string>
        </property>
        <property name="text">
-        <string>D&amp;efault Krita's importer</string>
+        <string>Default &amp;Krita's importer</string>
        </property>
       </widget>
      </item>

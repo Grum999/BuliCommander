@@ -3,6 +3,12 @@
     <file alias="buli-rounded-border">png/buli-powered-64x64-rounded-border.png</file>
   </qresource>
   <qresource prefix="images">
+    <file alias="url_downloadstart">svg/dark/32dp/url_downloadstart.svg</file>
+    <file alias="url_downloadstop">svg/dark/32dp/url_downloadstop.svg</file>
+    <file alias="clipboard_pushback">svg/dark/32dp/clipboard_pushback.svg</file>
+    <file alias="pinned">svg/dark/32dp/pinned.svg</file>
+    <file alias="url">svg/dark/32dp/url.svg</file>
+    <file alias="clipboard_new">svg/dark/32dp/clipboard_new.svg</file>
     <file alias="tree_expand">svg/dark/32dp/list_tree_expand.svg</file>
     <file alias="tree_collapse">svg/dark/32dp/list_tree_collapse.svg</file>
     <file alias="convert">svg/dark/32dp/convert.svg</file>
@@ -77,6 +83,11 @@
     <file alias="zoom_fit">svg/dark/32dp/zoom_fit.svg</file>
   </qresource>
   <qresource prefix="images_d">
+    <file alias="url_downloadstop">svg/dark/32dp-disabled/url_downloadstop.svg</file>
+    <file alias="url_downloadstart">svg/dark/32dp-disabled/url_downloadstart.svg</file>
+    <file alias="clipboard">svg/dark/32dp-disabled/clipboard.svg</file>
+    <file alias="clipboard_new">svg/dark/32dp-disabled/clipboard_new.svg</file>
+    <file alias="clipboard_pushback">svg/dark/32dp-disabled/clipboard_pushback.svg</file>
     <file alias="saved_view_search">svg/dark/32dp-disabled/saved_view_search.svg</file>
     <file alias="saved_view_file">svg/dark/32dp-disabled/saved_view_file.svg</file>
     <file alias="saved_view_delete">svg/dark/32dp-disabled/saved_views_delete.svg</file>

@@ -62,6 +62,8 @@ class BCSysTray(object):
         def actionQuitBc(action):
             self.__uiController.commandQuit()
 
+        def actionClipboardManagerActive(action):
+            self.__uiController.commandSettingsClipboardCacheSystrayMode(action)
 
         # Note: theme must be loaded before BCSysTray is instancied (otherwise no icon will be set)
         self.__buliIcon = buildIcon([(QPixmap(':/buli/buli-rounded-border'), QIcon.Normal)])
@@ -82,12 +84,22 @@ class BCSysTray(object):
         self.__actionCloseBc=QAction(i18n('Quit Buli Commander'))
         self.__actionCloseBc.triggered.connect(actionQuitBc)
 
+        self.__actionClipboardActive=QAction(i18n('Clipboard manager active'))
+        self.__actionClipboardActive.triggered.connect(actionClipboardManagerActive)
+        self.__actionClipboardActive.setCheckable(True)
+        if not self.__uiController is None:
+            self.__actionClipboardActive.setChecked(self.__uiController.commandSettingsClipboardCacheSystrayMode())
+
         self.__menu = QMenu()
+        self.__menu.addAction(self.__actionClipboardActive)
+        self.__menu.addSeparator()
         self.__menu.addAction(self.__actionAbout)
         self.__menu.addSeparator()
         self.__menu.addAction(self.__actionOpenBc)
         self.__menu.addSeparator()
         self.__menu.addAction(self.__actionCloseBc)
+
+        self.__menu.aboutToShow.connect(self.__displayContextMenu)
 
         self.__tray.setContextMenu(self.__menu)
 
@@ -96,11 +108,13 @@ class BCSysTray(object):
         """Display context menu on systray icon"""
         # menu
 
-        # About BC
-        # --------
-        # Open BC  | Show BC            ==> Open is not yet opened, otherwise show
-        # Quit BC
-        print("__displayContextMenu()")
+        # [ ] Clipboard manager active
+        # ----------------------------
+        #     About BC
+        # ----------------------------
+        #     Open BC
+        #     Quit BC
+        self.__actionClipboardActive.setEnabled((self.__uiController.commandSettingsClipboardCacheMode() != 'manual'))
 
 
     def __displayBuliCommander(self):
@@ -115,7 +129,8 @@ class BCSysTray(object):
         """System tray icon has been activated"""
         if activationReason == QSystemTrayIcon.Context:
             # in fact, does nothing if context menu is set...?
-            self.__displayContextMenu()
+            # use menu.aboutToShow() instead
+            pass
         elif QSystemTrayIcon.DoubleClick:
             self.__displayBuliCommander()
         else:
@@ -157,7 +172,7 @@ class BCSysTray(object):
 
     def visibleMode(self):
         """Return current Systray visible mode"""
-        return self.__tray.isVisible()
+        return self.__visibleMode
 
 
     def setVisibleMode(self, mode):
@@ -209,4 +224,3 @@ class BCSysTray(object):
     def messageCritical(title, message):
         """Display a critical message"""
         BCSysTray.__selfInstance.__popMessage(title, message, QSystemTrayIcon.Critical)
-

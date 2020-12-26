@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>699</width>
+    <width>726</width>
     <height>595</height>
    </rect>
   </property>
@@ -54,7 +54,7 @@
       <addaction name="actionFileDelete"/>
       <addaction name="actionFileRename"/>
       <addaction name="separator"/>
-      <addaction name="actionQuit"/>
+      <addaction name="actionFileQuit"/>
      </widget>
      <widget class="QMenu" name="menuEdit">
       <property name="title">
@@ -145,8 +145,8 @@
       <addaction name="actionViewShowBackupFiles"/>
       <addaction name="actionViewShowHiddenFiles"/>
       <addaction name="separator"/>
-      <addaction name="actionViewDisplaySecondaryPanel"/>
       <addaction name="actionViewDisplayQuickFilter"/>
+      <addaction name="actionViewDisplaySecondaryPanel"/>
       <addaction name="separator"/>
       <addaction name="actionViewSwapPanels"/>
      </widget>
@@ -175,7 +175,31 @@
       </property>
       <addaction name="actionHelpAboutBC"/>
      </widget>
+     <widget class="QMenu" name="menuClipboard">
+      <property name="title">
+       <string>&amp;Clipboard</string>
+      </property>
+      <addaction name="actionClipboardPushBack"/>
+      <addaction name="actionClipboardPasteAsNewLayer"/>
+      <addaction name="actionClipboardPasteAsNewDocument"/>
+      <addaction name="actionClipboardOpen"/>
+      <addaction name="separator"/>
+      <addaction name="actionClipboardSetPersistent"/>
+      <addaction name="actionClipboardSetNotPersistent"/>
+      <addaction name="separator"/>
+      <addaction name="actionClipboardStartDownload"/>
+      <addaction name="actionClipboardStopDownload"/>
+      <addaction name="separator"/>
+      <addaction name="actionClipboardQuit"/>
+     </widget>
+     <widget class="QMenu" name="menuDocument">
+      <property name="title">
+       <string>Doc&amp;ument</string>
+      </property>
+     </widget>
      <addaction name="menuFile"/>
+     <addaction name="menuClipboard"/>
+     <addaction name="menuDocument"/>
      <addaction name="menuEdit"/>
      <addaction name="menuGo"/>
      <addaction name="menuView"/>
@@ -402,7 +426,7 @@
     <string>Archive selected files (tar.gz, zip)</string>
    </property>
   </action>
-  <action name="actionQuit">
+  <action name="actionFileQuit">
    <property name="icon">
     <iconset resource="dark_icons.qrc">
      <normaloff>:/images/exit</normaloff>:/images/exit</iconset>
@@ -1142,7 +1166,7 @@
     <string>&amp;Convert files...</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+C</string>
+    <string>Ctrl+Shift+C</string>
    </property>
   </action>
   <action name="actionViewDisplayQuickFilter">
@@ -1154,10 +1178,186 @@
      <normaloff>:/images/filter</normaloff>:/images/filter</iconset>
    </property>
    <property name="text">
-    <string>Display quick filter</string>
+    <string>&amp;Display quick filter</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+F</string>
+   </property>
+  </action>
+  <action name="actionClipboardPasteAsNewLayer">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard</normaloff>
+     <normalon>:/images/clipboard</normalon>
+     <disabledoff>:/images_d/clipboard</disabledoff>
+     <disabledon>:/images_d/clipboard</disabledon>:/images/clipboard</iconset>
+   </property>
+   <property name="text">
+    <string>Paste as new &amp;layer</string>
+   </property>
+   <property name="toolTip">
+    <string>Paste image into a new layer</string>
+   </property>
+   <property name="statusTip">
+    <string>Image data content is pasted into a new layer</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="actionClipboardPasteAsNewDocument">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard_new</normaloff>
+     <normalon>:/images/clipboard_new</normalon>
+     <disabledoff>:/images_d/clipboard_new</disabledoff>
+     <disabledon>:/images_d/clipboard_new</disabledon>:/images/clipboard_new</iconset>
+   </property>
+   <property name="text">
+    <string>Past&amp;e as new document</string>
+   </property>
+   <property name="iconText">
+    <string>Paste image into a new document</string>
+   </property>
+   <property name="statusTip">
+    <string>Image data content is pasted into a new document</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+V</string>
+   </property>
+  </action>
+  <action name="actionClipboardOpen">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/folder_open</normaloff>
+     <disabledoff>:/images_d/folder_open</disabledoff>
+     <disabledon>:/images_d/folder_open</disabledon>:/images/folder_open</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Open</string>
+   </property>
+   <property name="toolTip">
+    <string>Open image stored in cache </string>
+   </property>
+   <property name="statusTip">
+    <string>Open image from file stored in cache </string>
+   </property>
+  </action>
+  <action name="actionClipboardSaveAs">
+   <property name="icon">
+    <iconset theme="document-save-as">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Copy to other panel</string>
+   </property>
+  </action>
+  <action name="actionClipboardSetPersistent">
+   <property name="icon">
+    <iconset theme="lock">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Set persistent</string>
+   </property>
+   <property name="toolTip">
+    <string>Set clipboard content as persistent</string>
+   </property>
+   <property name="statusTip">
+    <string>Set clipboard content to be available on next Krita session</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="actionClipboardSetNotPersistent">
+   <property name="icon">
+    <iconset theme="unlock">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Set &amp;not persistent</string>
+   </property>
+   <property name="toolTip">
+    <string>Set clipboard content as not persistent</string>
+   </property>
+   <property name="statusTip">
+    <string>Set clipboard content to be available only for current Krita session</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+P</string>
+   </property>
+  </action>
+  <action name="actionClipboardQuit">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/exit</normaloff>:/images/exit</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+  </action>
+  <action name="actionClipboardPushBack">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard_pushback</normaloff>
+     <normalon>:/images/clipboard_pushback</normalon>
+     <disabledoff>:/images_d/clipboard_pushback</disabledoff>
+     <disabledon>:/images_d/clipboard_pushback</disabledon>:/images/clipboard_pushback</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Push back to clipboard</string>
+   </property>
+   <property name="toolTip">
+    <string>Copy current item to clipboard</string>
+   </property>
+   <property name="statusTip">
+    <string>Original data content is pushed back to clipboard</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionClipboardStopDownload">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/url_downloadstop</normaloff>
+     <normalon>:/images/url_downloadstop</normalon>
+     <disabledoff>:/images_d/url_downloadstop</disabledoff>
+     <disabledon>:/images_d/url_downloadstop</disabledon>:/images/url_downloadstop</iconset>
+   </property>
+   <property name="text">
+    <string>Stop &amp;download</string>
+   </property>
+   <property name="toolTip">
+    <string>Stop download on selected URLs</string>
+   </property>
+   <property name="statusTip">
+    <string>Stop download on selected URLs currently downloading content</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+D</string>
+   </property>
+  </action>
+  <action name="actionClipboardStartDownload">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/url_downloadstart</normaloff>
+     <normalon>:/images/url_downloadstart</normalon>
+     <disabledoff>:/images_d/url_downloadstart</disabledoff>
+     <disabledon>:/images_d/url_downloadstart</disabledon>:/images/url_downloadstart</iconset>
+   </property>
+   <property name="text">
+    <string>Sta&amp;rt download</string>
+   </property>
+   <property name="toolTip">
+    <string>Start download on selected URLs</string>
+   </property>
+   <property name="statusTip">
+    <string>Start download on selected URLs for which content is not yet downloaded</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
  </widget>

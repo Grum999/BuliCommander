@@ -10,7 +10,7 @@
    viewBox="0 0 16 16"
    version="1.1"
    id="svg5"
-   sodipodi:docname="text.svg"
+   sodipodi:docname="clipboard_pushback.svg"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
    width="32"
    height="32">
@@ -22,7 +22,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -39,9 +39,9 @@
      inkscape:window-height="2056"
      id="namedview7"
      showgrid="false"
-     inkscape:zoom="22.627417"
-     inkscape:cx="15.790224"
-     inkscape:cy="15.956349"
+     inkscape:zoom="16"
+     inkscape:cx="2.7207807"
+     inkscape:cy="12.96087"
      inkscape:window-x="1920"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
@@ -60,9 +60,8 @@
       </style>
   </defs>
   <path
-     inkscape:connector-curvature="0"
-     style="color:#232629;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1"
-     d="M 7.3828124,3 3,13 H 4.3574218 L 5.546875,10.271484 h 4.927734 L 11.626953,13 h 1.373046 L 8.748047,3 Z M 8.0625,4.207031 c 0.11325,0.342 0.711625,1.8933903 1.7968751,4.6503906 L 10.083985,9.3632808 H 5.9414062 Z"
-     class="ColorScheme-Text"
-     id="path4" />
+     style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:2"
+     d="M 10 4 L 10 6 L 6 6 L 6 28 L 14 28 L 16 28 L 16 26 L 14 26 L 8 26 L 8 24 L 8 12 L 8 8 L 10 8 L 10 10 L 22 10 L 22 8 L 24 8 L 24 12 L 24 18 L 26 18 L 26 6 L 22 6 L 22 4 L 10 4 z M 10 12 L 10 14 L 20 14 L 22 14 L 22 12 L 20 12 L 10 12 z M 10 16 L 10 18 L 16 18 L 18 18 L 18 16 L 10 16 z M 21 18 L 20.5625 18.373047 L 16 23 L 16 25.820312 L 20 21.820312 L 20 28 L 22 28 L 22 21.820312 L 26 25.820312 L 26 23 L 21.4375 18.373047 L 21 18 z M 10 20 L 10 22 L 16 22 L 16 20 L 10 20 z "
+     transform="scale(0.5)"
+     id="path77-3" />
 </svg>

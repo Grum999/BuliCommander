@@ -118,8 +118,8 @@ class BCMainWindow(QMainWindow):
 
         self.mainViewTab0.highlightedStatusChanged.connect(panel_HighlightStatusChanged)
         self.mainViewTab1.highlightedStatusChanged.connect(panel_HighlightStatusChanged)
-        self.mainViewTab0.pathChanged.connect(panel_pathChanged)
-        self.mainViewTab1.pathChanged.connect(panel_pathChanged)
+        self.mainViewTab0.filesPathChanged.connect(panel_pathChanged)
+        self.mainViewTab1.filesPathChanged.connect(panel_pathChanged)
         #self.mainViewTab0.tabFilesLayoutChanged.connect(panel_TabFilesLayoutChanged)
         #self.mainViewTab1.tabFilesLayoutChanged.connect(panel_TabFilesLayoutChanged)
         #self.splitterMainView.splitterMoved.connect(splitterMainView_Moved)
@@ -139,7 +139,19 @@ class BCMainWindow(QMainWindow):
         self.actionFileMoveToOtherPanel.triggered.connect(self.__menuFileMoveConfirm)
         self.actionFileRename.triggered.connect(self.__menuFileRename)
         self.actionFileDelete.triggered.connect(self.__menuFileDeleteConfirm)
-        self.actionQuit.triggered.connect(self.__uiController.commandQuit)
+        self.actionFileQuit.triggered.connect(self.__uiController.commandQuit)
+
+        # Menu CLIPBPOARD
+        self.actionClipboardPushBack.triggered.connect(self.__menuClipboardPushBackClipboard)
+        self.actionClipboardPasteAsNewLayer.triggered.connect(self.__menuClipboardPasteAsNewLayer)
+        self.actionClipboardPasteAsNewDocument.triggered.connect(self.__menuClipboardPasteAsNewDocument)
+        self.actionClipboardOpen.triggered.connect(self.__menuClipboardOpen)
+        self.actionClipboardSetPersistent.triggered.connect(self.__menuClipboardSetPersistent)
+        self.actionClipboardSetNotPersistent.triggered.connect(self.__menuClipboardSetNotPersistent)
+        self.actionClipboardStartDownload.triggered.connect(self.__menuClipboardStartDownload)
+        self.actionClipboardStopDownload.triggered.connect(self.__menuClipboardStopDownload)
+        self.actionClipboardQuit.triggered.connect(self.__uiController.commandQuit)
+
 
         # Menu EDIT
         self.actionSelectAll.triggered.connect(self.__menuSelectAll_clicked)
@@ -191,19 +203,19 @@ class BCMainWindow(QMainWindow):
 
     def __menuHistoryShow(self):
         """Build menu history"""
-        self.__uiController.panel().showMenuHistory(self.menuGoHistory)
+        self.__uiController.panel().filesShowMenuHistory(self.menuGoHistory)
 
     def __menuLastDocumentsShow(self):
         """Build menu last documents"""
-        self.__uiController.panel().showMenuLastDocuments(self.menuGoLastDocuments)
+        self.__uiController.panel().filesShowMenuLastDocuments(self.menuGoLastDocuments)
 
     def __menuBookmarkShow(self):
         """Build menu history"""
-        self.__uiController.panel().showMenuBookmarks(self.menuGoBookmark)
+        self.__uiController.panel().filesShowMenuBookmarks(self.menuGoBookmark)
 
     def __menuSavedViewsShow(self):
         """Build menu history"""
-        self.__uiController.panel().showMenuSavedViews(self.menuGoSavedViews)
+        self.__uiController.panel().filesShowMenuSavedViews(self.menuGoSavedViews)
 
     # endregion: initialisation methods ----------------------------------------
 
@@ -265,6 +277,38 @@ class BCMainWindow(QMainWindow):
     def __menuFileRename(self):
         """Rename file(s)"""
         self.__uiController.commandFileRename()
+
+    def __menuClipboardPushBackClipboard(self):
+        """Push back content to clipboard"""
+        self.__uiController.commandClipboardPushBackClipboard()
+
+    def __menuClipboardPasteAsNewLayer(self):
+        """Paste content as new layer"""
+        self.__uiController.commandClipboardPasteAsNewLayer()
+
+    def __menuClipboardPasteAsNewDocument(self):
+        """Paste content as new document"""
+        self.__uiController.commandClipboardPasteAsNewDocument()
+
+    def __menuClipboardOpen(self):
+        """Open document"""
+        self.__uiController.commandClipboardOpen()
+
+    def __menuClipboardSetPersistent(self):
+        """Set clipboard item persistent"""
+        self.__uiController.commandClipboardSetPersistent(None, True)
+
+    def __menuClipboardSetNotPersistent(self):
+        """Set clipboard item not persistent"""
+        self.__uiController.commandClipboardSetPersistent(None, False)
+
+    def __menuClipboardStartDownload(self):
+        """Start download for selected items"""
+        self.__uiController.commandClipboardStartDownload()
+
+    def __menuClipboardStopDownload(self):
+        """Stop download for selected items"""
+        self.__uiController.commandClipboardStopDownload()
 
     def __menuSelectAll_clicked(self, action):
         """Select all files"""
@@ -415,6 +459,3 @@ class BCMainWindow(QMainWindow):
         return appendWithSubWidget(self)
 
     # endregion: methods -------------------------------------------------------
-
-
-
