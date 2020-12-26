@@ -3259,7 +3259,7 @@ class BCMainViewTab(QFrame):
 
 
     def filesColumnSort(self):
-        """Return current column sort status"""
+        """Return current column sort status (True=ascending)"""
         index = self.treeViewFiles.header().sortIndicatorSection()
         if index is None:
             index = BCMainViewFiles.COLNUM_NAME
@@ -3569,11 +3569,11 @@ class BCMainViewTab(QFrame):
 
 
     def clipboardColumnSort(self):
-        """Return current column sort status"""
+        """Return current column sort status (True=ascending)"""
         index = self.treeViewClipboard.header().sortIndicatorSection()
         if index is None:
             index = BCClipboardModel.COLNUM_DATE
-        return [index, (self.treeViewClipboard.header().sortIndicatorOrder() == Qt.DescendingOrder)]
+        return [index, (self.treeViewClipboard.header().sortIndicatorOrder() == Qt.AscendingOrder)]
 
 
     def setClipboardColumnSort(self, value):
