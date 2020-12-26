@@ -1187,7 +1187,10 @@
   <action name="actionClipboardPasteAsNewLayer">
    <property name="icon">
     <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/clipboard</normaloff>:/images/clipboard</iconset>
+     <normaloff>:/images/clipboard</normaloff>
+     <normalon>:/images/clipboard</normalon>
+     <disabledoff>:/images_d/clipboard</disabledoff>
+     <disabledon>:/images_d/clipboard</disabledon>:/images/clipboard</iconset>
    </property>
    <property name="text">
     <string>Paste as new &amp;layer</string>
@@ -1205,7 +1208,10 @@
   <action name="actionClipboardPasteAsNewDocument">
    <property name="icon">
     <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/clipboard_new</normaloff>:/images/clipboard_new</iconset>
+     <normaloff>:/images/clipboard_new</normaloff>
+     <normalon>:/images/clipboard_new</normalon>
+     <disabledoff>:/images_d/clipboard_new</disabledoff>
+     <disabledon>:/images_d/clipboard_new</disabledon>:/images/clipboard_new</iconset>
    </property>
    <property name="text">
     <string>Past&amp;e as new document</string>
@@ -1298,6 +1304,13 @@
    </property>
   </action>
   <action name="actionClipboardPushBack">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard_pushback</normaloff>
+     <normalon>:/images/clipboard_pushback</normalon>
+     <disabledoff>:/images_d/clipboard_pushback</disabledoff>
+     <disabledon>:/images_d/clipboard_pushback</disabledon>:/images/clipboard_pushback</iconset>
+   </property>
    <property name="text">
     <string>&amp;Push back to clipboard</string>
    </property>
@@ -1312,6 +1325,13 @@
    </property>
   </action>
   <action name="actionClipboardStopDownload">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/url_downloadstop</normaloff>
+     <normalon>:/images/url_downloadstop</normalon>
+     <disabledoff>:/images_d/url_downloadstop</disabledoff>
+     <disabledon>:/images_d/url_downloadstop</disabledon>:/images/url_downloadstop</iconset>
+   </property>
    <property name="text">
     <string>Stop &amp;download</string>
    </property>
@@ -1323,6 +1343,13 @@
    </property>
   </action>
   <action name="actionClipboardStartDownload">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/url_downloadstart</normaloff>
+     <normalon>:/images/url_downloadstart</normalon>
+     <disabledoff>:/images_d/url_downloadstart</disabledoff>
+     <disabledon>:/images_d/url_downloadstart</disabledon>:/images/url_downloadstart</iconset>
+   </property>
    <property name="text">
     <string>Sta&amp;rt download</string>
    </property>
