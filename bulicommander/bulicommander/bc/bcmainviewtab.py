@@ -717,6 +717,8 @@ class BCMainViewClipboard(QTreeView):
     """Tree view clipboard"""
     focused = Signal()
 
+    __COLNUM_FULLNFO_MINSIZE = 7
+
     def __init__(self, parent=None):
         super(BCMainViewClipboard, self).__init__(parent)
         self.__model = None
@@ -763,6 +765,7 @@ class BCMainViewClipboard(QTreeView):
 
         delegate=BCClipboardDelegate(self)
         self.setItemDelegateForColumn(BCClipboardModel.COLNUM_SRC, delegate)
+        self.setItemDelegateForColumn(BCClipboardModel.COLNUM_FULLNFO, delegate)
         self.setItemDelegateForColumn(BCClipboardModel.COLNUM_PERSISTENT, delegate)
 
         self.__model.updateWidth.connect(self.__resizeColumns)
@@ -801,27 +804,21 @@ class BCMainViewClipboard(QTreeView):
             # ...then cnot possible to determinate column ICON width from content
             # and fix it to icon size
             header.resizeSection(BCClipboardModel.COLNUM_ICON, self.__iconSize.value())
-            #if self.__iconSize.index() >= self.__viewNfoRowLimit:
-            #    header.setSectionHidden(self.COLNUM_PATH, True)
-            #    header.setSectionHidden(self.COLNUM_NAME, True)
-            #    header.setSectionHidden(self.COLNUM_TYPE, True)
-            #    header.setSectionHidden(self.COLNUM_SIZE, True)
-            #    header.setSectionHidden(self.COLNUM_DATE, True)
-            #    header.setSectionHidden(self.COLNUM_WIDTH, True)
-            #    header.setSectionHidden(self.COLNUM_HEIGHT, True)
-            #    header.setSectionHidden(self.COLNUM_FULLNFO, False)
-            #    header.setStretchLastSection(True)
-            #else:
-            #    header.setStretchLastSection(False)
-            #    header.setSectionHidden(self.COLNUM_PATH, not self.__showPath)
-            #    header.setSectionHidden(self.COLNUM_NAME, False)
-            #    header.setSectionHidden(self.COLNUM_TYPE, False)
-            #    header.setSectionHidden(self.COLNUM_SIZE, False)
-            #    header.setSectionHidden(self.COLNUM_DATE, False)
-            #    header.setSectionHidden(self.COLNUM_WIDTH, False)
-            #    header.setSectionHidden(self.COLNUM_HEIGHT, False)
-            #    header.setSectionHidden(self.COLNUM_FULLNFO, True)
-            #    self.resizeColumns(False)
+            if self.__iconSize.index() >= BCMainViewClipboard.__COLNUM_FULLNFO_MINSIZE:
+                header.setSectionHidden(BCClipboardModel.COLNUM_TYPE, True)
+                header.setSectionHidden(BCClipboardModel.COLNUM_DATE, True)
+                header.setSectionHidden(BCClipboardModel.COLNUM_SIZE, True)
+                header.setSectionHidden(BCClipboardModel.COLNUM_SRC, True)
+                header.setSectionHidden(BCClipboardModel.COLNUM_FULLNFO, False)
+                header.setStretchLastSection(True)
+            else:
+                header.setStretchLastSection(False)
+                header.setSectionHidden(BCClipboardModel.COLNUM_TYPE, False)
+                header.setSectionHidden(BCClipboardModel.COLNUM_DATE, False)
+                header.setSectionHidden(BCClipboardModel.COLNUM_SIZE, False)
+                header.setSectionHidden(BCClipboardModel.COLNUM_SRC, False)
+                header.setSectionHidden(BCClipboardModel.COLNUM_FULLNFO, True)
+                self.__resizeColumns()
 
     def selectedItems(self):
         """Return a list of selected clipboard items"""

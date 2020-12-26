@@ -1619,6 +1619,8 @@ class BCClipboardModel(QAbstractTableModel):
     __PIN_ICON_WIDTH = 30
     PIN_ICON_SIZE = QSize(22, 22)
 
+    FULLNFO_ICON_SIZE = 256
+
     HEADERS = ['', '', i18n("Type"), i18n("Date"), i18n("Image size"), i18n("Source"), i18n("Nfo")]
 
     def __init__(self, clipboard, parent=None):
@@ -1671,7 +1673,10 @@ class BCClipboardModel(QAbstractTableModel):
             indexE=self.createIndex(row, BCClipboardModel.COLNUM_LAST)
             self.dataChanged.emit(indexS, indexE, [Qt.DisplayRole])
         else:
-            index=self.createIndex(row, BCClipboardModel.COLNUM_SRC)
+            if self.__iconSize.width()>=BCClipboardModel.FULLNFO_ICON_SIZE:
+                index=self.createIndex(row, BCClipboardModel.COLNUM_FULLNFO)
+            else:
+                index=self.createIndex(row, BCClipboardModel.COLNUM_SRC)
             self.dataChanged.emit(index, index, [Qt.DisplayRole])
 
     def columnCount(self, parent=QModelIndex()):
@@ -1744,6 +1749,49 @@ class BCClipboardModel(QAbstractTableModel):
                         return 'T'
                     else:
                         return 'F'
+                elif column==BCClipboardModel.COLNUM_FULLNFO:
+                    returned=f'Type:       '
+
+                    if item.type() == 'BCClipboardItemFile':
+                        returned+=i18n('File')
+                    elif item.type() == 'BCClipboardItemUrl':
+                        returned+=i18n('Url')
+                    elif item.type() == 'BCClipboardItemImg':
+                        returned+=i18n('Image (Raster)')
+                    elif item.type() == 'BCClipboardItemSvg':
+                        returned+=i18n('Image (Vector)')
+                    elif item.type() == 'BCClipboardItemKra':
+                        if item.origin() == 'application/x-krita-selection':
+                            returned+=i18n('Krita selection')
+                        elif item.origin() == 'application/x-krita-node':
+                            returned+=i18n('Krita layer')
+                    else:
+                        returned+=i18n('Invalid')
+
+
+                    returned+=f'\nDate:       {datetime.datetime.fromtimestamp(item.timestamp()):%Y-%m-%d %H:%M:%S}'
+                    returned+=f'\nImage size: '
+
+                    if item.type() == 'BCClipboardItemUrl':
+                        if item.urlStatus() == BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
+                            returned+=i18n('Downloading...')
+                        elif item.urlStatus() == BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
+                            returned+=i18n('Not downloaded')
+                    else:
+                        size = item.imageSize()
+                        if size and size.width()>-1 and size.height()>-1:
+                            returned+=f'{size.width()}x{size.height()}'
+                        else:
+                            returned+='-'
+
+                    if item.type() == 'BCClipboardItemFile':
+                        returned+=f'\nSource:     {item.fileName()}'
+                    if item.type() == 'BCClipboardItemUrl':
+                        returned+=f'\nSource:     {item.url().url()}'
+                    elif item.type() == 'BCClipboardItemImg' and item.urlOrigin():
+                        returned+=f'\nSource:     {item.urlOrigin().url()}'
+
+                    return returned
         elif role == BCClipboardModel.ROLE_HASH:
             return self.__items[row]
         elif role == BCClipboardModel.ROLE_PCT:
@@ -1790,7 +1838,7 @@ class BCClipboardDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         """Paint list item"""
-        if index.column()==BCClipboardModel.COLNUM_SRC:
+        if index.column()in (BCClipboardModel.COLNUM_SRC, BCClipboardModel.COLNUM_FULLNFO):
             pct=index.data(BCClipboardModel.ROLE_PCT)
             if pct == -1:
                 # not progress bar to display
@@ -1801,7 +1849,11 @@ class BCClipboardDelegate(QStyledItemDelegate):
 
             rectTxt = QRect(option.rect.left() + 4, option.rect.top()+1, option.rect.width()-4, option.rect.height()-2)
             rectTextH = QRect(option.rect.left() + 4, option.rect.top()+1, round(option.rect.width() * pct/100, 2)-4, option.rect.height()-2)
-            rectPct = QRect(option.rect.left(), option.rect.top()+1, round(option.rect.width() * pct/100, 2), option.rect.height()-2)
+
+            if index.column()==BCClipboardModel.COLNUM_SRC:
+                rectPct = QRect(option.rect.left(), option.rect.top()+1, round(option.rect.width() * pct/100, 2), option.rect.height()-2)
+            else:
+                rectPct = QRect(option.rect.left(), option.rect.top()+option.rect.height()*0.75, round(option.rect.width() * pct/100, 2), option.rect.height()*0.25-1)
 
             palette = QApplication.palette()
 
