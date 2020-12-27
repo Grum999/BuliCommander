@@ -271,6 +271,7 @@ class BCUIController(QObject):
         self.commandInfoToClipBoardMaxWidthActive(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE.id()))
         self.commandInfoToClipBoardMinWidthActive(self.__settings.option(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE.id()))
 
+        self.commandSettingsClipboardDefaultAction(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION.id()))
         self.commandSettingsClipboardCacheMode(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_GENERAL.id()))
         self.commandSettingsClipboardCacheMaxSize(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MAXISZE.id()))
         self.commandSettingsClipboardCachePersistent(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_PERSISTENT.id()))
@@ -978,6 +979,10 @@ class BCUIController(QObject):
         """Return current option value"""
         return self.__settings.option(BCSettingsKey.CONFIG_FILES_HISTORY_MAXITEMS.id())
 
+    def optionClipboardDefaultAction(self):
+        """Return default option value for clipboard"""
+        return self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION.id())
+
     def commandQuit(self):
         """Close Buli Commander"""
         self.__window.close()
@@ -1216,6 +1221,16 @@ class BCUIController(QObject):
     def commandClipboardCheckContent(self):
         """Check clipboard content manually"""
         self.__clipboard.checkContent()
+
+    def commandClipboardDefaultAction(self, item):
+        """Execute default action on item"""
+        if item is None:
+            return
+
+        if self.optionClipboardDefaultAction() == BCSettingsValues.CLIPBOARD_ACTION_NLAYER:
+            self.commandClipboardPasteAsNewLayer(item)
+        elif self.optionClipboardDefaultAction() == BCSettingsValues.CLIPBOARD_ACTION_NDOCUMENT:
+            self.commandClipboardPasteAsNewDocument(item)
 
     def commandClipboardPushBackClipboard(self, items=None):
         """Push back items to clipboard"""
@@ -2186,6 +2201,12 @@ class BCUIController(QObject):
             self.__settings.setOption(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_GENERAL, value)
             self.__clipboardActive()
         return self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_GENERAL.id())
+
+    def commandSettingsClipboardDefaultAction(self, value=None):
+        """Define default action (on double-click) for clipboard manager"""
+        if not value is None:
+            self.__settings.setOption(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION, value)
+        return self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION.id())
 
     def commandSettingsClipboardCacheSystrayMode(self, value=None):
         """Define default mode for clipboard"""
