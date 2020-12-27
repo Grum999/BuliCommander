@@ -47,6 +47,8 @@
       <addaction name="actionFileOpenCloseBC"/>
       <addaction name="actionFileOpenAsNewDocument"/>
       <addaction name="actionFileOpenAsNewDocumentCloseBC"/>
+      <addaction name="actionFileOpenAsImageReference"/>
+      <addaction name="actionFileOpenAsImageReferenceCloseBC"/>
       <addaction name="separator"/>
       <addaction name="actionFileCopyToOtherPanel"/>
       <addaction name="actionFileMoveToOtherPanel"/>
@@ -183,6 +185,7 @@
       <addaction name="actionClipboardPushBack"/>
       <addaction name="actionClipboardPasteAsNewLayer"/>
       <addaction name="actionClipboardPasteAsNewDocument"/>
+      <addaction name="actionClipboardPasteAsRefImage"/>
       <addaction name="actionClipboardOpen"/>
       <addaction name="separator"/>
       <addaction name="actionClipboardSetPersistent"/>
@@ -1375,6 +1378,45 @@
    </property>
    <property name="visible">
     <bool>true</bool>
+   </property>
+  </action>
+  <action name="actionClipboardPasteAsRefImage">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard_pinned</normaloff>
+     <normalon>:/images/clipboard_pinned</normalon>
+     <disabledoff>:/images_d/clipboard_pinned</disabledoff>
+     <disabledon>:/images_d/clipboard_pinned</disabledon>:/images/clipboard_pinned</iconset>
+   </property>
+   <property name="text">
+    <string>Paste as reference image</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+R</string>
+   </property>
+  </action>
+  <action name="actionFileOpenAsImageReference">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/folder_pinned</normaloff>
+     <normalon>:/images/folder_pinned</normalon>
+     <disabledoff>:/images_d/folder_pinned</disabledoff>
+     <disabledon>:/images_d/folder_pinned</disabledon>:/images/folder_pinned</iconset>
+   </property>
+   <property name="text">
+    <string>Open file as Reference Image</string>
+   </property>
+  </action>
+  <action name="actionFileOpenAsImageReferenceCloseBC">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/folder_pinned</normaloff>
+     <normalon>:/images/folder_pinned</normalon>
+     <disabledoff>:/images_d/folder_pinned</disabledoff>
+     <disabledon>:/images_d/folder_pinned</disabledon>:/images/folder_pinned</iconset>
+   </property>
+   <property name="text">
+    <string>Open file as Reference Image and close Buli Commander</string>
    </property>
   </action>
  </widget>
