@@ -3,6 +3,7 @@
     <file alias="buli-rounded-border">png/buli-powered-64x64-rounded-border.png</file>
   </qresource>
   <qresource prefix="images">
+    <file alias="clipboard_refresh">svg/dark/32dp/clipboard_refresh.svg</file>
     <file alias="url_downloadstart">svg/dark/32dp/url_downloadstart.svg</file>
     <file alias="url_downloadstop">svg/dark/32dp/url_downloadstop.svg</file>
     <file alias="clipboard_pushback">svg/dark/32dp/clipboard_pushback.svg</file>

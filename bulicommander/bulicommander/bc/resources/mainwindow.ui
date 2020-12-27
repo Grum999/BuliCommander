@@ -179,6 +179,7 @@
       <property name="title">
        <string>&amp;Clipboard</string>
       </property>
+      <addaction name="actionClipboardCheckContent"/>
       <addaction name="actionClipboardPushBack"/>
       <addaction name="actionClipboardPasteAsNewLayer"/>
       <addaction name="actionClipboardPasteAsNewDocument"/>
@@ -1358,6 +1359,22 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="actionClipboardCheckContent">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard_refresh</normaloff>
+     <normalon>:/images/clipboard_refresh</normalon>:/images/clipboard_refresh</iconset>
+   </property>
+   <property name="text">
+    <string>Check clipboard content</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
    </property>
   </action>
  </widget>

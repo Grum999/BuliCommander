@@ -802,6 +802,8 @@ class BCUIController(QObject):
 
             selectionInfo = self.panel().clipboardSelected()
 
+            self.__window.actionClipboardCheckContent.setVisible(not self.__clipboard.enabled())
+
             if self.__clipboard.length()==0:
                 self.__window.actionSelectAll.setEnabled(False)
                 self.__window.actionSelectNone.setEnabled(False)
@@ -1210,6 +1212,10 @@ class BCUIController(QObject):
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesSetAllowRefresh(True)
+
+    def commandClipboardCheckContent(self):
+        """Check clipboard content manually"""
+        self.__clipboard.checkContent()
 
     def commandClipboardPushBackClipboard(self, items=None):
         """Push back items to clipboard"""

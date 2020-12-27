@@ -1603,6 +1603,9 @@ class BCClipboard(QObject):
         """Return statistics"""
         return self.__stats
 
+    def checkContent(self):
+        """Check clipboard content manually"""
+        self.__clipboardMimeContentChanged()
 
 class BCClipboardModel(QAbstractTableModel):
     """A model provided by clipboard"""
