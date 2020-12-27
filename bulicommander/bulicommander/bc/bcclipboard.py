@@ -1041,11 +1041,14 @@ class BCClipboard(QObject):
         self.__clipboard = QGuiApplication.clipboard()
 
         # regular expressions used to parse HTML and find urls
-        self.__reHtmlImg=QRegularExpression(r'(?im)<img(?:\s.*\s|\s+)(?:src="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg|webp)[^"]*?)"|src=\'(?<url2>https?:\/\/[^\']+?\.(?:jpeg|jpg|png|gif|svg|webp)[^\']*?)\')[^>]*?>')
-        self.__reHtmlLink=QRegularExpression(r'(?im)<a(?:\s.*\s|\s+)(?:href="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg|webp)[^"]*?)"|href=\'(?<url2>https?:\/\/[^\']+?\.(?:jpeg|jpg|png|gif|svg|webp)[^\']*?)\')[^>]*?>')
+        self.__reHtmlImg=QRegularExpression(r'(?im)<img(?:\s.*\s|\s+)(?:src="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg|webp|kra)[^"]*?)"|src=\'(?<url2>https?:\/\/[^\']+?\.(?:jpeg|jpg|png|gif|svg|webp|kra)[^\']*?)\')[^>]*?>')
+        self.__reHtmlLink=QRegularExpression(r'(?im)<a(?:\s.*\s|\s+)(?:href="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg|webp|kra)[^"]*?)"|href=\'(?<url2>https?:\/\/[^\']+?\.(?:jpeg|jpg|png|gif|svg|webp|kra)[^\']*?)\')[^>]*?>')
 
         # regular expression used to parse PLAIN TEXT and find urls
-        self.__reTextUrl=QRegularExpression(r'(?im)(["\'])?(?<url>https?:\/\/[^\s]+\.(?:jpeg|jpg|png|svg|gif|webp)(?:\?[^\s]*)?)\1?.*')
+        self.__reTextUrl=QRegularExpression(r'(?im)(["\'])?(?<url>https?:\/\/[^\s]+\.(?:jpeg|jpg|png|svg|gif|webp|kra)(?:\?[^\s]*)?)\1?.*')
+
+        # regular expression used to parse FILE path/name
+        self.__reTextFile=QRegularExpression(r'(?i)\.(?:jpeg|jpg|png|svg|gif|webp|kra)$')
 
         self.__totalCacheSizeP=0
         self.__totalCacheSizeS=0
@@ -1256,7 +1259,6 @@ class BCClipboard(QObject):
                     clipboardItem=BCClipboardItemFile(hashValue, url.path(), origin)
 
                     returned|=self.__addPool(clipboardItem)
-
                 else:
                     clipboardItem=BCClipboardItemUrl(hashValue, url, origin)
 
@@ -1364,7 +1366,9 @@ class BCClipboard(QObject):
             return
 
         if clipboardMimeContent.hasUrls():
-            if self.__addPoolUrls(clipboardMimeContent.urls(), 'URI list'):
+            list=[url for url in clipboardMimeContent.urls() if self.__reTextFile.match(url.url()).hasMatch() and url.path()!='' and os.path.exists(url.path())]
+
+            if len(list)>0 and self.__addPoolUrls(list, 'URI list'):
                 self.__emitUpdateAdded()
             # don't need to process other mime type
             return
@@ -1598,6 +1602,7 @@ class BCClipboard(QObject):
     def stats(self):
         """Return statistics"""
         return self.__stats
+
 
 class BCClipboardModel(QAbstractTableModel):
     """A model provided by clipboard"""
