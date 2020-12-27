@@ -291,6 +291,7 @@ class BCMainViewFiles(QTreeView):
     iconStartLoad = Signal(int)
     iconProcessed = Signal()
     iconStopLoad = Signal()
+    keyPressed = Signal(int)
 
     COLNUM_ICON = 0
     COLNUM_PATH = 1
@@ -307,8 +308,6 @@ class BCMainViewFiles(QTreeView):
     __STATUS_UPDATING = 1
 
     USERROLE_FILE = Qt.UserRole + 1
-
-    keyPressed = Signal(int)
 
     @staticmethod
     def getIcon(itemIndex, file, viewThumbnail=False, size=0):
@@ -716,6 +715,7 @@ class BCMainViewFiles(QTreeView):
 class BCMainViewClipboard(QTreeView):
     """Tree view clipboard"""
     focused = Signal()
+    keyPressed = Signal(int)
 
     __COLNUM_FULLNFO_MINSIZE = 7
 
@@ -769,6 +769,10 @@ class BCMainViewClipboard(QTreeView):
         self.setItemDelegateForColumn(BCClipboardModel.COLNUM_PERSISTENT, delegate)
 
         self.__model.updateWidth.connect(self.__resizeColumns)
+
+    def keyPressEvent(self, event):
+        super(BCMainViewClipboard, self).keyPressEvent(event)
+        self.keyPressed.emit(event.key())
 
     def focusInEvent(self, event):
         super(BCMainViewClipboard, self).focusInEvent(event)
@@ -1179,6 +1183,8 @@ class BCMainViewTab(QFrame):
         self.__actionClipboardApplyTabLayoutRight.triggered.connect(children_Clicked)
         self.__actionClipboardApplyIconSize.slider().valueChanged.connect(clipboardIconSize_changed)
 
+        self.treeViewClipboard.doubleClicked.connect(self.__clipboardDoubleClick)
+        self.treeViewClipboard.keyPressed.connect(self.__clipboardKeyPressed)
 
         # create menu for layout model button
         menuC = QMenu(self.btClipboardTabLayoutModel)
@@ -2751,6 +2757,27 @@ class BCMainViewTab(QFrame):
             self.__actionClipboardApplyTabLayoutRight.setChecked(True)
 
         self.tabClipboardLayoutChanged.emit(self)
+
+
+    def __clipboardDoubleClick(self, item):
+        """Apply default action to item"""
+        if len(self.__clipboardSelected) == 1:
+            self.__uiController.commandClipboardDefaultAction(self.__clipboardSelected[0])
+
+
+    def __clipboardKeyPressed(self, key):
+        if key in (Qt.Key_Return, Qt.Key_Enter):
+            for item in self.__clipboardSelected:
+                self.__uiController.commandClipboardDefaultAction(item)
+        elif key == Qt.Key_Space:
+            #print('__filesKeyPressed: Space', key)
+            pass
+        elif key == Qt.Key_Minus:
+            self.clipboardSelectInvert()
+        elif key == Qt.Key_Asterisk:
+            self.clipboardSelectAll()
+        elif key == Qt.Key_Slash:
+            self.clipboardSelectNone()
 
 
     # -- PUBLIC GLOBAL ---------------------------------------------------------
