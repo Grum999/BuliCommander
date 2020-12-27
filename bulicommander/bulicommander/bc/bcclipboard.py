@@ -731,6 +731,8 @@ class BCClipboardItemSvg(BCClipboardItem):
         if svgData and saveInCache:
             self.saveToCache(svgData, image)
 
+        self.updateBcFile()
+
     def saveToCache(self, svgData, image):
         """Save SVG+image data to cache"""
         saved = super(BCClipboardItemSvg, self).saveToCache()
@@ -767,6 +769,12 @@ class BCClipboardItemSvg(BCClipboardItem):
                 returned.append((data, 'image/svg'))
 
         return returned
+
+    def updateBcFile(self):
+        """Update BCFile according to current clipboard item properties"""
+        imgCacheFileName = self.fileName(True)
+        if os.path.exists(imgCacheFileName):
+            self.setFile(imgCacheFileName)
 
 
 class BCClipboardItemKra(BCClipboardItem):
