@@ -135,6 +135,8 @@ class BCMainWindow(QMainWindow):
         self.actionFileOpenCloseBC.triggered.connect(self.__menuFileOpenCloseBC)
         self.actionFileOpenAsNewDocument.triggered.connect(self.__menuFileOpenAsNewDocument)
         self.actionFileOpenAsNewDocumentCloseBC.triggered.connect(self.__menuFileOpenAsNewDocumentCloseBC)
+        self.actionFileOpenAsImageReference.triggered.connect(self.__menuFileOpenAsImageReference)
+        self.actionFileOpenAsImageReferenceCloseBC.triggered.connect(self.__menuFileOpenAsImageReferenceCloseBC)
         self.actionFileCopyToOtherPanel.triggered.connect(self.__menuFileCopyConfirm)
         self.actionFileMoveToOtherPanel.triggered.connect(self.__menuFileMoveConfirm)
         self.actionFileRename.triggered.connect(self.__menuFileRename)
@@ -146,6 +148,7 @@ class BCMainWindow(QMainWindow):
         self.actionClipboardPushBack.triggered.connect(self.__menuClipboardPushBackClipboard)
         self.actionClipboardPasteAsNewLayer.triggered.connect(self.__menuClipboardPasteAsNewLayer)
         self.actionClipboardPasteAsNewDocument.triggered.connect(self.__menuClipboardPasteAsNewDocument)
+        self.actionClipboardPasteAsRefImage.triggered.connect(self.__menuClipboardPasteAsRefImage)
         self.actionClipboardOpen.triggered.connect(self.__menuClipboardOpen)
         self.actionClipboardSetPersistent.triggered.connect(self.__menuClipboardSetPersistent)
         self.actionClipboardSetNotPersistent.triggered.connect(self.__menuClipboardSetNotPersistent)
@@ -251,6 +254,14 @@ class BCMainWindow(QMainWindow):
         """Open selected file(s) as new document and close"""
         self.__uiController.commandFileOpenAsNewCloseBC()
 
+    def __menuFileOpenAsImageReference(self, action):
+        """Open selected file(s) as image reference"""
+        self.__uiController.commandFileOpenAsImageReference()
+
+    def __menuFileOpenAsImageReferenceCloseBC(self, action):
+        """Open selected file(s) as image reference and close"""
+        self.__uiController.commandFileOpenAsImageReferenceCloseBC()
+
     def __menuFileDeleteConfirm(self, action):
         """Delete file after confirmation"""
         self.__uiController.commandFileDelete(True)
@@ -294,6 +305,10 @@ class BCMainWindow(QMainWindow):
     def __menuClipboardPasteAsNewDocument(self):
         """Paste content as new document"""
         self.__uiController.commandClipboardPasteAsNewDocument()
+
+    def __menuClipboardPasteAsRefImage(self):
+        """Paste content as reference image"""
+        self.__uiController.commandClipboardPasteAsRefImage()
 
     def __menuClipboardOpen(self):
         """Open document"""

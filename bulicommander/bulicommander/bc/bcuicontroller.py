@@ -24,6 +24,7 @@ from pathlib import Path
 
 import sys
 import re
+import hashlib
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -42,7 +43,8 @@ from .bcbookmark import BCBookmark
 from .bcclipboard import (
         BCClipboard,
         BCClipboardItem,
-        BCClipboardItemUrl
+        BCClipboardItemUrl,
+        BCClipboardItemFile
     )
 from .bcfile import (
         BCBaseFile,
@@ -735,6 +737,16 @@ class BCUIController(QObject):
 
     def updateMenuForPanel(self):
         """Update menu (enabled/disabled/checked/unchecked) according to current panel"""
+        def allowPasteFileAsRefimg(list):
+            if len(list)==0:
+                return False
+
+            for item in list:
+                if re.search('(?i)\.(jpeg|jpg|png)$', item):
+                    # at least one item can be pasted as reference image
+                    return True
+            return False
+
         #print("updateMenuForPanel", self.panel().tabActive())
         self.__window.actionViewThumbnail.setChecked(self.panel().filesViewThumbnail())
         self.__window.actionViewDisplayQuickFilter.setChecked(self.panel().filesFilterVisible())
@@ -761,6 +773,14 @@ class BCUIController(QObject):
             self.__window.actionFileCopyToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3]>0))
             self.__window.actionFileMoveToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3]>0))
             self.__window.actionFileDelete.setEnabled(selectionInfo[3]>0)
+
+            if Krita.instance().activeDocument():
+                allow=allowPasteFileAsRefimg([item.fullPathName() for item in selectionInfo[0] if isinstance(item, BCFile)])
+                self.__window.actionFileOpenAsImageReference.setEnabled(allow)
+                self.__window.actionFileOpenAsImageReferenceCloseBC.setEnabled(allow)
+            else:
+                self.__window.actionFileOpenAsImageReference.setEnabled(False)
+                self.__window.actionFileOpenAsImageReferenceCloseBC.setEnabled(False)
 
             # ^ ==> xor logical operator
             # Can do rename if:
@@ -820,8 +840,10 @@ class BCUIController(QObject):
 
                 if Krita.instance().activeDocument():
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
+                    self.__window.actionClipboardPasteAsRefImage.setEnabled(len([item for item in selectionInfo[0] if item.type()!="BCClipboardItemSvg"])>0)
                 else:
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC.id()))
+                    self.__window.actionClipboardPasteAsRefImage.setEnabled(False)
 
                 self.__window.actionClipboardPasteAsNewDocument.setEnabled(True)
                 self.__window.actionClipboardOpen.setEnabled(True)
@@ -851,8 +873,10 @@ class BCUIController(QObject):
 
                 if Krita.instance().activeDocument():
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
+                    self.__window.actionClipboardPasteAsRefImage.setEnabled(len([item for item in selectionInfo[0] if item.type()!="BCClipboardItemSvg"])>0)
                 else:
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(self.__settings.option(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC.id()))
+                    self.__window.actionClipboardPasteAsRefImage.setEnabled(False)
 
                 self.__window.actionClipboardPasteAsNewDocument.setEnabled(True)
                 self.__window.actionClipboardOpen.setEnabled(True)
@@ -885,6 +909,7 @@ class BCUIController(QObject):
                 self.__window.actionClipboardPushBack.setEnabled(False)
                 self.__window.actionClipboardPasteAsNewLayer.setEnabled(False)
                 self.__window.actionClipboardPasteAsNewDocument.setEnabled(False)
+                self.__window.actionClipboardPasteAsRefImage.setEnabled(False)
                 self.__window.actionClipboardOpen.setEnabled(False)
                 self.__window.actionClipboardSetPersistent.setEnabled(False)
                 self.__window.actionClipboardSetNotPersistent.setEnabled(False)
@@ -1081,6 +1106,38 @@ class BCUIController(QObject):
     def commandFileOpenAsNewCloseBC(self, file=None):
         """Open file and close BuliCommander"""
         if self.commandFileOpenAsNew(file):
+            self.commandQuit()
+            return True
+        return False
+
+    def commandFileOpenAsImageReference(self, file=None):
+        """Open file as new document"""
+        if file is None:
+            selectionInfo = self.panel().filesSelected()
+            if selectionInfo[4] > 0:
+                nbOpened = 0
+                for file in selectionInfo[0]:
+                    if isinstance(file, BCFile) and file.readable():
+                        if self.commandFileOpenAsImageReference(file.fullPathName()):
+                            nbOpened+=1
+                if nbOpened!=selectionInfo[4]:
+                    return False
+                else:
+                    return True
+        elif isinstance(file, BCFile) and file.readable():
+            return self.commandFileOpenAsImageReference(file.fullPathName())
+        elif isinstance(file, str):
+            hash=hashlib.md5()
+            hash.update(file.encode())
+            cbFile = BCClipboardItemFile(hash.hexdigest(), file, saveInCache=False, persistent=False)
+            self.commandClipboardPasteAsRefImage(cbFile)
+            return True
+        else:
+            raise EInvalidType('Given `file` is not valid')
+
+    def commandFileOpenAsImageReferenceCloseBC(self, file=None):
+        """Open file and close BuliCommander"""
+        if self.commandFileOpenAsImageReference(file):
             self.commandQuit()
             return True
         return False
@@ -1291,6 +1348,17 @@ class BCUIController(QObject):
                 # krita selection...
                 self.__clipboard.pushBackToClipboard(items)
                 Krita.instance().action('paste_new').trigger()
+
+    def commandClipboardPasteAsRefImage(self, items=None):
+        """Push back items to clipboard and paste them as reference image"""
+        if items is None:
+            selectionInfo = self.panel().clipboardSelected()
+            if selectionInfo[1]>0:
+                for item in selectionInfo[0]:
+                    self.commandClipboardPasteAsRefImage(item)
+        elif isinstance(items, BCClipboardItem):
+            self.__clipboard.pushBackToClipboard(items)
+            Krita.instance().action('paste_as_reference').trigger()
 
     def commandClipboardOpen(self, items=None):
         """Open selected items from clipboard

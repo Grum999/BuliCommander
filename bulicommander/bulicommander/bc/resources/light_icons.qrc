@@ -3,6 +3,8 @@
     <file alias="buli-rounded-border">png/buli-powered-64x64-rounded-border.png</file>
   </qresource>
   <qresource prefix="images">
+    <file alias="folder_pinned">svg/light/32dp/folder_open_pinned.svg</file>
+    <file alias="clipboard_pinned">svg/light/32dp/clipboard_pinned.svg</file>
     <file alias="clipboard_refresh">svg/light/32dp/clipboard_refresh.svg</file>
     <file alias="url_downloadstart">svg/light/32dp/url_downloadstart.svg</file>
     <file alias="url_downloadstop">svg/light/32dp/url_downloadstop.svg</file>
@@ -84,6 +86,8 @@
     <file alias="zoom_fit">svg/light/32dp/zoom_fit.svg</file>
   </qresource>
   <qresource prefix="images_d">
+    <file alias="folder_pinned">svg/light/32dp-disabled/folder_open_pinned.svg</file>
+    <file alias="clipboard_pinned">svg/light/32dp-disabled/clipboard_pinned.svg</file>
     <file alias="url_downloadstop">svg/light/32dp-disabled/url_downloadstop.svg</file>
     <file alias="url_downloadstart">svg/light/32dp-disabled/url_downloadstart.svg</file>
     <file alias="clipboard_new">svg/light/32dp-disabled/clipboard_new.svg</file>
