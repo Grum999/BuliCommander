@@ -142,6 +142,7 @@ class BCMainWindow(QMainWindow):
         self.actionFileQuit.triggered.connect(self.__uiController.commandQuit)
 
         # Menu CLIPBPOARD
+        self.actionClipboardCheckContent.triggered.connect(self.__menuClipboardCheckContent)
         self.actionClipboardPushBack.triggered.connect(self.__menuClipboardPushBackClipboard)
         self.actionClipboardPasteAsNewLayer.triggered.connect(self.__menuClipboardPasteAsNewLayer)
         self.actionClipboardPasteAsNewDocument.triggered.connect(self.__menuClipboardPasteAsNewDocument)
@@ -277,6 +278,10 @@ class BCMainWindow(QMainWindow):
     def __menuFileRename(self):
         """Rename file(s)"""
         self.__uiController.commandFileRename()
+
+    def __menuClipboardCheckContent(self):
+        """Check clipboard content manually"""
+        self.__uiController.commandClipboardCheckContent()
 
     def __menuClipboardPushBackClipboard(self):
         """Push back content to clipboard"""
