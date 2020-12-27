@@ -5578,8 +5578,8 @@ class BCFileList(QObject):
 
         self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH, len(foundFiles), len(foundDirectories), totalMatch))
 
-        Debug.print("Search in paths: {0}", self.__pathList)
-        Debug.print('Found {0} of {1} files in {2}s', totalMatch, nbTotal, Stopwatch.duration("BCFileList.execute.search"))
+        #Debug.print("Search in paths: {0}", self.__pathList)
+        #Debug.print('Found {0} of {1} files in {2}s', totalMatch, nbTotal, Stopwatch.duration("BCFileList.execute.search"))
 
         if totalMatch == 0:
             self.__invalidated = False
@@ -5601,7 +5601,7 @@ class BCFileList(QObject):
 
         self.stepExecuted.emit((BCFileList.STEPEXECUTED_SCAN,))
 
-        Debug.print('Scan {0} files in {1}s', totalMatch, Stopwatch.duration("BCFileList.execute.scan"))
+        #Debug.print('Scan {0} files in {1}s', totalMatch, Stopwatch.duration("BCFileList.execute.scan"))
 
         # ----
         Stopwatch.start('BCFileList.execute.filter')
@@ -5623,7 +5623,7 @@ class BCFileList(QObject):
             BCFileList.__MTASKS_RULES = []
 
         self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER,))
-        Debug.print('Filter {0} files in {1}s', len(filesList), Stopwatch.duration("BCFileList.execute.filter"))
+        #Debug.print('Filter {0} files in {1}s', len(filesList), Stopwatch.duration("BCFileList.execute.filter"))
 
         # ----
         Stopwatch.start('BCFileList.execute.result')
@@ -5632,12 +5632,12 @@ class BCFileList(QObject):
         self.__currentFilesName=set(pool.map(self.__currentFiles, BCFileList.getBcFileName))
         nb = len(self.__currentFiles)
 
-        Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.result"))
+        #Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.result"))
 
         if buildStats:
             Stopwatch.start('BCFileList.execute.buildStats')
             self.__statFiles=pool.aggregate(self.__currentFiles, self.__statFiles, BCFileList.getBcFileStats)
-            Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.buildStats"))
+            #Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.buildStats"))
 
         self.stepExecuted.emit((BCFileList.STEPEXECUTED_RESULT,))
 
@@ -5645,9 +5645,9 @@ class BCFileList(QObject):
         Stopwatch.start('BCFileList.sort')
         self.sort()
         self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT,))
-        Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.sort"))
+        #Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.sort"))
 
-        Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.global"))
+        #Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.global"))
 
         self.__invalidated = False
 
@@ -5700,7 +5700,7 @@ class BCFileList(QObject):
             elif isinstance(file, BCDirectory):
                 directoriesList.add(file)
 
-        Debug.print('[BCFileList.setResult] FoundFile: {0}', foundFiles)
+        #Debug.print('[BCFileList.setResult] FoundFile: {0}', foundFiles)
         pool = BCWorkerPool()
         if len(foundFiles)>0:
             filesList = filesList.union( pool.map(foundFiles, BCFileList.getBcFile) )

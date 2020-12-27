@@ -435,7 +435,6 @@ class BCMainViewFiles(QTreeView):
 
     def focusInEvent(self, event):
         super(BCMainViewFiles, self).focusInEvent(event)
-        Debug.print('[BCMainViewFiles.focusInEvent]')
         self.focused.emit()
 
     def resizeColumns(self, fixedOnly=True):
@@ -776,7 +775,6 @@ class BCMainViewClipboard(QTreeView):
 
     def focusInEvent(self, event):
         super(BCMainViewClipboard, self).focusInEvent(event)
-        Debug.print('[BCMainViewClipboard.focusInEvent]')
         self.focused.emit()
 
     def wheelEvent(self, event):
@@ -1011,7 +1009,6 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot('QString')
         def children_Clicked(value=None):
-            Debug.print('[BCMainViewTab.children_Clicked] value: {0} | path: {1}', value, self.filesPath())
             self.setHighlighted(True)
 
             if not self.__uiController is None:
@@ -1130,7 +1127,8 @@ class BCMainViewTab(QFrame):
 
         self.twInfo.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
 
-        #self.tabMain.tabBarClicked.connect(children_Clicked)
+        # need tabBarClicked AND currentChanged
+        self.tabMain.tabBarClicked.connect(children_Clicked)
         self.tabMain.currentChanged.connect(children_Clicked)
         self.tabFilesDetails.tabBarClicked.connect(children_Clicked)
         self.tvDirectoryTree.activated.connect(children_Clicked)
@@ -1208,8 +1206,6 @@ class BCMainViewTab(QFrame):
 
     def __refreshPanelHighlighted(self):
         """Refresh panel highlighted and emit signal"""
-        Debug.print('[BCMainViewTab.__refreshPanelHighlighted] value: {0} // {1}', self.__isHighlighted, self.filesPath())
-
         self.framePathBar.setHighlighted(self.__isHighlighted)
         if self.__isHighlighted:
             self.highlightedStatusChanged.emit(self)
@@ -2862,8 +2858,6 @@ class BCMainViewTab(QFrame):
 
         If highlighted status is changed, emit Signal
         """
-        Debug.print('[BCMainViewTab.setHighlighted] current: {0} / new: {1} // {2}', self.__isHighlighted, value, self.filesPath())
-
         if not isinstance(value, bool):
             raise EInvalidType("Given `value` must be a <bool>")
         elif self.__isHighlighted != value:
@@ -3189,7 +3183,6 @@ class BCMainViewTab(QFrame):
 
     def setFilesPath(self, path=None):
         """Set current path"""
-        Debug.print('[BCMainViewTab.setPath] path: {0}', path)
         return self.framePathBar.setPath(path)
 
 

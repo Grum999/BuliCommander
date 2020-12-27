@@ -58,7 +58,7 @@ class BreadcrumbsAddressBar(QFrame):
         self.__iconSize = QtCore.QSize(32, 32)  # px, size of generated semi-transparent icons
 
         self.setPalette(self.__paletteBase)
-        self.setAutoFillBackground(True)
+
         self.setFrameShape(self.NoFrame)
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
