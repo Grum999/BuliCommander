@@ -3399,6 +3399,7 @@ class BCFile(BCBaseFile):
             'document.fileLayers': [],
             'document.usedFonts': [],
             'document.embeddedPalettes': {},
+            'document.referenceImages': [],
 
             'about.title': '',
             'about.subject': '',
@@ -3418,6 +3419,8 @@ class BCFile(BCBaseFile):
             'author.company': '',
             'author.contact': [],
         }
+
+        tmpRefImgList=[]
 
         maindoc = self.__readArchiveDataFile("maindoc.xml")
         if not maindoc is None:
@@ -3586,7 +3589,6 @@ class BCFile(BCBaseFile):
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve framerate in file {0}: {1}', self._fullPathName, str(e))
 
 
-
                 try:
                     returned['document.fileLayers']=[node.attrib['source'] for node in xmlDoc.findall(".//{*}layer[@nodetype='filelayer']")]
                 except Exception as e:
@@ -3596,6 +3598,14 @@ class BCFile(BCBaseFile):
                     returned['document.layerCount']=len(xmlDoc.findall(".//{*}layer"))
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers in file {0}: {1}', self._fullPathName, str(e))
+
+
+                try:
+                    tmpRefImgList=[node.attrib['src'] for node in xmlDoc.findall(".//{*}layer[@nodetype='referenceimages']/{*}referenceimage")]
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers "referenceimage" in file {0}: {1}', self._fullPathName, str(e))
+
+
 
         infoDoc = self.__readArchiveDataFile("documentinfo.xml")
         if not infoDoc is None:
@@ -3729,6 +3739,19 @@ class BCFile(BCBaseFile):
                                         }
                     except Exception as e:
                         Debug.print('[BCFile.__readMetaDataKra] Malformed palette {2} in file {0}: {1}', self._fullPathName, str(e), filename)
+
+        # load reference image details
+        for refImg in tmpRefImgList:
+            imageData = self.__readArchiveDataFile(refImg)
+            if imageData:
+                image = QImage()
+                if image.loadFromData(imageData):
+                    returned['document.referenceImages'].append(image)
+
+        # References images are stored in a layer
+        # Do not consider it as a layer because reference image latyer is not visible in layer tree
+        returned['document.layerCount']-=len(returned['document.referenceImages'])
+
 
         return returned
 

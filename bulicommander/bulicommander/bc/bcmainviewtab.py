@@ -1611,11 +1611,16 @@ class BCMainViewTab(QFrame):
                     wValue.setToolTip(tooltip)
             elif isinstance(value, QWidget):
                 wValue=value
+            else:
+                wValue=None
 
             if not style is None:
                 wValue.setStyleSheet(self.__uiController.theme().style(style))
 
-            form.layout().addRow(wLabel, wValue)
+            if wValue:
+                form.layout().addRow(wLabel, wValue)
+            else:
+                form.layout().addRow(wLabel)
 
         def addSeparator(form, shifted=False):
             line = QFrame()
@@ -1963,6 +1968,22 @@ class BCMainViewTab(QFrame):
                                 addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), '-', shifted=True)
                                 addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), '-', shifted=True)
                                 addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-', shifted=True)
+
+
+                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                    if len(imgNfo['document.referenceImages']) > 0:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', str(len(imgNfo['document.referenceImages'])))
+
+                        refNumber=1
+                        for image in imgNfo['document.referenceImages']:
+                            label=QLabel()
+                            label.setPixmap(QPixmap.fromImage(image.scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation)))
+                            addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, f'Image #{refNumber}', f'{image.width()}x{image.height()}', shifted=True)
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', label, shifted=True)
+                            refNumber+=1
+                    else:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', 'None')
 
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
