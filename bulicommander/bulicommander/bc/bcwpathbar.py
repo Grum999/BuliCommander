@@ -470,7 +470,7 @@ class BCWPathBar(QFrame):
         menu2.addAction(self.__actionSavedViewsAddNewView)
 
         allowAddRemove = False
-        if self.__panel.selectedFiles()[3] > 0:
+        if self.__panel.filesSelected()[3] > 0:
             # Selected nb directories + files > 0
             # can be added to a current view
             allowAddRemove = True
@@ -606,9 +606,9 @@ class BCWPathBar(QFrame):
             viewId = self.__savedView.current(True)
 
         if menuAction == 'create_view':
-            self.__uiController.commandGoSavedViewCreateUI([file.fullPathName() for file in self.__panel.selectedFiles()[0]])
+            self.__uiController.commandGoSavedViewCreateUI([file.fullPathName() for file in self.__panel.filesSelected()[0]])
         elif menuAction == 'add_to_view':
-            self.__uiController.commandGoSavedViewAppend(viewId[1:], [file.fullPathName() for file in self.__panel.selectedFiles()[0]])
+            self.__uiController.commandGoSavedViewAppend(viewId[1:], [file.fullPathName() for file in self.__panel.filesSelected()[0]])
         elif menuAction == 'go_to_view':
             self.setPath(viewId)
         elif menuAction == 'delete_view':
@@ -616,9 +616,9 @@ class BCWPathBar(QFrame):
         elif menuAction == 'rename_view':
             self.__uiController.commandGoSavedViewRenameUI(viewId)
         elif menuAction == 'remove_from_view':
-            if self.__panel.selectedFiles()[3] > 0:
+            if self.__panel.filesSelected()[3] > 0:
                 # Remove given files from view
-                self.__uiController.commandGoSavedViewRemoveUI(viewId, [file.fullPathName() for file in self.__panel.selectedFiles()[5]])
+                self.__uiController.commandGoSavedViewRemoveUI(viewId, [file.fullPathName() for file in self.__panel.filesSelected()[5]])
         elif menuAction == 'clear_view_content':
             self.__uiController.commandGoSavedViewClearUI(viewId)
 
