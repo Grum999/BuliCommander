@@ -568,7 +568,7 @@ class BCExportFilesDialogBox(QDialog):
 
         self.__uiController = uicontroller
         self.__fileNfo = self.__uiController.panel().files()
-        self.__selectedFileNfo = self.__uiController.panel().selectedFiles()
+        self.__selectedFileNfo = self.__uiController.panel().filesSelected()
 
         self.__hasSavedSettings = self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED.id())
 
@@ -2794,7 +2794,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __getPath(self):
         """Return path (path file/name or quick ref)"""
-        path=self.__uiController.panel().path()
+        path=self.__uiController.panel().filesPath()
         lPath=path.lower()
         refDict=self.__uiController.quickRefDict()
 
