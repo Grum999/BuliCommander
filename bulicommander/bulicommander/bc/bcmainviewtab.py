@@ -2701,32 +2701,39 @@ class BCMainViewTab(QFrame):
 
             if stats:
                 if self.__clipboardSelectedNbPersistent>0:
-                    textItems.append(f"Persistent: {self.__clipboardSelectedNbPersistent} out of {stats['persistent']}")
-                statusTextItems.append(f"Persistent: {stats['persistent']}")
+                    statusTextItems.append(f"Persistent: {self.__clipboardSelectedNbPersistent} out of {stats['persistent']}")
+                else:
+                    statusTextItems.append(f"Persistent: {stats['persistent']}")
 
                 if self.__clipboardSelectedNbUrlDownloading>0:
-                    textItems.append(f"Downloading: {self.__clipboardSelectedNbUrlDownloading} out of {stats['downloading']}")
-                statusTextItems.append(f"Downloading: {stats['downloading']}")
+                    statusTextItems.append(f"Downloading: {self.__clipboardSelectedNbUrlDownloading} out of {stats['downloading']}")
+                else:
+                    statusTextItems.append(f"Downloading: {stats['downloading']}")
 
                 if self.__clipboardSelectedNbUrl>0:
-                    textItems.append(f"URLs: {self.__clipboardSelectedNbUrl} out of {stats['urls']}")
-                statusTextItems.append(f"URLs: {stats['urls']}")
+                    statusTextItems.append(f"URLs: {self.__clipboardSelectedNbUrl} out of {stats['urls']}")
+                else:
+                    statusTextItems.append(f"URLs: {stats['urls']}")
 
                 if (self.__clipboardSelectedNbImagesRaster+self.__clipboardSelectedNbImagesSvg)>0:
-                    textItems.append(f"Images: {self.__clipboardSelectedNbImagesRaster+self.__clipboardSelectedNbImagesSvg} out of {stats['images']}")
-                statusTextItems.append(f"Images: {stats['images']}")
+                    statusTextItems.append(f"Images: {self.__clipboardSelectedNbImagesRaster+self.__clipboardSelectedNbImagesSvg} out of {stats['images']}")
+                else:
+                    statusTextItems.append(f"Images: {stats['images']}")
 
                 if self.__clipboardSelectedNbImagesKraNode>0:
-                    textItems.append(f"Krita layers: {self.__clipboardSelectedNbImagesKraNode} out of {stats['kraNodes']}")
-                statusTextItems.append(f"Krita layers: {stats['kraNodes']}")
+                    statusTextItems.append(f"Krita layers: {self.__clipboardSelectedNbImagesKraNode} out of {stats['kraNodes']}")
+                else:
+                    statusTextItems.append(f"Krita layers: {stats['kraNodes']}")
 
                 if self.__clipboardSelectedNbImagesKraSelection>0:
-                    textItems.append(f"Krita selections: {self.__clipboardSelectedNbImagesKraSelection} out of {stats['kraSelection']}")
-                statusTextItems.append(f"Krita selections: {stats['kraSelection']}")
+                    statusTextItems.append(f"Krita selections: {self.__clipboardSelectedNbImagesKraSelection} out of {stats['kraSelection']}")
+                else:
+                    statusTextItems.append(f"Krita selections: {stats['kraSelection']}")
 
                 if self.__clipboardSelectedNbFiles>0:
-                    textItems.append(f"Files: {self.__clipboardSelectedNbFiles} out of {stats['files']}")
-                statusTextItems.append(f"Files: {stats['files']}")
+                    statusTextItems.append(f"Files: {self.__clipboardSelectedNbFiles} out of {stats['files']}")
+                else:
+                    statusTextItems.append(f"Files: {stats['files']}")
 
         self.lblClipboardNfo.setText(', '.join(textItems))
         self.lblClipboardNfo.setStatusTip(', '.join(statusTextItems))
