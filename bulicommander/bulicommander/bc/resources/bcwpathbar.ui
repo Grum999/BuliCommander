@@ -25,6 +25,9 @@
   <property name="windowTitle">
    <string>Frame</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <property name="frameShape">
    <enum>QFrame::NoFrame</enum>
   </property>
@@ -480,6 +483,9 @@
           <widget class="QLineEdit" name="leFilterQuery">
            <property name="statusTip">
             <string>Quick filter: use wildcard * to filter files | To use regular expression, prefix filter with &quot;re:&quot;</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
            </property>
            <property name="clearButtonEnabled">
             <bool>true</bool>

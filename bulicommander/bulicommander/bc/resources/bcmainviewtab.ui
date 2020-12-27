@@ -343,7 +343,7 @@
                            <item>
                             <widget class="QTabWidget" name="twInfo">
                              <property name="currentIndex">
-                              <number>0</number>
+                              <number>3</number>
                              </property>
                              <property name="tabBarAutoHide">
                               <bool>false</bool>
@@ -1672,7 +1672,7 @@
             <item>
              <widget class="QLabel" name="lblClipboardNfo">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -1685,19 +1685,22 @@
                </font>
               </property>
               <property name="toolTip">
-               <string>Number of files, size of files</string>
+               <string/>
               </property>
               <property name="toolTipDuration">
                <number>2500</number>
               </property>
               <property name="statusTip">
-               <string>Number of files, size of files</string>
+               <string/>
               </property>
               <property name="whatsThis">
-               <string>Number of files, size of files</string>
+               <string/>
               </property>
               <property name="text">
                <string>- - -</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -1710,6 +1713,12 @@
             </item>
             <item>
              <widget class="QLabel" name="lblClipboardCache">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="font">
                <font>
                 <family>DejaVu Sans Mono</family>
