@@ -364,11 +364,15 @@ def buildIcon(icons):
     else:
         raise EInvalidType("Given `icons` must be a list of tuples")
 
-def buildQAction(icons, title, parent):
+def buildQAction(icons, title, parent, action=None, parameters=[]):
     """Build a QAction and store icons resource path as properties
 
     Tricky method to be able to reload icons on the fly when theme is modified
     """
+    def execute(dummy=None):
+        if callable(action):
+            action(*parameters)
+
     pixmapList=[]
     propertyList=[]
     for icon in icons:
@@ -413,6 +417,9 @@ def buildQAction(icons, title, parent):
 
     for property in propertyList:
         returnedAction.setProperty(*property)
+
+    if callable(action):
+        returnedAction.triggered.connect(execute)
 
     return returnedAction
 

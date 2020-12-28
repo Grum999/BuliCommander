@@ -112,6 +112,8 @@ from .bctable import (
     )
 from .bcutils import (
         Debug,
+        buildQAction,
+        buildQMenu,
         bytesSizeToStr,
         frToStrTime,
         getLangValue,
@@ -417,10 +419,12 @@ class BCMainViewFiles(QTreeView):
         self.__iconPool.stopProcessing()
 
     def keyPressEvent(self, event):
+        """Emit signal on keyPressed"""
         super(BCMainViewFiles, self).keyPressEvent(event)
         self.keyPressed.emit(event.key())
 
     def wheelEvent(self, event):
+        """Mange zoom level through mouse wheel"""
         if event.modifiers() & Qt.ControlModifier:
             if event.angleDelta().y() > 0:
                 # Zoom in
@@ -435,6 +439,7 @@ class BCMainViewFiles(QTreeView):
             super(BCMainViewFiles, self).wheelEvent(event)
 
     def focusInEvent(self, event):
+        """Emit signal when treeview get focused"""
         super(BCMainViewFiles, self).focusInEvent(event)
         self.focused.emit()
 
@@ -1170,6 +1175,7 @@ class BCMainViewTab(QFrame):
         self.treeViewFiles.header().sectionClicked.connect(self.__filesSort)
         self.treeViewFiles.doubleClicked.connect(self.__filesDoubleClick)
         self.treeViewFiles.keyPressed.connect(self.__filesKeyPressed)
+        self.treeViewFiles.contextMenuEvent=self.__filesContextMenuEvent
 
         self.treeViewFiles.selectionModel().selectionChanged.connect(self.__filesSelectionChanged)
 
@@ -1204,6 +1210,7 @@ class BCMainViewTab(QFrame):
 
         self.treeViewClipboard.doubleClicked.connect(self.__clipboardDoubleClick)
         self.treeViewClipboard.keyPressed.connect(self.__clipboardKeyPressed)
+        self.treeViewClipboard.contextMenuEvent=self.__clipboardContextMenuEvent
 
         # create menu for layout model button
         menuC = QMenu(self.btClipboardTabLayoutModel)
@@ -2591,6 +2598,146 @@ class BCMainViewTab(QFrame):
                     self.__filesFsWatcher.addPath(path)
 
 
+    def __filesContextMenuEvent(self, event):
+        """Display context menu for files"""
+        #
+        #
+        #   +---------------------------------------+----------------------------------------------+
+        #   | ACTION                                | SELECTION                                    |
+        #   |                                       |                                              |
+        #   |                                       | None | File  |  File |  Dir. |  Dir. | Both  |
+        #   |                                       |      |  (1)  |  (n)  |  (1)  |  (n)  |       |
+        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
+        #   | Select All                            |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Select None                           |  VD  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Invert selecion                       |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
+        #   | New folder                            |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Open folder in opposite panel         |  H   |   H   |   H   | VE.VD |   H   |   H   |
+        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
+        #   | Open>                                 |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   |     Open                              |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   |     Open and close BC                 |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   |     Open as new document              |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   |     Open as new document and close BC |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
+        #   | Copy to other panel                   |  H   | VE.VD | VE.VD | VE.VD | VE.VD | VE.VD |
+        #   | Move to other panel                   |  H   | VE.VD | VE.VD | VE.VD | VE.VD | VE.VD |
+        #   | Delete                                |  H   |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Rename                                |  H   |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
+        #   | Copy to clipboard                     |  H   |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Export files list...                  |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Convert files...                      |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
+        #
+        #   H=Hidden
+        #   VE=Visible, Enabled
+        #   VD=Visible, Disabled
+        #   XX.XX=If opposite panel visible . if opposite panel hidden
+        #
+
+        HH=0
+        VD=1
+        VE=2
+
+        menuProperties=[
+            # 0:parent  1:Id                2:icon list
+            #                               3:label                                                     4:action                                            5:    6:status
+            ['',        'selectAll',        [(":/images/select_all", QIcon.Normal)],
+                                            i18n('Select all'),                                         self.__uiController.commandPanelSelectAll,          [],   [VE, VE, VE, VE, VE, VE] ],
+            ['',        'selectNone',       [(":/images/select_none", QIcon.Normal)],
+                                            i18n('Select none'),                                        self.__uiController.commandPanelSelectNone,         [],   [VD, VE, VE, VE, VE, VE] ],
+            ['',        'selectInvert',     [(":/images/select_invert", QIcon.Normal)],
+                                            i18n('Invert selection'),                                   self.__uiController.commandPanelSelectInvert,       [],   [VE, VE, VE, VE, VE, VE] ],
+            ['',        'sep1',             None,   None,                                               None,                                               [],   [VE, VE, VE, VE, VE, VE] ],
+            ['',        'newFolder',        [(":/images/create_folder", QIcon.Normal)],
+                                            i18n('New folder...'),                                      self.__uiController.commandFileCreateDir,           [],   [VE, VE, VE, VE, VE, VE] ],
+            #[i18n('Show in opposite panel'),    self.__uiController.commandFileCreateDir,   [],   [VE, VE, VE, VE, VE, VE] ],
+            ['',        'sep2',             None,   None,                                               None,                                               [],   [HH, VE, VE, HH, HH, VE] ],
+            ['',        'open',             [(":/images/folder_open", QIcon.Normal), (":/images_d/folder_open", QIcon.Disabled)],
+                                            i18n('Open'),                                               None,                                               [],   [HH, VE, VE, HH, HH, VE] ],
+            ['open',    'openFile',         [(":/images/folder_open", QIcon.Normal), (":/images_d/folder_open", QIcon.Disabled)],
+                                            i18n('Open file'),                                          self.__uiController.commandFileOpen,                [],   [HH, VE, VE, HH, HH, VE] ],
+            ['open',    'openFileCloseBC',  [(":/images/folder_open", QIcon.Normal), (":/images_d/folder_open", QIcon.Disabled)],
+                                            i18n('Open file and close Buli Commander'),                 self.__uiController.commandFileOpenCloseBC,         [],   [HH, VE, VE, HH, HH, VE] ],
+            ['open',    'openNew',          [(":/images/open_new", QIcon.Normal), (":/images_d/open_new", QIcon.Disabled)],
+                                            i18n('Open as new document'),                               self.__uiController.commandFileOpenAsNew,           [],   [HH, VE, VE, HH, HH, VE] ],
+            ['open',    'openNewCloseBC',   [(":/images/open_new", QIcon.Normal), (":/images_d/open_new", QIcon.Disabled)],
+                                            i18n('Open as new document and close Buli Commander'),      self.__uiController.commandFileOpenAsNewCloseBC,    [],   [HH, VE, VE, HH, HH, VE] ],
+            ['',        'sep3',             None,   None,                                               None,                                               [],   [VE, VE, VE, VE, VE, VE] ],
+            ['',        'copyOP',           [(":/images/file_copy", QIcon.Normal), (":/images_d/file_copy", QIcon.Disabled)],
+                                            i18n('Copy to other panel'),                                self.__uiController.commandFileCopy,                [],   [HH, (VE,VD), (VE,VD), (VE,VD), (VE,VD), (VE,VD)] ],
+            ['',        'moveOP',           [(":/images/file_move", QIcon.Normal), (":/images_d/file_move", QIcon.Disabled)],
+                                            i18n('Move to other panel'),                                self.__uiController.commandFileMove,                [],   [HH, (VE,VD), (VE,VD), (VE,VD), (VE,VD), (VE,VD)] ],
+            ['',        'delete',           [(":/images/delete", QIcon.Normal), (":/images_d/delete", QIcon.Disabled)],
+                                            i18n('Delete'),                                             self.__uiController.commandFileDelete,              [],   [HH, VE, VE, VE, VE, VE] ],
+            ['',        'rename',           [(":/images/file_rename", QIcon.Normal), (":/images_d/file_rename", QIcon.Disabled)],
+                                            i18n('Rename'),                                             self.__uiController.commandFileRename,              [],   [HH, VE, VE, VE, VE, VE] ],
+            ['',        'sep4',             None,   None,                                               None,                                               [],   [HH, VE, VE, VE, VE, VE] ],
+            ['',        'clipboard',        [(":/images/clipboard", QIcon.Normal)],
+                                            i18n('Copy to clipboard'),                                  self.__uiController.commandToolsListToClipboard,    [],   [HH, VE, VE, VE, VE, VE] ],
+            ['',        'exportlist',       [(":/images/export_list", QIcon.Normal)],
+                                            i18n('Export files list...'),                               self.__uiController.commandToolsExportFilesOpen,    [],   [VE, VE, VE, VE, VE, VE] ],
+            ['',        'convertFiles',     [(":/images/convert", QIcon.Normal)],
+                                            i18n('Convert files...'),                                   self.__uiController.commandToolsConvertFilesOpen,   [],   [VE, VE, VE, VE, VE, VE] ]
+        ]
+
+        # determinate current state index (0 to 5)
+        stateIndex=0
+        selection=self.filesSelected()
+        if selection[1]!=0 and selection[2]!=0:
+            # both
+            stateIndex = 5
+        elif selection[2]==1:
+            # file(1)
+            stateIndex = 1
+        elif selection[2]>1:
+            # file(n)
+            stateIndex = 2
+        elif selection[3]==1:
+            # dir.(1)
+            stateIndex = 3
+        elif selection[3]>1:
+            # dir.(n)
+            stateIndex = 4
+
+        contextMenu = QMenu()
+        parentMenu={}
+
+        for properties in menuProperties:
+            # deteminate status
+            status=properties[6][stateIndex]
+            if isinstance(status, tuple):
+                # need to determinate if opposite panel is active(0) or not(1)
+                if self.__uiController.panel(False).targetDirectoryReady():
+                    status=status[0]
+                else:
+                    status=status[1]
+
+            menu=contextMenu
+
+            if status != HH:
+                if properties[3] is None:
+                    # label is None=separator
+                    contextMenu.addSeparator()
+                elif properties[4] is None:
+                    # create a new menu instead of an action
+                    menu = buildQMenu(properties[2], properties[3], self)
+                    contextMenu.addMenu(menu)
+                    parentMenu[properties[1]]=menu
+                else:
+                    action = buildQAction(properties[2], properties[3], self, properties[4], properties[5])
+                    if status==VD:
+                        action.setEnabled(False)
+
+                    if properties[0]!='' and properties[0] in parentMenu:
+                        menu=parentMenu[properties[0]]
+                    menu.addAction(action)
+
+        contextMenu.exec_(event.globalPos())
+
+
     # -- PRIVATE CLIPBOARD -----------------------------------------------------
 
     def __clipboardUpdateDownloadInformation(self, item):
@@ -2829,6 +2976,43 @@ class BCMainViewTab(QFrame):
             self.clipboardSelectAll()
         elif key == Qt.Key_Slash:
             self.clipboardSelectNone()
+
+
+    def __clipboardContextMenuEvent(self, event):
+        """Display context menu for clipboard"""
+        # Implementation made differently than __filesContextMenuEvent()
+        # Here, retrieve action from mainwindow Menu
+
+        menuActions=[
+                self.__uiController.window().actionSelectAll,
+                self.__uiController.window().actionSelectNone,
+                self.__uiController.window().actionSelectInvert,
+                None,
+                self.__uiController.window().actionClipboardCheckContent,
+                None,
+                self.__uiController.window().actionClipboardPushBack,
+                None,
+                self.__uiController.window().actionClipboardPasteAsNewLayer,
+                self.__uiController.window().actionClipboardPasteAsNewDocument,
+                self.__uiController.window().actionClipboardPasteAsRefImage,
+                self.__uiController.window().actionClipboardOpen,
+                None,
+                self.__uiController.window().actionClipboardSetPersistent,
+                self.__uiController.window().actionClipboardSetNotPersistent,
+                None,
+                self.__uiController.window().actionClipboardStartDownload,
+                self.__uiController.window().actionClipboardStopDownload
+            ]
+
+        contextMenu = QMenu()
+
+        for action in menuActions:
+            if action is None:
+                contextMenu.addSeparator()
+            elif action.isVisible():
+                contextMenu.addAction(action)
+
+        contextMenu.exec_(event.globalPos())
 
 
     # -- PUBLIC GLOBAL ---------------------------------------------------------
