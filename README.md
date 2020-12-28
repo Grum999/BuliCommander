@@ -68,18 +68,19 @@ Here a list of some functionalities:
 - Image file information
   - File properties
   - Image properties (format, dimension, mode/depth, profile)
-  - Krita image properties (About + Author)
+  - Krita image properties (About, Author, embedded palettes, references images, used fonts, external files)
 - File manipulation (copy, move, delete, rename)
 - Export files as list
 - Convert files (KRA/PNG/JPEG)
 - Miscellaneous opening modes
   - Improved GIF/WEBP import file
+- Clipboard manager
 
 
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.5.0a](https://github.com/Grum999/BuliCommander/releases/download/0.5.0a/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.6.0a](https://github.com/Grum999/BuliCommander/releases/download/0.6.0a/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
@@ -106,6 +107,16 @@ I think it should be Ok, because of use of python and PyQt high level and multi 
 ## Plugin's life
 
 ### What's new?
+_[2020-12-29] Version 0.6.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.6.0a.md)*
+
+- Implement *Clipboard manager*
+- Implement tool *Copy to clipboard*
+- Implement function *Open file as reference image*
+- Implement context menu for files
+- Improve Krita image information - *Reference Images*
+- Fix bug - *Active panel not highlighted*
+
+
 _[2020-12-06] Version 0.5.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.5.0a.md)*
 
 - Implement *Rename*

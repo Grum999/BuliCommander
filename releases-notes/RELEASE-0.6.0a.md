@@ -1,7 +1,7 @@
-# Buli Commander :: Release 0.6.0a [YYYY-MM-DD]
+# Buli Commander :: Release 0.6.0a [2020-12-29]
 
 
-## Implement panel *Clipboard*
+## Implement *Clipboard manager*
 
 Clipboard panel catch and store clipboard content, allowing it to be re-used later.
 
