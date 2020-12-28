@@ -754,8 +754,10 @@ class BCUIController(QObject):
         if self.panel().tabActive() == BCMainViewTabTabs.FILES:
             self.__window.actionClipboardQuit.setShortcut(QKeySequence())
             self.__window.actionClipboardOpen.setShortcut(QKeySequence())
+            self.__window.actionClipboardPushBack.setShortcut(QKeySequence())
             self.__window.actionFileQuit.setShortcut("CTRL+Q")
             self.__window.actionFileOpen.setShortcut("CTRL+O")
+            self.__window.actionToolsCopyToClipboard.setShortcut("CTRL+C")
 
             self.__window.menuFile.menuAction().setVisible(True)
             self.__window.menuClipboard.menuAction().setVisible(False)
@@ -808,13 +810,16 @@ class BCUIController(QObject):
             self.__window.actionGoBack.setEnabled(self.panel().filesGoBackEnabled())
             self.__window.actionGoUp.setEnabled(self.panel().filesGoUpEnabled())
 
+            self.__window.actionToolsCopyToClipboard.setEnabled(selectionInfo[3]>0)
             self.__window.actionToolsExportFiles.setEnabled(True)
             self.__window.actionToolsConvertFiles.setEnabled(True)
         elif self.panel().tabActive() == BCMainViewTabTabs.CLIPBOARD:
             self.__window.actionFileQuit.setShortcut(QKeySequence())
             self.__window.actionFileOpen.setShortcut(QKeySequence())
+            self.__window.actionToolsCopyToClipboard.setShortcut(QKeySequence())
             self.__window.actionClipboardQuit.setShortcut("CTRL+Q")
             self.__window.actionClipboardOpen.setShortcut("CTRL+O")
+            self.__window.actionClipboardPushBack.setShortcut("CTRL+C")
 
             self.__window.menuFile.menuAction().setVisible(False)
             self.__window.menuClipboard.menuAction().setVisible(True)
@@ -923,6 +928,7 @@ class BCUIController(QObject):
             self.__window.actionViewDisplaySecondaryPanel.setEnabled(True)
             self.__window.actionViewDisplayQuickFilter.setEnabled(False)
 
+            self.__window.actionToolsCopyToClipboard.setEnabled(False)
             self.__window.actionToolsExportFiles.setEnabled(False)
             self.__window.actionToolsConvertFiles.setEnabled(False)
         elif self.panel().tabActive() == BCMainViewTabTabs.DOCUMENTS:
@@ -947,6 +953,7 @@ class BCUIController(QObject):
             self.__window.actionViewDisplaySecondaryPanel.setEnabled(True)
             self.__window.actionViewDisplayQuickFilter.setEnabled(False)
 
+            self.__window.actionToolsCopyToClipboard.setEnabled(False)
             self.__window.actionToolsExportFiles.setEnabled(False)
             self.__window.actionToolsConvertFiles.setEnabled(False)
 
@@ -2257,6 +2264,17 @@ class BCUIController(QObject):
     def commandToolsConvertFilesOpen(self):
         """Open window for tool 'Convert files'"""
         BCConvertFilesDialogBox.open(f'{self.__bcName}::Convert files', self)
+
+    def commandToolsListToClipboard(self):
+        """Copy current selection to clipboard"""
+        selectionInfo = self.panel().filesSelected()
+        if selectionInfo[3] > 0:
+            uriList=[]
+            for file in selectionInfo[0]:
+                uriList.append(BCClipboardItemFile('00000000000000000000000000000000', file.fullPathName(), saveInCache=False, persistent=False))
+
+            if len(uriList)>0:
+                self.__clipboard.pushBackToClipboard(uriList)
 
     def commandSettingsOpen(self):
         """Open dialog box settings"""
