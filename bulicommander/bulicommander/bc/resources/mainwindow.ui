@@ -153,6 +153,7 @@
     <addaction name="actionToolsSearch"/>
     <addaction name="actionToolsStatistics"/>
     <addaction name="actionConsole"/>
+    <addaction name="actionToolsCopyToClipboard"/>
     <addaction name="actionToolsExportFiles"/>
     <addaction name="actionToolsConvertFiles"/>
    </widget>
@@ -1392,6 +1393,24 @@
    </property>
    <property name="text">
     <string>Op&amp;en file as Reference Image and close Buli Commander</string>
+   </property>
+  </action>
+  <action name="actionToolsCopyToClipboard">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard_pushback</normaloff>
+     <normalon>:/images/clipboard_pushback</normalon>
+     <disabledoff>:/images_d/clipboard_pushback</disabledoff>
+     <disabledon>:/images_d/clipboard_pushback</disabledon>:/images/clipboard_pushback</iconset>
+   </property>
+   <property name="text">
+    <string>Copy to clipboard</string>
+   </property>
+   <property name="statusTip">
+    <string>Copy selected files name to clipboard</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
    </property>
   </action>
  </widget>

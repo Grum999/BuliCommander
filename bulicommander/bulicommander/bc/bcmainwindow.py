@@ -183,6 +183,7 @@ class BCMainWindow(QMainWindow):
         self.actionViewSwapPanels.triggered.connect(self.__uiController.commandViewSwapPanels)
 
         # Menu TOOLS
+        self.actionToolsCopyToClipboard.triggered.connect(self.__menuToolsCopyToClipboard_clicked)
         self.actionToolsSearch.triggered.connect(self.__actionNotYetImplemented)
         self.actionToolsExportFiles.triggered.connect(self.__menuToolsExportFiles_clicked)
         self.actionToolsConvertFiles.triggered.connect(self.__menuToolsConvertFiles_clicked)
@@ -373,6 +374,10 @@ class BCMainWindow(QMainWindow):
     def __menuViewShowHiddenFiles_clicked(self, action):
         """Display hidden files"""
         self.__uiController.commandViewShowHiddenFiles()
+
+    def __menuToolsCopyToClipboard_clicked(self, action):
+        """Copy current selected items to clipboard"""
+        self.__uiController.commandToolsListToClipboard()
 
     def __menuToolsExportFiles_clicked(self, action):
         """Open export file list tool"""

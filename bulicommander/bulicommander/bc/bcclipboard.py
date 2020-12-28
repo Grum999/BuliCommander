@@ -566,7 +566,7 @@ class BCClipboardItemFile(BCClipboardItem):
         """Push item back into clipboard"""
         returned=[(QUrl(f'file://{self.fileName()}'), 'text/uri-list'), (self.fileName(), 'text/plain')]
 
-        if os.path.exists(self.fileName()):
+        if os.path.isfile(self.fileName()):
             data=None
             with open(self.fileName(), 'rb') as fHandle:
                 data=fHandle.read()
