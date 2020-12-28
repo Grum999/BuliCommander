@@ -73,3 +73,10 @@ Image information panel provides for Krita file the list of references images:
 - Reference image thumbnail
 
 ![Reference image information](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-6-0a_infopanel-refimg.jpeg)
+
+> Note: A click on image reference allows to open it as a new document
+
+## Fix bug - *Active panel not highlighted*
+
+Path bar in active panel wasn't highlighted systematically.
+Problem is now fixed.
