@@ -1210,6 +1210,7 @@ class BCMainViewTab(QFrame):
 
         self.treeViewClipboard.doubleClicked.connect(self.__clipboardDoubleClick)
         self.treeViewClipboard.keyPressed.connect(self.__clipboardKeyPressed)
+        self.treeViewClipboard.contextMenuEvent=self.__clipboardContextMenuEvent
 
         # create menu for layout model button
         menuC = QMenu(self.btClipboardTabLayoutModel)
@@ -2597,7 +2598,6 @@ class BCMainViewTab(QFrame):
                     self.__filesFsWatcher.addPath(path)
 
 
-
     def __filesContextMenuEvent(self, event):
         """Display context menu for files"""
         #
@@ -2736,6 +2736,7 @@ class BCMainViewTab(QFrame):
                     menu.addAction(action)
 
         contextMenu.exec_(event.globalPos())
+
 
     # -- PRIVATE CLIPBOARD -----------------------------------------------------
 
@@ -2975,6 +2976,43 @@ class BCMainViewTab(QFrame):
             self.clipboardSelectAll()
         elif key == Qt.Key_Slash:
             self.clipboardSelectNone()
+
+
+    def __clipboardContextMenuEvent(self, event):
+        """Display context menu for clipboard"""
+        # Implementation made differently than __filesContextMenuEvent()
+        # Here, retrieve action from mainwindow Menu
+
+        menuActions=[
+                self.__uiController.window().actionSelectAll,
+                self.__uiController.window().actionSelectNone,
+                self.__uiController.window().actionSelectInvert,
+                None,
+                self.__uiController.window().actionClipboardCheckContent,
+                None,
+                self.__uiController.window().actionClipboardPushBack,
+                None,
+                self.__uiController.window().actionClipboardPasteAsNewLayer,
+                self.__uiController.window().actionClipboardPasteAsNewDocument,
+                self.__uiController.window().actionClipboardPasteAsRefImage,
+                self.__uiController.window().actionClipboardOpen,
+                None,
+                self.__uiController.window().actionClipboardSetPersistent,
+                self.__uiController.window().actionClipboardSetNotPersistent,
+                None,
+                self.__uiController.window().actionClipboardStartDownload,
+                self.__uiController.window().actionClipboardStopDownload
+            ]
+
+        contextMenu = QMenu()
+
+        for action in menuActions:
+            if action is None:
+                contextMenu.addSeparator()
+            elif action.isVisible():
+                contextMenu.addAction(action)
+
+        contextMenu.exec_(event.globalPos())
 
 
     # -- PUBLIC GLOBAL ---------------------------------------------------------

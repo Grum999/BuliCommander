@@ -650,6 +650,10 @@ class BCUIController(QObject):
         """Return clipboard instance"""
         return self.__clipboard
 
+    def window(self):
+        """return mainwindow"""
+        return self.__window
+
     # endregion: getter/setters ------------------------------------------------
 
 
