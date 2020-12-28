@@ -36,7 +36,7 @@ The _Manage clipboard content_ settings defines the way _Buli Commander_ works w
 
 > **Note:** When _Buli Commander_ is configured to be available in system tray, clipboard management can be temporary de-activated
 >
-> ![Clipboard settings](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-6-0a_clipboard-settings.png)
+> ![Clipboard settings](https://github.com/Grum999/BuliCommander/raw/master/screenshots/r0-6-0a_clipboard-systray-options.png)
 
 
 #### Option _Parse Text and HTML content for URLs_
