@@ -53,7 +53,6 @@ When checked, clipboard content is stored automatically in a cache for which dat
 When checked, _paste_ action **from Buli Commander** create a new document if there's no active document.
 
 
-
 ### Clipboard cache
 
 Session cache and/or persistent cache can be cleared at any moment from settings dialog box.
@@ -65,6 +64,12 @@ Session cache and/or persistent cache can be cleared at any moment from settings
 
 File can now be opened as reference image.
 
+## Implement tool *Copy to clilboard*
+
+This tools allows to copy selected files to clipboard:
+- In a text editor, paste list of selected path/file names
+- In a file manager, paste selected path/file names
+- In an image editor, paste image (last image from selected file, if more than one file is selected)
 
 ## Improve Krita image information - *Reference images*
 
