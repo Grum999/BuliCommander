@@ -82,7 +82,8 @@ from .bcclipboard import (
         BCClipboardModel,
         BCClipboardDelegate,
         BCClipboardItem,
-        BCClipboardItemUrl
+        BCClipboardItemUrl,
+        BCClipboardItemImg
     )
 from .bcfile import (
         BCBaseFile,
@@ -837,6 +838,26 @@ class BCMainViewClipboard(QTreeView):
         last = self.__proxyModel.index(self.__proxyModel.rowCount() - 1, BCClipboardModel.COLNUM_LAST)
 
         self.selectionModel().select(QItemSelection(first, last), QItemSelectionModel.Toggle)
+
+
+class BCWImageLabel(QLabel):
+    """A label with an image"""
+    clicked = Signal(QObject)
+
+    def __init__(self, image, parent=None):
+        super(BCWImageLabel, self).__init__(parent)
+
+        self.__image=image
+
+        self.setPixmap(QPixmap.fromImage(image.scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation)))
+        self.setCursor(Qt.PointingHandCursor)
+
+    def mousePressEvent(self, event):
+        super(BCWImageLabel, self).mousePressEvent(event)
+        self.clicked.emit(self)
+
+    def image(self):
+        return self.__image
 
 
 # -----------------------------------------------------------------------------
@@ -1640,6 +1661,11 @@ class BCMainViewTab(QFrame):
             self.__uiController.commandGoTo(oppositePanelId, '@file layer filter')
             self.__uiController.commandViewDisplaySecondaryPanel(True)
 
+        def loadReferenceImageAsnewDocument(imgLabel):
+            """Load reference image (from index) as a new document"""
+            item=BCClipboardItemImg('00000000000000000000000000000000', imgLabel.image(), saveInCache=True, persistent=False)
+            self.__uiController.clipboard().pushBackToClipboard(item)
+            Krita.instance().action('paste_new').trigger()
 
         self.__filesCurrentStats['nbSelectedFiles'] = 0
         self.__filesCurrentStats['nbSelectedDir'] = 0
@@ -1972,8 +1998,9 @@ class BCMainViewTab(QFrame):
 
                         refNumber=1
                         for image in imgNfo['document.referenceImages']:
-                            label=QLabel()
-                            label.setPixmap(QPixmap.fromImage(image.scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation)))
+                            label=BCWImageLabel(image)
+                            label.clicked.connect(loadReferenceImageAsnewDocument)
+                            label.setToolTip(i18n("Click to open as a new document"))
                             addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
                             addNfoRow(self.scrollAreaWidgetContentsNfoImage, f'Image #{refNumber}', f'{image.width()}x{image.height()}', shifted=True)
                             addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', label, shifted=True)
