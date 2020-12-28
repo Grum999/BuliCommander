@@ -81,7 +81,13 @@ Image information panel provides for Krita file the list of references images:
 
 > Note: A click on image reference allows to open it as a new document
 
+## Improve UI - *Context menu*
+
+Add context menu to files panel
+
+
+
 ## Fix bug - *Active panel not highlighted*
 
-Path bar in active panel wasn't highlighted systematically.
-Problem is now fixed.
+Path bar in active panel wasn't highlighted systematically.\
+Problem should now be fixed.
