@@ -72,8 +72,8 @@ class BCImportDialogBox(QDialog):
         self.lblFileName.setText(bcfile.fullPathName())
         self.hsKeyFrameNumber.setMaximum(self.__imgNfo['imageCount'])
         self.sbKeyFrameNumber.setMaximum(self.__imgNfo['imageCount'])
-        self.hsKeyFrameNumber.setValue(panel.currentAnimatedFrame())
-        self.sbKeyFrameNumber.setValue(panel.currentAnimatedFrame())
+        self.hsKeyFrameNumber.setValue(panel.preview().currentAnimatedFrame())
+        self.sbKeyFrameNumber.setValue(panel.preview().currentAnimatedFrame())
         self.hsKeyFrameNumber.valueChanged.connect(self.__currentFrameChanged)
 
         self.rbImportAsFrameLayer.toggled.connect(self.__setUiEnabled)
@@ -95,7 +95,7 @@ class BCImportDialogBox(QDialog):
         self.sbKeyFrameNumber.setEnabled(self.rbImportSingleFrame.isChecked())
 
     def __currentFrameChanged(self, value):
-        self.__panel.setCurrentAnimatedFrame(value)
+        self.__panel.preview().setCurrentAnimatedFrame(value)
 
     def setup(self):
         """Return current selected mode"""
@@ -282,4 +282,3 @@ class BCImportAnimated(object):
                     Debug.print('[BCImportAnimated.importInOneLayer] Unable to read animated file {0}: {1}', file.fullPathName(), e)
 
         return False
-

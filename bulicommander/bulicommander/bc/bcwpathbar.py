@@ -239,7 +239,6 @@ class BCWPathBar(QFrame):
 
         @pyqtSlot('QString')
         def path_Selected(value):
-            Debug.print('[BCWPathBar.path_Selected] path: {0} ({1})', self.path(), value)
             self.__backList.append(self.path())
             self.__updateUpBtn()
             self.__updateBackBtn()
@@ -286,7 +285,6 @@ class BCWPathBar(QFrame):
             self.__leFilterQueryFocusInEvent(e)
 
         self.widgetPath.setPalette(self.__paletteBase)
-        self.widgetPath.setAutoFillBackground(True)
 
         self.btSavedViews.clicked.connect(item_Clicked)
         self.btBookmark.clicked.connect(item_Clicked)
@@ -470,7 +468,7 @@ class BCWPathBar(QFrame):
         menu2.addAction(self.__actionSavedViewsAddNewView)
 
         allowAddRemove = False
-        if self.__panel.selectedFiles()[3] > 0:
+        if self.__panel.filesSelected()[3] > 0:
             # Selected nb directories + files > 0
             # can be added to a current view
             allowAddRemove = True
@@ -554,17 +552,10 @@ class BCWPathBar(QFrame):
         menu.addAction(self.__actionLastDocumentsOpened)
         menu.addAction(self.__actionLastDocumentsSaved)
 
-
-
     def __refreshStyle(self):
         """refresh current style for BCWPathBar"""
-        Debug.print('[BCWPathBar.__refreshStyle] current: {0} // {1}', self.__isHighlighted, self.path())
-        if self.__isHighlighted:
-            self.widgetPath.setPalette(self.__paletteHighlighted)
-        else:
-            self.widgetPath.setPalette(self.__paletteBase)
-
         self.frameBreacrumbPath.setHighlighted(self.__isHighlighted)
+        self.update()
 
     def __refreshFilter(self):
         """Refresh filter layout"""
@@ -606,9 +597,9 @@ class BCWPathBar(QFrame):
             viewId = self.__savedView.current(True)
 
         if menuAction == 'create_view':
-            self.__uiController.commandGoSavedViewCreateUI([file.fullPathName() for file in self.__panel.selectedFiles()[0]])
+            self.__uiController.commandGoSavedViewCreateUI([file.fullPathName() for file in self.__panel.filesSelected()[0]])
         elif menuAction == 'add_to_view':
-            self.__uiController.commandGoSavedViewAppend(viewId[1:], [file.fullPathName() for file in self.__panel.selectedFiles()[0]])
+            self.__uiController.commandGoSavedViewAppend(viewId[1:], [file.fullPathName() for file in self.__panel.filesSelected()[0]])
         elif menuAction == 'go_to_view':
             self.setPath(viewId)
         elif menuAction == 'delete_view':
@@ -616,9 +607,9 @@ class BCWPathBar(QFrame):
         elif menuAction == 'rename_view':
             self.__uiController.commandGoSavedViewRenameUI(viewId)
         elif menuAction == 'remove_from_view':
-            if self.__panel.selectedFiles()[3] > 0:
+            if self.__panel.filesSelected()[3] > 0:
                 # Remove given files from view
-                self.__uiController.commandGoSavedViewRemoveUI(viewId, [file.fullPathName() for file in self.__panel.selectedFiles()[5]])
+                self.__uiController.commandGoSavedViewRemoveUI(viewId, [file.fullPathName() for file in self.__panel.filesSelected()[5]])
         elif menuAction == 'clear_view_content':
             self.__uiController.commandGoSavedViewClearUI(viewId)
 
@@ -661,6 +652,17 @@ class BCWPathBar(QFrame):
         """update back button status"""
         self.btBack.setEnabled(self.__backList.length()>1)
 
+    def paintEvent(self, event):
+        super(BCWPathBar, self).paintEvent(event)
+
+        rect=QRect(0, 0, self.width(), self.height())
+
+        painter = QPainter(self)
+        if self.__isHighlighted:
+            painter.fillRect(rect, QBrush(self.__paletteHighlighted.color(QPalette.Highlight)))
+        else:
+            painter.fillRect(rect, QBrush(self.__paletteBase.color(QPalette.Base)))
+
     def uiController(self):
         """Return uiController"""
         return self.__uiController
@@ -700,8 +702,6 @@ class BCWPathBar(QFrame):
 
     def setHighlighted(self, value):
         """Allows to change highlighted status"""
-        Debug.print('[BCWPathBar.setHighlighted] current: {0} / value: {1} // {2}', self.__isHighlighted, value, self.path())
-
         if not isinstance(value, bool):
             raise EInvalidType("Given `value` must be a <bool>")
         elif self.__isHighlighted != value:
@@ -724,7 +724,6 @@ class BCWPathBar(QFrame):
 
     def setPath(self, path=None):
         """Set current path"""
-        Debug.print('[BCWPathBar.setPath] path: {0}', path)
         self.frameBreacrumbPath.set_path(path)
 
     def goToBackPath(self):

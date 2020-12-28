@@ -101,7 +101,7 @@ class BCConvertFilesDialogBox(QDialog):
 
         self.__uiController = uicontroller
         self.__fileNfo = self.__uiController.panel().files()
-        self.__selectedFileNfo = self.__uiController.panel().selectedFiles()
+        self.__selectedFileNfo = self.__uiController.panel().filesSelected()
 
         self.__hasSavedSettings = self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_GLB_SAVED.id())
 
@@ -269,7 +269,7 @@ class BCConvertFilesDialogBox(QDialog):
     def __loadSettingsPageTarget(self):
         """Load saved settings for page format"""
         # opposite panel path by default
-        self.bcwpbTargetDirectory.setPath(self.__uiController.panel(False).path())
+        self.bcwpbTargetDirectory.setPath(self.__uiController.panel(False).filesPath())
 
         if not self.__hasSavedSettings:
             # no saved settings: load default and exit
@@ -283,7 +283,7 @@ class BCConvertFilesDialogBox(QDialog):
     # -- Other functions -------------------------------------------------
     def __targetPathChanged(self, dummy=None):
         if self.rbTargetDirectorySame.isChecked():
-            self.__targetDirectory = self.__uiController.panel().path()
+            self.__targetDirectory = self.__uiController.panel().filesPath()
         else:
             self.__targetDirectory = self.bcwpbTargetDirectory.path()
 
@@ -609,7 +609,7 @@ class BCConvertFilesDialogBox(QDialog):
 
     def __getPath(self):
         """Return path (path file/name or quick ref)"""
-        path=self.__uiController.panel().path()
+        path=self.__uiController.panel().filesPath()
         lPath=path.lower()
         refDict=self.__uiController.quickRefDict()
 

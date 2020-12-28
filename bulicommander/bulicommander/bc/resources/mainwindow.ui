@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>699</width>
+    <width>726</width>
     <height>595</height>
    </rect>
   </property>
@@ -16,260 +16,264 @@
   <property name="autoFillBackground">
    <bool>false</bool>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="leftMargin">
-    <number>4</number>
+  <widget class="QMenuBar" name="mainMenuBar">
+   <property name="geometry">
+    <rect>
+     <x>4</x>
+     <y>4</y>
+     <width>718</width>
+     <height>31</height>
+    </rect>
    </property>
-   <property name="topMargin">
-    <number>4</number>
-   </property>
-   <property name="rightMargin">
-    <number>4</number>
-   </property>
-   <property name="bottomMargin">
-    <number>4</number>
-   </property>
-   <item>
-    <widget class="QMenuBar" name="mainMenuBar">
-     <widget class="QMenu" name="menuFile">
-      <property name="baseSize">
-       <size>
-        <width>0</width>
-        <height>0</height>
-       </size>
-      </property>
-      <property name="title">
-       <string>Fi&amp;le</string>
-      </property>
-      <addaction name="actionFolderNew"/>
-      <addaction name="separator"/>
-      <addaction name="actionFileOpen"/>
-      <addaction name="actionFileOpenCloseBC"/>
-      <addaction name="actionFileOpenAsNewDocument"/>
-      <addaction name="actionFileOpenAsNewDocumentCloseBC"/>
-      <addaction name="separator"/>
-      <addaction name="actionFileCopyToOtherPanel"/>
-      <addaction name="actionFileMoveToOtherPanel"/>
-      <addaction name="separator"/>
-      <addaction name="actionFileDelete"/>
-      <addaction name="actionFileRename"/>
-      <addaction name="separator"/>
-      <addaction name="actionQuit"/>
-     </widget>
-     <widget class="QMenu" name="menuEdit">
-      <property name="title">
-       <string>E&amp;dit</string>
-      </property>
-      <addaction name="actionSelectAll"/>
-      <addaction name="actionSelectNone"/>
-      <addaction name="actionSelectInvert"/>
-      <addaction name="separator"/>
-      <addaction name="actionSelectRegEx"/>
-     </widget>
-     <widget class="QMenu" name="menuGo">
-      <property name="title">
-       <string>&amp;Go</string>
-      </property>
-      <widget class="QMenu" name="menuGoSavedViews">
-       <property name="toolTip">
-        <string>Saved views</string>
-       </property>
-       <property name="statusTip">
-        <string>Saved views</string>
-       </property>
-       <property name="title">
-        <string>&amp;Views</string>
-       </property>
-       <property name="icon">
-        <iconset resource="dark_icons.qrc">
-         <normaloff>:/images/saved_view</normaloff>:/images/saved_view</iconset>
-       </property>
-       <addaction name="separator"/>
-      </widget>
-      <widget class="QMenu" name="menuGoHistory">
-       <property name="title">
-        <string>&amp;History</string>
-       </property>
-       <property name="icon">
-        <iconset resource="dark_icons.qrc">
-         <normaloff>:/images/history</normaloff>:/images/history</iconset>
-       </property>
-       <property name="toolTipsVisible">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QMenu" name="menuGoBookmark">
-       <property name="toolTip">
-        <string>Favorites places</string>
-       </property>
-       <property name="statusTip">
-        <string>Favorites places</string>
-       </property>
-       <property name="title">
-        <string>B&amp;ookmark</string>
-       </property>
-       <property name="icon">
-        <iconset resource="dark_icons.qrc">
-         <normaloff>:/images/bookmarks</normaloff>:/images/bookmarks</iconset>
-       </property>
-       <property name="toolTipsVisible">
-        <bool>true</bool>
-       </property>
-       <addaction name="separator"/>
-      </widget>
-      <widget class="QMenu" name="menuGoLastDocuments">
-       <property name="title">
-        <string>&amp;Last documents</string>
-       </property>
-       <property name="icon">
-        <iconset resource="dark_icons.qrc">
-         <normaloff>:/images/saved_view_last</normaloff>:/images/saved_view_last</iconset>
-       </property>
-      </widget>
-      <addaction name="actionGoHome"/>
-      <addaction name="actionGoUp"/>
-      <addaction name="actionGoBack"/>
-      <addaction name="menuGoHistory"/>
-      <addaction name="separator"/>
-      <addaction name="menuGoBookmark"/>
-      <addaction name="menuGoSavedViews"/>
-      <addaction name="menuGoLastDocuments"/>
-     </widget>
-     <widget class="QMenu" name="menuView">
-      <property name="title">
-       <string>&amp;View</string>
-      </property>
-      <addaction name="actionViewThumbnail"/>
-      <addaction name="separator"/>
-      <addaction name="actionViewShowImageFileOnly"/>
-      <addaction name="actionViewShowBackupFiles"/>
-      <addaction name="actionViewShowHiddenFiles"/>
-      <addaction name="separator"/>
-      <addaction name="actionViewDisplaySecondaryPanel"/>
-      <addaction name="actionViewDisplayQuickFilter"/>
-      <addaction name="separator"/>
-      <addaction name="actionViewSwapPanels"/>
-     </widget>
-     <widget class="QMenu" name="menuTools">
-      <property name="title">
-       <string>&amp;Tools</string>
-      </property>
-      <addaction name="actionToolsSearch"/>
-      <addaction name="actionToolsStatistics"/>
-      <addaction name="actionConsole"/>
-      <addaction name="actionToolsExportFiles"/>
-      <addaction name="actionToolsConvertFiles"/>
-     </widget>
-     <widget class="QMenu" name="menuSettings">
-      <property name="title">
-       <string>Setti&amp;ngs</string>
-      </property>
-      <addaction name="actionSettingsPreferences"/>
-      <addaction name="separator"/>
-      <addaction name="actionSettingsSaveSessionOnExit"/>
-      <addaction name="actionSettingsResetSessionToDefault"/>
-     </widget>
-     <widget class="QMenu" name="menuHelp">
-      <property name="title">
-       <string>&amp;Help</string>
-      </property>
-      <addaction name="actionHelpAboutBC"/>
-     </widget>
-     <addaction name="menuFile"/>
-     <addaction name="menuEdit"/>
-     <addaction name="menuGo"/>
-     <addaction name="menuView"/>
-     <addaction name="menuTools"/>
-     <addaction name="menuSettings"/>
-     <addaction name="menuHelp"/>
-    </widget>
-   </item>
-   <item>
-    <widget class="QWidget" name="widgetMainView" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+   <widget class="QMenu" name="menuFile">
+    <property name="baseSize">
+     <size>
+      <width>0</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="title">
+     <string>Fi&amp;le</string>
+    </property>
+    <addaction name="actionFolderNew"/>
+    <addaction name="separator"/>
+    <addaction name="actionFileOpen"/>
+    <addaction name="actionFileOpenCloseBC"/>
+    <addaction name="actionFileOpenAsNewDocument"/>
+    <addaction name="actionFileOpenAsNewDocumentCloseBC"/>
+    <addaction name="actionFileOpenAsImageReference"/>
+    <addaction name="actionFileOpenAsImageReferenceCloseBC"/>
+    <addaction name="separator"/>
+    <addaction name="actionFileCopyToOtherPanel"/>
+    <addaction name="actionFileMoveToOtherPanel"/>
+    <addaction name="separator"/>
+    <addaction name="actionFileDelete"/>
+    <addaction name="actionFileRename"/>
+    <addaction name="separator"/>
+    <addaction name="actionFileQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>E&amp;dit</string>
+    </property>
+    <addaction name="actionSelectAll"/>
+    <addaction name="actionSelectNone"/>
+    <addaction name="actionSelectInvert"/>
+    <addaction name="separator"/>
+    <addaction name="actionSelectRegEx"/>
+   </widget>
+   <widget class="QMenu" name="menuGo">
+    <property name="title">
+     <string>&amp;Go</string>
+    </property>
+    <widget class="QMenu" name="menuGoSavedViews">
+     <property name="toolTip">
+      <string>Saved views</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout">
-      <property name="leftMargin">
-       <number>4</number>
-      </property>
-      <property name="topMargin">
-       <number>4</number>
-      </property>
-      <property name="rightMargin">
-       <number>4</number>
-      </property>
-      <property name="bottomMargin">
-       <number>4</number>
-      </property>
-      <item row="1" column="0">
-       <widget class="QSplitter" name="splitterMainView">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="childrenCollapsible">
-         <bool>false</bool>
-        </property>
-        <widget class="BCMainViewTab" name="mainViewTab0">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_2">
-          <property name="leftMargin">
-           <number>4</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>4</number>
-          </property>
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-         </layout>
-        </widget>
-        <widget class="BCMainViewTab" name="mainViewTab1">
-         <layout class="QGridLayout" name="gridLayout_3">
-          <property name="leftMargin">
-           <number>4</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>4</number>
-          </property>
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-         </layout>
-        </widget>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QStatusBar" name="mainStatusBar">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+     <property name="statusTip">
+      <string>Saved views</string>
      </property>
-     <property name="sizeGripEnabled">
+     <property name="title">
+      <string>&amp;Views</string>
+     </property>
+     <property name="icon">
+      <iconset resource="dark_icons.qrc">
+       <normaloff>:/images/saved_view</normaloff>:/images/saved_view</iconset>
+     </property>
+     <addaction name="separator"/>
+    </widget>
+    <widget class="QMenu" name="menuGoHistory">
+     <property name="title">
+      <string>&amp;History</string>
+     </property>
+     <property name="icon">
+      <iconset resource="dark_icons.qrc">
+       <normaloff>:/images/history</normaloff>:/images/history</iconset>
+     </property>
+     <property name="toolTipsVisible">
       <bool>true</bool>
      </property>
     </widget>
-   </item>
-  </layout>
+    <widget class="QMenu" name="menuGoBookmark">
+     <property name="toolTip">
+      <string>Favorites places</string>
+     </property>
+     <property name="statusTip">
+      <string>Favorites places</string>
+     </property>
+     <property name="title">
+      <string>B&amp;ookmark</string>
+     </property>
+     <property name="icon">
+      <iconset resource="dark_icons.qrc">
+       <normaloff>:/images/bookmarks</normaloff>:/images/bookmarks</iconset>
+     </property>
+     <property name="toolTipsVisible">
+      <bool>true</bool>
+     </property>
+     <addaction name="separator"/>
+    </widget>
+    <widget class="QMenu" name="menuGoLastDocuments">
+     <property name="title">
+      <string>&amp;Last documents</string>
+     </property>
+     <property name="icon">
+      <iconset resource="dark_icons.qrc">
+       <normaloff>:/images/saved_view_last</normaloff>:/images/saved_view_last</iconset>
+     </property>
+    </widget>
+    <addaction name="actionGoHome"/>
+    <addaction name="actionGoUp"/>
+    <addaction name="actionGoBack"/>
+    <addaction name="menuGoHistory"/>
+    <addaction name="separator"/>
+    <addaction name="menuGoBookmark"/>
+    <addaction name="menuGoSavedViews"/>
+    <addaction name="menuGoLastDocuments"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <addaction name="actionViewThumbnail"/>
+    <addaction name="separator"/>
+    <addaction name="actionViewShowImageFileOnly"/>
+    <addaction name="actionViewShowBackupFiles"/>
+    <addaction name="actionViewShowHiddenFiles"/>
+    <addaction name="separator"/>
+    <addaction name="actionViewDisplayQuickFilter"/>
+    <addaction name="actionViewDisplaySecondaryPanel"/>
+    <addaction name="separator"/>
+    <addaction name="actionViewSwapPanels"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <addaction name="actionToolsSearch"/>
+    <addaction name="actionToolsStatistics"/>
+    <addaction name="actionConsole"/>
+    <addaction name="actionToolsCopyToClipboard"/>
+    <addaction name="actionToolsExportFiles"/>
+    <addaction name="actionToolsConvertFiles"/>
+   </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Setti&amp;ngs</string>
+    </property>
+    <addaction name="actionSettingsPreferences"/>
+    <addaction name="separator"/>
+    <addaction name="actionSettingsSaveSessionOnExit"/>
+    <addaction name="actionSettingsResetSessionToDefault"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="actionHelpAboutBC"/>
+   </widget>
+   <widget class="QMenu" name="menuClipboard">
+    <property name="title">
+     <string>&amp;Clipboard</string>
+    </property>
+    <addaction name="actionClipboardCheckContent"/>
+    <addaction name="actionClipboardPushBack"/>
+    <addaction name="actionClipboardPasteAsNewLayer"/>
+    <addaction name="actionClipboardPasteAsNewDocument"/>
+    <addaction name="actionClipboardPasteAsRefImage"/>
+    <addaction name="actionClipboardOpen"/>
+    <addaction name="separator"/>
+    <addaction name="actionClipboardSetPersistent"/>
+    <addaction name="actionClipboardSetNotPersistent"/>
+    <addaction name="separator"/>
+    <addaction name="actionClipboardStartDownload"/>
+    <addaction name="actionClipboardStopDownload"/>
+    <addaction name="separator"/>
+    <addaction name="actionClipboardQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuDocument">
+    <property name="title">
+     <string>Doc&amp;ument</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuClipboard"/>
+   <addaction name="menuDocument"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuGo"/>
+   <addaction name="menuView"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuSettings"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QWidget" name="widgetMainView" native="true">
+   <property name="geometry">
+    <rect>
+     <x>4</x>
+     <y>41</y>
+     <width>601</width>
+     <height>491</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>4</number>
+    </property>
+    <property name="topMargin">
+     <number>4</number>
+    </property>
+    <property name="rightMargin">
+     <number>4</number>
+    </property>
+    <property name="bottomMargin">
+     <number>4</number>
+    </property>
+    <item row="1" column="0">
+     <widget class="QSplitter" name="splitterMainView">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="childrenCollapsible">
+       <bool>false</bool>
+      </property>
+      <widget class="BCMainViewTab" name="mainViewTab0">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+      <widget class="BCMainViewTab" name="mainViewTab1"/>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="mainStatusBar">
+   <property name="geometry">
+    <rect>
+     <x>4</x>
+     <y>562</y>
+     <width>16</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="sizeGripEnabled">
+    <bool>true</bool>
+   </property>
+  </widget>
   <action name="actionFolderNew">
    <property name="icon">
     <iconset resource="dark_icons.qrc">
@@ -402,7 +406,7 @@
     <string>Archive selected files (tar.gz, zip)</string>
    </property>
   </action>
-  <action name="actionQuit">
+  <action name="actionFileQuit">
    <property name="icon">
     <iconset resource="dark_icons.qrc">
      <normaloff>:/images/exit</normaloff>:/images/exit</iconset>
@@ -1142,7 +1146,7 @@
     <string>&amp;Convert files...</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+C</string>
+    <string>Ctrl+Shift+C</string>
    </property>
   </action>
   <action name="actionViewDisplayQuickFilter">
@@ -1154,10 +1158,259 @@
      <normaloff>:/images/filter</normaloff>:/images/filter</iconset>
    </property>
    <property name="text">
-    <string>Display quick filter</string>
+    <string>&amp;Display quick filter</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+F</string>
+   </property>
+  </action>
+  <action name="actionClipboardPasteAsNewLayer">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard</normaloff>
+     <normalon>:/images/clipboard</normalon>
+     <disabledoff>:/images_d/clipboard</disabledoff>
+     <disabledon>:/images_d/clipboard</disabledon>:/images/clipboard</iconset>
+   </property>
+   <property name="text">
+    <string>Paste as new &amp;layer</string>
+   </property>
+   <property name="toolTip">
+    <string>Paste image into a new layer</string>
+   </property>
+   <property name="statusTip">
+    <string>Image data content is pasted into a new layer</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="actionClipboardPasteAsNewDocument">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard_new</normaloff>
+     <normalon>:/images/clipboard_new</normalon>
+     <disabledoff>:/images_d/clipboard_new</disabledoff>
+     <disabledon>:/images_d/clipboard_new</disabledon>:/images/clipboard_new</iconset>
+   </property>
+   <property name="text">
+    <string>Past&amp;e as new document</string>
+   </property>
+   <property name="iconText">
+    <string>Paste image into a new document</string>
+   </property>
+   <property name="statusTip">
+    <string>Image data content is pasted into a new document</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+V</string>
+   </property>
+  </action>
+  <action name="actionClipboardOpen">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/folder_open</normaloff>
+     <disabledoff>:/images_d/folder_open</disabledoff>
+     <disabledon>:/images_d/folder_open</disabledon>:/images/folder_open</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Open</string>
+   </property>
+   <property name="toolTip">
+    <string>Open image stored in cache </string>
+   </property>
+   <property name="statusTip">
+    <string>Open image from file stored in cache </string>
+   </property>
+  </action>
+  <action name="actionClipboardSaveAs">
+   <property name="icon">
+    <iconset theme="document-save-as">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Copy to other panel</string>
+   </property>
+  </action>
+  <action name="actionClipboardSetPersistent">
+   <property name="icon">
+    <iconset theme="lock">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Set persistent</string>
+   </property>
+   <property name="toolTip">
+    <string>Set clipboard content as persistent</string>
+   </property>
+   <property name="statusTip">
+    <string>Set clipboard content to be available on next Krita session</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="actionClipboardSetNotPersistent">
+   <property name="icon">
+    <iconset theme="unlock">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Set &amp;not persistent</string>
+   </property>
+   <property name="toolTip">
+    <string>Set clipboard content as not persistent</string>
+   </property>
+   <property name="statusTip">
+    <string>Set clipboard content to be available only for current Krita session</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+P</string>
+   </property>
+  </action>
+  <action name="actionClipboardQuit">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/exit</normaloff>:/images/exit</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+  </action>
+  <action name="actionClipboardPushBack">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard_pushback</normaloff>
+     <normalon>:/images/clipboard_pushback</normalon>
+     <disabledoff>:/images_d/clipboard_pushback</disabledoff>
+     <disabledon>:/images_d/clipboard_pushback</disabledon>:/images/clipboard_pushback</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Push back to clipboard</string>
+   </property>
+   <property name="toolTip">
+    <string>Copy current item to clipboard</string>
+   </property>
+   <property name="statusTip">
+    <string>Original data content is pushed back to clipboard</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionClipboardStopDownload">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/url_downloadstop</normaloff>
+     <normalon>:/images/url_downloadstop</normalon>
+     <disabledoff>:/images_d/url_downloadstop</disabledoff>
+     <disabledon>:/images_d/url_downloadstop</disabledon>:/images/url_downloadstop</iconset>
+   </property>
+   <property name="text">
+    <string>Stop &amp;download</string>
+   </property>
+   <property name="toolTip">
+    <string>Stop download on selected URLs</string>
+   </property>
+   <property name="statusTip">
+    <string>Stop download on selected URLs currently downloading content</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+D</string>
+   </property>
+  </action>
+  <action name="actionClipboardStartDownload">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/url_downloadstart</normaloff>
+     <normalon>:/images/url_downloadstart</normalon>
+     <disabledoff>:/images_d/url_downloadstart</disabledoff>
+     <disabledon>:/images_d/url_downloadstart</disabledon>:/images/url_downloadstart</iconset>
+   </property>
+   <property name="text">
+    <string>Sta&amp;rt download</string>
+   </property>
+   <property name="toolTip">
+    <string>Start download on selected URLs</string>
+   </property>
+   <property name="statusTip">
+    <string>Start download on selected URLs for which content is not yet downloaded</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="actionClipboardCheckContent">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard_refresh</normaloff>
+     <normalon>:/images/clipboard_refresh</normalon>:/images/clipboard_refresh</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Check clipboard content</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actionClipboardPasteAsRefImage">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard_pinned</normaloff>
+     <normalon>:/images/clipboard_pinned</normalon>
+     <disabledoff>:/images_d/clipboard_pinned</disabledoff>
+     <disabledon>:/images_d/clipboard_pinned</disabledon>:/images/clipboard_pinned</iconset>
+   </property>
+   <property name="text">
+    <string>Paste as reference &amp;image</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+R</string>
+   </property>
+  </action>
+  <action name="actionFileOpenAsImageReference">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/folder_pinned</normaloff>
+     <normalon>:/images/folder_pinned</normalon>
+     <disabledoff>:/images_d/folder_pinned</disabledoff>
+     <disabledon>:/images_d/folder_pinned</disabledon>:/images/folder_pinned</iconset>
+   </property>
+   <property name="text">
+    <string>Open file as Reference &amp;Image</string>
+   </property>
+  </action>
+  <action name="actionFileOpenAsImageReferenceCloseBC">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/folder_pinned</normaloff>
+     <normalon>:/images/folder_pinned</normalon>
+     <disabledoff>:/images_d/folder_pinned</disabledoff>
+     <disabledon>:/images_d/folder_pinned</disabledon>:/images/folder_pinned</iconset>
+   </property>
+   <property name="text">
+    <string>Op&amp;en file as Reference Image and close Buli Commander</string>
+   </property>
+  </action>
+  <action name="actionToolsCopyToClipboard">
+   <property name="icon">
+    <iconset resource="dark_icons.qrc">
+     <normaloff>:/images/clipboard_pushback</normaloff>
+     <normalon>:/images/clipboard_pushback</normalon>
+     <disabledoff>:/images_d/clipboard_pushback</disabledoff>
+     <disabledon>:/images_d/clipboard_pushback</disabledon>:/images/clipboard_pushback</iconset>
+   </property>
+   <property name="text">
+    <string>Copy to clipboard</string>
+   </property>
+   <property name="statusTip">
+    <string>Copy selected files name to clipboard</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
    </property>
   </action>
  </widget>
