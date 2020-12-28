@@ -1765,22 +1765,28 @@ class BCUIController(QObject):
         self.updateMenuForPanel()
         return returned
 
-    def commandPanelSelectAll(self, panel):
+    def commandPanelSelectAll(self, panel=None):
         """Select all item"""
+        if panel is None:
+            panel=self.__window.highlightedPanel()
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].selectAll()
 
-    def commandPanelSelectNone(self, panel):
+    def commandPanelSelectNone(self, panel=None):
         """Clear selection"""
+        if panel is None:
+            panel=self.__window.highlightedPanel()
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].selectNone()
 
-    def commandPanelSelectInvert(self, panel):
+    def commandPanelSelectInvert(self, panel=None):
         """Clear selection"""
+        if panel is None:
+            panel=self.__window.highlightedPanel()
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
