@@ -1370,7 +1370,7 @@ class BCClipboard(QObject):
 
         #print(self.__temporaryDisabled, clipboardMimeContent.formats())
 
-        if self.__temporaryDisabled:
+        if self.__temporaryDisabled or clipboardMimeContent.hasFormat('BCIGNORE'):
             return
 
         if clipboardMimeContent.hasUrls():
