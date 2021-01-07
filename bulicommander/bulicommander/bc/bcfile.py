@@ -3357,9 +3357,30 @@ class BCFile(BCBaseFile):
             # notes:
             #   - look directly for content.svg files into all *.shapelayer directory
             #     simpler to get shapelayer node and then build filename...
-            #   - dot '.' is used because don't know how path is returned in windows ----+
-            #                                                                            V
+            #   - dot '.' is used because don't know how path is returned in windows --------+
+            #                                                                                V
             returned = [file.filename for file in archive.filelist if re.search('\.shapelayer.content\.svg', file.filename)]
+            archive.close()
+
+            return returned
+
+        def getKeyFramesList():
+            # return a list of keyframes files into archive
+
+            try:
+                archive = zipfile.ZipFile(self._fullPathName, 'r')
+            except Exception as e:
+                # can't be read (not exist, not a zip file?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, str(e))
+                return []
+
+            # notes:
+            #   - look directly for *.keyframes.xml files into all layers directory
+            #     simpler to get keyframes files and then build filename...
+            #   - dot '.' is used because don't know how path is returned in windows --------+
+            #                                                                                V
+            returned = [file.filename for file in archive.filelist if re.search('.layers.*keyframes\.xml$', file.filename)]
             archive.close()
 
             return returned
@@ -3392,7 +3413,10 @@ class BCFile(BCBaseFile):
             'colorType': (None, ''),
             'bitDepth': (None, ''),
             'iccProfileName': {},
-            'imageCount': 0,
+            'imageFrom': 0,
+            'imageTo': 0,
+            'imageMaxKeyFrameTime': 0,
+            'imageNbKeyFrames': 0,
             'imageDelay': 0,
 
             'document.layerCount': 0,
@@ -3575,9 +3599,13 @@ class BCFile(BCBaseFile):
 
 
                 try:
-                    node=xmlDoc.find(".//{*}animation/{*}currentTime")
-                    if not node is None:
-                        returned['imageCount'] = int(node.attrib['value'])
+                    nodes=xmlDoc.findall(".//{*}layers/{*}layer[@keyframes]")
+                    if len(nodes)>0:
+                        # there's some nodes with keyframes
+                        node=xmlDoc.find(".//{*}animation/{*}range")
+                        if not node is None:
+                            returned['imageFrom'] = int(node.attrib['from'])
+                            returned['imageTo'] = int(node.attrib['to'])
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve currentTime in file {0}: {1}', self._fullPathName, str(e))
 
@@ -3692,6 +3720,28 @@ class BCFile(BCBaseFile):
                     for node in nodeList:
                         if strDefault(node.text) != '':
                             returned['author.contact'].append({node.attrib['type']: strDefault(node.text)})
+
+
+        for filename in getKeyFramesList():
+            contentDoc = self.__readArchiveDataFile(filename)
+
+            if not contentDoc is None:
+                parsed = False
+                try:
+                    xmlDoc = xmlElement.fromstring(contentDoc.decode())
+                    parsed = True
+                except Exception as e:
+                    # can't be read (not xml?)
+                    self.__readable = False
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, str(e), filename)
+
+                if parsed:
+                    nodes = xmlDoc.findall(".//{*}channel/{*}keyframe[@time]")
+                    returned['imageNbKeyFrames']+=len(nodes)
+
+                    for node in nodes:
+                        nodeTime=int(node.attrib['time'])
+                        returned['imageMaxKeyFrameTime']=max(returned['imageMaxKeyFrameTime'], nodeTime)
 
         for filename in getShapeLayerList():
             contentDoc = self.__readArchiveDataFile(filename)
