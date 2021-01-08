@@ -1926,15 +1926,29 @@ class BCMainViewTab(QFrame):
 
                 # ------------------------------ Image: KRA ------------------------------
                 if file.format() == BCFileManagedFormat.KRA:
-                    if imgNfo['imageCount'] > 1:
+                    if imgNfo['imageNbKeyFrames'] > 1:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'Yes')
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Frames:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageCount']}</i>")
-
 
                         if imgNfo['imageDelay'] > 0:
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Frame rate:&nbsp;{imgNfo['imageDelay']}fps</i>")
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Duration:&nbsp;&nbsp;&nbsp;{frToStrTime(imgNfo['imageCount'],imgNfo['imageDelay'])}</i>")
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Frame rate:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageDelay']}fps</i>")
 
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', '')
+
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Rendered frames:&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageTo'] - imgNfo['imageFrom']}</i>")
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Start frame:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageFrom']}</i>")
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>End frame:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageTo']}</i>")
+
+                        if imgNfo['imageDelay'] > 0:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Range duration:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{frToStrTime(imgNfo['imageTo'] - imgNfo['imageFrom'],imgNfo['imageDelay'])}</i>")
+
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', '')
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Last frame:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageMaxKeyFrameTime']}</i>")
+
+                        if imgNfo['imageDelay'] > 0:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Total Duration:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{frToStrTime(max(imgNfo['imageTo'], imgNfo['imageMaxKeyFrameTime']),imgNfo['imageDelay'])}</i>")
+
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', '')
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Total key frames:&nbsp;&nbsp;&nbsp;{imgNfo['imageNbKeyFrames']}</i>")
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'No')
 
