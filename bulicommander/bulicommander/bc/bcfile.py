@@ -1982,7 +1982,7 @@ class BCFile(BCBaseFile):
             self.__readable = False
             imgfile.close()
             archive.close()
-            Debug.print('[BCFile.__readArchiveDataFile] Unable to read "{2}}" in file {0}: {1}', self._fullPathName, str(e), file)
+            Debug.print('[BCFile.__readArchiveDataFile] Unable to read "{2}" in file {0}: {1}', self._fullPathName, str(e), file)
             return None
 
         imgfile.close()

@@ -94,7 +94,7 @@ class BCWPreview(QWidget):
     def hidePreview(self, msg=None):
         """Hide preview and display message"""
         if msg is None:
-            self.lblNoPreview.setText("No image selected")
+            self.lblNoPreview.setText(i18n("No image selected"))
         elif isinstance(msg, str):
             self.lblNoPreview.setText(msg)
         else:
@@ -106,8 +106,11 @@ class BCWPreview(QWidget):
     def showPreview(self, img=None):
         """Hide preview and display message"""
         self.swPreview.setCurrentIndex(0)
-        self.gvPreview.setImage(img)
-        self.lblNoPreview.setText("...")
+        try:
+            self.gvPreview.setImage(img)
+            self.lblNoPreview.setText("...")
+        except:
+            self.hidePreview(i18n("Unable to read/display preview"))
 
 
     def setText(self, msg):

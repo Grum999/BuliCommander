@@ -86,6 +86,7 @@ from .bcimportanimated import (
 from .bcwimagepreview import (
         BCWImagePreview
     )
+from .bcrepairfiles import BCRepairFilesDialogBox
 from .bcsavedview import BCSavedView
 from .bctable import (
         BCTable,
@@ -817,6 +818,7 @@ class BCUIController(QObject):
             self.__window.actionToolsCopyToClipboard.setEnabled(selectionInfo[3]>0)
             self.__window.actionToolsExportFiles.setEnabled(True)
             self.__window.actionToolsConvertFiles.setEnabled(True)
+            self.__window.actionToolsRepairFile.setEnabled(selectionInfo[2]==1)
         elif self.panel().tabActive() == BCMainViewTabTabs.CLIPBOARD:
             self.__window.actionFileQuit.setShortcut(QKeySequence())
             self.__window.actionFileOpen.setShortcut(QKeySequence())
@@ -935,6 +937,7 @@ class BCUIController(QObject):
             self.__window.actionToolsCopyToClipboard.setEnabled(False)
             self.__window.actionToolsExportFiles.setEnabled(False)
             self.__window.actionToolsConvertFiles.setEnabled(False)
+            self.__window.actionToolsRepairFile.setEnabled(False)
         elif self.panel().tabActive() == BCMainViewTabTabs.DOCUMENTS:
             self.__window.actionFileQuit.setShortcut(QKeySequence())
             self.__window.actionFileOpen.setShortcut(QKeySequence())
@@ -960,6 +963,7 @@ class BCUIController(QObject):
             self.__window.actionToolsCopyToClipboard.setEnabled(False)
             self.__window.actionToolsExportFiles.setEnabled(False)
             self.__window.actionToolsConvertFiles.setEnabled(False)
+            self.__window.actionToolsRepairFile.setEnabled(False)
 
     def close(self):
         """When window is about to be closed, execute some cleanup/backup/stuff before exiting BuliCommander"""
@@ -2285,6 +2289,12 @@ class BCUIController(QObject):
 
             if len(uriList)>0:
                 self.__clipboard.pushBackToClipboard(uriList)
+
+    def commandToolsRepairFileOpen(self):
+        """Try to repair current selected file"""
+        selectionInfo = self.panel().filesSelected()
+        if selectionInfo[2] == 1:
+            BCRepairFilesDialogBox.open(selectionInfo[5][0], f'{self.__bcName}::Repair file', self)
 
     def commandSettingsOpen(self):
         """Open dialog box settings"""

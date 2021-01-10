@@ -156,6 +156,7 @@
     <addaction name="actionToolsCopyToClipboard"/>
     <addaction name="actionToolsExportFiles"/>
     <addaction name="actionToolsConvertFiles"/>
+    <addaction name="actionToolsRepairFile"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
@@ -1404,13 +1405,27 @@
      <disabledon>:/images_d/clipboard_pushback</disabledon>:/images/clipboard_pushback</iconset>
    </property>
    <property name="text">
-    <string>Copy to clipboard</string>
+    <string>C&amp;opy to clipboard</string>
    </property>
    <property name="statusTip">
     <string>Copy selected files name to clipboard</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionToolsRepairFile">
+   <property name="text">
+    <string>Analyze/Repair file...</string>
+   </property>
+   <property name="toolTip">
+    <string>Analyze and repair broken/corrupted Krita document</string>
+   </property>
+   <property name="statusTip">
+    <string>Tools allows to analyze and try to repair a broken/corrupted Krita file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+!</string>
    </property>
   </action>
  </widget>
