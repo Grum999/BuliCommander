@@ -26,6 +26,7 @@
 
 from pathlib import Path
 
+import io
 import re
 import os
 import os.path
@@ -34,6 +35,7 @@ import tempfile
 import zipfile
 import pprint
 import xml.etree.ElementTree as xmlElement
+import struct
 
 import PyQt5.uic
 from PyQt5.Qt import *
@@ -192,6 +194,32 @@ class BCRepairFilesDialogBox(QDialog):
         return db.exec()
 
 
+class BCDataReader:
+    def __init__(self, data):
+        self.__data=data
+        self.__position=0
+
+    def read(self, size):
+        returned=self.__data[self.__position:self.__position+size]
+        self.__position+=size
+        return returned
+
+    def readInt16(self):
+        return struct.unpack('!H', self.read(2))[0]
+
+    def readInt32(self):
+        return struct.unpack('!I', self.read(4))[0]
+
+    def seek(self, nbBytes, relative=True):
+        if relative:
+            self.__position+=nbBytes
+        else:
+            # absolute
+            self.__position=nbBytes
+
+    def tell(self):
+        """Return current position"""
+        return self.__position
 
 
 class BCRepairKraFile:
@@ -215,6 +243,7 @@ class BCRepairKraFile:
     DOC_CANT_BE_READ =                    0b00000010
     DOC_IS_MISSING =                      0b00000100
     DOC_FORMAT_INVALID =                  0b00001000
+    DOC_UNEXPECTED_CONTENT =              0b00010000
 
     __COMMON_NODES_ATTRIB=['nodetype',
                            'colorlabel',
@@ -288,6 +317,7 @@ class BCRepairKraFile:
             try:
                 zContent = zFile.read()
             except Exception as e:
+                zFile.close()
                 # should not occurs as has already been tested, but...
                 return BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3
         else:
@@ -301,7 +331,303 @@ class BCRepairKraFile:
                     # exit..
                     break
 
+        zFile.close()
         return zContent
+
+
+    def __readICCData(self, iccData):
+        """Read an ICC byte array and return ICC profile information
+
+        ICC specifications: http://www.color.org/specification/ICC1v43_2010-12.pdf
+                            http://www.color.org/specification/ICC.2-2018.pdf
+                            http://www.littlecms.com/LittleCMS2.10%20API.pdf
+                            http://www.color.org/ICC_Minor_Revision_for_Web.pdf
+        """
+        def decode_mluc(data):
+            """Decode MLUC (multiLocalizedUnicodeType) tag type
+
+                Byte position           Field length    Content                                                     Encoded
+                0 to 3                  4               ‘mluc’ (0x6D6C7563) type signature
+                4 to 7                  4               Reserved, shall be set to 0
+                8 to 11                 4               Number of records (n)                                       uInt32Number
+                12 to 15                4               Record size: the length in bytes of every record.           0000000Ch
+                                                        The value is 12.
+                16 to 17                2               First record language code: in accordance with the          uInt16Number
+                                                        language code specified in ISO 639-1
+                18 to 19                2               First record country code: in accordance with the           uInt16Number
+                                                        country code specified in ISO 3166-1
+                20 to 23                4               First record string length: the length in bytes of          uInt32Number
+                                                        the string
+                24 to 27                4               First record string offset: the offset from the start       uInt32Number
+                                                        of the tag to the start of the string, in bytes
+                28 to 28+[12(n−1)]−1    12(n−1)         Additional records as needed
+                (or 15+12n)
+
+                28+[12(n−1)]            Variable        Storage area of strings of Unicode characters
+                (or 16+12n) to end
+
+                return a dict (key=lang, value=text)
+            """
+            returned = {}
+            if data[0:4] != b'mluc':
+                return returned
+
+            nbRecords = struct.unpack('!I', data[8:12])[0]
+            if nbRecords == 0:
+                return returned
+
+            szRecords = struct.unpack('!I', data[12:16])[0]
+            if szRecords != 12:
+                # if records size is not 12, it's not normal??
+                return returned
+
+            for index in range(nbRecords):
+                offset = 16 + index * szRecords
+                try:
+                    langCode = data[offset:offset+2].decode()
+                    countryCode = data[offset+2:offset+4].decode()
+
+                    txtSize = struct.unpack('!I', data[offset+4:offset+8])[0]
+                    txtOffset = struct.unpack('!I', data[offset+8:offset+12])[0]
+
+                    text = data[txtOffset:txtOffset+txtSize].decode('utf-16be')
+
+                    returned[f'{langCode}-{countryCode}'] = text.rstrip('\x00')
+                except Exception as a:
+                    Debug.print('[BCFile...decode_mluc] Unable to decode MLUC: {0}', str(e))
+                    continue
+            return returned
+
+        def decode_text(data):
+            """Decode TEXT (multiLocalizedUnicodeType) tag type
+
+                Byte position           Field length    Content                                                     Encoded
+                0 to 3                  4               ‘text’ (74657874h) type signature
+                4 to 7                  4               Reserved, shall be set to 0
+                8 to end                Variable        A string of (element size 8) 7-bit ASCII characters
+
+                return a dict (key='en-US', value=text)
+            """
+            returned = {}
+            if data[0:4] != b'text':
+                return returned
+
+            try:
+                returned['en-US'] = data[8:].decode().rstrip('\x00')
+            except Exception as a:
+                Debug.print('[BCFile...decode_mluc] Unable to decode TEXT: {0}', str(e))
+
+            return returned
+
+        def decode_desc(data):
+            """Decode DESC (textDescriptionType) tag type [deprecated]
+
+                Byte position           Field length    Content                                                     Encoded
+                0..3                    4               ‘desc’ (64657363h) type signature
+                4..7                    4               reserved, must be set to 0
+                8..11                   4               ASCII invariant description count, including terminating    uInt32Number
+                                                        null (description length)
+                12..n-1                                 ASCII invariant description                                 7-bit ASCII
+
+                ignore other data
+
+                return a dict (key='en-US', value=text)
+            """
+            returned = {}
+            if data[0:4] != b'desc':
+                return returned
+
+            try:
+                txtLen = struct.unpack('!I', data[8:12])[0]
+                returned['en-US'] = data[12:11+txtLen].decode().rstrip('\x00')
+            except Exception as e:
+                Debug.print('[BCFile...decode_mluc] Unable to decode DESC: {0}', str(e))
+
+            return returned
+
+        returned = {
+            'error': None,
+            'iccProfileName': {},
+            'iccProfileCopyright': {},
+        }
+
+        iccSize=struct.unpack('!I', iccData[0:4])[0]
+
+        if len(iccData)!=iccSize:
+            returned['error']="Invalid ICC size"
+            return returned
+
+        nbTags=struct.unpack('!I', iccData[128:132])[0]
+
+        for i in range(nbTags):
+            tData = iccData[132+i * 12:132+(i+1)*12]
+
+            tagId = tData[0:4]
+            offset = struct.unpack('!I', tData[4:8])[0]
+            size = struct.unpack('!I', tData[8:12])[0]
+
+            data = iccData[offset:offset+size]
+
+            if tagId == b'desc':
+                # description (color profile name)
+                if data[0:4] == b'mluc':
+                    returned['iccProfileName']=decode_mluc(data)
+                elif data[0:4] == b'text':
+                    returned['iccProfileName']=decode_text(data)
+                elif data[0:4] == b'desc':
+                    returned['iccProfileName']=decode_desc(data)
+            elif tagId == b'cprt':
+                # copyright
+                if data[0:4] == b'mluc':
+                    returned['iccProfileCopyright']=decode_mluc(data)
+                elif data[0:4] == b'text':
+                    returned['iccProfileCopyright']=decode_text(data)
+                elif data[0:4] == b'desc':
+                    returned['iccProfileCopyright']=decode_desc(data)
+        return returned
+
+
+    def __readASLData(self, aslData):
+        """Read an ASL byte array and return informations
+
+        ASL specifications: https://github.com/tonton-pixel/json-photoshop-scripting/tree/master/Documentation/Photoshop-Styles-File-Format
+                            https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_21585
+
+        Note:
+            Currently only return uuid for defined styles, allowing to check if they match layers
+            Need to improve parser to ensure that data are not corrupted...?
+        """
+        def readStrUnicode(dataReader):
+            size = dataReader.readInt32()
+            return dataReader.read(size * 2).decode('UTF-16BE')[:-1]    # strip last character \x00
+
+        def readKey(dataReader):
+            size=dataReader.readInt32()
+            if size==0:
+                return dataReader.read(4).decode()
+            else:
+                return dataReader.read(size).decode()
+
+        def readItem(dataReader, type):
+            if type=='TEXT':
+                return readStrUnicode(dataReader)
+            elif type=='long':
+                return dataReader.readInt32()
+
+        def readDescriptor(dataReader, returned):
+            descriptor=dataReader.read(4) # should be x'00 00 00 10'
+
+            if descriptor!=b'\x00\x00\x00\x10':
+                raise EInvalidValue("Not a valid descriptor")
+
+            readStrUnicode(dataReader)
+            readKey(dataReader)
+
+            itemCount = dataReader.readInt32() # number of items in descriptor
+
+            uuid=''
+            layer=''
+            for item in range(itemCount):
+                key=readKey(dataReader)
+                typeKey=dataReader.read(4).decode()
+
+                if key=='Nm  ':
+                    layer=readItem(dataReader, typeKey)
+                elif key=='Idnt':
+                    uuid=readItem(dataReader, typeKey)
+
+            if uuid!='':
+                returned['styles'][uuid]={'layer': layer}
+
+        def checkPatterns(dataReader, returned):
+            # need to check if patterns are used or not...
+            version=dataReader.read(2) # should x'00 03'
+            dataReader.seek(dataReader.readInt32()) # following pattern data size; skip bytes...
+
+        def checkStyles(dataReader, returned):
+            nbStyles=dataReader.readInt32()
+
+            for number in range(nbStyles):
+                dataSize=dataReader.readInt32() # data size for style??
+
+                currentPosition=dataReader.tell()
+
+                try:
+                    readDescriptor(dataReader, returned)
+                except Exception as e:
+                    break
+
+                dataReader.seek(currentPosition+dataSize, False)
+
+        returned = {
+            'error': None,
+            'version': None,
+            'styles': {}
+        }
+
+        # check header
+
+        if len(aslData)<10:
+            returned['error']='Invalid data size'
+            return returned
+
+        dataReader=BCDataReader(aslData)
+        returned['version']=dataReader.readInt16()
+
+        if dataReader.read(4)!=b'8BSL':
+            returned['error']='Invalid header (not 8BSL)'
+            return returned
+
+        checkPatterns(dataReader, returned)
+        checkStyles(dataReader, returned)
+
+        # header checked
+
+
+        return returned
+
+
+    def __readKPLData(self, kplData):
+        """Read an KPL byte array and return informations
+
+        KPL is a ZIP file...
+        1) Unzip file
+        2) Check file list
+
+        Should be enough to determinate if file is valid of not
+        """
+        returned = {
+            'error': None,
+            'missingFiles': [],
+            'invalidFiles': []
+        }
+
+        if len(kplData)==0:
+            returned['error']='No palette data'
+            return returned
+
+        try:
+            kplArchive = zipfile.ZipFile(io.BytesIO(kplData), 'r')
+        except Exception as e:
+            returned['error']='Not a valid archive file'
+            return returned
+
+        kplFiles=[zipInfo.filename for zipInfo in kplArchive.infolist()]
+        for file in ['colorset.xml', 'mimetype', 'profiles.xml']:
+            if not file in kplFiles:
+                returned['missingFiles'].append(file)
+                returned['error']='File is missing'
+
+        # maybe read all files to get a detailled list of corrupted files???
+        invalidFile=kplArchive.testzip()
+        if not invalidFile is None:
+            if isinstance(returned['error'], str):
+                returned['error']+=', file is corrupted'
+            returned['invalidFiles'].append(invalidFile)
+
+        kplArchive.close()
+
+        return returned
 
 
     def __checkFileStep01(self):
@@ -914,6 +1240,238 @@ class BCRepairKraFile:
         return returned
 
 
+    def __checkFileStep05a(self):
+        """Check documentinfo.xml"""
+        returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
+
+        docContent=self.__getDocumentContent("documentinfo.xml")
+
+        if isinstance(docContent, int):
+            # can't read document content
+            return docContent
+
+        # now, we have file content...
+        strDocContent=docContent.decode('UTF-8')
+
+        xmlParsable=True
+        try:
+            xmlDoc = xmlElement.fromstring(strDocContent)
+        except Exception as e:
+            xmlParsable=False
+            self.__archiveDocs['documentinfo.xml']['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
+            self.__archiveDocs['documentinfo.xml']['analysis']['statusMsg'].append(i18n(f'Not a parsable XML content ({str(e)})'))
+            returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2
+
+        return returned
+
+
+    def __checkFileStep06a(self):
+        """Check mimetype"""
+        returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
+
+        docContent=self.__getDocumentContent("mimetype")
+
+        if isinstance(docContent, int):
+            # can't read document content
+            return docContent
+
+        # now, we have file content...
+        strDocContent=docContent.decode('UTF-8')
+
+        if strDocContent!='application/x-krita':
+            self.__archiveDocs['mimetype']['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
+            self.__archiveDocs['mimetype']['analysis']['statusMsg'].append(i18n(f'Not expected mime type'))
+            returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
+
+        return returned
+
+
+    def __checkFileStep07a(self):
+        """Check mimetype"""
+        returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
+
+        docContent=self.__getDocumentContent("mergedimage.png")
+
+        if isinstance(docContent, int):
+            # can't read document content
+            return docContent
+
+        try:
+            image=QImage()
+            image.loadFromData(docContent)
+        except:
+            self.__archiveDocs['mergedimage.png']['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
+            self.__archiveDocs['mergedimage.png']['analysis']['statusMsg'].append(i18n(f'Not a PNG file?'))
+            returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
+
+        return returned
+
+
+    def __checkFileStep08a(self):
+        """Check mimetype"""
+        returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
+
+        docContent=self.__getDocumentContent("preview.png")
+
+        if isinstance(docContent, int):
+            # can't read document content
+            return docContent
+
+        try:
+            image=QImage()
+            image.loadFromData(docContent)
+        except:
+            self.__archiveDocs['preview.png']['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
+            self.__archiveDocs['preview.png']['analysis']['statusMsg'].append(i18n(f'Not a PNG file?'))
+            returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
+
+        return returned
+
+
+    def __checkFileStep09a(self):
+        """Check ICC file format"""
+        returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
+
+        name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
+        fName=f"{name}/annotations/icc"
+
+        docContent=self.__getDocumentContent(fName)
+
+        if isinstance(docContent, int):
+            # can't read document content
+            return docContent
+
+        decodedData=self.__readICCData(docContent)
+
+        if not decodedData['error'] is None:
+            self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
+            self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f'Not a valid ICC file ({decodedData["error"]})'))
+            returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
+        elif decodedData['iccProfileName']['en-US']!=self.__archiveDocs['maindoc.xml']['xml.doc.image']['profile']:
+            expectedIcc=self.__archiveDocs['maindoc.xml']['xml.doc.image']['profile']
+            self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_UNEXPECTED_CONTENT
+            self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f"Embedded ICC profile ({decodedData['iccProfileName']['en-US']}) doesn't match expected profile({expectedIcc})"))
+            returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2
+
+        return returned
+
+
+    def __checkFileStep09b(self):
+        """Check ASL file format"""
+        returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
+
+        name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
+        fName=f"{name}/annotations/layerstyles.asl"
+
+        docContent=self.__getDocumentContent(fName)
+
+        if isinstance(docContent, int):
+            # can't read document content
+            return docContent
+
+        decodedData=self.__readASLData(docContent)
+
+        if not decodedData['error'] is None:
+            self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
+            self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f'Not a valid ICC file ({decodedData["error"]})'))
+            returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
+        else:
+            self.__archiveDocs[fName]['styles']=decodedData['styles']
+            returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2
+
+        return returned
+
+
+    def __checkFileStep09c(self):
+        """Check assistant file format"""
+        returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
+
+        name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
+
+        for fName in self.__archiveDocs:
+            if re.search('\/assistants\/.*\.assistant$', fName):
+                docContent=self.__getDocumentContent(fName)
+
+                if isinstance(docContent, int):
+                    # can't read document content
+                    returned|=docContent
+                    self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_CANT_BE_READ
+                else:
+                    # now, we have file content...
+                    strDocContent=docContent.decode('UTF-8')
+
+                    xmlParsable=True
+                    try:
+                        xmlDoc = xmlElement.fromstring(strDocContent)
+                    except Exception as e:
+                        xmlParsable=False
+                        self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
+                        self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f'Not a parsable XML content ({str(e)})'))
+                        returned|=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2
+
+        return returned
+
+
+    def __checkFileStep09d(self):
+        """Check palette file format"""
+        returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
+
+        name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
+
+        for fName in self.__archiveDocs:
+            if re.search('\/palettes\/.*\.kpl$', fName):
+                docContent=self.__getDocumentContent(fName)
+
+                if isinstance(docContent, int):
+                    # can't read document content
+                    returned|=docContent
+                    self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_CANT_BE_READ
+                else:
+                    # now, we have file content...
+                    decodedData=self.__readKPLData(docContent)
+
+                    if not decodedData['error'] is None:
+                        returned|=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
+                        self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
+                        self.__archiveDocs[fName]['analysis']['statusMsg'].append(decodedData['error'])
+                        if len(decodedData['missingFiles'])>0:
+                            self.__archiveDocs[fName]['analysis']['statusMsg'].append(f'Missing files: {", ".join(decodedData["missingFiles"])}')
+                        if len(decodedData['invalidFiles'])>0:
+                            self.__archiveDocs[fName]['analysis']['statusMsg'].append(f'Invalid files: {", ".join(decodedData["invalidFiles"])}')
+
+        return returned
+
+
+    def __checkFileStep09e(self):
+        """Check references files"""
+        returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
+
+        name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
+
+        for node in self.__archiveDocs['maindoc.xml']:
+            if re.match('xml\.doc\.image\.layers\.referenceimages\[\d+\]', node):
+                fName=self.__archiveDocs['maindoc.xml'][node]['src']
+                if not re.match('file://', fName):
+                    # check only embedded files
+                    docContent=self.__getDocumentContent(fName)
+
+                    if isinstance(docContent, int):
+                        # can't read document content
+                        returned|=docContent
+                        self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_CANT_BE_READ
+                        self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f"Unable to read file"))
+                    else:
+                        try:
+                            image=QImage()
+                            image.loadFromData(docContent)
+                        except:
+                            self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
+                            self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f'Not a PNG file?'))
+                            returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
+
+        return returned
+
+
     def __setStatus(self, value):
         """Set current file status"""
         self.__status=value
@@ -947,9 +1505,11 @@ class BCRepairKraFile:
             #
             # 4) If maindoc.xml exist and readable
             #   4.a) Check format
-            #   4.b) Check all references
+            #   4.b) Check all files references, if exist (do not check content)
             #           . layers/keyframes
             #           . palettes
+            #           . references images
+            #           . ...
             #
             # 5) If documentinfo.xml exist and readable
             #   5.a) Check format
@@ -963,24 +1523,36 @@ class BCRepairKraFile:
             # 8) If preview exist and readable
             #   8.a) Check format
             #
-            # 9) Check all layers file
-            #   9.a) Check layers/layerN
-            #   9.b) Check layers/layerN.icc
-            #   9.c) Check layers/layerN.keyframes.xml (if exists)
-            #   9.d) Check layers/layerN.defaultpixel
-            #   9.e) Check layers/layerN.fX
-            #   9.f) Check layers/layerN.fX.defaultpixel
+            # 9) Check files
+            #   9.a)    icc:                    {name}/annotations/icc
+            #   9.b)    layer styles:           {name}/annotations/layerstyles.asl
+            #   9.c)    assistants:             {name}/assistants/{assistant.filename}
+            #   9.d)    palettes:               {name}/palettes/{palette.filename}
+            #   9.e)    referenceimage:         {referenceimage.src}
+            #   9.f)    layers:
+            #               paintlayer:         {name}/layers/{layer.filename}
+            #                                   {name}/layers/{layer.filename}.icc
+            #                                   {name}/layers/{layer.filename}.defaultpixel
+            #                                   # if layer have keyframes
+            #                                   {name}/layers/{layer.filename}.keyframes.xml
+            #                                   {name}/layers/{layer.filename}.f{N}
+            #                                   {name}/layers/{layer.filename}.f{N}.defaultpixel
+            #               shapelayer:         {name}/layers/{layer.filename}.shapelayer/content.svg
+            #               generatorlayer:     {name}/layers/{layer.filename}.filterconfig
+            #                                   {name}/layers/{layer.filename}.pixelselection
+            #                                   {name}/layers/{layer.filename}.pixelselection.defaultpixel
+            #               adjustmentlayer:    {name}/layers/{layer.filename}.filterconfig
+            #                                   {name}/layers/{layer.filename}.pixelselection
+            #                                   {name}/layers/{layer.filename}.pixelselection.defaultpixel
+            #               filtermask:         {name}/layers/{layer.filename}.pixelselection
+            #                                   {name}/layers/{layer.filename}.pixelselection.defaultpixel
+            #                                   {name}/layers/{layer.filename}.filterconfig
+            #               selectionmask:      {name}/layers/{layer.filename}.pixelselection
+            #                                   {name}/layers/{layer.filename}.pixelselection.defaultpixel
+            #               transparencymask:   {name}/layers/{layer.filename}.pixelselection
+            #                                   {name}/layers/{layer.filename}.pixelselection.defaultpixel
+            #               transformmask:      {name}/layers/{layer.filename}.transformconfig
             #
-            # 10) Check reference images
-            #
-            # 11) Check layers/layerN.shapelayer/content.svg
-            #
-            #zFile
-            #
-            #
-            # Annotations?
-            # guides
-            # ...
             try:
                 self.__archive = zipfile.ZipFile(self.__file.fullPathName(), 'r')
             except Exception as e:
@@ -999,6 +1571,16 @@ class BCRepairKraFile:
             currentStatus|=self.__checkFileStep03()
             currentStatus|=self.__checkFileStep04a()
             currentStatus|=self.__checkFileStep04b()
+            currentStatus|=self.__checkFileStep05a()
+            currentStatus|=self.__checkFileStep06a()
+            currentStatus|=self.__checkFileStep07a()
+            currentStatus|=self.__checkFileStep08a()
+            currentStatus|=self.__checkFileStep09a()
+            currentStatus|=self.__checkFileStep09b()
+            currentStatus|=self.__checkFileStep09c()
+            currentStatus|=self.__checkFileStep09d()
+            currentStatus|=self.__checkFileStep09e()
+            #currentStatus|=self.__checkFileStep09f()
 
             pp = pprint.PrettyPrinter(indent=2)
             pp.pprint(self.__archiveDocs)
