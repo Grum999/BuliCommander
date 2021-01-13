@@ -263,8 +263,6 @@ class BCRepairKraFile:
                            'layerstyle']
 
 
-
-
     def __init__(self, file):
         # get a BCFile instance
         if isinstance(file, BCFile):
@@ -394,7 +392,7 @@ class BCRepairKraFile:
 
                     returned[f'{langCode}-{countryCode}'] = text.rstrip('\x00')
                 except Exception as a:
-                    Debug.print('[BCFile...decode_mluc] Unable to decode MLUC: {0}', str(e))
+                    Debug.print('[BCFile...decode_mluc] Unable to decode MLUC: {0}', e)
                     continue
             return returned
 
@@ -415,7 +413,7 @@ class BCRepairKraFile:
             try:
                 returned['en-US'] = data[8:].decode().rstrip('\x00')
             except Exception as a:
-                Debug.print('[BCFile...decode_mluc] Unable to decode TEXT: {0}', str(e))
+                Debug.print('[BCFile...decode_mluc] Unable to decode TEXT: {0}', e)
 
             return returned
 
@@ -441,7 +439,7 @@ class BCRepairKraFile:
                 txtLen = struct.unpack('!I', data[8:12])[0]
                 returned['en-US'] = data[12:11+txtLen].decode().rstrip('\x00')
             except Exception as e:
-                Debug.print('[BCFile...decode_mluc] Unable to decode DESC: {0}', str(e))
+                Debug.print('[BCFile...decode_mluc] Unable to decode DESC: {0}', e)
 
             return returned
 
@@ -635,6 +633,7 @@ class BCRepairKraFile:
 
         Return BCRepairKraFile.REPAIR_STATUS_FILE_IS_DEAD if can't read document list, otherwise return BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
         """
+        Debug.print("(i) [__checkFileStep01] Initialise documents list")
         try:
             self.__archiveDocs={fileInfo.filename: {
                                             'maindoc.nodeId': None,
@@ -648,6 +647,7 @@ class BCRepairKraFile:
                                 }
         except Exception as e:
             # can't list files??
+            Debug.print("(!) [__checkFileStep01] Error: {0}", e)
             return BCRepairKraFile.REPAIR_STATUS_FILE_IS_DEAD
 
         return BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
@@ -659,13 +659,17 @@ class BCRepairKraFile:
         Return BCRepairKraFile.REPAIR_STATUS_FILE_IS_BROKEN if there's
         some files for which CRC is KO
         """
+        Debug.print("(i) [__checkFileStep02] Try to read files content")
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
         for fileName in self.__archiveDocs:
+            Debug.print("                        Get document: {0}", fileName)
+
             zipFile=self.__archiveDocs[fileName]['zipInfo']
             try:
                 zFile = self.__archive.open(fileName)
             except Exception as e:
+                Debug.print("                                      (!) Can't be opened: {0}", e)
                 self.__archiveDocs[fileName]['analysis']['status']|=BCRepairKraFile.DOC_CANT_BE_OPENED
                 self.__archiveDocs[fileName]['analysis']['statusMsg'].append(str(e))
                 self.__archiveDocs[fileName]['analysis']['readable']=0
@@ -676,6 +680,7 @@ class BCRepairKraFile:
             try:
                 zContent = zFile.read()
             except Exception as e:
+                Debug.print("                                      (!) Can't be read: {0}", e)
                 self.__archiveDocs[fileName]['analysis']['status']|=BCRepairKraFile.DOC_CANT_BE_READ
                 self.__archiveDocs[fileName]['analysis']['statusMsg'].append(str(e))
                 returned|=BCRepairKraFile.REPAIR_STATUS_FILE_IS_BROKEN
@@ -691,6 +696,7 @@ class BCRepairKraFile:
                         # read byte per byte....
                         data = zFile.read(1)
                     except Exception as e:
+                        Debug.print("                                      (!) Can't be read; max read size: {0}", position)
                         self.__archiveDocs[fileName]['analysis']['readable']=position
                         break
 
@@ -717,11 +723,13 @@ class BCRepairKraFile:
             'mergedimage.png': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
         }
 
+        Debug.print("(i) [__checkFileStep03] Check for missing files")
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
         for document in documents:
+            Debug.print("                        Check document: {0}", document)
             if not document in self.__archiveDocs:
-                print('misssing doc', document)
+                Debug.print("                                        (!) Document is missing")
                 returned|=documents[document]
                 self.__archiveDocs[document]={
                                         'maindoc.nodeId': None,
@@ -744,6 +752,7 @@ class BCRepairKraFile:
                 if attrib in node.attrib:
                     value=node.attrib[attrib]
                 else:
+                    Debug.print("                         /!\ Node attribute not found: {0}[{1}]", key, attrib)
                     value=None
 
                 self.__archiveDocs['maindoc.xml'][key][attrib]=value
@@ -877,6 +886,7 @@ class BCRepairKraFile:
         def loadAnimation(node, key):
             subNode=node.find("./{*}framerate")
             if subNode is None:
+                Debug.print("                         /!\ Missing node: {0}.framerate", key)
                 self.__archiveDocs['maindoc.xml'][f'{key}.framerate']={
                                                                         'type': None,
                                                                         'value': None,
@@ -886,6 +896,7 @@ class BCRepairKraFile:
 
             subNode=node.find("./{*}range")
             if subNode is None:
+                Debug.print("                         /!\ Missing node: {0}.range", key)
                 self.__archiveDocs['maindoc.xml'][f'{key}.framerate']={
                                                                         'to': None,
                                                                         'from': None,
@@ -896,6 +907,7 @@ class BCRepairKraFile:
 
             subNode=node.find("./{*}currentTime")
             if subNode is None:
+                Debug.print("                         /!\ Missing node: {0}.currentTime", key)
                 self.__archiveDocs['maindoc.xml'][f'{key}.currentTime']={
                                                                         'type': None,
                                                                         'value': None,
@@ -903,12 +915,15 @@ class BCRepairKraFile:
             else:
                 loadAttribs(subNode, f'{key}.currentTime', ['type', 'value'])
 
+        Debug.print("(i) [__checkFileStep04a] Check maindoc.xml (content)")
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
+        Debug.print("                         Get document: maindoc.xml")
         docContent=self.__getDocumentContent("maindoc.xml")
 
         if isinstance(docContent, int):
             # can't read document content
+            Debug.print("                         (!) Can't get content: {0}", docContent)
             return docContent
 
         # now, we have file content...
@@ -919,6 +934,7 @@ class BCRepairKraFile:
             xmlDoc = xmlElement.fromstring(strDocContent)
         except Exception as e:
             xmlParsable=False
+            Debug.print("                         (!) XML content can't be parsed: {0}", e)
             self.__archiveDocs['maindoc.xml']['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
             self.__archiveDocs['maindoc.xml']['analysis']['statusMsg'].append(i18n(f'Not a parsable XML content ({str(e)})'))
 
@@ -935,6 +951,7 @@ class BCRepairKraFile:
         # ...
         node=xmlDoc.find(".[@syntaxVersion='2']")
         if node is None:
+            Debug.print("                         (!) Can't find document version")
             return BCRepairKraFile.REPAIR_STATUS_FILE_VERSION_NOT_MANAGED
         loadAttribs(node, 'xml.doc', ['syntaxVersion', 'editor', 'kritaVersion'])
 
@@ -942,6 +959,7 @@ class BCRepairKraFile:
         if node is None:
             # no IMAGE node??
             # not a valid file...
+            Debug.print("                         (!) Can't find IMAGE node")
             return BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3
         loadAttribs(node, 'xml.doc.image', ['name', 'profile', 'width', 'height', 'colorspacename', 'mime'])
 
@@ -953,6 +971,7 @@ class BCRepairKraFile:
         # load global assistant color
         node=xmlDoc.find(".//{*}IMAGE/{*}ProjectionBackgroundColor")
         if node is None:
+            Debug.print("                         /!\ Missing node: IMAGE.ProjectionBackgroundColor")
             self.__archiveDocs['maindoc.xml']['xml.image.ProjectionBackgroundColor']['ColorData']=None
             returned|=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
         else:
@@ -961,6 +980,7 @@ class BCRepairKraFile:
         # load global assistant color
         node=xmlDoc.find(".//{*}IMAGE/{*}GlobalAssistantsColor")
         if node is None:
+            Debug.print("                         /!\ Missing node: IMAGE.GlobalAssistantsColor")
             self.__archiveDocs['maindoc.xml']['xml.image.GlobalAssistantsColor']['SimpleColorData']=None
             returned|=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
         else:
@@ -979,6 +999,7 @@ class BCRepairKraFile:
         # load animation
         node=xmlDoc.find(".//{*}IMAGE/{*}animation")
         if node is None:
+            Debug.print("                         /!\ Missing node: IMAGE.animation")
             self.__archiveDocs['maindoc.xml']['xml.image.animation.framerate']={
                                                                                 'type': None,
                                                                                 'value': None,
@@ -1040,6 +1061,8 @@ class BCRepairKraFile:
             transformmask:      {name}/layers/{layer.filename}.transformconfig
         """
         def addMissingFile(fileName, nodeId):
+            Debug.print("                         /!\ Add missing file: {0}", fileName)
+            Debug.print("                                               {0}", nodeId)
             self.__archiveDocs[fileName]={
                                 'maindoc.nodeId':   nodeId,
                                 'zipInfo':  None,
@@ -1052,6 +1075,8 @@ class BCRepairKraFile:
 
         def checkICC(name):
             fName=f'{name}/annotations/icc'
+            Debug.print("                         -- Checking ICC --")
+            Debug.print("                         Check document: {0}", fName)
             if not fName in self.__archiveDocs:
                 # add file
                 addMissingFile(fName)
@@ -1060,6 +1085,8 @@ class BCRepairKraFile:
 
         def checkLayerStyles(name):
             fName=f'{name}/annotations/layerstyles.asl'
+            Debug.print("                         -- Checking Layer styles --")
+            Debug.print("                         Check document: {0}", fName)
             # need to check if there's some layers for which a style is applied
             found=False
             nodeIdList=[]
@@ -1067,6 +1094,8 @@ class BCRepairKraFile:
                 if isinstance(self.__archiveDocs['maindoc.xml'][item], dict) and 'layerstyle' in self.__archiveDocs['maindoc.xml'][item] and not self.__archiveDocs['maindoc.xml'][item]['layerstyle'] is None:
                     found=True
                     nodeIdList.append(item)
+
+            Debug.print("                         Layer with style document: {0}", '\n                                                   '.join(nodeIdList))
 
             if found and not fName in self.__archiveDocs:
                 # there's at least on layer style applied, but no layerfile
@@ -1078,6 +1107,7 @@ class BCRepairKraFile:
             return BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
         def checkAssistants(name):
+            Debug.print("                         -- Checking Assistants --")
             returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
             fName=f'{name}/assistants/'
 
@@ -1086,6 +1116,7 @@ class BCRepairKraFile:
                     # item is an assistant
                     if not self.__archiveDocs['maindoc.xml'][item]['filename'] is None:
                         afName=f"{fName}{self.__archiveDocs['maindoc.xml'][item]['filename']}"
+                        Debug.print("                         Check document: {0}", afName)
                         if not afName in self.__archiveDocs:
                             # assistant file not found
                             addMissingFile(afName)
@@ -1096,6 +1127,7 @@ class BCRepairKraFile:
             return returned
 
         def checkPalettes(name):
+            Debug.print("                         -- Checking Palettes --")
             returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
             fName=f'{name}/palettes/'
 
@@ -1104,6 +1136,7 @@ class BCRepairKraFile:
                     # item is a palette
                     if not self.__archiveDocs['maindoc.xml'][item]['filename'] is None:
                         pfName=f"{fName}{self.__archiveDocs['maindoc.xml'][item]['filename']}"
+                        Debug.print("                         Check document: {0}", pfName)
                         if not pfName is None:
                             if not pfName in self.__archiveDocs:
                                 # assistant file not found
@@ -1115,13 +1148,15 @@ class BCRepairKraFile:
             return returned
 
         def checkReferenceImages():
+            Debug.print("                         -- Checking Reference images --")
             returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
             for item in self.__archiveDocs['maindoc.xml']:
                 if isinstance(self.__archiveDocs['maindoc.xml'][item], dict) and 'nodetype' in self.__archiveDocs['maindoc.xml'][item] and self.__archiveDocs['maindoc.xml'][item]['nodetype']=='referenceimage':
-                    # item is a palette
+                    # item is a reference image
                     if not self.__archiveDocs['maindoc.xml'][item]['src'] is None:
                         fName=self.__archiveDocs['maindoc.xml'][item]['src']
+                        Debug.print("                         Check document: {0}", fName)
                         if fName and not re.match('file:///', fName):
                             if not fName in self.__archiveDocs:
                                 # assistant file not found
@@ -1139,6 +1174,7 @@ class BCRepairKraFile:
 
                 if isinstance(docContent, int):
                     # can't read document content
+                    Debug.print("                         /!\ Unable to read document")
                     return docContent
 
                 # now, we have file content...
@@ -1149,6 +1185,7 @@ class BCRepairKraFile:
                     xmlDoc = xmlElement.fromstring(strDocContent)
                 except Exception as e:
                     xmlParsable=False
+                    Debug.print("                         /!\ XML content can't be parsed: {0}", e)
                     self.__archiveDocs[file]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
                     self.__archiveDocs[file]['analysis']['statusMsg'].append(i18n(f'Not a parsable XML content ({str(e)})'))
 
@@ -1162,6 +1199,7 @@ class BCRepairKraFile:
 
                 return returned
 
+            Debug.print("                         -- Checking Layers --")
             returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
             checks={
@@ -1193,18 +1231,22 @@ class BCRepairKraFile:
                     if nodeType in checks:
                         fileName=self.__archiveDocs['maindoc.xml'][item]['filename']
 
+                        # process layers
                         for check in checks[nodeType]:
                             fName=check.replace('{filename}', fileName)
+                            Debug.print("                         Check document: {0}", fName)
 
                             if fName and not fName in self.__archiveDocs:
                                 # assistant file not found
-                                addMissingFile(pfName)
+                                addMissingFile(fName)
                                 returned|=checks[check]
                             else:
                                 self.__archiveDocs[fName]['maindoc.nodeId']=item
 
+                        # paint layers: process keyframes
                         if nodeType=='paintlayer' and not self.__archiveDocs['maindoc.xml'][item]['keyframes'] is None:
                             fName=f"{name}/layers/{self.__archiveDocs['maindoc.xml'][item]['keyframes']}"
+                            Debug.print("                         Check document: {0}", fName)
                             if fName and not fName in self.__archiveDocs:
                                 # assistant file not found
                                 addMissingFile(pfName)
@@ -1217,6 +1259,7 @@ class BCRepairKraFile:
                                 else:
                                     for frame in frames:
                                         fName=f"{name}/layers/{frame}"
+                                        Debug.print("                         Check document: {0}", fName)
                                         if fName and not fName in self.__archiveDocs:
                                             # assistant file not found
                                             addMissingFile(fName)
@@ -1226,6 +1269,7 @@ class BCRepairKraFile:
 
             return returned
 
+        Debug.print("(i) [__checkFileStep04b] Check maindoc.xml (referenced files)")
 
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
         name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
@@ -1242,12 +1286,16 @@ class BCRepairKraFile:
 
     def __checkFileStep05a(self):
         """Check documentinfo.xml"""
+        Debug.print("(i) [__checkFileStep05a] Check documentinfo.xml")
+
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
+        Debug.print("                         Get document: documentinfo.xml")
         docContent=self.__getDocumentContent("documentinfo.xml")
 
         if isinstance(docContent, int):
             # can't read document content
+            Debug.print("                         /!\ Can't get content: {0}", docContent)
             return docContent
 
         # now, we have file content...
@@ -1257,6 +1305,7 @@ class BCRepairKraFile:
         try:
             xmlDoc = xmlElement.fromstring(strDocContent)
         except Exception as e:
+            Debug.print("                         /!\ XML content can't be parsed: {0}", e)
             xmlParsable=False
             self.__archiveDocs['documentinfo.xml']['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
             self.__archiveDocs['documentinfo.xml']['analysis']['statusMsg'].append(i18n(f'Not a parsable XML content ({str(e)})'))
@@ -1267,18 +1316,23 @@ class BCRepairKraFile:
 
     def __checkFileStep06a(self):
         """Check mimetype"""
+        Debug.print("(i) [__checkFileStep06a] Check mimetype")
+
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
+        Debug.print("                         Get document: mimetype")
         docContent=self.__getDocumentContent("mimetype")
 
         if isinstance(docContent, int):
             # can't read document content
+            Debug.print("                         /!\ Can't get content: {0}", docContent)
             return docContent
 
         # now, we have file content...
         strDocContent=docContent.decode('UTF-8')
 
         if strDocContent!='application/x-krita':
+            Debug.print("                         /!\ Invalid content: {0}", strDocContent)
             self.__archiveDocs['mimetype']['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
             self.__archiveDocs['mimetype']['analysis']['statusMsg'].append(i18n(f'Not expected mime type'))
             returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
@@ -1287,19 +1341,24 @@ class BCRepairKraFile:
 
 
     def __checkFileStep07a(self):
-        """Check mimetype"""
+        """Check mergedimage.png"""
+        Debug.print("(i) [__checkFileStep07a] Check mergedimage.png")
+
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
+        Debug.print("                         Get document: mergedimage.png")
         docContent=self.__getDocumentContent("mergedimage.png")
 
         if isinstance(docContent, int):
             # can't read document content
+            Debug.print("                         /!\ Can't get content: {0}", docContent)
             return docContent
 
         try:
             image=QImage()
             image.loadFromData(docContent)
         except:
+            Debug.print("                         /!\ Invalid PNG file: {0}", e)
             self.__archiveDocs['mergedimage.png']['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
             self.__archiveDocs['mergedimage.png']['analysis']['statusMsg'].append(i18n(f'Not a PNG file?'))
             returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
@@ -1308,19 +1367,24 @@ class BCRepairKraFile:
 
 
     def __checkFileStep08a(self):
-        """Check mimetype"""
+        """Check preview.png"""
+        Debug.print("(i) [__checkFileStep07a] Check preview.png")
+
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
+        Debug.print("                         Get document: preview.png")
         docContent=self.__getDocumentContent("preview.png")
 
         if isinstance(docContent, int):
             # can't read document content
+            Debug.print("                         /!\ Can't get content: {0}", docContent)
             return docContent
 
         try:
             image=QImage()
             image.loadFromData(docContent)
         except:
+            Debug.print("                         /!\ Invalid PNG file: {0}", e)
             self.__archiveDocs['preview.png']['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
             self.__archiveDocs['preview.png']['analysis']['statusMsg'].append(i18n(f'Not a PNG file?'))
             returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
@@ -1330,24 +1394,30 @@ class BCRepairKraFile:
 
     def __checkFileStep09a(self):
         """Check ICC file format"""
+        Debug.print("(i) [__checkFileStep09a] Check icc")
+
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
         name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
         fName=f"{name}/annotations/icc"
 
+        Debug.print("                         Get document: {0}", fName)
         docContent=self.__getDocumentContent(fName)
 
         if isinstance(docContent, int):
             # can't read document content
+            Debug.print("                         /!\ Can't get content: {0}", docContent)
             return docContent
 
         decodedData=self.__readICCData(docContent)
 
         if not decodedData['error'] is None:
+            Debug.print("                         /!\ Invalid ICC file: {0}", decodedData["error"])
             self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
             self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f'Not a valid ICC file ({decodedData["error"]})'))
             returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
         elif decodedData['iccProfileName']['en-US']!=self.__archiveDocs['maindoc.xml']['xml.doc.image']['profile']:
+            Debug.print("                         /!\ Invalid ICC profile: {0}", decodedData['iccProfileName']['en-US'])
             expectedIcc=self.__archiveDocs['maindoc.xml']['xml.doc.image']['profile']
             self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_UNEXPECTED_CONTENT
             self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f"Embedded ICC profile ({decodedData['iccProfileName']['en-US']}) doesn't match expected profile({expectedIcc})"))
@@ -1358,42 +1428,51 @@ class BCRepairKraFile:
 
     def __checkFileStep09b(self):
         """Check ASL file format"""
+        Debug.print("(i) [__checkFileStep09b] Check ASL file format")
+
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
         name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
         fName=f"{name}/annotations/layerstyles.asl"
 
+        Debug.print("                         Get document: {0}", fName)
         docContent=self.__getDocumentContent(fName)
 
         if isinstance(docContent, int):
             # can't read document content
+            Debug.print("                         /!\ Can't get content: {0}", docContent)
             return docContent
 
         decodedData=self.__readASLData(docContent)
 
         if not decodedData['error'] is None:
+            Debug.print("                         /!\ Invalid ASL file: {0}", decodedData["error"])
             self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
             self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f'Not a valid ICC file ({decodedData["error"]})'))
             returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
         else:
             self.__archiveDocs[fName]['styles']=decodedData['styles']
-            returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2
 
         return returned
 
 
     def __checkFileStep09c(self):
         """Check assistant file format"""
+        Debug.print("(i) [__checkFileStep09c] Check assistant files format")
+
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
         name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
 
         for fName in self.__archiveDocs:
             if re.search('\/assistants\/.*\.assistant$', fName):
+
+                Debug.print("                         Get document: {0}", fName)
                 docContent=self.__getDocumentContent(fName)
 
                 if isinstance(docContent, int):
                     # can't read document content
+                    Debug.print("                         /!\ Can't get content: {0}", docContent)
                     returned|=docContent
                     self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_CANT_BE_READ
                 else:
@@ -1404,6 +1483,7 @@ class BCRepairKraFile:
                     try:
                         xmlDoc = xmlElement.fromstring(strDocContent)
                     except Exception as e:
+                        Debug.print("                         /!\ XML content can't be parsed: {0}", e)
                         xmlParsable=False
                         self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
                         self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f'Not a parsable XML content ({str(e)})'))
@@ -1414,15 +1494,19 @@ class BCRepairKraFile:
 
     def __checkFileStep09d(self):
         """Check palette file format"""
+        Debug.print("(i) [__checkFileStep09d] Check palette files format")
+
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
         name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
 
         for fName in self.__archiveDocs:
             if re.search('\/palettes\/.*\.kpl$', fName):
+                Debug.print("                         Get document: {0}", fName)
                 docContent=self.__getDocumentContent(fName)
 
                 if isinstance(docContent, int):
+                    Debug.print("                         /!\ Can't get content: {0}", docContent)
                     # can't read document content
                     returned|=docContent
                     self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_CANT_BE_READ
@@ -1431,6 +1515,7 @@ class BCRepairKraFile:
                     decodedData=self.__readKPLData(docContent)
 
                     if not decodedData['error'] is None:
+                        Debug.print("                         /!\ Invalid KPL file: {0}", decodedData["error"])
                         returned|=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
                         self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
                         self.__archiveDocs[fName]['analysis']['statusMsg'].append(decodedData['error'])
@@ -1444,6 +1529,8 @@ class BCRepairKraFile:
 
     def __checkFileStep09e(self):
         """Check references files"""
+        Debug.print("(i) [__checkFileStep09e] Check reference files format")
+
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
         name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
@@ -1453,10 +1540,12 @@ class BCRepairKraFile:
                 fName=self.__archiveDocs['maindoc.xml'][node]['src']
                 if not re.match('file://', fName):
                     # check only embedded files
+                    Debug.print("                         Get document: {0}", fName)
                     docContent=self.__getDocumentContent(fName)
 
                     if isinstance(docContent, int):
                         # can't read document content
+                        Debug.print("                         /!\ Can't get content: {0}", docContent)
                         returned|=docContent
                         self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_CANT_BE_READ
                         self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f"Unable to read file"))
@@ -1480,13 +1569,19 @@ class BCRepairKraFile:
 
     def checkFile(self):
         """Check current file for analysis"""
+        Debug.print('Start file analysis: {0}', self.__file.fullPathName())
+
         if not os.access(self.__file.fullPathName(), os.F_OK):
+            Debug.print("(!) File doesn't exists")
             return self.__setStatus(BCRepairKraFile.REPAIR_STATUS_FILE_IS_NOT_EXISTS)
         elif not os.access(self.__file.fullPathName(), os.R_OK):
+            Debug.print("(!) File can't be read")
             return self.__setStatus(BCRepairKraFile.REPAIR_STATUS_FILE_IS_NOT_READABLE)
         elif self.__file.size()==0:
+            Debug.print("(!) File is empty")
             return self.__setStatus(BCRepairKraFile.REPAIR_STATUS_FILE_IS_EMPTY)
         elif self.__file.format()!=BCFileManagedFormat.KRA:
+            Debug.print("(!) Not a .kra file")
             return self.__setStatus(BCRepairKraFile.REPAIR_STATUS_FILE_IS_NOTKRA)
         else:
             # try to check if file is corrupted or not...
@@ -1556,6 +1651,7 @@ class BCRepairKraFile:
             try:
                 self.__archive = zipfile.ZipFile(self.__file.fullPathName(), 'r')
             except Exception as e:
+                Debug.print("(!) Not a zip file: {0}", e)
                 return self.__setStatus(BCRepairKraFile.REPAIR_STATUS_FILE_IS_NOTZIP)
 
             # by default consider file is valid
@@ -1564,6 +1660,7 @@ class BCRepairKraFile:
             currentStatus|=self.__checkFileStep01()
 
             if currentStatus!=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID:
+                Debug.print("(!) File is not valid, cancel")
                 self.__archive.close()
                 return self.__setStatus(currentStatus)
 
@@ -1580,6 +1677,8 @@ class BCRepairKraFile:
             currentStatus|=self.__checkFileStep09c()
             currentStatus|=self.__checkFileStep09d()
             currentStatus|=self.__checkFileStep09e()
+            # TODO: add Debug.print() everywhere in analysis, to easily track
+            #       all execution cases
             #currentStatus|=self.__checkFileStep09f()
 
             pp = pprint.PrettyPrinter(indent=2)
