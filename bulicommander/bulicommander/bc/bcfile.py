@@ -3792,11 +3792,18 @@ class BCFile(BCBaseFile):
 
         # load reference image details
         for refImg in tmpRefImgList:
-            imageData = self.__readArchiveDataFile(refImg)
-            if imageData:
+            if not re.match('file://', refImg):
+                # embedded file
+                imageData = self.__readArchiveDataFile(refImg)
+                if imageData:
+                    image = QImage()
+                    if image.loadFromData(imageData):
+                        returned['document.referenceImages'].append(image)
+            else:
                 image = QImage()
-                if image.loadFromData(imageData):
+                if image.load(refImg.replace('file://', '')):
                     returned['document.referenceImages'].append(image)
+
 
         # References images are stored in a layer
         # Do not consider it as a layer because reference image latyer is not visible in layer tree
