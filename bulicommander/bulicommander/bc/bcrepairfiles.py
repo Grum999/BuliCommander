@@ -36,6 +36,7 @@ import zipfile
 import pprint
 import xml.etree.ElementTree as xmlElement
 import struct
+import lzma
 
 import PyQt5.uic
 from PyQt5.Qt import *
@@ -244,6 +245,7 @@ class BCRepairKraFile:
     DOC_IS_MISSING =                      0b00000100
     DOC_FORMAT_INVALID =                  0b00001000
     DOC_UNEXPECTED_CONTENT =              0b00010000
+    DOC_DATA_CORRUPTED =                  0b00100000
 
     __COMMON_NODES_ATTRIB=['nodetype',
                            'colorlabel',
@@ -624,6 +626,336 @@ class BCRepairKraFile:
             returned['invalidFiles'].append(invalidFile)
 
         kplArchive.close()
+
+        return returned
+
+
+    def __readTilesData(self, tilesData):
+        """Read an Tiles byte array and return informations
+
+        Tiles file is a binary file
+
+        -- Header --
+        'VERSION 2\n'
+        'TILEWIDTH <w>\n'          # with <w> value for tile width (variable width)
+        'TILEHEIGHT <h>\n'         # with <h> value for tile height (variable width)
+        'PIXELSIZE <v>\n'          # with <s> value for pixel size (in bytes; variable width)
+        'DATA <t>\n'               # with <t> value for number of tiles (can be 0 for empty layer; variable width)
+                                   # note: only tiles with data are defined in layer?
+
+            . Example:
+                b'VERSION 2\n'
+                b'TILEWIDTH 64\n'
+                b'TILEHEIGHT 64\n'
+                b'PIXELSIZE 4\n'
+                b'DATA 31\n'
+                => 31 tiles of 64x64 pixels, 4bytes per pixels
+
+        -- for each tiles --
+        - tile header
+        '<x>,<y>,LZF,<length>\n'    # with <x> value for tile X position (can be negative)
+                                    # with <y> value for tile Y position (can be negative)
+                                    # with <length> value for (compressed) data following header
+            . Example:
+                b'64,64,LZF,647\n'
+                => tile position 64,64 is 647bytes
+
+        - tile data
+        Data is an array of bytes, for which size is defined in header (<length> value)
+        First byte can take the following value:
+        0x00    Uncompressed data; in this case the next <length>-1 bytes are raw pixels values
+        0x01    Compresssed data; in this case the next <length>-1 bytes are LZF compressed pixels values
+
+        1) Unzip file
+        2) Check file list
+
+
+        Method return a dictionary with following informations:
+        {
+            'error':            if errrors have been encountered
+            'tiles':            list of tiles, each tile is a dict
+                                    {
+                                        'x':            position X (int)
+                                        'y':            position Y (int)
+                                        'compressed':   tile data are compressed or not (bool)
+                                        'size':         tile data size, excluding compression byte flag (int)
+                                        'seek':         position in file at which start, excluding compression byte flag (int)
+                                        'valid':        data are valid or not (bool)
+                                        }
+            'invalidTiles':             list of invalid tiles (indexes on 'tiles' list)
+            'tiles.size':       QSize()
+            'tiles.count':      int
+            'pixel.size':       int
+            'position.x.min'    minimum x position for tiles
+            'position.y.min'    minimum y position for tiles
+            'position.x.max'    maximum x position for tiles
+            'position.y.max'    maximum y position for tiles
+        }
+        """
+
+        def getHeaderValue(bLine):
+            # return value from a header line
+            # b'TILEWIDTH 64\n' will return 64 for example
+            # return None if not able to return a value
+            line=bLine.decode()
+            result=re.search("\s(\d+)\n$", line)
+            if result:
+                return int(result.groups()[0])
+            return None
+
+        def getTileNfo(bLine):
+            # return a dictionary of a tile from tile header
+            # return None if not possible to return a value
+            line=bLine.decode()
+            result=re.search("^(-?\d+),(-?\d+),LZF,(\d+)\n$", line)
+            if result:
+                return {'x': int(result.groups()[0]),
+                        'y': int(result.groups()[1]),
+                        'size': int(result.groups()[2]) - 1,
+                        'seek': 0,
+                        'valid': True,
+                        'compressed': True
+                        }
+            return None
+
+        def lzfUncompress(dataIn, lenDataOut):
+            # Uncompress given dataIn (bytearray)
+            # return a bytearray() of size lenDataOut
+            # if not possible to uncompress data, return None
+            dataOut=bytearray(lenDataOut)
+            lenDataIn=len(dataIn)
+
+            inputPos=0
+            outputPos=0
+
+            while True:
+                ctrl = dataIn[inputPos]
+                inputPos+=1
+
+                if ctrl < 32:
+                    # literal run
+                    # note: 32 ==> 1 << 5
+                    ctrl+=1
+
+                    if outputPos + ctrl > lenDataOut:
+                        Debug.print("lzfUncompress: output buffer to small(1): {0} {1} {2}", outputPos, ctrl, lenDataOut)
+                        return None
+
+                    for loop in range(ctrl):
+                        dataOut[outputPos] = dataIn[inputPos]
+                        outputPos+=1
+                        inputPos+=1
+                else:
+                    dataLen = ctrl >> 5
+
+                    reference = outputPos - ((ctrl & 0x1f) << 8) - 1
+
+                    if dataLen == 7:
+                        dataLen+=dataIn[inputPos]
+                        inputPos+=1
+
+                    reference-=dataIn[inputPos]
+                    inputPos+=1
+
+                    if outputPos + dataLen + 2 > lenDataOut:
+                        Debug.print("lzfUncompress: output buffer to small(2): {0} {1} {2", outputPos, dataLen+2, lenDataOut)
+                        return None
+
+                    if reference < 0:
+                        Debug.print("lzfUncompress: invalid reference")
+                        return None
+
+                    for loop in range(dataLen+2):
+                        dataOut[outputPos]=dataOut[reference]
+                        outputPos+=1
+                        reference+=1
+
+                if inputPos >= lenDataIn:
+                    break
+
+            return dataOut
+
+        returned = {
+                'error': None,
+                'tiles': [],
+                'invalidTiles': [],
+                'tiles.size': None,
+                'tiles.count': 0,
+                'pixel.size': None,
+                'position.x.min': 9999999,
+                'position.y.min': 9999999,
+                'position.x.max': 0,
+                'position.y.max': 0
+            }
+
+        # Use LZMA module to uncompress LZF data
+        # define LZMA module configuration
+        lzmaFilters = [
+            {"id": lzma.FILTER_DELTA, "dist": 5},
+            {"id": lzma.FILTER_LZMA2, "preset": 7},
+        ]
+
+
+        with io.BytesIO(tilesData) as fHandle:
+            version=fHandle.readline()
+            if version!=b"VERSION 2\n":
+                returned['error']="Invalid file format (header); file version can't be analyzed"
+                return returned
+
+            tileWidth=getHeaderValue(fHandle.readline())
+            if tileWidth is None:
+                returned['error']="Invalid file format (header); tile width can't be analyzed"
+                return returned
+            tileHeight=getHeaderValue(fHandle.readline())
+            if tileHeight is None:
+                returned['error']="Invalid file for-1mat (header); tile height can't be analyzed"
+                return returned
+            returned['tiles.size']=QSize(tileWidth, tileHeight)
+
+            pixelSize=getHeaderValue(fHandle.readline())
+            if pixelSize is None:
+                returned['error']="Invalid file format (header); pixel size can't be analyzed"
+                return returned
+            returned['pixel.size']=pixelSize
+
+            tilesCount=getHeaderValue(fHandle.readline())
+            if tilesCount is None:
+                returned['error']="Invalid file format (header); number of tiles can't be analyzed"
+                return returned
+            returned['tiles.count']=tilesCount
+
+            tileSize=tileWidth*tileHeight*pixelSize
+
+            Debug.print(f'                         . Tile definition: {tileWidth}x{tileHeight}, pixel size: {pixelSize}, tiles count: {tilesCount}')
+
+            tileKo=0
+            tileNumber=0
+            while True:
+                #Debug.print(f'                         . Check tile: {tileNumber}')
+                line=fHandle.readline()
+
+                if not line:
+                    # EOF
+                    break
+
+                tileNfo=getTileNfo(line)
+                if tileNfo is None:
+                    returned['error']=f"Invalid file format (data); unable to parse tile header (tile #{tileNumber}; position: {fHandle.tell()})"
+                    return returned
+
+                isCompressed=fHandle.read(1)
+
+                tileNfo['compressed']=(isCompressed==0x01)
+                tileNfo['seek']=fHandle.tell()
+
+                lzfBuffer=fHandle.read(tileNfo["size"])
+                if isCompressed==0x01:
+                    try:
+                        data=lzma.decompress(lzfBuffer, lzma.FORMAT_RAW, filters=lzmaFilters)
+                        dataBlockOk=True
+                    except Exception as e:
+                        Debug.print(f'  /!\ Invalid tile')
+                        returned['invalidTiles'].append(tileNumber)
+                        tileNfo['valid']=False
+                else:
+                    # can't do test on raw data...
+                    pass
+
+                returned['tiles'].append(tileNfo)
+
+                returned['position.x.min']=min(returned['position.x.min'], tileNfo['x'])
+                returned['position.y.min']=min(returned['position.y.min'], tileNfo['y'])
+                returned['position.x.max']=max(returned['position.x.max'], tileNfo['x'])
+                returned['position.y.max']=max(returned['position.y.max'], tileNfo['y'])
+
+                tileNumber+=1
+
+        if len(returned['tiles'])!=returned['tiles.count']:
+            # a bloking error
+            returned['error']="Tiles number doesn't match to header"
+        elif returned['tiles.count']>0 and len(returned['invalidTiles'])==returned['tiles.count']:
+            # a bloking error
+            # otherwise, con't consider error is blocking (let error to None)
+            # in this case the analysis is made in a second time from invalidTiles len
+            returned['error']='All tiles are invalid'
+
+        return returned
+
+
+    def __readSVGData(self, svgData):
+        """Read an SVG byte array and return informations
+
+        SVG is a XML file...
+        Parsing file should be enough to determinate if file is valid or not..
+        """
+        returned = {
+            'error': None
+        }
+
+        if len(svgData)==0:
+            returned['error']='No SVG data'
+            return returned
+
+        # now, we have file content...
+        strSvgData=svgData.decode('UTF-8')
+
+        try:
+            xmlDoc = xmlElement.fromstring(strSvgData)
+        except Exception as e:
+            Debug.print("                         (!) XML content can't be parsed: {0}", e)
+            returned['error']=f"Can't parse SVG content ({(str(e))})"
+
+        return returned
+
+
+    def __readParamsData(self, paramsData):
+        """Read an Params byte array and return informations
+
+        Params is a XML file...
+        Parsing file should be enough to determinate if file is valid or not..
+        """
+        returned = {
+            'error': None
+        }
+
+        if len(paramsData)==0:
+            returned['error']='No Params data'
+            return returned
+
+        # now, we have file content...
+        strParamsData=paramsData.decode('UTF-8')
+
+        try:
+            xmlDoc = xmlElement.fromstring(strParamsData)
+        except Exception as e:
+            Debug.print("                         (!) XML content can't be parsed: {0}", e)
+            returned['error']=f"Can't parse Params content ({(str(e))})"
+
+        return returned
+
+
+    def __readTransformParamsData(self, tparamsData):
+        """Read an TransformParams byte array and return informations
+
+        Params is a XML file...
+        Parsing file should be enough to determinate if file is valid or not..
+        """
+        returned = {
+            'error': None
+        }
+
+        if len(tparamsData)==0:
+            returned['error']='No TransformParams data'
+            return returned
+
+        # now, we have file content...
+        strTParamsData=tparamsData.decode('UTF-8')
+
+        try:
+            xmlDoc = xmlElement.fromstring(strTParamsData)
+        except Exception as e:
+            Debug.print("                         (!) XML content can't be parsed: {0}", e)
+            returned['error']=f"Can't parse TransformParams content ({(str(e))})"
 
         return returned
 
@@ -1060,7 +1392,7 @@ class BCRepairKraFile:
                                 {name}/layers/{layer.filename}.pixelselection.defaultpixel
             transformmask:      {name}/layers/{layer.filename}.transformconfig
         """
-        def addMissingFile(fileName, nodeId):
+        def addMissingFile(fileName, nodeId=None):
             Debug.print("                         /!\ Add missing file: {0}", fileName)
             Debug.print("                                               {0}", nodeId)
             self.__archiveDocs[fileName]={
@@ -1095,14 +1427,15 @@ class BCRepairKraFile:
                     found=True
                     nodeIdList.append(item)
 
-            Debug.print("                         Layer with style document: {0}", '\n                                                   '.join(nodeIdList))
+            Debug.print(f"                         Layers with style document: {len(nodeIdList)}", '\n                                                   '.join(nodeIdList))
 
-            if found and not fName in self.__archiveDocs:
-                # there's at least on layer style applied, but no layerfile
-                addMissingFile(fName)
-                return BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2
-            else:
-                self.__archiveDocs[fName]['maindoc.nodeId']=nodeIdList
+            if found:
+                if not fName in self.__archiveDocs:
+                    # there's at least on layer style applied, but no layerfile
+                    addMissingFile(fName)
+                    return BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2
+                else:
+                    self.__archiveDocs[fName]['maindoc.nodeId']=nodeIdList
 
             return BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
@@ -1203,24 +1536,26 @@ class BCRepairKraFile:
             returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
             checks={
-                'paintlayer':       {f'{name}/layers/{{filename}}': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3,
-                                     f'{name}/layers/{{filename}}.icc': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2,
-                                     f'{name}/layers/{{filename}}.defaultpixel': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1},
-                'shapelayer':       {f'{name}/layers/{{filename}}.shapelayer/content.svg': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3},
-                'generatorlayer':   {f'{name}/layers/{{filename}}.filterconfig': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2,
-                                     f'{name}/layers/{{filename}}.pixelselection': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3,
-                                     f'{name}/layers/{{filename}}.pixelselection.defaultpixel': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1},
-                'adjustmentlayer':  {f'{name}/layers/{{filename}}.filterconfig': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2,
-                                     f'{name}/layers/{{filename}}.pixelselection': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3,
-                                     f'{name}/layers/{{filename}}.pixelselection.defaultpixel': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1},
-                'filtermask':       {f'{name}/layers/{{filename}}.pixelselection': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3,
-                                     f'{name}/layers/{{filename}}.pixelselection.defaultpixel': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1,
-                                     f'{name}/layers/{{filename}}.filterconfig': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2},
-                'selectionmask':    {f'{name}/layers/{{filename}}.pixelselection': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3,
-                                     f'{name}/layers/{{filename}}.pixelselection.defaultpixel': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1},
-                'transparencymask': {f'{name}/layers/{{filename}}.pixelselection': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3,
-                                     f'{name}/layers/{{filename}}.pixelselection.defaultpixel': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1},
-                'transformmask':    {f'{name}/layers/{{filename}}.transformconfig': BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3}
+                'paintlayer':       {f'{name}/layers/{{filename}}': ('tiles', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3),
+                                     f'{name}/layers/{{filename}}.icc': ('icc', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2),
+                                     f'{name}/layers/{{filename}}.defaultpixel': ('pixel', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1)},
+                'paintlayer.kf':    {f'{name}/layers/{{filename}}': ('tiles', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3),
+                                     f'{name}/layers/{{filename}}.defaultpixel': ('pixel', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1)},
+                'shapelayer':       {f'{name}/layers/{{filename}}.shapelayer/content.svg': ('xml/svg', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3)},
+                'generatorlayer':   {f'{name}/layers/{{filename}}.filterconfig': ('xml/params', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2),
+                                     f'{name}/layers/{{filename}}.pixelselection': ('tiles', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3),
+                                     f'{name}/layers/{{filename}}.pixelselection.defaultpixel': ('pixel', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1)},
+                'adjustmentlayer':  {f'{name}/layers/{{filename}}.filterconfig': ('xml/params', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2),
+                                     f'{name}/layers/{{filename}}.pixelselection': ('tiles', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3),
+                                     f'{name}/layers/{{filename}}.pixelselection.defaultpixel': ('pixel', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1)},
+                'filtermask':       {f'{name}/layers/{{filename}}.pixelselection': ('tiles', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3),
+                                     f'{name}/layers/{{filename}}.pixelselection.defaultpixel': ('pixel', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1),
+                                     f'{name}/layers/{{filename}}.filterconfig': ('xml/params', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE2)},
+                'selectionmask':    {f'{name}/layers/{{filename}}.pixelselection': ('tiles', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3),
+                                     f'{name}/layers/{{filename}}.pixelselection.defaultpixel': ('pixel', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1)},
+                'transparencymask': {f'{name}/layers/{{filename}}.pixelselection': ('tiles', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3),
+                                     f'{name}/layers/{{filename}}.pixelselection.defaultpixel': ('pixel', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1)},
+                'transformmask':    {f'{name}/layers/{{filename}}.transformconfig': ('xml/transform_params', BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3)}
             }
 
             for item in self.__archiveDocs['maindoc.xml']:
@@ -1234,14 +1569,16 @@ class BCRepairKraFile:
                         # process layers
                         for check in checks[nodeType]:
                             fName=check.replace('{filename}', fileName)
-                            Debug.print("                         Check document: {0}", fName)
+                            Debug.print("                         Check document[{0}]: {1}", checks[nodeType][check][0], fName)
 
-                            if fName and not fName in self.__archiveDocs:
+                            if not fName in self.__archiveDocs:
                                 # assistant file not found
-                                addMissingFile(fName)
-                                returned|=checks[check]
+                                addMissingFile(fName, item)
+                                returned|=checks[nodeType][check][1]
                             else:
                                 self.__archiveDocs[fName]['maindoc.nodeId']=item
+                            self.__archiveDocs[fName]['fileType']=checks[nodeType][check][0]
+                            self.__archiveDocs[fName]['fileErrLvl']=checks[nodeType][check][1]
 
                         # paint layers: process keyframes
                         if nodeType=='paintlayer' and not self.__archiveDocs['maindoc.xml'][item]['keyframes'] is None:
@@ -1249,7 +1586,7 @@ class BCRepairKraFile:
                             Debug.print("                         Check document: {0}", fName)
                             if fName and not fName in self.__archiveDocs:
                                 # assistant file not found
-                                addMissingFile(pfName)
+                                addMissingFile(pfName, item)
                                 returned|=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3
                             else:
                                 # xml file found, need to read it to determinate how much keyframes files are expected
@@ -1258,14 +1595,17 @@ class BCRepairKraFile:
                                     returned|=frames
                                 else:
                                     for frame in frames:
-                                        fName=f"{name}/layers/{frame}"
-                                        Debug.print("                         Check document: {0}", fName)
-                                        if fName and not fName in self.__archiveDocs:
-                                            # assistant file not found
-                                            addMissingFile(fName)
-                                            returned|=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3
-                                        else:
-                                            self.__archiveDocs[fName]['maindoc.nodeId']=item
+                                        for kfCheck in checks['paintlayer.kf']:
+                                            kfName=kfCheck.replace('{filename}', frame)
+                                            Debug.print("                         Check document[{0}]: {1}", checks['paintlayer.kf'][kfCheck][0], kfName)
+                                            if not kfName in self.__archiveDocs:
+                                                # assistant file not found
+                                                addMissingFile(kfName, item)
+                                                returned|=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3
+                                            else:
+                                                self.__archiveDocs[kfName]['maindoc.nodeId']=item
+                                            self.__archiveDocs[kfName]['fileType']=checks['paintlayer.kf'][kfCheck][0]
+                                            self.__archiveDocs[kfName]['fileErrLvl']=checks['paintlayer.kf'][kfCheck][1]
 
             return returned
 
@@ -1401,6 +1741,9 @@ class BCRepairKraFile:
         name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
         fName=f"{name}/annotations/icc"
 
+        if not fName in self.__archiveDocs:
+            return returned
+
         Debug.print("                         Get document: {0}", fName)
         docContent=self.__getDocumentContent(fName)
 
@@ -1434,6 +1777,9 @@ class BCRepairKraFile:
 
         name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
         fName=f"{name}/annotations/layerstyles.asl"
+
+        if not fName in self.__archiveDocs:
+            return returned
 
         Debug.print("                         Get document: {0}", fName)
         docContent=self.__getDocumentContent(fName)
@@ -1538,7 +1884,7 @@ class BCRepairKraFile:
         for node in self.__archiveDocs['maindoc.xml']:
             if re.match('xml\.doc\.image\.layers\.referenceimages\[\d+\]', node):
                 fName=self.__archiveDocs['maindoc.xml'][node]['src']
-                if not re.match('file://', fName):
+                if fName in self.__archiveDocs:
                     # check only embedded files
                     Debug.print("                         Get document: {0}", fName)
                     docContent=self.__getDocumentContent(fName)
@@ -1557,6 +1903,69 @@ class BCRepairKraFile:
                             self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
                             self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(f'Not a PNG file?'))
                             returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
+
+        return returned
+
+
+    def __checkFileStep09f(self):
+        """Check layers files"""
+        Debug.print("(i) [__checkFileStep09f] Check layers files format")
+
+        returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
+
+        name=self.__archiveDocs['maindoc.xml']['xml.doc.image']['name']
+
+        pixelDataSize=None
+        for fName in self.__archiveDocs:
+            if 'fileType' in self.__archiveDocs[fName]:
+                Debug.print("                         Get document[{0}]: {1}", self.__archiveDocs[fName]['fileType'], fName)
+                docContent=self.__getDocumentContent(fName)
+
+                if isinstance(docContent, int):
+                    # can't read document content
+                    Debug.print("                         /!\ Can't get content: {0}", docContent)
+                    continue
+
+                if self.__archiveDocs[fName]['fileType']=='tiles':
+                    decodedData=self.__readTilesData(docContent)
+                    self.__archiveDocs[fName]['fileData']=decodedData
+                    # .defaultpixel files is normaly defined AFTER
+                    if decodedData['error'] is None:
+                        pixelDataSize=decodedData['pixel.size']
+                    else:
+                        pixelDataSize=None
+                elif self.__archiveDocs[fName]['fileType']=='icc':
+                    decodedData=self.__readICCData(docContent)
+                elif self.__archiveDocs[fName]['fileType']=='pixel':
+
+                    decodedData={'error': None}
+                    if pixelDataSize is None:
+                        # TODO: if paintlayer, try to determinate pixel size from maindoc.xml
+                        #       otherwise, should be 1 byte (mask, selection, ...)
+                        pixelDataSize=1
+
+                    if len(docContent)!=pixelDataSize:
+                        decodedData['error']="Pixel data size is not expected"
+
+                    pixelDataSize=None # reset status
+                elif self.__archiveDocs[fName]['fileType']=='xml/svg':
+                    decodedData=self.__readSVGData(docContent)
+                elif self.__archiveDocs[fName]['fileType']=='xml/params':
+                    decodedData=self.__readParamsData(docContent)
+                elif self.__archiveDocs[fName]['fileType']=='xml/transform_params':
+                    decodedData=self.__readTransformParamsData(docContent)
+
+                if not decodedData['error'] is None:
+                    returned|=self.__archiveDocs[fName]['fileErrLvl']
+                    self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_FORMAT_INVALID
+                    self.__archiveDocs[fName]['analysis']['statusMsg'].append(decodedData['error'])
+                    Debug.print("                         /!\ Invalid format: {0}", decodedData['error'])
+                elif self.__archiveDocs[fName]['fileType']=='tiles' and len(decodedData['invalidTiles'])>0:
+                    msg=f"Some tiles ({len(decodedData['invalidTiles'])} of {decodedData['tiles.count']}) can't be decoded"
+                    returned|=self.__archiveDocs[fName]['fileErrLvl']
+                    self.__archiveDocs[fName]['analysis']['status']|=BCRepairKraFile.DOC_DATA_CORRUPTED
+                    self.__archiveDocs[fName]['analysis']['statusMsg'].append(i18n(msg))
+                    Debug.print("                         /!\ Invalid format: {0}", msg)
 
         return returned
 
@@ -1677,9 +2086,7 @@ class BCRepairKraFile:
             currentStatus|=self.__checkFileStep09c()
             currentStatus|=self.__checkFileStep09d()
             currentStatus|=self.__checkFileStep09e()
-            # TODO: add Debug.print() everywhere in analysis, to easily track
-            #       all execution cases
-            #currentStatus|=self.__checkFileStep09f()
+            currentStatus|=self.__checkFileStep09f()
 
             pp = pprint.PrettyPrinter(indent=2)
             pp.pprint(self.__archiveDocs)
