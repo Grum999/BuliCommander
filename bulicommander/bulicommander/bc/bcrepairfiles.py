@@ -1079,7 +1079,9 @@ class BCRepairKraFile:
     def __checkFileStep04a(self):
         """Check maindoc.xml"""
         def loadAttribs(node, key, attribs):
-            self.__archiveDocs['maindoc.xml'][key]={}
+            # load node attributes
+            if not key in self.__archiveDocs['maindoc.xml']:
+                self.__archiveDocs['maindoc.xml'][key]={}
             for attrib in attribs:
                 if attrib in node.attrib:
                     value=node.attrib[attrib]
@@ -1088,6 +1090,26 @@ class BCRepairKraFile:
                     value=None
 
                 self.__archiveDocs['maindoc.xml'][key][attrib]=value
+
+        def loadAttrib(node, key, attrib, name=None):
+            # load a node attribute; rename attribute if name is provided
+            if not key in self.__archiveDocs['maindoc.xml']:
+                self.__archiveDocs['maindoc.xml'][key]={}
+
+            if attrib in node.attrib:
+                value=node.attrib[attrib]
+            else:
+                Debug.print("                         /!\ Node attribute not found: {0}[{1}]", key, attrib)
+                value=None
+
+            if name is None:
+                name=attrib
+
+            if name in self.__archiveDocs['maindoc.xml'][key] and isinstance(self.__archiveDocs['maindoc.xml'][key][name], list):
+                self.__archiveDocs['maindoc.xml'][key][name].append(value)
+            else:
+                self.__archiveDocs['maindoc.xml'][key][name]=value
+
 
         def loadNodes(nodes, key):
             for node in nodes:
@@ -1247,6 +1269,149 @@ class BCRepairKraFile:
             else:
                 loadAttribs(subNode, f'{key}.currentTime', ['type', 'value'])
 
+        def loadGrid(xmlDoc):
+            node=xmlDoc.find(".//{*}IMAGE/{*}grid")
+
+            key='xml.image.grid'
+            self.__archiveDocs['maindoc.xml'][key]={
+                    'hasGrid': False
+                }
+
+            if not node is None:
+                self.__archiveDocs['maindoc.xml'][key]['hasGrid']=True
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}grid/{*}showGrid")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.showGrid")
+                    self.__archiveDocs['maindoc.xml'][key]['showGrid']=None
+                else:
+                    loadAttrib(node, key, 'value', 'showGrid')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}grid/{*}snapToGrid")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.snapToGrid")
+                    self.__archiveDocs['maindoc.xml'][key]['snapToGrid']=None
+                else:
+                    loadAttrib(node, key, 'value', 'snapToGrid')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}grid/{*}offset")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.offset")
+                    self.__archiveDocs['maindoc.xml'][key]['offset.x']=None
+                    self.__archiveDocs['maindoc.xml'][key]['offset.y']=None
+                else:
+                    loadAttrib(node, key, 'x', 'offset.x')
+                    loadAttrib(node, key, 'y', 'offset.y')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}grid/{*}spacing")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.spacing")
+                    self.__archiveDocs['maindoc.xml'][key]['spacing.x']=None
+                    self.__archiveDocs['maindoc.xml'][key]['spacing.y']=None
+                else:
+                    loadAttrib(node, key, 'x', 'spacing.x')
+                    loadAttrib(node, key, 'y', 'spacing.y')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}grid/{*}offsetAspectLocked")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.offsetAspectLocked")
+                    self.__archiveDocs['maindoc.xml'][key]['offsetAspectLocked']=None
+                else:
+                    loadAttrib(node, key, 'value', 'offsetAspectLocked')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}grid/{*}spacingAspectLocked")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.spacingAspectLocked")
+                    self.__archiveDocs['maindoc.xml'][key]['spacingAspectLocked']=None
+                else:
+                    loadAttrib(node, key, 'value', 'spacingAspectLocked')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}grid/{*}subdivision")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.subdivision")
+                    self.__archiveDocs['maindoc.xml'][key]['subdivision']=None
+                else:
+                    loadAttrib(node, key, 'value', 'subdivision')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}grid/{*}angleLeft")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.angleLeft")
+                    self.__archiveDocs['maindoc.xml'][key]['angleLeft']=None
+                else:
+                    loadAttrib(node, key, 'value', 'angleLeft')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}grid/{*}angleRight")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.angleRight")
+                    self.__archiveDocs['maindoc.xml'][key]['angleRight']=None
+                else:
+                    loadAttrib(node, key, 'value', 'angleRight')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}grid/{*}cellSpacing")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.cellSpacing")
+                    self.__archiveDocs['maindoc.xml'][key]['cellSpacing']=None
+                else:
+                    loadAttrib(node, key, 'value', 'cellSpacing')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}grid/{*}gridType")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.gridType")
+                    self.__archiveDocs['maindoc.xml'][key]['gridType']=None
+                else:
+                    loadAttrib(node, key, 'value', 'gridType')
+
+        def loadGuides(xmlDoc):
+            node=xmlDoc.find(".//{*}IMAGE/{*}grid")
+
+            key='xml.image.guides'
+            self.__archiveDocs['maindoc.xml'][key]={
+                    'hasGuides': False
+                }
+
+            if not node is None:
+                self.__archiveDocs['maindoc.xml'][key]['hasGuides']=True
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}guides/{*}showGuides")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.showGuides")
+                    self.__archiveDocs['maindoc.xml'][key]['showGuides']=None
+                else:
+                    loadAttrib(node, key, 'value', 'showGuides')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}guides/{*}snapToGuides")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.snapToGuides")
+                    self.__archiveDocs['maindoc.xml'][key]['snapToGuides']=None
+                else:
+                    loadAttrib(node, key, 'value', 'snapToGuides')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}guides/{*}lockGuides")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.lockGuides")
+                    self.__archiveDocs['maindoc.xml'][key]['lockGuides']=None
+                else:
+                    loadAttrib(node, key, 'value', 'lockGuides')
+
+                node=xmlDoc.find(".//{*}IMAGE/{*}guides/{*}rulersMultiple2")
+                if node is None:
+                    Debug.print("                         /!\ Missing node: IMAGE.grid.rulersMultiple2")
+                    self.__archiveDocs['maindoc.xml'][key]['rulersMultiple2']=None
+                else:
+                    loadAttrib(node, key, 'value', 'rulersMultiple2')
+
+                nodes=xmlDoc.findall(".//{*}IMAGE/{*}guides/{*}horizontalGuides/{*}*")
+                for index, node in enumerate(nodes):
+                    if not 'horizontalGuides' in self.__archiveDocs['maindoc.xml'][key]:
+                        self.__archiveDocs['maindoc.xml'][key]['horizontalGuides']=[]
+                    loadAttrib(node, key, 'value', 'horizontalGuides')
+
+                nodes=xmlDoc.findall(".//{*}IMAGE/{*}guides/{*}verticalGuides/{*}*")
+                for index, node in enumerate(nodes):
+                    if not 'verticalGuides' in self.__archiveDocs['maindoc.xml'][key]:
+                        self.__archiveDocs['maindoc.xml'][key]['verticalGuides']=[]
+                    loadAttrib(node, key, 'value', 'verticalGuides')
+
         Debug.print("(i) [__checkFileStep04a] Check maindoc.xml (content)")
         returned=BCRepairKraFile.REPAIR_STATUS_FILE_IS_VALID
 
@@ -1258,6 +1423,7 @@ class BCRepairKraFile:
             Debug.print("                         (!) Can't get content: {0}", docContent)
             return docContent
 
+        # ----------------------------------------------------------------------
         # now, we have file content...
         strDocContent=docContent.decode('UTF-8')
 
@@ -1295,11 +1461,13 @@ class BCRepairKraFile:
             return BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE3
         loadAttribs(node, 'xml.doc.image', ['name', 'profile', 'width', 'height', 'colorspacename', 'mime'])
 
+        # ----------------------------------------------------------------------
         # load layers tree...
         nodes=xmlDoc.findall(".//{*}IMAGE/{*}layers/{*}layer")
         if len(nodes)>0:
             loadNodes(nodes, 'xml.doc.image.layers')
 
+        # ----------------------------------------------------------------------
         # load global assistant color
         node=xmlDoc.find(".//{*}IMAGE/{*}ProjectionBackgroundColor")
         if node is None:
@@ -1309,6 +1477,7 @@ class BCRepairKraFile:
         else:
             loadAttribs(node, 'xml.image.ProjectionBackgroundColor', ['ColorData'])
 
+        # ----------------------------------------------------------------------
         # load global assistant color
         node=xmlDoc.find(".//{*}IMAGE/{*}GlobalAssistantsColor")
         if node is None:
@@ -1318,16 +1487,19 @@ class BCRepairKraFile:
         else:
             loadAttribs(node, 'xml.image.GlobalAssistantsColor', ['SimpleColorData'])
 
+        # ----------------------------------------------------------------------
         # load assistants
         nodes=xmlDoc.findall(".//{*}IMAGE/{*}assistants/{*}assistant")
         if len(nodes)>0:
             loadAssistants(nodes, 'xml.doc.image.assistants')
 
+        # ----------------------------------------------------------------------
         # load palettes
         nodes=xmlDoc.findall(".//{*}IMAGE/{*}Palettes/{*}palette")
         if len(nodes)>0:
             loadPalettes(nodes, 'xml.doc.image.Palettes')
 
+        # ----------------------------------------------------------------------
         # load animation
         node=xmlDoc.find(".//{*}IMAGE/{*}animation")
         if node is None:
@@ -1352,6 +1524,15 @@ class BCRepairKraFile:
                 returned|=BCRepairKraFile.REPAIR_STATUS_FILE_IS_UNCOMPLETE1
         else:
             loadAnimation(node, 'xml.doc.image.animation')
+
+        # ----------------------------------------------------------------------
+        # load grid
+        loadGrid(xmlDoc)
+
+        # ----------------------------------------------------------------------
+        # load guides
+        loadGuides(xmlDoc)
+
 
         return returned
 
