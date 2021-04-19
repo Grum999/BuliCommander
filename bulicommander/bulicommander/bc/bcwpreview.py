@@ -42,12 +42,12 @@ from PyQt5.QtWidgets import (
     )
 
 
-from .bcutils import (
+from pktk.modules.utils import (
         Debug,
         loadXmlUi
     )
 
-from ..pktk.pktk import (
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus

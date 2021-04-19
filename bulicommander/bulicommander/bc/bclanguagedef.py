@@ -34,8 +34,8 @@ from .bctokenizer import (
             BCTokenizerRule
         )
 
-from ..pktk.pktk import EInvalidType
-from ..pktk.pktk import EInvalidValue
+from pktk.pktk import EInvalidType
+from pktk.pktk import EInvalidValue
 
 class BCLanguageDef:
 

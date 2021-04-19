@@ -50,13 +50,14 @@ from .bcfile import (
     )
 from .bcsystray import BCSysTray
 from .bcwpathbar import BCWPathBar
-from .bcutils import (
-        Debug,
+
+from pktk.modules.utils import Debug
+from pktk.modules.strutils import (
         bytesSizeToStr,
-        strDefault,
-        tsToStr
+        strDefault
     )
-from ..pktk.pktk import (
+from pktk.modules.timeutils import tsToStr
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )

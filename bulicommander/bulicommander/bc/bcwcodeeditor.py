@@ -47,8 +47,10 @@ from .bctokenizer import (
         BCTokenizer
     )
 
-from ..pktk.pktk import EInvalidType
-from ..pktk.pktk import EInvalidValue
+from pktk.pktk import (
+        EInvalidType,
+        EInvalidValue
+    )
 
 
 class BCWCodeEditor(QPlainTextEdit):

@@ -106,28 +106,35 @@ from .bcsettings import (
 from .bcworkers import (
         BCWorkerPool
     )
-from .bctable import (
-        BCTable,
-        BCTableSettingsText
-    )
-from .bcutils import (
-        Debug,
-        buildQAction,
-        buildQMenu,
-        bytesSizeToStr,
-        frToStrTime,
-        getLangValue,
-        secToStrTime,
-        strDefault,
-        tsToStr,
-        stripTags,
-        loadXmlUi
-    )
+
 from .bcwpreview import (
         BCWPreview
     )
 
-from ..pktk.pktk import (
+from pktk.modules.strtable import (
+        TextTable,
+        TextTableSettingsText
+    )
+from pktk.modules.utils import (
+        getLangValue,
+        loadXmlUi,
+        Debug
+    )
+from pktk.modules.strutils import (
+        bytesSizeToStr,
+        strDefault,
+        stripTags
+    )
+from pktk.modules.timeutils import (
+        frToStrTime,
+        secToStrTime,
+        tsToStr
+    )
+from pktk.modules.menuutils import (
+        buildQAction,
+        buildQMenu
+    )
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus
@@ -2328,7 +2335,7 @@ class BCMainViewTab(QFrame):
                 formLayout = self.twInfo.widget(source).layout().itemAt(0).widget().widget().layout()
 
                 if not formLayout is None:
-                    table=BCTable()
+                    table=TextTable()
 
                     table.setTitle(f'[ {stripTags(self.twInfo.tabText(source))} ]' )
                     table.setHeader(['Property', 'Value'])
@@ -2372,19 +2379,19 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot('QString')
         def setBorderNone(action):
-            self.__uiController.commandInfoToClipBoardBorder(BCTableSettingsText.BORDER_NONE)
+            self.__uiController.commandInfoToClipBoardBorder(TextTableSettingsText.BORDER_NONE)
 
         @pyqtSlot('QString')
         def setBorderBasic(action):
-            self.__uiController.commandInfoToClipBoardBorder(BCTableSettingsText.BORDER_BASIC)
+            self.__uiController.commandInfoToClipBoardBorder(TextTableSettingsText.BORDER_BASIC)
 
         @pyqtSlot('QString')
         def setBorderSimple(action):
-            self.__uiController.commandInfoToClipBoardBorder(BCTableSettingsText.BORDER_SIMPLE)
+            self.__uiController.commandInfoToClipBoardBorder(TextTableSettingsText.BORDER_SIMPLE)
 
         @pyqtSlot('QString')
         def setBorderDouble(action):
-            self.__uiController.commandInfoToClipBoardBorder(BCTableSettingsText.BORDER_DOUBLE)
+            self.__uiController.commandInfoToClipBoardBorder(TextTableSettingsText.BORDER_DOUBLE)
 
         @pyqtSlot('QString')
         def setHeader(action):
@@ -2478,14 +2485,14 @@ class BCMainViewTab(QFrame):
         contextMenuOptBorderGroup.addAction(rbOptBorderSimpleAction)
         contextMenuOptBorderGroup.addAction(rbOptBorderDoubleAction)
 
-        if self.__uiController.tableSettings().border() == BCTableSettingsText.BORDER_NONE:
+        if self.__uiController.tableSettings().border() == TextTableSettingsText.BORDER_NONE:
             rbOptBorderNone.setChecked(True)
-        elif self.__uiController.tableSettings().border() == BCTableSettingsText.BORDER_BASIC:
+        elif self.__uiController.tableSettings().border() == TextTableSettingsText.BORDER_BASIC:
             rbOptBorderBasic.setChecked(True)
-        elif self.__uiController.tableSettings().border() == BCTableSettingsText.BORDER_SIMPLE:
+        elif self.__uiController.tableSettings().border() == TextTableSettingsText.BORDER_SIMPLE:
             rbOptBorderSimple.setChecked(True)
         else:
-        #elif self.__uiController.tableSettings().border() == BCTableSettingsText.BORDER_DOUBLE:
+        #elif self.__uiController.tableSettings().border() == TextTableSettingsText.BORDER_DOUBLE:
             rbOptBorderDouble.setChecked(True)
 
         optionMenu.addSeparator()
@@ -2514,8 +2521,8 @@ class BCMainViewTab(QFrame):
         optionMenu.addAction(cbOptMinWidthActiveAction)
 
         slOptWidthMin = BCWMenuSlider(None, optionMenu)
-        slOptWidthMin.slider().setMinimum(BCTableSettingsText.MIN_WIDTH)
-        slOptWidthMin.slider().setMaximum(BCTableSettingsText.MAX_WIDTH)
+        slOptWidthMin.slider().setMinimum(TextTableSettingsText.MIN_WIDTH)
+        slOptWidthMin.slider().setMaximum(TextTableSettingsText.MAX_WIDTH)
         slOptWidthMin.slider().setValue(value)
         slOptWidthMin.slider().setPageStep(10)
         slOptWidthMin.slider().setSingleStep(1)
@@ -2535,8 +2542,8 @@ class BCMainViewTab(QFrame):
         optionMenu.addAction(cbOptMaxWidthActiveAction)
 
         slOptWidthMax = BCWMenuSlider(None, optionMenu)
-        slOptWidthMax.slider().setMinimum(BCTableSettingsText.MIN_WIDTH)
-        slOptWidthMax.slider().setMaximum(BCTableSettingsText.MAX_WIDTH)
+        slOptWidthMax.slider().setMinimum(TextTableSettingsText.MIN_WIDTH)
+        slOptWidthMax.slider().setMaximum(TextTableSettingsText.MAX_WIDTH)
         slOptWidthMax.slider().setValue(value)
         slOptWidthMax.slider().setPageStep(10)
         slOptWidthMax.slider().setSingleStep(1)

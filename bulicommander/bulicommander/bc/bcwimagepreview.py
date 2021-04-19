@@ -45,11 +45,9 @@ from PyQt5.QtGui import (
         QPixmap
     )
 
-from .bcutils import (
-        checkerBoardBrush
-    )
+from pktk.modules.imgutils import checkerBoardBrush
 
-from ..pktk.pktk import (
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
@@ -456,8 +454,3 @@ class BCWImagePreview(QGraphicsView):
                 self.setZoom(self.__currentZoomFactor * 1.25)
             else:
                 self.setZoom(self.__currentZoomFactor * 0.8)
-
-
-
-
-

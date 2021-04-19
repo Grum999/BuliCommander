@@ -38,7 +38,6 @@ from PyQt5.QtWidgets import (
     )
 
 
-from .bcabout import BCAboutWindow
 from .bcbookmark import BCBookmark
 from .bcclipboard import (
         BCClipboard,
@@ -87,24 +86,27 @@ from .bcwimagepreview import (
         BCWImagePreview
     )
 from .bcsavedview import BCSavedView
-from .bctable import (
-        BCTable,
-        BCTableSettingsText
+
+from pktk.modules.strtable import (
+        TextTable,
+        TextTableSettingsText
     )
-from .bcutils import (
-        buildIcon,
-        getBytesSizeToStrUnit,
-        setBytesSizeToStrUnit,
+from pktk.modules.utils import (
         checkKritaVersion,
         Debug
     )
-from ..pktk.pktk import (
+from pktk.modules.imgutils import buildIcon
+from pktk.modules.strutils import (
+        getBytesSizeToStrUnit,
+        setBytesSizeToStrUnit
+    )
+from pktk.modules.about import AboutWindow
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus
     )
-
-from ..pktk.ekrita import (
+from pktk.modules.ekrita import (
         EKritaNode
     )
 
@@ -140,7 +142,7 @@ class BCUIController(QObject):
         self.__lastDocumentsSaved = BCHistory()
         self.__backupFilterDView = BCHistory()
         self.__fileLayerFilterDView = BCHistory()
-        self.__tableSettings = BCTableSettingsText()
+        self.__tableSettings = TextTableSettingsText()
 
         self.__confirmAction = True
 
@@ -2243,7 +2245,7 @@ class BCUIController(QObject):
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesShowQuickFilter(visible)
 
-    def commandInfoToClipBoardBorder(self, border=BCTableSettingsText.BORDER_DOUBLE):
+    def commandInfoToClipBoardBorder(self, border=TextTableSettingsText.BORDER_DOUBLE):
         """Set border for information panel content to clipboard"""
         self.__tableSettings.setBorder(border)
 
@@ -2341,6 +2343,6 @@ class BCUIController(QObject):
 
     def commandAboutBc(self):
         """Display 'About Buli Commander' dialog box"""
-        BCAboutWindow(self.__bcName, self.__bcVersion)
+        AboutWindow(self.__bcName, self.__bcVersion, os.path.join(os.path.dirname(__file__), 'resources', 'png', 'buli-powered-big.png'), None, ':BuliCommander')
 
     # endregion: define commands -----------------------------------------------

@@ -55,9 +55,12 @@ from PyQt5.QtGui import (
 from .bcbookmark import BCBookmark
 from .bchistory import BCHistory
 from .bcsavedview import BCSavedView
-from .bcutils import (
+
+from pktk.modules.menuutils import (
         buildQAction,
-        buildQMenu,
+        buildQMenu
+    )
+from pktk.modules.utils import (
         loadXmlUi,
         Debug
     )

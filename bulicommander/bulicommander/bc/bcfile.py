@@ -56,24 +56,6 @@ import xml.etree.ElementTree as xmlElement
 import zipfile
 import zlib
 
-from ..pktk.pktk import (
-        EInvalidType,
-        EInvalidValue,
-        EInvalidStatus
-    )
-
-from .bcutils import (
-        Debug,
-        Stopwatch,
-
-        strToBytesSize,
-        bytesSizeToStr,
-        regExIsValid,
-        strToTs,
-        tsToStr,
-        strDefault,
-        intDefault
-    )
 from .bclanguagedef import (
         BCLanguageDef
     )
@@ -100,6 +82,27 @@ from PyQt5.QtGui import (
     )
 from PyQt5.QtWidgets import (
         QFileIconProvider
+    )
+
+from pktk.modules.utils import (
+        Debug,
+        regExIsValid,
+        intDefault
+    )
+from pktk.modules.timeutils import (
+        Stopwatch,
+        strToTs,
+        tsToStr
+    )
+from pktk.modules.strutils import (
+        strToBytesSize,
+        bytesSizeToStr,
+        strDefault
+    )
+from pktk.pktk import (
+        EInvalidType,
+        EInvalidValue,
+        EInvalidStatus
     )
 
 if sys.platform == 'linux':

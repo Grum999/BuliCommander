@@ -44,10 +44,12 @@ from .bchistory import BCHistory
 from .bcwpathbar import BCWPathBar
 from .bcmainviewtab import BCMainViewTab
 from .bctheme import BCTheme
-from .bcutils import loadXmlUi
 
-from ..pktk.pktk import EInvalidType
-from ..pktk.pktk import EInvalidValue
+from pktk.modules.utils import loadXmlUi
+from pktk.pktk import (
+        EInvalidType,
+        EInvalidValue
+    )
 
 
 

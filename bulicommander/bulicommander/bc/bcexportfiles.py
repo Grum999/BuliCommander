@@ -51,33 +51,32 @@ from .bcfile import (
     )
 from .bcsettings import BCSettingsKey
 from .bcsystray import BCSysTray
-from .bctable import (
-        BCTable,
-        BCTableSettingsText,
-        BCTableSettingsTextCsv,
-        BCTableSettingsTextMarkdown
-    )
 from .bcwtextedit import (
         BCWTextEdit,
         BCWTextEditDialog
     )
-from .bcwcolorbutton import (
-        BCWColorButton
+
+from pktk.modules.strtable import (
+        TextTable,
+        TextTableSettingsText,
+        TextTableSettingsTextCsv,
+        TextTableSettingsTextMarkdown
     )
-from .bcutils import (
+from pktk.modules.strutils import (
         bytesSizeToStr,
-        checkerBoardBrush,
-        strDefault,
-        tsToStr,
+        strDefault
+    )
+from pktk.modules.imgutils import checkerBoardBrush
+from pktk.modules.timeutils import tsToStr
+from pktk.modules.utils import (
         cloneRect,
         Debug
     )
-
-from ..pktk.pktk import (
+from pktk.modules.ekrita import EKritaNode
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
-from ..pktk.ekrita import EKritaNode
 
 # -----------------------------------------------------------------------------
 
@@ -722,6 +721,13 @@ class BCExportFilesDialogBox(QDialog):
             self.dsbFormatDocImgThumbsSpacingInner.valueChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
 
             self.pbFormatDocImgTextFontColor.colorChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
+
+            self.pbFormatDocImgPageBorderColor.colorPicker().setStandardLayout('hsva')
+            self.pbFormatDocImgThumbsBgColor.colorPicker().setStandardLayout('hsva')
+            self.pbFormatDocImgThumbsBorderColor.colorPicker().setStandardLayout('hsva')
+            self.pbFormatDocImgTextFontColor.colorPicker().setStandardLayout('hsva')
+            self.pbFormatDocImgPageBgColor.colorPicker().setStandardLayout('hsva')
+            self.pbFormatDocImgPaperColor.colorPicker().setStandardLayout('hsva')
 
             self.cbxFormatDocImgPreviewMode.currentIndexChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
 
@@ -2313,7 +2319,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
                     'header.active': self.cbFormatTextHeader.isChecked(),
 
-                    'border.style': BCTableSettingsText.BORDER_NONE,
+                    'border.style': TextTableSettingsText.BORDER_NONE,
 
                     'minimumWidth.active': self.cbFormatTextMinWidth.isChecked(),
                     'minimumWidth.value': self.spFormatTextMinWidth.value(),
@@ -2326,11 +2332,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 }
 
             if self.rbFormatTextBorderBasic.isChecked():
-                returned['border.style'] = BCTableSettingsText.BORDER_BASIC
+                returned['border.style'] = TextTableSettingsText.BORDER_BASIC
             elif self.rbFormatTextBorderSimple.isChecked():
-                returned['border.style'] = BCTableSettingsText.BORDER_SIMPLE
+                returned['border.style'] = TextTableSettingsText.BORDER_SIMPLE
             elif self.rbFormatTextBorderDouble.isChecked():
-                returned['border.style'] = BCTableSettingsText.BORDER_DOUBLE
+                returned['border.style'] = TextTableSettingsText.BORDER_DOUBLE
 
         elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_CSV:
             returned = {
@@ -2744,7 +2750,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         self.cbTargetResultFileOpen.setEnabled(False)
         self.rbTargetResultClipboard.setEnabled(False)
 
-        self.__uiController.setAllowRefresh(False)
+        self.__uiController.filesSetAllowRefresh(False)
 
         if self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT:
             exported = self.exportAsText(self.__exportedFileName, self.__generateConfig())
@@ -2762,7 +2768,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             exported = self.exportAsImageSeq(self.__exportedFileName, self.__generateConfig(), 'jpeg')
 
 
-        self.__uiController.setAllowRefresh(True)
+        self.__uiController.filesSetAllowRefresh(True)
 
         QApplication.restoreOverrideCursor()
 
@@ -2887,8 +2893,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         return returned
 
     def __getTable(self, fields, items, title=None, preview=False):
-        """Generic method to initialise a BCTable content"""
-        returnedTable = BCTable()
+        """Generic method to initialise a TextTable content"""
+        returnedTable = TextTable()
 
         if not title is None:
             returnedTable.setTitle(title)
@@ -3349,7 +3355,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
                 'header.active': True,
 
-                'border.style': BCTableSettingsText.BORDER_BASIC,
+                'border.style': TextTableSettingsText.BORDER_BASIC,
 
                 'minimumWidth.active': True,
                 'minimumWidth.value': 80,
@@ -3364,7 +3370,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if not isinstance(config, dict):
             config = defaultConfig
 
-        tableSettings = BCTableSettingsText()
+        tableSettings = TextTableSettingsText()
         tableSettings.setHeaderActive(config.get('header.active', defaultConfig['header.active']))
         tableSettings.setBorder(config.get('border.style', defaultConfig['border.style']))
         tableSettings.setMinWidthActive(config.get('minimumWidth.active', defaultConfig['minimumWidth.active']))
@@ -3419,7 +3425,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if not isinstance(config, dict):
             config = defaultConfig
 
-        tableSettings = BCTableSettingsTextCsv()
+        tableSettings = TextTableSettingsTextCsv()
         tableSettings.setHeaderActive(config.get('header.active', defaultConfig['header.active']))
         tableSettings.setEnclosedField(config.get('field.enclosed', defaultConfig['field.enclosed']))
         tableSettings.setSeparator(config.get('field.separator', defaultConfig['field.separator']))
@@ -3479,7 +3485,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             fieldsList=[]
         fieldsList+=config.get('fields', defaultConfig['fields'])
 
-        tableSettings = BCTableSettingsTextMarkdown()
+        tableSettings = TextTableSettingsTextMarkdown()
         tableSettings.setColumnsFormatting([BCExportFilesDialogBox.FIELDS[key]['format'] for key in fieldsList])
 
         try:

@@ -80,8 +80,8 @@ if __name__ != '__main__':
             EInvalidValue,
             PkTk
         )
+    from pktk.modules.utils import checkKritaVersion
     from .bc.bcuicontroller import BCUIController
-    from .bc.bcutils import checkKritaVersion
 else:
     # Execution from 'Scripter' plugin?
     __PLUGIN_EXEC_FROM__ = 'SCRIPTER_PLUGIN'
@@ -102,8 +102,8 @@ else:
             EInvalidValue,
             PkTk
         )
+    from pktk.modules.utils import checkKritaVersion
     from bulicommander.bc.bcuicontroller import BCUIController
-    from bulicommander.bc.bcutils import checkKritaVersion
 
     print("======================================")
 

@@ -34,12 +34,12 @@ from PyQt5.QtCore import (
         QTimer
     )
 
-from ..pktk.pktk import (
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
 
-from .bcutils import BCTimer
+from pktk.modules.timeutils import Timer
 
 
 class BCWorkerSignals(QObject):
@@ -118,7 +118,7 @@ class BCWorkerPool(QObject):
     def __lock(self):
         """Lock ensure that no worker will try to access to same item"""
         while self.__locked:
-           BCTimer.sleep(1)
+           Timer.sleep(1)
         self.__locked=True
 
     def __unlock(self):
@@ -221,14 +221,14 @@ class BCWorkerPool(QObject):
             self.__stopProcess = True
             while self.__started > 0:
                 # check every 5ms if all thread are finished
-                BCTimer.sleep(5)
+                Timer.sleep(5)
             self.__stopProcess = False
 
     def waitProcessed(self):
         """Wait until all items in pool are processed"""
         # why self.__threadpool.waitForDone() don't work??
         while self.__started>0:
-            BCTimer.sleep(1)
+            Timer.sleep(1)
 
     def map(self, dataList, callback, *callbackArgv):
         """Apply `callback` function to each item `datalist` list and return a list

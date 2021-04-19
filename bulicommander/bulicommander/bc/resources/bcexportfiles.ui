@@ -1766,7 +1766,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="5" column="1">
-                <widget class="BCWColorButton" name="pbFormatDocImgPaperColor">
+                <widget class="WColorButton" name="pbFormatDocImgPaperColor">
                  <property name="toolTip">
                   <string>Paper color to apply</string>
                  </property>
@@ -2016,7 +2016,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="11" column="2" colspan="2">
-                <widget class="BCWColorButton" name="pbFormatDocImgPageBorderColor">
+                <widget class="WColorButton" name="pbFormatDocImgPageBorderColor">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Color applied for borders&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
@@ -2074,7 +2074,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="10" column="2" colspan="2">
-                <widget class="BCWColorButton" name="pbFormatDocImgPageBgColor">
+                <widget class="WColorButton" name="pbFormatDocImgPageBgColor">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Background page color&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;This value is different than page color as only page content inside margins is painted&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
@@ -2310,7 +2310,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="1" column="1" colspan="2">
-                <widget class="BCWColorButton" name="pbFormatDocImgThumbsBgColor">
+                <widget class="WColorButton" name="pbFormatDocImgThumbsBgColor">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Background thumbnail color&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
@@ -2320,7 +2320,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="2" column="1" colspan="2">
-                <widget class="BCWColorButton" name="pbFormatDocImgThumbsBorderColor">
+                <widget class="WColorButton" name="pbFormatDocImgThumbsBorderColor">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Color applied for borders&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
@@ -2378,7 +2378,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="11" column="1" colspan="2">
-                <widget class="BCWColorButton" name="pbFormatDocImgTextFontColor">
+                <widget class="WColorButton" name="pbFormatDocImgTextFontColor">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define color used for file information&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
@@ -2888,9 +2888,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
  </widget>
  <customwidgets>
   <customwidget>
-   <class>BCWColorButton</class>
-   <extends>QPushButton</extends>
-   <header>bulicommander.bc.bcwcolorbutton</header>
+   <class>WColorButton</class>
+   <extends>QToolButton</extends>
+   <header>bulicommander.pktk.widgets.wcolorbutton</header>
   </customwidget>
   <customwidget>
    <class>BCWSmallTextEdit</class>

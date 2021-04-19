@@ -47,13 +47,13 @@ from .bcfile import (
 
 from .bcwpathbar import BCWPathBar
 from .bcsystray import BCSysTray
-from .bcutils import (
-        bytesSizeToStr,
+from pktk.modules.utils import (
         checkKritaVersion,
         Debug
     )
+from pktk.modules.strutils import bytesSizeToStr
 
-from ..pktk.pktk import (
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )

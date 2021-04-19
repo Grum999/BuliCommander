@@ -32,7 +32,7 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal,
         QObject
     )
-from ..pktk.pktk import EInvalidType
+from pktk.pktk import EInvalidType
 
 
 class BCBookmarkEdit(QDialog):
@@ -464,4 +464,3 @@ class BCBookmark(QObject):
     def uiUpdate(self, name, value):
         """Open editor to update a bookmark"""
         return BCBookmarkEdit.update(self, name, value)
-

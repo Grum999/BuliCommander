@@ -38,7 +38,7 @@ from PyQt5.QtWidgets import (
         QVBoxLayout,
         QWidget
     )
-from .bcwcolorbutton import BCWColorButton
+from pktk.widgets.wcolorbutton import WColorButton
 
 
 class BCWTextEditDialog(QDialog):

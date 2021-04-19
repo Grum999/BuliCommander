@@ -29,8 +29,10 @@ import time
 from PyQt5.Qt import *
 from .bclist import BCList
 from .bctheme import BCTheme
-from ..pktk.pktk import EInvalidType
-from ..pktk.pktk import EInvalidValue
+from pktk.pktk import (
+        EInvalidType,
+        EInvalidValue
+    )
 
 
 class BCTokenType(Enum):

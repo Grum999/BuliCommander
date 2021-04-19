@@ -32,10 +32,6 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal
     )
 
-from .bcutils import (
-        bytesSizeToStr,
-        Debug
-    )
 from .bcfile import (
         BCBaseFile,
         BCFile,
@@ -43,7 +39,9 @@ from .bcfile import (
     )
 from .bcdownloader import BCDownloader
 
-from ..pktk.pktk import (
+from pktk.modules.strutils import bytesSizeToStr
+from pktk.modules.utils import Debug
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus

@@ -207,7 +207,7 @@
     </widget>
    </item>
    <item row="10" column="2">
-    <widget class="BCWColorButton" name="pbBgColor">
+    <widget class="WColorButton" name="pbBgColor">
      <property name="maximumSize">
       <size>
        <width>90</width>
@@ -269,9 +269,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>BCWColorButton</class>
-   <extends>QPushButton</extends>
-   <header>bulicommander.bc.bcwcolorbutton</header>
+   <class>WColorButton</class>
+   <extends>QToolButton</extends>
+   <header>bulicommander.pktk.widgets.wcolorbutton</header>
   </customwidget>
  </customwidgets>
  <resources/>

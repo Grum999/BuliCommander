@@ -36,9 +36,9 @@ from PyQt5.QtCore import (
 from PyQt5.QtWidgets import (
         QWidget
     )
-from .bcwcolorbutton import BCWColorButton
-from .bcutils import loadXmlUi
 
+from pktk.modules.utils import loadXmlUi
+from pktk.widgets.wcolorselector import WColorPicker
 
 
 class BCWExportOptionsPng(QWidget):
@@ -51,7 +51,8 @@ class BCWExportOptionsPng(QWidget):
         loadXmlUi(uiFileName, self)
 
         self.rbStoreAlpha.toggled.connect(self.__transparentColorState)
-        self.pbBgColor.setAlphaChannel(False)
+        self.pbBgColor.colorPicker().setStandardLayout('hsv')
+        self.pbBgColor.colorPicker().setOptionMenu(WColorPicker.OPTION_MENU_ALL&~WColorPicker.OPTION_MENU_ALPHA)
         self.__transparentColorState(self.rbStoreAlpha.isChecked())
 
     def __transparentColorState(self, checked):
@@ -133,7 +134,8 @@ class BCWExportOptionsJpeg(QWidget):
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcwexportoptionsjpeg.ui')
         loadXmlUi(uiFileName, self)
 
-        self.pbBgColor.setAlphaChannel(False)
+        self.pbBgColor.colorPicker().setStandardLayout('hsv')
+        self.pbBgColor.colorPicker().setOptionMenu(WColorPicker.OPTION_MENU_ALL&~WColorPicker.OPTION_MENU_ALPHA)
 
     def options(self, asInfoObject=False):
         """Return current options

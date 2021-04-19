@@ -61,19 +61,22 @@ from .bcwexportoptions import (
         BCWExportOptionsPng
     )
 from .bcwpathbar import BCWPathBar
-from .bcutils import (
+
+from pktk.modules.strutils import (
         bytesSizeToStr,
-        checkerBoardBrush,
-        strDefault,
-        tsToStr,
+        strDefault
+    )
+from pktk.modules.timeutils import tsToStr
+from pktk.modules.imgutils import checkerBoardBrush
+from pktk.modules.utils import (
         cloneRect,
         Debug
     )
-from ..pktk.pktk import (
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
-from ..pktk.ekrita import EKritaNode
+from pktk.modules.ekrita import EKritaNode
 
 # -----------------------------------------------------------------------------
 
@@ -491,7 +494,7 @@ class BCConvertFilesDialogBox(QDialog):
         self.bcwpbTargetDirectory.setEnabled(False)
         self.ceTargetFilePattern.setEnabled(False)
 
-        self.__uiController.setAllowRefresh(False)
+        self.__uiController.filesSetAllowRefresh(False)
 
 
 
@@ -572,7 +575,7 @@ class BCConvertFilesDialogBox(QDialog):
             self.pteConsole.appendLine('')
             fileNumber+=1
 
-        self.__uiController.setAllowRefresh(True)
+        self.__uiController.filesSetAllowRefresh(True)
 
         QApplication.restoreOverrideCursor()
 
