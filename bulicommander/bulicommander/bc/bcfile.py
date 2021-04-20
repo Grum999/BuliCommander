@@ -64,9 +64,6 @@ from .bctokenizer import (
         BCTokenizerRule,
         BCTokenType
     )
-from .bcworkers import (
-        BCWorkerPool
-    )
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -83,6 +80,7 @@ from PyQt5.QtWidgets import (
         QFileIconProvider
     )
 
+from pktk.modules.workers import WorkerPool
 from pktk.modules.uitheme import UITheme
 from pktk.modules.imgutils import buildIcon
 from pktk.modules.utils import (
@@ -5654,7 +5652,7 @@ class BCFileList(QObject):
         directoriesList = set()
 
 
-        pool = BCWorkerPool()
+        pool = WorkerPool()
         pool.signals.processed.connect(progressScanning)
         filesList = pool.mapNoNone(foundFiles, BCFileList.getBcFile, strict)
         pool.signals.processed.disconnect(progressScanning)
@@ -5762,7 +5760,7 @@ class BCFileList(QObject):
                 directoriesList.add(file)
 
         #Debug.print('[BCFileList.setResult] FoundFile: {0}', foundFiles)
-        pool = BCWorkerPool()
+        pool = WorkerPool()
         if len(foundFiles)>0:
             filesList = filesList.union( pool.map(foundFiles, BCFileList.getBcFile) )
         if len(foundDirectories)>0:

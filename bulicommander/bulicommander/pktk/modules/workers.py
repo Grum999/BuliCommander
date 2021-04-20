@@ -1,8 +1,6 @@
 #-----------------------------------------------------------------------------
-# PyKritaToolKit
-# Copyright (C) 2019-2021 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
+# Buli Commander
+# Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.
 # If not, see https://www.gnu.org/licenses/
+# -----------------------------------------------------------------------------
+# A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
 
@@ -34,7 +34,7 @@ from PyQt5.QtCore import (
         QTimer
     )
 
-from ..pktk.pktk import (
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
@@ -42,15 +42,15 @@ from ..pktk.pktk import (
 from pktk.modules.timeutils import Timer
 
 
-class BCWorkerSignals(QObject):
+class WorkerSignals(QObject):
     processed = Signal(tuple)
     finished = Signal()
 
 
-class BCWorker(QRunnable):
-    """"A worker designed to process data from BCWorkerPool
+class Worker(QRunnable):
+    """"A worker designed to process data from WorkerPool
 
-    Not aimed to be instancied directly, jsut use BCWorkerPool
+    Not aimed to be instancied directly, jsut use WorkerPool
     """
 
     def __init__(self, pool, callback, *callbackArgv):
@@ -58,11 +58,11 @@ class BCWorker(QRunnable):
 
         The given `callback` will be executed on each item from pool with give optional `*callbackArgv` arguements
         """
-        super(BCWorker, self).__init__()
+        super(Worker, self).__init__()
         self.__pool = pool
         self.__callback = callback
         self.__callbackArgv = callbackArgv
-        self.signals = BCWorkerSignals()
+        self.signals = WorkerSignals()
 
     @pyqtSlot()
     def run(self):
@@ -83,7 +83,7 @@ class BCWorker(QRunnable):
         self.signals.finished.emit()
 
 
-class BCWorkerPool(QObject):
+class WorkerPool(QObject):
     """A worker pool allows to process data using pyqt multithreading
     """
     __MAP_MODE_OFF = 0
@@ -92,7 +92,7 @@ class BCWorkerPool(QObject):
     __MAP_MODE_AGGREGATE = 3
 
     def __init__(self, maxWorkerCount=None):
-        super(BCWorkerPool, self).__init__()
+        super(WorkerPool, self).__init__()
         self.__threadpool = QThreadPool()
         #self.__threadpool = QThreadPool.globalInstance()
 
@@ -111,9 +111,9 @@ class BCWorkerPool(QObject):
         self.__stopProcess = False
         self.__dataList = []
         self.__results = []
-        self.__mapResults = BCWorkerPool.__MAP_MODE_OFF
+        self.__mapResults = WorkerPool.__MAP_MODE_OFF
 
-        self.signals = BCWorkerSignals()
+        self.signals = WorkerSignals()
 
     def __lock(self):
         """Lock ensure that no worker will try to access to same item"""
@@ -126,13 +126,13 @@ class BCWorkerPool(QObject):
 
     def __onProcessed(self, processedNfo):
         """an item has been processed"""
-        if self.__mapResults != BCWorkerPool.__MAP_MODE_OFF:
+        if self.__mapResults != WorkerPool.__MAP_MODE_OFF:
             index, item = processedNfo
-            if self.__mapResults == BCWorkerPool.__MAP_MODE_ALL and not index is None:
+            if self.__mapResults == WorkerPool.__MAP_MODE_ALL and not index is None:
                 self.__results[index] = item
-            elif self.__mapResults == BCWorkerPool.__MAP_MODE_NONONE and not item is None:
+            elif self.__mapResults == WorkerPool.__MAP_MODE_NONONE and not item is None:
                 self.__results.append(item)
-            elif self.__mapResults == BCWorkerPool.__MAP_MODE_AGGREGATE and isinstance(item, dict):
+            elif self.__mapResults == WorkerPool.__MAP_MODE_AGGREGATE and isinstance(item, dict):
                 for key in item:
                     self.__results[key]+=item[key]
         self.signals.processed.emit(processedNfo)
@@ -181,9 +181,9 @@ class BCWorkerPool(QObject):
 
         self.__dataList = [v for v in dataList]
 
-        if self.__mapResults == BCWorkerPool.__MAP_MODE_ALL:
+        if self.__mapResults == WorkerPool.__MAP_MODE_ALL:
             self.__results = [None] * self.__size
-        elif self.__mapResults != BCWorkerPool.__MAP_MODE_AGGREGATE:
+        elif self.__mapResults != WorkerPool.__MAP_MODE_AGGREGATE:
             # already initialised by aggregate() method
             self.__results = []
 
@@ -202,7 +202,7 @@ class BCWorkerPool(QObject):
 
         self.__allStarted = False
         for index in range(self.__nbWorkers):
-            self.__workers.append(BCWorker(self, callback, *callbackArgv))
+            self.__workers.append(Worker(self, callback, *callbackArgv))
             self.__workers[index].signals.processed.connect(self.__onProcessed)
             self.__workers[index].signals.finished.connect(self.__onFinished)
             self.__workers[index].setAutoDelete(True)
@@ -239,10 +239,10 @@ class BCWorkerPool(QObject):
         if len(dataList) == 0:
             return []
 
-        self.__mapResults = BCWorkerPool.__MAP_MODE_ALL
+        self.__mapResults = WorkerPool.__MAP_MODE_ALL
         self.startProcessing(dataList, callback, *callbackArgv)
         self.waitProcessed()
-        self.__mapResults = BCWorkerPool.__MAP_MODE_OFF
+        self.__mapResults = WorkerPool.__MAP_MODE_OFF
         return self.__results
 
     def mapNoNone(self, dataList, callback, *callbackArgv):
@@ -255,10 +255,10 @@ class BCWorkerPool(QObject):
         if len(dataList) == 0:
             return []
 
-        self.__mapResults = BCWorkerPool.__MAP_MODE_NONONE
+        self.__mapResults = WorkerPool.__MAP_MODE_NONONE
         self.startProcessing(dataList, callback, *callbackArgv)
         self.waitProcessed()
-        self.__mapResults = BCWorkerPool.__MAP_MODE_OFF
+        self.__mapResults = WorkerPool.__MAP_MODE_OFF
         return self.__results
 
     def aggregate(self, dataList, returnedStruct, callback, *callbackArgv):
@@ -268,9 +268,9 @@ class BCWorkerPool(QObject):
         if len(dataList) == 0:
             return returnedStruct
 
-        self.__mapResults = BCWorkerPool.__MAP_MODE_AGGREGATE
+        self.__mapResults = WorkerPool.__MAP_MODE_AGGREGATE
         self.__results = returnedStruct
         self.startProcessing(dataList, callback, *callbackArgv)
         self.waitProcessed()
-        self.__mapResults = BCWorkerPool.__MAP_MODE_OFF
+        self.__mapResults = WorkerPool.__MAP_MODE_OFF
         return self.__results

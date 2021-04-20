@@ -99,14 +99,12 @@ from .bcsettings import (
         BCSettingsKey,
         BCSettingsValues
     )
-from .bcworkers import (
-        BCWorkerPool
-    )
 
 from .bcwpreview import (
         BCWPreview
     )
 
+from pktk.modules.workers import WorkerPool
 from pktk.modules.imgutils import buildIcon
 from pktk.modules.strtable import (
         TextTable,
@@ -341,7 +339,7 @@ class BCMainViewFiles(QTreeView):
         self.__showPath = False
 
         self.__initHeaders()
-        self.__iconPool = BCWorkerPool()
+        self.__iconPool = WorkerPool()
         self.__iconPool.signals.processed.connect(self.__updateIconsProcessed)
         self.__iconPool.signals.finished.connect(self.__updateIconsFinished)
 
