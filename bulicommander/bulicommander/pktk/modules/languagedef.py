@@ -26,11 +26,11 @@ from PyQt5.Qt import *
 
 import re
 
-from .bctokenizer import (
-            BCToken,
-            BCTokenStyle,
-            BCTokenizer,
-            BCTokenizerRule
+from pktk.modules.tokenizer import (
+            Token,
+            TokenStyle,
+            Tokenizer,
+            TokenizerRule
         )
 
 from pktk.pktk import (
@@ -38,12 +38,12 @@ from pktk.pktk import (
             EInvalidValue
         )
 
-class BCLanguageDef:
+class LanguageDef:
 
     def __init__(self, rules=[], styles=[]):
         """Initialise language & styles"""
-        self.__tokenizer = BCTokenizer(rules)
-        self.__tokenStyle = BCTokenStyle()
+        self.__tokenizer = Tokenizer(rules)
+        self.__tokenStyle = TokenStyle()
 
     def tokenizer(self):
         """Return tokenizer for language"""

@@ -19,8 +19,8 @@
 # A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
-class BCList(object):
-    """A BCList is a list on which we can use next() and prev() method to get values
+class EList(object):
+    """A EList is a list on which we can use next() and prev() method to get values
 
     When initialised, current values point on nothing (return None) and next() should be call first
     """

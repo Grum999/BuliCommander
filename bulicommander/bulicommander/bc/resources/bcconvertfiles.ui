@@ -546,7 +546,7 @@
         </widget>
        </item>
        <item row="5" column="1" colspan="4">
-        <widget class="BCWCodeEditor" name="ceTargetFilePattern"/>
+        <widget class="WCodeEditor" name="ceTargetFilePattern"/>
        </item>
        <item row="6" column="1" colspan="4">
         <widget class="QLabel" name="lblError">
@@ -878,9 +878,9 @@
    <header>bulicommander.bc.bcwconsole</header>
   </customwidget>
   <customwidget>
-   <class>BCWCodeEditor</class>
+   <class>WCodeEditor</class>
    <extends>QPlainTextEdit</extends>
-   <header>bulicommander.bc.bcwcodeeditor</header>
+   <header>bulicommander.pktk.widgets.wcodeeditor</header>
   </customwidget>
  </customwidgets>
  <resources>

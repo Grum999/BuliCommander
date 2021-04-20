@@ -38,13 +38,11 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import (
         QSyntaxHighlighter
     )
-from .bclanguagedef import (
-        BCLanguageDef
-    )
-from .bctokenizer import (
-        BCTokenStyle,
-        BCTokenType,
-        BCTokenizer
+from pktk.modules.languagedef import LanguageDef
+from pktk.modules.tokenizer import (
+        TokenStyle,
+        TokenType,
+        Tokenizer
     )
 
 from pktk.pktk import (
@@ -53,7 +51,7 @@ from pktk.pktk import (
     )
 
 
-class BCWCodeEditor(QPlainTextEdit):
+class WCodeEditor(QPlainTextEdit):
     """Extended editor with syntax highlighting, autocompletion, line nubmer..."""
 
     KEY_INDENT = 'indent'
@@ -66,7 +64,7 @@ class BCWCodeEditor(QPlainTextEdit):
     CTRL_KEY_FALSE = False
 
     def __init__(self, parent=None, languageDef=None):
-        super(BCWCodeEditor, self).__init__(parent)
+        super(WCodeEditor, self).__init__(parent)
 
         self.__languageDef = None
         self.__highlighter = None
@@ -126,20 +124,20 @@ class BCWCodeEditor(QPlainTextEdit):
 
         self.__shortCuts={
             Qt.Key_Tab: {
-                    BCWCodeEditor.CTRL_KEY_FALSE: BCWCodeEditor.KEY_INDENT
+                    WCodeEditor.CTRL_KEY_FALSE: WCodeEditor.KEY_INDENT
                 },
             Qt.Key_Backtab: {
                     # SHIFT+TAB = BACKTAB
-                    BCWCodeEditor.CTRL_KEY_FALSE: BCWCodeEditor.KEY_DEDENT
+                    WCodeEditor.CTRL_KEY_FALSE: WCodeEditor.KEY_DEDENT
                 },
             Qt.Key_Slash: {
-                    BCWCodeEditor.CTRL_KEY_TRUE: BCWCodeEditor.KEY_TOGGLE_COMMENT
+                    WCodeEditor.CTRL_KEY_TRUE: WCodeEditor.KEY_TOGGLE_COMMENT
                 },
             Qt.Key_Return: {
-                    BCWCodeEditor.CTRL_KEY_FALSE: BCWCodeEditor.KEY_AUTOINDENT
+                    WCodeEditor.CTRL_KEY_FALSE: WCodeEditor.KEY_AUTOINDENT
                 },
             Qt.Key_Space: {
-                    BCWCodeEditor.CTRL_KEY_TRUE: BCWCodeEditor.KEY_COMPLETION
+                    WCodeEditor.CTRL_KEY_TRUE: WCodeEditor.KEY_COMPLETION
                 }
         }
 
@@ -156,7 +154,7 @@ class BCWCodeEditor(QPlainTextEdit):
         palette.setColor(QPalette.Inactive, QPalette.Base, QColor('#282c34'))
 
         # ---- instanciate line number area
-        self.__lineNumberArea = BCWLineNumberArea(self)
+        self.__lineNumberArea = WCELineNumberArea(self)
 
         # ---- initialise signals
         self.blockCountChanged.connect(self.__updateLineNumberAreaWidth)
@@ -166,7 +164,7 @@ class BCWCodeEditor(QPlainTextEdit):
         self.customContextMenuRequested.connect(self.__contextMenu)
 
         # ---- initialise completion list model
-        self.__completerModel = BCWCodeEditorCompleterModel()
+        self.__completerModel = WCECompleterModel()
 
         # set dictionary + syntax highlighter
         self.setLanguageDefinition(languageDef)
@@ -184,7 +182,7 @@ class BCWCodeEditor(QPlainTextEdit):
 
         # ---- initialise customized item rendering for completer
         self.__completer.popup().setFont(font)
-        self.__completer.popup().setItemDelegate(BCWCodeEditorCompleterView(self))
+        self.__completer.popup().setItemDelegate(WCECompleterView(self))
 
         self.__completerLastSelectedIndex = None
 
@@ -240,7 +238,7 @@ class BCWCodeEditor(QPlainTextEdit):
             self.__hideCompleterHint()
             return
 
-        tooltipHelp=index.data(BCWCodeEditorCompleterModel.DESCRIPTION)
+        tooltipHelp=index.data(WCECompleterModel.DESCRIPTION)
         if tooltipHelp is None or tooltipHelp == '':
             self.__hideCompleterHint()
             return
@@ -379,7 +377,7 @@ class BCWCodeEditor(QPlainTextEdit):
 
         Need to resize the line number area
         """
-        super(BCWCodeEditor, self).resizeEvent(event)
+        super(WCodeEditor, self).resizeEvent(event)
 
         if self.__optionShowLineNumber:
             contentRect = self.contentsRect()
@@ -388,7 +386,7 @@ class BCWCodeEditor(QPlainTextEdit):
 
     def lineNumberAreaPaintEvent(self, event):
         """Paint gutter content"""
-        # initialise painter on BCWLineNumberArea
+        # initialise painter on WCELineNumberArea
         painter=QPainter(self.__lineNumberArea)
 
         # set background
@@ -427,7 +425,7 @@ class BCWCodeEditor(QPlainTextEdit):
             elif delta > 0:
                 self.zoomIn()
         else:
-            super(BCWCodeEditor, self).wheelEvent(event)
+            super(WCodeEditor, self).wheelEvent(event)
 
 
     def keyPressEvent(self, event):
@@ -453,20 +451,20 @@ class BCWCodeEditor(QPlainTextEdit):
         action = self.shortCut(event.key(), event.modifiers())
 
         if action is None:
-            super(BCWCodeEditor, self).keyPressEvent(event)
+            super(WCodeEditor, self).keyPressEvent(event)
             # if no action is defined and autocompletion is active, display
             # completer list automatically
             if self.__optionAutoCompletion:
-                action = BCWCodeEditor.KEY_COMPLETION
+                action = WCodeEditor.KEY_COMPLETION
         elif event.key() == Qt.Key_Return:
-            super(BCWCodeEditor, self).keyPressEvent(event)
+            super(WCodeEditor, self).keyPressEvent(event)
 
         self.doAction(action)
 
 
     def paintEvent(self, event):
         """Customize painting"""
-        super(BCWCodeEditor, self).paintEvent(event)
+        super(WCodeEditor, self).paintEvent(event)
 
         if not(self.__optionRightLimitVisible or self.__optionShowSpaces or self.__optionShowIndentLevel):
             return
@@ -609,15 +607,15 @@ class BCWCodeEditor(QPlainTextEdit):
         """Execute given action"""
         if action is None:
             return
-        elif action == BCWCodeEditor.KEY_INDENT:
+        elif action == WCodeEditor.KEY_INDENT:
             self.doIndent()
-        elif action == BCWCodeEditor.KEY_DEDENT:
+        elif action == WCodeEditor.KEY_DEDENT:
             self.doDedent()
-        elif action == BCWCodeEditor.KEY_TOGGLE_COMMENT:
+        elif action == WCodeEditor.KEY_TOGGLE_COMMENT:
             self.doToggleComment()
-        elif action == BCWCodeEditor.KEY_AUTOINDENT:
+        elif action == WCodeEditor.KEY_AUTOINDENT:
             self.doAutoIndent()
-        elif action == BCWCodeEditor.KEY_COMPLETION:
+        elif action == WCodeEditor.KEY_COMPLETION:
             self.doCompletionPopup()
 
 
@@ -636,13 +634,13 @@ class BCWCodeEditor(QPlainTextEdit):
     def setShortCut(self, key, modifiers, action):
         """Set action for given key/modifier"""
         if not action in (None,
-                          BCWCodeEditor.KEY_INDENT,
-                          BCWCodeEditor.KEY_DEDENT,
-                          BCWCodeEditor.KEY_TOGGLE_COMMENT):
+                          WCodeEditor.KEY_INDENT,
+                          WCodeEditor.KEY_DEDENT,
+                          WCodeEditor.KEY_TOGGLE_COMMENT):
             raise EInvalidValue('Given `action` is not a valid value')
 
         if modifiers is None:
-            modifiers = BCWCodeEditor.CTRL_KEY_FALSE
+            modifiers = WCodeEditor.CTRL_KEY_FALSE
 
         if not key in self.__shortCuts:
             self.__shortCuts[key]={}
@@ -954,11 +952,11 @@ class BCWCodeEditor(QPlainTextEdit):
             if currentToken.previous() is None:
                 break
 
-            if not currentToken.type() in (BCTokenType.SPACE, BCTokenType.UNKNOWN) and currentToken.previous().type() != currentToken.type():
+            if not currentToken.type() in (TokenType.SPACE, TokenType.UNKNOWN) and currentToken.previous().type() != currentToken.type():
                 break
 
             currentToken=currentToken.previous()
-            if currentToken.type() == BCTokenType.SPACE:
+            if currentToken.type() == TokenType.SPACE:
                 text = " " + text
             else:
                 text = currentToken.text() + text
@@ -999,14 +997,14 @@ class BCWCodeEditor(QPlainTextEdit):
 
     def setLanguageDefinition(self, languageDef):
         """Set current language definition"""
-        if not (languageDef is None or isinstance(languageDef, BCLanguageDef)):
-            raise EInvalidType('Given `languageDef` must be <BCLanguageDef> type')
+        if not (languageDef is None or isinstance(languageDef, LanguageDef)):
+            raise EInvalidType('Given `languageDef` must be <LanguageDef> type')
 
         self.__completerModel.clear()
 
         if not languageDef is None:
             self.__languageDef = languageDef
-            self.__highlighter = BCSyntaxHighlighter(self.document(), self.__languageDef, self)
+            self.__highlighter = WCESyntaxHighlighter(self.document(), self.__languageDef, self)
 
             for rule in self.__languageDef.tokenizer().rules():
                 for autoCompletion in rule.autoCompletion():
@@ -1086,7 +1084,7 @@ class BCWCodeEditor(QPlainTextEdit):
         if isinstance(value, bool) and value != self.__optionShowLineNumber:
             self.__optionShowLineNumber=value
             if value:
-                self.__lineNumberArea = BCWLineNumberArea(self)
+                self.__lineNumberArea = WCELineNumberArea(self)
             else:
                 self.__lineNumberArea.disconnect()
                 self.__lineNumberArea = None
@@ -1244,26 +1242,24 @@ class BCWCodeEditor(QPlainTextEdit):
         return self.__cursorToken
 
 
-
-
-class BCWLineNumberArea(QWidget):
+class WCELineNumberArea(QWidget):
     """Gutter area for line number
 
     # From example documentation
-    We paint the line numbers on this widget, and place it over the BCWCodeEditor's viewport() 's left margin area.
+    We paint the line numbers on this widget, and place it over the WCodeEditor's viewport() 's left margin area.
 
     We need to use protected functions in QPlainTextEdit while painting the area.
     So to keep things simple, we paint the area in the CodeEditor class.
     The area also asks the editor to calculate its size hint.
 
-    Note that we could simply paint the line numbers directly on the code editor, and drop the BCWLineNumberArea class.
+    Note that we could simply paint the line numbers directly on the code editor, and drop the WCELineNumberArea class.
     However, the QWidget class helps us to scroll() its contents.
     Also, having a separate widget is the right choice if we wish to extend the editor with breakpoints or other code editor features.
     The widget would then help in the handling of mouse events.
     """
 
     def __init__(self, codeEditor):
-        super(BCWLineNumberArea, self).__init__(codeEditor)
+        super(WCELineNumberArea, self).__init__(codeEditor)
         self.__codeEditor = codeEditor
 
     def sizeHint(self):
@@ -1281,7 +1277,7 @@ class BCWLineNumberArea(QWidget):
         self.__codeEditor = None
 
 
-class BCWCodeEditorCompleterModel(QAbstractListModel):
+class WCECompleterModel(QAbstractListModel):
     """Dedicated model used to list completion values"""
 
     VALUE = Qt.UserRole + 1
@@ -1296,20 +1292,20 @@ class BCWCodeEditorCompleterModel(QAbstractListModel):
         self.__items=[]
 
     def __repr__(self):
-        return f'<BCWCodeEditorCompleterModel({self.__items})>'
+        return f'<WCECompleterModel({self.__items})>'
 
     def data(self, index, role=Qt.DisplayRole):
         """Return data for index+role"""
         row = index.row()
-        if role in (BCWCodeEditorCompleterModel.VALUE, Qt.DisplayRole):
+        if role in (WCECompleterModel.VALUE, Qt.DisplayRole):
             return self.__items[row]["value"]
-        if role == BCWCodeEditorCompleterModel.TYPE:
+        if role == WCECompleterModel.TYPE:
             return self.__items[row]["type"]
-        if role == BCWCodeEditorCompleterModel.STYLE:
+        if role == WCECompleterModel.STYLE:
             return self.__items[row]["style"]
-        if role == BCWCodeEditorCompleterModel.DESCRIPTION:
+        if role == WCECompleterModel.DESCRIPTION:
             return self.__items[row]["description"]
-        if role == BCWCodeEditorCompleterModel.CHAR:
+        if role == WCECompleterModel.CHAR:
             return self.__items[row]["char"]
 
     def rowCount(self, parent=QModelIndex()):
@@ -1318,11 +1314,11 @@ class BCWCodeEditorCompleterModel(QAbstractListModel):
 
     def roleNames(self):
         return {
-            BCWCodeEditorCompleterModel.VALUE: b'value',
-            BCWCodeEditorCompleterModel.TYPE: b'type',
-            BCWCodeEditorCompleterModel.STYLE: b'style',
-            BCWCodeEditorCompleterModel.DESCRIPTION: b'description',
-            BCWCodeEditorCompleterModel.CHAR: b'char'
+            WCECompleterModel.VALUE: b'value',
+            WCECompleterModel.TYPE: b'type',
+            WCECompleterModel.STYLE: b'style',
+            WCECompleterModel.DESCRIPTION: b'description',
+            WCECompleterModel.CHAR: b'char'
         }
 
     @pyqtSlot(str, int)
@@ -1359,13 +1355,13 @@ class BCWCodeEditorCompleterModel(QAbstractListModel):
         self.__items.sort(key=sortKey)
 
 
-class BCWCodeEditorCompleterView(QStyledItemDelegate):
+class WCECompleterView(QStyledItemDelegate):
     """Extend QStyledItemDelegate class to build an improved QCompleter list that
     list completion value with improved style
     """
     def __init__(self, parent=None):
         """Constructor, nothingspecial"""
-        super(BCWCodeEditorCompleterView, self).__init__(parent)
+        super(WCECompleterView, self).__init__(parent)
 
     def paint(self, painter, option, index):
         """Paint list item:
@@ -1375,7 +1371,7 @@ class BCWCodeEditorCompleterView(QStyledItemDelegate):
         self.initStyleOption(option, index)
 
         # retrieve style from token
-        style = index.data(BCWCodeEditorCompleterModel.STYLE)
+        style = index.data(WCECompleterModel.STYLE)
 
         # memorize curent state
         painter.save()
@@ -1397,7 +1393,7 @@ class BCWCodeEditorCompleterView(QStyledItemDelegate):
         painter.setFont(font)
         painter.setPen(QPen(color.lighter(300)))
 
-        painter.drawText(rect, Qt.AlignHCenter|Qt.AlignVCenter, index.data(BCWCodeEditorCompleterModel.CHAR))
+        painter.drawText(rect, Qt.AlignHCenter|Qt.AlignVCenter, index.data(WCECompleterModel.CHAR))
 
         # -- completion value
         font = style.font()
@@ -1415,28 +1411,28 @@ class BCWCodeEditorCompleterView(QStyledItemDelegate):
             painter.fillRect(rect, option.palette.color(QPalette.AlternateBase))
 
         rect = QRect(lPosition, option.rect.top(), option.rect.width(), option.rect.height())
-        painter.drawText(rect, Qt.AlignLeft|Qt.AlignVCenter, index.data(BCWCodeEditorCompleterModel.VALUE).replace('\x01',''))
+        painter.drawText(rect, Qt.AlignLeft|Qt.AlignVCenter, index.data(WCECompleterModel.VALUE).replace('\x01',''))
 
         painter.restore()
 
     def sizeHint(self, option, index):
         """Caclulate size for rendered completion item"""
-        size = super(BCWCodeEditorCompleterView, self).sizeHint(option, index)
+        size = super(WCECompleterView, self).sizeHint(option, index)
         size.setWidth(size.width() + 2 * size.height() + 5)
         return size
 
 
-class BCSyntaxHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for Buli Script language"""
+class WCESyntaxHighlighter(QSyntaxHighlighter):
+    """Syntax highlighter"""
 
     def __init__(self, parent, languageDef, editor):
         """When subclassing the QSyntaxHighlighter class you must pass the parent parameter to the base class constructor.
 
         The parent is the text document upon which the syntax highlighting will be applied.
 
-        Given `languageDef` is a BCLanguageDef object that define language
+        Given `languageDef` is a LanguageDef object that define language
         """
-        super(BCSyntaxHighlighter, self).__init__(parent)
+        super(WCESyntaxHighlighter, self).__init__(parent)
 
         self.__languageDef = languageDef
         self.__cursorLastToken = None

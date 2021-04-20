@@ -53,14 +53,14 @@ from .bcsettings import (
         BCSettings
     )
 from .bcsystray import BCSysTray
-from .bctokenizer import (
-        BCTokenizer,
-        BCTokenizerRule
-    )
 
 from .bcwconsole import BCWConsole
 from .bcwpathbar import BCWPathBar
 
+from pktk.modules.tokenizer import (
+        Tokenizer,
+        TokenizerRule
+    )
 from pktk.modules.strutils import (
         bytesSizeToStr,
         strDefault
@@ -163,19 +163,19 @@ class BCConvertFilesDialogBox(QDialog):
 
             # Update language rule to add keyword "{targetFile:ext}"
             self.__languageDef = BCFileManipulateNameLanguageDef()
-            self.__languageDef.tokenizer().addRule(BCTokenizerRule(
-                                            BCFileManipulateNameLanguageDef.TokenType.KW,
+            self.__languageDef.tokenizer().addRule(TokenizerRule(
+                                            BCFileManipulateNameLanguageDef.ITokenType.KW,
                                             r'\{(?:file:targetExt)\}',
                                             'Keyword',
                                             [('{file:targetExt}',
-                                                BCTokenizerRule.formatDescription(
+                                                TokenizerRule.formatDescription(
                                                     'Keyword',
                                                     # description
                                                     'Return target extension (without dot **`.`**) for file, according to defined conversion format')
                                                 )
                                             ],
                                             'k'),
-                                            BCTokenizer.ADD_RULE_TYPE_AFTER_FIRST)
+                                            Tokenizer.ADD_RULE_TYPE_AFTER_FIRST)
 
             self.ceTargetFilePattern.textChanged.connect(self.__patternChanged)
             self.ceTargetFilePattern.setLanguageDefinition(self.__languageDef)
