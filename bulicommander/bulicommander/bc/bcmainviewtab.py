@@ -72,10 +72,6 @@ from PyQt5.QtWidgets import (
     )
 
 
-from .bcwmenuitem import (
-        BCWMenuSlider,
-        BCWMenuTitle
-    )
 from .bcbookmark import BCBookmark
 from .bcclipboard import (
         BCClipboard,
@@ -134,6 +130,10 @@ from pktk.modules.timeutils import (
 from pktk.modules.menuutils import (
         buildQAction,
         buildQMenu
+    )
+from pktk.widgets.wmenuitem import (
+        WMenuSlider,
+        WMenuTitle
     )
 from pktk.pktk import (
         EInvalidType,
@@ -955,7 +955,7 @@ class BCMainViewTab(QFrame):
         self.__actionFilesApplyTabLayoutRight.setCheckable(True)
         self.__actionFilesApplyTabLayoutRight.setProperty('layout', BCMainViewTabFilesLayout.RIGHT)
 
-        self.__actionFilesApplyIconSize = BCWMenuSlider(i18n("Icon size"))
+        self.__actionFilesApplyIconSize = WMenuSlider(i18n("Icon size"))
         self.__actionFilesApplyIconSize.slider().setMinimum(0)
         self.__actionFilesApplyIconSize.slider().setMaximum(8)
         self.__actionFilesApplyIconSize.slider().setPageStep(1)
@@ -997,7 +997,7 @@ class BCMainViewTab(QFrame):
         self.__actionClipboardApplyTabLayoutRight.setCheckable(True)
         self.__actionClipboardApplyTabLayoutRight.setProperty('layout', BCMainViewTabClipboardLayout.RIGHT)
 
-        self.__actionClipboardApplyIconSize = BCWMenuSlider(i18n("Icon size"))
+        self.__actionClipboardApplyIconSize = WMenuSlider(i18n("Icon size"))
         self.__actionClipboardApplyIconSize.slider().setMinimum(0)
         self.__actionClipboardApplyIconSize.slider().setMaximum(8)
         self.__actionClipboardApplyIconSize.slider().setPageStep(1)
@@ -2439,7 +2439,7 @@ class BCMainViewTab(QFrame):
         else:
             currentItem = None
 
-        title = BCWMenuTitle(i18n("Content to clipboard"))
+        title = WMenuTitle(i18n("Content to clipboard"))
 
         contextMenu = QMenu(i18n("Content to clipboard"))
         contextMenu.addAction(title)
@@ -2521,7 +2521,7 @@ class BCMainViewTab(QFrame):
 
         optionMenu.addAction(cbOptMinWidthActiveAction)
 
-        slOptWidthMin = BCWMenuSlider(None, optionMenu)
+        slOptWidthMin = WMenuSlider(None, optionMenu)
         slOptWidthMin.slider().setMinimum(TextTableSettingsText.MIN_WIDTH)
         slOptWidthMin.slider().setMaximum(TextTableSettingsText.MAX_WIDTH)
         slOptWidthMin.slider().setValue(value)
@@ -2542,7 +2542,7 @@ class BCMainViewTab(QFrame):
 
         optionMenu.addAction(cbOptMaxWidthActiveAction)
 
-        slOptWidthMax = BCWMenuSlider(None, optionMenu)
+        slOptWidthMax = WMenuSlider(None, optionMenu)
         slOptWidthMax.slider().setMinimum(TextTableSettingsText.MIN_WIDTH)
         slOptWidthMax.slider().setMaximum(TextTableSettingsText.MAX_WIDTH)
         slOptWidthMax.slider().setValue(value)
