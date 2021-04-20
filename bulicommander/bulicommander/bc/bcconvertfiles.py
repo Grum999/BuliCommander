@@ -59,10 +59,6 @@ from .bctokenizer import (
     )
 
 from .bcwconsole import BCWConsole
-from .bcwexportoptions import (
-        BCWExportOptionsJpeg,
-        BCWExportOptionsPng
-    )
 from .bcwpathbar import BCWPathBar
 
 from pktk.modules.strutils import (
@@ -74,6 +70,10 @@ from pktk.modules.imgutils import checkerBoardBrush
 from pktk.modules.utils import (
         cloneRect,
         Debug
+    )
+from pktk.widgets.wexportoptions import (
+        WExportOptionsJpeg,
+        WExportOptionsPng
     )
 from pktk.pktk import (
         EInvalidType,

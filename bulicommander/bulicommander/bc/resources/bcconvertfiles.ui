@@ -309,7 +309,7 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="BCWExportOptionsPng" name="bcweoPng" native="true">
+            <widget class="WExportOptionsPng" name="bcweoPng" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
                <horstretch>0</horstretch>
@@ -347,7 +347,7 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="BCWExportOptionsJpeg" name="bcweoJpg" native="true">
+            <widget class="WExportOptionsJpeg" name="bcweoJpg" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
                <horstretch>0</horstretch>
@@ -861,15 +861,15 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>BCWExportOptionsPng</class>
+   <class>WExportOptionsPng</class>
    <extends>QWidget</extends>
-   <header>bulicommander.bc.bcwexportoptions</header>
+   <header>bulicommander.pktk.widgets.wexportoptions</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>BCWExportOptionsJpeg</class>
+   <class>WExportOptionsJpeg</class>
    <extends>QWidget</extends>
-   <header>bulicommander.bc.bcwexportoptions</header>
+   <header>bulicommander.pktk.widgets.wexportoptions</header>
    <container>1</container>
   </customwidget>
   <customwidget>

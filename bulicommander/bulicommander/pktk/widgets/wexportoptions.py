@@ -41,13 +41,13 @@ from pktk.modules.utils import loadXmlUi
 from pktk.widgets.wcolorselector import WColorPicker
 
 
-class BCWExportOptionsPng(QWidget):
+class WExportOptionsPng(QWidget):
     """A wdiget to manage PNG export options"""
 
     def __init__(self, parent=None):
-        super(BCWExportOptionsPng, self).__init__(parent)
+        super(WExportOptionsPng, self).__init__(parent)
 
-        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcwexportoptionspng.ui')
+        uiFileName = os.path.join(os.path.dirname(__file__), '..', 'resources', 'wexportoptionspng.ui')
         loadXmlUi(uiFileName, self)
 
         self.rbStoreAlpha.toggled.connect(self.__transparentColorState)
@@ -125,13 +125,13 @@ class BCWExportOptionsPng(QWidget):
         self.__transparentColorState(self.rbStoreAlpha.isChecked())
 
 
-class BCWExportOptionsJpeg(QWidget):
+class WExportOptionsJpeg(QWidget):
     """A wdiget to manage JPEG export options"""
 
     def __init__(self, parent=None):
-        super(BCWExportOptionsJpeg, self).__init__(parent)
+        super(WExportOptionsJpeg, self).__init__(parent)
 
-        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcwexportoptionsjpeg.ui')
+        uiFileName = os.path.join(os.path.dirname(__file__), '..', 'resources', 'wexportoptionsjpeg.ui')
         loadXmlUi(uiFileName, self)
 
         self.pbBgColor.colorPicker().setStandardLayout('hsv')
