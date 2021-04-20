@@ -1818,7 +1818,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="5" column="1" colspan="3">
-                <widget class="BCWSmallTextEdit" name="bcsteFormatDocImgFooter">
+                <widget class="WSmallTextEdit" name="bcsteFormatDocImgFooter">
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
@@ -1866,7 +1866,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="3" column="1" colspan="3">
-                <widget class="BCWSmallTextEdit" name="bcsteFormatDocImgHeader">
+                <widget class="WSmallTextEdit" name="bcsteFormatDocImgHeader">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
                    <horstretch>0</horstretch>
@@ -2042,7 +2042,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 </widget>
                </item>
                <item row="8" column="1" colspan="3">
-                <widget class="BCWSmallTextEdit" name="bcsteFormatDocImgFPageNotes">
+                <widget class="WSmallTextEdit" name="bcsteFormatDocImgFPageNotes">
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
@@ -2893,9 +2893,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
    <header>bulicommander.pktk.widgets.wcolorbutton</header>
   </customwidget>
   <customwidget>
-   <class>BCWSmallTextEdit</class>
+   <class>WSmallTextEdit</class>
    <extends>QFrame</extends>
-   <header>bulicommander.bc.bcwtextedit</header>
+   <header>bulicommander.pktk.widgets.wtextedit</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

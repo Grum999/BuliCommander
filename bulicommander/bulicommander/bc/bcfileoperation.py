@@ -52,6 +52,7 @@ from .bcsystray import BCSysTray
 from .bcwpathbar import BCWPathBar
 
 from pktk.modules.utils import Debug
+from pktk.modules.imgutils import buildIcon
 from pktk.modules.strutils import (
         bytesSizeToStr,
         strDefault
@@ -490,7 +491,7 @@ class BCFileOperationUi(object):
         # Improve BCFileList class to generate statistics ready-to-use about returned results (number of directories, nb files+size, nb non kra file+size)
         for file in files:
             if file.format() == BCFileManagedFormat.DIRECTORY:
-                fullNfo.append(f"<img width=16 height=16 src=':/images/folder_open'/>&nbsp;{file.fullPathName()}")
+                fullNfo.append(f"<img width=16 height=16 src=':/pktk/images/normal/folder_open'/>&nbsp;{file.fullPathName()}")
                 if full:
                     # build informations about directory content
                     pathFileList=BCFileList()
@@ -514,11 +515,11 @@ class BCFileOperationUi(object):
                         fullNfo.append("<br/>".join(nfo))
                 statFiles['nbDir']+=1
             elif file.format() == BCFileManagedFormat.UNKNOWN:
-                fullNfo.append(f"<img width=16 height=16 src=':/images/file'/>&nbsp;{file.fullPathName()}")
+                fullNfo.append(f"<img width=16 height=16 src=':/pktk/images/normal/file'/>&nbsp;{file.fullPathName()}")
                 statFiles['nbOther']+=1
                 statFiles['sizeOther']+=file.size()
             else:
-                fullNfo.append(f"<img width=16 height=16 src=':/images/large_view'/>&nbsp;{file.fullPathName()}")
+                fullNfo.append(f"<img width=16 height=16 src=':/pktk/images/normal/image'/>&nbsp;{file.fullPathName()}")
                 statFiles['nbKra']+=1
                 statFiles['sizeKra']+=file.size()
 

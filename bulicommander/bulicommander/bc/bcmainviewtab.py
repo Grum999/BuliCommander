@@ -111,6 +111,7 @@ from .bcwpreview import (
         BCWPreview
     )
 
+from pktk.modules.imgutils import buildIcon
 from pktk.modules.strtable import (
         TextTable,
         TextTableSettingsText
@@ -934,23 +935,23 @@ class BCMainViewTab(QFrame):
         self.__filesFsWatcher = QFileSystemWatcher()
         self.__filesFsWatcherTmpList = []
 
-        self.__actionFilesApplyTabLayoutFull = QAction(QIcon(":/images/dashboard_full"), i18n('Full mode'), self)
+        self.__actionFilesApplyTabLayoutFull = QAction(buildIcon("pktk:dashboard_full"), i18n('Full mode'), self)
         self.__actionFilesApplyTabLayoutFull.setCheckable(True)
         self.__actionFilesApplyTabLayoutFull.setProperty('layout', BCMainViewTabFilesLayout.FULL)
 
-        self.__actionFilesApplyTabLayoutTop = QAction(QIcon(":/images/dashboard_tb"), i18n('Top/Bottom'), self)
+        self.__actionFilesApplyTabLayoutTop = QAction(buildIcon("pktk:dashboard_tb"), i18n('Top/Bottom'), self)
         self.__actionFilesApplyTabLayoutTop.setCheckable(True)
         self.__actionFilesApplyTabLayoutTop.setProperty('layout', BCMainViewTabFilesLayout.TOP)
 
-        self.__actionFilesApplyTabLayoutLeft = QAction(QIcon(":/images/dashboard_lr"), i18n('Left/Right'), self)
+        self.__actionFilesApplyTabLayoutLeft = QAction(buildIcon("pktk:dashboard_lr"), i18n('Left/Right'), self)
         self.__actionFilesApplyTabLayoutLeft.setCheckable(True)
         self.__actionFilesApplyTabLayoutLeft.setProperty('layout', BCMainViewTabFilesLayout.LEFT)
 
-        self.__actionFilesApplyTabLayoutBottom = QAction(QIcon(":/images/dashboard_bt"), i18n('Bottom/Top'), self)
+        self.__actionFilesApplyTabLayoutBottom = QAction(buildIcon("pktk:dashboard_bt"), i18n('Bottom/Top'), self)
         self.__actionFilesApplyTabLayoutBottom.setCheckable(True)
         self.__actionFilesApplyTabLayoutBottom.setProperty('layout', BCMainViewTabFilesLayout.BOTTOM)
 
-        self.__actionFilesApplyTabLayoutRight = QAction(QIcon(":/images/dashboard_rl"), i18n('Right/Left'), self)
+        self.__actionFilesApplyTabLayoutRight = QAction(buildIcon("pktk:dashboard_rl"), i18n('Right/Left'), self)
         self.__actionFilesApplyTabLayoutRight.setCheckable(True)
         self.__actionFilesApplyTabLayoutRight.setProperty('layout', BCMainViewTabFilesLayout.RIGHT)
 
@@ -980,19 +981,19 @@ class BCMainViewTab(QFrame):
         self.__clipboardSelectedNbUrlNotDownloaded=0
 
 
-        self.__actionClipboardApplyTabLayoutTop = QAction(QIcon(":/images/dashboard_tb"), i18n('Top/Bottom'), self)
+        self.__actionClipboardApplyTabLayoutTop = QAction(buildIcon("pktk:dashboard_tb"), i18n('Top/Bottom'), self)
         self.__actionClipboardApplyTabLayoutTop.setCheckable(True)
         self.__actionClipboardApplyTabLayoutTop.setProperty('layout', BCMainViewTabClipboardLayout.TOP)
 
-        self.__actionClipboardApplyTabLayoutLeft = QAction(QIcon(":/images/dashboard_lr"), i18n('Left/Right'), self)
+        self.__actionClipboardApplyTabLayoutLeft = QAction(buildIcon("pktk:dashboard_lr"), i18n('Left/Right'), self)
         self.__actionClipboardApplyTabLayoutLeft.setCheckable(True)
         self.__actionClipboardApplyTabLayoutLeft.setProperty('layout', BCMainViewTabClipboardLayout.LEFT)
 
-        self.__actionClipboardApplyTabLayoutBottom = QAction(QIcon(":/images/dashboard_bt"), i18n('Bottom/Top'), self)
+        self.__actionClipboardApplyTabLayoutBottom = QAction(buildIcon("pktk:dashboard_bt"), i18n('Bottom/Top'), self)
         self.__actionClipboardApplyTabLayoutBottom.setCheckable(True)
         self.__actionClipboardApplyTabLayoutBottom.setProperty('layout', BCMainViewTabClipboardLayout.BOTTOM)
 
-        self.__actionClipboardApplyTabLayoutRight = QAction(QIcon(":/images/dashboard_rl"), i18n('Right/Left'), self)
+        self.__actionClipboardApplyTabLayoutRight = QAction(buildIcon("pktk:dashboard_rl"), i18n('Right/Left'), self)
         self.__actionClipboardApplyTabLayoutRight.setCheckable(True)
         self.__actionClipboardApplyTabLayoutRight.setProperty('layout', BCMainViewTabClipboardLayout.RIGHT)
 
@@ -2425,7 +2426,7 @@ class BCMainViewTab(QFrame):
         # current tab index
         index=self.twInfo.currentIndex()
 
-        actionCopyAll = QAction(QIcon(":/images/tabs"), i18n('All tabs'), self)
+        actionCopyAll = QAction(buildIcon("pktk:tabs"), i18n('All tabs'), self)
         actionCopyAll.triggered.connect(copyAllTabs)
 
         actionCopyCurrent = QAction(self.twInfo.tabIcon(index), i18n(f'Current "{stripTags(self.twInfo.tabText(index))}" tab'), self)
@@ -2433,7 +2434,7 @@ class BCMainViewTab(QFrame):
 
         currentItem = QApplication.widgetAt(event.globalPos())
         if isinstance(currentItem, QLabel):
-            actionCopyItem = QAction(QIcon(":/images/text"), i18n(f'Value "{stripTags(currentItem.text())}"'), self)
+            actionCopyItem = QAction(buildIcon("pktk:text"), i18n(f'Value "{stripTags(currentItem.text())}"'), self)
             actionCopyItem.triggered.connect(copyItem)
         else:
             currentItem = None
@@ -2448,7 +2449,7 @@ class BCMainViewTab(QFrame):
             contextMenu.addAction(actionCopyItem)
 
         contextMenu.addSeparator()
-        optionMenu = contextMenu.addMenu(QIcon(":/images/tune"), i18n('Options'))
+        optionMenu = contextMenu.addMenu(buildIcon("pktk:tune"), i18n('Options'))
 
         # options menu widgets
         # do not use classic action, but built QWidgetAction with widget insed to avoid
@@ -2588,10 +2589,10 @@ class BCMainViewTab(QFrame):
 
             collapse(self.tvDirectoryTree.currentIndex(), False)
 
-        actionExpandAll = QAction(QIcon(":/images/tree_expand"), i18n('Expand all subdirectories'), self)
+        actionExpandAll = QAction(buildIcon("pktk:list_tree_expand"), i18n('Expand all subdirectories'), self)
         actionExpandAll.triggered.connect(expandAll)
 
-        actionCollapseAll = QAction(QIcon(":/images/tree_collapse"), i18n('Collapse all subdirectories'), self)
+        actionCollapseAll = QAction(buildIcon("pktk:list_tree_collapse"), i18n('Collapse all subdirectories'), self)
         actionCollapseAll.triggered.connect(collapseAll)
 
         # current tab index
@@ -2665,42 +2666,42 @@ class BCMainViewTab(QFrame):
         menuProperties=[
             # 0:parent  1:Id                2:icon list
             #                               3:label                                                     4:action                                            5:    6:status
-            ['',        'selectAll',        [(":/images/select_all", QIcon.Normal)],
+            ['',        'selectAll',        "pktk:select_all",
                                             i18n('Select all'),                                         self.__uiController.commandPanelSelectAll,          [],   [VE, VE, VE, VE, VE, VE] ],
-            ['',        'selectNone',       [(":/images/select_none", QIcon.Normal)],
+            ['',        'selectNone',       "pktk:select_none",
                                             i18n('Select none'),                                        self.__uiController.commandPanelSelectNone,         [],   [VD, VE, VE, VE, VE, VE] ],
-            ['',        'selectInvert',     [(":/images/select_invert", QIcon.Normal)],
+            ['',        'selectInvert',     "pktk:select_invert",
                                             i18n('Invert selection'),                                   self.__uiController.commandPanelSelectInvert,       [],   [VE, VE, VE, VE, VE, VE] ],
             ['',        'sep1',             None,   None,                                               None,                                               [],   [VE, VE, VE, VE, VE, VE] ],
-            ['',        'newFolder',        [(":/images/create_folder", QIcon.Normal)],
+            ['',        'newFolder',        "pktk:folder_open_add",
                                             i18n('New folder...'),                                      self.__uiController.commandFileCreateDir,           [],   [VE, VE, VE, VE, VE, VE] ],
             #[i18n('Show in opposite panel'),    self.__uiController.commandFileCreateDir,   [],   [VE, VE, VE, VE, VE, VE] ],
             ['',        'sep2',             None,   None,                                               None,                                               [],   [HH, VE, VE, HH, HH, VE] ],
-            ['',        'open',             [(":/images/folder_open", QIcon.Normal), (":/images_d/folder_open", QIcon.Disabled)],
+            ['',        'open',             "pktk:folder_open",
                                             i18n('Open'),                                               None,                                               [],   [HH, VE, VE, HH, HH, VE] ],
-            ['open',    'openFile',         [(":/images/folder_open", QIcon.Normal), (":/images_d/folder_open", QIcon.Disabled)],
+            ['open',    'openFile',         "pktk:folder_open",
                                             i18n('Open file'),                                          self.__uiController.commandFileOpen,                [],   [HH, VE, VE, HH, HH, VE] ],
-            ['open',    'openFileCloseBC',  [(":/images/folder_open", QIcon.Normal), (":/images_d/folder_open", QIcon.Disabled)],
+            ['open',    'openFileCloseBC',  "pktk:folder_open",
                                             i18n('Open file and close Buli Commander'),                 self.__uiController.commandFileOpenCloseBC,         [],   [HH, VE, VE, HH, HH, VE] ],
-            ['open',    'openNew',          [(":/images/open_new", QIcon.Normal), (":/images_d/open_new", QIcon.Disabled)],
+            ['open',    'openNew',          "pktk:folder_open_new",
                                             i18n('Open as new document'),                               self.__uiController.commandFileOpenAsNew,           [],   [HH, VE, VE, HH, HH, VE] ],
-            ['open',    'openNewCloseBC',   [(":/images/open_new", QIcon.Normal), (":/images_d/open_new", QIcon.Disabled)],
+            ['open',    'openNewCloseBC',   "pktk:folder_open_new",
                                             i18n('Open as new document and close Buli Commander'),      self.__uiController.commandFileOpenAsNewCloseBC,    [],   [HH, VE, VE, HH, HH, VE] ],
             ['',        'sep3',             None,   None,                                               None,                                               [],   [VE, VE, VE, VE, VE, VE] ],
-            ['',        'copyOP',           [(":/images/file_copy", QIcon.Normal), (":/images_d/file_copy", QIcon.Disabled)],
+            ['',        'copyOP',           "pktk:file_copy",
                                             i18n('Copy to other panel'),                                self.__uiController.commandFileCopy,                [],   [HH, (VE,VD), (VE,VD), (VE,VD), (VE,VD), (VE,VD)] ],
-            ['',        'moveOP',           [(":/images/file_move", QIcon.Normal), (":/images_d/file_move", QIcon.Disabled)],
+            ['',        'moveOP',           "pktk:file_move",
                                             i18n('Move to other panel'),                                self.__uiController.commandFileMove,                [],   [HH, (VE,VD), (VE,VD), (VE,VD), (VE,VD), (VE,VD)] ],
-            ['',        'delete',           [(":/images/delete", QIcon.Normal), (":/images_d/delete", QIcon.Disabled)],
+            ['',        'delete',           "pktk:delete",
                                             i18n('Delete'),                                             self.__uiController.commandFileDelete,              [],   [HH, VE, VE, VE, VE, VE] ],
-            ['',        'rename',           [(":/images/file_rename", QIcon.Normal), (":/images_d/file_rename", QIcon.Disabled)],
+            ['',        'rename',           "pktk:file_rename",
                                             i18n('Rename'),                                             self.__uiController.commandFileRename,              [],   [HH, VE, VE, VE, VE, VE] ],
             ['',        'sep4',             None,   None,                                               None,                                               [],   [HH, VE, VE, VE, VE, VE] ],
-            ['',        'clipboard',        [(":/images/clipboard", QIcon.Normal)],
+            ['',        'clipboard',        "pktk:clipboard",
                                             i18n('Copy to clipboard'),                                  self.__uiController.commandToolsListToClipboard,    [],   [HH, VE, VE, VE, VE, VE] ],
-            ['',        'exportlist',       [(":/images/export_list", QIcon.Normal)],
+            ['',        'exportlist',       "pktk:export_list",
                                             i18n('Export files list...'),                               self.__uiController.commandToolsExportFilesOpen,    [],   [VE, VE, VE, VE, VE, VE] ],
-            ['',        'convertFiles',     [(":/images/convert", QIcon.Normal)],
+            ['',        'convertFiles',     "pktk:image_convert",
                                             i18n('Convert files...'),                                   self.__uiController.commandToolsConvertFilesOpen,   [],   [VE, VE, VE, VE, VE, VE] ]
         ]
 

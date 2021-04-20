@@ -76,7 +76,6 @@ from .bcsettings import (
         BCSettingsKey,
         BCSettingsValues,
     )
-from .bctheme import BCTheme
 
 from .bcimportanimated import (
         BCImportDialogBox,
@@ -87,6 +86,7 @@ from .bcwimagepreview import (
     )
 from .bcsavedview import BCSavedView
 
+from pktk.modules.uitheme import UITheme
 from pktk.modules.strtable import (
         TextTable,
         TextTableSettingsText
@@ -129,7 +129,6 @@ class BCUIController(QObject):
         self.__bcStarted = False
         self.__bcStarting = False
 
-        self.__theme = BCTheme()
         self.__window = None
         self.__bcName = bcName
         self.__bcVersion = bcVersion
@@ -188,8 +187,7 @@ class BCUIController(QObject):
         # Check if windows are opened and then, connect signal if needed
         self.__checkKritaWindows()
 
-        if not self.__theme is None:
-            self.__theme.loadResources()
+        UITheme.load()
 
         self.__initialised = False
         self.__window = BCMainWindow(self)
@@ -390,37 +388,36 @@ class BCUIController(QObject):
                         pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Selected, QIcon.Off) )
             return pixmaps
 
-        if not self.__theme is None:
-            self.__theme.loadResources()
+        UITheme.reloadResources()
 
-            # need to apply new palette to widgets
-            # otherwise it seems they keep to refer to the old palette...
-            palette = QApplication.palette()
-            widgetList = self.__window.getWidgets()
+        # need to apply new palette to widgets
+        # otherwise it seems they keep to refer to the old palette...
+        palette = QApplication.palette()
+        widgetList = self.__window.getWidgets()
 
-            for widget in widgetList:
-                if isinstance(widget, BCWPathBar) or isinstance(widget, BreadcrumbsAddressBar):
-                    widget.updatePalette()
-                elif hasattr(widget, 'setPalette'):
-                    # force palette to be applied to widget
-                    widget.setPalette(palette)
+        for widget in widgetList:
+            if isinstance(widget, BCWPathBar) or isinstance(widget, BreadcrumbsAddressBar):
+                widget.updatePalette()
+            elif hasattr(widget, 'setPalette'):
+                # force palette to be applied to widget
+                widget.setPalette(palette)
 
-                if isinstance(widget, QTabWidget):
-                    # For QTabWidget, it's not possible to set icon directly,
-                    # need to use setTabIcon()
-                    for tabIndex in range(widget.count()):
-                        tabWidget = widget.widget(tabIndex)
+            if isinstance(widget, QTabWidget):
+                # For QTabWidget, it's not possible to set icon directly,
+                # need to use setTabIcon()
+                for tabIndex in range(widget.count()):
+                    tabWidget = widget.widget(tabIndex)
 
-                        if not widget.tabIcon(tabIndex) is None:
-                            pixmaps=buildPixmapList(tabWidget)
-                            if len(pixmaps) > 0:
-                                widget.setTabIcon(tabIndex, buildIcon(pixmaps))
+                    if not widget.tabIcon(tabIndex) is None:
+                        pixmaps=buildPixmapList(tabWidget)
+                        if len(pixmaps) > 0:
+                            widget.setTabIcon(tabIndex, buildIcon(pixmaps))
 
-                # need to do something to relad icons...
-                elif hasattr(widget, 'icon'):
-                    pixmaps=buildPixmapList(widget)
-                    if len(pixmaps) > 0:
-                        widget.setIcon(buildIcon(pixmaps))
+            # need to do something to relad icons...
+            elif hasattr(widget, 'icon'):
+                pixmaps=buildPixmapList(widget)
+                if len(pixmaps) > 0:
+                    widget.setIcon(buildIcon(pixmaps))
 
 
     def __checkKritaWindows(self):
@@ -568,26 +565,22 @@ class BCUIController(QObject):
         else:
             raise EInvalidValue("Not a valid panel Id (0 or 1)")
 
-    def theme(self):
-        """Return theme object"""
-        return self.__theme
-
     def quickRefDict(self):
         """Return a dictionnary of quick references
 
         key = reference (a saved view Id @xxxx or a bpookmark id @xxxx)
         value = (Type, Icon, Case sensitive)
         """
-        iconSavedView = buildIcon([(QPixmap(":/images/saved_view_file"), QIcon.Normal)])
-        iconBookmark = buildIcon([(QPixmap(":/images/bookmark"), QIcon.Normal)])
+        iconSavedView = buildIcon("pktk:saved_view_file")
+        iconBookmark = buildIcon("pktk:bookmark")
 
-        returned = {'@home': (BCWPathBar.QUICKREF_RESERVED_HOME, buildIcon([(QPixmap(":/images/home"), QIcon.Normal)]), 'Home'),
-                    '@last': (BCWPathBar.QUICKREF_RESERVED_LAST_ALL, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened/saved documents'),
-                    '@last opened': (BCWPathBar.QUICKREF_RESERVED_LAST_OPENED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last opened documents'),
-                    '@last saved': (BCWPathBar.QUICKREF_RESERVED_LAST_SAVED, buildIcon([(QPixmap(":/images/saved_view_last"), QIcon.Normal)]), 'Last saved documents'),
-                    '@history': (BCWPathBar.QUICKREF_RESERVED_HISTORY, buildIcon([(QPixmap(":/images/history"), QIcon.Normal)]), 'History directories'),
-                    '@backup filter': (BCWPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW, buildIcon([(QPixmap(":/images/filter"), QIcon.Normal)]), 'Backup files list'),
-                    '@file layer filter': (BCWPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW, buildIcon([(QPixmap(":/images/large_view"), QIcon.Normal)]), 'Layer files list')
+        returned = {'@home': (BCWPathBar.QUICKREF_RESERVED_HOME, buildIcon("pktk:home"), 'Home'),
+                    '@last': (BCWPathBar.QUICKREF_RESERVED_LAST_ALL, buildIcon("pktk:saved_view_last"), 'Last opened/saved documents'),
+                    '@last opened': (BCWPathBar.QUICKREF_RESERVED_LAST_OPENED, buildIcon("pktk:saved_view_last"), 'Last opened documents'),
+                    '@last saved': (BCWPathBar.QUICKREF_RESERVED_LAST_SAVED, buildIcon("pktk:saved_view_last"), 'Last saved documents'),
+                    '@history': (BCWPathBar.QUICKREF_RESERVED_HISTORY, buildIcon("pktk:history"), 'History directories'),
+                    '@backup filter': (BCWPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW, buildIcon("pktk:filter_alt"), 'Backup files list'),
+                    '@file layer filter': (BCWPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW, buildIcon("pktk:image"), 'Layer files list')
                     }
 
         if not self.__bookmark is None and self.__bookmark.length() > 0:

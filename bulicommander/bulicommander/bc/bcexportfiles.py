@@ -51,11 +51,11 @@ from .bcfile import (
     )
 from .bcsettings import BCSettingsKey
 from .bcsystray import BCSysTray
-from .bcwtextedit import (
-        BCWTextEdit,
-        BCWTextEditDialog
-    )
 
+from pktk.widgets.wtextedit import (
+        WTextEdit,
+        WTextEditDialog
+    )
 from pktk.modules.strtable import (
         TextTable,
         TextTableSettingsText,
@@ -66,7 +66,10 @@ from pktk.modules.strutils import (
         bytesSizeToStr,
         strDefault
     )
-from pktk.modules.imgutils import checkerBoardBrush
+from pktk.modules.imgutils import (
+        checkerBoardBrush,
+        buildIcon
+    )
 from pktk.modules.timeutils import tsToStr
 from pktk.modules.utils import (
         cloneRect,
@@ -647,11 +650,11 @@ class BCExportFilesDialogBox(QDialog):
             # - - - Page list
             self.lvFormatDocImgRef.itemSelectionChanged.connect(self.__slotPageFormatDocImgRefChanged)
 
-            self.__itemFormatDocImgRefPageSetup = QListWidgetItem(QIcon(":/images/page_setup"), "Page setup")
+            self.__itemFormatDocImgRefPageSetup = QListWidgetItem(buildIcon("pktk:page_setup"), "Page setup")
             self.__itemFormatDocImgRefPageSetup.setData(Qt.UserRole, BCExportFilesDialogBox.__PANEL_FORMAT_DOCIMG_PAGESETUP)
-            self.__itemFormatDocImgRefPageLayout = QListWidgetItem(QIcon(":/images/page_layout"), "Page layout")
+            self.__itemFormatDocImgRefPageLayout = QListWidgetItem(buildIcon("pktk:page_layout"), "Page layout")
             self.__itemFormatDocImgRefPageLayout.setData(Qt.UserRole, BCExportFilesDialogBox.__PANEL_FORMAT_DOCIMG_PAGELAYOUT)
-            self.__itemFormatDocImgRefThumbConfig = QListWidgetItem(QIcon(":/images/large_view"), "Thumbnail")
+            self.__itemFormatDocImgRefThumbConfig = QListWidgetItem(buildIcon("pktk:image"), "Thumbnail")
             self.__itemFormatDocImgRefThumbConfig.setData(Qt.UserRole, BCExportFilesDialogBox.__PANEL_FORMAT_DOCIMG_THUMBCONFIG)
 
             self.lvFormatDocImgRef.addItem(self.__itemFormatDocImgRefPageSetup)
@@ -1663,7 +1666,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             painterThumb.setPen(pen)
 
             # thumb image
-            painterThumb.drawPixmap(imgLeft, imgTop, QIcon(':/images/large_view').pixmap(thumbSize - 5, thumbSize - 5))
+            painterThumb.drawPixmap(imgLeft, imgTop, buildIcon('pktk:image').pixmap(thumbSize - 5, thumbSize - 5))
 
             painterThumb.setCompositionMode(QPainter.CompositionMode_SourceIn)
             painterThumb.fillRect(imgLeft, imgTop, thumbSize - 5, thumbSize - 5, brush)

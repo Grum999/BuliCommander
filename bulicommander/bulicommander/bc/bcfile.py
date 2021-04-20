@@ -67,7 +67,6 @@ from .bctokenizer import (
 from .bcworkers import (
         BCWorkerPool
     )
-from .bctheme import BCTheme
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -84,6 +83,8 @@ from PyQt5.QtWidgets import (
         QFileIconProvider
     )
 
+from pktk.modules.uitheme import UITheme
+from pktk.modules.imgutils import buildIcon
 from pktk.modules.utils import (
         Debug,
         regExIsValid,
@@ -490,7 +491,7 @@ class BCFileManipulateNameLanguageDef(BCLanguageDef):
             BCTokenizerRule(BCFileManipulateNameLanguageDef.TokenType.TEXT, r'[{\[,][^{\[\]\}"\'\\\/\s,]*|[^{\[\]\}"\'\\\/\s,]+')
         ])
 
-        self.setStyles(BCTheme.DARK_THEME, [
+        self.setStyles(UITheme.DARK_THEME, [
             (BCFileManipulateNameLanguageDef.TokenType.STRING, '#9ac07c', False, False),
             (BCFileManipulateNameLanguageDef.TokenType.NUMBER, '#c9986a', False, False),
             (BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR, '#e5dd82', True, False),
@@ -502,7 +503,7 @@ class BCFileManipulateNameLanguageDef(BCLanguageDef):
             (BCFileManipulateNameLanguageDef.TokenType.TEXT, '#ffffff', False, False),
             (BCFileManipulateNameLanguageDef.TokenType.ETEXT, '#999999', False, False)
         ])
-        self.setStyles(BCTheme.LIGHT_THEME, [
+        self.setStyles(UITheme.LIGHT_THEME, [
             (BCFileManipulateNameLanguageDef.TokenType.STRING, '#9ac07c', False, False),
             (BCFileManipulateNameLanguageDef.TokenType.NUMBER, '#c9986a', False, False),
             (BCFileManipulateNameLanguageDef.TokenType.FUNCO_STR, '#c278da', True, False),
@@ -1593,11 +1594,11 @@ class BCMissingFile(BCBaseFile):
 
     def icon(self):
         """return system icon for file"""
-        return QIcon(':/images/warning')
+        return buildIcon('pktk:warning')
 
     def thumbnail(self, size=None, thumbType=None, icon=None):
         """return system icon for file"""
-        return super(BCMissingFile, self).thumbnail(size, thumbType, QIcon(':/images/warning'))
+        return super(BCMissingFile, self).thumbnail(size, thumbType, buildIcon('pktk:warning'))
 
     def permissions(self):
         """Return permission as rwx------ string"""
@@ -5800,7 +5801,7 @@ class BCFileIcon(object):
             raise EInvalidType("Given `file` must be a <str> or <BCBaseFile>")
 
         if fileInfo.fileName() == '..':
-            return QIcon(':/images/goup')
+            return buildIcon('pktk:goup')
 
 
         return BCFileIcon.__IconProvider.icon(fileInfo)

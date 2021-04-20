@@ -28,7 +28,7 @@ import time
 
 from PyQt5.Qt import *
 from .bclist import BCList
-from .bctheme import BCTheme
+from pktk.modules.uitheme import UITheme
 from pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -59,17 +59,17 @@ class BCTokenStyle:
 
     def __init__(self, styles=[]):
         """Initialise token family"""
-        self.__currentThemeId = BCTheme.DARK_THEME
+        self.__currentThemeId = UITheme.DARK_THEME
 
         # define default styles for tokens
         self.__tokenStyles = {}
 
         styles = {
-                BCTheme.DARK_THEME: [
+                UITheme.DARK_THEME: [
                         (BCTokenType.UNKNOWN, '#d85151', True, True, '#7b1b1b'),
                         (BCTokenType.NEWLINE, None, False, False)
                     ],
-                BCTheme.LIGHT_THEME: [
+                UITheme.LIGHT_THEME: [
                         (BCTokenType.UNKNOWN, '#d85151', True, True, '#7b1b1b'),
                         (BCTokenType.NEWLINE, None, False, False)
                     ]

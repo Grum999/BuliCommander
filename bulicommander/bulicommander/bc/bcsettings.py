@@ -51,6 +51,7 @@ from pktk.modules.utils import (
         checkKritaVersion,
         Debug
     )
+from pktk.modules.imgutils import buildIcon
 from pktk.modules.strutils import bytesSizeToStr
 
 from pktk.pktk import (
@@ -931,15 +932,15 @@ class BCSettingsDialogBox(QDialog):
         self.setWindowTitle(self.__title)
         self.lvCategory.itemSelectionChanged.connect(self.__categoryChanged)
 
-        self.__itemCatGeneral = QListWidgetItem(QIcon(":/images/tune"), "General")
+        self.__itemCatGeneral = QListWidgetItem(buildIcon("pktk:tune"), "General")
         self.__itemCatGeneral.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_GENERAL)
-        self.__itemCatNavigation = QListWidgetItem(QIcon(":/images/navigation"), "Navigation")
+        self.__itemCatNavigation = QListWidgetItem(buildIcon("pktk:navigation"), "Navigation")
         self.__itemCatNavigation.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_NAVIGATION)
-        self.__itemCatImageFiles = QListWidgetItem(QIcon(":/images/large_view"), "Image files")
+        self.__itemCatImageFiles = QListWidgetItem(buildIcon("pktk:image"), "Image files")
         self.__itemCatImageFiles.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_IMAGES)
-        self.__itemCatClipboard = QListWidgetItem(QIcon(":/images/clipboard"), "Clipboard")
+        self.__itemCatClipboard = QListWidgetItem(buildIcon("pktk:clipboard"), "Clipboard")
         self.__itemCatClipboard.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CLIPBOARD)
-        self.__itemCatCachedImages = QListWidgetItem(QIcon(":/images/cached"), "Cached images")
+        self.__itemCatCachedImages = QListWidgetItem(buildIcon("pktk:cache_refresh"), "Cached images")
         self.__itemCatCachedImages.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CACHE)
 
         self.__uiController = uicontroller

@@ -20,7 +20,7 @@
       <string notr="true"/>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="pgPreviewImg">
       <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -205,8 +205,9 @@ QSlider::handle:horizontal {
                 <string/>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/play</normaloff>:/images/play</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/play</normaloff>
+                 <disabledoff>:/pktk/images/disabled/play</disabledoff>:/pktk/images/normal/play</iconset>
                </property>
                <property name="autoRaise">
                 <bool>true</bool>
@@ -269,7 +270,7 @@ QSlider::handle:horizontal {
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="dark_icons.qrc"/>
+  <include location="../../pktk/resources/svg/dark_icons.qrc"/>
  </resources>
  <connections/>
 </ui>

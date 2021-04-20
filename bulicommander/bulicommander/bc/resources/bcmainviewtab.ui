@@ -22,15 +22,16 @@
         <enum>QTabWidget::West</enum>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <property name="movable">
         <bool>true</bool>
        </property>
        <widget class="QWidget" name="tabFiles">
         <attribute name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/folder_open</normaloff>:/images/folder_open</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/folder_open</normaloff>
+          <disabledoff>:/pktk/images/disabled/folder_open</disabledoff>:/pktk/images/normal/folder_open</iconset>
         </attribute>
         <attribute name="title">
          <string>Files</string>
@@ -229,8 +230,9 @@
                </property>
                <widget class="QWidget" name="tabFilesDetailsInformations">
                 <attribute name="icon">
-                 <iconset resource="dark_icons.qrc">
-                  <normaloff>:/images/info</normaloff>:/images/info</iconset>
+                 <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                  <normaloff>:/pktk/images/normal/info</normaloff>
+                  <disabledoff>:/pktk/images/disabled/info</disabledoff>:/pktk/images/normal/info</iconset>
                 </attribute>
                 <attribute name="title">
                  <string>Informations</string>
@@ -350,8 +352,9 @@
                              </property>
                              <widget class="QWidget" name="pageFileNfoGeneric">
                               <attribute name="icon">
-                               <iconset resource="dark_icons.qrc">
-                                <normaloff>:/images/file</normaloff>:/images/file</iconset>
+                               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                                <normaloff>:/pktk/images/normal/file</normaloff>
+                                <disabledoff>:/pktk/images/disabled/file</disabledoff>:/pktk/images/normal/file</iconset>
                               </attribute>
                               <attribute name="title">
                                <string>File</string>
@@ -565,8 +568,9 @@
                              </widget>
                              <widget class="QWidget" name="pageFileNfoImage">
                               <attribute name="icon">
-                               <iconset resource="dark_icons.qrc">
-                                <normaloff>:/images/large_view</normaloff>:/images/large_view</iconset>
+                               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                                <normaloff>:/pktk/images/normal/image</normaloff>
+                                <disabledoff>:/pktk/images/disabled/image</disabledoff>:/pktk/images/normal/image</iconset>
                               </attribute>
                               <attribute name="title">
                                <string>Image</string>
@@ -796,8 +800,9 @@
                              </widget>
                              <widget class="QWidget" name="pageFileNfoKraAbout">
                               <attribute name="icon">
-                               <iconset resource="dark_icons.qrc">
-                                <normaloff>:/images/info</normaloff>:/images/info</iconset>
+                               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                                <normaloff>:/pktk/images/normal/info</normaloff>
+                                <disabledoff>:/pktk/images/disabled/info</disabledoff>:/pktk/images/normal/info</iconset>
                               </attribute>
                               <attribute name="title">
                                <string>About</string>
@@ -1050,8 +1055,9 @@
                              </widget>
                              <widget class="QWidget" name="pageFileNfoKraAuthor">
                               <attribute name="icon">
-                               <iconset resource="dark_icons.qrc">
-                                <normaloff>:/images/author</normaloff>:/images/author</iconset>
+                               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                                <normaloff>:/pktk/images/normal/author</normaloff>
+                                <disabledoff>:/pktk/images/disabled/author</disabledoff>:/pktk/images/normal/author</iconset>
                               </attribute>
                               <attribute name="title">
                                <string>Author</string>
@@ -1324,8 +1330,9 @@
                </widget>
                <widget class="QWidget" name="tabFilesDetailsDirTree">
                 <attribute name="icon">
-                 <iconset resource="dark_icons.qrc">
-                  <normaloff>:/images/tree_list</normaloff>:/images/tree_list</iconset>
+                 <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                  <normaloff>:/pktk/images/normal/list_tree</normaloff>
+                  <disabledoff>:/pktk/images/disabled/list_tree</disabledoff>:/pktk/images/normal/list_tree</iconset>
                 </attribute>
                 <attribute name="title">
                  <string>Directory tree</string>
@@ -1526,8 +1533,9 @@
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="dark_icons.qrc">
-                <normaloff>:/images/dashboard</normaloff>:/images/dashboard</iconset>
+               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                <normaloff>:/pktk/images/normal/dashboard</normaloff>
+                <disabledoff>:/pktk/images/disabled/dashboard</disabledoff>:/pktk/images/normal/dashboard</iconset>
               </property>
               <property name="popupMode">
                <enum>QToolButton::MenuButtonPopup</enum>
@@ -1550,8 +1558,9 @@
        </widget>
        <widget class="QWidget" name="tabDocuments">
         <attribute name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/large_view</normaloff>:/images/large_view</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/image</normaloff>
+          <disabledoff>:/pktk/images/disabled/image</disabledoff>:/pktk/images/normal/image</iconset>
         </attribute>
         <attribute name="title">
          <string>Documents</string>
@@ -1578,8 +1587,9 @@
        </widget>
        <widget class="QWidget" name="tabClipboard">
         <attribute name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/clipboard</normaloff>:/images/clipboard</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/clipboard</normaloff>
+          <disabledoff>:/pktk/images/disabled/clipboard</disabledoff>:/pktk/images/normal/clipboard</iconset>
         </attribute>
         <attribute name="title">
          <string>Clipboard</string>
@@ -1773,8 +1783,9 @@
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="dark_icons.qrc">
-                <normaloff>:/images/dashboard</normaloff>:/images/dashboard</iconset>
+               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                <normaloff>:/pktk/images/normal/dashboard</normaloff>
+                <disabledoff>:/pktk/images/disabled/dashboard</disabledoff>:/pktk/images/normal/dashboard</iconset>
               </property>
               <property name="popupMode">
                <enum>QToolButton::MenuButtonPopup</enum>
@@ -1826,8 +1837,8 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="dark_icons.qrc"/>
-  <include location="light_icons.qrc"/>
+  <include location="../../pktk/resources/svg/dark_icons.qrc"/>
+  <include location="../../pktk/resources/svg/light_icons.qrc"/>
  </resources>
  <connections/>
 </ui>

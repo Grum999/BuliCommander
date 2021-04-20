@@ -497,7 +497,7 @@
           <string notr="true">padding-left: 30px</string>
          </property>
          <property name="text">
-          <string>Desig&amp;ned directory</string>
+          <string>Designed director&amp;y</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -513,7 +513,7 @@
           <string notr="true">padding-left: 30px</string>
          </property>
          <property name="text">
-          <string>Same &amp;directory</string>
+          <string>Same dire&amp;ctory</string>
          </property>
          <property name="checked">
           <bool>true</bool>
@@ -732,8 +732,9 @@
                 <string>...</string>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/visibility_off</normaloff>:/images/visibility_off</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/visibility_off</normaloff>
+                 <disabledoff>:/pktk/images/disabled/visibility_off</disabledoff>:/pktk/images/normal/visibility_off</iconset>
                </property>
                <property name="autoRaise">
                 <bool>true</bool>
@@ -883,7 +884,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="dark_icons.qrc"/>
+  <include location="../../pktk/resources/svg/dark_icons.qrc"/>
  </resources>
  <connections/>
  <buttongroups>

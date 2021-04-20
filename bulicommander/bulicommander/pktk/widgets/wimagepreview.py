@@ -45,8 +45,10 @@ from PyQt5.QtGui import (
         QPixmap
     )
 
-from pktk.modules.imgutils import checkerBoardBrush
-
+from pktk.modules.imgutils import (
+        checkerBoardBrush,
+        buildIcon
+    )
 from pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -118,31 +120,31 @@ class BCWImagePreview(QGraphicsView):
         self.__mousePos = None
 
 
-        self.__actionZoom1x1 = QAction(QIcon(":/images/zoom_1x1"), i18n('Zoom 1:1'), self)
+        self.__actionZoom1x1 = QAction(buildIcon("pktk:zoom_1x1"), i18n('Zoom 1:1'), self)
         self.__actionZoom1x1.triggered.connect(zoom1x1)
-        self.__actionZoomToFit = QAction(QIcon(":/images/zoom_fit"), i18n('Zoom to fit'), self)
+        self.__actionZoomToFit = QAction(buildIcon("pktk:zoom_fit"), i18n('Zoom to fit'), self)
         self.__actionZoomToFit.triggered.connect(zoomToFit)
 
-        self.__actionBgBlack = QAction(QIcon(":/images/color_black"), i18n('Black'), self)
+        self.__actionBgBlack = QAction(buildIcon("pktk:color_black"), i18n('Black'), self)
         self.__actionBgBlack.triggered.connect(bgColorBlack)
         self.__actionBgBlack.setCheckable(True)
-        self.__actionBgWhite = QAction(QIcon(":/images/color_white"), i18n('White'), self)
+        self.__actionBgWhite = QAction(buildIcon("pktk:color_white"), i18n('White'), self)
         self.__actionBgWhite.triggered.connect(bgColorWhite)
         self.__actionBgWhite.setCheckable(True)
-        self.__actionBgNGray = QAction(QIcon(":/images/color_ngray"), i18n('Gray'), self)
+        self.__actionBgNGray = QAction(buildIcon("pktk:color_ngray"), i18n('Gray'), self)
         self.__actionBgNGray.triggered.connect(bgColorNGray)
         self.__actionBgNGray.setCheckable(True)
-        self.__actionBgNone = QAction(QIcon(":/images/color_none"), i18n('Default'), self)
+        self.__actionBgNone = QAction(buildIcon("pktk:color_none"), i18n('Default'), self)
         self.__actionBgNone.triggered.connect(bgColorNone)
         self.__actionBgNone.setCheckable(True)
-        self.__actionBgCheckerBoard = QAction(QIcon(":/images/color_checkerboard"), i18n('Checker board'), self)
+        self.__actionBgCheckerBoard = QAction(buildIcon("pktk:color_checkerboard"), i18n('Checker board'), self)
         self.__actionBgCheckerBoard.triggered.connect(bgColorCheckerBoard)
         self.__actionBgCheckerBoard.setCheckable(True)
 
 
 
         self.__contextMenu = QMenu(i18n("Background"))
-        self.__bgMenu = self.__contextMenu.addMenu(QIcon(":/images/color"), 'Background')
+        self.__bgMenu = self.__contextMenu.addMenu(buildIcon("pktk:color"), 'Background')
         self.__contextMenu.addSeparator()
         self.__contextMenu.addAction(self.__actionZoom1x1)
         self.__contextMenu.addAction(self.__actionZoomToFit)

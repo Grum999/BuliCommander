@@ -26,7 +26,6 @@ from PyQt5.Qt import *
 
 import re
 
-from .bctheme import BCTheme
 from .bctokenizer import (
             BCToken,
             BCTokenStyle,
@@ -34,8 +33,10 @@ from .bctokenizer import (
             BCTokenizerRule
         )
 
-from pktk.pktk import EInvalidType
-from pktk.pktk import EInvalidValue
+from pktk.pktk import (
+            EInvalidType,
+            EInvalidValue
+        )
 
 class BCLanguageDef:
 

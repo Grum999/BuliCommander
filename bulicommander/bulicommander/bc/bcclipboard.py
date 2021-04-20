@@ -41,6 +41,7 @@ from .bcdownloader import BCDownloader
 
 from pktk.modules.strutils import bytesSizeToStr
 from pktk.modules.utils import Debug
+from pktk.modules.imgutils import buildIcon
 from pktk.pktk import (
         EInvalidType,
         EInvalidValue,
@@ -1712,9 +1713,9 @@ class BCClipboardModel(QAbstractTableModel):
                 if isinstance(item.file(), BCBaseFile):
                     return item.file().thumbnail(self.__thumbSize, thumbType=BCBaseFile.THUMBTYPE_ICON)
                 elif item.type() == 'BCClipboardItemUrl':
-                    return QIcon(':/images/url')
+                    return buildIcon('pktk:url')
                 else:
-                    return QIcon(':/images/warning')
+                    return buildIcon('pktk:warning')
         elif role == Qt.DisplayRole:
             hash=self.__items[row]
             item = self.__clipboard.get(hash)
