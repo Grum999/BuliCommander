@@ -1,6 +1,8 @@
 #-----------------------------------------------------------------------------
-# Buli Commander
-# Copyright (C) 2020 - Grum999
+# PyKritaToolKit
+# Copyright (C) 2019-2021 - Grum999
+#
+# A toolkit to make pykrita plugin coding easier :-)
 # -----------------------------------------------------------------------------
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.
 # If not, see https://www.gnu.org/licenses/
-# -----------------------------------------------------------------------------
-# A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
 
@@ -59,7 +59,7 @@ from pktk.pktk import (
 
 
 # -----------------------------------------------------------------------------
-class BCWImagePreview(QGraphicsView):
+class WImageView(QGraphicsView):
     """Display image with pan/zoom hability"""
 
     BG_BLACK = 0
@@ -84,17 +84,17 @@ class BCWImagePreview(QGraphicsView):
         def zoom1x1(dummy):
             self.setZoom(1.0)
         def bgColorBlack(dummy):
-            self.setBackgroundType(BCWImagePreview.BG_BLACK)
+            self.setBackgroundType(WImageView.BG_BLACK)
         def bgColorWhite(dummy):
-            self.setBackgroundType(BCWImagePreview.BG_WHITE)
+            self.setBackgroundType(WImageView.BG_WHITE)
         def bgColorNGray(dummy):
-            self.setBackgroundType(BCWImagePreview.BG_NEUTRAL_GRAY)
+            self.setBackgroundType(WImageView.BG_NEUTRAL_GRAY)
         def bgColorNone(dummy):
-            self.setBackgroundType(BCWImagePreview.BG_TRANSPARENT)
+            self.setBackgroundType(WImageView.BG_TRANSPARENT)
         def bgColorCheckerBoard(dummy):
-            self.setBackgroundType(BCWImagePreview.BG_CHECKER_BOARD)
+            self.setBackgroundType(WImageView.BG_CHECKER_BOARD)
 
-        super(BCWImagePreview, self).__init__(parent)
+        super(WImageView, self).__init__(parent)
 
         # Image is a QPixmap in a QGraphicsScene
         self.__gScene = QGraphicsScene()
@@ -176,7 +176,7 @@ class BCWImagePreview(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
 
-        self.setBackgroundType(BCWImagePreview.BG_CHECKER_BOARD)
+        self.setBackgroundType(WImageView.BG_CHECKER_BOARD)
 
 
 
@@ -186,11 +186,11 @@ class BCWImagePreview(QGraphicsView):
     @staticmethod
     def backgroundList():
         """return list of possible values"""
-        return [BCWImagePreview.BG_BLACK,
-                BCWImagePreview.BG_WHITE,
-                BCWImagePreview.BG_NEUTRAL_GRAY,
-                BCWImagePreview.BG_TRANSPARENT,
-                BCWImagePreview.BG_CHECKER_BOARD]
+        return [WImageView.BG_BLACK,
+                WImageView.BG_WHITE,
+                WImageView.BG_NEUTRAL_GRAY,
+                WImageView.BG_TRANSPARENT,
+                WImageView.BG_CHECKER_BOARD]
 
 
     def allowZoom(self):
@@ -234,37 +234,37 @@ class BCWImagePreview(QGraphicsView):
         """Set current background definition
 
         Can be:
-            BCWImagePreview.BG_BLACK = 0
-            BCWImagePreview.BG_WHITE = 1
-            BCWImagePreview.BG_NEUTRAL_GRAY = 2
-            BCWImagePreview.BG_TRANSPARENT = 3
-            BCWImagePreview.BG_CHECKER_BOARD = 4
+            WImageView.BG_BLACK = 0
+            WImageView.BG_WHITE = 1
+            WImageView.BG_NEUTRAL_GRAY = 2
+            WImageView.BG_TRANSPARENT = 3
+            WImageView.BG_CHECKER_BOARD = 4
         """
         if not isinstance(value, int):
             raise EInvalidType("Given `value` must be a valid <int>")
 
-        if not value in [BCWImagePreview.BG_BLACK,
-                         BCWImagePreview.BG_WHITE,
-                         BCWImagePreview.BG_NEUTRAL_GRAY,
-                         BCWImagePreview.BG_TRANSPARENT,
-                         BCWImagePreview.BG_CHECKER_BOARD]:
+        if not value in [WImageView.BG_BLACK,
+                         WImageView.BG_WHITE,
+                         WImageView.BG_NEUTRAL_GRAY,
+                         WImageView.BG_TRANSPARENT,
+                         WImageView.BG_CHECKER_BOARD]:
             raise EInvalidValue("Given `value` is not valid")
 
         if self.__backgroundType != value:
             self.__backgroundType = value
-            if self.__backgroundType == BCWImagePreview.BG_BLACK:
+            if self.__backgroundType == WImageView.BG_BLACK:
                 self.__gScene.setBackgroundBrush(QBrush(Qt.black))
                 self.__actionBgBlack.setChecked(True)
-            elif self.__backgroundType == BCWImagePreview.BG_WHITE:
+            elif self.__backgroundType == WImageView.BG_WHITE:
                 self.__gScene.setBackgroundBrush(QBrush(Qt.white))
                 self.__actionBgWhite.setChecked(True)
-            elif self.__backgroundType == BCWImagePreview.BG_NEUTRAL_GRAY:
+            elif self.__backgroundType == WImageView.BG_NEUTRAL_GRAY:
                 self.__gScene.setBackgroundBrush(QBrush(QColor(128,128,128)))
                 self.__actionBgNGray.setChecked(True)
-            elif self.__backgroundType == BCWImagePreview.BG_TRANSPARENT:
+            elif self.__backgroundType == WImageView.BG_TRANSPARENT:
                 self.__gScene.setBackgroundBrush(QBrush(Krita.activeWindow().qwindow().palette().color(QPalette.Mid)))
                 self.__actionBgNone.setChecked(True)
-            elif self.__backgroundType == BCWImagePreview.BG_CHECKER_BOARD:
+            elif self.__backgroundType == WImageView.BG_CHECKER_BOARD:
                 self.__gScene.setBackgroundBrush(checkerBoardBrush(32))
                 self.__actionBgCheckerBoard.setChecked(True)
 

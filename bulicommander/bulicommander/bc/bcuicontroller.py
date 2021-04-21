@@ -81,9 +81,6 @@ from .bcimportanimated import (
         BCImportDialogBox,
         BCImportAnimated
     )
-from .bcwimagepreview import (
-        BCWImagePreview
-    )
 from .bcsavedview import BCSavedView
 
 from pktk.modules.uitheme import UITheme
@@ -101,6 +98,7 @@ from pktk.modules.strutils import (
         setBytesSizeToStrUnit
     )
 from pktk.modules.about import AboutWindow
+from pktk.widgets.wimageview import WImageView
 from pktk.pktk import (
         EInvalidType,
         EInvalidValue,
@@ -1574,8 +1572,8 @@ class BCUIController(QObject):
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        if not mode in BCWImagePreview.backgroundList():
-            mode = BCWImagePreview.BG_CHECKER_BOARD
+        if not mode in WImageView.backgroundList():
+            mode = WImageView.BG_CHECKER_BOARD
 
         self.__window.panels[panel].setPreviewBackground(mode)
 
