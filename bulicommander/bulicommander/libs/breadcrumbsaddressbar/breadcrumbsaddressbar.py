@@ -242,8 +242,8 @@ class BreadcrumbsAddressBar(QFrame):
             child = layout.takeAt(0)
             if child.widget():
                 layout.removeWidget(child.widget())
-                child.widget().deleteLater()
-                child.widget().setParent(None)
+                #child.widget().deleteLater()
+                #child.widget().setParent(None)
 
     def _insert_crumb(self, path):
         btn = QtWidgets.QToolButton(self.crumbs_panel)
