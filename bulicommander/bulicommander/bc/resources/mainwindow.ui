@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>726</width>
-    <height>595</height>
+    <width>1419</width>
+    <height>1111</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -59,8 +59,6 @@
     <addaction name="actionSelectAll"/>
     <addaction name="actionSelectNone"/>
     <addaction name="actionSelectInvert"/>
-    <addaction name="separator"/>
-    <addaction name="actionSelectRegEx"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -77,8 +75,9 @@
       <string>&amp;Views</string>
      </property>
      <property name="icon">
-      <iconset resource="dark_icons.qrc">
-       <normaloff>:/images/saved_view</normaloff>:/images/saved_view</iconset>
+      <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+       <normaloff>:/pktk/images/normal/saved_views</normaloff>
+       <disabledoff>:/pktk/images/disabled/saved_views</disabledoff>:/pktk/images/normal/saved_views</iconset>
      </property>
      <addaction name="separator"/>
     </widget>
@@ -87,8 +86,9 @@
       <string>&amp;History</string>
      </property>
      <property name="icon">
-      <iconset resource="dark_icons.qrc">
-       <normaloff>:/images/history</normaloff>:/images/history</iconset>
+      <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+       <normaloff>:/pktk/images/normal/history</normaloff>
+       <disabledoff>:/pktk/images/disabled/history</disabledoff>:/pktk/images/normal/history</iconset>
      </property>
      <property name="toolTipsVisible">
       <bool>true</bool>
@@ -105,8 +105,9 @@
       <string>B&amp;ookmark</string>
      </property>
      <property name="icon">
-      <iconset resource="dark_icons.qrc">
-       <normaloff>:/images/bookmarks</normaloff>:/images/bookmarks</iconset>
+      <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+       <normaloff>:/pktk/images/normal/bookmarks</normaloff>
+       <disabledoff>:/pktk/images/disabled/bookmarks</disabledoff>:/pktk/images/normal/bookmarks</iconset>
      </property>
      <property name="toolTipsVisible">
       <bool>true</bool>
@@ -118,8 +119,9 @@
       <string>&amp;Last documents</string>
      </property>
      <property name="icon">
-      <iconset resource="dark_icons.qrc">
-       <normaloff>:/images/saved_view_last</normaloff>:/images/saved_view_last</iconset>
+      <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+       <normaloff>:/pktk/images/normal/saved_view_last</normaloff>
+       <disabledoff>:/pktk/images/disabled/saved_view_last</disabledoff>:/pktk/images/normal/saved_view_last</iconset>
      </property>
     </widget>
     <addaction name="actionGoHome"/>
@@ -151,8 +153,6 @@
      <string>&amp;Tools</string>
     </property>
     <addaction name="actionToolsSearch"/>
-    <addaction name="actionToolsStatistics"/>
-    <addaction name="actionConsole"/>
     <addaction name="actionToolsCopyToClipboard"/>
     <addaction name="actionToolsExportFiles"/>
     <addaction name="actionToolsConvertFiles"/>
@@ -277,8 +277,9 @@
   </widget>
   <action name="actionFolderNew">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/create_folder</normaloff>:/images/create_folder</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/folder_open_add</normaloff>
+     <disabledon>:/pktk/images/disabled/folder_open_add</disabledon>:/pktk/images/normal/folder_open_add</iconset>
    </property>
    <property name="text">
     <string>&amp;New folder...</string>
@@ -295,10 +296,10 @@
   </action>
   <action name="actionFileOpen">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/folder_open</normaloff>
-     <disabledoff>:/images_d/folder_open</disabledoff>
-     <disabledon>:/images_d/folder_open</disabledon>:/images/folder_open</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/folder_open</normaloff>
+     <disabledoff>:/pktk/images/disabled/folder_open</disabledoff>
+     <disabledon>:/pktk/images/disabled/folder_open</disabledon>:/pktk/images/normal/folder_open</iconset>
    </property>
    <property name="text">
     <string>&amp;Open file</string>
@@ -315,10 +316,10 @@
   </action>
   <action name="actionFileCopyToOtherPanel">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/file_copy</normaloff>
-     <disabledoff>:/images_d/file_copy</disabledoff>
-     <disabledon>:/images_d/file_copy</disabledon>:/images/file_copy</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/file_copy</normaloff>
+     <disabledoff>:/pktk/images/disabled/file_copy</disabledoff>
+     <disabledon>:/pktk/images/disabled/file_copy</disabledon>:/pktk/images/normal/file_copy</iconset>
    </property>
    <property name="text">
     <string>&amp;Copy to other panel</string>
@@ -335,10 +336,10 @@
   </action>
   <action name="actionFileMoveToOtherPanel">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/file_move</normaloff>
-     <disabledoff>:/images_d/file_move</disabledoff>
-     <disabledon>:/images_d/file_move</disabledon>:/images/file_move</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/file_move</normaloff>
+     <disabledoff>:/pktk/images/disabled/file_move</disabledoff>
+     <disabledon>:/pktk/images/disabled/file_move</disabledon>:/pktk/images/normal/file_move</iconset>
    </property>
    <property name="text">
     <string>&amp;Move to other panel</string>
@@ -355,10 +356,10 @@
   </action>
   <action name="actionFileDelete">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/delete</normaloff>
-     <disabledoff>:/images_d/delete</disabledoff>
-     <disabledon>:/images_d/delete</disabledon>:/images/delete</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/delete</normaloff>
+     <disabledoff>:/pktk/images/disabled/delete</disabledoff>
+     <disabledon>:/pktk/images/disabled/delete</disabledon>:/pktk/images/normal/delete</iconset>
    </property>
    <property name="text">
     <string>&amp;Delete...</string>
@@ -375,10 +376,10 @@
   </action>
   <action name="actionFileRename">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/file_rename</normaloff>
-     <disabledoff>:/images_d/file_rename</disabledoff>
-     <disabledon>:/images_d/file_rename</disabledon>:/images/file_rename</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/file_rename</normaloff>
+     <disabledoff>:/pktk/images/disabled/file_rename</disabledoff>
+     <disabledon>:/pktk/images/disabled/file_rename</disabledon>:/pktk/images/normal/file_rename</iconset>
    </property>
    <property name="text">
     <string>&amp;Rename...</string>
@@ -409,8 +410,10 @@
   </action>
   <action name="actionFileQuit">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/exit</normaloff>:/images/exit</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/application_exit</normaloff>
+     <disabledoff>:/pktk/images/disabled/application_exit</disabledoff>
+     <disabledon>:/pktk/images/disabled/application_exit</disabledon>:/pktk/images/normal/application_exit</iconset>
    </property>
    <property name="text">
     <string>&amp;Quit</string>
@@ -427,10 +430,10 @@
   </action>
   <action name="actionFileOpenCloseBC">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/folder_open</normaloff>
-     <disabledoff>:/images_d/folder_open</disabledoff>
-     <disabledon>:/images_d/folder_open</disabledon>:/images/folder_open</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/folder_open</normaloff>
+     <disabledoff>:/pktk/images/disabled/folder_open</disabledoff>
+     <disabledon>:/pktk/images/disabled/folder_open</disabledon>:/pktk/images/normal/folder_open</iconset>
    </property>
    <property name="text">
     <string>Open &amp;file and close Buli Commander</string>
@@ -447,8 +450,9 @@
   </action>
   <action name="actionSelectAll">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/select_all</normaloff>:/images/select_all</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/select_all</normaloff>
+     <disabledoff>:/pktk/images/disabled/select_all</disabledoff>:/pktk/images/normal/select_all</iconset>
    </property>
    <property name="text">
     <string>&amp;Select all</string>
@@ -465,8 +469,9 @@
   </action>
   <action name="actionSelectNone">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/select_none</normaloff>:/images/select_none</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/select_none</normaloff>
+     <disabledoff>:/pktk/images/disabled/select_none</disabledoff>:/pktk/images/normal/select_none</iconset>
    </property>
    <property name="text">
     <string>Select &amp;none</string>
@@ -483,8 +488,9 @@
   </action>
   <action name="actionSelectInvert">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/select_invert</normaloff>:/images/select_invert</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/select_invert</normaloff>
+     <disabledoff>:/pktk/images/disabled/select_invert</disabledoff>:/pktk/images/normal/select_invert</iconset>
    </property>
    <property name="text">
     <string>&amp;Invert selection</string>
@@ -501,10 +507,9 @@
   </action>
   <action name="actionGoUp">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/goup</normaloff>
-     <disabledoff>:/images_d/goup</disabledoff>
-     <disabledon>:/images_d/goup</disabledon>:/images/goup</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/goup</normaloff>
+     <disabledoff>:/pktk/images/disabled/goup</disabledoff>:/pktk/images/normal/goup</iconset>
    </property>
    <property name="text">
     <string>&amp;Up</string>
@@ -521,10 +526,9 @@
   </action>
   <action name="actionGoBack">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/goback</normaloff>
-     <disabledoff>:/images_d/goback</disabledoff>
-     <disabledon>:/images_d/goback</disabledon>:/images/goback</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/goback</normaloff>
+     <disabledoff>:/pktk/images/disabled/goback</disabledoff>:/pktk/images/normal/goback</iconset>
    </property>
    <property name="text">
     <string>&amp;Back</string>
@@ -540,12 +544,6 @@
    </property>
   </action>
   <action name="actionGoBookmark_clearBookmark">
-   <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/bookmark_clear</normaloff>
-     <disabledoff>:/images_d/bookmark_clear</disabledoff>
-     <disabledon>:/images_d/bookmark_clear</disabledon>:/images/bookmark_clear</iconset>
-   </property>
    <property name="text">
     <string>&amp;Clear bookmarks</string>
    </property>
@@ -556,87 +554,14 @@
     <string>Remove all bookmarked paths</string>
    </property>
   </action>
-  <action name="actionGoSavedViews_clearView">
-   <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/saved_view_clear</normaloff>
-     <disabledoff>:/images_d/saved_view_clear</disabledoff>
-     <disabledon>:/images_d/saved_view_clear</disabledon>:/images/saved_view_clear</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Clear view content</string>
-   </property>
-   <property name="toolTip">
-    <string>Clear current view content</string>
-   </property>
-   <property name="statusTip">
-    <string>Clear current view content</string>
-   </property>
-  </action>
-  <action name="actionViewList">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset>
-     <normaloff>:/images/list</normaloff>:/images/list</iconset>
-   </property>
-   <property name="text">
-    <string>List view</string>
-   </property>
-   <property name="toolTip">
-    <string>Detailled list file informations</string>
-   </property>
-   <property name="statusTip">
-    <string>Detailled list file informations</string>
-   </property>
-  </action>
-  <action name="actionViewSmallIcon">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset>
-     <normaloff>:/images/small_view</normaloff>:/images/small_view</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Small icon view</string>
-   </property>
-   <property name="toolTip">
-    <string>A small icon view with minimum informations</string>
-   </property>
-   <property name="statusTip">
-    <string>A small icon view with minimum informations</string>
-   </property>
-  </action>
-  <action name="actionViewMediumIcon">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset>
-     <normaloff>:/images/medium_view</normaloff>:/images/medium_view</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Medium icon view</string>
-   </property>
-   <property name="toolTip">
-    <string>A medium icon view with minimum informations</string>
-   </property>
-   <property name="statusTip">
-    <string>A medium icon view with minimum informations</string>
-   </property>
-  </action>
   <action name="actionViewThumbnail">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/large_view</normaloff>:/images/large_view</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/image</normaloff>
+     <disabledoff>:/pktk/images/disabled/image</disabledoff>:/pktk/images/normal/image</iconset>
    </property>
    <property name="text">
     <string>&amp;Thumbnail view</string>
@@ -676,8 +601,9 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/visibility_off</normaloff>:/images/visibility_off</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/visibility_off</normaloff>
+     <disabledoff>:/pktk/images/disabled/visibility_off</disabledoff>:/pktk/images/normal/visibility_off</iconset>
    </property>
    <property name="text">
     <string>Show &amp;hidden files</string>
@@ -700,8 +626,9 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/second_panel</normaloff>:/images/second_panel</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/panel_second</normaloff>
+     <disabledoff>:/pktk/images/disabled/panel_second</disabledoff>:/pktk/images/normal/panel_second</iconset>
    </property>
    <property name="text">
     <string>Display secondary panel (&amp;right side)</string>
@@ -732,10 +659,9 @@
   </action>
   <action name="actionViewSwapPanels">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/swap</normaloff>
-     <disabledoff>:/images_d/swap</disabledoff>
-     <disabledon>:/images_d/swap</disabledon>:/images/swap</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/swap_horiz</normaloff>
+     <disabledoff>:/pktk/images/disabled/swap_horiz</disabledoff>:/pktk/images/normal/swap_horiz</iconset>
    </property>
    <property name="text">
     <string>Swap &amp;panels</string>
@@ -769,8 +695,9 @@
   </action>
   <action name="actionToolsSearch">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/search</normaloff>:/images/search</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/search</normaloff>
+     <disabledoff>:/pktk/images/disabled/search</disabledoff>:/pktk/images/normal/search</iconset>
    </property>
    <property name="text">
     <string>&amp;Search...</string>
@@ -785,60 +712,11 @@
     <string>Ctrl+F</string>
    </property>
   </action>
-  <action name="actionToolsStatistics">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/images/pie_chart</normaloff>:/images/pie_chart</iconset>
-   </property>
-   <property name="text">
-    <string>Stat&amp;istics...</string>
-   </property>
-   <property name="toolTip">
-    <string>Calculate statistics for current directory</string>
-   </property>
-   <property name="statusTip">
-    <string>Calculate statistics for current directory</string>
-   </property>
-   <property name="visible">
-    <bool>false</bool>
-   </property>
-  </action>
-  <action name="actionToolsSynchronizePanels">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/images/synchronize</normaloff>:/images/synchronize</iconset>
-   </property>
-   <property name="text">
-    <string>Synchronize &amp;panels...</string>
-   </property>
-   <property name="toolTip">
-    <string>Synchronize files between panels</string>
-   </property>
-   <property name="statusTip">
-    <string>Synchronize files between panels</string>
-   </property>
-   <property name="visible">
-    <bool>true</bool>
-   </property>
-  </action>
-  <action name="actionConsole">
-   <property name="text">
-    <string>&amp;Buli Commander terminal</string>
-   </property>
-   <property name="toolTip">
-    <string>Open Buli Commander terminal</string>
-   </property>
-   <property name="statusTip">
-    <string>Open Buli Commander terminal</string>
-   </property>
-   <property name="visible">
-    <bool>false</bool>
-   </property>
-  </action>
   <action name="actionSettingsPreferences">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/tune</normaloff>:/images/tune</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/tune</normaloff>
+     <disabledoff>:/pktk/images/disabled/tune</disabledoff>:/pktk/images/normal/tune</iconset>
    </property>
    <property name="text">
     <string>&amp;Preferences...</string>
@@ -852,8 +730,9 @@
   </action>
   <action name="actionHelpAboutBC">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/info</normaloff>:/images/info</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/info</normaloff>
+     <disabledoff>:/pktk/images/disabled/info</disabledoff>:/pktk/images/normal/info</iconset>
    </property>
    <property name="text">
     <string>&amp;About Buli Commander...</string>
@@ -872,10 +751,6 @@
    </property>
   </action>
   <action name="actionSelectRegEx">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/images/select_regex</normaloff>:/images/select_regex</iconset>
-   </property>
    <property name="text">
     <string>&amp;RegEx select...</string>
    </property>
@@ -889,45 +764,15 @@
     <string>Ctrl+Shift+R</string>
    </property>
    <property name="visible">
-    <bool>false</bool>
-   </property>
-  </action>
-  <action name="actionGoHistory_clearHistory">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/history_clear</normaloff>
-     <disabledoff>:/images_d/history_clear</disabledoff>
-     <disabledon>:/images_d/history_clear</disabledon>:/images/history_clear</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Clear history</string>
-   </property>
-   <property name="toolTip">
-    <string>Clear all paths from history</string>
-   </property>
-   <property name="statusTip">
-    <string>Clear all paths from history</string>
-   </property>
-  </action>
-  <action name="actionBCSManageScripts">
-   <property name="text">
-    <string>&amp;Manage scripts...</string>
-   </property>
-  </action>
-  <action name="actionBCS_NoScriptYetDefined">
-   <property name="text">
-    <string>(&amp;no script yet defined)</string>
+    <bool>true</bool>
    </property>
   </action>
   <action name="actionFileOpenAsNewDocument">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/open_new</normaloff>
-     <disabledoff>:/images_d/open_new</disabledoff>
-     <disabledon>:/images_d/open_new</disabledon>:/images/open_new</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/folder_open_new</normaloff>
+     <disabledoff>:/pktk/images/disabled/folder_open_new</disabledoff>
+     <disabledon>:/pktk/images/disabled/folder_open_new</disabledon>:/pktk/images/normal/folder_open_new</iconset>
    </property>
    <property name="text">
     <string>O&amp;pen file as new document</string>
@@ -944,10 +789,10 @@
   </action>
   <action name="actionFileOpenAsNewDocumentCloseBC">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/open_new</normaloff>
-     <disabledoff>:/images_d/open_new</disabledoff>
-     <disabledon>:/images_d/open_new</disabledon>:/images/open_new</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/folder_open_new</normaloff>
+     <disabledoff>:/pktk/images/disabled/folder_open_new</disabledoff>
+     <disabledon>:/pktk/images/disabled/folder_open_new</disabledon>:/pktk/images/normal/folder_open_new</iconset>
    </property>
    <property name="text">
     <string>Open file as new document and close &amp;Buli Commander</string>
@@ -981,132 +826,11 @@
     <string>&amp;Save session on exit</string>
    </property>
   </action>
-  <action name="actionGoBookmark_addBookmark">
-   <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/bookmark_add</normaloff>
-     <disabledoff>:/images_d/bookmark_add</disabledoff>
-     <disabledon>:/images_d/bookmark_add</disabledon>:/images/bookmark_add</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Add to bookmarks...</string>
-   </property>
-   <property name="toolTip">
-    <string>Add current path to bookmarks</string>
-   </property>
-   <property name="statusTip">
-    <string>Add current path to bookmarks</string>
-   </property>
-  </action>
-  <action name="actionGoBookmark_removeBookmark">
-   <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/bookmark_remove</normaloff>
-     <disabledoff>:/images_d/bookmark_remove</disabledoff>
-     <disabledon>:/images_d/bookmark_remove</disabledon>:/images/bookmark_remove</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Remove from bookmarks...</string>
-   </property>
-   <property name="iconText">
-    <string>Remove from bookmarks...</string>
-   </property>
-   <property name="toolTip">
-    <string>Remove current path from bookmarks</string>
-   </property>
-   <property name="statusTip">
-    <string>Remove current path from bookmarks</string>
-   </property>
-  </action>
-  <action name="actionGoBookmark_renameBookmark">
-   <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/bookmark_rename</normaloff>
-     <disabledoff>:/images_d/bookmark_rename</disabledoff>
-     <disabledon>:/images_d/bookmark_rename</disabledon>:/images/bookmark_rename</iconset>
-   </property>
-   <property name="text">
-    <string>Rename &amp;bookmark...</string>
-   </property>
-   <property name="toolTip">
-    <string>Rename current bookmark</string>
-   </property>
-   <property name="statusTip">
-    <string>Rename current bookmark</string>
-   </property>
-  </action>
-  <action name="actionGoSavedViews_removeFromView">
-   <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/saved_view_remove</normaloff>
-     <disabledoff>:/images_d/saved_view_remove</disabledoff>
-     <disabledon>:/images_d/saved_view_remove</disabledon>:/images/saved_view_remove</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Remove from view...</string>
-   </property>
-   <property name="toolTip">
-    <string>Remove selected files from view</string>
-   </property>
-   <property name="statusTip">
-    <string>Remove selected files from view</string>
-   </property>
-  </action>
-  <action name="actionGoSavedViews_renameView">
-   <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/saved_view_rename</normaloff>
-     <disabledoff>:/images_d/saved_view_rename</disabledoff>
-     <disabledon>:/images_d/saved_view_rename</disabledon>:/images/saved_view_rename</iconset>
-   </property>
-   <property name="text">
-    <string>Rename &amp;view...</string>
-   </property>
-   <property name="toolTip">
-    <string>Rename current view</string>
-   </property>
-   <property name="statusTip">
-    <string>Rename current view</string>
-   </property>
-  </action>
-  <action name="actionGoSavedViews_newView">
-   <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/saved_view_new</normaloff>
-     <disabledoff>:/images_d/saved_view_new</disabledoff>
-     <disabledon>:/images_d/saved_view_new</disabledon>:/images/saved_view_new</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;New view</string>
-   </property>
-   <property name="toolTip">
-    <string>Add selected files to a new view</string>
-   </property>
-   <property name="statusTip">
-    <string>Add selected files to a new view</string>
-   </property>
-  </action>
-  <action name="actionDelete_view">
-   <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/saved_view_delete</normaloff>
-     <disabledoff>:/images_d/saved_view_delete</disabledoff>
-     <disabledon>:/images_d/saved_view_delete</disabledon>:/images/saved_view_delete</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Delete view...</string>
-   </property>
-   <property name="statusTip">
-    <string>Delete current view</string>
-   </property>
-   <property name="whatsThis">
-    <string>Delete current view</string>
-   </property>
-  </action>
   <action name="actionGoHome">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/home</normaloff>:/images/home</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/home</normaloff>
+     <disabledoff>:/pktk/images/disabled/home</disabledoff>:/pktk/images/normal/home</iconset>
    </property>
    <property name="text">
     <string>Ho&amp;me</string>
@@ -1122,8 +846,9 @@
   </action>
   <action name="actionToolsExportFiles">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/export_list</normaloff>:/images/export_list</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/export_list</normaloff>
+     <disabledoff>:/pktk/images/disabled/export_list</disabledoff>:/pktk/images/normal/export_list</iconset>
    </property>
    <property name="text">
     <string>&amp;Export files list...</string>
@@ -1140,8 +865,9 @@
   </action>
   <action name="actionToolsConvertFiles">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/convert</normaloff>:/images/convert</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/image_convert</normaloff>
+     <disabledoff>:/pktk/images/disabled/image_convert</disabledoff>:/pktk/images/normal/image_convert</iconset>
    </property>
    <property name="text">
     <string>&amp;Convert files...</string>
@@ -1155,8 +881,9 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/filter</normaloff>:/images/filter</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/filter_alt</normaloff>
+     <disabledoff>:/pktk/images/disabled/filter_alt</disabledoff>:/pktk/images/normal/filter_alt</iconset>
    </property>
    <property name="text">
     <string>&amp;Display quick filter</string>
@@ -1167,11 +894,11 @@
   </action>
   <action name="actionClipboardPasteAsNewLayer">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/clipboard</normaloff>
-     <normalon>:/images/clipboard</normalon>
-     <disabledoff>:/images_d/clipboard</disabledoff>
-     <disabledon>:/images_d/clipboard</disabledon>:/images/clipboard</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/clipboard</normaloff>
+     <normalon>:/pktk/images/normal/clipboard</normalon>
+     <disabledoff>:/pktk/images/disabled/clipboard</disabledoff>
+     <disabledon>:/pktk/images/disabled/clipboard</disabledon>:/pktk/images/normal/clipboard</iconset>
    </property>
    <property name="text">
     <string>Paste as new &amp;layer</string>
@@ -1188,11 +915,11 @@
   </action>
   <action name="actionClipboardPasteAsNewDocument">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/clipboard_new</normaloff>
-     <normalon>:/images/clipboard_new</normalon>
-     <disabledoff>:/images_d/clipboard_new</disabledoff>
-     <disabledon>:/images_d/clipboard_new</disabledon>:/images/clipboard_new</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/clipboard_new</normaloff>
+     <normalon>:/pktk/images/normal/clipboard_new</normalon>
+     <disabledoff>:/pktk/images/disabled/clipboard_new</disabledoff>
+     <disabledon>:/pktk/images/disabled/clipboard_new</disabledon>:/pktk/images/normal/clipboard_new</iconset>
    </property>
    <property name="text">
     <string>Past&amp;e as new document</string>
@@ -1209,10 +936,10 @@
   </action>
   <action name="actionClipboardOpen">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/folder_open</normaloff>
-     <disabledoff>:/images_d/folder_open</disabledoff>
-     <disabledon>:/images_d/folder_open</disabledon>:/images/folder_open</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/folder_open</normaloff>
+     <disabledoff>:/pktk/images/disabled/folder_open</disabledoff>
+     <disabledon>:/pktk/images/disabled/folder_open</disabledon>:/pktk/images/normal/folder_open</iconset>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -1235,8 +962,10 @@
   </action>
   <action name="actionClipboardSetPersistent">
    <property name="icon">
-    <iconset theme="lock">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/lock_locked</normaloff>
+     <disabledoff>:/pktk/images/disabled/lock_locked</disabledoff>
+     <disabledon>:/pktk/images/disabled/lock_locked</disabledon>:/pktk/images/normal/lock_locked</iconset>
    </property>
    <property name="text">
     <string>&amp;Set persistent</string>
@@ -1253,8 +982,10 @@
   </action>
   <action name="actionClipboardSetNotPersistent">
    <property name="icon">
-    <iconset theme="unlock">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/lock_unlocked</normaloff>
+     <disabledoff>:/pktk/images/disabled/lock_unlocked</disabledoff>
+     <disabledon>:/pktk/images/disabled/lock_unlocked</disabledon>:/pktk/images/normal/lock_unlocked</iconset>
    </property>
    <property name="text">
     <string>Set &amp;not persistent</string>
@@ -1271,8 +1002,9 @@
   </action>
   <action name="actionClipboardQuit">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/exit</normaloff>:/images/exit</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/application_exit</normaloff>
+     <disabledoff>:/pktk/images/disabled/application_exit</disabledoff>:/pktk/images/normal/application_exit</iconset>
    </property>
    <property name="text">
     <string>&amp;Quit</string>
@@ -1280,11 +1012,11 @@
   </action>
   <action name="actionClipboardPushBack">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/clipboard_pushback</normaloff>
-     <normalon>:/images/clipboard_pushback</normalon>
-     <disabledoff>:/images_d/clipboard_pushback</disabledoff>
-     <disabledon>:/images_d/clipboard_pushback</disabledon>:/images/clipboard_pushback</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/clipboard_pushback</normaloff>
+     <normalon>:/pktk/images/normal/clipboard_pushback</normalon>
+     <disabledoff>:/pktk/images/disabled/clipboard_pushback</disabledoff>
+     <disabledon>:/pktk/images/disabled/clipboard_pushback</disabledon>:/pktk/images/normal/clipboard_pushback</iconset>
    </property>
    <property name="text">
     <string>&amp;Push back to clipboard</string>
@@ -1301,11 +1033,11 @@
   </action>
   <action name="actionClipboardStopDownload">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/url_downloadstop</normaloff>
-     <normalon>:/images/url_downloadstop</normalon>
-     <disabledoff>:/images_d/url_downloadstop</disabledoff>
-     <disabledon>:/images_d/url_downloadstop</disabledon>:/images/url_downloadstop</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/url_downloadstop</normaloff>
+     <normalon>:/pktk/images/normal/url_downloadstop</normalon>
+     <disabledoff>:/pktk/images/disabled/url_downloadstop</disabledoff>
+     <disabledon>:/pktk/images/disabled/url_downloadstop</disabledon>:/pktk/images/normal/url_downloadstop</iconset>
    </property>
    <property name="text">
     <string>Stop &amp;download</string>
@@ -1322,11 +1054,11 @@
   </action>
   <action name="actionClipboardStartDownload">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/url_downloadstart</normaloff>
-     <normalon>:/images/url_downloadstart</normalon>
-     <disabledoff>:/images_d/url_downloadstart</disabledoff>
-     <disabledon>:/images_d/url_downloadstart</disabledon>:/images/url_downloadstart</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/url_downloadstart</normaloff>
+     <normalon>:/pktk/images/normal/url_downloadstart</normalon>
+     <disabledoff>:/pktk/images/disabled/url_downloadstart</disabledoff>
+     <disabledon>:/pktk/images/disabled/url_downloadstart</disabledon>:/pktk/images/normal/url_downloadstart</iconset>
    </property>
    <property name="text">
     <string>Sta&amp;rt download</string>
@@ -1343,9 +1075,10 @@
   </action>
   <action name="actionClipboardCheckContent">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/clipboard_refresh</normaloff>
-     <normalon>:/images/clipboard_refresh</normalon>:/images/clipboard_refresh</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/clipboard_refresh</normaloff>
+     <disabledoff>:/pktk/images/disabled/clipboard_refresh</disabledoff>
+     <disabledon>:/pktk/images/disabled/clipboard_refresh</disabledon>:/pktk/images/normal/clipboard_refresh</iconset>
    </property>
    <property name="text">
     <string>&amp;Check clipboard content</string>
@@ -1359,11 +1092,11 @@
   </action>
   <action name="actionClipboardPasteAsRefImage">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/clipboard_pinned</normaloff>
-     <normalon>:/images/clipboard_pinned</normalon>
-     <disabledoff>:/images_d/clipboard_pinned</disabledoff>
-     <disabledon>:/images_d/clipboard_pinned</disabledon>:/images/clipboard_pinned</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/clipboard_pinned</normaloff>
+     <normalon>:/pktk/images/normal/clipboard_pinned</normalon>
+     <disabledoff>:/pktk/images/disabled/clipboard_pinned</disabledoff>
+     <disabledon>:/pktk/images/disabled/clipboard_pinned</disabledon>:/pktk/images/normal/clipboard_pinned</iconset>
    </property>
    <property name="text">
     <string>Paste as reference &amp;image</string>
@@ -1374,11 +1107,11 @@
   </action>
   <action name="actionFileOpenAsImageReference">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/folder_pinned</normaloff>
-     <normalon>:/images/folder_pinned</normalon>
-     <disabledoff>:/images_d/folder_pinned</disabledoff>
-     <disabledon>:/images_d/folder_pinned</disabledon>:/images/folder_pinned</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/folder_open_pinned</normaloff>
+     <normalon>:/pktk/images/normal/folder_open_pinned</normalon>
+     <disabledoff>:/pktk/images/disabled/folder_open_pinned</disabledoff>
+     <disabledon>:/pktk/images/disabled/folder_open_pinned</disabledon>:/pktk/images/normal/folder_open_pinned</iconset>
    </property>
    <property name="text">
     <string>Open file as Reference &amp;Image</string>
@@ -1386,11 +1119,11 @@
   </action>
   <action name="actionFileOpenAsImageReferenceCloseBC">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/folder_pinned</normaloff>
-     <normalon>:/images/folder_pinned</normalon>
-     <disabledoff>:/images_d/folder_pinned</disabledoff>
-     <disabledon>:/images_d/folder_pinned</disabledon>:/images/folder_pinned</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/folder_open_pinned</normaloff>
+     <normalon>:/pktk/images/normal/folder_open_pinned</normalon>
+     <disabledoff>:/pktk/images/disabled/folder_open_pinned</disabledoff>
+     <disabledon>:/pktk/images/disabled/folder_open_pinned</disabledon>:/pktk/images/normal/folder_open_pinned</iconset>
    </property>
    <property name="text">
     <string>Op&amp;en file as Reference Image and close Buli Commander</string>
@@ -1398,11 +1131,9 @@
   </action>
   <action name="actionToolsCopyToClipboard">
    <property name="icon">
-    <iconset resource="dark_icons.qrc">
-     <normaloff>:/images/clipboard_pushback</normaloff>
-     <normalon>:/images/clipboard_pushback</normalon>
-     <disabledoff>:/images_d/clipboard_pushback</disabledoff>
-     <disabledon>:/images_d/clipboard_pushback</disabledon>:/images/clipboard_pushback</iconset>
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/clipboard_pushback</normaloff>
+     <disabledoff>:/pktk/images/disabled/clipboard_pushback</disabledoff>:/pktk/images/normal/clipboard_pushback</iconset>
    </property>
    <property name="text">
     <string>C&amp;opy to clipboard</string>
@@ -1444,8 +1175,8 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="dark_icons.qrc"/>
-  <include location="light_icons.qrc"/>
+  <include location="../../pktk/resources/svg/dark_icons.qrc"/>
+  <include location="../../pktk/resources/svg/light_icons.qrc"/>
  </resources>
  <connections/>
 </ui>

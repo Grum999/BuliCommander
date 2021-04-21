@@ -28,7 +28,7 @@ from PyQt5.QtCore import (
     )
 
 
-from ..pktk.pktk import (
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
@@ -158,5 +158,3 @@ class BCHistory(QObject):
         self.__list = tmpList
         if notifyChange and modified:
             self.changed.emit()
-
-

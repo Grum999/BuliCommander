@@ -49,35 +49,40 @@ from .bcfile import (
         BCFileProperty,
         BCFileThumbnailSize
     )
-from .bcsettings import BCSettingsKey
+from .bcsettings import (
+        BCSettingsKey,
+        BCSettings
+    )
 from .bcsystray import BCSysTray
-from .bctable import (
-        BCTable,
-        BCTableSettingsText,
-        BCTableSettingsTextCsv,
-        BCTableSettingsTextMarkdown
+
+from pktk.widgets.wtextedit import (
+        WTextEdit,
+        WTextEditDialog
     )
-from .bcwtextedit import (
-        BCWTextEdit,
-        BCWTextEditDialog
+from pktk.modules.strtable import (
+        TextTable,
+        TextTableSettingsText,
+        TextTableSettingsTextCsv,
+        TextTableSettingsTextMarkdown
     )
-from .bcwcolorbutton import (
-        BCWColorButton
-    )
-from .bcutils import (
+from pktk.modules.strutils import (
         bytesSizeToStr,
+        strDefault
+    )
+from pktk.modules.imgutils import (
         checkerBoardBrush,
-        strDefault,
-        tsToStr,
+        buildIcon
+    )
+from pktk.modules.timeutils import tsToStr
+from pktk.modules.utils import (
         cloneRect,
         Debug
     )
-
-from ..pktk.pktk import (
+from pktk.modules.ekrita import EKritaNode
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
-from ..pktk.ekrita import EKritaNode
 
 # -----------------------------------------------------------------------------
 
@@ -570,7 +575,7 @@ class BCExportFilesDialogBox(QDialog):
         self.__fileNfo = self.__uiController.panel().files()
         self.__selectedFileNfo = self.__uiController.panel().filesSelected()
 
-        self.__hasSavedSettings = self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED.id())
+        self.__hasSavedSettings = BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED)
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcexportfiles.ui')
         PyQt5.uic.loadUi(uiFileName, self)
@@ -648,11 +653,11 @@ class BCExportFilesDialogBox(QDialog):
             # - - - Page list
             self.lvFormatDocImgRef.itemSelectionChanged.connect(self.__slotPageFormatDocImgRefChanged)
 
-            self.__itemFormatDocImgRefPageSetup = QListWidgetItem(QIcon(":/images/page_setup"), "Page setup")
+            self.__itemFormatDocImgRefPageSetup = QListWidgetItem(buildIcon("pktk:page_setup"), "Page setup")
             self.__itemFormatDocImgRefPageSetup.setData(Qt.UserRole, BCExportFilesDialogBox.__PANEL_FORMAT_DOCIMG_PAGESETUP)
-            self.__itemFormatDocImgRefPageLayout = QListWidgetItem(QIcon(":/images/page_layout"), "Page layout")
+            self.__itemFormatDocImgRefPageLayout = QListWidgetItem(buildIcon("pktk:page_layout"), "Page layout")
             self.__itemFormatDocImgRefPageLayout.setData(Qt.UserRole, BCExportFilesDialogBox.__PANEL_FORMAT_DOCIMG_PAGELAYOUT)
-            self.__itemFormatDocImgRefThumbConfig = QListWidgetItem(QIcon(":/images/large_view"), "Thumbnail")
+            self.__itemFormatDocImgRefThumbConfig = QListWidgetItem(buildIcon("pktk:image"), "Thumbnail")
             self.__itemFormatDocImgRefThumbConfig.setData(Qt.UserRole, BCExportFilesDialogBox.__PANEL_FORMAT_DOCIMG_THUMBCONFIG)
 
             self.lvFormatDocImgRef.addItem(self.__itemFormatDocImgRefPageSetup)
@@ -722,6 +727,13 @@ class BCExportFilesDialogBox(QDialog):
             self.dsbFormatDocImgThumbsSpacingInner.valueChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
 
             self.pbFormatDocImgTextFontColor.colorChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
+
+            self.pbFormatDocImgPageBorderColor.colorPicker().setStandardLayout('hsva')
+            self.pbFormatDocImgThumbsBgColor.colorPicker().setStandardLayout('hsva')
+            self.pbFormatDocImgThumbsBorderColor.colorPicker().setStandardLayout('hsva')
+            self.pbFormatDocImgTextFontColor.colorPicker().setStandardLayout('hsva')
+            self.pbFormatDocImgPageBgColor.colorPicker().setStandardLayout('hsva')
+            self.pbFormatDocImgPaperColor.colorPicker().setStandardLayout('hsva')
 
             self.cbxFormatDocImgPreviewMode.currentIndexChanged.connect(self.__slotPageFormatDocImgPageLayoutChanged)
 
@@ -859,7 +871,7 @@ class BCExportFilesDialogBox(QDialog):
 
         self.swPages.setCurrentIndex(BCExportFilesDialogBox.__PAGE_PERIMETER)
 
-        checkedList = self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES.id())
+        checkedList = BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES)
         for itemIndex in range(self.lwPerimeterProperties.count()):
             if self.lwPerimeterProperties.item(itemIndex).data(BCExportFilesDialogBox.__FIELD_ID) in checkedList:
                 self.lwPerimeterProperties.item(itemIndex).setCheckState(Qt.Checked)
@@ -1039,11 +1051,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         """Load saved settings for page format"""
         def defaultText():
             # --- TEXT interface ---
-            self.cbFormatTextLayoutUserDefined.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_ACTIVE.id()))
-            self.teFormatTextLayoutUserDefined.setPlainText(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_CONTENT.id()))
+            self.cbFormatTextLayoutUserDefined.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_ACTIVE))
+            self.teFormatTextLayoutUserDefined.setPlainText(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_CONTENT))
 
-            self.cbFormatTextHeader.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_HEADER_ACTIVE.id()))
-            currentBordersStyle = self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE.id())
+            self.cbFormatTextHeader.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_HEADER_ACTIVE))
+            currentBordersStyle = BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE)
             if currentBordersStyle == 0:
                 self.rbFormatTextBorderNone.setChecked(True)
             elif currentBordersStyle == 1:
@@ -1052,10 +1064,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 self.rbFormatTextBorderSimple.setChecked(True)
             elif currentBordersStyle == 3:
                 self.rbFormatTextBorderDouble.setChecked(True)
-            self.cbFormatTextMinWidth.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_ACTIVE.id()))
-            self.hsFormatTextMinWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_VALUE.id()))
-            self.cbFormatTextMaxWidth.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_ACTIVE.id()))
-            self.hsFormatTextMaxWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_VALUE.id()))
+            self.cbFormatTextMinWidth.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_ACTIVE))
+            self.hsFormatTextMinWidth.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_VALUE))
+            self.cbFormatTextMaxWidth.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_ACTIVE))
+            self.hsFormatTextMaxWidth.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_VALUE))
 
             self.__slotPageFormatTextLayoutUserDefined()
             self.__slotPageFormatTextBordersCheck()
@@ -1067,38 +1079,38 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         def defaultTextMd():
             # --- TEXT/MARKDOWN interface ---
-            self.cbFormatTextMDLayoutUserDefined.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_ACTIVE.id()))
-            self.teFormatTextMDLayoutUserDefined.setPlainText(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT.id()))
+            self.cbFormatTextMDLayoutUserDefined.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_ACTIVE))
+            self.teFormatTextMDLayoutUserDefined.setPlainText(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT))
 
-            self.cbFormatTextMDIncludeThumbnails.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED.id()))
-            self.cbxFormatTextMDThumbnailsSize.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE.id()))
+            self.cbFormatTextMDIncludeThumbnails.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED))
+            self.cbxFormatTextMDThumbnailsSize.setCurrentIndex(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE))
 
             self.__slotPageFormatTextMDLayoutUserDefined()
             self.__slotPageFormatTextMDIncludeThumbnails()
 
         def defaultTextCsv():
             # --- TEXT/CSV interface ---
-            self.cbFormatTextCSVHeader.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE.id()))
-            self.cbFormatTextCSVEnclosedFields.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED.id()))
-            self.cbxFormatTextCSVSeparator.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR.id()))
+            self.cbFormatTextCSVHeader.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE))
+            self.cbFormatTextCSVEnclosedFields.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED))
+            self.cbxFormatTextCSVSeparator.setCurrentIndex(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR))
 
         def defaultDocPdf():
             # --- DOC/PDF interface ---
-            imageResolution=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_RESOLUTION.id())
+            imageResolution=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_RESOLUTION)
             imageIndex=3
             for itemIndex in range(self.cbxFormatDocImgPaperResolution.count()):
                 if self.cbxFormatDocImgPaperResolution.itemData(itemIndex) == imageResolution:
                     imageIndex = itemIndex
                     break
 
-            paperSize=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE.id())
+            paperSize=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE)
             paperIndex=2
             for itemIndex in range(self.cbxFormatDocImgPaperSize.count()):
                 if self.cbxFormatDocImgPaperSize.itemData(itemIndex) == paperSize:
                     paperIndex = itemIndex
                     break
 
-            unit=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_UNIT.id())
+            unit=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_UNIT)
             unitIndex=0
             for itemIndex in range(self.cbxFormatDocImgPaperUnit.count()):
                 if self.cbxFormatDocImgPaperUnit.itemData(itemIndex) == unit:
@@ -1109,50 +1121,50 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.lvFormatDocImgRef.setCurrentRow(0)
             self.cbxFormatDocImgPaperUnit.setCurrentIndex(unitIndex)
             self.cbxFormatDocImgPaperSize.setCurrentIndex(paperIndex)
-            self.cbxFormatDocImgPaperOrientation.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION.id()))
-            self.cbFormatDocImgPaperColor.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE.id()))
-            self.pbFormatDocImgPaperColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR.id()))
-            self.dsbFormatDocImgMarginsLeft.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LEFT.id()))
-            self.dsbFormatDocImgMarginsRight.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_RIGHT.id()))
-            self.dsbFormatDocImgMarginsTop.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_TOP.id()))
-            self.dsbFormatDocImgMarginsBottom.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_BOTTOM.id()))
-            self.cbFormatDocImgMarginsLinked.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LINKED.id()))
+            self.cbxFormatDocImgPaperOrientation.setCurrentIndex(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION))
+            self.cbFormatDocImgPaperColor.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE))
+            self.pbFormatDocImgPaperColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR))
+            self.dsbFormatDocImgMarginsLeft.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LEFT))
+            self.dsbFormatDocImgMarginsRight.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_RIGHT))
+            self.dsbFormatDocImgMarginsTop.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_TOP))
+            self.dsbFormatDocImgMarginsBottom.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_BOTTOM))
+            self.cbFormatDocImgMarginsLinked.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LINKED))
 
-            self.cbFormatDocImgHeader.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_ACTIVE.id()))
-            self.cbFormatDocImgFooter.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotesPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_PREVIEW.id()))
+            self.cbFormatDocImgHeader.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_ACTIVE))
+            self.cbFormatDocImgFooter.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_ACTIVE))
+            self.cbFormatDocImgFPageNotes.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_ACTIVE))
+            self.cbFormatDocImgFPageNotesPreview.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_PREVIEW))
 
-            self.bcsteFormatDocImgHeader.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_CONTENT.id()))
-            self.bcsteFormatDocImgFooter.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_CONTENT.id()))
-            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_CONTENT.id()))
+            self.bcsteFormatDocImgHeader.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_CONTENT))
+            self.bcsteFormatDocImgFooter.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_CONTENT))
+            self.bcsteFormatDocImgFPageNotes.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_CONTENT))
 
-            self.sbFormatDocImgThumbsPerRow.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_NBPERROW.id()))
-            self.dsbFormatDocImgThumbsSpacingOuter.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_OUTER.id()))
+            self.sbFormatDocImgThumbsPerRow.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_NBPERROW))
+            self.dsbFormatDocImgThumbsSpacingOuter.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_OUTER))
 
-            self.cbFormatDocImgPageBgColor.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_ACTIVE.id()))
-            self.pbFormatDocImgPageBgColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_COL.id()))
+            self.cbFormatDocImgPageBgColor.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_ACTIVE))
+            self.pbFormatDocImgPageBgColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_COL))
 
-            self.cbFormatDocImgPageBorder.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_ACTIVE.id()))
-            self.pbFormatDocImgPageBorderColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_COL.id()))
-            self.dsbFormatDocImgPageBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_WIDTH.id()))
-            self.dsbFormatDocImgPageBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_RADIUS.id()))
+            self.cbFormatDocImgPageBorder.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_ACTIVE))
+            self.pbFormatDocImgPageBorderColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_COL))
+            self.dsbFormatDocImgPageBorderWidth.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_WIDTH))
+            self.dsbFormatDocImgPageBorderRadius.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_RADIUS))
 
-            self.cbFormatDocImgThumbsBg.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE.id()))
-            self.pbFormatDocImgThumbsBgColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL.id()))
-            self.cbFormatDocImgThumbsBorder.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_ACTIVE.id()))
-            self.pbFormatDocImgThumbsBorderColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_COL.id()))
-            self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_WIDTH.id()))
-            self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS.id()))
-            self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_INNER.id()))
-            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD.id())))
+            self.cbFormatDocImgThumbsBg.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE))
+            self.pbFormatDocImgThumbsBgColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL))
+            self.cbFormatDocImgThumbsBorder.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_ACTIVE))
+            self.pbFormatDocImgThumbsBorderColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_COL))
+            self.dsbFormatDocImgThumbsBorderWidth.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_WIDTH))
+            self.dsbFormatDocImgThumbsBorderRadius.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS))
+            self.dsbFormatDocImgThumbsSpacingInner.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_INNER))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD)))
 
-            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS.id())))
-            self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTNAME.id())))
-            self.dsbFormatDocImgTextFontSize.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTSIZE.id()))
-            self.pbFormatDocImgTextFontColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTCOL.id()))
+            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS)))
+            self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTNAME)))
+            self.dsbFormatDocImgTextFontSize.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTSIZE))
+            self.pbFormatDocImgTextFontColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTCOL))
 
-            self.cbxFormatDocImgPreviewMode.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE.id()))
+            self.cbxFormatDocImgPreviewMode.setCurrentIndex(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE))
 
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
             self.__slotPageFormatDocImgPageSetupUnitChanged()
@@ -1165,21 +1177,21 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         def defaultImgKra():
             # --- IMG/KRA interface ---
-            imageResolution=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION.id())
+            imageResolution=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION)
             imageIndex=3
             for itemIndex in range(self.cbxFormatDocImgPaperResolution.count()):
                 if self.cbxFormatDocImgPaperResolution.itemData(itemIndex) == imageResolution:
                     imageIndex = itemIndex
                     break
 
-            paperSize=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE.id())
+            paperSize=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE)
             paperIndex=2
             for itemIndex in range(self.cbxFormatDocImgPaperSize.count()):
                 if self.cbxFormatDocImgPaperSize.itemData(itemIndex) == paperSize:
                     paperIndex = itemIndex
                     break
 
-            unit=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_UNIT.id())
+            unit=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_UNIT)
             unitIndex=0
             for itemIndex in range(self.cbxFormatDocImgPaperUnit.count()):
                 if self.cbxFormatDocImgPaperUnit.itemData(itemIndex) == unit:
@@ -1191,53 +1203,53 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.cbxFormatDocImgPaperResolution.setCurrentIndex(imageIndex)
             self.cbxFormatDocImgPaperUnit.setCurrentIndex(unitIndex)
             self.cbxFormatDocImgPaperSize.setCurrentIndex(paperIndex)
-            self.cbxFormatDocImgPaperOrientation.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION.id()))
-            self.cbFormatDocImgPaperColor.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE.id()))
-            self.pbFormatDocImgPaperColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR.id()))
-            self.dsbFormatDocImgMarginsLeft.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LEFT.id()))
-            self.dsbFormatDocImgMarginsRight.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_RIGHT.id()))
-            self.dsbFormatDocImgMarginsTop.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_TOP.id()))
-            self.dsbFormatDocImgMarginsBottom.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_BOTTOM.id()))
-            self.cbFormatDocImgMarginsLinked.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LINKED.id()))
+            self.cbxFormatDocImgPaperOrientation.setCurrentIndex(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION))
+            self.cbFormatDocImgPaperColor.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE))
+            self.pbFormatDocImgPaperColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR))
+            self.dsbFormatDocImgMarginsLeft.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LEFT))
+            self.dsbFormatDocImgMarginsRight.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_RIGHT))
+            self.dsbFormatDocImgMarginsTop.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_TOP))
+            self.dsbFormatDocImgMarginsBottom.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_BOTTOM))
+            self.cbFormatDocImgMarginsLinked.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LINKED))
 
-            self.cbFormatDocImgHeader.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_ACTIVE.id()))
-            self.cbFormatDocImgFooter.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotesPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_PREVIEW.id()))
+            self.cbFormatDocImgHeader.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_ACTIVE))
+            self.cbFormatDocImgFooter.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_ACTIVE))
+            self.cbFormatDocImgFPageNotes.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_ACTIVE))
+            self.cbFormatDocImgFPageNotesPreview.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_PREVIEW))
 
-            self.bcsteFormatDocImgHeader.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_CONTENT.id()))
-            self.bcsteFormatDocImgFooter.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_CONTENT.id()))
-            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_CONTENT.id()))
+            self.bcsteFormatDocImgHeader.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_CONTENT))
+            self.bcsteFormatDocImgFooter.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_CONTENT))
+            self.bcsteFormatDocImgFPageNotes.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_CONTENT))
 
-            self.sbFormatDocImgThumbsPerRow.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_NBPERROW.id()))
-            self.dsbFormatDocImgThumbsSpacingOuter.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_OUTER.id()))
+            self.sbFormatDocImgThumbsPerRow.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_NBPERROW))
+            self.dsbFormatDocImgThumbsSpacingOuter.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_OUTER))
 
-            self.cbFormatDocImgPageBgColor.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_ACTIVE.id()))
-            self.pbFormatDocImgPageBgColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_COL.id()))
+            self.cbFormatDocImgPageBgColor.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_ACTIVE))
+            self.pbFormatDocImgPageBgColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_COL))
 
-            self.cbFormatDocImgPageBorder.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_ACTIVE.id()))
-            self.pbFormatDocImgPageBorderColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_COL.id()))
-            self.dsbFormatDocImgPageBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_WIDTH.id()))
-            self.dsbFormatDocImgPageBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_RADIUS.id()))
+            self.cbFormatDocImgPageBorder.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_ACTIVE))
+            self.pbFormatDocImgPageBorderColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_COL))
+            self.dsbFormatDocImgPageBorderWidth.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_WIDTH))
+            self.dsbFormatDocImgPageBorderRadius.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_RADIUS))
 
-            self.cbFormatDocImgThumbsBg.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_ACTIVE.id()))
-            self.pbFormatDocImgThumbsBgColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL.id()))
-            self.cbFormatDocImgThumbsBorder.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_ACTIVE.id()))
-            self.pbFormatDocImgThumbsBorderColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_COL.id()))
-            self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_WIDTH.id()))
-            self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS.id()))
-            self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_INNER.id()))
-            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD.id())))
+            self.cbFormatDocImgThumbsBg.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_ACTIVE))
+            self.pbFormatDocImgThumbsBgColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL))
+            self.cbFormatDocImgThumbsBorder.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_ACTIVE))
+            self.pbFormatDocImgThumbsBorderColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_COL))
+            self.dsbFormatDocImgThumbsBorderWidth.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_WIDTH))
+            self.dsbFormatDocImgThumbsBorderRadius.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS))
+            self.dsbFormatDocImgThumbsSpacingInner.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_INNER))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD)))
 
-            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS.id())))
-            self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTNAME.id())))
-            self.dsbFormatDocImgTextFontSize.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTSIZE.id()))
-            self.pbFormatDocImgTextFontColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTCOL.id()))
+            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS)))
+            self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTNAME)))
+            self.dsbFormatDocImgTextFontSize.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTSIZE))
+            self.pbFormatDocImgTextFontColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTCOL))
 
             # placed here instead of __loadSettingsPageTarget
-            self.cbTargetResultFileOpen.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE.id()))
+            self.cbTargetResultFileOpen.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE))
 
-            self.cbxFormatDocImgPreviewMode.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE.id()))
+            self.cbxFormatDocImgPreviewMode.setCurrentIndex(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE))
 
 
             self.__updateFormatDocImgPaperSizeList()
@@ -1251,21 +1263,21 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         def defaultImgPng():
             # --- IMG/PNG interface ---
-            imageResolution=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION.id())
+            imageResolution=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION)
             imageIndex=3
             for itemIndex in range(self.cbxFormatDocImgPaperResolution.count()):
                 if self.cbxFormatDocImgPaperResolution.itemData(itemIndex) == imageResolution:
                     imageIndex = itemIndex
                     break
 
-            paperSize=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE.id())
+            paperSize=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE)
             paperIndex=2
             for itemIndex in range(self.cbxFormatDocImgPaperSize.count()):
                 if self.cbxFormatDocImgPaperSize.itemData(itemIndex) == paperSize:
                     paperIndex = itemIndex
                     break
 
-            unit=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_UNIT.id())
+            unit=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_UNIT)
             unitIndex=0
             for itemIndex in range(self.cbxFormatDocImgPaperUnit.count()):
                 if self.cbxFormatDocImgPaperUnit.itemData(itemIndex) == unit:
@@ -1277,53 +1289,53 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.cbxFormatDocImgPaperResolution.setCurrentIndex(imageIndex)
             self.cbxFormatDocImgPaperUnit.setCurrentIndex(unitIndex)
             self.cbxFormatDocImgPaperSize.setCurrentIndex(paperIndex)
-            self.cbxFormatDocImgPaperOrientation.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION.id()))
-            self.cbFormatDocImgPaperColor.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE.id()))
-            self.pbFormatDocImgPaperColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR.id()))
-            self.dsbFormatDocImgMarginsLeft.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LEFT.id()))
-            self.dsbFormatDocImgMarginsRight.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_RIGHT.id()))
-            self.dsbFormatDocImgMarginsTop.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_TOP.id()))
-            self.dsbFormatDocImgMarginsBottom.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_BOTTOM.id()))
-            self.cbFormatDocImgMarginsLinked.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LINKED.id()))
+            self.cbxFormatDocImgPaperOrientation.setCurrentIndex(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION))
+            self.cbFormatDocImgPaperColor.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE))
+            self.pbFormatDocImgPaperColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR))
+            self.dsbFormatDocImgMarginsLeft.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LEFT))
+            self.dsbFormatDocImgMarginsRight.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_RIGHT))
+            self.dsbFormatDocImgMarginsTop.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_TOP))
+            self.dsbFormatDocImgMarginsBottom.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_BOTTOM))
+            self.cbFormatDocImgMarginsLinked.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LINKED))
 
-            self.cbFormatDocImgHeader.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_ACTIVE.id()))
-            self.cbFormatDocImgFooter.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotesPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_PREVIEW.id()))
+            self.cbFormatDocImgHeader.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_ACTIVE))
+            self.cbFormatDocImgFooter.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_ACTIVE))
+            self.cbFormatDocImgFPageNotes.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_ACTIVE))
+            self.cbFormatDocImgFPageNotesPreview.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_PREVIEW))
 
-            self.bcsteFormatDocImgHeader.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_CONTENT.id()))
-            self.bcsteFormatDocImgFooter.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_CONTENT.id()))
-            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_CONTENT.id()))
+            self.bcsteFormatDocImgHeader.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_CONTENT))
+            self.bcsteFormatDocImgFooter.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_CONTENT))
+            self.bcsteFormatDocImgFPageNotes.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_CONTENT))
 
-            self.sbFormatDocImgThumbsPerRow.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_NBPERROW.id()))
-            self.dsbFormatDocImgThumbsSpacingOuter.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_OUTER.id()))
+            self.sbFormatDocImgThumbsPerRow.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_NBPERROW))
+            self.dsbFormatDocImgThumbsSpacingOuter.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_OUTER))
 
-            self.cbFormatDocImgPageBgColor.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_ACTIVE.id()))
-            self.pbFormatDocImgPageBgColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_COL.id()))
+            self.cbFormatDocImgPageBgColor.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_ACTIVE))
+            self.pbFormatDocImgPageBgColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_COL))
 
-            self.cbFormatDocImgPageBorder.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_ACTIVE.id()))
-            self.pbFormatDocImgPageBorderColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_COL.id()))
-            self.dsbFormatDocImgPageBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_WIDTH.id()))
-            self.dsbFormatDocImgPageBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_RADIUS.id()))
+            self.cbFormatDocImgPageBorder.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_ACTIVE))
+            self.pbFormatDocImgPageBorderColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_COL))
+            self.dsbFormatDocImgPageBorderWidth.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_WIDTH))
+            self.dsbFormatDocImgPageBorderRadius.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_RADIUS))
 
-            self.cbFormatDocImgThumbsBg.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_ACTIVE.id()))
-            self.pbFormatDocImgThumbsBgColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL.id()))
-            self.cbFormatDocImgThumbsBorder.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_ACTIVE.id()))
-            self.pbFormatDocImgThumbsBorderColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_COL.id()))
-            self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_WIDTH.id()))
-            self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS.id()))
-            self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_INNER.id()))
-            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD.id())))
+            self.cbFormatDocImgThumbsBg.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_ACTIVE))
+            self.pbFormatDocImgThumbsBgColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL))
+            self.cbFormatDocImgThumbsBorder.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_ACTIVE))
+            self.pbFormatDocImgThumbsBorderColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_COL))
+            self.dsbFormatDocImgThumbsBorderWidth.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_WIDTH))
+            self.dsbFormatDocImgThumbsBorderRadius.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS))
+            self.dsbFormatDocImgThumbsSpacingInner.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_INNER))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD)))
 
-            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS.id())))
-            self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME.id())))
-            self.dsbFormatDocImgTextFontSize.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTSIZE.id()))
-            self.pbFormatDocImgTextFontColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTCOL.id()))
+            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS)))
+            self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME)))
+            self.dsbFormatDocImgTextFontSize.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTSIZE))
+            self.pbFormatDocImgTextFontColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTCOL))
 
             # placed here instead of __loadSettingsPageTarget
-            self.cbTargetResultFileOpen.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE.id()))
+            self.cbTargetResultFileOpen.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE))
 
-            self.cbxFormatDocImgPreviewMode.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE.id()))
+            self.cbxFormatDocImgPreviewMode.setCurrentIndex(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE))
 
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
             self.__slotPageFormatDocImgPageSetupUnitChanged()
@@ -1336,21 +1348,21 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         def defaultImgJpg():
             # --- IMG/JPG interface ---
-            imageResolution=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION.id())
+            imageResolution=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION)
             imageIndex=3
             for itemIndex in range(self.cbxFormatDocImgPaperResolution.count()):
                 if self.cbxFormatDocImgPaperResolution.itemData(itemIndex) == imageResolution:
                     imageIndex = itemIndex
                     break
 
-            paperSize=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE.id())
+            paperSize=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE)
             paperIndex=2
             for itemIndex in range(self.cbxFormatDocImgPaperSize.count()):
                 if self.cbxFormatDocImgPaperSize.itemData(itemIndex) == paperSize:
                     paperIndex = itemIndex
                     break
 
-            unit=self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_UNIT.id())
+            unit=BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_UNIT)
             unitIndex=0
             for itemIndex in range(self.cbxFormatDocImgPaperUnit.count()):
                 if self.cbxFormatDocImgPaperUnit.itemData(itemIndex) == unit:
@@ -1362,53 +1374,53 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.cbxFormatDocImgPaperResolution.setCurrentIndex(imageIndex)
             self.cbxFormatDocImgPaperUnit.setCurrentIndex(unitIndex)
             self.cbxFormatDocImgPaperSize.setCurrentIndex(paperIndex)
-            self.cbxFormatDocImgPaperOrientation.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION.id()))
-            self.cbFormatDocImgPaperColor.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE.id()))
-            self.pbFormatDocImgPaperColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR.id()))
-            self.dsbFormatDocImgMarginsLeft.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LEFT.id()))
-            self.dsbFormatDocImgMarginsRight.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_RIGHT.id()))
-            self.dsbFormatDocImgMarginsTop.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_TOP.id()))
-            self.dsbFormatDocImgMarginsBottom.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_BOTTOM.id()))
-            self.cbFormatDocImgMarginsLinked.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LINKED.id()))
+            self.cbxFormatDocImgPaperOrientation.setCurrentIndex(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION))
+            self.cbFormatDocImgPaperColor.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE))
+            self.pbFormatDocImgPaperColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR))
+            self.dsbFormatDocImgMarginsLeft.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LEFT))
+            self.dsbFormatDocImgMarginsRight.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_RIGHT))
+            self.dsbFormatDocImgMarginsTop.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_TOP))
+            self.dsbFormatDocImgMarginsBottom.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_BOTTOM))
+            self.cbFormatDocImgMarginsLinked.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LINKED))
 
-            self.cbFormatDocImgHeader.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_ACTIVE.id()))
-            self.cbFormatDocImgFooter.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotes.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_ACTIVE.id()))
-            self.cbFormatDocImgFPageNotesPreview.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_PREVIEW.id()))
+            self.cbFormatDocImgHeader.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_ACTIVE))
+            self.cbFormatDocImgFooter.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_ACTIVE))
+            self.cbFormatDocImgFPageNotes.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_ACTIVE))
+            self.cbFormatDocImgFPageNotesPreview.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_PREVIEW))
 
-            self.bcsteFormatDocImgHeader.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_CONTENT.id()))
-            self.bcsteFormatDocImgFooter.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_CONTENT.id()))
-            self.bcsteFormatDocImgFPageNotes.setHtml(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_CONTENT.id()))
+            self.bcsteFormatDocImgHeader.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_CONTENT))
+            self.bcsteFormatDocImgFooter.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_CONTENT))
+            self.bcsteFormatDocImgFPageNotes.setHtml(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_CONTENT))
 
-            self.sbFormatDocImgThumbsPerRow.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_NBPERROW.id()))
-            self.dsbFormatDocImgThumbsSpacingOuter.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_OUTER.id()))
+            self.sbFormatDocImgThumbsPerRow.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_NBPERROW))
+            self.dsbFormatDocImgThumbsSpacingOuter.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_OUTER))
 
-            self.cbFormatDocImgPageBgColor.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_ACTIVE.id()))
-            self.pbFormatDocImgPageBgColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_COL.id()))
+            self.cbFormatDocImgPageBgColor.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_ACTIVE))
+            self.pbFormatDocImgPageBgColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_COL))
 
-            self.cbFormatDocImgPageBorder.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_ACTIVE.id()))
-            self.pbFormatDocImgPageBorderColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_COL.id()))
-            self.dsbFormatDocImgPageBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_WIDTH.id()))
-            self.dsbFormatDocImgPageBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_RADIUS.id()))
+            self.cbFormatDocImgPageBorder.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_ACTIVE))
+            self.pbFormatDocImgPageBorderColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_COL))
+            self.dsbFormatDocImgPageBorderWidth.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_WIDTH))
+            self.dsbFormatDocImgPageBorderRadius.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_RADIUS))
 
-            self.cbFormatDocImgThumbsBg.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_ACTIVE.id()))
-            self.pbFormatDocImgThumbsBgColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL.id()))
-            self.cbFormatDocImgThumbsBorder.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_ACTIVE.id()))
-            self.pbFormatDocImgThumbsBorderColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_COL.id()))
-            self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_WIDTH.id()))
-            self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS.id()))
-            self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_INNER.id()))
-            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD.id())))
+            self.cbFormatDocImgThumbsBg.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_ACTIVE))
+            self.pbFormatDocImgThumbsBgColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL))
+            self.cbFormatDocImgThumbsBorder.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_ACTIVE))
+            self.pbFormatDocImgThumbsBorderColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_COL))
+            self.dsbFormatDocImgThumbsBorderWidth.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_WIDTH))
+            self.dsbFormatDocImgThumbsBorderRadius.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS))
+            self.dsbFormatDocImgThumbsSpacingInner.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_INNER))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD)))
 
-            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS.id())))
-            self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME.id())))
-            self.dsbFormatDocImgTextFontSize.setValue(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTSIZE.id()))
-            self.pbFormatDocImgTextFontColor.setColor(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTCOL.id()))
+            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS)))
+            self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME)))
+            self.dsbFormatDocImgTextFontSize.setValue(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTSIZE))
+            self.pbFormatDocImgTextFontColor.setColor(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTCOL))
 
             # placed here instead of __loadSettingsPageTarget
-            self.cbTargetResultFileOpen.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE.id()))
+            self.cbTargetResultFileOpen.setChecked(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE))
 
-            self.cbxFormatDocImgPreviewMode.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE.id()))
+            self.cbxFormatDocImgPreviewMode.setCurrentIndex(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE))
 
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
             self.__slotPageFormatDocImgPageSetupUnitChanged()
@@ -1426,7 +1438,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         if target is None:
             # --- ALL format ---
-            self.cbxFormat.setCurrentIndex(self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT.id()))
+            self.cbxFormat.setCurrentIndex(BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT))
             self.__slotPageFormatFormatChanged()
 
             # -- pages
@@ -1657,7 +1669,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             painterThumb.setPen(pen)
 
             # thumb image
-            painterThumb.drawPixmap(imgLeft, imgTop, QIcon(':/images/large_view').pixmap(thumbSize - 5, thumbSize - 5))
+            painterThumb.drawPixmap(imgLeft, imgTop, buildIcon('pktk:image').pixmap(thumbSize - 5, thumbSize - 5))
 
             painterThumb.setCompositionMode(QPainter.CompositionMode_SourceIn)
             painterThumb.fillRect(imgLeft, imgTop, thumbSize - 5, thumbSize - 5, brush)
@@ -1905,7 +1917,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             checked = self.cbFormatTextLayoutUserDefined.isChecked()
 
         self.teFormatTextLayoutUserDefined.setEnabled(checked)
-        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextBordersCheck(self, checked=None):
         # user defined borders option ahs been checked/unchecked
@@ -1915,11 +1926,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if not checked:
             self.rbFormatTextBorderNone.setChecked(True)
 
-        self.__updateFormatDocImgConfigurationPreview()
-
     def __slotPageFormatTextBordersStyleCheck(self, checked=None):
         self.cbFormatTextBorders.setChecked(not self.rbFormatTextBorderNone.isChecked())
-        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMinWidthCheck(self, checked=None):
         # State of checkbox Minimum width has been changed
@@ -1928,7 +1936,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         self.hsFormatTextMinWidth.setEnabled(checked)
         self.spFormatTextMinWidth.setEnabled(checked)
-        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMaxWidthCheck(self, checked=None):
         # State of checkbox Maximum width has been changed
@@ -1937,7 +1944,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         self.hsFormatTextMaxWidth.setEnabled(checked)
         self.spFormatTextMaxWidth.setEnabled(checked)
-        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMinWidthChanged(self, value=None):
         # Value of Minimum width has changed
@@ -1947,7 +1953,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         if value > self.hsFormatTextMaxWidth.value():
             self.hsFormatTextMaxWidth.setValue(value)
-        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMaxWidthChanged(self, value=None):
         # Value of Maximum width has changed
@@ -1957,7 +1962,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         if value < self.hsFormatTextMinWidth.value():
             self.hsFormatTextMinWidth.setValue(value)
-        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMDLayoutUserDefined(self, checked=None):
         # user defined layout option has been checked/unchecked
@@ -1965,7 +1969,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             checked = self.cbFormatTextMDLayoutUserDefined.isChecked()
 
         self.teFormatTextMDLayoutUserDefined.setEnabled(checked)
-        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatTextMDIncludeThumbnails(self, checked=None):
         # include thumbnail in md export has been checked/unchecked
@@ -1973,7 +1976,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             checked = self.cbFormatTextMDIncludeThumbnails.isChecked()
 
         self.cbxFormatTextMDThumbnailsSize.setEnabled(checked)
-        self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgRefChanged(self):
         """Set page according to current configuration type"""
@@ -2174,7 +2176,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.__loadDefaultPageTarget()
             return
 
-        self.leTargetResultFile.setProperty('__bcExtension', self.__uiController.settings().option(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME.id()))
+        self.leTargetResultFile.setProperty('__bcExtension', BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME))
 
     # -- Other functions -------------------------------------------------
     def __goPreviousPage(self, action):
@@ -2313,7 +2315,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
                     'header.active': self.cbFormatTextHeader.isChecked(),
 
-                    'border.style': BCTableSettingsText.BORDER_NONE,
+                    'border.style': TextTableSettingsText.BORDER_NONE,
 
                     'minimumWidth.active': self.cbFormatTextMinWidth.isChecked(),
                     'minimumWidth.value': self.spFormatTextMinWidth.value(),
@@ -2326,11 +2328,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 }
 
             if self.rbFormatTextBorderBasic.isChecked():
-                returned['border.style'] = BCTableSettingsText.BORDER_BASIC
+                returned['border.style'] = TextTableSettingsText.BORDER_BASIC
             elif self.rbFormatTextBorderSimple.isChecked():
-                returned['border.style'] = BCTableSettingsText.BORDER_SIMPLE
+                returned['border.style'] = TextTableSettingsText.BORDER_SIMPLE
             elif self.rbFormatTextBorderDouble.isChecked():
-                returned['border.style'] = BCTableSettingsText.BORDER_DOUBLE
+                returned['border.style'] = TextTableSettingsText.BORDER_DOUBLE
 
         elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_CSV:
             returned = {
@@ -2409,18 +2411,18 @@ Files:         {items:files.count} ({items:files.size(KiB)})
     def __saveSettings(self):
         """Save current export configuration to settings"""
         def __savePagePerimeter():
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES, [self.lwPerimeterProperties.item(itemIndex).data(BCExportFilesDialogBox.__FIELD_ID) for itemIndex in range(self.lwPerimeterProperties.count()) if self.lwPerimeterProperties.item(itemIndex).checkState() == Qt.Checked])
+            BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES, [self.lwPerimeterProperties.item(itemIndex).data(BCExportFilesDialogBox.__FIELD_ID) for itemIndex in range(self.lwPerimeterProperties.count()) if self.lwPerimeterProperties.item(itemIndex).checkState() == Qt.Checked])
 
         def __savePageFormat():
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT, self.cbxFormat.currentIndex())
+            BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT, self.cbxFormat.currentIndex())
 
             if self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT:
                 # -- TEXT format --
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_ACTIVE, self.cbFormatTextLayoutUserDefined.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_CONTENT, self.teFormatTextLayoutUserDefined.toPlainText())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_HEADER_ACTIVE, self.cbFormatTextHeader.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_ACTIVE, self.cbFormatTextLayoutUserDefined.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_CONTENT, self.teFormatTextLayoutUserDefined.toPlainText())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_HEADER_ACTIVE, self.cbFormatTextHeader.isChecked())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE, self.cbFormatTextBorders.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE, self.cbFormatTextBorders.isChecked())
 
                 if self.rbFormatTextBorderNone.isChecked():
                     currentBordersStyle = 0
@@ -2430,253 +2432,253 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                     currentBordersStyle = 2
                 elif self.rbFormatTextBorderDouble.isChecked():
                     currentBordersStyle = 3
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE, currentBordersStyle)
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE, currentBordersStyle)
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_ACTIVE, self.cbFormatTextMinWidth.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_VALUE, self.hsFormatTextMinWidth.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_ACTIVE, self.cbFormatTextMaxWidth.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_VALUE, self.hsFormatTextMaxWidth.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_ACTIVE, self.cbFormatTextMinWidth.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_VALUE, self.hsFormatTextMinWidth.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_ACTIVE, self.cbFormatTextMaxWidth.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_VALUE, self.hsFormatTextMaxWidth.value())
             elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_MD:
                 # -- TEXT/MARKDOWN format --
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_ACTIVE, self.cbFormatTextMDLayoutUserDefined.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT, self.teFormatTextMDLayoutUserDefined.toPlainText())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED, self.cbFormatTextMDIncludeThumbnails.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE, self.cbxFormatTextMDThumbnailsSize.currentIndex())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_ACTIVE, self.cbFormatTextMDLayoutUserDefined.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT, self.teFormatTextMDLayoutUserDefined.toPlainText())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED, self.cbFormatTextMDIncludeThumbnails.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE, self.cbxFormatTextMDThumbnailsSize.currentIndex())
             elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_CSV:
                 # -- TEXT/CSV format --
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE, self.cbFormatTextCSVHeader.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED, self.cbFormatTextCSVEnclosedFields.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR, self.cbxFormatTextCSVSeparator.currentIndex())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE, self.cbFormatTextCSVHeader.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED, self.cbFormatTextCSVEnclosedFields.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR, self.cbxFormatTextCSVSeparator.currentIndex())
             elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_DOC_PDF:
                 # -- DOC/PDF format --
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_RESOLUTION, self.cbxFormatDocImgPaperResolution.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE, self.cbxFormatDocImgPaperSize.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_UNIT, self.cbxFormatDocImgPaperUnit.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION, self.cbxFormatDocImgPaperOrientation.currentIndex())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE, self.cbFormatDocImgPaperColor.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR, self.pbFormatDocImgPaperColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_RESOLUTION, self.cbxFormatDocImgPaperResolution.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE, self.cbxFormatDocImgPaperSize.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_UNIT, self.cbxFormatDocImgPaperUnit.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION, self.cbxFormatDocImgPaperOrientation.currentIndex())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE, self.cbFormatDocImgPaperColor.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR, self.pbFormatDocImgPaperColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LEFT, self.dsbFormatDocImgMarginsLeft.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_RIGHT, self.dsbFormatDocImgMarginsRight.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_TOP, self.dsbFormatDocImgMarginsTop.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_BOTTOM, self.dsbFormatDocImgMarginsBottom.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LINKED, self.cbFormatDocImgMarginsLinked.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LEFT, self.dsbFormatDocImgMarginsLeft.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_RIGHT, self.dsbFormatDocImgMarginsRight.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_TOP, self.dsbFormatDocImgMarginsTop.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_BOTTOM, self.dsbFormatDocImgMarginsBottom.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LINKED, self.cbFormatDocImgMarginsLinked.isChecked())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_ACTIVE, self.cbFormatDocImgHeader.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_ACTIVE, self.cbFormatDocImgFooter.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_ACTIVE, self.cbFormatDocImgFPageNotes.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_PREVIEW, self.cbFormatDocImgFPageNotesPreview.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_ACTIVE, self.cbFormatDocImgHeader.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_ACTIVE, self.cbFormatDocImgFooter.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_ACTIVE, self.cbFormatDocImgFPageNotes.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_PREVIEW, self.cbFormatDocImgFPageNotesPreview.isChecked())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_CONTENT, self.bcsteFormatDocImgHeader.toHtml())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
-
-
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
-
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_ACTIVE, self.cbFormatDocImgPageBorder.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_COL, self.pbFormatDocImgPageBorderColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_HEADER_CONTENT, self.bcsteFormatDocImgHeader.toHtml())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
 
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
-                #self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_TEXT, self.xxx.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_ACTIVE, self.cbFormatDocImgThumbsBorder.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_ACTIVE, self.cbFormatDocImgPageBorder.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_COL, self.pbFormatDocImgPageBorderColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE, self.cbxFormatDocImgPreviewMode.currentIndex())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
+                #BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_TEXT, self.xxx.value())
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_ACTIVE, self.cbFormatDocImgThumbsBorder.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE, self.cbxFormatDocImgPreviewMode.currentIndex())
             elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_KRA:
                 # -- IMG/KRA format --
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION, self.cbxFormatDocImgPaperResolution.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE, self.cbxFormatDocImgPaperSize.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_UNIT, self.cbxFormatDocImgPaperUnit.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION, self.cbxFormatDocImgPaperOrientation.currentIndex())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE, self.cbFormatDocImgPaperColor.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR, self.pbFormatDocImgPaperColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION, self.cbxFormatDocImgPaperResolution.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE, self.cbxFormatDocImgPaperSize.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_UNIT, self.cbxFormatDocImgPaperUnit.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION, self.cbxFormatDocImgPaperOrientation.currentIndex())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE, self.cbFormatDocImgPaperColor.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR, self.pbFormatDocImgPaperColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LEFT, self.dsbFormatDocImgMarginsLeft.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_RIGHT, self.dsbFormatDocImgMarginsRight.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_TOP, self.dsbFormatDocImgMarginsTop.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_BOTTOM, self.dsbFormatDocImgMarginsBottom.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LINKED, self.cbFormatDocImgMarginsLinked.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LEFT, self.dsbFormatDocImgMarginsLeft.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_RIGHT, self.dsbFormatDocImgMarginsRight.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_TOP, self.dsbFormatDocImgMarginsTop.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_BOTTOM, self.dsbFormatDocImgMarginsBottom.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LINKED, self.cbFormatDocImgMarginsLinked.isChecked())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_ACTIVE, self.cbFormatDocImgHeader.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_ACTIVE, self.cbFormatDocImgFooter.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_ACTIVE, self.cbFormatDocImgFPageNotes.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_PREVIEW, self.cbFormatDocImgFPageNotesPreview.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_ACTIVE, self.cbFormatDocImgHeader.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_ACTIVE, self.cbFormatDocImgFooter.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_ACTIVE, self.cbFormatDocImgFPageNotes.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_PREVIEW, self.cbFormatDocImgFPageNotesPreview.isChecked())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_CONTENT, self.bcsteFormatDocImgHeader.toHtml())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
-
-
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
-
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_ACTIVE, self.cbFormatDocImgPageBorder.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_COL, self.pbFormatDocImgPageBorderColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_HEADER_CONTENT, self.bcsteFormatDocImgHeader.toHtml())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
 
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
-                #self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_TEXT, self.xxx.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_ACTIVE, self.cbFormatDocImgThumbsBorder.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_ACTIVE, self.cbFormatDocImgPageBorder.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_COL, self.pbFormatDocImgPageBorderColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE, self.cbTargetResultFileOpen.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
+                #BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_TEXT, self.xxx.value())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE, self.cbxFormatDocImgPreviewMode.currentIndex())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_ACTIVE, self.cbFormatDocImgThumbsBorder.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE, self.cbTargetResultFileOpen.isChecked())
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE, self.cbxFormatDocImgPreviewMode.currentIndex())
             elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_PNG:
                 # -- IMG/PNG format --
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION, self.cbxFormatDocImgPaperResolution.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE, self.cbxFormatDocImgPaperSize.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_UNIT, self.cbxFormatDocImgPaperUnit.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION, self.cbxFormatDocImgPaperOrientation.currentIndex())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE, self.cbFormatDocImgPaperColor.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR, self.pbFormatDocImgPaperColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION, self.cbxFormatDocImgPaperResolution.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE, self.cbxFormatDocImgPaperSize.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_UNIT, self.cbxFormatDocImgPaperUnit.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION, self.cbxFormatDocImgPaperOrientation.currentIndex())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE, self.cbFormatDocImgPaperColor.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR, self.pbFormatDocImgPaperColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LEFT, self.dsbFormatDocImgMarginsLeft.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_RIGHT, self.dsbFormatDocImgMarginsRight.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_TOP, self.dsbFormatDocImgMarginsTop.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_BOTTOM, self.dsbFormatDocImgMarginsBottom.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LINKED, self.cbFormatDocImgMarginsLinked.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LEFT, self.dsbFormatDocImgMarginsLeft.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_RIGHT, self.dsbFormatDocImgMarginsRight.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_TOP, self.dsbFormatDocImgMarginsTop.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_BOTTOM, self.dsbFormatDocImgMarginsBottom.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LINKED, self.cbFormatDocImgMarginsLinked.isChecked())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_ACTIVE, self.cbFormatDocImgHeader.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_ACTIVE, self.cbFormatDocImgFooter.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_ACTIVE, self.cbFormatDocImgFPageNotes.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_PREVIEW, self.cbFormatDocImgFPageNotesPreview.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_ACTIVE, self.cbFormatDocImgHeader.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_ACTIVE, self.cbFormatDocImgFooter.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_ACTIVE, self.cbFormatDocImgFPageNotes.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_PREVIEW, self.cbFormatDocImgFPageNotesPreview.isChecked())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_CONTENT, self.bcsteFormatDocImgHeader.toHtml())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
-
-
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
-
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_ACTIVE, self.cbFormatDocImgPageBorder.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_COL, self.pbFormatDocImgPageBorderColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_HEADER_CONTENT, self.bcsteFormatDocImgHeader.toHtml())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
 
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
-                #self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_TEXT, self.xxx.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_ACTIVE, self.cbFormatDocImgThumbsBorder.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_ACTIVE, self.cbFormatDocImgPageBorder.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_COL, self.pbFormatDocImgPageBorderColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE, self.cbxFormatDocImgPreviewMode.currentIndex())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
+                #BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_TEXT, self.xxx.value())
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_ACTIVE, self.cbFormatDocImgThumbsBorder.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE, self.cbxFormatDocImgPreviewMode.currentIndex())
             elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_IMG_JPG:
                 # -- IMG/JPG format --
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION, self.cbxFormatDocImgPaperResolution.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE, self.cbxFormatDocImgPaperSize.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_UNIT, self.cbxFormatDocImgPaperUnit.currentData())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION, self.cbxFormatDocImgPaperOrientation.currentIndex())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE, self.cbFormatDocImgPaperColor.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR, self.pbFormatDocImgPaperColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION, self.cbxFormatDocImgPaperResolution.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE, self.cbxFormatDocImgPaperSize.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_UNIT, self.cbxFormatDocImgPaperUnit.currentData())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION, self.cbxFormatDocImgPaperOrientation.currentIndex())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE, self.cbFormatDocImgPaperColor.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR, self.pbFormatDocImgPaperColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LEFT, self.dsbFormatDocImgMarginsLeft.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_RIGHT, self.dsbFormatDocImgMarginsRight.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_TOP, self.dsbFormatDocImgMarginsTop.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_BOTTOM, self.dsbFormatDocImgMarginsBottom.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LINKED, self.cbFormatDocImgMarginsLinked.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LEFT, self.dsbFormatDocImgMarginsLeft.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_RIGHT, self.dsbFormatDocImgMarginsRight.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_TOP, self.dsbFormatDocImgMarginsTop.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_BOTTOM, self.dsbFormatDocImgMarginsBottom.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LINKED, self.cbFormatDocImgMarginsLinked.isChecked())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_ACTIVE, self.cbFormatDocImgHeader.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_ACTIVE, self.cbFormatDocImgFooter.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_ACTIVE, self.cbFormatDocImgFPageNotes.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_PREVIEW, self.cbFormatDocImgFPageNotesPreview.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_ACTIVE, self.cbFormatDocImgHeader.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_ACTIVE, self.cbFormatDocImgFooter.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_ACTIVE, self.cbFormatDocImgFPageNotes.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_PREVIEW, self.cbFormatDocImgFPageNotesPreview.isChecked())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_CONTENT, self.bcsteFormatDocImgHeader.toHtml())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
-
-
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
-
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_ACTIVE, self.cbFormatDocImgPageBorder.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_COL, self.pbFormatDocImgPageBorderColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_HEADER_CONTENT, self.bcsteFormatDocImgHeader.toHtml())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
 
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
-                #self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_TEXT, self.xxx.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_ACTIVE, self.cbFormatDocImgThumbsBorder.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_ACTIVE, self.cbFormatDocImgPageBorder.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_COL, self.pbFormatDocImgPageBorderColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE, self.cbxFormatDocImgPreviewMode.currentIndex())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
+                #BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_TEXT, self.xxx.value())
 
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE, self.cbFormatTextCSVHeader.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED, self.cbFormatTextCSVEnclosedFields.isChecked())
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR, self.cbxFormatTextCSVSeparator.currentIndex())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_ACTIVE, self.cbFormatDocImgThumbsBorder.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_COL, self.pbFormatDocImgThumbsBorderColor.color().name(QColor.HexArgb))
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_WIDTH, self.dsbFormatDocImgThumbsBorderWidth.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE, self.cbxFormatDocImgPreviewMode.currentIndex())
+
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE, self.cbFormatTextCSVHeader.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED, self.cbFormatTextCSVEnclosedFields.isChecked())
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR, self.cbxFormatTextCSVSeparator.currentIndex())
 
         def __savePageTarget():
             fileName = self.leTargetResultFile.text()
             if fileName != '' and (result:=re.match("(.*)(\..*)$", fileName)):
                 fileName = f"{result.groups()[0]}.{{ext}}"
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME, fileName)
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME, fileName)
 
         __savePagePerimeter()
         __savePageFormat()
         __savePageTarget()
 
-        self.__uiController.settings().setOption(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED, True)
+        BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED, True)
         self.__uiController.saveSettings()
 
     def __resetSettings(self):
@@ -2744,7 +2746,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         self.cbTargetResultFileOpen.setEnabled(False)
         self.rbTargetResultClipboard.setEnabled(False)
 
-        self.__uiController.setAllowRefresh(False)
+        self.__uiController.filesSetAllowRefresh(False)
 
         if self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT:
             exported = self.exportAsText(self.__exportedFileName, self.__generateConfig())
@@ -2762,7 +2764,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             exported = self.exportAsImageSeq(self.__exportedFileName, self.__generateConfig(), 'jpeg')
 
 
-        self.__uiController.setAllowRefresh(True)
+        self.__uiController.filesSetAllowRefresh(True)
 
         QApplication.restoreOverrideCursor()
 
@@ -2887,8 +2889,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         return returned
 
     def __getTable(self, fields, items, title=None, preview=False):
-        """Generic method to initialise a BCTable content"""
-        returnedTable = BCTable()
+        """Generic method to initialise a TextTable content"""
+        returnedTable = TextTable()
 
         if not title is None:
             returnedTable.setTitle(title)
@@ -3349,7 +3351,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
                 'header.active': True,
 
-                'border.style': BCTableSettingsText.BORDER_BASIC,
+                'border.style': TextTableSettingsText.BORDER_BASIC,
 
                 'minimumWidth.active': True,
                 'minimumWidth.value': 80,
@@ -3364,7 +3366,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if not isinstance(config, dict):
             config = defaultConfig
 
-        tableSettings = BCTableSettingsText()
+        tableSettings = TextTableSettingsText()
         tableSettings.setHeaderActive(config.get('header.active', defaultConfig['header.active']))
         tableSettings.setBorder(config.get('border.style', defaultConfig['border.style']))
         tableSettings.setMinWidthActive(config.get('minimumWidth.active', defaultConfig['minimumWidth.active']))
@@ -3419,7 +3421,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if not isinstance(config, dict):
             config = defaultConfig
 
-        tableSettings = BCTableSettingsTextCsv()
+        tableSettings = TextTableSettingsTextCsv()
         tableSettings.setHeaderActive(config.get('header.active', defaultConfig['header.active']))
         tableSettings.setEnclosedField(config.get('field.enclosed', defaultConfig['field.enclosed']))
         tableSettings.setSeparator(config.get('field.separator', defaultConfig['field.separator']))
@@ -3479,7 +3481,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             fieldsList=[]
         fieldsList+=config.get('fields', defaultConfig['fields'])
 
-        tableSettings = BCTableSettingsTextMarkdown()
+        tableSettings = TextTableSettingsTextMarkdown()
         tableSettings.setColumnsFormatting([BCExportFilesDialogBox.FIELDS[key]['format'] for key in fieldsList])
 
         try:

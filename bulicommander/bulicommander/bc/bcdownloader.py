@@ -28,13 +28,10 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal
     )
 
-from .bcutils import (
-        bytesSizeToStr,
-        BCTimer,
-        Debug
-    )
+from pktk.modules.strutils import bytesSizeToStr
+from pktk.modules.utils import Debug
 
-from ..pktk.pktk import (
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus
