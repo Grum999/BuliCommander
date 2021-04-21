@@ -276,7 +276,7 @@ class BCIconSizes(object):
         """
         currentIndex = self.__index
         if value in self.__values:
-            self.__index = self.__values.indexOf(value)
+            self.__index = self.__values.index(value)
         else:
             self.__index=0
             for v in self.__values:
