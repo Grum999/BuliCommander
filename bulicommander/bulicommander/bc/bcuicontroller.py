@@ -145,6 +145,10 @@ class BCUIController(QObject):
 
         BCSettings.load()
 
+        UITheme.load()
+        # BC theme must be loaded before systray is initialized
+        UITheme.load(os.path.join(os.path.dirname(__file__), 'resources'))
+
         self.__systray=BCSysTray(self)
         self.commandSettingsSysTrayMode(BCSettings.get(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE))
 
@@ -185,7 +189,6 @@ class BCUIController(QObject):
         # Check if windows are opened and then, connect signal if needed
         self.__checkKritaWindows()
 
-        UITheme.load()
 
         self.__initialised = False
         self.__window = BCMainWindow(self)
