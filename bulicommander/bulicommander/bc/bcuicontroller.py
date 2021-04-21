@@ -81,7 +81,7 @@ from .bcimportanimated import (
         BCImportDialogBox,
         BCImportAnimated
     )
-from .bcrepairfiles import BCRepairFilesDialogBox
+from .bcrepairfilesui import BCRepairFilesDialogBox
 from .bcsavedview import BCSavedView
 
 from pktk.modules.uitheme import UITheme
