@@ -40,15 +40,12 @@ from .bcfile import (
         BCFile,
         BCFileManagedFormat
     )
-from .bcutils import (
-        Debug
-    )
-from ..pktk.pktk import (
+
+from pktk.modules.utils import Debug
+from pktk.modules.ekrita import EKritaNode
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue
-    )
-from ..pktk.ekrita import (
-        EKritaNode
     )
 
 

@@ -20,7 +20,7 @@
       <string notr="true"/>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="pgPreviewImg">
       <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -40,7 +40,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="BCWImagePreview" name="gvPreview">
+        <widget class="WImageView" name="gvPreview">
          <property name="statusTip">
           <string>Double-click: zoom to fit/scale 1:1 | Drag: pan | Ctrl+Drag: select and zoom</string>
          </property>
@@ -205,8 +205,9 @@ QSlider::handle:horizontal {
                 <string/>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/play</normaloff>:/images/play</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/play</normaloff>
+                 <disabledoff>:/pktk/images/disabled/play</disabledoff>:/pktk/images/normal/play</iconset>
                </property>
                <property name="autoRaise">
                 <bool>true</bool>
@@ -263,13 +264,13 @@ QSlider::handle:horizontal {
  </widget>
  <customwidgets>
   <customwidget>
-   <class>BCWImagePreview</class>
+   <class>WImageView</class>
    <extends>QGraphicsView</extends>
-   <header>bulicommander.bc.bcwimagepreview</header>
+   <header>bulicommander.pktk.widgets.wimageview</header>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="dark_icons.qrc"/>
+  <include location="../../pktk/resources/svg/dark_icons.qrc"/>
  </resources>
  <connections/>
 </ui>

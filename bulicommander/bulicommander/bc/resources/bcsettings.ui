@@ -80,7 +80,7 @@
      <item>
       <widget class="QStackedWidget" name="swCatPages">
        <property name="currentIndex">
-        <number>3</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="pageCatGeneral">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -273,7 +273,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="dark_icons.qrc">:/buli/buli-rounded-border</pixmap>
+                <pixmap>:/buli/buli-rounded-border</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
@@ -485,8 +485,9 @@
                 <string>Home</string>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/home</normaloff>:/images/home</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/home</normaloff>
+                 <disabledoff>:/pktk/images/disabled/home</disabledoff>:/pktk/images/normal/home</iconset>
                </property>
               </widget>
              </item>
@@ -496,8 +497,9 @@
                 <string>Views</string>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/saved_view</normaloff>:/images/saved_view</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/saved_views</normaloff>
+                 <disabledoff>:/pktk/images/disabled/saved_views</disabledoff>:/pktk/images/normal/saved_views</iconset>
                </property>
               </widget>
              </item>
@@ -507,8 +509,9 @@
                 <string>Bookmarks</string>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/bookmarks</normaloff>:/images/bookmarks</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/bookmarks</normaloff>
+                 <disabledoff>:/pktk/images/disabled/bookmarks</disabledoff>:/pktk/images/normal/bookmarks</iconset>
                </property>
               </widget>
              </item>
@@ -518,8 +521,9 @@
                 <string>Last documents</string>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/saved_view_last</normaloff>:/images/saved_view_last</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/saved_view_last</normaloff>
+                 <disabledoff>:/pktk/images/disabled/saved_view_last</disabledoff>:/pktk/images/normal/saved_view_last</iconset>
                </property>
               </widget>
              </item>
@@ -529,8 +533,9 @@
                 <string>History</string>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/history</normaloff>:/images/history</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/history</normaloff>
+                 <disabledoff>:/pktk/images/disabled/history</disabledoff>:/pktk/images/normal/history</iconset>
                </property>
               </widget>
              </item>
@@ -540,8 +545,9 @@
                 <string>Go up</string>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/goup</normaloff>:/images/goup</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/goup</normaloff>
+                 <disabledoff>:/pktk/images/disabled/goup</disabledoff>:/pktk/images/normal/goup</iconset>
                </property>
               </widget>
              </item>
@@ -551,8 +557,9 @@
                 <string>Go back</string>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/goback</normaloff>:/images/goback</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/goback</normaloff>
+                 <disabledoff>:/pktk/images/disabled/goback</disabledoff>:/pktk/images/normal/goback</iconset>
                </property>
               </widget>
              </item>
@@ -562,8 +569,9 @@
                 <string>Quick filter</string>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/filter</normaloff>:/images/filter</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/filter_alt</normaloff>
+                 <disabledoff>:/pktk/images/disabled/filter_alt</disabledoff>:/pktk/images/normal/filter_alt</iconset>
                </property>
               </widget>
              </item>
@@ -1304,7 +1312,7 @@
             <string>Paste item as new layer on double-click</string>
            </property>
            <property name="text">
-            <string>Paste as new layer</string>
+            <string>Pas&amp;te as new layer</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -1320,7 +1328,7 @@
             <string>Paste item as new document on double-click</string>
            </property>
            <property name="text">
-            <string>Paste as new document</string>
+            <string>Paste as new &amp;document</string>
            </property>
            <attribute name="buttonGroup">
             <string notr="true">buttonGroupClpDefaultAction</string>
@@ -1576,8 +1584,8 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="dark_icons.qrc"/>
-  <include location="light_icons.qrc"/>
+  <include location="../../pktk/resources/svg/dark_icons.qrc"/>
+  <include location="../../pktk/resources/svg/light_icons.qrc"/>
  </resources>
  <connections>
   <connection>
@@ -1678,11 +1686,11 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="buttonGroupClpDefaultAction"/>
   <buttongroup name="buttonGroupImgDefaultOther"/>
+  <buttongroup name="buttonGroupNavHomeDir"/>
   <buttongroup name="buttonGroupImgDefaultKrita"/>
   <buttongroup name="buttonGroupGenSysTray"/>
-  <buttongroup name="buttonGroupNavHomeDir"/>
   <buttongroup name="buttonGroupClpMode"/>
-  <buttongroup name="buttonGroupClpDefaultAction"/>
  </buttongroups>
 </ui>

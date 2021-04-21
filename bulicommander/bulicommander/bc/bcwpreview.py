@@ -41,13 +41,13 @@ from PyQt5.QtWidgets import (
         QWidget
     )
 
-
-from .bcutils import (
+from pktk.modules.imgutils import buildIcon
+from pktk.modules.utils import (
         Debug,
         loadXmlUi
     )
 
-from ..pktk.pktk import (
+from pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus
@@ -132,17 +132,17 @@ class BCWPreview(QWidget):
         if not self.__imgReaderAnimated is None:
             if self.__imgReaderAnimated.state() == QMovie.Running:
                 self.__imgReaderAnimated.setPaused(True)
-                self.tbPlayPause.setIcon(QIcon(":/images/play"))
+                self.tbPlayPause.setIcon(buildIcon("pktk:play"))
                 self.__imgReaderAnimated.frameChanged.disconnect(self.setCurrentAnimatedFrame)
             elif self.__imgReaderAnimated.state() == QMovie.Paused:
                 self.__imgReaderAnimated.frameChanged.connect(self.setCurrentAnimatedFrame)
                 self.__imgReaderAnimated.setPaused(False)
-                self.tbPlayPause.setIcon(QIcon(":/images/pause"))
+                self.tbPlayPause.setIcon(buildIcon("pktk:pause"))
             else:
                 # not running
                 self.__imgReaderAnimated.frameChanged.connect(self.setCurrentAnimatedFrame)
                 self.__imgReaderAnimated.start()
-                self.tbPlayPause.setIcon(QIcon(":/images/pause"))
+                self.tbPlayPause.setIcon(buildIcon("pktk:pause"))
 
 
     def hideAnimatedFrames(self):
@@ -161,7 +161,7 @@ class BCWPreview(QWidget):
             self.__imgReaderAnimated = QMovie(fileName)
             self.__imgReaderAnimated.setCacheMode(QMovie.CacheAll)
             self.__maxAnimatedFrame=maxAnimatedFrames
-            self.tbPlayPause.setIcon(QIcon(":/images/play"))
+            self.tbPlayPause.setIcon(buildIcon("pktk:play"))
             self.wAnimated.setVisible(True)
             self.hsAnimatedFrameNumber.setMaximum(self.__maxAnimatedFrame)
             self.hsAnimatedFrameNumber.setValue(1)

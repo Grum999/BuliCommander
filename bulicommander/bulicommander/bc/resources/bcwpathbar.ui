@@ -92,8 +92,9 @@
          <string>...</string>
         </property>
         <property name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/home</normaloff>:/images/home</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/home</normaloff>
+          <disabledoff>:/pktk/images/disabled/home</disabledoff>:/pktk/images/normal/home</iconset>
         </property>
         <property name="autoRaise">
          <bool>true</bool>
@@ -112,10 +113,10 @@
          <string>...</string>
         </property>
         <property name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/saved_view</normaloff>
-          <disabledoff>:/images_d/saved_view</disabledoff>
-          <disabledon>:/images_d/saved_view</disabledon>:/images/saved_view</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/saved_views</normaloff>
+          <disabledoff>:/pktk/images/disabled/saved_views</disabledoff>
+          <disabledon>:/pktk/images/disabled/saved_views</disabledon>:/pktk/images/normal/saved_views</iconset>
         </property>
         <property name="popupMode">
          <enum>QToolButton::InstantPopup</enum>
@@ -167,10 +168,10 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/bookmarks</normaloff>
-          <disabledoff>:/images_d/bookmarks</disabledoff>
-          <disabledon>:/images_d/bookmarks</disabledon>:/images/bookmarks</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/bookmarks</normaloff>
+          <disabledoff>:/pktk/images/disabled/bookmarks</disabledoff>
+          <disabledon>:/pktk/images/disabled/bookmarks_clear</disabledon>:/pktk/images/normal/bookmarks</iconset>
         </property>
         <property name="popupMode">
          <enum>QToolButton::InstantPopup</enum>
@@ -189,8 +190,9 @@
          <string>...</string>
         </property>
         <property name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/saved_view_last</normaloff>:/images/saved_view_last</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/saved_view_last</normaloff>
+          <disabledoff>:/pktk/images/disabled/saved_view_last</disabledoff>:/pktk/images/normal/saved_view_last</iconset>
         </property>
         <property name="popupMode">
          <enum>QToolButton::InstantPopup</enum>
@@ -212,10 +214,10 @@
          <string>h</string>
         </property>
         <property name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/history</normaloff>
-          <disabledoff>:/images_d/history</disabledoff>
-          <disabledon>:/images_d/history</disabledon>:/images/history</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/history</normaloff>
+          <disabledoff>:/pktk/images/disabled/history</disabledoff>
+          <disabledon>:/pktk/images/disabled/history</disabledon>:/pktk/images/normal/history</iconset>
         </property>
         <property name="popupMode">
          <enum>QToolButton::InstantPopup</enum>
@@ -265,10 +267,10 @@
              <string>&lt;</string>
             </property>
             <property name="icon">
-             <iconset resource="dark_icons.qrc">
-              <normaloff>:/images/goback</normaloff>
-              <disabledoff>:/images_d/goback</disabledoff>
-              <disabledon>:/images_d/goback</disabledon>:/images/goback</iconset>
+             <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+              <normaloff>:/pktk/images/normal/goback</normaloff>
+              <disabledoff>:/pktk/images/disabled/goback</disabledoff>
+              <disabledon>:/pktk/images/disabled/goback</disabledon>:/pktk/images/normal/goback</iconset>
             </property>
             <property name="autoRaise">
              <bool>true</bool>
@@ -287,10 +289,10 @@
              <string>^</string>
             </property>
             <property name="icon">
-             <iconset resource="dark_icons.qrc">
-              <normaloff>:/images/goup</normaloff>
-              <disabledoff>:/images_d/goup</disabledoff>
-              <disabledon>:/images_d/goup</disabledon>:/images/goup</iconset>
+             <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+              <normaloff>:/pktk/images/normal/goup</normaloff>
+              <disabledoff>:/pktk/images/disabled/goup</disabledoff>
+              <disabledon>:/pktk/images/disabled/goup</disabledon>:/pktk/images/normal/goup</iconset>
             </property>
             <property name="autoRaise">
              <bool>true</bool>
@@ -341,10 +343,10 @@
              <string>...</string>
             </property>
             <property name="icon">
-             <iconset resource="dark_icons.qrc">
-              <normaloff>:/images/goback</normaloff>
-              <disabledoff>:/images_d/goback</disabledoff>
-              <disabledon>:/images_d/goback</disabledon>:/images/goback</iconset>
+             <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+              <normaloff>:/pktk/images/normal/goback</normaloff>
+              <disabledoff>:/pktk/images/normal/goback</disabledoff>
+              <disabledon>:/pktk/images/normal/goback</disabledon>:/pktk/images/normal/goback</iconset>
             </property>
             <property name="autoRaise">
              <bool>true</bool>
@@ -357,10 +359,10 @@
              <string>...</string>
             </property>
             <property name="icon">
-             <iconset resource="dark_icons.qrc">
-              <normaloff>:/images/goup</normaloff>
-              <disabledoff>:/images_d/goup</disabledoff>
-              <disabledon>:/images_d/goup</disabledon>:/images/goup</iconset>
+             <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+              <normaloff>:/pktk/images/normal/goup</normaloff>
+              <disabledoff>:/pktk/images/disabled/goup</disabledoff>
+              <disabledon>:/pktk/images/disabled/goup</disabledon>:/pktk/images/normal/goup</iconset>
             </property>
             <property name="autoRaise">
              <bool>true</bool>
@@ -408,8 +410,9 @@
          <string>f</string>
         </property>
         <property name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/filter</normaloff>:/images/filter</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/filter_alt</normaloff>
+          <disabledoff>:/pktk/images/disabled/filter_alt</disabledoff>:/pktk/images/normal/filter_alt</iconset>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -509,8 +512,8 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="dark_icons.qrc"/>
-  <include location="light_icons.qrc"/>
+  <include location="../../pktk/resources/svg/dark_icons.qrc"/>
+  <include location="../../pktk/resources/svg/light_icons.qrc"/>
  </resources>
  <connections/>
 </ui>

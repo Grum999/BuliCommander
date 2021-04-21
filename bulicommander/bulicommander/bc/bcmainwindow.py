@@ -23,7 +23,6 @@
 
 
 # -----------------------------------------------------------------------------
-#from .pktk import PkTk
 
 import krita
 import os
@@ -43,11 +42,12 @@ from .bcbookmark import BCBookmark
 from .bchistory import BCHistory
 from .bcwpathbar import BCWPathBar
 from .bcmainviewtab import BCMainViewTab
-from .bctheme import BCTheme
-from .bcutils import loadXmlUi
 
-from ..pktk.pktk import EInvalidType
-from ..pktk.pktk import EInvalidValue
+from pktk.modules.utils import loadXmlUi
+from pktk.pktk import (
+        EInvalidType,
+        EInvalidValue
+    )
 
 
 
@@ -161,7 +161,6 @@ class BCMainWindow(QMainWindow):
         self.actionSelectAll.triggered.connect(self.__menuSelectAll_clicked)
         self.actionSelectNone.triggered.connect(self.__menuSelectNone_clicked)
         self.actionSelectInvert.triggered.connect(self.__menuSelectInvert_clicked)
-        #self.actionSelectRegEx.triggered.connect(self.__actionNotYetImplemented)
 
         # Menu GO
         self.menuGoHistory.aboutToShow.connect(self.__menuHistoryShow)
@@ -187,10 +186,6 @@ class BCMainWindow(QMainWindow):
         self.actionToolsSearch.triggered.connect(self.__actionNotYetImplemented)
         self.actionToolsExportFiles.triggered.connect(self.__menuToolsExportFiles_clicked)
         self.actionToolsConvertFiles.triggered.connect(self.__menuToolsConvertFiles_clicked)
-        #self.actionToolsStatistics.triggered.connect(self.__actionNotYetImplemented)
-        #self.actionConsole.triggered.connect(self.__actionNotYetImplemented)
-
-        #self.actionBCSManageScripts.triggered.connect(self.__actionNotYetImplemented)
 
         # Menu SETTINGS
         self.actionSettingsPreferences.triggered.connect(self.__uiController.commandSettingsOpen)
