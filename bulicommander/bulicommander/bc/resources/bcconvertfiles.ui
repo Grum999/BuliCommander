@@ -635,7 +635,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="BCWConsole" name="pteConsole">
+           <widget class="WConsole" name="pteConsole">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
               <horstretch>0</horstretch>
@@ -873,9 +873,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>BCWConsole</class>
+   <class>WConsole</class>
    <extends>QPlainTextEdit</extends>
-   <header>bulicommander.bc.bcwconsole</header>
+   <header>bulicommander.pktk.widgets.wconsole</header>
   </customwidget>
   <customwidget>
    <class>WCodeEditor</class>

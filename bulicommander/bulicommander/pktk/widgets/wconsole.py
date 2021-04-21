@@ -32,7 +32,7 @@ from PyQt5.QtWidgets import (
     )
 
 
-class BCWConsole(QPlainTextEdit):
+class WConsole(QPlainTextEdit):
     """A console output (no input...)"""
 
     COLORS={
@@ -45,9 +45,9 @@ class BCWConsole(QPlainTextEdit):
         }
 
     def __init__(self, parent=None):
-        super(BCWConsole, self).__init__(parent)
+        super(WConsole, self).__init__(parent)
 
-        self.setStyleSheet("BCWConsole { background: #000000; color: #ffffff;}")
+        self.setStyleSheet("WConsole { background: #000000; color: #ffffff;}")
 
     def appendLine(self, text):
         """Append a new line to console"""
@@ -58,8 +58,8 @@ class BCWConsole(QPlainTextEdit):
         if isinstance(text, str):
             self.moveCursor(QTextCursor.End)
             lstyle=style.lower()
-            if lstyle in BCWConsole.COLORS:
-                self.textCursor().insertHtml(f"<font color='{BCWConsole.COLORS[lstyle]}'>{text}</font>")
+            if lstyle in WConsole.COLORS:
+                self.textCursor().insertHtml(f"<font color='{WConsole.COLORS[lstyle]}'>{text}</font>")
             else:
                 self.textCursor().insertHtml(text)
             self.moveCursor(QTextCursor.End)
@@ -69,4 +69,3 @@ class BCWConsole(QPlainTextEdit):
                     self.append(item, style)
                 elif isinstance(item, tuple):
                     self.append(item[0], item[1])
-

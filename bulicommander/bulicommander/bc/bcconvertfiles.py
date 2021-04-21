@@ -54,7 +54,6 @@ from .bcsettings import (
     )
 from .bcsystray import BCSysTray
 
-from .bcwconsole import BCWConsole
 from .bcwpathbar import BCWPathBar
 
 from pktk.modules.tokenizer import (
@@ -75,6 +74,7 @@ from pktk.widgets.wexportoptions import (
         WExportOptionsJpeg,
         WExportOptionsPng
     )
+from pktk.widgets.wconsole import WConsole
 from pktk.pktk import (
         EInvalidType,
         EInvalidValue
