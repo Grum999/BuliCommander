@@ -28,10 +28,10 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal
     )
 
-from pktk.modules.strutils import bytesSizeToStr
-from pktk.modules.utils import Debug
+from bulicommander.pktk.modules.strutils import bytesSizeToStr
+from bulicommander.pktk.modules.utils import Debug
 
-from pktk.pktk import (
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus

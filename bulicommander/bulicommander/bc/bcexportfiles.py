@@ -55,31 +55,31 @@ from .bcsettings import (
     )
 from .bcsystray import BCSysTray
 
-from pktk.widgets.wtextedit import (
+from bulicommander.pktk.widgets.wtextedit import (
         WTextEdit,
         WTextEditDialog
     )
-from pktk.modules.strtable import (
+from bulicommander.pktk.modules.strtable import (
         TextTable,
         TextTableSettingsText,
         TextTableSettingsTextCsv,
         TextTableSettingsTextMarkdown
     )
-from pktk.modules.strutils import (
+from bulicommander.pktk.modules.strutils import (
         bytesSizeToStr,
         strDefault
     )
-from pktk.modules.imgutils import (
+from bulicommander.pktk.modules.imgutils import (
         checkerBoardBrush,
         buildIcon
     )
-from pktk.modules.timeutils import tsToStr
-from pktk.modules.utils import (
+from bulicommander.pktk.modules.timeutils import tsToStr
+from bulicommander.pktk.modules.utils import (
         cloneRect,
         Debug
     )
-from pktk.modules.ekrita import EKritaNode
-from pktk.pktk import (
+from bulicommander.pktk.modules.ekrita import EKritaNode
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )

@@ -72,31 +72,31 @@ from PyQt5.QtWidgets import (
         QFileIconProvider
     )
 
-from pktk.modules.languagedef import LanguageDef
-from pktk.modules.tokenizer import (
+from bulicommander.pktk.modules.languagedef import LanguageDef
+from bulicommander.pktk.modules.tokenizer import (
         Tokenizer,
         TokenizerRule,
         TokenType
     )
-from pktk.modules.workers import WorkerPool
-from pktk.modules.uitheme import UITheme
-from pktk.modules.imgutils import buildIcon
-from pktk.modules.utils import (
+from bulicommander.pktk.modules.workers import WorkerPool
+from bulicommander.pktk.modules.uitheme import UITheme
+from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.utils import (
         Debug,
         regExIsValid,
         intDefault
     )
-from pktk.modules.timeutils import (
+from bulicommander.pktk.modules.timeutils import (
         Stopwatch,
         strToTs,
         tsToStr
     )
-from pktk.modules.strutils import (
+from bulicommander.pktk.modules.strutils import (
         strToBytesSize,
         bytesSizeToStr,
         strDefault
     )
-from pktk.pktk import (
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus

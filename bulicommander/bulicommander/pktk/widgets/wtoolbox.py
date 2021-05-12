@@ -28,9 +28,9 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal
     )
 
-from pktk.modules.timeutils import Timer
-from pktk.widgets.wstandardcolorselector import WStandardColorSelector
-
+from ..modules.timeutils import Timer
+from .wstandardcolorselector import WStandardColorSelector
+from ..pktk import *
 
 class WToolBox(QWidget):
     """The widget toolbox is a dialog box that can be used as a tool box

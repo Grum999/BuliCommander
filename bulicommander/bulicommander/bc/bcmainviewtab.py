@@ -104,36 +104,37 @@ from .bcwpreview import (
         BCWPreview
     )
 
-from pktk.modules.workers import WorkerPool
-from pktk.modules.imgutils import buildIcon
-from pktk.modules.strtable import (
+from bulicommander.pktk.modules.workers import WorkerPool
+from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.strtable import (
         TextTable,
         TextTableSettingsText
     )
-from pktk.modules.utils import (
+from bulicommander.pktk.modules.utils import (
         getLangValue,
         loadXmlUi,
         Debug
     )
-from pktk.modules.strutils import (
+from bulicommander.pktk.modules.strutils import (
         bytesSizeToStr,
         strDefault,
         stripTags
     )
-from pktk.modules.timeutils import (
+from bulicommander.pktk.modules.timeutils import (
         frToStrTime,
         secToStrTime,
         tsToStr
     )
-from pktk.modules.menuutils import (
+from bulicommander.pktk.modules.menuutils import (
         buildQAction,
         buildQMenu
     )
-from pktk.widgets.wmenuitem import (
+from bulicommander.pktk.modules.uitheme import UITheme
+from bulicommander.pktk.widgets.wmenuitem import (
         WMenuSlider,
         WMenuTitle
     )
-from pktk.pktk import (
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus
@@ -1645,7 +1646,7 @@ class BCMainViewTab(QFrame):
                 wValue=None
 
             if not style is None:
-                wValue.setStyleSheet(self.__uiController.theme().style(style))
+                wValue.setStyleSheet(UITheme.style(style))
 
             if wValue:
                 form.layout().addRow(wLabel, wValue)

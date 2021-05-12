@@ -43,8 +43,8 @@ from .bchistory import BCHistory
 from .bcwpathbar import BCWPathBar
 from .bcmainviewtab import BCMainViewTab
 
-from pktk.modules.utils import loadXmlUi
-from pktk.pktk import (
+from bulicommander.pktk.modules.utils import loadXmlUi
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )

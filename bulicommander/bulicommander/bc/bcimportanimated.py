@@ -41,9 +41,9 @@ from .bcfile import (
         BCFileManagedFormat
     )
 
-from pktk.modules.utils import Debug
-from pktk.modules.ekrita import EKritaNode
-from pktk.pktk import (
+from bulicommander.pktk.modules.utils import Debug
+from bulicommander.pktk.modules.ekrita import EKritaNode
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
