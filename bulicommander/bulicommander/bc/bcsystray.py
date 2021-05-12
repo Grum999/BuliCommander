@@ -34,8 +34,8 @@ from PyQt5.QtCore import (
         QEventLoop,
         QTimer
     )
-from pktk.modules.utils import Debug
-from pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.utils import Debug
+from bulicommander.pktk.modules.imgutils import buildIcon
 
 class BCSysTray(object):
     """Manage system tray"""

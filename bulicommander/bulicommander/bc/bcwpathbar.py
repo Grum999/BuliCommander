@@ -56,12 +56,12 @@ from .bcbookmark import BCBookmark
 from .bchistory import BCHistory
 from .bcsavedview import BCSavedView
 
-from pktk.modules.imgutils import buildIcon
-from pktk.modules.menuutils import (
+from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.menuutils import (
         buildQAction,
         buildQMenu
     )
-from pktk.modules.utils import (
+from bulicommander.pktk.modules.utils import (
         loadXmlUi,
         Debug
     )

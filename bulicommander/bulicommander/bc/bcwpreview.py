@@ -41,13 +41,13 @@ from PyQt5.QtWidgets import (
         QWidget
     )
 
-from pktk.modules.imgutils import buildIcon
-from pktk.modules.utils import (
+from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.utils import (
         Debug,
         loadXmlUi
     )
 
-from pktk.pktk import (
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus

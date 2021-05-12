@@ -51,14 +51,14 @@ from .bcfile import (
 from .bcsystray import BCSysTray
 from .bcwpathbar import BCWPathBar
 
-from pktk.modules.utils import Debug
-from pktk.modules.imgutils import buildIcon
-from pktk.modules.strutils import (
+from bulicommander.pktk.modules.utils import Debug
+from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.strutils import (
         bytesSizeToStr,
         strDefault
     )
-from pktk.modules.timeutils import tsToStr
-from pktk.pktk import (
+from bulicommander.pktk.modules.timeutils import tsToStr
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )

@@ -47,19 +47,19 @@ from .bcfile import (
 
 from .bcwpathbar import BCWPathBar
 from .bcsystray import BCSysTray
-from pktk.modules.utils import (
+from bulicommander.pktk.modules.utils import (
         checkKritaVersion,
         Debug
     )
-from pktk.modules.imgutils import buildIcon
-from pktk.modules.strutils import bytesSizeToStr
-from pktk.modules.settings import (
+from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.strutils import bytesSizeToStr
+from bulicommander.pktk.modules.settings import (
                         Settings,
                         SettingsFmt,
                         SettingsKey,
                         SettingsRule
                     )
-from pktk.pktk import (
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )

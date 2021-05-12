@@ -28,7 +28,7 @@ from PyQt5.QtCore import (
     )
 
 
-from pktk.pktk import (
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )

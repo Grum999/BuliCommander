@@ -56,30 +56,30 @@ from .bcsystray import BCSysTray
 
 from .bcwpathbar import BCWPathBar
 
-from pktk.modules.tokenizer import (
+from bulicommander.pktk.modules.tokenizer import (
         Tokenizer,
         TokenizerRule
     )
-from pktk.modules.strutils import (
+from bulicommander.pktk.modules.strutils import (
         bytesSizeToStr,
         strDefault
     )
-from pktk.modules.timeutils import tsToStr
-from pktk.modules.imgutils import checkerBoardBrush
-from pktk.modules.utils import (
+from bulicommander.pktk.modules.timeutils import tsToStr
+from bulicommander.pktk.modules.imgutils import checkerBoardBrush
+from bulicommander.pktk.modules.utils import (
         cloneRect,
         Debug
     )
-from pktk.widgets.wexportoptions import (
+from bulicommander.pktk.widgets.wexportoptions import (
         WExportOptionsJpeg,
         WExportOptionsPng
     )
-from pktk.widgets.wconsole import WConsole
-from pktk.pktk import (
+from bulicommander.pktk.widgets.wconsole import WConsole
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
-from pktk.modules.ekrita import EKritaNode
+from bulicommander.pktk.modules.ekrita import EKritaNode
 
 # -----------------------------------------------------------------------------
 

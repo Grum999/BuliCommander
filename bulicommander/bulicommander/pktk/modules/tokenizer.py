@@ -1,6 +1,8 @@
 #-----------------------------------------------------------------------------
-# Buli Commander
-# Copyright (C) 2020 - Grum999
+# PyKritaToolKit
+# Copyright (C) 2019-2021 - Grum999
+#
+# A toolkit to make pykrita plugin coding easier :-)
 # -----------------------------------------------------------------------------
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,8 +18,6 @@
 # along with this program.
 # If not, see https://www.gnu.org/licenses/
 # -----------------------------------------------------------------------------
-# A Krita plugin designed to manage documents
-# -----------------------------------------------------------------------------
 
 
 from enum import Enum
@@ -27,12 +27,9 @@ import re
 import time
 
 from PyQt5.Qt import *
-from pktk.modules.elist import EList
-from pktk.modules.uitheme import UITheme
-from pktk.pktk import (
-        EInvalidType,
-        EInvalidValue
-    )
+from .elist import EList
+from .uitheme import UITheme
+from ..pktk import *
 
 
 class TokenType(Enum):

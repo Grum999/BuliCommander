@@ -1,6 +1,8 @@
 #-----------------------------------------------------------------------------
-# Buli Script
-# Copyright (C) 2020 - Grum999
+# PyKritaToolKit
+# Copyright (C) 2019-2021 - Grum999
+#
+# A toolkit to make pykrita plugin coding easier :-)
 # -----------------------------------------------------------------------------
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.
 # If not, see https://www.gnu.org/licenses/
-# -----------------------------------------------------------------------------
-# A Krita plugin designed to draw programmatically
 # -----------------------------------------------------------------------------
 
 
@@ -38,17 +38,14 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import (
         QSyntaxHighlighter
     )
-from pktk.modules.languagedef import LanguageDef
-from pktk.modules.tokenizer import (
+from ..modules.languagedef import LanguageDef
+from ..modules.tokenizer import (
         TokenStyle,
         TokenType,
         Tokenizer
     )
 
-from pktk.pktk import (
-        EInvalidType,
-        EInvalidValue
-    )
+from ..pktk import *
 
 
 class WCodeEditor(QPlainTextEdit):

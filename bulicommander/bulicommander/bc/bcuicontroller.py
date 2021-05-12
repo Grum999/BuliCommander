@@ -83,28 +83,28 @@ from .bcimportanimated import (
     )
 from .bcsavedview import BCSavedView
 
-from pktk.modules.uitheme import UITheme
-from pktk.modules.strtable import (
+from bulicommander.pktk.modules.uitheme import UITheme
+from bulicommander.pktk.modules.strtable import (
         TextTable,
         TextTableSettingsText
     )
-from pktk.modules.utils import (
+from bulicommander.pktk.modules.utils import (
         checkKritaVersion,
         Debug
     )
-from pktk.modules.imgutils import buildIcon
-from pktk.modules.strutils import (
+from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.strutils import (
         getBytesSizeToStrUnit,
         setBytesSizeToStrUnit
     )
-from pktk.modules.about import AboutWindow
-from pktk.widgets.wimageview import WImageView
-from pktk.pktk import (
+from bulicommander.pktk.modules.about import AboutWindow
+from bulicommander.pktk.widgets.wimageview import WImageView
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus
     )
-from pktk.modules.ekrita import (
+from bulicommander.pktk.modules.ekrita import (
         EKritaNode
     )
 
