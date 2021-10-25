@@ -1444,7 +1444,7 @@ class BCMainViewTab(QFrame):
                             bckSufRe=BCFileManagedFormat.backupSuffixRe()
                             reBase+=[fr'\.{extension}{bckSufRe}' for extension in BCFileManagedFormat.list()]
 
-                        filter.setName((r're:({0})$'.format('|'.join(reBase)), 'match'))
+                        filter.setName((r're/i:({0})$'.format('|'.join(reBase)), 'match'))
                     else:
                         filter.setName((r're:.*', 'match'))
 
@@ -1774,7 +1774,7 @@ class BCMainViewTab(QFrame):
             # Search for backup files...
             backupSuffix = Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.')
             filePattern = file.name().replace('.', r'\.')
-            rePattern = f"re:{filePattern}(?:\.\d+)?{backupSuffix}$"
+            rePattern = f"re/i:{filePattern}(?:\.\d+)?{backupSuffix}$"
             searchBackupRule = BCFileListRule()
             searchBackupRule.setName((rePattern, 'match'))
 
