@@ -1734,7 +1734,7 @@ class BCFile(BCBaseFile):
 
             if imageReader.canRead():
                 self._format = bytes(imageReader.format()).decode().lower()
-                if self._format == 'jpg':
+                if self._format == BCFileManagedFormat.JPG:
                     # harmonize file type
                     self._format = BCFileManagedFormat.JPEG
             else:
@@ -4584,16 +4584,18 @@ class BCFileListRule(object):
             displayValue = value[0]
 
             if isinstance(value[0], str):
-                checkIsRegEx = re.search('^re:(.*)', value[0])
-                if not checkIsRegEx is None:
+                if checkIsRegEx:=re.search('^re(/i)?:(.*)', value[0]):
                     # provided as a regular expression
-                    displayValue = checkIsRegEx.group(1)
-                    value = (re.compile( checkIsRegEx.group(1) ), value[1])
+                    displayValue = checkIsRegEx.groups()[1]
+
+                    if not checkIsRegEx.groups()[0] is None:
+                        displayValue=f"(?i)(?:{displayValue})"
+                    value = (re.compile(displayValue), value[1])
                 else:
                     # provided as a wildcard character
                     # convert to regex
                     displayValue = value[0]
-                    value = (re.compile( '^'+value[0].replace('.', r'\.').replace('*', r'.*').replace('?', '.')+'$' ), value[1])
+                    value = (re.compile( '(?i)(?:^'+value[0].replace('.', r'\.').replace('*', r'.*').replace('?', '.')+'$)'), value[1])
             elif isinstance(value[0], re.Pattern):
                 displayValue = value[0].pattern
             else:
