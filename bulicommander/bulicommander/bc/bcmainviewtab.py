@@ -71,7 +71,6 @@ from PyQt5.QtWidgets import (
         QWidget
     )
 
-
 from .bcbookmark import BCBookmark
 from .bcclipboard import (
         BCClipboard,
@@ -104,6 +103,7 @@ from .bcwpreview import (
         BCWPreview
     )
 
+from bulicommander.pktk.modules.timeutils import Timer
 from bulicommander.pktk.modules.workers import WorkerPool
 from bulicommander.pktk.modules.imgutils import buildIcon
 from bulicommander.pktk.modules.strtable import (
@@ -317,6 +317,10 @@ class BCMainViewFiles(QTreeView):
     __STATUS_READY = 0
     __STATUS_UPDATING = 1
 
+    __STATUS_ICON_LOADED = 0
+    __STATUS_ICON_LOADING = 1
+    __STATUS_ICON_STOPLOADING = -1
+
     USERROLE_FILE = Qt.UserRole + 1
 
     @staticmethod
@@ -338,6 +342,7 @@ class BCMainViewFiles(QTreeView):
         self.__status = BCMainViewFiles.__STATUS_READY
         self.__changed = False
         self.__showPath = False
+        self.__updatingIcons = BCMainViewFiles.__STATUS_ICON_LOADED
 
         self.__initHeaders()
         self.__iconPool = WorkerPool()
@@ -400,6 +405,7 @@ class BCMainViewFiles(QTreeView):
         """updateing icon in treeview list is terminated"""
         self.__status = BCMainViewFiles.__STATUS_READY
         self.iconStopLoad.emit()
+        self.__updatingIcons = BCMainViewFiles.__STATUS_ICON_LOADED
 
     def __updateIcons(self):
         """Update files icons according to current view mode"""
@@ -407,6 +413,14 @@ class BCMainViewFiles(QTreeView):
             # nothing to update
             return
 
+        if self.__updatingIcons==BCMainViewFiles.__STATUS_ICON_STOPLOADING:
+            # currently stop laoding icons, so don't need to update them as
+            # an update is already waiting
+            return
+
+        self.__stopUpdatingIcons()
+
+        self.__updatingIcons=BCMainViewFiles.__STATUS_ICON_LOADING
         self.iconStartLoad.emit(self.__model.rowCount())
 
         items = [self.__model.item(fileIndex, BCMainViewFiles.COLNUM_NAME).data(BCMainViewFiles.USERROLE_FILE) for fileIndex in range(self.__model.rowCount())]
@@ -422,8 +436,11 @@ class BCMainViewFiles(QTreeView):
 
         All threads are stopped
         """
-        self.__status = BCMainViewFiles.__STATUS_READY
-        self.__iconPool.stopProcessing()
+        if self.__updatingIcons==BCMainViewFiles.__STATUS_ICON_LOADING:
+            # process only if currently loading
+            self.__updatingIcons=BCMainViewFiles.__STATUS_ICON_STOPLOADING
+            self.__iconPool.stopProcessing()
+            self.__iconPool.waitProcessed()
 
     def keyPressEvent(self, event):
         """Emit signal on keyPressed"""
@@ -1117,6 +1134,7 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot(int)
         def treeViewFiles_iconStartLoad(nbIcons):
+            self.__filesProgressStop(False)
             self.__filesProgressStart(nbIcons, i18n('Loading thumbnails %v of %m (%p%)'))
 
         @pyqtSlot()
@@ -2291,17 +2309,18 @@ class BCMainViewTab(QFrame):
         self.pbProgress.setVisible(True)
 
 
-    def __filesProgressStop(self):
+    def __filesProgressStop(self, hide=True):
         """Hide progress bar / display status bar information"""
         #self.lblFileNfo.setVisible(True)
         if self.__filesPbVisible:
             self.__filesPbDispCount-=1
             if self.__filesPbDispCount<=0:
-                self.lblDiskNfo.setVisible(True)
-                self.lineDiskNfo.setVisible(True)
-                self.pbProgress.setVisible(False)
+                if hide:
+                    self.lblDiskNfo.setVisible(True)
+                    self.lineDiskNfo.setVisible(True)
+                    self.pbProgress.setVisible(False)
+                    self.__filesPbVisible=False
                 self.__filesPbDispCount = 0
-                self.__filesPbVisible=False
 
 
     def __filesProgressSetValue(self, value):
