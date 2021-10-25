@@ -1128,6 +1128,7 @@ class BCSettingsDialogBox(QDialog):
 
         if QMessageBox.question(self, i18n(f"{self.__title}::Clear Cache"), i18n(f"Current cache content will be cleared ({self.lblCCINbFileAndSize.text()})\n\nDo you confirm action?"), QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
             shutil.rmtree(BCFile.thumbnailCacheDirectory(), ignore_errors=True)
+            BCFile.initialiseCache()
             self.__calculateCacheSize()
 
 
@@ -1135,6 +1136,7 @@ class BCSettingsDialogBox(QDialog):
         """Clear clipboard session cache after user confirmation"""
         if QMessageBox.question(self, i18n(f"{self.__title}::Clear Clipboard Cache (session)"), i18n(f"Current clipboard session cache content will be cleared ({self.lblCCINbItemsAndSizeCS.text()})\n\nDo you confirm action?"), QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
             self.__uiController.clipboard().cacheSessionFlush()
+            BCClipboard.initialiseCache()
             self.__calculateCacheSize()
 
 
@@ -1142,6 +1144,7 @@ class BCSettingsDialogBox(QDialog):
         """Clear clipboard persistent cache after user confirmation"""
         if QMessageBox.question(self, i18n(f"{self.__title}::Clear Clipboard Cache (persistent)"), i18n(f"Persitent clipboard cache content will be cleared ({self.lblCCINbItemsAndSizeCP.text()})\n\nDo you confirm action?"), QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
             self.__uiController.clipboard().cachePersistentFlush()
+            BCClipboard.initialiseCache()
             self.__calculateCacheSize()
 
 
