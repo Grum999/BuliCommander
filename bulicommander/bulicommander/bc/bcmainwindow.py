@@ -78,7 +78,7 @@ class BCMainWindow(QMainWindow):
 
         self.__fontMono = QFont()
         self.__fontMono.setPointSize(9)
-        self.__fontMono.setFamily('DejaVu Sans Mono')
+        self.__fontMono.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
         for panelId in self.panels:
             self.panels[panelId].setAllowRefresh(False)

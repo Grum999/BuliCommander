@@ -135,7 +135,7 @@ class BCWPathBar(QFrame):
 
         self.__font = QFont()
         self.__font.setPointSize(9)
-        self.__font.setFamily('DejaVu Sans Mono')
+        self.__font.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
         self.__actionHistoryClear = buildQAction("pktk:history_clear", i18n('Clear history'), self)
         self.__actionHistoryClear.setStatusTip(i18n('Clear all paths from history'))
@@ -287,10 +287,14 @@ class BCWPathBar(QFrame):
         if not self.__savedView is None:
             self.frameBreacrumbPath.checkViewId=self.__savedView.inList
 
+        fnt=self.leFilterQuery.font()
+        fnt.setFamily('DejaVu Sans Mono, Consolas, Courier New')
         self.__leFilterQueryFocusInEvent=self.leFilterQuery.focusInEvent
         self.leFilterQuery.focusInEvent=filter_Focused
         self.leFilterQuery.editingFinished.connect(filter_Finished)
         self.leFilterQuery.textChanged.connect(filter_Changed)
+        self.leFilterQuery.findChild(QToolButton).setIcon(QIcon(":/pktk/images/normal/edit_text_clear"))
+        self.leFilterQuery.setFont(fnt)
 
         self.btBack.clicked.connect(item_Clicked)
         self.btBack.clicked.connect(back_Clicked)

@@ -66,7 +66,7 @@ class BreadcrumbsAddressBar(QFrame):
 
         self.font = QFont()
         self.font.setPointSize(9)
-        self.font.setFamily('DejaVu Sans Mono')
+        self.font.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
         # A label used to display view name (when view reference is used)
         self.viewName = QtWidgets.QLabel(self)

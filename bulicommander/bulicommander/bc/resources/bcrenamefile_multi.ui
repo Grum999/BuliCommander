@@ -59,7 +59,7 @@
        <widget class="QLabel" name="lblError">
         <property name="font">
          <font>
-          <family>DejaVu Sans Mono</family>
+          <family>DejaVu Sans Mono, Consolas, Courier New</family>
           <pointsize>8</pointsize>
          </font>
         </property>
@@ -91,7 +91,7 @@
         </property>
         <property name="font">
          <font>
-          <family>DejaVu Sans Mono</family>
+          <family>DejaVu Sans Mono, Consolas, Courier New</family>
          </font>
         </property>
         <property name="verticalScrollBarPolicy">
@@ -156,7 +156,7 @@
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans Mono</family>
+       <family>DejaVu Sans Mono, Consolas, Courier New</family>
       </font>
      </property>
      <property name="horizontalScrollBarPolicy">

@@ -37,7 +37,7 @@
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans Mono</family>
+       <family>DejaVu Sans Mono, Consolas, Courier New</family>
        <weight>75</weight>
        <bold>true</bold>
       </font>
@@ -73,7 +73,7 @@
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans Mono</family>
+       <family>DejaVu Sans Mono, Consolas, Courier New</family>
        <weight>75</weight>
        <bold>true</bold>
       </font>
@@ -152,7 +152,7 @@ padding: 6;</string>
         </property>
         <property name="font">
          <font>
-          <family>DejaVu Sans Mono</family>
+          <family>DejaVu Sans Mono, Consolas, Courier New</family>
          </font>
         </property>
         <property name="text">
@@ -184,7 +184,7 @@ padding: 6;</string>
        <widget class="QLabel" name="lblFileSrcNfo">
         <property name="font">
          <font>
-          <family>DejaVu Sans Mono</family>
+          <family>DejaVu Sans Mono, Consolas, Courier New</family>
          </font>
         </property>
         <property name="text">
@@ -231,7 +231,7 @@ padding: 6;</string>
         </property>
         <property name="font">
          <font>
-          <family>DejaVu Sans Mono</family>
+          <family>DejaVu Sans Mono, Consolas, Courier New</family>
          </font>
         </property>
         <property name="toolTip">

@@ -20,7 +20,7 @@
       <widget class="QLineEdit" name="ledName">
        <property name="font">
         <font>
-         <family>DejaVu Sans Mono</family>
+         <family>DejaVu Sans Mono, Consolas, Courier New</family>
          <italic>false</italic>
         </font>
        </property>

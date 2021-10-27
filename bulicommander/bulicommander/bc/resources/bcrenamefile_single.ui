@@ -40,7 +40,7 @@
        <widget class="QLineEdit" name="leCurrentPathFileName">
         <property name="font">
          <font>
-          <family>DejaVu Sans Mono</family>
+          <family>DejaVu Sans Mono, Consolas, Courier New</family>
          </font>
         </property>
         <property name="readOnly">
@@ -65,7 +65,7 @@
        <widget class="QLineEdit" name="leNewFileName">
         <property name="font">
          <font>
-          <family>DejaVu Sans Mono</family>
+          <family>DejaVu Sans Mono, Consolas, Courier New</family>
          </font>
         </property>
        </widget>

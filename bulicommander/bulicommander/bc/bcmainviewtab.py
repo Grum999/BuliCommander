@@ -414,7 +414,7 @@ class BCMainViewFiles(QTreeView):
             return
 
         if self.__updatingIcons==BCMainViewFiles.__STATUS_ICON_STOPLOADING:
-            # currently stop laoding icons, so don't need to update them as
+            # currently stop loading icons, so don't need to update them as
             # an update is already waiting
             return
 
@@ -1616,7 +1616,7 @@ class BCMainViewTab(QFrame):
 
         def addNfoBtnRow(form, label, value, button, tooltip=None):
             fntValue = QFont()
-            fntValue.setFamily('DejaVu Sans Mono')
+            fntValue.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
             wContainer=QWidget()
             wContainerLayout=QHBoxLayout(wContainer)
@@ -1650,7 +1650,7 @@ class BCMainViewTab(QFrame):
                 wLabel.setContentsMargins(30, 0, 0, 0)
 
             fntValue = QFont()
-            fntValue.setFamily('DejaVu Sans Mono')
+            fntValue.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
             if isinstance(value, str):
                 wLabel.setAlignment(Qt.AlignLeft|Qt.AlignTop)

@@ -152,7 +152,7 @@
                   <widget class="BCMainViewFiles" name="treeViewFiles">
                    <property name="font">
                     <font>
-                     <family>DejaVu Sans Mono</family>
+                     <family>DejaVu Sans Mono, Consolas, Courier New</family>
                     </font>
                    </property>
                    <property name="editTriggers">
@@ -413,7 +413,7 @@
                                     <widget class="QLabel" name="lblPath">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                        <italic>false</italic>
                                       </font>
                                      </property>
@@ -439,7 +439,7 @@
                                     <widget class="QLabel" name="lblName">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -464,7 +464,7 @@
                                     <widget class="QLabel" name="lblModified">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -489,7 +489,7 @@
                                     <widget class="QLabel" name="lblSize">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -521,7 +521,7 @@
                                     <widget class="QLabel" name="lblPerm">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -552,7 +552,7 @@
                                      </property>
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -638,7 +638,7 @@
                                     <widget class="QLabel" name="lblImgFormat">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -670,7 +670,7 @@
                                     <widget class="QLabel" name="lblImgSize">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -695,7 +695,7 @@
                                     <widget class="QLabel" name="lblImgResolution">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -727,7 +727,7 @@
                                     <widget class="QLabel" name="lblImgMode">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -752,7 +752,7 @@
                                     <widget class="QLabel" name="lblImgDepth">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -777,7 +777,7 @@
                                     <widget class="QLabel" name="lblImgProfile">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -864,7 +864,7 @@
                                     <widget class="QLabel" name="lblKraAboutTitle">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -889,7 +889,7 @@
                                     <widget class="QLabel" name="lblKraAboutDesc">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -914,7 +914,7 @@
                                     <widget class="QLabel" name="lblKraAboutKeywords">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -939,7 +939,7 @@
                                     <widget class="QLabel" name="lblKraAboutInitCreator">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -964,7 +964,7 @@
                                     <widget class="QLabel" name="lblKraAboutCreationDate">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -989,7 +989,7 @@
                                     <widget class="QLabel" name="lblKraAboutEditingTime">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1014,7 +1014,7 @@
                                     <widget class="QLabel" name="lblKraAboutSubject">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1039,7 +1039,7 @@
                                     <widget class="QLabel" name="lblKraAboutEditingCycles">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1125,7 +1125,7 @@
                                     <widget class="QLabel" name="lblKraAuthorNickname">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1150,7 +1150,7 @@
                                     <widget class="QLabel" name="lblKraAuthorFName">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1175,7 +1175,7 @@
                                     <widget class="QLabel" name="lblKraAuthorLName">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1213,7 +1213,7 @@
                                     <widget class="QLabel" name="lblKraAuthorInitials">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1225,7 +1225,7 @@
                                     <widget class="QLabel" name="lblKraAuthorTitle">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1250,7 +1250,7 @@
                                     <widget class="QLabel" name="lblKraAuthorPosition">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1275,7 +1275,7 @@
                                     <widget class="QLabel" name="lblKraAuthorCompagny">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1300,7 +1300,7 @@
                                     <widget class="QLabel" name="lblKraAuthorContact">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1342,7 +1342,7 @@
                   <widget class="QTreeView" name="tvDirectoryTree">
                    <property name="font">
                     <font>
-                     <family>DejaVu Sans Mono</family>
+                     <family>DejaVu Sans Mono, Consolas, Courier New</family>
                     </font>
                    </property>
                    <property name="editTriggers">
@@ -1401,7 +1401,7 @@
               </property>
               <property name="font">
                <font>
-                <family>DejaVu Sans Mono</family>
+                <family>DejaVu Sans Mono, Consolas, Courier New</family>
                 <pointsize>9</pointsize>
                 <italic>false</italic>
                </font>
@@ -1466,7 +1466,7 @@
               </property>
               <property name="font">
                <font>
-                <family>DejaVu Sans Mono</family>
+                <family>DejaVu Sans Mono, Consolas, Courier New</family>
                 <pointsize>9</pointsize>
                </font>
               </property>
@@ -1618,7 +1618,7 @@
               <widget class="BCMainViewClipboard" name="treeViewClipboard">
                <property name="font">
                 <font>
-                 <family>DejaVu Sans Mono</family>
+                 <family>DejaVu Sans Mono, Consolas, Courier New</family>
                 </font>
                </property>
                <property name="editTriggers">
@@ -1689,7 +1689,7 @@
               </property>
               <property name="font">
                <font>
-                <family>DejaVu Sans Mono</family>
+                <family>DejaVu Sans Mono, Consolas, Courier New</family>
                 <pointsize>9</pointsize>
                 <italic>false</italic>
                </font>
@@ -1731,7 +1731,7 @@
               </property>
               <property name="font">
                <font>
-                <family>DejaVu Sans Mono</family>
+                <family>DejaVu Sans Mono, Consolas, Courier New</family>
                 <pointsize>9</pointsize>
                </font>
               </property>

@@ -34,7 +34,7 @@
     <widget class="QTextEdit" name="teInfo">
      <property name="font">
       <font>
-       <family>DejaVu Sans Mono</family>
+       <family>DejaVu Sans Mono, Consolas, Courier New</family>
       </font>
      </property>
     </widget>

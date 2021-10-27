@@ -806,7 +806,7 @@ Row 3.1   Row 3.2
              </property>
              <property name="font">
               <font>
-               <family>DejaVu Sans Mono</family>
+               <family>DejaVu Sans Mono, Consolas, Courier New</family>
                <pointsize>9</pointsize>
               </font>
              </property>
@@ -1229,7 +1229,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
              </property>
              <property name="font">
               <font>
-               <family>DejaVu Sans Mono</family>
+               <family>DejaVu Sans Mono, Consolas, Courier New</family>
                <pointsize>9</pointsize>
               </font>
              </property>
