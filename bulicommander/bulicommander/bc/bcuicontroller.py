@@ -99,6 +99,7 @@ from bulicommander.pktk.modules.strutils import (
     )
 from bulicommander.pktk.modules.about import AboutWindow
 from bulicommander.pktk.widgets.wimageview import WImageView
+from bulicommander.pktk.widgets.wiodialog import WDialogMessage
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
@@ -1203,11 +1204,11 @@ class BCUIController(QObject):
 
         newPath = BCFileOperationUi.createDir(self.__bcName, targetPath)
         if not newPath is None:
-            if not BCFileOperation.createDir(newPath):
-                QMessageBox.warning(
-                        QWidget(),
-                        f"{self.__bcName}::Create directory",
-                        f"Unable to create directory:\n{newPath}"
+            if not BCFileOperation.createDir(self.__bcName, newPath):
+                WDialogMessage.display(
+                        i18n(f"{self.__bcName}::Create directory"),
+                        "".join([i18n("<h1 class='warning'>Warning!</h1>"),
+                                 i18n(f"""<p>Unable to create directory <span style="font-family:'consolas, monospace'; font-weight:bold; white-space: nowrap;">{newPath}</span></p>""")])
                     )
 
     def commandFileDelete(self, confirm=True):

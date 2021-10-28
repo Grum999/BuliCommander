@@ -58,6 +58,7 @@ from bulicommander.pktk.modules.strutils import (
         strDefault
     )
 from bulicommander.pktk.modules.timeutils import tsToStr
+from bulicommander.pktk.widgets.wiodialog import WDialogStrInput
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -571,8 +572,13 @@ class BCFileOperationUi(object):
     @staticmethod
     def createDir(title, targetPath):
         """Open dialog box to create a new directory"""
-        value, ok = QInputDialog.getText(QWidget(), f"{title}::Create directory", f"Create a new directory into\n{targetPath}", QLineEdit.Normal,"New directory")
-        if ok and value != '':
+
+        value=WDialogStrInput.display(i18n(f"{title}::Create directory"),
+                                      i18n(f"""<h2>Create a new directory</h2><p>Directory will be created into <span style="font-family:'consolas, monospace'; font-weight:bold; white-space: nowrap;">{targetPath}</span></p>"""),
+                                      i18n("Please provide name for new directory"),
+                                      i18n('New directory'),
+                                      r'^[^\\/<>?:"*|]+$')
+        if not value is None:
             return os.path.join(targetPath, value)
         return None
 
@@ -1013,7 +1019,7 @@ class BCFileOperation(object):
         return BCFileOperation.__copyOrMove(title, files, targetPath, 'move')
 
     @staticmethod
-    def createDir(path, createParent=True):
+    def createDir(title, path, createParent=True):
         """Create a new directory for given path
 
         Return True if file as heen created otherwise False
