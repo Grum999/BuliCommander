@@ -1559,6 +1559,10 @@ class BCDirectory(BCBaseFile):
         """Return directory size"""
         return 0
 
+    def isEmpty(self):
+        """Return True if directory is empty, otherwise False"""
+        return len(os.listdir(self._fullPathName))==0
+
 class BCMissingFile(BCBaseFile):
     """A missing file"""
 

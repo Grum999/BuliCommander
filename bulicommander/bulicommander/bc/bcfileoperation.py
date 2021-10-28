@@ -118,21 +118,40 @@ class BCFileOperationUi(object):
             informations = BCFileOperationUi.buildInformation(fileList, True)
 
             dlgMain.lblMessage.setText(informations['info']['short'])
-            dlgMain.teInfo.setHtml(informations['info']['full'])
+            dlgMain.teInfo.setHtml(header+"<p style='font-family: consolas, monospace;'>"+informations['info']['full']+"</p>")
 
             dlgMain.pbDeepDirAnalysis.setVisible(False)
 
             dlgMain.pbOk.setEnabled(True)
             dlgMain.pbCancel.setEnabled(True)
 
+        def haveSubItems():
+            for item in fileList:
+                if isinstance(item, BCDirectory) and not item.isEmpty():
+                    return True
+            return False
+
         informations = BCFileOperationUi.buildInformation(fileList, False)
+
+        header=''
+        if action=='Delete':
+
+            header=i18n('<h2>Please confirm deletion</h2>')
+            if haveSubItems():
+                header+="<p><table><tr><td valign=middle width=48><img width=32 height=32 src=':/pktk/images/normal/warning'/></td><td><span style='margin-left: 16px; font-style: italic;'>"
+                header+=i18n("Warning: some directories are not empty!")
+                header+="<br>"+i18n("Please execute <b>Sub-directories analysis</b> to check content before deletion") + "</span></td></tr></table></p>"
+
+            translatedAction=i18n('Delete')
+        else:
+            translatedAction=action
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcfileoperation.ui')
         dlgMain = PyQt5.uic.loadUi(uiFileName)
         dlgMain._oldShowEvent = dlgMain.showEvent
 
         dlgMain.lblMessage.setText(informations['info']['short'])
-        dlgMain.teInfo.setHtml(informations['info']['full'])
+        dlgMain.teInfo.setHtml(header+"<p style='font-family: consolas, monospace;'>"+informations['info']['full']+"</p>")
 
         if message2 is None or message2 == '':
             dlgMain.lblMessage2.setVisible(False)
@@ -158,8 +177,11 @@ class BCFileOperationUi(object):
 
         if informations['stats']['nbDir'] == 0:
             dlgMain.pbDeepDirAnalysis.setVisible(False)
+        else:
+            dlgMain.pbDeepDirAnalysis.setVisible(haveSubItems())
 
-        dlgMain.pbOk.setText(action)
+
+        dlgMain.pbOk.setText(translatedAction)
 
         dlgMain.pbOk.clicked.connect(dlgMain.accept)
         dlgMain.pbCancel.clicked.connect(dlgMain.reject)
@@ -484,7 +506,9 @@ class BCFileOperationUi(object):
                 'nbOther': 0,
                 'sizeKra': 0,
                 'sizeOther': 0,
-                'nbDir': 0
+                'nbDir': 0,
+                'nbTotal': 0
+
             }
 
         # ----------------------------------------------------------------------
@@ -505,13 +529,13 @@ class BCFileOperationUi(object):
                         statFiles[key]+=stats[key]
 
                     if stats['nbKra'] > 0 or stats['nbOther'] > 0 or stats['nbDir'] > 0:
-                        nfo=["""<span style=" font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&gt; Directory contains:</span>"""]
+                        nfo=["""<span style=" font-family:'consolas, monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&gt; Directory contains:</span>"""]
                         if stats['nbDir'] > 0:
-                            nfo.append(f"""<span style="margin-left: 40px; font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Sub-directories: {stats['nbDir']}</span>""" )
+                            nfo.append(f"""<span style="margin-left: 40px; font-family:'consolas, monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Sub-directories: {stats['nbDir']}</span>""" )
                         if stats['nbKra'] > 0:
-                            nfo.append(f"""<span style="margin-left: 40px; font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Image files: {stats['nbKra']} ({bytesSizeToStr(stats['sizeKra'])})</span>""" )
+                            nfo.append(f"""<span style="margin-left: 40px; font-family:'consolas, monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Image files: {stats['nbKra']} ({bytesSizeToStr(stats['sizeKra'])})</span>""" )
                         if stats['nbOther'] > 0:
-                            nfo.append(f"""<span style="margin-left: 40px; font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Other files: {stats['nbOther']} ({bytesSizeToStr(stats['sizeOther'])})</span>""" )
+                            nfo.append(f"""<span style="margin-left: 40px; font-family:'consolas, monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Other files: {stats['nbOther']} ({bytesSizeToStr(stats['sizeOther'])})</span>""" )
 
                         fullNfo.append("<br/>".join(nfo))
                 statFiles['nbDir']+=1
@@ -533,6 +557,8 @@ class BCFileOperationUi(object):
         if statFiles['nbOther'] > 0:
             shortNfo.append(f"Other files: {statFiles['nbOther']} ({bytesSizeToStr(statFiles['sizeOther'])})" )
 
+        statFiles['nbTotal']=statFiles['nbKra']+statFiles['nbOther']+statFiles['nbDir']
+
         QApplication.restoreOverrideCursor()
 
         return {
@@ -552,7 +578,7 @@ class BCFileOperationUi(object):
     def delete(title, nbFiles, nbDirectories, fileList):
         """Open dialog box"""
         db = BCFileOperationUi.__dialogFileOperation('Delete', nbFiles, nbDirectories, fileList)
-        db.setWindowTitle(f"{title}::Delete files")
+        db.setWindowTitle(i18n(f"{title}::Delete files"))
         return db.exec()
 
     @staticmethod
