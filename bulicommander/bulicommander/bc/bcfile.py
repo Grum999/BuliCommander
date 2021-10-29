@@ -631,7 +631,7 @@ class BCFileManagedFormat(object):
     @staticmethod
     def backupSuffixRe():
         """return backup suffix as regular expression"""
-        return '(?:\.\d+)?'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.')
+        return r'(?:\.\d+)?'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.')
 
     @staticmethod
     def inExtensions(value, withBackup=False, noExtIsOk=False):
@@ -797,7 +797,7 @@ class BCFileManipulateName(object):
         if not isinstance(pattern, str):
             raise EInvalidType('Given `pattenr` must be a <str>')
 
-        if pattern.strip() == '' or re.search('(?i)<none>', pattern):
+        if pattern.strip() == '' or re.search(r'(?i)<none>', pattern):
             return ''
 
         currentDateTime = time.time()
@@ -806,19 +806,21 @@ class BCFileManipulateName(object):
         if targetPath is None:
             targetPath = file.path()
 
+        targetPath=targetPath.replace('\\', r'\\')
+
         isDir = False
         if file.format() != BCFileManagedFormat.DIRECTORY:
             baseFileNameWithoutExt = os.path.splitext(file.name())[0]
             nameFileNameWithoutExt = os.path.splitext(file.fullPathName())[0]
             if file.extension(False) == '' and file.name()[-1] != '.' :
-                replaceExtExpr = "(?i)\.\{file:ext\}"
+                replaceExtExpr = r"(?i)\.\{file:ext\}"
             else:
-                replaceExtExpr = "(?i)\{file:ext\}"
+                replaceExtExpr = r"(?i)\{file:ext\}"
 
             fileName = re.sub(replaceExtExpr,      file.extension(False),                        fileName)
-            fileName = re.sub("(?i)\{image:size\}",           f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}x{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
-            fileName = re.sub("(?i)\{image:size:width\}",     f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}", fileName)
-            fileName = re.sub("(?i)\{image:size:height\}",    f"{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
+            fileName = re.sub(r"(?i)\{image:size\}",           f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}x{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
+            fileName = re.sub(r"(?i)\{image:size:width\}",     f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}", fileName)
+            fileName = re.sub(r"(?i)\{image:size:height\}",    f"{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
 
             if kw:=re.search("(?i)\{image:size:width:(#+)\}", fileName):
                 replaceHash=kw.groups()[0]
@@ -835,91 +837,93 @@ class BCFileManipulateName(object):
             nameFileNameWithoutExt = file.fullPathName()
             replaceExtExpr = None
 
-            fileName = re.sub("(?i)\.\{file:ext\}",     "", fileName)
-            fileName = re.sub("(?i)\{file:ext\}",       "", fileName)
-            fileName = re.sub("(?i)\{image:size\}",           "0x0", fileName)
-            fileName = re.sub("(?i)\{image:size:width\}",     "0", fileName)
-            fileName = re.sub("(?i)\{image:size:height\}",    "0", fileName)
+            fileName = re.sub(r"(?i)\.\{file:ext\}",     "", fileName)
+            fileName = re.sub(r"(?i)\{file:ext\}",       "", fileName)
+            fileName = re.sub(r"(?i)\{image:size\}",           "0x0", fileName)
+            fileName = re.sub(r"(?i)\{image:size:width\}",     "0", fileName)
+            fileName = re.sub(r"(?i)\{image:size:height\}",    "0", fileName)
 
+        baseFileNameWithoutExt=baseFileNameWithoutExt.replace('\\', r'\\')
+        nameFileNameWithoutExt=nameFileNameWithoutExt.replace('\\', r'\\')
 
-        fileName = re.sub("(?i)\{file:path\}", targetPath,                                   fileName)
-        fileName = re.sub("(?i)\{file:baseName\}", baseFileNameWithoutExt,                   fileName)
-        fileName = re.sub("(?i)\{file:name\}", nameFileNameWithoutExt,     fileName)
-        fileName = re.sub("(?i)\{file:format\}", file.format(),     fileName)
+        fileName = re.sub(r"(?i)\{file:path\}", targetPath,                                   fileName)
+        fileName = re.sub(r"(?i)\{file:baseName\}", baseFileNameWithoutExt,                   fileName)
+        fileName = re.sub(r"(?i)\{file:name\}", nameFileNameWithoutExt,     fileName)
+        fileName = re.sub(r"(?i)\{file:format\}", file.format(),     fileName)
 
-        if re.match("(?i)\{file:hash:md5\}", fileName):
-            fileName = re.sub("(?i)\{file:hash:md5\}",      file.hash('md5'),           fileName)
-        if re.match("(?i)\{file:hash:sha1\}", fileName):
-            fileName = re.sub("(?i)\{file:hash:sha1\}",      file.hash('sha1'),           fileName)
-        if re.match("(?i)\{file:hash:sha256\}", fileName):
-            fileName = re.sub("(?i)\{file:hash:sha256\}",      file.hash('sha256'),           fileName)
-        if re.match("(?i)\{file:hash:sha512\}", fileName):
-            fileName = re.sub("(?i)\{file:hash:sha512\}",      file.hash('sha512'),           fileName)
+        if re.match(r"(?i)\{file:hash:md5\}", fileName):
+            fileName = re.sub(r"(?i)\{file:hash:md5\}",      file.hash('md5'),           fileName)
+        if re.match(r"(?i)\{file:hash:sha1\}", fileName):
+            fileName = re.sub(r"(?i)\{file:hash:sha1\}",      file.hash('sha1'),           fileName)
+        if re.match(r"(?i)\{file:hash:sha256\}", fileName):
+            fileName = re.sub(r"(?i)\{file:hash:sha256\}",      file.hash('sha256'),           fileName)
+        if re.match(r"(?i)\{file:hash:sha512\}", fileName):
+            fileName = re.sub(r"(?i)\{file:hash:sha512\}",      file.hash('sha512'),           fileName)
 
-        fileName = re.sub("(?i)\{file:date\}",      tsToStr(file.lastModificationDateTime(), '%Y%m%d'),           fileName)
-        fileName = re.sub("(?i)\{file:date:yyyy\}", tsToStr(file.lastModificationDateTime(), '%Y'),               fileName)
-        fileName = re.sub("(?i)\{file:date:mm\}",   tsToStr(file.lastModificationDateTime(), '%m'),               fileName)
-        fileName = re.sub("(?i)\{file:date:dd\}",   tsToStr(file.lastModificationDateTime(), '%d'),               fileName)
+        fileName = re.sub(r"(?i)\{file:date\}",      tsToStr(file.lastModificationDateTime(), '%Y%m%d'),           fileName)
+        fileName = re.sub(r"(?i)\{file:date:yyyy\}", tsToStr(file.lastModificationDateTime(), '%Y'),               fileName)
+        fileName = re.sub(r"(?i)\{file:date:mm\}",   tsToStr(file.lastModificationDateTime(), '%m'),               fileName)
+        fileName = re.sub(r"(?i)\{file:date:dd\}",   tsToStr(file.lastModificationDateTime(), '%d'),               fileName)
 
-        fileName = re.sub("(?i)\{file:time\}",      tsToStr(file.lastModificationDateTime(), '%H%M%S'),           fileName)
-        fileName = re.sub("(?i)\{file:time:hh\}",   tsToStr(file.lastModificationDateTime(), '%H'),               fileName)
-        fileName = re.sub("(?i)\{file:time:mm\}",   tsToStr(file.lastModificationDateTime(), '%M'),               fileName)
-        fileName = re.sub("(?i)\{file:time:ss\}",   tsToStr(file.lastModificationDateTime(), '%S'),               fileName)
+        fileName = re.sub(r"(?i)\{file:time\}",      tsToStr(file.lastModificationDateTime(), '%H%M%S'),           fileName)
+        fileName = re.sub(r"(?i)\{file:time:hh\}",   tsToStr(file.lastModificationDateTime(), '%H'),               fileName)
+        fileName = re.sub(r"(?i)\{file:time:mm\}",   tsToStr(file.lastModificationDateTime(), '%M'),               fileName)
+        fileName = re.sub(r"(?i)\{file:time:ss\}",   tsToStr(file.lastModificationDateTime(), '%S'),               fileName)
 
-        fileName = re.sub("(?i)\{date\}",      tsToStr(currentDateTime, '%Y%m%d'),           fileName)
-        fileName = re.sub("(?i)\{date:yyyy\}", tsToStr(currentDateTime, '%Y'),               fileName)
-        fileName = re.sub("(?i)\{date:mm\}",   tsToStr(currentDateTime, '%m'),               fileName)
-        fileName = re.sub("(?i)\{date:dd\}",   tsToStr(currentDateTime, '%d'),               fileName)
+        fileName = re.sub(r"(?i)\{date\}",      tsToStr(currentDateTime, '%Y%m%d'),           fileName)
+        fileName = re.sub(r"(?i)\{date:yyyy\}", tsToStr(currentDateTime, '%Y'),               fileName)
+        fileName = re.sub(r"(?i)\{date:mm\}",   tsToStr(currentDateTime, '%m'),               fileName)
+        fileName = re.sub(r"(?i)\{date:dd\}",   tsToStr(currentDateTime, '%d'),               fileName)
 
-        fileName = re.sub("(?i)\{time\}",      tsToStr(currentDateTime, '%H%M%S'),           fileName)
-        fileName = re.sub("(?i)\{time:hh\}",   tsToStr(currentDateTime, '%H'),               fileName)
-        fileName = re.sub("(?i)\{time:mm\}",   tsToStr(currentDateTime, '%M'),               fileName)
-        fileName = re.sub("(?i)\{time:ss\}",   tsToStr(currentDateTime, '%S'),               fileName)
+        fileName = re.sub(r"(?i)\{time\}",      tsToStr(currentDateTime, '%H%M%S'),           fileName)
+        fileName = re.sub(r"(?i)\{time:hh\}",   tsToStr(currentDateTime, '%H'),               fileName)
+        fileName = re.sub(r"(?i)\{time:mm\}",   tsToStr(currentDateTime, '%M'),               fileName)
+        fileName = re.sub(r"(?i)\{time:ss\}",   tsToStr(currentDateTime, '%S'),               fileName)
 
         if resultCounter:=re.search("(?i)\{counter(?::(#+))?\}", fileName):
-            regEx = re.sub("(?i)\{file:path\}", re.escape(targetPath),                        pattern)
+            regEx = re.sub(r"(?i)\{file:path\}", targetPath,                        pattern)
 
-            regEx = re.sub("(?i)\{file:baseName\}", re.escape(baseFileNameWithoutExt),        regEx)
-            regEx = re.sub("(?i)\{file:name\}", re.escape(nameFileNameWithoutExt),            regEx)
+            regEx = re.sub(r"(?i)\{file:baseName\}", baseFileNameWithoutExt,        regEx)
+            regEx = re.sub(r"(?i)\{file:name\}", nameFileNameWithoutExt,            regEx)
             if not replaceExtExpr is None:
                 regEx = re.sub(replaceExtExpr,  re.escape(file.extension(False)),             regEx)
             else:
-                regEx = re.sub("(?i)\.\{file:ext\}",     "", regEx)
-                regEx = re.sub("(?i)\{file:ext\}",       "", regEx)
+                regEx = re.sub(r"(?i)\.\{file:ext\}",     "", regEx)
+                regEx = re.sub(r"(?i)\{file:ext\}",       "", regEx)
 
-            regEx = re.sub("(?i)\{file:format\}", re.escape(file.format()),     regEx)
+            regEx = re.sub(r"(?i)\{file:format\}", re.escape(file.format()),     regEx)
 
 
-            regEx = re.sub("(?i)\{file:hash:md5\}",      r'[a-z0-9]{32}',           regEx)
-            regEx = re.sub("(?i)\{file:hash:sha1\}",     r'[a-z0-9]{40}',           regEx)
-            regEx = re.sub("(?i)\{file:hash:sha256\}",   r'[a-z0-9]{64}',           regEx)
-            regEx = re.sub("(?i)\{file:hash:sha512\}",   r'[a-z0-9]{128}',          regEx)
+            regEx = re.sub(r"(?i)\{file:hash:md5\}",      r'[a-z0-9]{32}',           regEx)
+            regEx = re.sub(r"(?i)\{file:hash:sha1\}",     r'[a-z0-9]{40}',           regEx)
+            regEx = re.sub(r"(?i)\{file:hash:sha256\}",   r'[a-z0-9]{64}',           regEx)
+            regEx = re.sub(r"(?i)\{file:hash:sha512\}",   r'[a-z0-9]{128}',          regEx)
 
-            regEx = re.sub("(?i)\{file:date\}",      r'\\d{8}',                                    regEx)
-            regEx = re.sub("(?i)\{file:date:yyyy\}", r'\\d{4}',                                    regEx)
-            regEx = re.sub("(?i)\{file:date:mm\}",   r'\\d{2}',                                    regEx)
-            regEx = re.sub("(?i)\{file:date:dd\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub(r"(?i)\{file:date\}",      r'\\d{8}',                                    regEx)
+            regEx = re.sub(r"(?i)\{file:date:yyyy\}", r'\\d{4}',                                    regEx)
+            regEx = re.sub(r"(?i)\{file:date:mm\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub(r"(?i)\{file:date:dd\}",   r'\\d{2}',                                    regEx)
 
-            regEx = re.sub("(?i)\{file:time\}",      r'\\d{6}',                                    regEx)
-            regEx = re.sub("(?i)\{file:time:hh\}",   r'\\d{2}',                                    regEx)
-            regEx = re.sub("(?i)\{file:time:mm\}",   r'\\d{2}',                                    regEx)
-            regEx = re.sub("(?i)\{file:time:ss\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub(r"(?i)\{file:time\}",      r'\\d{6}',                                    regEx)
+            regEx = re.sub(r"(?i)\{file:time:hh\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub(r"(?i)\{file:time:mm\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub(r"(?i)\{file:time:ss\}",   r'\\d{2}',                                    regEx)
 
-            regEx = re.sub("(?i)\{date\}",      r'\\d{8}',                                    regEx)
-            regEx = re.sub("(?i)\{date:yyyy\}", r'\\d{4}',                                    regEx)
-            regEx = re.sub("(?i)\{date:mm\}",   r'\\d{2}',                                    regEx)
-            regEx = re.sub("(?i)\{date:dd\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub(r"(?i)\{date\}",      r'\\d{8}',                                    regEx)
+            regEx = re.sub(r"(?i)\{date:yyyy\}", r'\\d{4}',                                    regEx)
+            regEx = re.sub(r"(?i)\{date:mm\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub(r"(?i)\{date:dd\}",   r'\\d{2}',                                    regEx)
 
-            regEx = re.sub("(?i)\{time\}",      r'\\d{6}',                                    regEx)
-            regEx = re.sub("(?i)\{time:hh\}",   r'\\d{2}',                                    regEx)
-            regEx = re.sub("(?i)\{time:mm\}",   r'\\d{2}',                                    regEx)
-            regEx = re.sub("(?i)\{time:ss\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub(r"(?i)\{time\}",      r'\\d{6}',                                    regEx)
+            regEx = re.sub(r"(?i)\{time:hh\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub(r"(?i)\{time:mm\}",   r'\\d{2}',                                    regEx)
+            regEx = re.sub(r"(?i)\{time:ss\}",   r'\\d{2}',                                    regEx)
 
-            regEx = re.sub("(?i)\{image:size\}",       r'\\d+x\\d+',                                 regEx)
-            regEx = re.sub("(?i)\{image:size:width\}", r'\\d+',                                     regEx)
-            regEx = re.sub("(?i)\{image:size:height\}",r'\\d+',                                     regEx)
+            regEx = re.sub(r"(?i)\{image:size\}",       r'\\d+x\\d+',                                 regEx)
+            regEx = re.sub(r"(?i)\{image:size:width\}", r'\\d+',                                     regEx)
+            regEx = re.sub(r"(?i)\{image:size:height\}",r'\\d+',                                     regEx)
 
-            regEx = re.sub("(?i)\{counter\}",r'(\\d+)',                                         regEx)
+            regEx = re.sub(r"(?i)\{counter\}",r'(\\d+)',                                         regEx)
 
             for replaceHash in resultCounter.groups():
                 if not replaceHash is None:
@@ -944,7 +948,7 @@ class BCFileManipulateName(object):
             else:
                 nbFiles = max(fileList) + 1
 
-            fileName = re.sub("(?i)\{counter\}", str(nbFiles),   fileName)
+            fileName = re.sub(r"(?i)\{counter\}", str(nbFiles),   fileName)
 
             for replaceHash in resultCounter.groups():
                 if not replaceHash is None:
@@ -1164,7 +1168,7 @@ class BCFileManipulateName(object):
                     if result:=re.findall(find, returned, re.IGNORECASE):
                         returned=''.join([value for value in result if not value is None])
                 else:
-                    returned=re.sub(find, re.sub("\$", "\\\\",  replace,flags=re.IGNORECASE), returned, flags=re.IGNORECASE)
+                    returned=re.sub(find, re.sub(r"\$", "\\\\",  replace,flags=re.IGNORECASE), returned, flags=re.IGNORECASE)
             elif tokenName == 'Sub':
                 # returned=text to process
                 token=tokens.next()
@@ -1358,7 +1362,7 @@ class BCFileManipulateName(object):
 
         if manageCounter:
             # 5)
-            returnedValue=re.sub("(?i)\x01excludecounter(:#+)?\x01", r"{counter\1}", returnedValue)
+            returnedValue=re.sub(r"(?i)\x01excludecounter(:#+)?\x01", r"{counter\1}", returnedValue)
             # 6)
             returnedValue=BCFileManipulateName.parseFileNameKw(file, returnedValue, targetPath)
 
@@ -1577,7 +1581,7 @@ class BCMissingFile(BCBaseFile):
 
         self.__baseName, self.__extension = os.path.splitext(fileName)
 
-        if reResult:=re.match('^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
+        if reResult:=re.match(r'^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
             # seems to be an extension for a backup file with number
             baseName, originalExtension = os.path.splitext(self.__baseName)
             self.__extension=f'{originalExtension}{self.__extension}'
@@ -1721,7 +1725,7 @@ class BCFile(BCBaseFile):
 
         self.__baseName, self.__extension = os.path.splitext(fileName)
 
-        if reResult:=re.match('^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
+        if reResult:=re.match(r'^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
             # seems to be an extension for a backup file with number
             baseName, originalExtension = os.path.splitext(self.__baseName)
             self.__extension=f'{originalExtension}{self.__extension}'
@@ -3796,7 +3800,7 @@ class BCFile(BCBaseFile):
 
         # load reference image details
         for refImg in tmpRefImgList:
-            if not re.match('file://', refImg):
+            if not re.match(r'file://', refImg):
                 # embedded file
                 imageData = self.__readArchiveDataFile(refImg)
                 if imageData:
@@ -5809,4 +5813,4 @@ class BCFileIcon(object):
         return BCFileIcon.__IconProvider.icon(fileInfo)
 
 
-Debug.setEnabled(True)
+#Debug.setEnabled(True)

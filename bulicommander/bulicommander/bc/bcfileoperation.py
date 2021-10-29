@@ -770,6 +770,8 @@ class BCFileOperation(object):
         processed=None
         inError=0
 
+        targetPath=targetPath.rstrip(os.sep)
+
         # initialise process:
         # - calculate total size to copy/move (in bytes)
         # - determinate target path for file/dir to process
@@ -835,7 +837,7 @@ class BCFileOperation(object):
                         # ok new name is valid, doesn't exist
                         # need to modify all file designed to be processed into the new directory
                         for fileToUpdate in files:
-                            if (currentTarget + os.sep) in fileToUpdate.tag('newPath'):
+                            if currentTarget in fileToUpdate.tag('newPath'):
                                 fileToUpdate.setTag('newPath', fileToUpdate.tag('newPath').replace(currentTarget, targetFile))
 
                     if not os.path.exists(targetFile):
@@ -846,7 +848,7 @@ class BCFileOperation(object):
                                 fileToUpdate.setTag('newPath', targetFile)
                         break
                 elif not isDir and not newFilePattern is None:
-                    # current directory exist AND a rename pattern exist for files
+                    # current file exist AND a rename pattern exist for files
                     # => means that we try to rename file automatically
                     targetFile = os.path.join(file.tag('newPath'), BCFileManipulateName.parseFileNameKw(BCFile(targetFile), newFilePattern))
 
@@ -879,7 +881,7 @@ class BCFileOperation(object):
                             # need to modify all file designed to be processed into the new directory
                             # do it only if new target not exists
                             for fileToUpdate in files:
-                                if (currentTarget + os.sep) in fileToUpdate.tag('newPath'):
+                                if currentTarget in fileToUpdate.tag('newPath'):
                                     fileToUpdate.setTag('newPath', fileToUpdate.tag('newPath').replace(currentTarget, targetFile))
 
                         # apply to all
