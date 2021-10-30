@@ -28,8 +28,7 @@ from PyQt5.QtCore import (
     )
 from PyQt5.QtWidgets import (
         QDialog,
-        QFileDialog,
-        QMessageBox
+        QFileDialog
     )
 
 import os
@@ -76,6 +75,7 @@ from bulicommander.pktk.modules.imgutils import (
 from bulicommander.pktk.modules.timeutils import tsToStr
 from bulicommander.pktk.modules.utils import (
         cloneRect,
+        replaceLineEditClearButton,
         Debug
     )
 from bulicommander.pktk.modules.ekrita import EKritaNode
@@ -762,6 +762,7 @@ class BCExportFilesDialogBox(QDialog):
             self.rbTargetResultFile.toggled.connect(checkButton)
             self.rbTargetResultClipboard.toggled.connect(checkButton)
             self.leTargetResultFile.textChanged.connect(checkButton)
+            replaceLineEditClearButton(self.leTargetResultFile)
 
             self.__loadSettingsPageTarget()
 

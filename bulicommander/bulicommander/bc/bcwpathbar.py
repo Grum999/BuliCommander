@@ -63,6 +63,7 @@ from bulicommander.pktk.modules.menuutils import (
     )
 from bulicommander.pktk.modules.utils import (
         loadXmlUi,
+        replaceLineEditClearButton,
         Debug
     )
 
@@ -293,7 +294,7 @@ class BCWPathBar(QFrame):
         self.leFilterQuery.focusInEvent=filter_Focused
         self.leFilterQuery.editingFinished.connect(filter_Finished)
         self.leFilterQuery.textChanged.connect(filter_Changed)
-        self.leFilterQuery.findChild(QToolButton).setIcon(QIcon(":/pktk/images/normal/edit_text_clear"))
+        replaceLineEditClearButton(self.leFilterQuery)
         self.leFilterQuery.setFont(fnt)
 
         self.btBack.clicked.connect(item_Clicked)
