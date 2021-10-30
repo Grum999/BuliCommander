@@ -35,7 +35,7 @@ from PyQt5.QtCore import (
         QRect
     )
 
-
+from .imgutils import buildIcon
 from ..pktk import *
 
 # -----------------------------------------------------------------------------
@@ -395,7 +395,9 @@ def colorSpaceNfo(colorSpace):
             'text': text
         }
 
-
+def replaceLineEditClearButton(lineEdit):
+    """Replace default 'clear' button with a better one"""
+    lineEdit.findChild(QToolButton).setIcon(buildIcon("pktk:edit_text_clear"))
 
 
 

@@ -158,7 +158,7 @@ class WSearchInput(QWidget):
         self.__leSearch.textChanged.connect(self. __searchTextModified)
         self.__leSearch.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
         self.__leSearch.setClearButtonEnabled(True)
-        self.__leSearch.findChild(QToolButton).setIcon(buildIcon("pktk:edit_text_clear"))
+        replaceLineEditClearButton(self.__leSearch)
         self.__leSearch.setFont(font)
 
 
@@ -167,7 +167,7 @@ class WSearchInput(QWidget):
         self.__leReplace.textChanged.connect(self. __replaceTextModified)
         self.__leReplace.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
         self.__leReplace.setClearButtonEnabled(True)
-        self.__leReplace.findChild(QToolButton).setIcon(buildIcon("pktk:edit_text_clear"))
+        replaceLineEditClearButton(self.__leReplace)
         self.__leReplace.setFont(font)
 
         # buttons
