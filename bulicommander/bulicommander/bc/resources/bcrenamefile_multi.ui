@@ -181,6 +181,9 @@
    </item>
    <item>
     <widget class="QCheckBox" name="cbShowPath">
+     <property name="toolTip">
+      <string>Show full path for source name</string>
+     </property>
      <property name="text">
       <string>Show path</string>
      </property>
@@ -188,6 +191,9 @@
    </item>
    <item>
     <widget class="QCheckBox" name="cbExcludeSelected">
+     <property name="toolTip">
+      <string>When checked, selected item in list won't be renamed</string>
+     </property>
      <property name="text">
       <string>Exclude selected files</string>
      </property>

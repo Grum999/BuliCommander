@@ -79,6 +79,7 @@ from bulicommander.pktk.modules.utils import (
         Debug
     )
 from bulicommander.pktk.modules.ekrita import EKritaNode
+from bulicommander.pktk.widgets.wiodialog import WDialogBooleanInput
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -912,7 +913,7 @@ class BCExportFilesDialogBox(QDialog):
             return QSize(size.height(), size.width())
         return size
 
-    def __loadDefaultPageFormat(self):
+    def __loadDefaultPageFormat(self, index=None):
         """Load default internal configuration for page perimeter"""
         def defaultText():
             # --- TEXT interface ---
@@ -994,9 +995,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.cbFormatDocImgFPageNotes.setChecked(True)
             self.cbFormatDocImgFPageNotesPreview.setChecked(True)
 
-            self.bcsteFormatDocImgHeader.setPlainText('')
-            self.bcsteFormatDocImgFooter.setPlainText('')
-            self.bcsteFormatDocImgFPageNotes.setPlainText('')
+            self.bcsteFormatDocImgHeader.setHtml('')
+            self.bcsteFormatDocImgFooter.setHtml('')
+            self.bcsteFormatDocImgFPageNotes.setHtml('')
 
             self.sbFormatDocImgThumbsPerRow.setValue(2)
             self.dsbFormatDocImgThumbsSpacingOuter.setValue(5.0)
@@ -1039,8 +1040,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.__slotPageFormatDocImgPropertiesFontChanged()
 
         # --- ALL format ---
-        self.cbxFormat.setCurrentIndex(BCExportFormat.EXPORT_FMT_TEXT)
-        self.__slotPageFormatFormatChanged()
+        if index is None:
+            self.cbxFormat.setCurrentIndex(BCExportFormat.EXPORT_FMT_TEXT)
+            self.__slotPageFormatFormatChanged()
 
         # -- pages
         defaultText()
@@ -1515,8 +1517,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __updateFormatDocImgConfigurationPreview(self):
         """Generate a configuration preview and update it"""
-
-        if self.__formatPdfImgPaperSize.height() == 0:
+        if self.__formatPdfImgPaperSize.height() == 0 or not self.cbxFormat.currentIndex() in [BCExportFormat.EXPORT_FMT_IMG_KRA,
+                                                                                               BCExportFormat.EXPORT_FMT_IMG_JPG,
+                                                                                               BCExportFormat.EXPORT_FMT_IMG_PNG,
+                                                                                               BCExportFormat.EXPORT_FMT_DOC_PDF]:
             return
 
         # paper size w/h ratio
@@ -2730,8 +2734,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.__exportedFileName = self.leTargetResultFile.text()
 
             if os.path.exists(self.__exportedFileName):
-                choice = QMessageBox.question(self, self.__title, f"Target file <b>{os.path.basename(self.__exportedFileName)}</b> already exist.<br><br>Do you want to override it?")
-                if choice == QDialogButtonBox.No:
+                if not WDialogBooleanInput.display(self.__title, i18n(f"Target file <b>{os.path.basename(self.__exportedFileName)}</b> already exist.<br><br>Do you want to override it?")):
                     return
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
