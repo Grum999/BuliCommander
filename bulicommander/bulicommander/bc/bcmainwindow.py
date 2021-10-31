@@ -44,6 +44,7 @@ from .bcwpathbar import BCWPathBar
 from .bcmainviewtab import BCMainViewTab
 
 from bulicommander.pktk.modules.utils import loadXmlUi
+from bulicommander.pktk.widgets.wiodialog import WDialogMessage
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -224,8 +225,7 @@ class BCMainWindow(QMainWindow):
 
     def __actionNotYetImplemented(self, v=None):
         """"Method called when an action not yet implemented is triggered"""
-        QMessageBox.warning(
-                QWidget(),
+        WDialogMessage.display(
                 self.__uiController.name(),
                 i18n(f"Sorry! Action has not yet been implemented ({v})")
             )

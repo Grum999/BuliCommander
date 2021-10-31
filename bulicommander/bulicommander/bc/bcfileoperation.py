@@ -34,7 +34,6 @@ import PyQt5.uic
 from PyQt5.Qt import *
 
 from PyQt5.QtWidgets import (
-        QMessageBox,
         QDialog
     )
 from .bcfile import (

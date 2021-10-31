@@ -66,7 +66,6 @@ from PyQt5.QtWidgets import (
         QListWidget,
         QListWidgetItem,
         QMenu,
-        QMessageBox,
         QTreeView,
         QWidget
     )

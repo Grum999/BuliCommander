@@ -33,7 +33,6 @@ from PyQt5.QtCore import (
     )
 
 from PyQt5.QtWidgets import (
-        QMessageBox,
         QWidget
     )
 
@@ -99,7 +98,10 @@ from bulicommander.pktk.modules.strutils import (
     )
 from bulicommander.pktk.modules.about import AboutWindow
 from bulicommander.pktk.widgets.wimageview import WImageView
-from bulicommander.pktk.widgets.wiodialog import WDialogMessage
+from bulicommander.pktk.widgets.wiodialog import (
+        WDialogMessage,
+        WDialogBooleanInput
+    )
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
@@ -1867,10 +1869,10 @@ class BCUIController(QObject):
     def commandGoHistoryClearUI(self):
         """Clear history content"""
         if self.__confirmAction:
-            if QMessageBox.question(QWidget(),
-                                          self.__bcName,
-                                          "Are you sure you want to clear history?"
-                                        ) == QMessageBox.No:
+            if not WDialogBooleanInput.display(
+                                        self.__bcName,
+                                        "Are you sure you want to clear history?"
+                                    ):
                 return False
         self.commandGoHistoryClear()
         return True
@@ -1896,10 +1898,10 @@ class BCUIController(QObject):
     def commandGoBookmarkClearUI(self):
         """Clear bookmark content"""
         if self.__confirmAction:
-            if QMessageBox.question(QWidget(),
-                                          self.__bcName,
-                                          "Are you sure you want to clear all bookmarks?"
-                                        ) == QMessageBox.No:
+            if not WDialogBooleanInput.display(
+                                        self.__bcName,
+                                        "Are you sure you want to clear all bookmarks?"
+                                    ):
                 return
         self.commandGoBookmarkClear()
 
@@ -2025,10 +2027,10 @@ class BCUIController(QObject):
     def commandGoLastDocsClearUI(self):
         """Clear history content"""
         if self.__confirmAction:
-            if QMessageBox.question(QWidget(),
-                                          self.__bcName,
-                                          "Are you sure you want to clear last opened/saved list?"
-                                        ) == QMessageBox.No:
+            if WDialogBooleanInput.display(
+                                        self.__bcName,
+                                        "Are you sure you want to clear last opened/saved list?"
+                                    ):
                 return False
         self.commandGoLastDocsClear()
         return True
@@ -2045,10 +2047,10 @@ class BCUIController(QObject):
     def commandGoLastDocsResetUI(self):
         """Reset last doc content from Krita last documents list"""
         if self.__confirmAction:
-            if QMessageBox.question(QWidget(),
-                                          self.__bcName,
-                                          "Are you sure you want to reset last opened/saved list?"
-                                        ) == QMessageBox.No:
+            if WDialogBooleanInput.display(
+                                        self.__bcName,
+                                        "Are you sure you want to reset last opened/saved list?"
+                                    ):
                 return False
         self.commandGoLastDocsReset()
         return True
