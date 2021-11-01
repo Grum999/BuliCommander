@@ -60,7 +60,6 @@ from PyQt5.QtWidgets import (
         QGroupBox,
         QHBoxLayout,
         QLabel,
-        QLineEdit,
         QMessageBox,
         QProgressBar,
         QProgressDialog,

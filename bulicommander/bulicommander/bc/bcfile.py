@@ -2007,7 +2007,7 @@ class BCFile(BCBaseFile):
            + use the last 8KB to reduce risk of colision
 
           Risk for collision is not null, but tested on ~12000 different images from 16KB to 160MB, nothing bad happened
-          Hash calculation for 12000 files (~114.00GB) take ~2.70s, that's seems good enough (hopr nobody have so much image
+          Hash calculation for 12000 files (~114.00GB) take ~2.70s, that's seems good enough (hope nobody have so much image
           files in the same directory ^_^')
         """
         if self.__readable:
@@ -2015,6 +2015,9 @@ class BCFile(BCBaseFile):
                 with open(self._fullPathName, "rb") as fileHandle:
                     # digest = 256bits (32Bytes)
                     fileHash = hashlib.blake2b(digest_size=32)
+
+                    # file size is the first part of hash (ie: file size changed then ensure that hash is not the same event if 1st/last 8KB of file are the same)
+                    fileHash.update(f"{self.__size}".encode())
 
                     # read 1st 8.00KB and update hash
                     fileHash.update(fileHandle.read(BCFile.__CHUNK_SIZE))
