@@ -77,6 +77,10 @@ class BCWPreview(QWidget):
         self.__maxAnimatedFrame = 0
         self.__imgReaderAnimated = None
 
+        self.__lblNoPreviewPixmap=None
+        self.__lblNoPreviewResizeEventOrigin=self.lblNoPreview.resizeEvent
+        self.lblNoPreview.resizeEvent=self.__lblNoPreviewResizeEvent
+
         # Allow zooming with right mouse button.
         # Drag for zoom box, doubleclick to view full image.
         self.gvPreview.setCacheMode(QGraphicsView.CacheBackground)
@@ -90,14 +94,26 @@ class BCWPreview(QWidget):
     def __zoomChanged(self, value):
         self.lblPreviewZoom.setText(f"View at {value:.2f}%")
 
+    def __lblNoPreviewResizeEvent(self, event):
+        """Resize pixmap when label is resized"""
+        self.__lblNoPreviewResizeEventOrigin(event)
+
+        if self.__lblNoPreviewPixmap:
+            if event.size().width() > self.__lblNoPreviewPixmap.width() and event.size().height() > self.__lblNoPreviewPixmap.height():
+                self.lblNoPreview.setPixmap(self.__lblNoPreviewPixmap)
+            else:
+                self.lblNoPreview.setPixmap(self.__lblNoPreviewPixmap.scaled(event.size().width(), event.size().height(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
     def hidePreview(self, msg=None):
         """Hide preview and display message"""
         if msg is None:
+            self.__lblNoPreviewPixmap=None
             self.lblNoPreview.setText("No image selected")
         elif isinstance(msg, str):
+            self.__lblNoPreviewPixmap=None
             self.lblNoPreview.setText(msg)
         else:
+            self.__lblNoPreviewPixmap=msg
             self.lblNoPreview.setPixmap(msg)
 
         self.swPreview.setCurrentIndex(1)
