@@ -27,6 +27,7 @@
 
 from enum import Enum
 from math import floor
+from pathlib import Path
 
 import krita
 import os
@@ -490,8 +491,11 @@ class BCMainViewFiles(QTreeView):
             raise EInvalidType("Given `fileNfo` must be a <BCBaseFile>")
 
         if not self.__status == BCMainViewFiles.__STATUS_UPDATING:
-            raise EInvalidStatus("Current treeview is not in update mode")
-
+            # this case should not occurs...
+            # ignore it for now, but need to understand in which situation it can
+            # happen and what are the impacts
+            #raise EInvalidStatus("Current treeview is not in update mode")
+            return
 
         self.__changed = True
 
@@ -572,7 +576,11 @@ class BCMainViewFiles(QTreeView):
     def clear(self):
         """Clear content"""
         if not self.__status == BCMainViewFiles.__STATUS_UPDATING:
-            raise EInvalidStatus("Current treeview is not in update mode")
+            # this case should not occurs...
+            # ignore it for now, but need to understand in which situation it can
+            # happen and what are the impacts
+            #raise EInvalidStatus("Current treeview is not in update mode")
+            return
 
         self.__model.removeRows(0, self.__model.rowCount())
         self.__changed = True
@@ -1449,6 +1457,20 @@ class BCMainViewTab(QFrame):
                 self.__filesQuery.setResult(self.filesLayerFilterDView().list())
 
         else:
+            path=self.filesPath()
+            if not os.path.isdir(path):
+                # directory has been deleted?
+                # get parent; at least go up until root ^_^''
+                while True:
+                    path=str(Path(path).parent)
+
+                    if os.path.isdir(path):
+                        break
+                # define path as new location
+                self.setFilesPath(path)
+                # and exit (as now, content has laready been refreshed with new path)
+                return
+
             # MODE_PATH
             if fileQuery is None:
                 if self.__filesQuery is None:
@@ -1465,7 +1487,7 @@ class BCMainViewTab(QFrame):
                         filter.setName((r're:.*', 'match'))
 
                     self.__filesQuery = BCFileList()
-                    self.__filesQuery.addPath(self.filesPath())
+                    self.__filesQuery.addPath(path)
                     self.__filesQuery.setIncludeDirectories(True)
 
                     if self.__uiController.optionViewFileHidden():

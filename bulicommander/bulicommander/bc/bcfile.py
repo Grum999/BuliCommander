@@ -5624,7 +5624,7 @@ class BCFileList(QObject):
                             # check if file name match given pattern (if pattern) and is not already in file list
                             if (namePattern is None or namePattern.search(name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
                                 foundFiles.add(fullPathName)
-            else:
+            elif os.path.isdir(pathName):
                 # return current directory content
                 with os.scandir(pathName) as files:
 
