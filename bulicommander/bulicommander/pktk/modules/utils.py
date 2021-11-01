@@ -193,7 +193,7 @@ def loadXmlUi(fileName, parent):
         return None
 
     # load UI
-    PyQt5.uic.loadUi(fileName, parent)
+    PyQt5.uic.loadUi(fileName, parent, PkTk.packageName())
 
     # Parse XML file and retrieve all object for which an icon is set
     tree = ET.parse(fileName)
