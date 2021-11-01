@@ -308,7 +308,7 @@ class BCUIController(QObject):
             self.commandPanelFilesTabSplitterFilesPosition(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId)))
             self.commandPanelFilesTabSplitterPreviewPosition(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId)))
 
-            self.commandPanelPath(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId)))
+            self.commandPanelPath(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId)), True)
 
             self.commandPanelFilterValue(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId)))
             self.commandPanelFilterVisible(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId)))
@@ -1755,12 +1755,15 @@ class BCUIController(QObject):
 
         return self.__window.panels[panel].setFilesTabSplitterPreviewPosition(positions)
 
-    def commandPanelPath(self, panel, path=None):
-        """Define path for given panel"""
+    def commandPanelPath(self, panel, path=None, force=False):
+        """Define path for given panel
+
+        If `force` is True, force to set path even if path already set with given value (do a "refresh")
+        """
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        returned = self.__window.panels[panel].setFilesPath(path)
+        returned = self.__window.panels[panel].setFilesPath(path, force)
         self.updateMenuForPanel()
         return returned
 

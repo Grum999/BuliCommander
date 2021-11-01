@@ -1420,7 +1420,6 @@ class BCMainViewTab(QFrame):
                 if self.__filesPbVisible:
                     self.__filesProgressSetNext()
 
-
         if not self.isVisible():
             # if panel is not visible, do not update file list
             self.__filesAllowRefresh = False
@@ -3438,9 +3437,12 @@ class BCMainViewTab(QFrame):
         return self.framePathBar.path()
 
 
-    def setFilesPath(self, path=None):
-        """Set current path"""
-        return self.framePathBar.setPath(path)
+    def setFilesPath(self, path=None, force=False):
+        """Set current path
+
+        If `force` is True, force to set path even if path already set with given value (do a "refresh")
+        """
+        return self.framePathBar.setPath(path, force)
 
 
     def filesGoToBackPath(self):

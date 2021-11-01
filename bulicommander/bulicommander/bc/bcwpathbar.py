@@ -717,9 +717,12 @@ class BCWPathBar(QFrame):
         else:
             return None
 
-    def setPath(self, path=None):
-        """Set current path"""
-        self.frameBreacrumbPath.set_path(path)
+    def setPath(self, path=None, force=False):
+        """Set current path
+        
+        If `force` is True, force to set path even if path already set with given value (do a "refresh")
+        """
+        self.frameBreacrumbPath.set_path(path, force)
 
     def goToBackPath(self):
         """Go to previous path
