@@ -36,6 +36,7 @@ from PyQt5.QtWidgets import (
     )
 
 
+from ..modules.utils import replaceLineEditClearButton
 from ..modules.imgutils import buildIcon
 from .wseparator import WVLine
 
