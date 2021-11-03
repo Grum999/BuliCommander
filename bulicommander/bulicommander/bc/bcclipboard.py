@@ -26,6 +26,7 @@ import hashlib
 import json
 import re
 import shutil
+import sys
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -246,6 +247,7 @@ class BCClipboardItemUrl(BCClipboardItem):
     URL_STATUS_NOTDOWNLOADED = 0
     URL_STATUS_DOWNLOADING = 1
     URL_STATUS_DOWNLOADED = 2
+    URL_STATUS_DOWNLOADERROR = 3
 
     @staticmethod
     def new(hash, options):
@@ -295,6 +297,8 @@ class BCClipboardItemUrl(BCClipboardItem):
         self.__downloader=None
         self.__pctDelta=0
         self.__downloadSize=0
+        self.__downloadErrorCode=0
+        self.__downloadErrorStr=0
         if self.urlIsLoaded():
             self.__status=BCClipboardItemUrl.URL_STATUS_DOWNLOADED
             self.updateBcFile()
@@ -307,7 +311,7 @@ class BCClipboardItemUrl(BCClipboardItem):
     def __repr__(self):
         return f'{super(BCClipboardItemUrl, self).__repr__()[:-2]}, "{self.__url.url()}", {self.__urlIsValid}, {self.urlIsLoaded()})>'
 
-    def __downloadFinished(self, error=0):
+    def __downloadFinished(self, error=0, errorStr=''):
         """Download has finished
 
         Move file from download directory to cache directory
@@ -339,7 +343,9 @@ class BCClipboardItemUrl(BCClipboardItem):
                 except:
                     Debug.print('[BCDownloader.downloadStop] unable to remove target file {0}: {1}', self.__downloader.target(), e)
 
-            self.__status=BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED
+            self.__downloadErrorCode=error
+            self.__downloadErrorStr=errorStr
+            self.__status=BCClipboardItemUrl.URL_STATUS_DOWNLOADERROR
             self.setImageSize(QSize(-1,-1))
             self.saveToCache()
             self.calculateCacheSize()
@@ -460,6 +466,15 @@ class BCClipboardItemUrl(BCClipboardItem):
         """Recturn expected download file size"""
         return self.__downloadSize
 
+    def downloadErrorCode(self):
+        """Return download error code"""
+        return self.__downloadError
+
+    def downloadErrorStr(self):
+        """Return download error code as human readble string"""
+        return self.__downloadErrorStr
+
+
     def setDownloadSize(self, value):
         """Set expected download file size"""
         self.__downloadSize=value
@@ -518,7 +533,7 @@ class BCClipboardItemFile(BCClipboardItem):
     def __init__(self, hashValue, fileName, origin=None, timestamp=None, saveInCache=True, persistent=None):
         super(BCClipboardItemFile, self).__init__(hashValue, origin, timestamp, persistent)
 
-        self.__fileName=fileName
+        self.__fileName=os.path.normpath(fileName)
 
         if saveInCache:
             self.saveToCache()
@@ -1263,7 +1278,13 @@ class BCClipboard(QObject):
                 if self.__inPool(hashValue):
                     returned|=self.__updateTimeStamp(hashValue, origin)
                 elif url.scheme()=='file':
-                    clipboardItem=BCClipboardItemFile(hashValue, url.path(), origin)
+                    if sys.platform == 'win32':
+                        # in windows, QUrl() likes "file:///C:/Temp/filetest/20190728_200521-01.jpeg"
+                        # and returned .path() likes "/C:/Temp/filetest/20190728_200521-01.jpeg"
+                        # ==> need to remove the leading "/" if here
+                        clipboardItem=BCClipboardItemFile(hashValue, re.sub(r"^/([A-Z]):", r"\1:", url.path()), origin)
+                    else:
+                        clipboardItem=BCClipboardItemFile(hashValue, url.path(), origin)
 
                     returned|=self.__addPool(clipboardItem)
                 else:
@@ -1368,12 +1389,19 @@ class BCClipboard(QObject):
             return
 
         #print(self.__temporaryDisabled, clipboardMimeContent.formats())
+        #qDebug(f'__temporaryDisabled: {self.__temporaryDisabled} // hasUrls: {clipboardMimeContent.hasUrls()} // formats: {clipboardMimeContent.formats()}')
 
         if self.__temporaryDisabled or clipboardMimeContent.hasFormat('BCIGNORE'):
             return
 
         if clipboardMimeContent.hasUrls():
-            list=[url for url in clipboardMimeContent.urls() if self.__reTextFile.match(url.url()).hasMatch() and url.path()!='' and os.path.exists(url.path())]
+            if sys.platform == 'win32':
+                # in windows, QUrl() likes "file:///C:/Temp/filetest/20190728_200521-01.jpeg"
+                # and returned .path() likes "/C:/Temp/filetest/20190728_200521-01.jpeg"
+                # ==> need to remove the leading "/" if here
+                list=[url for url in clipboardMimeContent.urls() if self.__reTextFile.match(url.url()).hasMatch() and url.path()!='' and os.path.exists(re.sub(r"^/([A-Z]):", r"\1:", url.path()))]
+            else:
+                list=[url for url in clipboardMimeContent.urls() if self.__reTextFile.match(url.url()).hasMatch() and url.path()!='' and os.path.exists(url.path())]
 
             if len(list)>0 and self.__addPoolUrls(list, 'URI list'):
                 self.__emitUpdateAdded()
@@ -1744,6 +1772,8 @@ class BCClipboardModel(QAbstractTableModel):
                             return i18n('Downloading...')
                         elif item.urlStatus() == BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
                             return i18n('Not downloaded')
+                        elif item.urlStatus() == BCClipboardItemUrl.URL_STATUS_DOWNLOADERROR:
+                            return i18n('Download error')
 
                     size = item.imageSize()
                     if size and size.width()>-1 and size.height()>-1:

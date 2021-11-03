@@ -2884,13 +2884,24 @@ class BCMainViewTab(QFrame):
 
             if item.type() == 'BCClipboardItemUrl':
                 if item.urlStatus()==BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
-                    self.wClipboardPreview.hidePreview("Image not yet downloaded")
+                    self.wClipboardPreview.hidePreview(i18n("Image not yet downloaded"))
                     return
                 elif item.urlStatus()==BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
-                    self.wClipboardPreview.hidePreview("Image currently downloading")
+                    self.wClipboardPreview.hidePreview(i18n("Image currently downloading"))
                     self.__currentDownloadingItemTracked=item
                     self.__currentDownloadingItemTracked.downloadProgress.connect(self.__clipboardUpdateDownloadInformation)
                     self.__clipboardUpdateDownloadInformation(self.__currentDownloadingItemTracked)
+                    return
+                elif item.urlStatus()==BCClipboardItemUrl.URL_STATUS_DOWNLOADERROR:
+                    errorList=item.downloadErrorStr().split("\n")
+                    errorStr=""
+                    for index, error in enumerate(errorList):
+                        if index==0:
+                            errorStr+=f"<i>{error}</i>"
+                        else:
+                            errorStr+=f"<i><small><br>{error}</small></i>"
+
+                    self.wClipboardPreview.hidePreview(i18n("Image download failed")+f"<br>{errorStr}")
                     return
 
             if item.file():
