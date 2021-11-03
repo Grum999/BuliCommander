@@ -278,7 +278,7 @@ class GenericKeyValueModel(QAbstractItemModel):
 
 
 class WGenericKeyValueView(QTreeView):
-    """A treeview to visualize krita document layers"""
+    """A treeview to visualize key/values list"""
 
     def __init__(self, parent=None):
         super(WGenericKeyValueView, self).__init__(parent)
@@ -297,7 +297,15 @@ class WGenericKeyValueView(QTreeView):
         header.setSectionResizeMode(GenericKeyValueModel.COLNUM_VALUE, QHeaderView.Interactive)
 
     def setData(self, data, expandAll=True):
-        """Set data for treeview"""
+        """Set data for treeview
+
+        Data are added as dictionary key/value
+        If key contains "/", then a tree is built
+            {"a/b/c": 'value'}
+            => a
+               +- b
+                  +- c      value
+        """
         self.__model.setData(data)
         if expandAll:
             self.expandAll()

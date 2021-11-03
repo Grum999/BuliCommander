@@ -34,7 +34,6 @@ import PyQt5.uic
 from PyQt5.Qt import *
 
 from PyQt5.QtWidgets import (
-        QMessageBox,
         QDialog
     )
 from .bcfile import (
@@ -58,6 +57,7 @@ from bulicommander.pktk.modules.strutils import (
         strDefault
     )
 from bulicommander.pktk.modules.timeutils import tsToStr
+from bulicommander.pktk.widgets.wiodialog import WDialogStrInput
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -117,21 +117,44 @@ class BCFileOperationUi(object):
             informations = BCFileOperationUi.buildInformation(fileList, True)
 
             dlgMain.lblMessage.setText(informations['info']['short'])
-            dlgMain.teInfo.setHtml(informations['info']['full'])
+            dlgMain.teInfo.setHtml(header+"<p style='font-family: consolas, monospace;'>"+informations['info']['full']+"</p>")
 
             dlgMain.pbDeepDirAnalysis.setVisible(False)
 
             dlgMain.pbOk.setEnabled(True)
             dlgMain.pbCancel.setEnabled(True)
 
+        def haveSubItems():
+            for item in fileList:
+                if isinstance(item, BCDirectory) and not item.isEmpty():
+                    return True
+            return False
+
         informations = BCFileOperationUi.buildInformation(fileList, False)
+
+        header=''
+        if action=='Delete':
+            header=i18n('<h2>Please confirm deletion</h2>')
+            if haveSubItems():
+                header+="<p><table><tr><td valign=middle width=48><img width=32 height=32 src=':/pktk/images/normal/warning'/></td><td><span style='margin-left: 16px; font-style: italic;'>"
+                header+=i18n("Warning: some directories are not empty!")
+                header+="<br>"+i18n("Please execute <b>Sub-directories analysis</b> to check content before deletion") + "</span></td></tr></table></p>"
+            translatedAction=i18n('Delete')
+        elif action=='Copy':
+            header=i18n('<h2>Please confirm copy</h2>')
+            translatedAction=i18n('Copy')
+        elif action=='Move':
+            header=i18n('<h2>Please confirm move</h2>')
+            translatedAction=i18n('Move')
+        else:
+            translatedAction=action
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcfileoperation.ui')
         dlgMain = PyQt5.uic.loadUi(uiFileName)
         dlgMain._oldShowEvent = dlgMain.showEvent
 
         dlgMain.lblMessage.setText(informations['info']['short'])
-        dlgMain.teInfo.setHtml(informations['info']['full'])
+        dlgMain.teInfo.setHtml(header+"<p style='font-family: consolas, monospace;'>"+informations['info']['full']+"</p>")
 
         if message2 is None or message2 == '':
             dlgMain.lblMessage2.setVisible(False)
@@ -157,8 +180,11 @@ class BCFileOperationUi(object):
 
         if informations['stats']['nbDir'] == 0:
             dlgMain.pbDeepDirAnalysis.setVisible(False)
+        else:
+            dlgMain.pbDeepDirAnalysis.setVisible(haveSubItems())
 
-        dlgMain.pbOk.setText(action)
+
+        dlgMain.pbOk.setText(translatedAction)
 
         dlgMain.pbOk.clicked.connect(dlgMain.accept)
         dlgMain.pbCancel.clicked.connect(dlgMain.reject)
@@ -483,7 +509,9 @@ class BCFileOperationUi(object):
                 'nbOther': 0,
                 'sizeKra': 0,
                 'sizeOther': 0,
-                'nbDir': 0
+                'nbDir': 0,
+                'nbTotal': 0
+
             }
 
         # ----------------------------------------------------------------------
@@ -504,13 +532,13 @@ class BCFileOperationUi(object):
                         statFiles[key]+=stats[key]
 
                     if stats['nbKra'] > 0 or stats['nbOther'] > 0 or stats['nbDir'] > 0:
-                        nfo=["""<span style=" font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&gt; Directory contains:</span>"""]
+                        nfo=["""<span style=" font-family:'consolas, monospace'; font-size:9pt; font-style:italic;">&nbsp;&nbsp;&gt;&nbsp;"""+ i18n("Directory contains:")+"</span>"]
                         if stats['nbDir'] > 0:
-                            nfo.append(f"""<span style="margin-left: 40px; font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Sub-directories: {stats['nbDir']}</span>""" )
+                            nfo.append(f"""<span style="margin-left: 40px; font-family:'consolas, monospace'; font-size:9pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. """+i18n("Sub-directories:")+f" {stats['nbDir']}</span>")
                         if stats['nbKra'] > 0:
-                            nfo.append(f"""<span style="margin-left: 40px; font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Image files: {stats['nbKra']} ({bytesSizeToStr(stats['sizeKra'])})</span>""" )
+                            nfo.append(f"""<span style="margin-left: 40px; font-family:'consolas, monospace'; font-size:9pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. """+i18n("Image files:")+f" {stats['nbKra']} ({bytesSizeToStr(stats['sizeKra'])})</span>")
                         if stats['nbOther'] > 0:
-                            nfo.append(f"""<span style="margin-left: 40px; font-family:'monospace'; font-size:8pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. Other files: {stats['nbOther']} ({bytesSizeToStr(stats['sizeOther'])})</span>""" )
+                            nfo.append(f"""<span style="margin-left: 40px; font-family:'consolas, monospace'; font-size:9pt; font-style:italic;">&nbsp;&nbsp;&nbsp;&nbsp;. """+i18n("Other files:")+f" {stats['nbOther']} ({bytesSizeToStr(stats['sizeOther'])})</span>")
 
                         fullNfo.append("<br/>".join(nfo))
                 statFiles['nbDir']+=1
@@ -523,14 +551,15 @@ class BCFileOperationUi(object):
                 statFiles['nbKra']+=1
                 statFiles['sizeKra']+=file.size()
 
-
         shortNfo = []
         if statFiles['nbDir'] > 0:
-            shortNfo.append(f"Directories: {statFiles['nbDir']}")
+            shortNfo.append(i18n("Directories: ")+str(statFiles['nbDir']))
         if statFiles['nbKra'] > 0:
-            shortNfo.append(f"Image files: {statFiles['nbKra']} ({bytesSizeToStr(statFiles['sizeKra'])})")
+            shortNfo.append(i18n("Image files: ")+f"{statFiles['nbKra']} ({bytesSizeToStr(statFiles['sizeKra'])})")
         if statFiles['nbOther'] > 0:
-            shortNfo.append(f"Other files: {statFiles['nbOther']} ({bytesSizeToStr(statFiles['sizeOther'])})" )
+            shortNfo.append(i18n("Other files: ")+f"{statFiles['nbOther']} ({bytesSizeToStr(statFiles['sizeOther'])})")
+
+        statFiles['nbTotal']=statFiles['nbKra']+statFiles['nbOther']+statFiles['nbDir']
 
         QApplication.restoreOverrideCursor()
 
@@ -551,28 +580,33 @@ class BCFileOperationUi(object):
     def delete(title, nbFiles, nbDirectories, fileList):
         """Open dialog box"""
         db = BCFileOperationUi.__dialogFileOperation('Delete', nbFiles, nbDirectories, fileList)
-        db.setWindowTitle(f"{title}::Delete files")
+        db.setWindowTitle(i18n(f"{title}::Delete files"))
         return db.exec()
 
     @staticmethod
     def copy(title, nbFiles, nbDirectories, fileList, targetPath):
         """Open dialog box"""
         db = BCFileOperationUi.__dialogFileOperation('Copy', nbFiles, nbDirectories, fileList, "To", targetPath)
-        db.setWindowTitle(f"{title}::Copy files")
+        db.setWindowTitle(i18n(f"{title}::Copy files"))
         return db.exec()
 
     @staticmethod
     def move(title, nbFiles, nbDirectories, fileList, targetPath):
         """Open dialog box"""
         db = BCFileOperationUi.__dialogFileOperation('Move', nbFiles, nbDirectories, fileList, "To", targetPath)
-        db.setWindowTitle(f"{title}::Move files")
+        db.setWindowTitle(i18n(f"{title}::Move files"))
         return db.exec()
 
     @staticmethod
     def createDir(title, targetPath):
         """Open dialog box to create a new directory"""
-        value, ok = QInputDialog.getText(QWidget(), f"{title}::Create directory", f"Create a new directory into\n{targetPath}", QLineEdit.Normal,"New directory")
-        if ok and value != '':
+
+        value=WDialogStrInput.display(i18n(f"{title}::Create directory"),
+                                      i18n(f"""<h2>Create a new directory</h2><p>Directory will be created into <span style="font-family:'consolas, monospace'; font-weight:bold; white-space: nowrap;">{targetPath}</span></p>"""),
+                                      i18n("Please provide name for new directory"),
+                                      i18n('New directory'),
+                                      r'^[^\\/<>?:"*|]+$')
+        if not value is None:
             return os.path.join(targetPath, value)
         return None
 
@@ -617,7 +651,7 @@ class BCFileOperationUi(object):
     def fileExists(title, action, fileSrc, fileTgt, nbFiles=0):
         """Open dialog box to ask action on existing file"""
         db = BCFileOperationUi.__dialogFileExists(action, fileSrc, fileTgt, nbFiles)
-        db.setWindowTitle(f"{title}::{action} files")
+        db.setWindowTitle(i18n(f"{title}::{action} files"))
         returned = db.exec()
         if returned:
             return (db.action(), db.renamed(), db.applyToAll())
@@ -735,6 +769,8 @@ class BCFileOperation(object):
         processed=None
         inError=0
 
+        targetPath=targetPath.rstrip(os.sep)
+
         # initialise process:
         # - calculate total size to copy/move (in bytes)
         # - determinate target path for file/dir to process
@@ -800,7 +836,7 @@ class BCFileOperation(object):
                         # ok new name is valid, doesn't exist
                         # need to modify all file designed to be processed into the new directory
                         for fileToUpdate in files:
-                            if (currentTarget + os.sep) in fileToUpdate.tag('newPath'):
+                            if currentTarget in fileToUpdate.tag('newPath'):
                                 fileToUpdate.setTag('newPath', fileToUpdate.tag('newPath').replace(currentTarget, targetFile))
 
                     if not os.path.exists(targetFile):
@@ -811,7 +847,7 @@ class BCFileOperation(object):
                                 fileToUpdate.setTag('newPath', targetFile)
                         break
                 elif not isDir and not newFilePattern is None:
-                    # current directory exist AND a rename pattern exist for files
+                    # current file exist AND a rename pattern exist for files
                     # => means that we try to rename file automatically
                     targetFile = os.path.join(file.tag('newPath'), BCFileManipulateName.parseFileNameKw(BCFile(targetFile), newFilePattern))
 
@@ -844,7 +880,7 @@ class BCFileOperation(object):
                             # need to modify all file designed to be processed into the new directory
                             # do it only if new target not exists
                             for fileToUpdate in files:
-                                if (currentTarget + os.sep) in fileToUpdate.tag('newPath'):
+                                if currentTarget in fileToUpdate.tag('newPath'):
                                     fileToUpdate.setTag('newPath', fileToUpdate.tag('newPath').replace(currentTarget, targetFile))
 
                         # apply to all
@@ -949,10 +985,10 @@ class BCFileOperation(object):
         # TODO: implement move to trash options
         #       improve message when error is encountered?
 
-        # cancelled=0
-        #   when cancelled > 0, it's the number of items processed
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
+        # cancelled=0
+        #   when cancelled > 0, it's the number of items processed
         cancelled=0
         inError=0
 
@@ -1013,7 +1049,7 @@ class BCFileOperation(object):
         return BCFileOperation.__copyOrMove(title, files, targetPath, 'move')
 
     @staticmethod
-    def createDir(path, createParent=True):
+    def createDir(title, path, createParent=True):
         """Create a new directory for given path
 
         Return True if file as heen created otherwise False
@@ -1024,7 +1060,7 @@ class BCFileOperation(object):
         except Exception as e:
             BCSysTray.messageCritical(
                 i18n(f"{title}::Create directory"),
-                f"Unable to create directory <b>{path}</b>"
+                i18n(f"Unable to create directory <b>{path}</b>")
             )
             return False
 

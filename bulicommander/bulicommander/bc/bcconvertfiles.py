@@ -28,8 +28,7 @@ from PyQt5.QtCore import (
     )
 from PyQt5.QtWidgets import (
         QDialog,
-        QFileDialog,
-        QMessageBox
+        QFileDialog
     )
 
 import os

@@ -1079,7 +1079,7 @@
              </property>
              <property name="font">
               <font>
-               <family>DejaVu Sans Mono</family>
+               <family>DejaVu Sans Mono, Consolas, Courier New</family>
               </font>
              </property>
              <property name="toolTip">
@@ -1116,7 +1116,7 @@
              </property>
              <property name="font">
               <font>
-               <family>DejaVu Sans Mono</family>
+               <family>DejaVu Sans Mono, Consolas, Courier New</family>
               </font>
              </property>
              <property name="toolTip">

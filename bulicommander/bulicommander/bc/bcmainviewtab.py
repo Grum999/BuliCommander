@@ -27,6 +27,7 @@
 
 from enum import Enum
 from math import floor
+from pathlib import Path
 
 import krita
 import os
@@ -66,7 +67,6 @@ from PyQt5.QtWidgets import (
         QListWidget,
         QListWidgetItem,
         QMenu,
-        QMessageBox,
         QTreeView,
         QWidget
     )
@@ -414,7 +414,7 @@ class BCMainViewFiles(QTreeView):
             return
 
         if self.__updatingIcons==BCMainViewFiles.__STATUS_ICON_STOPLOADING:
-            # currently stop laoding icons, so don't need to update them as
+            # currently stop loading icons, so don't need to update them as
             # an update is already waiting
             return
 
@@ -491,8 +491,11 @@ class BCMainViewFiles(QTreeView):
             raise EInvalidType("Given `fileNfo` must be a <BCBaseFile>")
 
         if not self.__status == BCMainViewFiles.__STATUS_UPDATING:
-            raise EInvalidStatus("Current treeview is not in update mode")
-
+            # this case should not occurs...
+            # ignore it for now, but need to understand in which situation it can
+            # happen and what are the impacts
+            #raise EInvalidStatus("Current treeview is not in update mode")
+            return
 
         self.__changed = True
 
@@ -573,7 +576,11 @@ class BCMainViewFiles(QTreeView):
     def clear(self):
         """Clear content"""
         if not self.__status == BCMainViewFiles.__STATUS_UPDATING:
-            raise EInvalidStatus("Current treeview is not in update mode")
+            # this case should not occurs...
+            # ignore it for now, but need to understand in which situation it can
+            # happen and what are the impacts
+            #raise EInvalidStatus("Current treeview is not in update mode")
+            return
 
         self.__model.removeRows(0, self.__model.rowCount())
         self.__changed = True
@@ -1421,7 +1428,6 @@ class BCMainViewTab(QFrame):
                 if self.__filesPbVisible:
                     self.__filesProgressSetNext()
 
-
         if not self.isVisible():
             # if panel is not visible, do not update file list
             self.__filesAllowRefresh = False
@@ -1451,6 +1457,20 @@ class BCMainViewTab(QFrame):
                 self.__filesQuery.setResult(self.filesLayerFilterDView().list())
 
         else:
+            path=self.filesPath()
+            if not os.path.isdir(path):
+                # directory has been deleted?
+                # get parent; at least go up until root ^_^''
+                while True:
+                    path=str(Path(path).parent)
+
+                    if os.path.isdir(path):
+                        break
+                # define path as new location
+                self.setFilesPath(path)
+                # and exit (as now, content has laready been refreshed with new path)
+                return
+
             # MODE_PATH
             if fileQuery is None:
                 if self.__filesQuery is None:
@@ -1467,7 +1487,7 @@ class BCMainViewTab(QFrame):
                         filter.setName((r're:.*', 'match'))
 
                     self.__filesQuery = BCFileList()
-                    self.__filesQuery.addPath(self.filesPath())
+                    self.__filesQuery.addPath(path)
                     self.__filesQuery.setIncludeDirectories(True)
 
                     if self.__uiController.optionViewFileHidden():
@@ -1616,7 +1636,7 @@ class BCMainViewTab(QFrame):
 
         def addNfoBtnRow(form, label, value, button, tooltip=None):
             fntValue = QFont()
-            fntValue.setFamily('DejaVu Sans Mono')
+            fntValue.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
             wContainer=QWidget()
             wContainerLayout=QHBoxLayout(wContainer)
@@ -1650,7 +1670,7 @@ class BCMainViewTab(QFrame):
                 wLabel.setContentsMargins(30, 0, 0, 0)
 
             fntValue = QFont()
-            fntValue.setFamily('DejaVu Sans Mono')
+            fntValue.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
             if isinstance(value, str):
                 wLabel.setAlignment(Qt.AlignLeft|Qt.AlignTop)
@@ -2864,13 +2884,24 @@ class BCMainViewTab(QFrame):
 
             if item.type() == 'BCClipboardItemUrl':
                 if item.urlStatus()==BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED:
-                    self.wClipboardPreview.hidePreview("Image not yet downloaded")
+                    self.wClipboardPreview.hidePreview(i18n("Image not yet downloaded"))
                     return
                 elif item.urlStatus()==BCClipboardItemUrl.URL_STATUS_DOWNLOADING:
-                    self.wClipboardPreview.hidePreview("Image currently downloading")
+                    self.wClipboardPreview.hidePreview(i18n("Image currently downloading"))
                     self.__currentDownloadingItemTracked=item
                     self.__currentDownloadingItemTracked.downloadProgress.connect(self.__clipboardUpdateDownloadInformation)
                     self.__clipboardUpdateDownloadInformation(self.__currentDownloadingItemTracked)
+                    return
+                elif item.urlStatus()==BCClipboardItemUrl.URL_STATUS_DOWNLOADERROR:
+                    errorList=item.downloadErrorStr().split("\n")
+                    errorStr=""
+                    for index, error in enumerate(errorList):
+                        if index==0:
+                            errorStr+=f"<i>{error}</i>"
+                        else:
+                            errorStr+=f"<i><small><br>{error}</small></i>"
+
+                    self.wClipboardPreview.hidePreview(i18n("Image download failed")+f"<br>{errorStr}")
                     return
 
             if item.file():
@@ -3439,9 +3470,12 @@ class BCMainViewTab(QFrame):
         return self.framePathBar.path()
 
 
-    def setFilesPath(self, path=None):
-        """Set current path"""
-        return self.framePathBar.setPath(path)
+    def setFilesPath(self, path=None, force=False):
+        """Set current path
+
+        If `force` is True, force to set path even if path already set with given value (do a "refresh")
+        """
+        return self.framePathBar.setPath(path, force)
 
 
     def filesGoToBackPath(self):

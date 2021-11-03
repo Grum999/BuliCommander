@@ -30,8 +30,7 @@ from PyQt5.QtCore import (
         QStandardPaths
     )
 from PyQt5.QtWidgets import (
-        QDialog,
-        QMessageBox
+        QDialog
     )
 
 from os.path import join, getsize
@@ -58,6 +57,10 @@ from bulicommander.pktk.modules.settings import (
                         SettingsFmt,
                         SettingsKey,
                         SettingsRule
+                    )
+from bulicommander.pktk.widgets.wiodialog import (
+                        WDialogMessage,
+                        WDialogBooleanInput
                     )
 from bulicommander.pktk.pktk import (
         EInvalidType,
@@ -1058,8 +1061,7 @@ class BCSettingsDialogBox(QDialog):
 
         if checked:
             # User will ask to replace native dialog box
-            QMessageBox.warning(
-                    self,
+            WDialogMessage.display(
                     i18n(f"{self.__title}::Override Krita's native ""Open file"" dialog"),
                     i18n(f"Once option is applied, Krita's native <i>Open file</i> dialog will be replaced by <i>Buli Commander</><br><br>"
                          f"If later you want restore original <i>Open file</i> dialog, keep in mind that at this moment you'll need to restart Krita"
@@ -1067,8 +1069,7 @@ class BCSettingsDialogBox(QDialog):
                 )
         else:
             # User want to restore native dialog box
-            QMessageBox.warning(
-                    self,
+            WDialogMessage.display(
                     i18n(f"{self.__title}::Restore Krita's native ""Open file"" dialog"),
                     i18n(f"Please keep in mind that original <i>Open file</i> dialog will be restored only on next Krita's startup"
                         )
@@ -1126,7 +1127,10 @@ class BCSettingsDialogBox(QDialog):
     def __clearCache(self):
         """Clear cache after user confirmation"""
 
-        if QMessageBox.question(self, i18n(f"{self.__title}::Clear Cache"), i18n(f"Current cache content will be cleared ({self.lblCCINbFileAndSize.text()})\n\nDo you confirm action?"), QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
+        if WDialogBooleanInput.display(
+                    i18n(f"{self.__title}::Clear Cache"),
+                    i18n(f"Current cache content will be cleared ({self.lblCCINbFileAndSize.text()})<br><br>Do you confirm action?")
+                ):
             shutil.rmtree(BCFile.thumbnailCacheDirectory(), ignore_errors=True)
             BCFile.initialiseCache()
             self.__calculateCacheSize()
@@ -1134,7 +1138,10 @@ class BCSettingsDialogBox(QDialog):
 
     def __clearCacheCS(self):
         """Clear clipboard session cache after user confirmation"""
-        if QMessageBox.question(self, i18n(f"{self.__title}::Clear Clipboard Cache (session)"), i18n(f"Current clipboard session cache content will be cleared ({self.lblCCINbItemsAndSizeCS.text()})\n\nDo you confirm action?"), QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
+        if WDialogBooleanInput.display(
+                    i18n(f"{self.__title}::Clear Clipboard Cache (session)"),
+                    i18n(f"Current clipboard session cache content will be cleared ({self.lblCCINbItemsAndSizeCS.text()})<br><br>Do you confirm action?")
+                ):
             self.__uiController.clipboard().cacheSessionFlush()
             BCClipboard.initialiseCache()
             self.__calculateCacheSize()
@@ -1142,7 +1149,10 @@ class BCSettingsDialogBox(QDialog):
 
     def __clearCacheCP(self):
         """Clear clipboard persistent cache after user confirmation"""
-        if QMessageBox.question(self, i18n(f"{self.__title}::Clear Clipboard Cache (persistent)"), i18n(f"Persitent clipboard cache content will be cleared ({self.lblCCINbItemsAndSizeCP.text()})\n\nDo you confirm action?"), QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
+        if WDialogBooleanInput.display(
+                    i18n(f"{self.__title}::Clear Clipboard Cache (persistent)"),
+                    i18n(f"Persitent clipboard cache content will be cleared ({self.lblCCINbItemsAndSizeCP.text()})<br><br>Do you confirm action?")
+                ):
             self.__uiController.clipboard().cachePersistentFlush()
             BCClipboard.initialiseCache()
             self.__calculateCacheSize()

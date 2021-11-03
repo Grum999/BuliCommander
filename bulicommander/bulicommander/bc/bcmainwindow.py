@@ -44,6 +44,7 @@ from .bcwpathbar import BCWPathBar
 from .bcmainviewtab import BCMainViewTab
 
 from bulicommander.pktk.modules.utils import loadXmlUi
+from bulicommander.pktk.widgets.wiodialog import WDialogMessage
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -78,7 +79,7 @@ class BCMainWindow(QMainWindow):
 
         self.__fontMono = QFont()
         self.__fontMono.setPointSize(9)
-        self.__fontMono.setFamily('DejaVu Sans Mono')
+        self.__fontMono.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
         for panelId in self.panels:
             self.panels[panelId].setAllowRefresh(False)
@@ -224,8 +225,7 @@ class BCMainWindow(QMainWindow):
 
     def __actionNotYetImplemented(self, v=None):
         """"Method called when an action not yet implemented is triggered"""
-        QMessageBox.warning(
-                QWidget(),
+        WDialogMessage.display(
                 self.__uiController.name(),
                 i18n(f"Sorry! Action has not yet been implemented ({v})")
             )

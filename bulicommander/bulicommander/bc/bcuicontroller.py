@@ -33,7 +33,6 @@ from PyQt5.QtCore import (
     )
 
 from PyQt5.QtWidgets import (
-        QMessageBox,
         QWidget
     )
 
@@ -99,6 +98,10 @@ from bulicommander.pktk.modules.strutils import (
     )
 from bulicommander.pktk.modules.about import AboutWindow
 from bulicommander.pktk.widgets.wimageview import WImageView
+from bulicommander.pktk.widgets.wiodialog import (
+        WDialogMessage,
+        WDialogBooleanInput
+    )
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
@@ -305,7 +308,7 @@ class BCUIController(QObject):
             self.commandPanelFilesTabSplitterFilesPosition(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId)))
             self.commandPanelFilesTabSplitterPreviewPosition(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId)))
 
-            self.commandPanelPath(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId)))
+            self.commandPanelPath(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId)), True)
 
             self.commandPanelFilterValue(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId)))
             self.commandPanelFilterVisible(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId)))
@@ -1203,11 +1206,11 @@ class BCUIController(QObject):
 
         newPath = BCFileOperationUi.createDir(self.__bcName, targetPath)
         if not newPath is None:
-            if not BCFileOperation.createDir(newPath):
-                QMessageBox.warning(
-                        QWidget(),
-                        f"{self.__bcName}::Create directory",
-                        f"Unable to create directory:\n{newPath}"
+            if not BCFileOperation.createDir(self.__bcName, newPath):
+                WDialogMessage.display(
+                        i18n(f"{self.__bcName}::Create directory"),
+                        "".join([i18n("<h1 class='warning'>Warning!</h1>"),
+                                 i18n(f"""<p>Unable to create directory <span style="font-family:'consolas, monospace'; font-weight:bold; white-space: nowrap;">{newPath}</span></p>""")])
                     )
 
     def commandFileDelete(self, confirm=True):
@@ -1752,12 +1755,15 @@ class BCUIController(QObject):
 
         return self.__window.panels[panel].setFilesTabSplitterPreviewPosition(positions)
 
-    def commandPanelPath(self, panel, path=None):
-        """Define path for given panel"""
+    def commandPanelPath(self, panel, path=None, force=False):
+        """Define path for given panel
+
+        If `force` is True, force to set path even if path already set with given value (do a "refresh")
+        """
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        returned = self.__window.panels[panel].setFilesPath(path)
+        returned = self.__window.panels[panel].setFilesPath(path, force)
         self.updateMenuForPanel()
         return returned
 
@@ -1866,10 +1872,10 @@ class BCUIController(QObject):
     def commandGoHistoryClearUI(self):
         """Clear history content"""
         if self.__confirmAction:
-            if QMessageBox.question(QWidget(),
-                                          self.__bcName,
-                                          "Are you sure you want to clear history?"
-                                        ) == QMessageBox.No:
+            if not WDialogBooleanInput.display(
+                                        self.__bcName,
+                                        "Are you sure you want to clear history?"
+                                    ):
                 return False
         self.commandGoHistoryClear()
         return True
@@ -1895,10 +1901,10 @@ class BCUIController(QObject):
     def commandGoBookmarkClearUI(self):
         """Clear bookmark content"""
         if self.__confirmAction:
-            if QMessageBox.question(QWidget(),
-                                          self.__bcName,
-                                          "Are you sure you want to clear all bookmarks?"
-                                        ) == QMessageBox.No:
+            if not WDialogBooleanInput.display(
+                                        self.__bcName,
+                                        "Are you sure you want to clear all bookmarks?"
+                                    ):
                 return
         self.commandGoBookmarkClear()
 
@@ -2024,10 +2030,10 @@ class BCUIController(QObject):
     def commandGoLastDocsClearUI(self):
         """Clear history content"""
         if self.__confirmAction:
-            if QMessageBox.question(QWidget(),
-                                          self.__bcName,
-                                          "Are you sure you want to clear last opened/saved list?"
-                                        ) == QMessageBox.No:
+            if WDialogBooleanInput.display(
+                                        self.__bcName,
+                                        "Are you sure you want to clear last opened/saved list?"
+                                    ):
                 return False
         self.commandGoLastDocsClear()
         return True
@@ -2044,10 +2050,10 @@ class BCUIController(QObject):
     def commandGoLastDocsResetUI(self):
         """Reset last doc content from Krita last documents list"""
         if self.__confirmAction:
-            if QMessageBox.question(QWidget(),
-                                          self.__bcName,
-                                          "Are you sure you want to reset last opened/saved list?"
-                                        ) == QMessageBox.No:
+            if WDialogBooleanInput.display(
+                                        self.__bcName,
+                                        "Are you sure you want to reset last opened/saved list?"
+                                    ):
                 return False
         self.commandGoLastDocsReset()
         return True

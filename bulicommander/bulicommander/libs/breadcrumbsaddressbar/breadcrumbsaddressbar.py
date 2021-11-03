@@ -66,7 +66,7 @@ class BreadcrumbsAddressBar(QFrame):
 
         self.font = QFont()
         self.font.setPointSize(9)
-        self.font.setFamily('DejaVu Sans Mono')
+        self.font.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
         # A label used to display view name (when view reference is used)
         self.viewName = QtWidgets.QLabel(self)
@@ -304,11 +304,13 @@ class BreadcrumbsAddressBar(QFrame):
         menu = self.sender()
         self.fs_model.setPathPrefix(str(menu.parent().path) + os.path.sep)
 
-    def set_path(self, path=None):
+    def set_path(self, path=None, force=False):
         """
         Set path displayed in this BreadcrumbsAddressBar
         Returns `False` if path does not exist or permission error.
         Can be used as a SLOT: `sender().path` is used if `path` is `None`)
+
+        If `force` is True, force to set path even if path already set with given value (do a "refresh")
         """
         if path is None or path == '':
             try:
@@ -350,7 +352,7 @@ class BreadcrumbsAddressBar(QFrame):
             self.view_selected.emit(path)
             return True
 
-        elif str(path) != str(self.path_):
+        elif force or str(path) != str(self.path_):
             self.__quickRef=None
             path, emit_err = Path(path), None
             try:  # C: -> C:\, folder\..\folder -> folder
