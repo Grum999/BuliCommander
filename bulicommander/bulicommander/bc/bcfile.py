@@ -514,6 +514,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
 class BCFileManagedFormat(object):
     """Managed files format """
     KRA = 'kra'
+    KRZ = 'krz'
     PNG = 'png'
     JPG = 'jpg'
     JPEG = 'jpeg'
@@ -530,6 +531,7 @@ class BCFileManagedFormat(object):
 
     __TRANSLATIONS = {
             'KRA': ('Krita image', 'Krita native image'),
+            'KRZ': ('Krita archive', 'Krita archival image'),
             'JPG': ('JPEG image', 'JPEG Interchange Format'),
             'JPEG': ('JPEG image', 'JPEG Interchange Format'),
             'PNG': ('PNG image', 'Portable Network Graphic'),
@@ -610,6 +612,7 @@ class BCFileManagedFormat(object):
     def list(full=True):
         if full:
             return [BCFileManagedFormat.KRA,
+                    BCFileManagedFormat.KRZ,
                     BCFileManagedFormat.PNG,
                     BCFileManagedFormat.JPG,
                     BCFileManagedFormat.JPEG,
@@ -1749,6 +1752,13 @@ class BCFile(BCBaseFile):
                 self._format = self.__extension[1:]    # remove '.'
 
 
+            if self._format == BCFileManagedFormat.KRA:
+                # in case of Qt readed is able to determinate Krita file, it can't made
+                # distinction between KRA and KRZ
+                # then need to check
+                if self.__extension[1:].lower()==BCFileManagedFormat.KRZ:
+                    self._format = BCFileManagedFormat.KRZ
+
             if self._format in BCFileManagedFormat.list(False):
                 # Use image reader
                 self.__imgSize = imageReader.size()
@@ -1768,6 +1778,14 @@ class BCFile(BCBaseFile):
                 if not size is None:
                     self.__imgSize = size
                     self._format = BCFileManagedFormat.KRA
+            elif self._format == BCFileManagedFormat.KRZ or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.KRZ, True):
+                # Image reader can't read file...
+                # or some file type (kra, ora) seems to not properly be managed
+                # by qimagereader
+                size = self.__readKraImageSize()
+                if not size is None:
+                    self.__imgSize = size
+                    self._format = BCFileManagedFormat.KRZ
             elif self._format == BCFileManagedFormat.ORA or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.ORA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
@@ -4020,7 +4038,7 @@ class BCFile(BCBaseFile):
         if not self.__readable:
             return None
 
-        if self._format == BCFileManagedFormat.KRA:
+        if self._format in (BCFileManagedFormat.KRA, BCFileManagedFormat.KRZ):
             return self.__readKraImage()
         elif self._format == BCFileManagedFormat.ORA:
             return self.__readOraImage()
@@ -4172,7 +4190,7 @@ class BCFile(BCBaseFile):
 
     def getMetaInformation(self):
         """Return metadata informations"""
-        if self._format == BCFileManagedFormat.KRA:
+        if self._format in (BCFileManagedFormat.KRA, BCFileManagedFormat.KRZ):
             return self.__readMetaDataKra()
         elif self._format == BCFileManagedFormat.ORA:
             return self.__readMetaDataOra()
