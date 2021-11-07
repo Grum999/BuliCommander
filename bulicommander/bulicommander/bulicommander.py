@@ -137,12 +137,16 @@ class BuliCommander(Extension):
         @pyqtSlot('QString')
         def opened(document):
             # a document has been created: if filename is set, document has been opened
-            if document.fileName() != '':
+            # also, need to check if uiController is initialized
+            # (possible case: document opened before uiController is initialized
+            #                 can occurs when BC is opened at startup and user able to open
+            #                 a document before/during intiialization)
+            if self.__uiController and document.fileName() != '':
                 self.__uiController.commandGoLastDocsOpenedAdd(document.fileName())
         @pyqtSlot('QString')
         def saved(fileName):
             # a document has been saved
-            if fileName != '':
+            if self.__uiController and fileName != '':
                 self.__uiController.commandGoLastDocsSavedAdd(fileName)
 
         try:
