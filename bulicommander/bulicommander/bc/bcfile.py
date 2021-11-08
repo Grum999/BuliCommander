@@ -523,6 +523,7 @@ class BCFileManagedFormat(object):
     GIF = 'gif'
     PSD = 'psd'
     XCF = 'xcf'
+    BMP = 'bmp'
     WEBP = 'webp'
 
     UNKNOWN = 'unknown'
@@ -545,6 +546,7 @@ class BCFileManagedFormat(object):
             'TGA': ('TGA image', 'Truevision TGA'),
             'XCF': ('Gimp image', 'eXperimental Computing Facility'),
             'WEBP': ('WebP', 'WebP'),
+            'BMP': ('BMP image', 'Bitmap Image File'),
 
             'ZIP': 'ZIP archive',
             '7Z': '7Zip archive',
@@ -621,6 +623,7 @@ class BCFileManagedFormat(object):
                     BCFileManagedFormat.GIF,
                     BCFileManagedFormat.PSD,
                     BCFileManagedFormat.XCF,
+                    BCFileManagedFormat.BMP,
                     BCFileManagedFormat.WEBP]
         else:
             # remove KRA/ORA/PSD/XCF (use dedicated code from plugin to retrieve basic information)
@@ -629,6 +632,7 @@ class BCFileManagedFormat(object):
                     BCFileManagedFormat.JPEG,
                     BCFileManagedFormat.SVG,
                     BCFileManagedFormat.GIF,
+                    BCFileManagedFormat.BMP,
                     BCFileManagedFormat.WEBP]
 
     @staticmethod
@@ -2337,13 +2341,13 @@ class BCFile(BCBaseFile):
                         ppX*=2.54
                         ppY*=2.54
 
-                    returned['resolutionX'] = (ppX, f'{ppX:.2f}ppi')
-                    returned['resolutionY'] = (ppY, f'{ppY:.2f}ppi')
+                    returned['resolutionX'] = (ppX, f'{ppX:.3f}ppi')
+                    returned['resolutionY'] = (ppY, f'{ppY:.3f}ppi')
 
                     if ppX == ppY:
-                        returned['resolution'] = f'{ppX:.2f}ppi'
+                        returned['resolution'] = f'{ppX:.3f}ppi'
                     else:
-                        returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+                        returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
                 else:
                     returned['resolutionX'] = (ppX, f'{ppX:.2f}')
                     returned['resolutionY'] = (ppY, f'{ppY:.2f}')
@@ -2587,13 +2591,13 @@ class BCFile(BCBaseFile):
                 ppX*=0.0254
                 ppY*=0.0254
 
-                returned['resolutionX'] = (ppX, f'{ppX:.2f}ppi')
-                returned['resolutionY'] = (ppY, f'{ppY:.2f}ppi')
+                returned['resolutionX'] = (ppX, f'{ppX:.3f}ppi')
+                returned['resolutionY'] = (ppY, f'{ppY:.3f}ppi')
 
                 if ppX == ppY:
-                    returned['resolution'] = f'{ppX:.2f}ppi'
+                    returned['resolution'] = f'{ppX:.3f}ppi'
                 else:
-                    returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+                    returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
             else:
                 returned['resolutionX'] = (ppX, f'{ppX:.2f}')
                 returned['resolutionY'] = (ppY, f'{ppY:.2f}')
@@ -3134,15 +3138,15 @@ class BCFile(BCBaseFile):
                 ppY*=0.0254
 
             returned = {
-                'resolutionX': (ppX, f'{ppX:.2f}ppi'),
-                'resolutionY': (ppY, f'{ppY:.2f}ppi'),
+                'resolutionX': (ppX, f'{ppX:.3f}ppi'),
+                'resolutionY': (ppY, f'{ppY:.3f}ppi'),
                 'resolution': ''
             }
 
             if ppX == ppY:
-                returned['resolution'] = f'{ppX:.2f}ppi'
+                returned['resolution'] = f'{ppX:.3f}ppi'
             else:
-                returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+                returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
 
             return returned
 
@@ -3307,15 +3311,15 @@ class BCFile(BCBaseFile):
             ppY = struct.unpack('!f', data[4:8])[0]
 
             returned = {
-                'resolutionX': (ppX, f'{ppX:.2f}ppi'),
-                'resolutionY': (ppY, f'{ppY:.2f}ppi'),
+                'resolutionX': (ppX, f'{ppX:.3f}ppi'),
+                'resolutionY': (ppY, f'{ppY:.3f}ppi'),
                 'resolution': ''
             }
 
             if ppX == ppY:
-                returned['resolution'] = f'{ppX:.2f}ppi'
+                returned['resolution'] = f'{ppX:.3f}ppi'
             else:
-                returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+                returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
 
             return returned
 
@@ -3492,21 +3496,21 @@ class BCFile(BCBaseFile):
                 try:
                     ppX = 0
                     ppX = float(xmlDoc[0].attrib['x-res'])
-                    returned['resolutionX'] = (ppX, f'{ppX:.2f}ppi')
+                    returned['resolutionX'] = (ppX, f'{ppX:.3f}ppi')
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, str(e))
 
                 try:
                     ppY = 0
                     ppY = float(xmlDoc[0].attrib['y-res'])
-                    returned['resolutionY'] = (ppY, f'{ppX:.2f}ppi')
+                    returned['resolutionY'] = (ppY, f'{ppX:.3f}ppi')
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-y in file {0}: {1}', self._fullPathName, str(e))
 
                 if ppX == ppY:
-                    returned['resolution'] = f'{ppX:.2f}ppi'
+                    returned['resolution'] = f'{ppX:.3f}ppi'
                 else:
-                    returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+                    returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
 
                 # Color model id comparison through the ages (from kis_kra_loader.cpp)
                 #
@@ -3869,14 +3873,14 @@ class BCFile(BCBaseFile):
                 try:
                     ppX = 0
                     ppX = float(xmlDoc.attrib['xres'])
-                    returned['resolutionX'] = (ppX, f'{ppX:.2f}ppi')
+                    returned['resolutionX'] = (ppX, f'{ppX:.3f}ppi')
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, str(e))
 
                 try:
                     ppY = 0
                     ppY = float(xmlDoc.attrib['yres'])
-                    returned['resolutionY'] = (ppY, f'{ppX:.2f}ppi')
+                    returned['resolutionY'] = (ppY, f'{ppX:.3f}ppi')
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image resolution-y in file {0}: {1}', self._fullPathName, str(e))
 
@@ -3886,9 +3890,9 @@ class BCFile(BCBaseFile):
                     returned.pop('resolutionY')
                     returned.pop('resolution')
                 elif ppX == ppY:
-                    returned['resolution'] = f'{ppX:.2f}ppi'
+                    returned['resolution'] = f'{ppX:.3f}ppi'
                 else:
-                    returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}ppi'
+                    returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
 
                 try:
                     returned['document.layerCount']=len(xmlDoc.findall(".//{*}layer"))
@@ -3897,6 +3901,181 @@ class BCFile(BCBaseFile):
 
 
         return returned
+
+
+    def __readMetaDataBmp(self):
+        """Read metadata from BMP file
+
+        BMP specifications: https://en.wikipedia.org/wiki/BMP_file_format
+                            https://www.digicamsoft.com/bmp/bmp.html
+                            https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmapv5header
+                            https://formats.kaitai.io/bmp/
+                            https://exiftool.org/TagNames/BMP.html
+        """
+        returned = {}
+
+        with open(self._fullPathName, 'rb') as fHandler:
+            # check signature (2 bytes)
+            bytes = fHandler.read(2)
+            if not bytes in (b'BM', b'BA', b'CI', b'CP', b'IC', b'PT'):
+                Debug.print('[BCFile.__readMetaDataBmp] Invalid header: {0}', bytes)
+                return returned
+
+            # skip useless data from header
+            fHandler.seek(12, os.SEEK_CUR)
+
+            # now in DIB header
+            bytes = fHandler.read(4)
+            dibHeaderSize=struct.unpack('<I', bytes)[0]
+
+            if dibHeaderSize in (12, 16, 64):
+                # with/height stored on 2bytes each
+                bytes = fHandler.read(2)
+                returned['width']=struct.unpack('<H', bytes)[0]
+
+                # height can be negative?
+                bytes = fHandler.read(2)
+                returned['height']=abs(struct.unpack('<H', bytes)[0])
+            else:
+                # with/height stored on 4bytes each
+                bytes = fHandler.read(4)
+                returned['width']=struct.unpack('<I', bytes)[0]
+
+                bytes = fHandler.read(4)
+                returned['height']=struct.unpack('<I', bytes)[0]
+
+                # colorPlane = 1, useless
+                bytes = fHandler.read(2)
+
+                # bits per pixels
+                bytes = fHandler.read(2)
+                bitsPerPixel=struct.unpack('<H', bytes)[0]
+
+                # bits per pixels
+                bytes = fHandler.read(4)
+                compressionMethod=struct.unpack('<I', bytes)[0]
+
+                if bitsPerPixel==1:
+                    returned['colorType']=(3, 'Indexed palette')
+                    returned['bitDepth']=(1, f"1-bit/pixel")
+                elif bitsPerPixel==2:
+                    returned['colorType']=(3, 'Indexed palette')
+                    returned['bitDepth']=(2, f"2-bit/pixel")
+                elif bitsPerPixel==4:
+                    returned['colorType']=(3, 'Indexed palette')
+                    returned['bitDepth']=(4, f"4-bit/pixel")
+                elif bitsPerPixel==8:
+                    returned['colorType']=(3, 'Indexed palette')
+                    returned['bitDepth']=(8, f"8-bit")
+                elif bitsPerPixel==16:
+                    returned['colorType']=(6, 'RGB with Alpha')
+                    returned['bitDepth']=(16, f"4-bit/channel")
+                elif bitsPerPixel==24:
+                    returned['colorType']=(2, 'RGB')
+                    returned['bitDepth']=(24, f"8-bit/channel")
+                elif bitsPerPixel==32:
+                    returned['colorType']=(6, 'RGB with Alpha')
+                    returned['bitDepth']=(32, f"8-bit/channel")
+
+                # image data size
+                bytes = fHandler.read(4)
+
+                # Horizontal resolution (pixels per meter)
+                bytes = fHandler.read(4)
+                ppX=struct.unpack('<i', bytes)[0]*0.0254
+
+                # Vertical resolution (pixels per meter)
+                bytes = fHandler.read(4)
+                ppY=struct.unpack('<i', bytes)[0]*0.0254
+
+                if ppX>0:
+                    returned['resolutionX'] = (ppX, f'{ppX:.3f}ppi')
+                if ppY>0:
+                    returned['resolutionY'] = (ppY, f'{ppY:.3f}ppi')
+
+                if ppX>0:
+                    if ppX == ppY:
+                        returned['resolution'] = f'{ppX:.3f}ppi'
+                    else:
+                        returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
+
+                # Palette size
+                bytes = fHandler.read(4)
+                paletteSize=struct.unpack('<I', bytes)[0]
+                if paletteSize>0:
+                    returned['paletteSize']=paletteSize
+
+                if dibHeaderSize >= 108:
+                    # BITMAPV5HEADER -- get icc profile
+
+                    # skip useless data from header
+                    # 4: important colors
+                    skipSize=4
+
+                    if compressionMethod in (3,6) or dibHeaderSize==124:
+                        # not really sure, documentations are not clear about
+                        # this format
+
+                        # 4: Red channel bit mask
+                        # 4: Green channel bit mask
+                        # 4: Blue channel bit mask
+                        skipSize+=12
+
+                        if dibHeaderSize==124 or bitsPerPixel in (16,32):
+                            # 4: Alpha channel bit mask
+                            skipSize+=4
+
+
+                    fHandler.seek(skipSize, os.SEEK_CUR)
+
+                    # 4: color space
+                    #       b'\x00\x00\x00\x00      None (Calibrated RGB)
+                    #       b'\x01\x00\x00\x00      None (Device RGB)
+                    #       b'\x02\x00\x00\x00      None (Device CMYK)
+                    #       'sRGB' => b'BGRs'       sRGB
+                    #       'Win ' => b' niW'       Windows Color Space
+                    #       'LINK' => b'KNIL'       Linked Color Profile
+                    #       'MBED' => b'DEBM'       Embedded Color Profile
+                    colorSpace = fHandler.read(4)
+
+                    skipSize=None
+                    if colorSpace==b'BGRs':
+                        returned['iccProfileName']={'en-gb': 'sRGB built-in'}
+                    elif colorSpace==b'KNIL':
+                        skipSize=48
+                        embedded=False
+                    elif colorSpace==b'DEBM':
+                        skipSize=48
+                        embedded=True
+                    elif colorSpace==b' niW':
+                        returned['iccProfileName']={'en-gb': 'Windows color space'}
+
+                    if not skipSize is None:
+                        fHandler.seek(skipSize, os.SEEK_CUR)
+
+                        bytes=fHandler.read(4)
+                        intent=struct.unpack('<I', bytes)[0]
+
+                        bytes=fHandler.read(4)
+                        iccProfileDataPos=struct.unpack('<I', bytes)[0]
+
+                        bytes=fHandler.read(4)
+                        iccProfileDataSize=struct.unpack('<I', bytes)[0]
+
+                        fHandler.seek(14+iccProfileDataPos, os.SEEK_SET)
+                        bytes=fHandler.read(iccProfileDataSize)
+
+                        if embedded:
+                            iccNfo=self.__readICCData(bytes)
+                            returned.update(iccNfo)
+                        else:
+                            returned['iccProfileName']={'en-gb': 'Linked to external file'}
+                            returned['iccProfileCopyright']={'en-gb': bytes.decode('utf-8', 'ignore')}
+                            
+
+        return returned
+
+
 
     # endregion: utils ---------------------------------------------------------
 
@@ -4206,6 +4385,8 @@ class BCFile(BCBaseFile):
             return self.__readMetaDataPsd()
         elif self._format == BCFileManagedFormat.XCF:
             return self.__readMetaDataXcf()
+        elif self._format == BCFileManagedFormat.BMP:
+            return self.__readMetaDataBmp()
         else:
             return {}
 
