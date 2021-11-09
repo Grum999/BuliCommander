@@ -1970,7 +1970,11 @@ class BCMainViewTab(QFrame):
 
 
                 # ------------------------------ Image: KRA ------------------------------
-                if file.format() == BCFileManagedFormat.KRA:
+                if file.format() in (BCFileManagedFormat.KRA, BCFileManagedFormat.KRZ):
+
+                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Krita version'), imgNfo['kritaVersion'], i18n('Version of Krita used to create/edit document'))
+                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
+
                     if imgNfo['imageNbKeyFrames'] > 1:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'Yes')
 
