@@ -3451,6 +3451,7 @@ class BCFile(BCBaseFile):
             'imageMaxKeyFrameTime': 0,
             'imageNbKeyFrames': 0,
             'imageDelay': 0,
+            'kritaVersion': '-',
 
             'document.layerCount': 0,
             'document.fileLayers': [],
@@ -3493,6 +3494,11 @@ class BCFile(BCBaseFile):
                 Debug.print('[BCFile.__readMetaDataKra] Unable to parse "maindoc.xml" in file {0}: {1}', self._fullPathName, str(e))
 
             if parsed:
+                try:
+                    returned['kritaVersion'] = xmlDoc.attrib['kritaVersion']
+                except Exception as e:
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve Krita version in file {0}: {1}', self._fullPathName, str(e))
+
                 try:
                     ppX = 0
                     ppX = float(xmlDoc[0].attrib['x-res'])
@@ -4071,7 +4077,7 @@ class BCFile(BCBaseFile):
                         else:
                             returned['iccProfileName']={'en-gb': 'Linked to external file'}
                             returned['iccProfileCopyright']={'en-gb': bytes.decode('utf-8', 'ignore')}
-                            
+
 
         return returned
 
