@@ -65,6 +65,15 @@ class NodeEditorScene(QObject):
     defaultLinkColorChanged=Signal(QColor)              # default color value for links has been modified
     defaultLinkSizeChanged=Signal(float)                # default size value for links has been modified
 
+    defaultNodeTitleColorChanged=Signal(QColor)         # default title color value for nodes has been modified
+    defaultNodeTitleBgColorChanged=Signal(QColor)       # default title background value for nodes has been modified
+    defaultNodeTitleSelectedColorChanged=Signal(QColor) # default title color value for selected nodes has been modified
+    defaultNodeTitleSelectedBgColorChanged=Signal(QColor)  # default title background value for selected nodes has been modified
+    defaultNodeBgColorChanged=Signal(QColor)            # default background color value for nodes has been modified
+    defaultNodeSelectedBgColorChanged=Signal(QColor)    # default background color value for selected nodes has been modified
+    defaultNodeBorderRadiusChanged=Signal(float)        # default border radius value for nodes has been modified
+    defaultNodeBorderSizeChanged=Signal(float)          # default border size value for nodes has been modified
+
     defaultConnectorRadiusChanged=Signal(float)         # default radius value for connectors has been modified
     defaultConnectorBorderSizeChanged=Signal(float)     # default border size value for connectors has been modified
     defaultConnectorBorderColorChanged=Signal(QColor)   # default color value for border connectors has been modified
@@ -94,6 +103,38 @@ class NodeEditorScene(QObject):
         # graphic scene
         self.__grScene=NodeEditorGrScene(self)
         self.__grScene.selectionChanged.connect(self.__checkSelection)
+
+        # default title color (text); when None, use default from scene
+        # (will be used by new NodeEditorNode if none is defined)
+        self.__defaultNodeColorTitle=palette.color(QPalette.BrightText)
+
+        # default title color (background); when None, use default from scene
+        # (will be used by new NodeEditorNode if none is defined)
+        self.__defaultNodeColorBgTitle=palette.color(QPalette.Dark)
+
+        # default title color (text - node selected); when None, use default from scene
+        # (will be used by new NodeEditorNode if none is defined)
+        self.__defaultNodeColorSelectedTitle=palette.color(QPalette.HighlightedText)
+
+        # default title color (background - node selected); when None, use default from scene
+        # (will be used by new NodeEditorNode if none is defined)
+        self.__defaultNodeColorSelectedBgTitle=palette.color(QPalette.Highlight)
+
+        # default node bg color (background); when None, use default from scene
+        # (will be used by new NodeEditorNode if none is defined)
+        self.__defaultNodeColorBgNode=palette.color(QPalette.Window)
+
+        # default node bg color (background - node selected); when None, use default from scene
+        # (will be used by new NodeEditorNode if none is defined)
+        self.__defaultNodeColorBgNodesSelected=palette.color(QPalette.Window)
+
+        # default border radius (corners); when None, use default from scene
+        # (will be used by new NodeEditorNode if none is defined)
+        self.__defaultNodeBorderRadius=6.0
+
+        # default border size; when None, use default from scene
+        # (will be used by new NodeEditorNode if none is defined)
+        self.__defaultNodeBorderSize=2.0
 
         # default render mode for links
         # (will be used by new NodeEditorLink if none is defined)
@@ -267,6 +308,110 @@ class NodeEditorScene(QObject):
 
     # -- default render settings for items in scene --
 
+    def defaultNodeTitleColor(self):
+        """Return default color value for nodes title"""
+        return self.__defaultNodeColorTitle
+
+    def setDefaultNodeTitleColor(self, value):
+        """Set default color value for nodes title"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__defaultNodeColorTitle=QColor(value)
+                self.defaultNodeTitleColorChanged.emit(self.__defaultNodeColorTitle)
+            except:
+                # ignore invalid color...
+                pass
+
+    def defaultNodeTitleBgColor(self):
+        """Return default color value for nodes background title"""
+        return self.__defaultNodeColorBgTitle
+
+    def setDefaultNodeTitleBgColor(self, value):
+        """Set default color value for nodes background title"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__defaultNodeColorBgTitle=QColor(value)
+                self.defaultNodeTitleBgColorChanged.emit(self.__defaultNodeColorBgTitle)
+            except:
+                # ignore invalid color...
+                pass
+
+    def defaultNodeTitleSelectedColor(self):
+        """Return default color value for selected nodes title"""
+        return self.__defaultNodeColorSelectedTitle
+
+    def setDefaultNodeTitleSelectedColor(self, value):
+        """Set default color value for selected nodes title"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__defaultNodeColorSelectedTitle=QColor(value)
+                self.defaultNodeTitleSelectedColorChanged.emit(self.__defaultNodeColorSelectedTitle)
+            except:
+                # ignore invalid color...
+                pass
+
+    def defaultNodeTitleSelectedBgColor(self):
+        """Return default color value for selected nodes title"""
+        return self.__defaultNodeColorSelectedBgTitle
+
+    def setDefaultNodeTitleSelectedBgColor(self, value):
+        """Set default color value for selected nodes title"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__defaultNodeColorSelectedBgTitle=QColor(value)
+                self.defaultNodeTitleSelectedBgColorChanged.emit(self.__defaultNodeColorSelectedBgTitle)
+            except:
+                # ignore invalid color...
+                pass
+
+    def defaultNodeBgColor(self):
+        """Return default color value for selected nodes title"""
+        return self.__defaultNodeColorBgNode
+
+    def setDefaultNodeBgColor(self, value):
+        """Set default color value for selected nodes title"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__defaultNodeColorBgNode=QColor(value)
+                self.defaultNodeBgColorChanged.emit(self.__defaultNodeColorBgNode)
+            except:
+                # ignore invalid color...
+                pass
+
+    def defaultNodeSelectedBgColor(self):
+        """Return default color value for selected nodes title"""
+        return self.__defaultNodeColorBgNodesSelected
+
+    def setDefaultNodeSelectedBgColor(self, value):
+        """Set default color value for selected nodes title"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__defaultNodeColorBgNodesSelected=QColor(value)
+                self.defaultNodeSelectedBgColorChanged.emit(self.__defaultNodeColorBgNodesSelected)
+            except:
+                # ignore invalid color...
+                pass
+
+    def defaultNodeBorderSize(self):
+        """Return default border size value for connectors"""
+        return self.__defaultNodeBorderSize
+
+    def setDefaultNodeBorderSize(self, value):
+        """Set default size value for connectors"""
+        if isinstance(value, (int, float)) and value>=0:
+            self.__defaultNodeBorderSize=float(value)
+            self.defaultNodeBorderSizeChanged.emit(self.__defaultNodeBorderSize)
+
+    def defaultNodeBorderRadius(self):
+        """Return default radius value for connectors"""
+        return self.__defaultNodeBorderRadius
+
+    def setDefaultNodeBorderRadius(self, value):
+        """Set default radius value for connectors"""
+        if isinstance(value, (int, float)) and value>=0 and self.__defaultNodeBorderRadius!=value:
+            self.__defaultNodeBorderRadius=float(value)
+            self.defaultNodeBorderRadiusChanged.emit(self.__defaultNodeBorderRadius)
+
     def defaultLinkRenderMode(self):
         """Return default render value for links"""
         return self.__defaultLinkRender
@@ -298,12 +443,8 @@ class NodeEditorScene(QObject):
     def setDefaultLinkSize(self, value):
         """Set default size value for links"""
         if isinstance(value, (int, float)) and value>0:
-            try:
-                self.__defaultLinkSize=float(value)
-                self.defaultLinkSizeChanged.emit(self.__defaultLinkSize)
-            except:
-                # ignore invalid value...
-                pass
+            self.__defaultLinkSize=float(value)
+            self.defaultLinkSizeChanged.emit(self.__defaultLinkSize)
 
     def defaultConnectorBorderSize(self):
         """Return default border size value for connectors"""
@@ -312,12 +453,8 @@ class NodeEditorScene(QObject):
     def setDefaultConnectorBorderSize(self, value):
         """Set default size value for connectors"""
         if isinstance(value, (int, float)) and value>=0:
-            try:
-                self.__defaultConnectorBorderSize=float(value)
-                self.defaultConnectorBorderSizeChanged.emit(self.__defaultConnectorBorderSize)
-            except:
-                # ignore invalid value...
-                pass
+            self.__defaultConnectorBorderSize=float(value)
+            self.defaultConnectorBorderSizeChanged.emit(self.__defaultConnectorBorderSize)
 
     def defaultConnectorRadius(self):
         """Return default radius value for connectors"""
@@ -325,7 +462,7 @@ class NodeEditorScene(QObject):
 
     def setDefaultConnectorRadius(self, value):
         """Set default radius value for connectors"""
-        if isinstance(value, (int, float)) and self.__defaultConnectorRadius!=value:
+        if isinstance(value, (int, float)) and value > 0 and self.__defaultConnectorRadius!=value:
             self.__defaultConnectorRadius=value
             self.defaultConnectorRadiusChanged.emit(self.__defaultConnectorRadius)
 
@@ -375,6 +512,14 @@ class NodeEditorScene(QObject):
 class NodeEditorNode(QObject):
     """Define a node, independently from graphic rendered item"""
     titleChanged=Signal(NodeEditorNode)                                         # node title has been changed: current node
+    titleColorChanged=Signal(QColor)                                            # title text color has been changed
+    titleBgColorChanged=Signal(QColor)                                          # title background color has been changed (also used for border color)
+    titleSelectedColorChanged=Signal(QColor)                                    # title text color (when node is selected) has been changed
+    titleSelectedBgColorChanged=Signal(QColor)                                  # title background color (when node is selected) has been changed
+    nodeBgColorChanged=Signal(QColor)                                           # node background color has been changed
+    nodeSelectedBgColorChanged=Signal(QColor)                                   # node background color (when node is selected) has been changed
+    borderRadiusChanged=Signal(float)                                           # border radius has been changed
+    borderSizeChanged=Signal(float)                                             # border size has been changed
 
     selectionChanged=Signal(bool)                                               # node selection state has been changed: boolean True=Selected/False=Unselected
     positionChanged=Signal(QPointF)                                             # node position has been modified: position as QPointF
@@ -399,6 +544,15 @@ class NodeEditorNode(QObject):
 
         # parent scene
         self.__scene=scene
+        self.__scene.defaultNodeTitleColorChanged.connect(self.__defaultSceneNodeTitleColorChanged)
+        self.__scene.defaultNodeTitleBgColorChanged.connect(self.__defaultSceneNodeTitleBgColorChanged)
+        self.__scene.defaultNodeTitleSelectedColorChanged.connect(self.__defaultSceneNodeTitleSelectedColorChanged)
+        self.__scene.defaultNodeTitleSelectedBgColorChanged.connect(self.__defaultSceneNodeTitleSelectedBgColorChanged)
+        self.__scene.defaultNodeBgColorChanged.connect(self.__defaultSceneNodeBgColorChanged)
+        self.__scene.defaultNodeSelectedBgColorChanged.connect(self.__defaultSceneNodeSelectedBgColorChanged)
+        self.__scene.defaultNodeBorderRadiusChanged.connect(self.__defaultSceneNodeBorderRadiusChanged)
+        self.__scene.defaultNodeBorderSizeChanged.connect(self.__defaultSceneNodeBorderSizeChanged)
+
         self.__scene.defaultConnectorRadiusChanged.connect(self.__defaultSceneConnectorRadiusChanged)
         self.__scene.defaultConnectorBorderSizeChanged.connect(self.__defaultSceneConnectorBorderSizeChanged)
         self.__scene.defaultConnectorBorderColorChanged.connect(self.__defaultSceneConnectorBorderColorChanged)
@@ -409,6 +563,30 @@ class NodeEditorNode(QObject):
 
         # title (str) for node
         self.__title=title
+
+        # title color (text); when None, use default from scene
+        self.__colorTitle=None
+
+        # title color (background); when None, use default from scene
+        self.__colorBgTitle=None
+
+        # title color (text - node selected); when None, use default from scene
+        self.__colorSelectedTitle=None
+
+        # title color (background - node selected); when None, use default from scene
+        self.__colorSelectedBgTitle=None
+
+        # node bg color (background); when None, use default from scene
+        self.__colorBgNode=None
+
+        # node bg color (background - node selected); when None, use default from scene
+        self.__colorBgNodesSelected=None
+
+        # border radius (corners); when None, use default from scene
+        self.__borderRadius=None
+
+        # border size; when None, use default from scene
+        self.__borderSize=None
 
         # default border size for connectors
         # when None, border size from scene is used, otherwise border size from node is used
@@ -498,6 +676,46 @@ class NodeEditorNode(QObject):
             elif connector.location()==NodeEditorConnector.LOCATION_BOTTOM_RIGHT:
                 nbBottomRight+=1
                 self.__updateConnectorPosition(connector, nbBottomRight)
+
+    def __defaultSceneNodeTitleColorChanged(self, value):
+        """Default value from scene has been changed; check for update"""
+        if self.__colorTitle is None:
+            self.titleColorChanged.emit(value)
+
+    def __defaultSceneNodeTitleBgColorChanged(self, value):
+        """Default value from scene has been changed; check for update"""
+        if self.__colorBgTitle is None:
+            self.titleBgColorChanged.emit(value)
+
+    def __defaultSceneNodeTitleSelectedColorChanged(self, value):
+        """Default value from scene has been changed; check for update"""
+        if self.__colorSelectedTitle is None:
+            self.titleSelectedColorChanged.emit(value)
+
+    def __defaultSceneNodeTitleSelectedBgColorChanged(self, value):
+        """Default value from scene has been changed; check for update"""
+        if self.__colorSelectedBgTitle is None:
+            self.titleSelectedBgColorChanged.emit(value)
+
+    def __defaultSceneNodeBgColorChanged(self, value):
+        """Default value from scene has been changed; check for update"""
+        if self.__colorBgNode is None:
+            self.nodeBgColorChanged.emit(value)
+
+    def __defaultSceneNodeSelectedBgColorChanged(self, value):
+        """Default value from scene has been changed; check for update"""
+        if self.__colorBgNodesSelected is None:
+            self.nodeSelectedBgColorChanged.emit(value)
+
+    def __defaultSceneNodeBorderRadiusChanged(self, value):
+        """Default value from scene has been changed; check for update"""
+        if self.__borderRadius is None:
+            self.borderRadiusChanged.emit(value)
+
+    def __defaultSceneNodeBorderSizeChanged(self, value):
+        """Default value from scene has been changed; check for update"""
+        if self.__borderSize is None:
+            self.borderSizeChanged.emit(value)
 
     def __defaultSceneConnectorRadiusChanged(self, value):
         """Default value from scene has been changed; check for update"""
@@ -669,6 +887,144 @@ class NodeEditorNode(QObject):
             return True
 
         return False
+
+    def titleColor(self):
+        """Return color for title text (unselected node)"""
+        if self.__colorTitle is None:
+            return self.__scene.defaultNodeTitleColor()
+        return self.__colorTitle
+
+    def setTitleColor(self, value):
+        """Set color for title text (unselected node)"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__colorTitle=QColor(value)
+                self.titleColorChanged.emit(self.titleColor())
+            except:
+                # ignore invalid color...
+                pass
+        elif value is None:
+            self.__colorTitle=None
+            self.titleColorChanged.emit(self.titleColor())
+
+    def titleBgColor(self):
+        """Return color for title background (unselected node)"""
+        if self.__colorBgTitle is None:
+            return self.__scene.defaultNodeTitleBgColor()
+        return self.__colorBgTitle
+
+    def setTitleBgColor(self, value):
+        """Set color for title background (unselected node)"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__colorBgTitle=QColor(value)
+                self.titleBgColorChanged.emit(self.titleBgColor())
+            except:
+                # ignore invalid color...
+                pass
+        elif value is None:
+            self.__colorBgTitle=None
+            self.titleBgColorChanged.emit(self.titleBgColor())
+
+    def titleSelectedColor(self):
+        """Return color for title text (selected node)"""
+        if self.__colorSelectedTitle is None:
+            return self.__scene.defaultNodeTitleSelectedColor()
+        return self.__colorSelectedTitle
+
+    def setTitleSelectedColor(self, value):
+        """Set color for title text (selected node)"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__colorSelectedTitle=QColor(value)
+                self.titleSelectedColorChanged.emit(self.titleSelectedColor())
+            except:
+                # ignore invalid color...
+                pass
+        elif value is None:
+            self.__colorSelectedTitle=None
+            self.titleSelectedColorChanged.emit(self.titleSelectedColor())
+
+    def titleSelectedBgColor(self):
+        """Return color for title background (selected node)"""
+        if self.__colorSelectedBgTitle is None:
+            return self.__scene.defaultNodeTitleSelectedBgColor()
+        return self.__colorSelectedBgTitle
+
+    def setTitleSelectedBgColor(self, value):
+        """Set color for title background (selected node)"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__colorSelectedBgTitle=QColor(value)
+                self.titleSelectedBgColorChanged.emit(self.titleSelectedBgColor())
+            except:
+                # ignore invalid color...
+                pass
+        elif value is None:
+            self.__colorSelectedBgTitle=None
+            self.titleSelectedBgColorChanged.emit(self.titleSelectedBgColor())
+
+    def nodeBgColor(self):
+        """Return color for node background (unselected node)"""
+        if self.__colorBgNode is None:
+            return self.__scene.defaultNodeBgColor()
+        return self.__colorBgNode
+
+    def setNodeBgColor(self, value):
+        """Set color for node background (unselected node)"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__colorBgNode=QColor(value)
+                self.nodeBgColorChanged.emit(self.nodeBgColor())
+            except:
+                # ignore invalid color...
+                pass
+        elif value is None:
+            self.__colorBgNode=None
+            self.nodeBgColorChanged.emit(self.nodeBgColor())
+
+    def nodeSelectedBgColor(self):
+        """Return color for node background (selected node)"""
+        if self.__colorBgNodesSelected is None:
+            return self.__scene.defaultNodeSelectedBgColor()
+        return self.__colorBgNodesSelected
+
+    def setNodeSelectedBgColor(self, value):
+        """Set color for node background (selected node)"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__colorBgNodesSelected=QColor(value)
+                self.nodeSelectedBgColorChanged.emit(self.nodeSelectedBgColor())
+            except:
+                # ignore invalid color...
+                pass
+        elif value is None:
+            self.__colorBgNodesSelected=None
+            self.nodeSelectedBgColorChanged.emit(self.nodeSelectedBgColor())
+
+    def borderSize(self):
+        """Return current connector border size (in pixels)"""
+        if self.__borderSize is None:
+            return self.__scene.defaultNodeBorderSize()
+        return self.__borderSize
+
+    def setBorderSize(self, value):
+        """Set current connector border size (in pixels)"""
+        if (value is None or isinstance(value, (int, float))) and self.__borderSize!=value:
+            self.__borderSize=value
+            self.borderSizeChanged.emit(self.borderSize())
+
+    def radius(self):
+        """Return current connector radius (in pixels)"""
+        if self.__borderRadius is None:
+            return self.__node.defaultNodeBorderRadius()
+        return self.__borderRadius
+
+    def setRadius(self, value):
+        """Set current connector radius (in pixels)"""
+        if (value is None or isinstance(value, (int, float))) and self.__radius!=value:
+            self.__borderRadius=value
+            self.borderRadiusChanged.emit(self.radius())
 
     def defaultConnectorBorderSize(self):
         """Return default border size value for connectors
@@ -1729,6 +2085,14 @@ class NodeEditorGrNode(QGraphicsItem):
         # node for graphic node
         self.__node=node
         self.__node.titleChanged.connect(self.__updateTitle)
+        self.__node.titleColorChanged.connect(self.__updateTitleColor)
+        self.__node.titleBgColorChanged.connect(self.__updateTitleBgColor)
+        self.__node.titleSelectedColorChanged.connect(self.__updateTitleSelectorColor)
+        self.__node.titleSelectedBgColorChanged.connect(self.__updateTitleSelectorBgColor)
+        self.__node.nodeBgColorChanged.connect(self.__updateNodeBgColor)
+        self.__node.nodeSelectedBgColorChanged.connect(self.__updateNodeSelectedBgColor)
+        self.__node.borderRadiusChanged.connect(self.__updateBorderRadius)
+        self.__node.borderSizeChanged.connect(self.__updateBorderSize)
 
         # curent node size
         self.__size=None
@@ -1749,14 +2113,17 @@ class NodeEditorGrNode(QGraphicsItem):
 
         self.__borderPen=QPen(self.__titleBgColor)
         self.__borderPen.setWidth(self.__borderSize)
+        self.__borderPen.setJoinStyle(Qt.MiterJoin)
         self.__borderPenSelected=QPen(self.__titleBgColorSelected)
         self.__borderPenSelected.setWidth(self.__borderSize)
+        self.__borderPenSelected.setJoinStyle(Qt.MiterJoin)
 
         # define window rendering properties
-        self.__windowTextColor=palette.color(QPalette.WindowText)
         self.__windowBgColor=palette.color(QPalette.Window)
+        self.__windowBgColorSelected=palette.color(QPalette.Window)
 
         self.__windowBrush=QBrush(self.__windowBgColor)
+        self.__windowBrushSelected=QBrush(self.__windowBgColorSelected)
 
         # define title
         self.__itemTitle=QGraphicsTextItem(self)
@@ -1776,6 +2143,78 @@ class NodeEditorGrNode(QGraphicsItem):
         """Update title from node"""
         self.__itemTitle.setPlainText(self.__node.title())
         self.__updateSize()
+
+    def __updateTitleColor(self, value):
+        """Title color has been modified"""
+        if self.__titleTextColor!=value:
+            self.__titleTextColor=value
+            if not self.isSelected():
+                self.__itemTitle.setDefaultTextColor(self.__titleTextColor)
+                self.update()
+
+    def __updateTitleBgColor(self, value):
+        """Title background color has been modified"""
+        if self.__titleBgColor!=value:
+            self.__titleBgColor=value
+            self.__titleBrush.setColor(self.__titleBgColor)
+            self.__borderPen.setColor(self.__titleBgColor)
+            if not self.isSelected():
+                self.update()
+
+    def __updateTitleSelectorColor(self, value):
+        """Title color (selected node) has been modified"""
+        if self.__titleTextColorSelected!=value:
+            self.__titleTextColorSelected=value
+            if self.isSelected():
+                self.__itemTitle.setDefaultTextColor(self.__titleTextColorSelected)
+                self.update()
+
+    def __updateTitleSelectorBgColor(self, value):
+        """Title background color (selected node) has been modified"""
+        if self.__titleBgColorSelected!=value:
+            self.__titleBgColorSelected=value
+            self.__titleBrushSelected.setColor(self.__titleBgColorSelected)
+            self.__borderPenSelected.setColor(self.__titleBgColorSelected)
+            if self.isSelected():
+                self.update()
+
+    def __updateNodeBgColor(self, value):
+        """Node background color has been modified"""
+        if self.__windowBgColor!=value:
+            self.__windowBgColor=value
+            self.__windowBrush.setColor(self.__windowBgColor)
+            if not self.isSelected():
+                self.update()
+
+    def __updateNodeSelectedBgColor(self, value):
+        """Node background color (selected node) has been modified"""
+        if self.__windowBgColorSelected!=value:
+            self.__windowBgColorSelected=value
+            self.__windowBrushSelected.setColor(self.__windowBgColorSelected)
+            if self.isSelected():
+                self.update()
+
+    def __updateBorderRadius(self, value):
+        """Border radius has been modified"""
+        if self.__borderRadius!=value:
+            self.__borderRadius=value
+            self.update()
+
+    def __updateBorderSize(self, value):
+        """Border size has been modified"""
+        if self.__borderSize!=value:
+            self.__borderSize=value
+            self.__borderPen.setWidth(self.__borderSize)
+            self.__borderPenSelected.setWidth(self.__borderSize)
+
+            if self.__borderSize==0:
+                self.__borderPen.setStyle(Qt.NoPen)
+                self.__borderPenSelected.setStyle(Qt.NoPen)
+            else:
+                self.__borderPen.setStyle(Qt.SolidLine)
+                self.__borderPenSelected.setStyle(Qt.SolidLine)
+            self.__updateSize()
+            self.update()
 
     def __updateSize(self):
         """Calculate bounds size for current node
@@ -1830,7 +2269,10 @@ class NodeEditorGrNode(QGraphicsItem):
 
         # render
         painter.setPen(Qt.NoPen)
-        painter.setBrush(self.__windowBrush)
+        if self.isSelected():
+            painter.setBrush(self.__windowBrushSelected)
+        else:
+            painter.setBrush(self.__windowBrush)
         painter.drawPath(pathWindow)
 
         if self.isSelected():
@@ -2038,8 +2480,10 @@ class NodeEditorGrLink(QGraphicsPathItem):
 
         self.__borderPen=QPen(self.__borderColor)
         self.__borderPen.setWidth(self.__borderSize)
+        self.__borderPen.setJoinStyle(Qt.MiterJoin)
         self.__borderPenSelected=QPen(self.__borderColorSelected)
         self.__borderPenSelected.setWidth(self.__borderSize)
+        self.__borderPenSelected.setJoinStyle(Qt.MiterJoin)
 
         # link properties
         self.setZValue(NodeEditorScene.LINK_ZINDEX)
@@ -2190,7 +2634,7 @@ class NodeEditorGrLink(QGraphicsPathItem):
             # if not linked, draw a bullet at current 'end' position
             painter.setPen(Qt.NoPen)
             painter.setBrush(QBrush(self.__borderColor))
-            painter.drawEllipse(self.__link.scene().cursorScenePosition(), 3*self.__borderSize, 3*self.__borderSize)
+            painter.drawEllipse(self.__link.scene().cursorScenePosition(), 2*self.__borderSize, 2*self.__borderSize)
             # and use dashed line to render path
             pen.setStyle(Qt.DotLine)
 
