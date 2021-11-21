@@ -20,6 +20,10 @@
 # -----------------------------------------------------------------------------
 
 
+# Basically inspired from https://www.blenderfreak.com/tutorials/node-editor-tutorial-series
+# First tutorials are intersting to easily and quickly understand basic stuff ("how to" implement)
+# but quickly rewritten everything according to my own vision of things :-)
+
 import math
 
 from PyQt5.Qt import *
@@ -47,6 +51,7 @@ class NodeEditorScene(QObject):
     LINK_ZINDEX=-1.0
     LINK_ZINDEX_FRONT=-0.5
 
+    CUT_ZINDEX=-0.25
 
     sizeChanged=Signal(QSize, QSize)                    # scene size changed: newSize, oldSize
 
@@ -1949,6 +1954,10 @@ class NodeEditorGrScene(QGraphicsScene):
     # --------------------------------------------------------------------------
     # getters
     # --------------------------------------------------------------------------
+    def scene(self):
+        """Return scene"""
+        return self.__scene
+
     def gridVisible(self):
         """Return if grid is visible"""
         return self.__gridVisible
@@ -2644,6 +2653,106 @@ class NodeEditorGrLink(QGraphicsPathItem):
         painter.drawPath(self.path())
 
 
+class NodeEditorGrCutLine(QGraphicsItem):
+    """A cut line"""
+
+    # default factors for curves/angle links render
+
+    def __init__(self, parent=None):
+        super(NodeEditorGrCutLine, self).__init__(parent)
+
+        palette=QApplication.palette()
+
+        # default bounding rect, no need here to have exactly a bounding rect...
+        self.__boundingRect=QRectF(0,0,1,1)
+
+        # link for graphic item
+        self.__points=[]
+
+        # define line properties
+        self.__lineSize=1.0
+        self.__lineColor=QColor("#88ffff00")
+        self.__lineStyle=Qt.DashLine
+
+        self.__pen=QPen(self.__lineColor)
+        self.__pen.setWidth(self.__lineSize)
+        self.__pen.setStyle(self.__lineStyle)
+
+        # link properties
+        self.setVisible(False)
+        self.setZValue(NodeEditorScene.CUT_ZINDEX)
+
+    def boundingRect(self):
+        """Return bouding rect for connector"""
+        return self.__boundingRect
+
+    def points(self):
+        """Return points from cut line"""
+        return self.__points
+
+    def color(self):
+        """Return line color"""
+        return self.__lineColor
+
+    def setColor(self, value):
+        """Update line color"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__lineColor=QColor(value)
+                self.__pen.setColor(self.__lineColor)
+            except:
+                pass
+
+    def size(self):
+        """Return line width"""
+        return self.__lineSize
+
+    def setSize(self, value):
+        """Update line width"""
+        if isinstance(value, (int, float)):
+            self.__lineSize=float(value)
+            self.__pen.setWidth(self.__lineSize)
+
+    def style(self):
+        """Return line style"""
+        return self.__lineStyle
+
+    def setStyle(self, value):
+        """Update line style"""
+        if isinstance(value, int) and value>=1 and value<=5:
+            self.__lineStyle=value
+            self.__pen.setStyle(self.__lineStyle)
+        elif isinstance(value, list):
+            invalid=[item for item in value if not isinstance(item, (float, int))]
+            if len(invalid)==0:
+                # all values are valid
+                self.__lineStyle=value
+                self.__pen.setStyle(Qt.CustomDashLine)
+                self.__pen.setDashPattern(value)
+
+    def clear(self):
+        """Clear line"""
+        self.__points=[]
+        self.update()
+
+    def appendPosition(self, position):
+        """Clear line"""
+        if isinstance(position, (QPointF, QPoint)):
+            self.__points.append(QPointF(position))
+            self.update()
+
+    def paint(self, painter, options, widget=None):
+        """Render cut line"""
+        painter.setRenderHints(QPainter.Antialiasing, True)
+
+        painter.setBrush(Qt.NoBrush)
+        painter.setPen(self.__pen)
+
+        polygon=QPolygonF(self.__points)
+        painter.drawPolyline(polygon)
+
+
+
 # ------------------------------------------------------------------------------
 
 
@@ -2651,8 +2760,8 @@ class WNodeEditorView(QGraphicsView):
     """A graphic view dedicated to render scene"""
     zoomChanged=Signal(float)
 
-    def __init__(self, parent=None):
-        super(WNodeEditorView, self).__init__(parent)
+    def __init__(self, scene, parent=None):
+        super(WNodeEditorView, self).__init__(scene, parent)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setRenderHint(QPainter.TextAntialiasing)
 
@@ -2666,10 +2775,35 @@ class WNodeEditorView(QGraphicsView):
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         self.setDragMode(QGraphicsView.NoDrag)
 
+        self.__cutLine=NodeEditorGrCutLine()
+        scene.addItem(self.__cutLine)
         self.__currentZoomFactor = 1.0
         self.__zoomStep=0.25
         self.setMouseTracking(True)
         self.setCacheMode(QGraphicsView.CacheBackground)
+
+    def cutLine(self):
+        """Return cut line instance
+
+        Allows to modify properties
+        """
+        return self.__cutLine
+
+    def cutLineDeleteLinks(self):
+        """Delete all links which intersect cut line"""
+        points=self.__cutLine.points()
+        scene=self.scene().scene()
+        for ptNumber in range(len(points)-1):
+            path=QPainterPath(points[ptNumber])
+            path.lineTo(points[ptNumber+1])
+
+            linksToRemove=[]
+            for link in scene.links():
+                if path.intersects(link.graphicItem().path()):
+                    linksToRemove.append(link)
+
+            for link in linksToRemove:
+                scene.removeLink(link)
 
     def mousePressEvent(self, event):
         """On left button pressed, start to pan scene"""
@@ -2677,6 +2811,10 @@ class WNodeEditorView(QGraphicsView):
             hoverItem=self.itemAt(event.pos())
             if event.modifiers()&Qt.ShiftModifier==Qt.ShiftModifier:
                 self.setDragMode(QGraphicsView.RubberBandDrag)
+            elif event.modifiers()&Qt.AltModifier==Qt.AltModifier:
+                self.setCursor(Qt.CrossCursor)
+                self.__cutLine.setVisible(True)
+                self.__cutLine.appendPosition(self.mapToScene(event.pos()))
             elif not isinstance(hoverItem, NodeEditorGrConnector):
                 self.setDragMode(QGraphicsView.ScrollHandDrag)
         elif event.button() == Qt.MidButton:
@@ -2694,8 +2832,22 @@ class WNodeEditorView(QGraphicsView):
         """On left button released, stop to pan scene"""
         if event.button() in (Qt.LeftButton, Qt.MidButton) and self.dragMode()==QGraphicsView.ScrollHandDrag:
             self.setDragMode(QGraphicsView.NoDrag)
+        elif event.button() == Qt.LeftButton and self.__cutLine.isVisible():
+            self.setDragMode(QGraphicsView.NoDrag)
+            self.cutLineDeleteLinks()
+            self.__cutLine.setVisible(False)
+            self.__cutLine.clear()
+            self.unsetCursor()
 
         super(WNodeEditorView, self).mouseReleaseEvent(event)
+
+    def mouseMoveEvent(self, event):
+        """Mouse is moving..."""
+        if event.buttons()&Qt.LeftButton == Qt.LeftButton and self.__cutLine.isVisible():
+            self.__cutLine.appendPosition(self.mapToScene(event.pos()))
+
+        super(WNodeEditorView, self).mouseMoveEvent(event)
+
 
     def wheelEvent(self, event:QWheelEvent):
         """Manage to zoom with wheel"""
