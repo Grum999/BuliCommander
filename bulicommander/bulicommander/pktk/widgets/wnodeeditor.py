@@ -629,6 +629,13 @@ class NodeEditorNode(QObject):
             # add connector only if no connector with same identifier already exists
             connector.setNode(self)
             self.__connectors[connector.id()]=connector
+
+            self.defaultConnectorRadiusChanged.emit(self.defaultConnectorRadius())
+            self.defaultConnectorBorderSizeChanged.emit(self.defaultConnectorBorderSize())
+            self.defaultConnectorBorderColorChanged.emit(self.defaultConnectorBorderColor())
+            self.defaultConnectorInputColorChanged.emit(self.defaultConnectorInputColor())
+            self.defaultConnectorOutputColorChanged.emit(self.defaultConnectorOutputColor())
+
             # need to recalculate positions
             self.__updateAllConnectorPosition()
             return True
@@ -977,7 +984,7 @@ class NodeEditorConnector(QObject):
     def borderSize(self):
         """Return current connector border size (in pixels)"""
         if self.__borderSize is None:
-            if self.__borderSize:
+            if self.__node:
                 return self.__node.defaultConnectorBorderSize()
             else:
                 return 0
@@ -1187,6 +1194,11 @@ class NodeEditorLink(QObject):
 
         # add link to scene
         self.__scene.addLink(self)
+
+        self.sizeChanged.emit(self.size())
+        self.renderModeChanged.emit(self.renderMode())
+        self.colorChanged.emit(self.color())
+
         self.__updateConnectors()
 
     # Deleting (Calling destructor)
@@ -1324,7 +1336,7 @@ class NodeEditorLink(QObject):
 
         if renderMode!=self.__renderMode:
             self.__renderMode=renderMode
-            self.renderModeChanged.emit(self.__renderMode)
+            self.renderModeChanged.emit(self.renderMode())
 
     def size(self):
         """Return size value for link
