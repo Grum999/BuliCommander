@@ -2661,8 +2661,10 @@ class WNodeEditorView(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
+        self.setRubberBandSelectionMode(Qt.ContainsItemBoundingRect)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setDragMode(QGraphicsView.NoDrag)
 
         self.__currentZoomFactor = 1.0
         self.__zoomStep=0.25
@@ -2673,7 +2675,9 @@ class WNodeEditorView(QGraphicsView):
         """On left button pressed, start to pan scene"""
         if event.button() == Qt.LeftButton:
             hoverItem=self.itemAt(event.pos())
-            if not isinstance(hoverItem, NodeEditorGrConnector):
+            if event.modifiers()&Qt.ShiftModifier==Qt.ShiftModifier:
+                self.setDragMode(QGraphicsView.RubberBandDrag)
+            elif not isinstance(hoverItem, NodeEditorGrConnector):
                 self.setDragMode(QGraphicsView.ScrollHandDrag)
         elif event.button() == Qt.MidButton:
             self.setDragMode(QGraphicsView.ScrollHandDrag)
@@ -2682,16 +2686,16 @@ class WNodeEditorView(QGraphicsView):
             event=QMouseEvent(event.type(), event.localPos(), Qt.LeftButton, Qt.LeftButton, event.modifiers())
         elif event.button() == Qt.RightButton:
             self.centerOn(self.sceneRect().center())
+            self.setDragMode(QGraphicsView.NoDrag)
 
-        QGraphicsView.mousePressEvent(self, event)
+        super(WNodeEditorView, self).mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
         """On left button released, stop to pan scene"""
-        if event.button() in (Qt.LeftButton, Qt.MidButton):
-        #if event.button() == Qt.MidButton:
+        if event.button() in (Qt.LeftButton, Qt.MidButton) and self.dragMode()==QGraphicsView.ScrollHandDrag:
             self.setDragMode(QGraphicsView.NoDrag)
 
-        QGraphicsView.mouseReleaseEvent(self, event)
+        super(WNodeEditorView, self).mouseReleaseEvent(event)
 
     def wheelEvent(self, event:QWheelEvent):
         """Manage to zoom with wheel"""
