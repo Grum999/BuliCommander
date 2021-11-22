@@ -68,6 +68,7 @@ class NodeEditorScene(QObject):
 
     defaultLinkRenderModeChanged=Signal(int)            # default render mode for links has been modified
     defaultLinkColorChanged=Signal(QColor)              # default color value for links has been modified
+    defaultLinkSelectedColorChanged=Signal(QColor)      # default color value for selected links has been modified
     defaultLinkSizeChanged=Signal(float)                # default size value for links has been modified
 
     defaultNodeTitleColorChanged=Signal(QColor)         # default title color value for nodes has been modified
@@ -148,6 +149,10 @@ class NodeEditorScene(QObject):
         # default color for links
         # (will be used by new NodeEditorLink if none is defined)
         self.__defaultLinkColor=palette.color(QPalette.Dark)
+
+        # default color for selected links
+        # (will be used by new NodeEditorLink if none is defined)
+        self.__defaultLinkColorSelected=palette.color(QPalette.Highlight)
 
         # default size for links (line width)
         # (will be used by new NodeEditorLink if none is defined)
@@ -437,6 +442,20 @@ class NodeEditorScene(QObject):
             try:
                 self.__defaultLinkColor=QColor(value)
                 self.defaultLinkColorChanged.emit(self.__defaultLinkColor)
+            except:
+                # ignore invalid color...
+                pass
+
+    def defaultLinkColorSelected(self):
+        """Return default color value for selected links"""
+        return self.__defaultLinkColorSelected
+
+    def setDefaultLinkColorSelected(self, value):
+        """Set default color value for selected links"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__defaultLinkColorSelected=QColor(value)
+                self.defaultLinkSelectedColorChanged.emit(self.__defaultLinkColorSelected)
             except:
                 # ignore invalid color...
                 pass
@@ -1567,6 +1586,7 @@ class NodeEditorLink(QObject):
     """Define a link (connection between 2 connector - from an output => input)"""
     renderModeChanged=Signal(int)                                               # render mode for link has been modifier: RENDER_DIRECT, RENDER_CURVE, RENDER_ANGLE
     colorChanged=Signal(QColor)                                                 # render color for link has been modified
+    colorSelectedChanged=Signal(QColor)                                         # render color for selected link has been modified
     sizeChanged=Signal(float)                                                   # render size for link has been modified: line width in pixels (at 100%)
     selectionChanged=Signal(bool)                                               # node selection state has been changed: boolean True=Selected/False=Unselected
 
@@ -1574,7 +1594,7 @@ class NodeEditorLink(QObject):
     RENDER_CURVE =   0x02
     RENDER_ANGLE =   0x03
 
-    def __init__(self, fromConnector, toConnector, renderMode=None, color=None, size=None, parent=None):
+    def __init__(self, fromConnector, toConnector, renderMode=None, color=None, colorSelected=None, size=None, parent=None):
         super(NodeEditorLink, self).__init__(parent)
 
         if not isinstance(fromConnector, NodeEditorConnector):
@@ -1614,6 +1634,9 @@ class NodeEditorLink(QObject):
         # define render color
         self.__color=color
 
+        # define render color for selected link
+        self.__colorSelected=colorSelected
+
         # define render size
         self.__size=size
 
@@ -1628,6 +1651,7 @@ class NodeEditorLink(QObject):
         self.__scene.defaultLinkRenderModeChanged.connect(self.__defaultSceneLinkRenderModeChanged)
         self.__scene.defaultLinkSizeChanged.connect(self.__defaultSceneLinkSizeChanged)
         self.__scene.defaultLinkColorChanged.connect(self.__defaultSceneLinkColorChanged)
+        self.__scene.defaultLinkSelectedColorChanged.connect(self.__defaultSceneLinkColorSelectedChanged)
 
         # QGraphicsItem for link
         self.__grItem=NodeEditorGrLink(self)
@@ -1638,6 +1662,7 @@ class NodeEditorLink(QObject):
         self.sizeChanged.emit(self.size())
         self.renderModeChanged.emit(self.renderMode())
         self.colorChanged.emit(self.color())
+        self.colorSelectedChanged.emit(self.selectedColor())
 
         self.__updateConnectors()
 
@@ -1661,6 +1686,11 @@ class NodeEditorLink(QObject):
         """Default value from scene has been changed; check for update"""
         if self.__color is None:
             self.colorChanged.emit(value)
+
+    def __defaultSceneLinkColorSelectedChanged(self, value):
+        """Default value from scene has been changed; check for update"""
+        if self.__colorSelected is None:
+            self.colorSelectedChanged.emit(value)
 
     def __updateConnectors(self, fromConnector=None, toConnector=None):
         """Update connector, asking to check link connections"""
@@ -1794,7 +1824,7 @@ class NodeEditorLink(QObject):
             self.sizeChanged.emit(self.size())
 
     def color(self):
-        """Return current render mode"""
+        """Return current render color"""
         if self.__color is None:
             return self.__scene.defaultLinkColor()
         return self.__color
@@ -1811,6 +1841,25 @@ class NodeEditorLink(QObject):
         elif value is None:
             self.__color=None
             self.colorChanged.emit(self.color())
+
+    def selectedColor(self):
+        """Return current render color for selected link"""
+        if self.__colorSelected is None:
+            return self.__scene.defaultLinkColorSelected()
+        return self.__colorSelected
+
+    def setSelectedColor(self, value):
+        """Return current render color for selected link"""
+        if isinstance(value, (QColor, str)):
+            try:
+                self.__colorSelected=QColor(value)
+                self.colorSelectedChanged.emit(self.selectedColor())
+            except:
+                # ignore invalid color...
+                pass
+        elif value is None:
+            self.__colorSelected=None
+            self.colorSelectedChanged.emit(self.selectedColor())
 
     def isSelected(self):
         """Return if current node is selected"""
@@ -2578,6 +2627,7 @@ class NodeEditorGrLink(QGraphicsPathItem):
         self.__link=link
         self.__link.renderModeChanged.connect(self.update)
         self.__link.colorChanged.connect(self.__colorUpdated)
+        self.__link.colorSelectedChanged.connect(self.__colorSelectedUpdated)
         self.__link.sizeChanged.connect(self.__sizeUpdated)
 
         # define if link have a START/END values defined (by default, True)
@@ -2716,6 +2766,11 @@ class NodeEditorGrLink(QGraphicsPathItem):
         self.__borderPen.setColor(QColor(value))
         self.update()
 
+    def __colorSelectedUpdated(self, value):
+        """Color has been updated for selected link"""
+        self.__borderPenSelected.setColor(QColor(value))
+        self.update()
+
     def __sizeUpdated(self, value):
         """Size has been updated"""
         self.__borderSize=value
@@ -2744,7 +2799,7 @@ class NodeEditorGrLink(QGraphicsPathItem):
         if not self.__isLinked:
             # if not linked, draw a bullet at current 'end' position
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(self.__borderColor))
+            painter.setBrush(QBrush(pen.color()))
             painter.drawEllipse(self.__link.scene().cursorScenePosition(), 2*self.__borderSize, 2*self.__borderSize)
             # and use dashed line to render path
             pen.setStyle(Qt.DotLine)
