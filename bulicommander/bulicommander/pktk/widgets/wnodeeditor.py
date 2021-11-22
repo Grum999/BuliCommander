@@ -634,14 +634,36 @@ class NodeEditorNode(QObject):
         self.__nbBottomLeft=0
         self.__nbBottomRight=0
 
+        self.__minSizeUserDefined=QSize(200, 200)
+        self.__minSizeCalculated=QSize(self.__minSizeUserDefined)
+
         # add connectors to node, if some given
         for connector in connectors:
             self.addConnector(connector)
 
-    def __updateConnectorPosition(self, connector, index):
+        self.titleColorChanged.emit(self.titleColor())
+        self.titleBgColorChanged.emit(self.titleBgColor())
+        self.titleSelectedColorChanged.emit(self.titleSelectedColor())
+        self.titleSelectedBgColorChanged.emit(self.titleSelectedBgColor())
+        self.nodeBgColorChanged.emit(self.nodeBgColor())
+        self.nodeSelectedBgColorChanged.emit(self.nodeSelectedBgColor())
+        self.borderRadiusChanged.emit(self.borderRadius())
+        self.borderSizeChanged.emit(self.borderSize())
+
+    def __updateMinSize(self):
+        """Update minimum size for node"""
+        self.__grItem.setMinimumSize(self.__minSizeUserDefined.expandedTo(self.__minSizeCalculated))
+
+        # size has been updated; update connectors position
+        for key in self.__connectors:
+            # no value => just recalculate automatically position according to node's size
+            self.__connectors[key].setPosition()
+
+    def __updateConnectorPosition(self, connector, index, minPosition):
         """Calculate and update position for given `connector` at given `index`"""
         position=2*self.defaultConnectorRadius()+self.__connectorSpace + self.defaultConnectorBorderSize()
-        connector.setPosition(index*position)
+        connector.setPosition(index*position+minPosition)
+        return connector.position()
 
     def __updateAllConnectorPosition(self):
         """recalculate and update position for all connector"""
@@ -655,32 +677,72 @@ class NodeEditorNode(QObject):
         nbBottomLeft=0
         nbBottomRight=0
 
+        # maintain position for each corner
+        # used to determinate minimum width/height needed for node to not have
+        # overlapped connectors
+        maxPositionLeftTop=0
+        maxPositionLeftBottom=0
+        maxPositionRightTop=0
+        maxPositionRightBottom=0
+        maxPositionTopLeft=0
+        maxPositionTopRight=0
+        maxPositionBottomLeft=0
+        maxPositionBottomRight=0
+
+        offsetPositionLeftTop=0
+        offsetPositionLeftBottom=0
+        offsetPositionRightTop=0
+        offsetPositionRightBottom=0
+        offsetPositionTopLeft=0
+        offsetPositionTopRight=0
+        offsetPositionBottomLeft=0
+        offsetPositionBottomRight=0
+
+        titleHeight=self.__grItem.titleSize().height()
+
         for key in self.__connectors:
             connector=self.__connectors[key]
+
+            connectorRadius=connector.radius()
+            minPosition=self.borderRadius()+2*connectorRadius
+            minPositionTop=max(minPosition, titleHeight+2*connectorRadius)
+
             if connector.location()==NodeEditorConnector.LOCATION_LEFT_TOP:
+                maxPositionLeftTop=self.__updateConnectorPosition(connector, nbLeftTop, minPositionTop)
                 nbLeftTop+=1
-                self.__updateConnectorPosition(connector, nbLeftTop)
+                offsetPositionLeftTop+=connectorRadius
             elif connector.location()==NodeEditorConnector.LOCATION_LEFT_BOTTOM:
+                maxPositionLeftBottom=self.__updateConnectorPosition(connector, nbLeftBottom, minPosition)
                 nbLeftBottom+=1
-                self.__updateConnectorPosition(connector, nbLeftBottom)
+                offsetPositionLeftBottom+=connectorRadius
             elif connector.location()==NodeEditorConnector.LOCATION_RIGHT_TOP:
+                maxPositionRightTop=self.__updateConnectorPosition(connector, nbRightTop, minPositionTop)
                 nbRightTop+=1
-                self.__updateConnectorPosition(connector, nbRightTop)
+                offsetPositionRightTop+=connectorRadius
             elif connector.location()==NodeEditorConnector.LOCATION_RIGHT_BOTTOM:
+                maxPositionRightBottom=self.__updateConnectorPosition(connector, nbRightBottom, minPosition)
                 nbRightBottom+=1
-                self.__updateConnectorPosition(connector, nbRightBottom)
+                offsetPositionRightBottom+=connectorRadius
             elif connector.location()==NodeEditorConnector.LOCATION_TOP_LEFT:
+                maxPositionTopLeft=self.__updateConnectorPosition(connector, nbTopLeft, minPosition)
                 nbTopLeft+=1
-                self.__updateConnectorPosition(connector, nbTopLeft)
+                offsetPositionTopLeft+=connectorRadius
             elif connector.location()==NodeEditorConnector.LOCATION_TOP_RIGHT:
+                maxPositionTopRight=self.__updateConnectorPosition(connector, nbTopRight, minPosition)
                 nbTopRight+=1
-                self.__updateConnectorPosition(connector, nbTopRight)
+                offsetPositionTopRight+=connectorRadius
             elif connector.location()==NodeEditorConnector.LOCATION_BOTTOM_LEFT:
+                maxPositionBottomLeft=self.__updateConnectorPosition(connector, nbBottomLeft, minPosition)
                 nbBottomLeft+=1
-                self.__updateConnectorPosition(connector, nbBottomLeft)
+                offsetPositionBottomLeft+=connectorRadius
             elif connector.location()==NodeEditorConnector.LOCATION_BOTTOM_RIGHT:
+                maxPositionBottomRight=self.__updateConnectorPosition(connector, nbBottomRight, minPosition)
                 nbBottomRight+=1
-                self.__updateConnectorPosition(connector, nbBottomRight)
+                offsetPositionBottomRight+=connectorRadius
+
+        self.__minSizeCalculated=QSize(2*self.__connectorSpace+max(offsetPositionTopLeft+offsetPositionTopRight+maxPositionTopLeft+maxPositionTopRight, offsetPositionBottomLeft+offsetPositionBottomRight+maxPositionBottomLeft+maxPositionBottomRight),
+                                       2*self.__connectorSpace+max(offsetPositionLeftTop+offsetPositionLeftBottom+maxPositionLeftTop+maxPositionLeftBottom, offsetPositionRightTop+offsetPositionRightBottom+maxPositionRightTop+maxPositionRightBottom))
+        self.__updateMinSize()
 
     def __defaultSceneNodeTitleColorChanged(self, value):
         """Default value from scene has been changed; check for update"""
@@ -716,6 +778,7 @@ class NodeEditorNode(QObject):
         """Default value from scene has been changed; check for update"""
         if self.__borderRadius is None:
             self.borderRadiusChanged.emit(value)
+            self.__updateAllConnectorPosition()
 
     def __defaultSceneNodeBorderSizeChanged(self, value):
         """Default value from scene has been changed; check for update"""
@@ -725,14 +788,14 @@ class NodeEditorNode(QObject):
     def __defaultSceneConnectorRadiusChanged(self, value):
         """Default value from scene has been changed; check for update"""
         if self.__defaultConnectorRadius is None:
-            self.__updateAllConnectorPosition()
             self.defaultConnectorRadiusChanged.emit(value)
+            self.__updateAllConnectorPosition()
 
     def __defaultSceneConnectorBorderSizeChanged(self, value):
         """Default value from scene has been changed; check for update"""
         if self.__defaultConnectorBorderSize is None:
-            self.__updateAllConnectorPosition()
             self.defaultConnectorBorderSizeChanged.emit(value)
+            self.__updateAllConnectorPosition()
 
     def __defaultSceneConnectorBorderColorChanged(self, value):
         """Default value from scene has been changed; check for update"""
@@ -1007,6 +1070,20 @@ class NodeEditorNode(QObject):
             self.__colorBgNodesSelected=None
             self.nodeSelectedBgColorChanged.emit(self.nodeSelectedBgColor())
 
+    def boundingRect(self):
+        """Return node size"""
+        return self.__grItem.boundingRect()
+
+    def minimumSize(self):
+        """return minimum size for node"""
+        return self.__minSizeUserDefined
+
+    def setMinimumSize(self, value):
+        """Set minimum size for node"""
+        if (value is None or isinstance(value, (int, float))) and self.__minSizeUserDefined!=value:
+            self.__minSizeUserDefined=value
+            self.__updateMinSize()
+
     def borderSize(self):
         """Return current connector border size (in pixels)"""
         if self.__borderSize is None:
@@ -1019,17 +1096,18 @@ class NodeEditorNode(QObject):
             self.__borderSize=value
             self.borderSizeChanged.emit(self.borderSize())
 
-    def radius(self):
+    def borderRadius(self):
         """Return current connector radius (in pixels)"""
         if self.__borderRadius is None:
-            return self.__node.defaultNodeBorderRadius()
+            return self.__scene.defaultNodeBorderRadius()
         return self.__borderRadius
 
-    def setRadius(self, value):
+    def setBorderRadius(self, value):
         """Set current connector radius (in pixels)"""
         if (value is None or isinstance(value, (int, float))) and self.__radius!=value:
             self.__borderRadius=value
-            self.borderRadiusChanged.emit(self.radius())
+            self.borderRadiusChanged.emit(self.borderRadius())
+            self.__updateAllConnectorPosition()
 
     def defaultConnectorBorderSize(self):
         """Return default border size value for connectors
@@ -1230,12 +1308,12 @@ class NodeEditorConnector(QObject):
         Position of QGraphicsItem is defined from location+position values
         """
         if self.__location == NodeEditorConnector.LOCATION_LEFT_TOP:
-            self.__grItem.setPos(0,  self.__node.graphicItem().titleSize().height()+self.__position)
+            self.__grItem.setPos(0, self.__position)
         elif self.__location == NodeEditorConnector.LOCATION_LEFT_BOTTOM:
             self.__grItem.setPos(0, self.__node.graphicItem().size().height() - self.__position)
 
         elif self.__location == NodeEditorConnector.LOCATION_RIGHT_TOP:
-            self.__grItem.setPos(self.__node.graphicItem().size().width(), self.__node.graphicItem().titleSize().height()+self.__position)
+            self.__grItem.setPos(self.__node.graphicItem().size().width(), self.__position)
         elif self.__location == NodeEditorConnector.LOCATION_RIGHT_BOTTOM:
             self.__grItem.setPos(self.__node.graphicItem().size().width(), self.__node.graphicItem().size().height() - self.__position)
 
@@ -1337,9 +1415,10 @@ class NodeEditorConnector(QObject):
 
     def setPosition(self, value=None):
         """Set current position for location"""
-        if not isinstance(value, (int, float)):
+        if not (value is None or isinstance(value, (int, float))):
             raise EInvalidType("Given `position` must be <int> or <float>")
-        self.__position=value
+        elif not value is None:
+            self.__position=value
         self.__updatePosition()
 
     def borderSize(self):
@@ -2105,6 +2184,7 @@ class NodeEditorGrNode(QGraphicsItem):
 
         # curent node size
         self.__size=None
+        self.__minSize=QSize()
 
         # define title rendering properties
         self.__titleTextColor=palette.color(QPalette.BrightText)
@@ -2231,7 +2311,7 @@ class NodeEditorGrNode(QGraphicsItem):
         Take in account current title width + minimum size (200x200 pixels) for a node
         """
         self.__size=self.__itemTitle.boundingRect().size().toSize()
-        self.__size=self.__size.expandedTo(QSize(200, 200))
+        self.__size=self.__size.expandedTo(self.__minSize)
         self.__updateBoundingRect()
         self.prepareGeometryChange()
 
@@ -2251,6 +2331,17 @@ class NodeEditorGrNode(QGraphicsItem):
         self.__node.itemChange(change, value)
         return super(NodeEditorGrNode, self).itemChange(change, value)
 
+    def minimumSize(self):
+        """Return minimum size for node"""
+        return self.__minSize
+
+    def setMinimumSize(self, value):
+        """set minimum size for node"""
+        if isinstance(value, QSize) and value!=self.__minSize:
+            self.__minSize=value
+            self.__updateSize()
+            self.update()
+
     def size(self):
         """Return node size"""
         return self.__size
@@ -2268,13 +2359,24 @@ class NodeEditorGrNode(QGraphicsItem):
         painter.setRenderHints(QPainter.Antialiasing|QPainter.SmoothPixmapTransform, True)
 
         # window background
-        pathWindow=QPainterPath()
-        pathWindow.addRoundedRect(0, 0, self.__size.width(), self.__size.height(), self.__borderRadius, self.__borderRadius)
+        pathWindowBorder=QPainterPath()
+        pathWindowBorder.addRoundedRect(0, 0, self.__size.width(), self.__size.height(), self.__borderRadius, self.__borderRadius)
+
+        # window title rect
+        pathTitleRect=QPainterPath()
+        pathTitleRect.addRect(0, 0, self.__size.width(), self.__itemTitle.boundingRect().size().height())
 
         # window title
-        pathTitle=QPainterPath()
-        pathTitle.addRect(0, 0, self.__size.width(), self.__itemTitle.boundingRect().size().height())
-        pathTitle=pathTitle.intersected(pathWindow)
+        pathTitleBg=pathTitleRect.intersected(pathWindowBorder)
+
+        # window background
+        pathWindowBg=QPainterPath(pathWindowBorder)
+        pathWindowBg=pathWindowBg.subtracted(pathTitleRect)
+
+        # window borders
+        pathWindowBorder=QPainterPath()
+        pathWindowBorder.addRoundedRect(0, 0, self.__size.width(), self.__size.height(), self.__borderRadius, self.__borderRadius)
+
 
         # render
         painter.setPen(Qt.NoPen)
@@ -2282,20 +2384,20 @@ class NodeEditorGrNode(QGraphicsItem):
             painter.setBrush(self.__windowBrushSelected)
         else:
             painter.setBrush(self.__windowBrush)
-        painter.drawPath(pathWindow)
+        painter.drawPath(pathWindowBg)
 
         if self.isSelected():
             painter.setBrush(self.__titleBrushSelected)
         else:
             painter.setBrush(self.__titleBrush)
-        painter.drawPath(pathTitle)
+        painter.drawPath(pathTitleBg)
 
         if self.isSelected():
             painter.setPen(self.__borderPenSelected)
         else:
             painter.setPen(self.__borderPen)
         painter.setBrush(Qt.NoBrush)
-        painter.drawPath(pathWindow)
+        painter.drawPath(pathWindowBorder)
 
 
 class NodeEditorGrConnector(QGraphicsItem):
