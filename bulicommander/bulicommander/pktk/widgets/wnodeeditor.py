@@ -3132,6 +3132,9 @@ class WNodeEditorView(QGraphicsView):
     zoomChanged=Signal(float)
 
     def __init__(self, scene, parent=None):
+        if isinstance(scene, NodeEditorScene):
+            scene=scene.grScene()
+
         super(WNodeEditorView, self).__init__(scene, parent)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setRenderHint(QPainter.TextAntialiasing)
@@ -3194,7 +3197,7 @@ class WNodeEditorView(QGraphicsView):
             # so emulate leftbutton event when middle button is used for panning
             event=QMouseEvent(event.type(), event.localPos(), Qt.LeftButton, Qt.LeftButton, event.modifiers())
         elif event.button() == Qt.RightButton:
-            self.centerOn(self.sceneRect().center())
+            #self.centerOn(self.sceneRect().center())
             self.setDragMode(QGraphicsView.NoDrag)
 
         super(WNodeEditorView, self).mousePressEvent(event)
