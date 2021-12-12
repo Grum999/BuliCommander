@@ -57,6 +57,9 @@ class NodeEditorScene(QObject):
 
     CUT_ZINDEX=-0.25
 
+    CONNECTOR_ZINDEX=1.0
+    WIDGET_ZINDEX=0.5
+
     # declare signals
     sizeChanged=Signal(QSize, QSize)                    # scene size changed: newSize, oldSize
 
@@ -659,6 +662,9 @@ class NodeEditorNode(QObject):
         # selection state
         self.__isSelected=False
 
+        # define node's widget
+        self.__widget=None
+
         # define node's padding
         self.__padding=None
 
@@ -875,6 +881,31 @@ class NodeEditorNode(QObject):
         elif link.connectorTo().node()==self:
             self.connectorUnlinked.emit(self, link.connectorTo())
 
+    def __connectorValueChanged(self, connector):
+        """Value for given `connector` has been modified"""
+        if not self.__widget is None:
+            if connector.isInput():
+                #print('NodeEditorNode.__connectorValueChanged(input)', connector.id(), connector.value())
+                self.__widget.inputUpdated(connector.id(), connector.value())
+            else:
+                #print('NodeEditorNode.__connectorValueChanged(output)', connector.id(), connector.value())
+                links=self.__scene.links(connector)
+                for link in links:
+                    link.connectorTo().setValue(connector.value())
+
+
+    def __outputUpdated(self, value):
+        """An output value has been updated
+
+        Given `value` is a dictionnary:
+        - key: connector id
+        - value: updated value
+        """
+        key=list(value.keys())[0]
+        #print('NodeEditorNode.__outputUpdated', key, value[key])
+        # get connector from id
+        if key in self.__connectors and self.__connectors[key].isOutput():
+            self.__connectors[key].setValue(value[key])
     def itemChange(self, change, value):
         """Something has been changed on graphic item
 
@@ -916,6 +947,21 @@ class NodeEditorNode(QObject):
             return self.__connectors[id]
         else:
             return None
+
+    def input(self, id):
+        """Return input connector if exists, otherwise return None"""
+        for connectorId in self.__connectors:
+            connector=self.__connectors[connectorId]
+            if connector.isInput() and connector.id()==id:
+                return connector
+        return None
+
+    def output(self, id):
+        """Return output connector if exists, otherwise return None"""
+        for connector in self.__connectors:
+            if connector.isOutput() and connector.id()==id:
+                return connector
+        return None
 
     def inputs(self):
         """Return a list of inputs connectors"""
@@ -965,6 +1011,9 @@ class NodeEditorNode(QObject):
             connector.setNode(self)
             self.__connectors[connector.id()]=connector
 
+            # add signal connection when connector value is changed
+            connector.valueChanged.connect(self.__connectorValueChanged)
+
             self.defaultConnectorRadiusChanged.emit(self.defaultConnectorRadius())
             self.defaultConnectorBorderSizeChanged.emit(self.defaultConnectorBorderSize())
             self.defaultConnectorBorderColorChanged.emit(self.defaultConnectorBorderColor())
@@ -997,6 +1046,8 @@ class NodeEditorNode(QObject):
                 return False
 
         if connector.id() in self.__connectors:
+            # remove signal connection
+            connector.valueChanged.disconnect(self.__connectorValueChanged)
             # remove connector only if exists
             self.__connectors.pop(connector.id())
             # need to recalculate positions
@@ -1004,6 +1055,27 @@ class NodeEditorNode(QObject):
             return True
 
         return False
+
+    def widget(self):
+        """Return node's widget, or None if not defined"""
+        return self.__widget
+
+    def setWidget(self, widget):
+        """Set widget for node
+
+        Note: Once widget is defined, it's not possible to change it
+        """
+        if not isinstance(widget, NodeEditorNodeWidget):
+            raise EInvalidType("Given `widget` <NodeEditorNodeWidget>")
+        elif not self.__widget is None:
+            raise EInvalidType("Widget is is already defined for node")
+
+        self.__widget=widget
+        self.__widget.setNode(self)
+        self.__widget.outputUpdated.connect(self.__outputUpdated)
+        # force graphic item update
+        self.paddingChanged.emit(-1)
+        self.paddingChanged.emit(self.padding())
 
     def titleColor(self):
         """Return color for title text (unselected node)"""
@@ -1268,6 +1340,8 @@ class NodeEditorConnector(QObject):
     colorChanged=Signal(QColor)
     borderColorChanged=Signal(QColor)
 
+    valueChanged=Signal(NodeEditorConnector)
+
     # position define position in which connector is defined
     LOCATION_LEFT_TOP =     0x00000001
     LOCATION_LEFT_BOTTOM =  0x00000010
@@ -1357,6 +1431,11 @@ class NodeEditorConnector(QObject):
 
         # parent scene
         self.__scene=None
+
+        # value for connector
+        # - input direction: last value provided as input value
+        # - output direction: last value provided as output value
+        self.__value=None
 
         # QGraphicsItem to represent connector on QGraphicsScene
         self.__grItem=NodeEditorGrConnector(self)
@@ -1622,6 +1701,19 @@ class NodeEditorConnector(QObject):
                 return False
 
         return True
+
+    def value(self):
+        """Return value for connector"""
+        return self.__value
+
+    def setValue(self, value):
+        """Set value for connector
+
+        When value is set, a "valueChanged" signal is emitted, even if new set value
+        is the same than previous value
+        """
+        self.__value=value
+        self.valueChanged.emit(self)
 
 
 class NodeEditorLink(QObject):
@@ -1911,6 +2003,43 @@ class NodeEditorLink(QObject):
         """Select/Deselect item"""
         if selectionStatus!=self.__isSelected and isinstance(selectionStatus, bool):
             self.__grItem.setSelected(selectionStatus)
+
+
+# ------------------------------------------------------------------------------
+
+class NodeEditorNodeWidget(QWidget):
+    outputUpdated=Signal(dict)
+
+    def __init__(self, parent=None):
+        super(NodeEditorNodeWidget, self).__init__(parent)
+
+        self.__node=None
+
+    def node(self):
+        """Return parent node for connector"""
+        return self.__node
+
+    def setNode(self, node):
+        """Set parent node for widget
+
+        Once parent node has been defined, it's not possible anymore to modify it
+        """
+        if not isinstance(node, NodeEditorNode):
+            raise EInvalidType("Given `node` <NodeEditorNode>")
+        elif not self.__node is None:
+            raise EInvalidType("Node is is already defined for widget")
+        self.__node=node
+
+    def inputUpdated(self, inputId, value):
+        """An input entry has been updated
+
+        Automatically called by node when an input value has been changed
+        """
+        pass
+
+    def updateOutput(self, outputId, value):
+        """Update output defined by `outputId` with given `value`"""
+        self.outputUpdated.emit({outputId: value})
 
 
 # ------------------------------------------------------------------------------
@@ -2273,6 +2402,7 @@ class NodeEditorGrNode(QGraphicsItem):
         self.__node.borderRadiusChanged.connect(self.__updateBorderRadius)
         self.__node.borderSizeChanged.connect(self.__updateBorderSize)
         self.__node.paddingChanged.connect(self.__updatePadding)
+        self.__node.defaultConnectorRadiusChanged.connect(self.__updateWidgetGeometry) # because connector radius have impact on widget size...
 
         # curent node size
         self.__size=None
@@ -2294,6 +2424,10 @@ class NodeEditorGrNode(QGraphicsItem):
 
         # define padding (distance between border & widget)
         self.__padding=6.0
+
+        # widget contained in node
+        self.__proxyWidget=None
+
         self.__borderPen=QPen(self.__titleBgColor)
         self.__borderPen.setWidth(self.__borderSize)
         self.__borderPen.setJoinStyle(Qt.MiterJoin)
@@ -2321,6 +2455,24 @@ class NodeEditorGrNode(QGraphicsItem):
         self.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
 
         self.__updateTitle()
+
+    def __updateWidgetGeometry(self):
+        """update geometry for widget, according to node's size & padding"""
+        if self.__proxyWidget is None:
+            widget=self.__node.widget()
+            if widget:
+                self.__proxyWidget=QGraphicsProxyWidget(self)
+                self.__proxyWidget.setZValue(NodeEditorScene.WIDGET_ZINDEX)
+                self.__proxyWidget.setWidget(widget)
+
+        if self.__proxyWidget is None:
+            return
+
+        titleHeight=self.__itemTitle.boundingRect().size().height()
+        padding=self.__node.defaultConnectorRadius()+self.__padding+self.__borderSize/2
+        padding2=2*padding+self.__borderSize
+
+        self.__proxyWidget.setGeometry(QRectF(padding, titleHeight+padding, self.__boundingRect.width()-padding2, self.__boundingRect.height()-padding2-titleHeight))
 
     def __updateTitle(self, node=None):
         """Update title from node"""
@@ -2397,10 +2549,14 @@ class NodeEditorGrNode(QGraphicsItem):
                 self.__borderPen.setStyle(Qt.SolidLine)
                 self.__borderPenSelected.setStyle(Qt.SolidLine)
             self.__updateSize()
+            self.__updateWidgetGeometry()
+            self.update()
+
     def __updatePadding(self, value):
         """Border size has been modified"""
         if self.__padding!=value:
             self.__padding=value
+            self.__updateWidgetGeometry()
             self.update()
 
     def __updateSize(self):
@@ -2411,6 +2567,7 @@ class NodeEditorGrNode(QGraphicsItem):
         self.__size=self.__itemTitle.boundingRect().size().toSize()
         self.__size=self.__size.expandedTo(self.__minSize)
         self.__updateBoundingRect()
+        self.__updateWidgetGeometry()
         self.prepareGeometryChange()
 
     def __updateBoundingRect(self):
@@ -2544,6 +2701,7 @@ class NodeEditorGrConnector(QGraphicsItem):
         self.__brush=QBrush(self.__color)
 
         self.__updateBoundingRect()
+        self.setZValue(NodeEditorScene.CONNECTOR_ZINDEX)
         self.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
 
     def __updateBoundingRect(self):
