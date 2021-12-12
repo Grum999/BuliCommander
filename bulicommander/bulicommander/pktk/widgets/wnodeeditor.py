@@ -21,7 +21,7 @@
 
 
 # Basically inspired from https://www.blenderfreak.com/tutorials/node-editor-tutorial-series
-# First tutorials are intersting to easily and quickly understand basic stuff ("how to" implement)
+# First tutorials are really interesting to easily and quickly understand basic stuff ("how to" implement)
 # but quickly rewritten everything according to my own vision of things :-)
 
 import math
@@ -43,8 +43,12 @@ class NodeEditorLink(QObject):
 
 
 
+
+
+
 class NodeEditorScene(QObject):
     """Define the scene content, independently from graphic scene"""
+    # define zIndex for object in scene
     NODE_ZINDEX=0.0
     NODE_ZINDEX_FRONT=1.0
 
@@ -53,6 +57,7 @@ class NodeEditorScene(QObject):
 
     CUT_ZINDEX=-0.25
 
+    # declare signals
     sizeChanged=Signal(QSize, QSize)                    # scene size changed: newSize, oldSize
 
     startLinkingItem=Signal()                           # linking item started: 'from' connector
@@ -79,6 +84,7 @@ class NodeEditorScene(QObject):
     defaultNodeSelectedBgColorChanged=Signal(QColor)    # default background color value for selected nodes has been modified
     defaultNodeBorderRadiusChanged=Signal(float)        # default border radius value for nodes has been modified
     defaultNodeBorderSizeChanged=Signal(float)          # default border size value for nodes has been modified
+    defaultNodePaddingChanged=Signal(int)               # default padding value for nodes has been modified
 
     defaultConnectorRadiusChanged=Signal(float)         # default radius value for connectors has been modified
     defaultConnectorBorderSizeChanged=Signal(float)     # default border size value for connectors has been modified
@@ -141,6 +147,10 @@ class NodeEditorScene(QObject):
         # default border size; when None, use default from scene
         # (will be used by new NodeEditorNode if none is defined)
         self.__defaultNodeBorderSize=2.0
+
+        # default padding value; when None, use default from scene
+        # (will be used by new NodeEditorNode if none is defined)
+        self.__defaultNodePadding=6.0
 
         # default render mode for links
         # (will be used by new NodeEditorLink if none is defined)
@@ -422,6 +432,16 @@ class NodeEditorScene(QObject):
             self.__defaultNodeBorderRadius=float(value)
             self.defaultNodeBorderRadiusChanged.emit(self.__defaultNodeBorderRadius)
 
+    def defaultNodePadding(self):
+        """Return default radius value for connectors"""
+        return self.__defaultNodePadding
+
+    def setDefaultNodePadding(self, value):
+        """Set default radius value for connectors"""
+        if isinstance(value, (int, float)) and value>=0 and self.__defaultNodePadding!=value:
+            self.__defaultNodePadding=float(value)
+            self.defaultNodePaddingChanged.emit(self.__defaultNodePadding)
+
     def defaultLinkRenderMode(self):
         """Return default render value for links"""
         return self.__defaultLinkRender
@@ -544,6 +564,7 @@ class NodeEditorNode(QObject):
     nodeSelectedBgColorChanged=Signal(QColor)                                   # node background color (when node is selected) has been changed
     borderRadiusChanged=Signal(float)                                           # border radius has been changed
     borderSizeChanged=Signal(float)                                             # border size has been changed
+    paddingChanged=Signal(int)                                                  # padding value has been changed
 
     selectionChanged=Signal(bool)                                               # node selection state has been changed: boolean True=Selected/False=Unselected
     positionChanged=Signal(QPointF)                                             # node position has been modified: position as QPointF
@@ -576,6 +597,7 @@ class NodeEditorNode(QObject):
         self.__scene.defaultNodeSelectedBgColorChanged.connect(self.__defaultSceneNodeSelectedBgColorChanged)
         self.__scene.defaultNodeBorderRadiusChanged.connect(self.__defaultSceneNodeBorderRadiusChanged)
         self.__scene.defaultNodeBorderSizeChanged.connect(self.__defaultSceneNodeBorderSizeChanged)
+        self.__scene.defaultNodePaddingChanged.connect(self.__defaultSceneNodePaddingChanged)
 
         self.__scene.defaultConnectorRadiusChanged.connect(self.__defaultSceneConnectorRadiusChanged)
         self.__scene.defaultConnectorBorderSizeChanged.connect(self.__defaultSceneConnectorBorderSizeChanged)
@@ -636,6 +658,9 @@ class NodeEditorNode(QObject):
 
         # selection state
         self.__isSelected=False
+
+        # define node's padding
+        self.__padding=None
 
         # QGraphicsItem for node
         self.__grItem=NodeEditorGrNode(self)
@@ -803,6 +828,11 @@ class NodeEditorNode(QObject):
         """Default value from scene has been changed; check for update"""
         if self.__borderSize is None:
             self.borderSizeChanged.emit(value)
+
+    def __defaultSceneNodePaddingChanged(self, value):
+        """Default value from scene has been changed; check for update"""
+        if self.__padding is None:
+            self.paddingChanged.emit(value)
 
     def __defaultSceneConnectorRadiusChanged(self, value):
         """Default value from scene has been changed; check for update"""
@@ -1127,6 +1157,18 @@ class NodeEditorNode(QObject):
             self.__borderRadius=value
             self.borderRadiusChanged.emit(self.borderRadius())
             self.__updateAllConnectorPosition()
+
+    def padding(self):
+        """Return current node padding value"""
+        if self.__padding is None:
+            return self.__scene.defaultNodePadding()
+        return self.__padding
+
+    def setPadding(self, value):
+        """Set current node padding value"""
+        if (value is None or isinstance(value, (int, float))) and self.__padding!=value:
+            self.__padding=value
+            self.paddingChanged.emit(self.padding())
 
     def defaultConnectorBorderSize(self):
         """Return default border size value for connectors
@@ -2230,6 +2272,7 @@ class NodeEditorGrNode(QGraphicsItem):
         self.__node.nodeSelectedBgColorChanged.connect(self.__updateNodeSelectedBgColor)
         self.__node.borderRadiusChanged.connect(self.__updateBorderRadius)
         self.__node.borderSizeChanged.connect(self.__updateBorderSize)
+        self.__node.paddingChanged.connect(self.__updatePadding)
 
         # curent node size
         self.__size=None
@@ -2249,6 +2292,8 @@ class NodeEditorGrNode(QGraphicsItem):
         self.__borderSize=2.0
         self.__borderRadius=6.0
 
+        # define padding (distance between border & widget)
+        self.__padding=6.0
         self.__borderPen=QPen(self.__titleBgColor)
         self.__borderPen.setWidth(self.__borderSize)
         self.__borderPen.setJoinStyle(Qt.MiterJoin)
@@ -2352,6 +2397,10 @@ class NodeEditorGrNode(QGraphicsItem):
                 self.__borderPen.setStyle(Qt.SolidLine)
                 self.__borderPenSelected.setStyle(Qt.SolidLine)
             self.__updateSize()
+    def __updatePadding(self, value):
+        """Border size has been modified"""
+        if self.__padding!=value:
+            self.__padding=value
             self.update()
 
     def __updateSize(self):
@@ -2394,6 +2443,13 @@ class NodeEditorGrNode(QGraphicsItem):
     def size(self):
         """Return node size"""
         return self.__size
+
+    def title(self):
+        """Return instance of title
+
+        (let user change font properties...)
+        """
+        return self.__itemTitle
 
     def titleSize(self):
         """Return node title size"""
