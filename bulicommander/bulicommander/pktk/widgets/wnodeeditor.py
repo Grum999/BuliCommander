@@ -1093,6 +1093,15 @@ class NodeEditorNode(QObject):
 
             self.__grItem.setSelected(selectionStatus)
 
+    def isMoveable(self):
+        """Return if node is moveable"""
+        return (self.__grItem.flags()&QGraphicsItem.ItemIsMovable==QGraphicsItem.ItemIsMovable)
+
+    def setMoveable(self, value):
+        """Set if node is moveable"""
+        if isinstance(value, bool):
+            return self.__grItem.setFlag(QGraphicsItem.ItemIsMovable, value)
+
     def graphicItem(self):
         """Return graphic item for node"""
         return self.__grItem
