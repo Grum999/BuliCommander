@@ -119,6 +119,10 @@ class NodeEditorScene(QObject):
         self.__grScene=NodeEditorGrScene(self)
         self.__grScene.selectionChanged.connect(self.__checkSelection)
 
+        # cut line
+        self.__cutLine=NodeEditorGrCutLine()
+        self.__grScene.addItem(self.__cutLine)
+
         #
         # -- default style options --
         #
@@ -195,6 +199,9 @@ class NodeEditorScene(QObject):
 
         # determinate if output events are enabled
         self.__optionOutputEventEnabled=True
+
+        # define option to determinate if cutline is active or not
+        self.__optionCutLineActive=True
 
 
         # define default scene size to 10000x10000 pixels
@@ -349,6 +356,28 @@ class NodeEditorScene(QObject):
         for node in self.__nodes:
             node.updateOutputs()
         self.__optionOutputEventEnabled=eventEnabled
+
+    def cutLine(self):
+        """Return cut line instance
+
+        Allows to modify properties
+        """
+        return self.__cutLine
+
+    def cutLineDeleteLinks(self):
+        """Delete all links which intersect cut line"""
+        points=self.__cutLine.points()
+        for ptNumber in range(len(points)-1):
+            path=QPainterPath(points[ptNumber])
+            path.lineTo(points[ptNumber+1])
+
+            linksToRemove=[]
+            for link in self.__links:
+                if path.intersects(link.graphicItem().path()):
+                    linksToRemove.append(link)
+
+            for link in linksToRemove:
+                self.removeLink(link)
 
     # -- default render settings for items in scene --
 
@@ -586,6 +615,39 @@ class NodeEditorScene(QObject):
             self.__optionOutputEventEnabled=value
             if self.__optionOutputEventEnabled:
                 self.updateOutputs()
+
+    def optionCutLineActive(self):
+        """Return if cutline is active"""
+        return self.__optionCutLineActive
+
+    def setOptionCutLineActive(self, value):
+        """Set if cutline is active"""
+        if isinstance(value, bool):
+            self.__optionCutLineActive=value
+
+    def defaultCutLineColor(self):
+        """Return cut line color"""
+        return self.__cutLine.color()
+
+    def setDefaultCutLineColor(self, value):
+        """Set cut line color"""
+        self.__cutLine.setColor(value)
+
+    def defaultCutLineSize(self):
+        """Return  cut line width"""
+        return self.__cutLine.size()
+
+    def setDefaultCutLineSize(self, value):
+        """Set cut line width"""
+        self.__cutLine.setSize(value)
+
+    def defaultCutLineStyle(self):
+        """Return cut line style"""
+        return self.__cutLine.style()
+
+    def setDefaultCutLineStyle(self, value):
+        """set cut line style"""
+        self.__cutLine.setStyle(value)
 
 
 
@@ -3193,10 +3255,13 @@ class WNodeEditorView(QGraphicsView):
     zoomChanged=Signal(float)
 
     def __init__(self, scene, parent=None):
-        if isinstance(scene, NodeEditorScene):
-            scene=scene.grScene()
+        if not isinstance(scene, NodeEditorScene):
+            raise EInvalidType("Given `scene` must be a <NodeEditorScene>")
 
-        super(WNodeEditorView, self).__init__(scene, parent)
+        # keep link to scene
+        self.__scene=scene
+
+        super(WNodeEditorView, self).__init__(self.__scene.grScene(), parent)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setRenderHint(QPainter.TextAntialiasing)
 
@@ -3210,35 +3275,11 @@ class WNodeEditorView(QGraphicsView):
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         self.setDragMode(QGraphicsView.NoDrag)
 
-        self.__cutLine=NodeEditorGrCutLine()
-        scene.addItem(self.__cutLine)
-        self.__currentZoomFactor = 1.0
+        self.__cutLine=scene.cutLine()
+        self.__currentZoomFactor=1.0
         self.__zoomStep=0.25
         self.setMouseTracking(True)
         self.setCacheMode(QGraphicsView.CacheBackground)
-
-    def cutLine(self):
-        """Return cut line instance
-
-        Allows to modify properties
-        """
-        return self.__cutLine
-
-    def cutLineDeleteLinks(self):
-        """Delete all links which intersect cut line"""
-        points=self.__cutLine.points()
-        scene=self.scene().scene()
-        for ptNumber in range(len(points)-1):
-            path=QPainterPath(points[ptNumber])
-            path.lineTo(points[ptNumber+1])
-
-            linksToRemove=[]
-            for link in scene.links():
-                if path.intersects(link.graphicItem().path()):
-                    linksToRemove.append(link)
-
-            for link in linksToRemove:
-                scene.removeLink(link)
 
     def mousePressEvent(self, event):
         """On left button pressed, start to pan scene"""
@@ -3247,9 +3288,10 @@ class WNodeEditorView(QGraphicsView):
             if event.modifiers()&Qt.ShiftModifier==Qt.ShiftModifier:
                 self.setDragMode(QGraphicsView.RubberBandDrag)
             elif event.modifiers()&Qt.AltModifier==Qt.AltModifier:
-                self.setCursor(Qt.CrossCursor)
-                self.__cutLine.setVisible(True)
-                self.__cutLine.appendPosition(self.mapToScene(event.pos()))
+                if self.__scene.optionCutLineActive():
+                    self.setCursor(Qt.CrossCursor)
+                    self.__cutLine.setVisible(True)
+                    self.__cutLine.appendPosition(self.mapToScene(event.pos()))
             elif not isinstance(hoverItem, NodeEditorGrConnector):
                 self.setDragMode(QGraphicsView.ScrollHandDrag)
         elif event.button() == Qt.MidButton:
@@ -3269,7 +3311,7 @@ class WNodeEditorView(QGraphicsView):
             self.setDragMode(QGraphicsView.NoDrag)
         elif event.button() == Qt.LeftButton and self.__cutLine.isVisible():
             self.setDragMode(QGraphicsView.NoDrag)
-            self.cutLineDeleteLinks()
+            self.__scene.cutLineDeleteLinks()
             self.__cutLine.setVisible(False)
             self.__cutLine.clear()
             self.unsetCursor()
@@ -3282,7 +3324,6 @@ class WNodeEditorView(QGraphicsView):
             self.__cutLine.appendPosition(self.mapToScene(event.pos()))
 
         super(WNodeEditorView, self).mouseMoveEvent(event)
-
 
     def wheelEvent(self, event:QWheelEvent):
         """Manage to zoom with wheel"""
