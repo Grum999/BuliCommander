@@ -206,6 +206,8 @@ class NodeEditorScene(QObject):
         # define option to determinate if cutline is active or not
         self.__optionCutLineActive=True
 
+        # define option to snap nodes to grid
+        self.__optionSnapToGrid=False
 
         # define default scene size to 10000x10000 pixels
         self.setSize(QSize(10000, 10000))
@@ -683,6 +685,15 @@ class NodeEditorScene(QObject):
     def setDefaultCutLineStyle(self, value):
         """set cut line style"""
         self.__cutLine.setStyle(value)
+
+    def snapToGrid(self):
+        """Return if snap to grid option is active or not"""
+        return self.__optionSnapToGrid
+
+    def setSnapToGrid(self, value):
+        """Set if snap to grid option is active or not"""
+        if isinstance(value, bool):
+            self.__optionSnapToGrid=value
 
     def gridVisible(self):
         """Return if grid is visible"""
@@ -2853,6 +2864,15 @@ class NodeEditorGrNode(QGraphicsItem):
                 self.__itemTitle.setDefaultTextColor(self.__titleTextColorSelected)
             else:
                 self.__itemTitle.setDefaultTextColor(self.__titleTextColor)
+        elif change==QGraphicsItem.ItemPositionChange:
+            if self.__node.scene().snapToGrid():
+                # snap to grid, force position to be aligned to grid
+                gridSize, dummy=self.__node.scene().gridSize()
+
+                newXPosition = round(value.x()/gridSize)*gridSize
+                newYPosition = round(value.y()/gridSize)*gridSize
+
+                return QPointF(newXPosition, newYPosition)
         self.__node.itemChange(change, value)
         return super(NodeEditorGrNode, self).itemChange(change, value)
 
