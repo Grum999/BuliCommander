@@ -119,6 +119,10 @@ class NodeEditorScene(QObject):
         self.__grScene=NodeEditorGrScene(self)
         self.__grScene.selectionChanged.connect(self.__checkSelection)
 
+        #
+        # -- default style options --
+        #
+
         # default title color (text); when None, use default from scene
         # (will be used by new NodeEditorNode if none is defined)
         self.__defaultNodeColorTitle=palette.color(QPalette.BrightText)
@@ -184,6 +188,14 @@ class NodeEditorScene(QObject):
         self.__defaultConnectorBorderColor=palette.color(QPalette.Dark)
         self.__defaultConnectorInputColor=QColor("#1e74fd")
         self.__defaultConnectorOutputColor=QColor("#1dfd8e")
+
+        #
+        # -- options --
+        #
+
+        # determinate if output events are enabled
+        self.__optionOutputEventEnabled=True
+
 
         # define default scene size to 10000x10000 pixels
         self.setSize(QSize(10000, 10000))
@@ -328,6 +340,15 @@ class NodeEditorScene(QObject):
     def cursorScenePosition(self):
         """Return current position of mouse on scene"""
         return self.__grScene.cursorScenePosition()
+
+    def updateOutputs(self):
+        """Force all outputs to be updated, even if option output event is disabled"""
+        eventEnabled=self.__optionOutputEventEnabled
+        # temporary enable output event
+        self.__optionOutputEventEnabled=True
+        for node in self.__nodes:
+            node.updateOutputs()
+        self.__optionOutputEventEnabled=eventEnabled
 
     # -- default render settings for items in scene --
 
@@ -554,6 +575,18 @@ class NodeEditorScene(QObject):
             except:
                 # ignore invalid color...
                 pass
+
+    def optionOutputEventEnabled(self):
+        """Return if input/output events are enables or not"""
+        return self.__optionOutputEventEnabled
+
+    def setOptionOutputEventEnabled(self, value):
+        """Define if output events are enables or not"""
+        if isinstance(value, bool) and self.__optionOutputEventEnabled!=value:
+            self.__optionOutputEventEnabled=value
+            if self.__optionOutputEventEnabled:
+                self.updateOutputs()
+
 
 
 class NodeEditorNode(QObject):
@@ -872,13 +905,19 @@ class NodeEditorNode(QObject):
         if link.connectorFrom().node()==self:
             self.connectorLinked.emit(self, link.connectorFrom())
         elif link.connectorTo().node()==self:
-            self.connectorLinked.emit(self, link.connectorFrom())
+            if not self.__widget is None:
+                # input link removed; need to update input connector value
+                link.connectorTo().setValue(link.connectorFrom().value())
+            self.connectorLinked.emit(self, link.connectorTo())
 
     def __checkRemovedLink(self, link):
         """Check if removed link was connected to node and emit signal if needed"""
         if link.connectorFrom().node()==self:
             self.connectorUnlinked.emit(self, link.connectorFrom())
         elif link.connectorTo().node()==self:
+            if not self.__widget is None:
+                # input link removed; need to update input connector value
+                link.connectorTo().setValue(None)
             self.connectorUnlinked.emit(self, link.connectorTo())
 
     def __connectorValueChanged(self, connector):
@@ -887,12 +926,11 @@ class NodeEditorNode(QObject):
             if connector.isInput():
                 #print('NodeEditorNode.__connectorValueChanged(input)', connector.id(), connector.value())
                 self.__widget.inputUpdated(connector.id(), connector.value())
-            else:
+            elif self.__scene.optionOutputEventEnabled():
                 #print('NodeEditorNode.__connectorValueChanged(output)', connector.id(), connector.value())
                 links=self.__scene.links(connector)
                 for link in links:
                     link.connectorTo().setValue(connector.value())
-
 
     def __outputUpdated(self, value):
         """An output value has been updated
@@ -901,11 +939,13 @@ class NodeEditorNode(QObject):
         - key: connector id
         - value: updated value
         """
-        key=list(value.keys())[0]
-        #print('NodeEditorNode.__outputUpdated', key, value[key])
-        # get connector from id
-        if key in self.__connectors and self.__connectors[key].isOutput():
-            self.__connectors[key].setValue(value[key])
+        if self.__scene.optionOutputEventEnabled():
+            key=list(value.keys())[0]
+            #print('NodeEditorNode.__outputUpdated', key, value[key])
+            # get connector from id
+            if key in self.__connectors and self.__connectors[key].isOutput():
+                self.__connectors[key].setValue(value[key])
+
     def itemChange(self, change, value):
         """Something has been changed on graphic item
 
@@ -970,6 +1010,15 @@ class NodeEditorNode(QObject):
     def outputs(self):
         """Return a list of outputs connectors"""
         return [self.__connectors[connector] for connector in self.__connectors if self.__connectors[connector].isOutput()]
+
+    def updateOutputs(self, outputs=None):
+        """Update all outputs
+
+        If given `outputs` id None, all outputs are updated
+        Otherwise only given outputs from list are updated
+        """
+        if self.__widget:
+            self.__widget.updateOutputs(outputs)
 
     def scene(self):
         """Return scene in which node is defined"""
@@ -2034,12 +2083,24 @@ class NodeEditorNodeWidget(QWidget):
         """An input entry has been updated
 
         Automatically called by node when an input value has been changed
+
+        Need to be overrided
         """
         pass
 
     def updateOutput(self, outputId, value):
         """Update output defined by `outputId` with given `value`"""
         self.outputUpdated.emit({outputId: value})
+
+    def updateOutputs(self, outputs=None):
+        """Update all outputs
+
+        If given `outputs` id None, all outputs should be are updated
+        Otherwise only given outputs from list are updated
+
+        Need to be overrided
+        """
+        pass
 
 
 # ------------------------------------------------------------------------------
