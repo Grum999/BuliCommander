@@ -42,9 +42,7 @@ class NodeEditorLink(QObject):
     pass
 
 
-
-
-
+# ------------------------------------------------------------------------------
 
 class NodeEditorScene(QObject):
     """Define the scene content, independently from graphic scene"""
@@ -686,6 +684,68 @@ class NodeEditorScene(QObject):
         """set cut line style"""
         self.__cutLine.setStyle(value)
 
+    def gridVisible(self):
+        """Return if grid is visible"""
+        return self.__grScene.gridVisible()
+
+    def setGridVisible(self, value):
+        """Set if grid is visible"""
+        self.__grScene.setGridVisible(value)
+
+    def gridSize(self):
+        """Return a tuple (grid size width, main grid frequency) in PX"""
+        return self.__grScene.gridSize()
+
+    def setGridSize(self, width, main=0):
+        """Set grid size, given `width` is in PX
+        Given `main` is an integer that define to draw a main line everything `main` line
+        """
+        self.__grScene.setGridSize(width, main)
+
+    def gridBgColor(self):
+        """Return background color used to render grid"""
+        return self.__grScene.gridBrush().color()
+
+    def setGridBgColor(self, value):
+        """Set background color used to render grid"""
+        self.__grScene.setGridBrushColor(value)
+
+    def gridFgColor(self):
+        """Return foreground color used to render grid"""
+        return self.__grScene.gridPenMain().color()
+
+    def setGridFgColor(self, value):
+        """Set foreground color used to render grid"""
+        # get current opacity
+        self.__grScene.setGridPenColor(value)
+
+    def gridStyleMain(self):
+        """return stroke style for main grid"""
+        return self.__grScene.gridPenMain().style()
+
+    def setGridStyleMain(self, value):
+        """Set stroke style for main grid"""
+        self.__grScene.setGridPenStyleMain(value)
+
+    def gridStyleSecondary(self):
+        """Return stroke style for secondary grid"""
+        return self.__grScene.gridPenSecondary().style()
+
+    def setGridStyleSecondary(self, value):
+        """Set stroke style for secondary grid"""
+        self.__grScene.setGridPenStyleSecondary(value)
+
+    def gridOpacity(self):
+        """Return opacity for grid"""
+        return self.__grScene.gridPenMain().color().alphaF()*100
+
+    def setGridOpacity(self, value):
+        """Set opacity for grid"""
+        self.__grScene.setGridPenOpacity(value)
+
+    def cursorScenePosition(self):
+        """Return current mouse position over scene"""
+        return self.__grScene.cursorScenePosition()
 
 
 class NodeEditorNode(QObject):
@@ -2259,7 +2319,6 @@ class NodeEditorNodeWidget(QWidget):
 
 # ------------------------------------------------------------------------------
 
-
 class NodeEditorGrScene(QGraphicsScene):
     """Render canvas scene: grid, origin, bounds, background, rendered graphics....
 
@@ -2311,14 +2370,12 @@ class NodeEditorGrScene(QGraphicsScene):
 
     def __generateGridStrokes(self, rect):
         """Generate grid strokes (avoid to regenerate them on each update)"""
-        if rect==self.__gridStrokesRect:
+        if rect==self.__gridStrokesRect and len(self.__gridStrokesSecondary)>0 and len(self.__gridStrokesMain)>0:
             # viewport is the same, keep current grid definition
             return
 
         self.__gridStrokesSecondary=[]
         self.__gridStrokesMain=[]
-        self.__gridStrokesRulerH=[]
-        self.__gridStrokesRulerV=[]
 
         # bounds
         left = int(math.floor(rect.left()))
@@ -2336,19 +2393,15 @@ class NodeEditorGrScene(QGraphicsScene):
         for positionX in range(firstLeftStroke, right, self.__gridSizeWidth):
             if (positionX % mainStroke != 0):
                 self.__gridStrokesSecondary.append(QLine(positionX, top, positionX, bottom))
-                self.__gridStrokesRulerH.append((False, positionX))
             else:
                 self.__gridStrokesMain.append(QLine(positionX, top, positionX, bottom))
-                self.__gridStrokesRulerH.append((True, positionX))
 
         # generate horizontal grid lines
         for positionY in range(firstTopStroke, bottom, self.__gridSizeWidth):
             if (positionY % mainStroke != 0):
                 self.__gridStrokesSecondary.append(QLine(left, positionY, right, positionY))
-                self.__gridStrokesRulerV.append((False, positionY))
             else:
                 self.__gridStrokesMain.append(QLine(left, positionY, right, positionY))
-                self.__gridStrokesRulerV.append((True, positionY))
 
     def __calculateSceneSize(self):
         """Calculate scene size/rect"""
@@ -2520,6 +2573,8 @@ class NodeEditorGrScene(QGraphicsScene):
         if width!=self.__gridSizeWidth or main!=self.__gridSizeMain:
             # force grid to be recalculated
             self.__gridStrokesRect=QRect()
+            self.__gridStrokesSecondary=[]
+            self.__gridStrokesMain=[]
             self.__gridSizeWidth=max(2, round(width))
             self.__gridSizeMain=max(0, main)
             self.__propertyChanged('canvas.grid.size.main', self.__gridSizeMain)
@@ -2563,7 +2618,7 @@ class NodeEditorGrScene(QGraphicsScene):
     def setGridPenStyleSecondary(self, value):
         """Set stroke style for secondary grid"""
         self.__gridPenSecondary.setStyle(value)
-        self.__propertyChanged('canvas.origin.style.secondary', value)
+        self.__propertyChanged('canvas.grid.style.secondary', value)
         self.update()
 
     def setGridPenOpacity(self, value):
@@ -3338,9 +3393,7 @@ class NodeEditorGrCutLine(QGraphicsItem):
         painter.drawPolyline(polygon)
 
 
-
 # ------------------------------------------------------------------------------
-
 
 class WNodeEditorView(QGraphicsView):
     """A graphic view dedicated to render scene"""
@@ -3352,6 +3405,7 @@ class WNodeEditorView(QGraphicsView):
 
         # keep link to scene
         self.__scene=scene
+        self.__scene.grScene().propertyChanged.connect(self.__scenePropertyChanged)
 
         super(WNodeEditorView, self).__init__(self.__scene.grScene(), parent)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
@@ -3372,6 +3426,17 @@ class WNodeEditorView(QGraphicsView):
         self.__zoomStep=0.25
         self.setMouseTracking(True)
         self.setCacheMode(QGraphicsView.CacheBackground)
+
+    def __scenePropertyChanged(self, value):
+        """A property has been changed"""
+        if value[0] in ('canvas.grid.size.main',
+                     'canvas.grid.visibility',
+                     'canvas.grid.bgColor',
+                     'canvas.grid.color',
+                     'canvas.grid.style.main',
+                     'canvas.grid.style.secondary',
+                     'canvas.grid.opacity'):
+            self.resetCachedContent()
 
     def mousePressEvent(self, event):
         """On left button pressed, start to pan scene"""
