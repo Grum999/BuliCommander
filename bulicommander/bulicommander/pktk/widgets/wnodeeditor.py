@@ -60,6 +60,11 @@ class NodeEditorScene(QObject):
     CONNECTOR_ZINDEX=1.0
     WIDGET_ZINDEX=0.5
 
+    SELECTION_NODES=0b00000001
+    SELECTION_LINKS=0b00000010
+    SELECTION_ALL=  0b00000011
+
+
     # declare signals
     sizeChanged=Signal(QSize, QSize)                    # scene size changed: newSize, oldSize
 
@@ -317,6 +322,38 @@ class NodeEditorScene(QObject):
     def selectedNodes(self):
         """Return all selected nodes"""
         return [node for node in self.__nodes if node.isSelected()]
+
+    def selectAll(self, perimeter=None):
+        """Select all items in scene
+
+        If `perimeter` is:
+        - None or NodeEditorScene.SELECTION_ALL: all nodes & links are selected
+        - NodeEditorScene.SELECTION_NODES: all nodes are selected
+        - NodeEditorScene.SELECTION_LINKS: all links are selected
+        """
+        if perimeter is None or perimeter&NodeEditorScene.SELECTION_NODES:
+            for node in self.__nodes:
+                node.setSelected(True)
+
+        if perimeter is None or perimeter&NodeEditorScene.SELECTION_LINKS:
+            for link in self.__links:
+                link.setSelected(True)
+
+    def deselectAll(self, perimeter=None):
+        """Unselect all items in scene
+
+        If `perimeter` is:
+        - None or NodeEditorScene.SELECTION_ALL: all nodes & links are deselected
+        - NodeEditorScene.SELECTION_NODES: all nodes are deselected
+        - NodeEditorScene.SELECTION_LINKS: all links are deselected
+        """
+        if perimeter is None or perimeter&NodeEditorScene.SELECTION_NODES:
+            for node in self.__nodes:
+                node.setSelected(False)
+
+        if perimeter is None or perimeter&NodeEditorScene.SELECTION_LINKS:
+            for link in self.__links:
+                link.setSelected(False)
 
     def links(self, item=None):
         """Return links
@@ -1025,13 +1062,35 @@ class NodeEditorNode(QObject):
         elif change==QGraphicsItem.ItemPositionHasChanged:
             self.positionChanged.emit(value)
 
+    def isSelectable(self):
+        """Return if node is selectable"""
+        return (self.__grItem.flags()&QGraphicsItem.ItemIsSelectable==QGraphicsItem.ItemIsSelectable)
+
+    def setSelectable(self, value):
+        """Set if node is selectable"""
+        if isinstance(value, bool):
+            return self.__grItem.setFlag(QGraphicsItem.ItemIsSelectable, value)
+
     def isSelected(self):
         """Return if current node is selected"""
         return self.__isSelected
 
-    def setSelected(self, selectionStatus=True):
-        """Select/Deselect item"""
+    def setSelected(self, selectionStatus=True, doNotChangeOtherItemSelection=True):
+        """Select/Deselect item
+
+        If `doNotChangeOtherItemSelection` is True:
+        - When `selectionStatus` is True: let other selected item selected
+        - When `selectionStatus` is False: let other unselected item unselected
+
+
+        If `doNotChangeOtherItemSelection` is False:
+        - When `selectionStatus` is True: only current item will be selected
+        - When `selectionStatus` is False: ignored
+        """
         if selectionStatus!=self.__isSelected and isinstance(selectionStatus, bool):
+            if doNotChangeOtherItemSelection==False and selectionStatus:
+                self.__scene.deselectAll()
+
             self.__grItem.setSelected(selectionStatus)
 
     def graphicItem(self):
@@ -2106,13 +2165,35 @@ class NodeEditorLink(QObject):
             self.__colorSelected=None
             self.colorSelectedChanged.emit(self.selectedColor())
 
+    def isSelectable(self):
+        """Return if node is selectable"""
+        return (self.__grItem.flags()&QGraphicsItem.ItemIsSelectable==QGraphicsItem.ItemIsSelectable)
+
+    def setSelectable(self, value):
+        """Set if node is selectable"""
+        if isinstance(value, bool):
+            return self.__grItem.setFlag(QGraphicsItem.ItemIsSelectable, value)
+
     def isSelected(self):
         """Return if current node is selected"""
         return self.__isSelected
 
-    def setSelected(self, selectionStatus=True):
-        """Select/Deselect item"""
+    def setSelected(self, selectionStatus=True, doNotChangeOtherItemSelection=True):
+        """Select/Deselect item
+
+        If `doNotChangeOtherItemSelection` is True:
+        - When `selectionStatus` is True: let other selected item selected
+        - When `selectionStatus` is False: let other unselected item unselected
+
+
+        If `doNotChangeOtherItemSelection` is False:
+        - When `selectionStatus` is True: only current item will be selected
+        - When `selectionStatus` is False: ignored
+        """
         if selectionStatus!=self.__isSelected and isinstance(selectionStatus, bool):
+            if doNotChangeOtherItemSelection==False and selectionStatus:
+                self.__scene.deselectAll()
+
             self.__grItem.setSelected(selectionStatus)
 
 
