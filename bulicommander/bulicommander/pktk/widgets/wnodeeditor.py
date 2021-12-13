@@ -707,8 +707,8 @@ class NodeEditorNode(QObject):
     connectorLinked=Signal(NodeEditorNode, NodeEditorConnector)                 # a connector has been connected: node and concerned connector
     connectorUnlinked=Signal(NodeEditorNode, NodeEditorConnector)               # a connector has been disconnected: node and concerned connector
 
-    inputValueChanged=Signal(NodeEditorConnector)
-    outputValueChanged=Signal(NodeEditorConnector)
+    inputValueChanged=Signal(NodeEditorConnector)                               # value for an input connector has been modified
+    outputValueChanged=Signal(NodeEditorConnector)                              # value for an output connector has been modified
 
     defaultConnectorRadiusChanged=Signal(float)                                 # default radius for connector has been changed: new radius value as float
     defaultConnectorBorderSizeChanged=Signal(float)                             # default border size for connector has been changed: new value as float
@@ -1025,11 +1025,13 @@ class NodeEditorNode(QObject):
             if connector.isInput():
                 #print('NodeEditorNode.__connectorValueChanged(input)', connector.id(), connector.value())
                 self.__widget.inputUpdated(connector.id(), connector.value())
+                self.inputValueChanged.emit(connector)
             elif self.__scene.optionOutputEventEnabled():
                 #print('NodeEditorNode.__connectorValueChanged(output)', connector.id(), connector.value())
                 links=self.__scene.links(connector)
                 for link in links:
                     link.connectorTo().setValue(connector.value())
+                self.outputValueChanged.emit(connector)
 
     def __outputUpdated(self, value):
         """An output value has been updated
