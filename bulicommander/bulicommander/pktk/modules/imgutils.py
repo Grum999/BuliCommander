@@ -97,6 +97,14 @@ def checkerBoardImage(size, checkerSize=32):
 
     return pixmap
 
+def paintOpaqueAsColor(pixmap, color):
+    """From given pixmap, non transparent color are replaced with given color"""
+    if isinstance(pixmap, QPixmap):
+        painter=QPainter(pixmap)
+        painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
+        painter.fillRect(pixmap.rect(),  color)
+    return pixmap
+
 def buildIcon(icons, size=None):
     """Return a QIcon build from given icons
 
