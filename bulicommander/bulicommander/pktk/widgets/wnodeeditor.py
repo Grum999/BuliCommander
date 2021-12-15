@@ -31,6 +31,7 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal
     )
 
+from ..modules.imgutils import (buildIcon, paintOpaqueAsColor)
 from ..pktk import *
 
 # forward declaration of classes (needed for NodeEditorScene Signal declaration...)
@@ -97,6 +98,8 @@ class NodeEditorScene(QObject):
     defaultConnectorBorderColorChanged=Signal(QColor)   # default color value for border connectors has been modified
     defaultConnectorInputColorChanged=Signal(QColor)    # default color value for input connectors has been modified
     defaultConnectorOutputColorChanged=Signal(QColor)   # default color value for output connectors has been modified
+
+    optionNodeCloseButtonVisibilityChanged=Signal(bool) # default visibility for nodes close button has been modified
 
     def __init__(self, parent=None):
         super(NodeEditorScene, self).__init__(parent)
@@ -209,6 +212,9 @@ class NodeEditorScene(QObject):
         # define option to snap nodes to grid
         self.__optionSnapToGrid=False
 
+        # define option to determinate if node's close button are visible
+        self.__optionNodeCloseButtonVisible=False
+
         # define default scene size to 10000x10000 pixels
         self.setSize(QSize(10000, 10000))
 
@@ -239,7 +245,7 @@ class NodeEditorScene(QObject):
 
         If node is not found, does nothing
         """
-        if node in self.__nodes:
+        if node in self.__nodes and node.isRemovable():
             linksToRemove=[]
             for link in self.__links:
                 if node==link.nodeFrom() or node==link.nodeTo():
@@ -686,11 +692,22 @@ class NodeEditorScene(QObject):
         """set cut line style"""
         self.__cutLine.setStyle(value)
 
-    def snapToGrid(self):
+    def optionNodeCloseButtonVisible(self):
+        """Return if close button on nodes are visible or not"""
+        return self.__optionNodeCloseButtonVisible
+
+    def setOptionNodeCloseButtonVisible(self, value):
+        """Set if close button on nodes are visible or not"""
+        print('setOptionNodeCloseButtonVisible', value)
+        if isinstance(value, bool):
+            self.__optionNodeCloseButtonVisible=value
+            self.optionNodeCloseButtonVisibilityChanged.emit(value)
+
+    def optionSnapToGrid(self):
         """Return if snap to grid option is active or not"""
         return self.__optionSnapToGrid
 
-    def setSnapToGrid(self, value):
+    def setOptionSnapToGrid(self, value):
         """Set if snap to grid option is active or not"""
         if isinstance(value, bool):
             self.__optionSnapToGrid=value
@@ -813,6 +830,9 @@ class NodeEditorNode(QObject):
         self.__scene.linkAdded.connect(self.__checkAddedLink)
         self.__scene.linkRemoved.connect(self.__checkRemovedLink)
 
+        # node can be removed?
+        self.__isRemovable=True
+
         # title (str) for node
         self.__title=title
 
@@ -873,6 +893,7 @@ class NodeEditorNode(QObject):
 
         # QGraphicsItem for node
         self.__grItem=NodeEditorGrNode(self)
+        self.__grItem.setCloseButtonVisibility(self.__scene.optionNodeCloseButtonVisible())
 
         # add curent node to scene
         self.__scene.addNode(self)
@@ -902,6 +923,13 @@ class NodeEditorNode(QObject):
         self.nodeSelectedBgColorChanged.emit(self.nodeSelectedBgColor())
         self.borderRadiusChanged.emit(self.borderRadius())
         self.borderSizeChanged.emit(self.borderSize())
+
+        self.__scene.optionNodeCloseButtonVisibilityChanged.connect(self.__updateCloseButtonVisibility)
+
+    def __updateCloseButtonVisibility(self, value):
+        """Update close button visibility"""
+        self.__grItem.setCloseButtonVisibility(value)
+        self.__updateAllConnectorPosition()
 
     def __updateMinSize(self):
         """Update minimum size for node"""
@@ -1135,6 +1163,16 @@ class NodeEditorNode(QObject):
         elif change==QGraphicsItem.ItemPositionHasChanged:
             self.positionChanged.emit(value)
 
+    def isRemovable(self):
+        """Return if node is removable"""
+        return self.__isRemovable
+
+    def setRemovable(self, value):
+        """Set if node is selectable"""
+        if isinstance(value, bool):
+            self.__isRemovable=value
+            self.__grItem.setCloseButtonVisibility()
+
     def isSelectable(self):
         """Return if node is selectable"""
         return (self.__grItem.flags()&QGraphicsItem.ItemIsSelectable==QGraphicsItem.ItemIsSelectable)
@@ -1142,7 +1180,7 @@ class NodeEditorNode(QObject):
     def setSelectable(self, value):
         """Set if node is selectable"""
         if isinstance(value, bool):
-            return self.__grItem.setFlag(QGraphicsItem.ItemIsSelectable, value)
+            self.__grItem.setFlag(QGraphicsItem.ItemIsSelectable, value)
 
     def isSelected(self):
         """Return if current node is selected"""
@@ -2330,6 +2368,58 @@ class NodeEditorNodeWidget(QWidget):
 
 # ------------------------------------------------------------------------------
 
+class NodeEditorGrTitleButton(QGraphicsWidget):
+    """A button for node title"""
+    # might need some improvement to update style when mouse is hover button
+    clicked=Signal()
+
+    def __init__(self, name, node, parent=None):
+        # name: 'pktk:close' for example
+        super(NodeEditorGrTitleButton, self).__init__(parent)
+
+        self.__node=node
+        self.__size=QSize()
+        self.__icon=buildIcon(name)
+        self.__pixmap=None
+        self.__color=self.__node.titleColor()
+
+        self.setAcceptHoverEvents(True)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setSize(QSize(32, 32))
+
+    def mousePressEvent(self, event):
+        """Button clicked"""
+        # emit signal
+        self.clicked.emit()
+
+    #def hoverEnterEvent(self, event):
+    #    """Mouse enter hover button"""
+    #    print('Hover: enter')
+
+    #def hoverLeaveEvent(self, event):
+    #    """Mouse leave hover button"""
+    #    print('Hover: leave')
+
+    def paint(self, painter, option, widget=None):
+        """Paint button"""
+        # need to implement color "over"
+        painter.drawPixmap(0, 0, self.__pixmap)
+
+    def updateColor(self, color=None):
+        if isinstance(color, QColor):
+            self.__color=color
+        self.__pixmap=paintOpaqueAsColor(self.__icon.pixmap(self.__size), self.__color)
+
+    def setSize(self, size):
+        """Set size for close button"""
+        # need to draw pixmap smaller (close cross is too big; use padding?)
+        # need to implement icon colors (normal, over)
+        if self.__size!=size:
+            self.__size=size
+            self.updateColor()
+            self.resize(QSizeF(self.__size))
+
+
 class NodeEditorGrScene(QGraphicsScene):
     """Render canvas scene: grid, origin, bounds, background, rendered graphics....
 
@@ -2724,8 +2814,18 @@ class NodeEditorGrNode(QGraphicsItem):
         self.__windowBrushSelected=QBrush(self.__windowBgColorSelected)
 
         # define title
-        self.__itemTitle=QGraphicsTextItem(self)
-        self.__itemTitle.setDefaultTextColor(self.__titleTextColor)
+        self.__titleText=''
+        self.__titleColor=self.__titleTextColor
+        self.__titleFont=QApplication.font()
+        self.__titleFontMetrics=QFontMetrics(self.__titleFont, )
+        self.__titleTextBounds=QRect()
+        self.__titleSize=QSize()
+
+        # define close button
+        self.__itemTitleCloseButton=NodeEditorGrTitleButton('pktk:close', self.__node, self)
+        self.__itemTitleCloseButton.clicked.connect(self.__remove)
+        self.__itemTitleCloseButton.setVisible(False)
+        self.__itemTitleCloseButtonVisibility=False
 
         #node's bounding rect is calculated and stored when size/border size is modified
         self.__boundingRect=QRectF()
@@ -2736,6 +2836,10 @@ class NodeEditorGrNode(QGraphicsItem):
         self.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
 
         self.__updateTitle()
+
+    def __remove(self):
+        """Remove current node"""
+        self.__node.scene().removeNode(self.__node)
 
     def __updateWidgetGeometry(self):
         """update geometry for widget, according to node's size & padding"""
@@ -2749,7 +2853,7 @@ class NodeEditorGrNode(QGraphicsItem):
         if self.__proxyWidget is None:
             return
 
-        titleHeight=self.__itemTitle.boundingRect().size().height()
+        titleHeight=self.__titleSize.height()
         padding=self.__node.defaultConnectorRadius()+self.__padding+self.__borderSize/2
         padding2=2*padding+self.__borderSize
 
@@ -2757,7 +2861,7 @@ class NodeEditorGrNode(QGraphicsItem):
 
     def __updateTitle(self, node=None):
         """Update title from node"""
-        self.__itemTitle.setPlainText(self.__node.title())
+        self.__titleText=self.__node.title()
         self.__updateSize()
 
     def __updateTitleColor(self, value):
@@ -2765,7 +2869,8 @@ class NodeEditorGrNode(QGraphicsItem):
         if self.__titleTextColor!=value:
             self.__titleTextColor=value
             if not self.isSelected():
-                self.__itemTitle.setDefaultTextColor(self.__titleTextColor)
+                self.__titleColor=self.__titleTextColor
+                self.__itemTitleCloseButton.updateColor(self.__titleColor)
                 self.update()
 
     def __updateTitleBgColor(self, value):
@@ -2782,7 +2887,8 @@ class NodeEditorGrNode(QGraphicsItem):
         if self.__titleTextColorSelected!=value:
             self.__titleTextColorSelected=value
             if self.isSelected():
-                self.__itemTitle.setDefaultTextColor(self.__titleTextColorSelected)
+                self.__titleColor=self.__titleTextColorSelected
+                self.__itemTitleCloseButton.updateColor(self.__titleColor)
                 self.update()
 
     def __updateTitleSelectorBgColor(self, value):
@@ -2814,6 +2920,7 @@ class NodeEditorGrNode(QGraphicsItem):
         """Border radius has been modified"""
         if self.__borderRadius!=value:
             self.__borderRadius=value
+            self.__updateSize()
             self.update()
 
     def __updateBorderSize(self, value):
@@ -2837,6 +2944,7 @@ class NodeEditorGrNode(QGraphicsItem):
         """Border size has been modified"""
         if self.__padding!=value:
             self.__padding=value
+            self.__updateSize()
             self.__updateWidgetGeometry()
             self.update()
 
@@ -2845,8 +2953,69 @@ class NodeEditorGrNode(QGraphicsItem):
 
         Take in account current title width + minimum size (200x200 pixels) for a node
         """
-        self.__size=self.__itemTitle.boundingRect().size().toSize()
-        self.__size=self.__size.expandedTo(self.__minSize)
+        # Have to take in account:
+        # - Minimum width
+        # - Title width
+        # - Button width
+        # - Padding
+        #                                 MinSpace=Button width
+        #                                  ┊
+        #                 Title width      ┊   Button width
+        #                <-------------->  ┊  <->
+        #                ┊              ┊  ┊  ┊ ┊
+        #        Padding ┊              ┊  ┊  ┊ ┊ Padding
+        #            <-->┊              ┊<-+->┊ ┊<-->
+        #            ┊  ┊┊              ┊     ┊ ┊┊  ┊
+        #            ╭──────────────────────────────╮
+        #            │   ┊              ┊     ┊ ┊   │
+        #            │   Title-text-value     [X]   │
+        #            │                              │
+        #            ├──────────────────────────────┤
+        #            │                              │
+        #            │                              │
+        #            │                              │
+        #            ╰──────────────────────────────╯
+        #            ┊                              ┊
+        #            <------------------------------>
+        #             Minimum width
+        #
+        # If button is not visible, button width = 0
+        #
+
+        # calculate title bounds from text + font metrics
+        self.__titleTextBounds=self.__titleFontMetrics.boundingRect(QRect(0,0,800,100), 0, self.__titleText)
+
+        if self.__itemTitleCloseButton.isVisible():
+            # button size: width=height=title text height
+            buttonSize=self.__titleTextBounds.height()
+            self.__itemTitleCloseButton.setSize(QSize(buttonSize, buttonSize))
+        else:
+            # there's no button
+            buttonSize=0
+
+        # minimum space between title text & button=button width
+        minSpace=buttonSize
+
+        # padding is the greastest value between:
+        # - padding applied to node's content
+        # - 1/3 of border radius
+        # - 2 pixels (in case of padding&border radius are less than 2, need a minimum space with border)
+        padding=max(self.__padding, self.__borderRadius//3, 2)
+        padding2=2*padding
+
+        # calculate minimal expected width
+        calculatedWidth=self.__titleTextBounds.width()+padding2+buttonSize+minSpace
+
+        self.__titleSize=QSize(max(calculatedWidth, self.__minSize.width()), self.__titleTextBounds.height()+padding2)
+        self.__size=self.__titleSize.expandedTo(self.__minSize)
+
+        #self.__titleTextBounds.moveTo(padding, padding)
+        self.__titleTextBounds.translate(padding, padding)
+
+        if self.__itemTitleCloseButton.isVisible():
+            # if button is visible, position have to be updated, otherwise we don't care
+            self.__itemTitleCloseButton.setPos(self.__size.width()-padding-buttonSize, padding)
+
         self.__updateBoundingRect()
         self.__updateWidgetGeometry()
         self.prepareGeometryChange()
@@ -2858,14 +3027,15 @@ class NodeEditorGrNode(QGraphicsItem):
 
     def itemChange(self, change, value):
         """A QGraphicsItem property has been changed"""
-        if value==QGraphicsItem.ItemSelectedHasChanged:
+        if change==QGraphicsItem.ItemSelectedHasChanged:
             # item selection state has been modified, take it in account
             if value:
-                self.__itemTitle.setDefaultTextColor(self.__titleTextColorSelected)
+                self.__titleColor=self.__titleTextColorSelected
             else:
-                self.__itemTitle.setDefaultTextColor(self.__titleTextColor)
+                self.__titleColor=self.__titleTextColor
+            self.__itemTitleCloseButton.updateColor(self.__titleColor)
         elif change==QGraphicsItem.ItemPositionChange:
-            if self.__node.scene().snapToGrid():
+            if self.__node.scene().optionSnapToGrid():
                 # snap to grid, force position to be aligned to grid
                 gridSize, dummy=self.__node.scene().gridSize()
 
@@ -2891,16 +3061,9 @@ class NodeEditorGrNode(QGraphicsItem):
         """Return node size"""
         return self.__size
 
-    def title(self):
-        """Return instance of title
-
-        (let user change font properties...)
-        """
-        return self.__itemTitle
-
     def titleSize(self):
         """Return node title size"""
-        return self.__itemTitle.boundingRect().size().toSize()
+        return self.__titleSize
 
     def boundingRect(self):
         """Return boundingRect for node"""
@@ -2908,7 +3071,9 @@ class NodeEditorGrNode(QGraphicsItem):
 
     def paint(self, painter, options, widget=None):
         """Render node"""
-        painter.setRenderHints(QPainter.Antialiasing|QPainter.SmoothPixmapTransform, True)
+        painter.setRenderHints(QPainter.Antialiasing|QPainter.SmoothPixmapTransform|QPainter.TextAntialiasing, True)
+
+        # -- calculate paths --
 
         # window background
         pathWindowBorder=QPainterPath()
@@ -2916,7 +3081,7 @@ class NodeEditorGrNode(QGraphicsItem):
 
         # window title rect
         pathTitleRect=QPainterPath()
-        pathTitleRect.addRect(0, 0, self.__size.width(), self.__itemTitle.boundingRect().size().height())
+        pathTitleRect.addRect(0, 0, self.__size.width(), self.__titleSize.height())
 
         # window title
         pathTitleBg=pathTitleRect.intersected(pathWindowBorder)
@@ -2930,7 +3095,7 @@ class NodeEditorGrNode(QGraphicsItem):
         pathWindowBorder.addRoundedRect(0, 0, self.__size.width(), self.__size.height(), self.__borderRadius, self.__borderRadius)
 
 
-        # render
+        # -- render paths --
         painter.setPen(Qt.NoPen)
         if self.isSelected():
             painter.setBrush(self.__windowBrushSelected)
@@ -2950,6 +3115,22 @@ class NodeEditorGrNode(QGraphicsItem):
             painter.setPen(self.__borderPen)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(pathWindowBorder)
+
+        # -- draw title text --
+        painter.setPen(QPen(self.__titleColor))
+        painter.setFont(self.__titleFont)
+        painter.drawText(self.__titleTextBounds, 0, self.__titleText)
+
+    def setCloseButtonVisibility(self, value=None):
+        """Button visibility has been changed, update
+
+        If value is none, just update
+        """
+        if isinstance(value, bool):
+            self.__itemTitleCloseButtonVisibility=value
+
+        self.__itemTitleCloseButton.setVisible(self.__itemTitleCloseButtonVisibility and self.__node.isRemovable())
+        self.__updateSize()
 
 
 class NodeEditorGrConnector(QGraphicsItem):
@@ -3411,6 +3592,7 @@ class NodeEditorGrCutLine(QGraphicsItem):
 
         polygon=QPolygonF(self.__points)
         painter.drawPolyline(polygon)
+
 
 
 # ------------------------------------------------------------------------------
