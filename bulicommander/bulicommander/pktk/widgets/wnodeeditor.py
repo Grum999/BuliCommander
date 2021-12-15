@@ -698,7 +698,6 @@ class NodeEditorScene(QObject):
 
     def setOptionNodeCloseButtonVisible(self, value):
         """Set if close button on nodes are visible or not"""
-        print('setOptionNodeCloseButtonVisible', value)
         if isinstance(value, bool):
             self.__optionNodeCloseButtonVisible=value
             self.optionNodeCloseButtonVisibilityChanged.emit(value)
@@ -2383,6 +2382,9 @@ class NodeEditorGrTitleButton(QGraphicsWidget):
         self.__pixmap=None
         self.__color=self.__node.titleColor()
 
+        self.__bgBrush=QBrush(Qt.NoBrush)
+        self.__bgRadius=3
+
         self.setAcceptHoverEvents(True)
         self.setCursor(Qt.PointingHandCursor)
         self.setSize(QSize(32, 32))
@@ -2392,17 +2394,28 @@ class NodeEditorGrTitleButton(QGraphicsWidget):
         # emit signal
         self.clicked.emit()
 
-    #def hoverEnterEvent(self, event):
-    #    """Mouse enter hover button"""
-    #    print('Hover: enter')
+    def hoverEnterEvent(self, event):
+        """Mouse enter hover button"""
+        self.__bgBrush.setStyle(Qt.SolidPattern)
+        if self.__node.isSelected():
+            self.__bgBrush.setColor(self.__node.titleBgColor())
+        else:
+            self.__bgBrush.setColor(self.__node.titleSelectedBgColor())
+        self.update()
 
-    #def hoverLeaveEvent(self, event):
-    #    """Mouse leave hover button"""
-    #    print('Hover: leave')
+    def hoverLeaveEvent(self, event):
+        """Mouse leave hover button"""
+        self.__bgBrush.setStyle(Qt.NoBrush)
+        self.update()
 
     def paint(self, painter, option, widget=None):
         """Paint button"""
-        # need to implement color "over"
+        painter.setRenderHints(QPainter.Antialiasing|QPainter.SmoothPixmapTransform)
+        if self.__bgBrush.style()!=Qt.NoBrush:
+            painter.setBrush(self.__bgBrush)
+            painter.setPen(QPen(Qt.NoPen))
+            painter.drawRoundedRect(0, 0, self.__size.width(), self.__size.height(), self.__bgRadius, self.__bgRadius)
+
         painter.drawPixmap(0, 0, self.__pixmap)
 
     def updateColor(self, color=None):
@@ -2857,7 +2870,9 @@ class NodeEditorGrNode(QGraphicsItem):
         padding=self.__node.defaultConnectorRadius()+self.__padding+self.__borderSize/2
         padding2=2*padding+self.__borderSize
 
-        self.__proxyWidget.setGeometry(QRectF(padding, titleHeight+padding, self.__boundingRect.width()-padding2, self.__boundingRect.height()-padding2-titleHeight))
+        rectF=QRectF(padding, titleHeight+padding, self.__boundingRect.width()-padding2, self.__boundingRect.height()-padding2-titleHeight)
+        self.__proxyWidget.setGeometry(rectF)
+        self.__proxyWidget.setMaximumSize(rectF.size())
 
     def __updateTitle(self, node=None):
         """Update title from node"""
