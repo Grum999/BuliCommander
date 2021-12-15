@@ -3639,6 +3639,8 @@ class WNodeEditorView(QGraphicsView):
         self.setDragMode(QGraphicsView.NoDrag)
 
         self.__cutLine=scene.cutLine()
+        self.__minimumZoomFactor=0.01
+        self.__maximumZoomFactor=1.0
         self.__currentZoomFactor=1.0
         self.__zoomStep=0.25
         self.setMouseTracking(True)
@@ -3719,6 +3721,7 @@ class WNodeEditorView(QGraphicsView):
         if value > 0:
             isIncreased=(value>self.__currentZoomFactor)
 
+            value=max(min(value, self.__maximumZoomFactor), self.__minimumZoomFactor)
             self.__currentZoomFactor = round(value, 2)
             self.scene().setViewZoom(self.__currentZoomFactor)
             self.resetTransform()
@@ -3740,3 +3743,49 @@ class WNodeEditorView(QGraphicsView):
                     self.__zoomStep=0.05
                 else:
                     self.__zoomStep=0.25
+
+    def minimumZoom(self):
+        """Return Minimum zoom that can be applied"""
+        return self.__minimumZoomFactor
+
+    def setMinimumZoom(self, value):
+        """Minimum zoom that can be applied
+
+        1.00 = 100%
+        """
+        if value>0 and value <=1.00:
+            self.__minimumZoomFactor=value
+            if self.__currentZoomFactor<self.__minimumZoomFactor:
+                self.setZoom(self.__minimumZoomFactor)
+
+    def maximumZoom(self):
+        """Return Maximum zoom that can be applied"""
+        return self.__maximumZoomFactor
+
+    def setMaximumZoom(self, value):
+        """Maximum zoom that can be applied
+
+        1.00 = 100%
+        """
+        if value>=1.00:
+            self.__maximumZoomFactor=value
+            if self.__currentZoomFactor>self.__maximumZoomFactor:
+                self.setZoom(self.__maximumZoomFactor)
+
+    def zoomToFit(self):
+        """Zoom to fit scene content"""
+        boundingRect=self.__scene.grScene().itemsBoundingRect()
+        scale=round(min((self.frameSize().width()-50) / boundingRect.width(), (self.frameSize().height()-50) / boundingRect.height()), 2)
+
+        self.setZoom(scale)
+        self.centerToContent()
+
+    def centerToContent(self):
+        """Center view to content"""
+        boundingRect=self.__scene.grScene().itemsBoundingRect()
+        self.centerOn(boundingRect.center())
+
+    def resetZoom(self):
+        """reset zoom to 1:1 + center to content"""
+        self.setZoom(1.0)
+        self.centerToContent()
