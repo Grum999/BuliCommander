@@ -118,6 +118,9 @@ class NodeEditorScene(QObject):
         # current linking item (link currently created/updated)
         self.__linkingItem=None
 
+        # flag set to True if scene is currently being cleared
+        self.__inClearMode=False
+
         # scene size
         self.__size=QSize()
 
@@ -233,6 +236,22 @@ class NodeEditorScene(QObject):
             self.__selectedLinksCount=nbSelectedLinks
             self.linkSelection.emit()
 
+    def clear(self):
+        """Clear scene
+
+        All nodes and links are removed
+        (even non removeable nodes are removed)
+        """
+        self.__inClearMode=True
+
+        while len(self.__links):
+            self.removeLink(self.__links[-1])
+
+        while len(self.__nodes):
+            self.removeNode(self.__nodes[-1])
+
+        self.__inClearMode=False
+
     def addNode(self, node):
         """Add node to current scene"""
         if not node in self.__nodes:
@@ -245,7 +264,7 @@ class NodeEditorScene(QObject):
 
         If node is not found, does nothing
         """
-        if node in self.__nodes and node.isRemovable():
+        if self.__inClearMode or node in self.__nodes and node.isRemovable():
             linksToRemove=[]
             for link in self.__links:
                 if node==link.nodeFrom() or node==link.nodeTo():
@@ -650,6 +669,9 @@ class NodeEditorScene(QObject):
 
     def optionOutputEventEnabled(self):
         """Return if input/output events are enables or not"""
+        # in if clear mode, temporary disable output event
+        if self.__inClearMode:
+            return False
         return self.__optionOutputEventEnabled
 
     def setOptionOutputEventEnabled(self, value):
