@@ -24,7 +24,10 @@
 # First tutorials are really interesting to easily and quickly understand basic stuff ("how to" implement)
 # but quickly rewritten everything according to my own vision of things :-)
 
+
 import math
+import json
+import os.path
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -32,6 +35,7 @@ from PyQt5.QtCore import (
     )
 
 from ..modules.imgutils import (buildIcon, paintOpaqueAsColor)
+from ..modules.utils import Debug
 from ..pktk import *
 
 # forward declaration of classes (needed for NodeEditorScene Signal declaration...)
@@ -62,6 +66,17 @@ class NodeEditorScene(QObject):
     SELECTION_NODES=0b00000001
     SELECTION_LINKS=0b00000010
     SELECTION_ALL=  0b00000011
+
+    EXPORT_OK=       0b00000000
+    EXPORT_CANT_SAVE=0b00000001
+
+    IMPORT_OK=                              0b00000000
+    IMPORT_FILE_NOT_FOUND=                  0b00000001
+    IMPORT_FILE_CANT_READ=                  0b00000010
+    IMPORT_FILE_NOT_JSON=                   0b00000100
+    IMPORT_FILE_INVALID_FORMAT_IDENTIFIER=  0b00001000
+    IMPORT_FILE_MISSING_FORMAT_IDENTIFIER=  0b00010000
+    IMPORT_FILE_MISSING_SCENE_DEFINITION=   0b00100000
 
 
     # declare signals
@@ -339,6 +354,13 @@ class NodeEditorScene(QObject):
         else:
             self.__linkingItem=item
             self.startLinkingItem.emit()
+
+    def nodeFromId(self, id):
+        """Return node from given Id, return Non if no node is found"""
+        for node in self.__nodes:
+            if node.id()==id:
+                return node
+        return None
 
     def nodes(self):
         """Return all nodes"""
@@ -712,7 +734,8 @@ class NodeEditorScene(QObject):
 
     def setDefaultCutLineStyle(self, value):
         """set cut line style"""
-        self.__cutLine.setStyle(value)
+        if value in [Qt.SolidLine, Qt.DashLine, Qt.DotLine, Qt.DashDotLine, Qt.DashDotDotLine]:
+            self.__cutLine.setStyle(value)
 
     def optionNodeCloseButtonVisible(self):
         """Return if close button on nodes are visible or not"""
@@ -796,6 +819,293 @@ class NodeEditorScene(QObject):
         """Return current mouse position over scene"""
         return self.__grScene.cursorScenePosition()
 
+    def exportToFile(self, fileName, sceneFormatIdentifier=None):
+        """Export current scene as json file
+
+        Given `fileName` define full path/file name on which exported content is saved
+
+        Given `fileFormatIdentifier` is a <str> provided to define scene format:
+        => Export always produce json file, but according to nodes types, a scene
+           can be loaded or not...
+           The format identifier allows to specify "this is a ZZZ scene"
+
+           This allows to avoid loading a scene that is not compatible
+        """
+        if not isinstance(sceneFormatIdentifier, str):
+            sceneFormatIdentifier=None
+
+        dataAsDict={
+                'sceneFormatIdentifier': sceneFormatIdentifier,
+                'scene': {
+                        'geometry': {
+                                'width': self.__size.width(),
+                                'height': self.__size.height()
+                            },
+                        'options': {
+                                'snapToGrid': self.__optionSnapToGrid,
+                                'nodeCloseButtonVisible': self.__optionNodeCloseButtonVisible
+                            },
+                        'style': {
+                                'defaultNodeColorTitle': self.__defaultNodeColorTitle.name(),
+                                'defaultNodeColorBgTitle': self.__defaultNodeColorBgTitle.name(),
+                                'defaultNodeColorSelectedTitle': self.__defaultNodeColorSelectedTitle.name(),
+                                'defaultNodeColorSelectedBgTitle': self.__defaultNodeColorSelectedBgTitle.name(),
+                                'defaultNodeColorBgNode': self.__defaultNodeColorBgNode.name(),
+                                'defaultNodeColorBgNodesSelected': self.__defaultNodeColorBgNodesSelected.name(),
+                                'defaultNodeBorderRadius': self.__defaultNodeBorderRadius,
+                                'defaultNodeBorderSize': self.__defaultNodeBorderSize,
+                                'defaultNodePadding': self.__defaultNodePadding,
+                                'defaultLinkRender': self.__defaultLinkRender,
+                                'defaultLinkColor': self.__defaultLinkColor.name(),
+                                'defaultLinkColorSelected': self.__defaultLinkColorSelected.name(),
+                                'defaultLinkSize': self.__defaultLinkSize,
+                                'defaultConnectorRadius': self.__defaultConnectorRadius,
+                                'defaultConnectorBorderSize': self.__defaultConnectorBorderSize,
+                                'defaultConnectorBorderColor': self.__defaultConnectorBorderColor.name(),
+                                'defaultConnectorInputColor': self.__defaultConnectorInputColor.name(),
+                                'defaultConnectorOutputColor': self.__defaultConnectorOutputColor.name(),
+                                'defaultCutLineColor': self.defaultCutLineColor().name(),
+                                'defaultCutLineSize': self.defaultCutLineSize(),
+                                'defaultCutLineStyle': self.defaultCutLineStyle(),
+                                'gridVisible': self.gridVisible(),
+                                'gridSizeWidth': self.gridSize()[0],
+                                'gridSizeFrequency': self.gridSize()[1],
+                                'gridBgColor': self.gridBgColor().name(),
+                                'gridFgColor': self.gridFgColor().name(),
+                                'gridStyleMain': self.gridStyleMain(),
+                                'gridStyleSecondary': self.gridStyleSecondary(),
+                                'gridOpacity': self.gridOpacity()
+                            }
+                    },
+                'nodes': [node.serialize() for node in self.__nodes],
+                'links': [link.serialize() for link in self.__links]
+            }
+
+        returned=NodeEditorScene.EXPORT_OK
+        try:
+            with open(fileName, 'w') as fHandle:
+                fHandle.write(json.dumps(dataAsDict, indent=4, sort_keys=True))
+        except Exception as e:
+            returned=NodeEditorScene.EXPORT_CANT_SAVE
+
+        return returned
+
+    def importFromFile(self, fileName, sceneFormatIdentifier=None):
+        """Import scene from a json file
+
+        Given `fileName` define full path/file name on which exported content is saved
+
+        Given `fileFormatIdentifier` is a <str> provided to define scene format:
+        => If the format identifier in json file doesn't match provided value, import is cancelled
+        """
+        if not os.path.isfile(fileName):
+            return NodeEditorScene.IMPORT_FILE_NOT_FOUND
+
+        try:
+            with open(fileName, 'r') as fHandle:
+                jsonAsStr=fHandle.read()
+        except Exception as e:
+            Debug.print("Can't open/read file {0}: {1}", fileName, str(e))
+            return NodeEditorScene.IMPORT_FILE_CANT_READ
+
+        try:
+            jsonAsDict = json.loads(jsonAsStr)
+        except Exception as e:
+            Debug.print("Can't parse file {0}: {1}", fileName, str(e))
+            return NodeEditorScene.IMPORT_FILE_NOT_JSON
+
+        if not isinstance(sceneFormatIdentifier, str):
+            sceneFormatIdentifier=None
+
+        if sceneFormatIdentifier:
+            if 'sceneFormatIdentifier' in jsonAsDict:
+                if jsonAsDict['sceneFormatIdentifier']!=sceneFormatIdentifier:
+                    return NodeEditorScene.IMPORT_FILE_INVALID_FORMAT_IDENTIFIER
+            else:
+                # invalid file format
+                return NodeEditorScene.IMPORT_FILE_MISSING_FORMAT_IDENTIFIER
+
+        # deserialize scene data only scene if available
+        if 'scene' in jsonAsDict:
+            # 1. reset current scene content
+            self.clear()
+
+            # 2. apply options, if any
+            if 'options' in jsonAsDict['scene'] and isinstance(jsonAsDict['scene']['options'], dict):
+                options=jsonAsDict['scene']['options']
+
+                if 'snapToGrid' in options and isinstance(options['snapToGrid'], bool):
+                    self.__optionSnapToGrid=options['snapToGrid']
+
+                if 'nodeCloseButtonVisible' in options and isinstance(options['nodeCloseButtonVisible'], bool):
+                    self.__optionNodeCloseButtonVisible=options['nodeCloseButtonVisible']
+
+            # 3. apply styles, if any
+            if 'style' in jsonAsDict['scene'] and isinstance(jsonAsDict['scene']['style'], dict):
+                style=jsonAsDict['scene']['style']
+
+                if 'defaultNodeColorTitle' in style and isinstance(style['defaultNodeColorTitle'], str):
+                    self.__defaultNodeColorTitle=QColor(style['defaultNodeColorTitle'])
+
+                if 'defaultNodeColorBgTitle' in style and isinstance(style['defaultNodeColorBgTitle'], str):
+                    self.__defaultNodeColorBgTitle=QColor(style['defaultNodeColorBgTitle'])
+
+                if 'defaultNodeColorSelectedTitle' in style and isinstance(style['defaultNodeColorSelectedTitle'], str):
+                    self.__defaultNodeColorSelectedTitle=QColor(style['defaultNodeColorSelectedTitle'])
+
+                if 'defaultNodeColorSelectedBgTitle' in style and isinstance(style['defaultNodeColorSelectedBgTitle'], str):
+                    self.__defaultNodeColorSelectedBgTitle=QColor(style['defaultNodeColorSelectedBgTitle'])
+
+                if 'defaultNodeColorBgNode' in style and isinstance(style['defaultNodeColorBgNode'], str):
+                    self.__defaultNodeColorBgNode=QColor(style['defaultNodeColorBgNode'])
+
+                if 'defaultNodeColorBgNodesSelected' in style and isinstance(style['defaultNodeColorBgNodesSelected'], str):
+                    self.__defaultNodeColorBgNodesSelected=QColor(style['defaultNodeColorBgNodesSelected'])
+
+                if 'defaultNodeBorderRadius' in style and isinstance(style['defaultNodeBorderRadius'], (int, float)):
+                    self.__defaultNodeBorderRadius=max(0, style['defaultNodeBorderRadius'])
+
+                if 'defaultNodeBorderSize' in style and isinstance(style['defaultNodeBorderSize'], (int, float)):
+                    self.__defaultNodeBorderSize=max(0, style['defaultNodeBorderSize'])
+
+                if 'defaultNodePadding' in style and isinstance(style['defaultNodePadding'], (int, float)):
+                    self.__defaultNodePadding=max(0, style['defaultNodePadding'])
+
+                if 'defaultLinkRender' in style and isinstance(style['defaultLinkRender'], int) and style['defaultLinkRender'] in (NodeEditorLink.RENDER_DIRECT, NodeEditorLink.RENDER_CURVE, NodeEditorLink.RENDER_ANGLE):
+                    self.__defaultLinkRender=style['defaultLinkRender']
+
+                if 'defaultLinkColor' in style and isinstance(style['defaultLinkColor'], str):
+                    self.__defaultLinkColor=QColor(style['defaultLinkColor'])
+
+                if 'defaultLinkColorSelected' in style and isinstance(style['defaultLinkColorSelected'], str):
+                    self.__defaultLinkColorSelected=QColor(style['defaultLinkColorSelected'])
+
+                if 'defaultLinkSize' in style and isinstance(style['defaultLinkSize'], (int, float)):
+                    self.__defaultLinkSize=max(0.01, style['defaultLinkSize'])
+
+                if 'defaultConnectorRadius' in style and isinstance(style['defaultConnectorRadius'], (int, float)):
+                    self.__defaultConnectorRadius=max(1, style['defaultConnectorRadius'])
+
+                if 'defaultConnectorBorderSize' in style and isinstance(style['defaultConnectorBorderSize'], (int, float)):
+                    self.__defaultConnectorBorderSize=max(0, style['defaultConnectorBorderSize'])
+
+                if 'defaultConnectorBorderColor' in style and isinstance(style['defaultConnectorBorderColor'], str):
+                    self.__defaultConnectorBorderColor=QColor(style['defaultConnectorBorderColor'])
+
+                if 'defaultConnectorInputColor' in style and isinstance(style['defaultConnectorInputColor'], str):
+                    self.__defaultConnectorInputColor=QColor(style['defaultConnectorInputColor'])
+
+                if 'defaultConnectorOutputColor' in style and isinstance(style['defaultConnectorOutputColor'], str):
+                    self.__defaultConnectorOutputColor=QColor(style['defaultConnectorOutputColor'])
+
+                if 'defaultCutLineColor' in style and isinstance(style['defaultCutLineColor'], str):
+                    self.setDefaultCutLineColor(QColor(style['defaultCutLineColor']))
+
+                if 'defaultCutLineSize' in style and isinstance(style['defaultCutLineSize'], (int, float)):
+                    self.setDefaultCutLineSize(style['defaultCutLineSize'])
+
+                if 'defaultCutLineStyle' in style and isinstance(style['defaultCutLineStyle'], int) and style['defaultCutLineStyle'] in []:
+                    self.setDefaultCutLineStyle(style['defaultCutLineStyle'])
+
+                if 'gridVisible' in style and isinstance(style['gridVisible'], bool):
+                    self.setGridVisible(style['gridVisible'])
+
+                gridSizeWidth, gridSizeFrequency=self.gridSize()
+                if 'gridSizeWidth' in style and isinstance(style['gridSizeWidth'], int):
+                    gridSizeWidth=style['gridSizeWidth']
+
+                if 'gridSizeFrequency' in style and isinstance(style['gridSizeFrequency'], int):
+                    gridSizeFrequency=style['gridSizeFrequency']
+
+                self.setGridSize(gridSizeWidth, gridSizeFrequency)
+
+                if 'gridBgColor' in style and isinstance(style['gridBgColor'], str):
+                    self.setGridBgColor(QColor(style['gridBgColor']))
+
+                if 'gridFgColor' in style and isinstance(style['gridFgColor'], str):
+                    self.setGridFgColor(QColor(style['gridFgColor']))
+
+                if 'gridStyleMain' in style and isinstance(style['gridStyleMain'], str):
+                    self.setGridStyleMain(style['gridStyleMain'])
+
+                if 'gridStyleSecondary' in style and isinstance(style['gridStyleSecondary'], str):
+                    self.setGridStyleSecondary(style['gridStyleSecondary'])
+
+                if 'gridOpacity' in style and isinstance(style['gridOpacity'], (int, float)):
+                    self.setGridOpacity(style['gridOpacity'])
+
+            # 4. apply bounds, if any
+            if 'geometry' in jsonAsDict['scene'] and isinstance(jsonAsDict['scene']['geometry'], dict):
+                geometry=jsonAsDict['scene']['geometry']
+
+                size=self.__size
+
+                if 'width' in geometry and isinstance(geometry['width'], int):
+                    size.setWidth(geometry['width'])
+
+                if 'height' in geometry and isinstance(geometry['height'], int):
+                    size.setHeight(geometry['height'])
+
+                self.setSize(size)
+
+            # 5. import nodes, if any
+            if 'nodes' in jsonAsDict and isinstance(jsonAsDict['nodes'], list):
+                for nodeAsDict in jsonAsDict['nodes']:
+                    if isinstance(nodeAsDict, dict):
+                        widget=None
+
+                        # need a node title in all cases
+                        title=''
+                        if 'properties' in nodeAsDict and isinstance(nodeAsDict['widget'], dict):
+                            if 'title' in nodeAsDict['properties'] and isinstance(nodeAsDict['properties']['title'], str):
+                                title=nodeAsDict['properties']['title']
+
+                        if 'widget' in nodeAsDict and isinstance(nodeAsDict['widget'], dict) and 'type' in nodeAsDict['widget'] and isinstance(nodeAsDict['widget']['type'], str):
+                            widgetClass=NodeEditorNodeWidget.registeredClass(nodeAsDict['widget']['type'])
+
+                            if widgetClass:
+                                # class exist, create new instance
+                                widget=widgetClass(self, title)
+                                widget._deserialize(nodeAsDict)
+
+                        if widget is None:
+                            # no widget??
+                            # create Node directly
+                            node=NodeEditorNode(self, title)
+                            node.deserialize(nodeAsDict)
+
+            # 6. import links, if any
+            if 'links' in jsonAsDict and isinstance(jsonAsDict['links'], list):
+                for linkAsDict in jsonAsDict['links']:
+                    if isinstance(linkAsDict, dict):
+                        fromConnector=None
+                        toConnector=None
+
+                        if 'connect' in linkAsDict and isinstance(linkAsDict['connect'], dict):
+                            # check fromConnector reference
+                            if 'from' in linkAsDict['connect'] and isinstance(linkAsDict['connect']['from'], str):
+                                fromNfo=linkAsDict['connect']['from'].split(':')
+                                if len(fromNfo)==2:
+                                    node=self.nodeFromId(fromNfo[0])
+                                    if node:
+                                        fromConnector=node.connector(fromNfo[1])
+
+                            if 'to' in linkAsDict['connect'] and isinstance(linkAsDict['connect']['to'], str):
+                                # check toConnector reference
+                                toNfo=linkAsDict['connect']['to'].split(':')
+                                if len(toNfo)==2:
+                                    node=self.nodeFromId(toNfo[0])
+                                    if node:
+                                        toConnector=node.connector(toNfo[1])
+
+                        if fromConnector and toConnector:
+                            link=NodeEditorLink(fromConnector, toConnector)
+                            link.deserialize(linkAsDict)
+        else:
+            return NodeEditorScene.IMPORT_FILE_MISSING_SCENE_DEFINITION
+
+        return NodeEditorScene.IMPORT_OK
+
 
 class NodeEditorNode(QObject):
     """Define a node, independently from graphic rendered item"""
@@ -851,6 +1161,9 @@ class NodeEditorNode(QObject):
         self.__scene.linkAdded.connect(self.__checkAddedLink)
         self.__scene.linkRemoved.connect(self.__checkRemovedLink)
 
+        # node's unique Id
+        self.__id=QUuid.createUuid().toString()
+
         # node can be removed?
         self.__isRemovable=True
 
@@ -902,6 +1215,11 @@ class NodeEditorNode(QObject):
         # - key = connector identifier
         # - value = connector
         self.__connectors={}
+        # list of connectors Id; keep order in which connectors has been added
+        self.__connectorsId=[]
+
+        # an index about next connector Id (used to automatically create a connector id if none is provided)
+        self.__connectorNextIndexId=0
 
         # selection state
         self.__isSelected=False
@@ -935,6 +1253,8 @@ class NodeEditorNode(QObject):
         # add connectors to node, if some given
         for connector in connectors:
             self.addConnector(connector)
+
+        self.__updateAllConnectorPosition()
 
         self.titleColorChanged.emit(self.titleColor())
         self.titleBgColorChanged.emit(self.titleBgColor())
@@ -1002,7 +1322,7 @@ class NodeEditorNode(QObject):
 
         titleHeight=self.__grItem.titleSize().height()
 
-        for key in self.__connectors:
+        for key in self.__connectorsId:
             connector=self.__connectors[key]
 
             connectorRadius=connector.radius()
@@ -1151,7 +1471,7 @@ class NodeEditorNode(QObject):
                 links=self.__scene.links(connector)
                 for link in links:
                     link.connectorTo().setValue(connector.value())
-                self.outputValueChanged.emit(connector)
+                self.outputValueChanged.emit(connector)#    . node content
 
     def __outputUpdated(self, value):
         """An output value has been updated
@@ -1317,10 +1637,12 @@ class NodeEditorNode(QObject):
         if not isinstance(connector, NodeEditorConnector):
             raise EInvalidType("Given `connector` must be <NodeEditorConnector>")
 
+        self.__connectorNextIndexId+=1
         if not connector.id() in self.__connectors:
             # add connector only if no connector with same identifier already exists
             connector.setNode(self)
             self.__connectors[connector.id()]=connector
+            self.__connectorsId.append(connector.id())
 
             # add signal connection when connector value is changed
             connector.valueChanged.connect(self.__connectorValueChanged)
@@ -1361,11 +1683,16 @@ class NodeEditorNode(QObject):
             connector.valueChanged.disconnect(self.__connectorValueChanged)
             # remove connector only if exists
             self.__connectors.pop(connector.id())
+            self.__connectorsId.pop(connector.id())
             # need to recalculate positions
             self.__updateAllConnectorPosition()
             return True
 
         return False
+
+    def connectorIndex(self):
+        """Return current connector index"""
+        return self.__connectorNextIndexId
 
     def widget(self):
         """Return node's widget, or None if not defined"""
@@ -1382,7 +1709,6 @@ class NodeEditorNode(QObject):
             raise EInvalidType("Widget is is already defined for node")
 
         self.__widget=widget
-        self.__widget.setNode(self)
         self.__widget.outputUpdated.connect(self.__outputUpdated)
         # force graphic item update
         self.paddingChanged.emit(-1)
@@ -1512,8 +1838,8 @@ class NodeEditorNode(QObject):
 
     def setMinimumSize(self, value):
         """Set minimum size for node"""
-        if (value is None or isinstance(value, (int, float))) and self.__minSizeUserDefined!=value:
-            self.__minSizeUserDefined=value
+        if (value is None or isinstance(value, QSize)) and self.__minSizeUserDefined!=value:
+            self.__minSizeUserDefined=QSize(value)
             self.__updateMinSize()
 
     def borderSize(self):
@@ -1643,6 +1969,192 @@ class NodeEditorNode(QObject):
             self.__defaultConnectorOutputColor=None
             self.defaultConnectorOutputColorChanged.emit(self.defaultConnectorOutputColor())
 
+    def id(self):
+        """Return Unique Id for node"""
+        return self.__id
+
+    def serialize(self):
+        """Return node definition as dictionnary"""
+        return {
+                'status': {
+                        'isSelected': self.__isSelected,
+                        'isSelectable': self.isSelectable(),
+                        'isRemovable': self.__isRemovable
+                    },
+                'geometry': {
+                        'position': {
+                                'x': self.position().x(),
+                                'y': self.position().y()
+                            },
+                        'minSizeUserDefined': {
+                                'width': self.__minSizeUserDefined.width(),
+                                'height': self.__minSizeUserDefined.height(),
+                            }
+                    },
+                'properties': {
+                        'id': self.__id,
+                        'title': self.__title
+                    },
+                'widget': self.__widget._serialize() if self.__widget else None,
+                'style': {
+                        'colorUnselectedTitle': self.__colorTitle.name() if isinstance(self.__colorTitle, QColor) else None,
+                        'colorUnselectedBgTitle': self.__colorBgTitle.name() if isinstance(self.__colorBgTitle, QColor) else None,
+                        'colorSelectedTitle': self.__colorSelectedTitle.name() if isinstance(self.__colorSelectedTitle, QColor) else None,
+                        'colorSelectedBgTitle': self.__colorSelectedBgTitle.name() if isinstance(self.__colorSelectedBgTitle, QColor) else None,
+                        'colorUnselectedBgNode': self.__colorBgNode.name() if isinstance(self.__colorBgNode, QColor) else None,
+                        'colorSelectedBgNode': self.__colorBgNodesSelected.name() if isinstance(self.__colorBgNodesSelected, QColor) else None,
+                        'borderRadius': self.__borderRadius,
+                        'borderSize': self.__borderSize,
+                        'defaultConnectorBorderSize': self.__defaultConnectorBorderSize,
+                        'defaultConnectorRadius': self.__defaultConnectorRadius,
+                        'defaultConnectorBorderColor': self.__defaultConnectorBorderColor.name() if isinstance(self.__defaultConnectorBorderColor, QColor) else None,
+                        'defaultConnectorInputColor': self.__defaultConnectorInputColor.name() if isinstance(self.__defaultConnectorInputColor, QColor) else None,
+                        'defaultConnectorOutputColor': self.__defaultConnectorOutputColor.name() if isinstance(self.__defaultConnectorOutputColor, QColor) else None,
+                        'padding': self.__padding,
+                    },
+                'connectors': [self.__connectors[connectorId].serialize() for connectorId in self.__connectorsId]
+            }
+
+    def deserialize(self, dataAsDict):
+        """From given dictionnary, rebuild node"""
+        if isinstance(dataAsDict, dict):
+            # widget is ignored (in a normal case, widget create node and then widget definition has already been deserialized)
+            if 'properties' in dataAsDict and isinstance(dataAsDict['properties'], dict):
+                properties=dataAsDict['properties']
+
+                if 'id' in properties and isinstance(properties['id'], str):
+                    self.__id=properties['id']
+
+                if 'title' in properties and isinstance(properties['title'], str):
+                    self.setTitle(properties['title'])
+
+            if 'geometry' in dataAsDict and isinstance(dataAsDict['geometry'], dict):
+                geometry=dataAsDict['geometry']
+
+                if 'minSizeUserDefined' in geometry and isinstance(geometry['minSizeUserDefined'], dict):
+                    minWidth=self.__minSizeUserDefined.width()
+                    minHeight=self.__minSizeUserDefined.height()
+
+                    if 'width' in geometry['minSizeUserDefined'] and isinstance(geometry['minSizeUserDefined']['width'], (int, float)):
+                        minWidth=geometry['minSizeUserDefined']['width']
+
+                    if 'height' in geometry['minSizeUserDefined'] and isinstance(geometry['minSizeUserDefined']['height'], (int, float)):
+                        minHeight=geometry['minSizeUserDefined']['height']
+
+                    self.setMinimumSize(QSize(minWidth, minHeight))
+
+                if 'position' in geometry and isinstance(geometry['position'], dict):
+                    positionX=self.position().x()
+                    positionY=self.position().y()
+
+                    if 'x' in geometry['position'] and isinstance(geometry['position']['x'], (int, float)):
+                        positionX=geometry['position']['x']
+
+                    if 'y' in geometry['position'] and isinstance(geometry['position']['y'], (int, float)):
+                        positionY=geometry['position']['y']
+
+                    self.setPosition(QPointF(positionX, positionY))
+
+            if 'status' in dataAsDict and isinstance(dataAsDict['status'], dict):
+                status=dataAsDict['status']
+
+                if 'isRemovable' in status and isinstance(status['isRemovable'], bool):
+                    self.setRemovable(status['isRemovable'])
+
+                if 'isSelectable' in status and isinstance(status['isSelectable'], bool):
+                    self.setSelectable(status['isSelectable'])
+
+                if 'isSelected' in status and isinstance(status['isSelected'], bool):
+                    self.setSelected(status['isSelected'])
+
+            if 'style' in dataAsDict and isinstance(dataAsDict['style'], dict):
+                style=dataAsDict['style']
+
+                if 'borderRadius' in style and isinstance(style['borderRadius'], (int, float)):
+                    self.setBorderRadius(style['borderRadius'])
+
+                if 'borderSize' in style and isinstance(style['borderSize'], (int, float)):
+                    self.setBorderSize(style['borderSize'])
+
+                if 'colorSelectedBgNode' in style and isinstance(style['colorSelectedBgNode'], str):
+                    self.setNodeSelectedBgColor(QColor(style['colorSelectedBgNode']))
+
+                if 'colorSelectedBgTitle' in style and isinstance(style['colorSelectedBgTitle'], str):
+                    self.setTitleSelectedBgColor(QColor(style['colorSelectedBgTitle']))
+
+                if 'colorSelectedTitle' in style and isinstance(style['colorSelectedTitle'], str):
+                    self.setTitleSelectedColor(QColor(style['colorSelectedTitle']))
+
+                if 'colorUnselectedBgNode' in style and isinstance(style['colorUnselectedBgNode'], str):
+                    self.setNodeBgColor(QColor(style['colorUnselectedBgNode']))
+
+                if 'colorUnselectedBgTitle' in style and isinstance(style['colorUnselectedBgTitle'], str):
+                    self.setTitleBgColor(QColor(style['colorUnselectedBgTitle']))
+
+                if 'colorUnselectedTitle' in style and isinstance(style['colorUnselectedTitle'], str):
+                    self.setTitleColor(QColor(style['colorUnselectedTitle']))
+
+                if 'defaultConnectorBorderColor' in style and isinstance(style['defaultConnectorBorderColor'], str):
+                    self.setDefaultConnectorBorderColor(QColor(style['defaultConnectorBorderColor']))
+
+                if 'defaultConnectorBorderSize' in style and isinstance(style['defaultConnectorBorderSize'], (int, float)):
+                    self.setDefaultConnectorBorderSize(style['defaultConnectorBorderSize'])
+
+                if 'defaultConnectorInputColor' in style and isinstance(style['defaultConnectorInputColor'], str):
+                    self.setDefaultConnectorInputColor(QColor(style['defaultConnectorInputColor']))
+
+                if 'defaultConnectorOutputColor' in style and isinstance(style['defaultConnectorOutputColor'], str):
+                    self.setDefaultConnectorOutputColor(QColor(style['defaultConnectorOutputColor']))
+
+                if 'defaultConnectorRadius' in style and isinstance(style['defaultConnectorRadius'], (int, float)):
+                    self.setDefaultConnectorRadius(style['defaultConnectorRadius'])
+
+                if 'padding' in style and isinstance(style['padding'], (int, float)):
+                    self.setPadding(style['padding'])
+
+            if 'connectors' in dataAsDict and isinstance(dataAsDict['connectors'], list):
+                # connectors should have already been created by widget (in a normal case)
+                # however, a connector in list that does not exist yet will be created
+                # and in all case, created or not by widget, apply connectors styles
+                for connectorAsDict in dataAsDict['connectors']:
+                    if isinstance(connectorAsDict, dict):
+
+                        if 'id' in connectorAsDict:
+                            # if there's no id, it's not a normal case
+                            # process only if id exists
+                            connector=self.connector(connectorAsDict['id'])
+
+                            if connector is None:
+                                # doesn't exists??
+                                # not a 'normal' case, but create connector...
+
+                                directionValue=None
+                                locationValue=None
+
+                                if 'properties' in connectorAsDict:
+                                    if 'direction' in connectorAsDict['properties'] and connectorAsDict['properties']['direction'] in [NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.DIRECTION_OUTPUT]:
+                                        directionValue=connectorAsDict['properties']['direction']
+
+                                    if 'location' in connectorAsDict['properties'] and connectorAsDict['properties']['location'] in [NodeEditorConnector.LOCATION_LEFT_TOP,
+                                                                                                                                     NodeEditorConnector.LOCATION_LEFT_BOTTOM,
+                                                                                                                                     NodeEditorConnector.LOCATION_RIGHT_TOP,
+                                                                                                                                     NodeEditorConnector.LOCATION_RIGHT_BOTTOM,
+                                                                                                                                     NodeEditorConnector.LOCATION_TOP_LEFT,
+                                                                                                                                     NodeEditorConnector.LOCATION_TOP_RIGHT,
+                                                                                                                                     NodeEditorConnector.LOCATION_BOTTOM_LEFT,
+                                                                                                                                     NodeEditorConnector.LOCATION_BOTTOM_RIGHT]:
+                                        locationValue=connectorAsDict['properties']['location']
+
+                                if not directionValue is None:
+                                    # at least direction should be provided...
+                                    connector=NodeEditorConnector(connectorAsDict['id'], directionValue, locationValue)
+                                    self.addConnector(connector)
+
+                            if connector:
+                                # connector exists, deserialize it (style)
+                                connector.deserialize(connectorAsDict)
+
+
 
 class NodeEditorConnector(QObject):
     """Define a connection for a node (input/output connection)"""
@@ -1654,14 +2166,14 @@ class NodeEditorConnector(QObject):
     valueChanged=Signal(NodeEditorConnector)
 
     # position define position in which connector is defined
-    LOCATION_LEFT_TOP =     0x00000001
-    LOCATION_LEFT_BOTTOM =  0x00000010
-    LOCATION_RIGHT_TOP =    0x00000100
-    LOCATION_RIGHT_BOTTOM = 0x00001000
-    LOCATION_TOP_LEFT =     0x00010000
-    LOCATION_TOP_RIGHT =    0x00100000
-    LOCATION_BOTTOM_LEFT =  0x01000000
-    LOCATION_BOTTOM_RIGHT = 0x10000000
+    LOCATION_LEFT_TOP =     0b00000001
+    LOCATION_LEFT_BOTTOM =  0b00000010
+    LOCATION_RIGHT_TOP =    0b00000100
+    LOCATION_RIGHT_BOTTOM = 0b00001000
+    LOCATION_TOP_LEFT =     0b00010000
+    LOCATION_TOP_RIGHT =    0b00100000
+    LOCATION_BOTTOM_LEFT =  0b01000000
+    LOCATION_BOTTOM_RIGHT = 0b10000000
 
     # define connector direction
     DIRECTION_INPUT=0x01
@@ -1686,14 +2198,11 @@ class NodeEditorConnector(QObject):
                     NodeEditorConnector.DIRECTION_OUTPUT):
             raise EInvalidValue("Given `direction` is not valid")
 
-        if id is None:
-            # no identifier provided, generate a default one
-            id=QUuid.createUuid().toString()
-
-        if not isinstance(id, str):
-            raise EInvalidType("Given `id` must be None or <str>")
-        elif id=='':
-            raise EInvalidValue("Given `id` can't be empty")
+        if not id is None:
+            if not isinstance(id, str):
+                raise EInvalidType("Given `id` must be None or <str>")
+            elif id=='':
+                raise EInvalidValue("Given `id` can't be empty")
 
         # unique identifier for connector allows to access easily to them from node
         self.__id=id
@@ -1836,6 +2345,7 @@ class NodeEditorConnector(QObject):
 
         Once parent node has been defined, it's not possible anymore to modify it
         """
+
         if not isinstance(node, NodeEditorNode):
             raise EInvalidType("Given `node` <NodeEditorNode>")
         elif not self.__node is None:
@@ -1844,6 +2354,14 @@ class NodeEditorConnector(QObject):
         self.__node.defaultConnectorRadiusChanged.connect(self.__defaultNodeConnectorRadiusChanged)
         self.__node.defaultConnectorBorderSizeChanged.connect(self.__defaultNodeConnectorBorderSizeChanged)
         self.__node.defaultConnectorBorderColorChanged.connect(self.__defaultNodeConnectorBorderColorChanged)
+
+        if self.__id is None:
+            # id hasn't been provided
+            # generate a new one from current node informations
+            if self.__direction==NodeEditorConnector.DIRECTION_INPUT:
+                self.__id=f"cI.{node.connectorIndex():04X}.{self.__location:02X}"
+            else:
+                self.__id=f"cO.{node.connectorIndex():04X}.{self.__location:02X}"
 
         if self.isInput():
             self.__node.defaultConnectorInputColorChanged.connect(self.__defaultNodeConnectorInputColorChanged)
@@ -2025,6 +2543,45 @@ class NodeEditorConnector(QObject):
         """
         self.__value=value
         self.valueChanged.emit(self)
+
+    def serialize(self):
+        """Return connector definition as dictionnary"""
+        return {
+                'id': self.__id,
+                'properties': {
+                        'direction': self.__direction,
+                        'location': self.__location,
+                    },
+                'style': {
+                        'radius': self.__radius,
+                        'borderSize': self.__borderSize,
+                        'borderColor': self.__borderColor.name() if isinstance(self.__borderColor, QColor) else None,
+                        'color': self.__color.name() if isinstance(self.__color, QColor) else None
+                    }
+            }
+
+    def deserialize(self, dataAsDict):
+        """From given dictionnary, rebuild connector
+
+        => only style is taken in account; considering id/direction/location are
+           defined when connector is created
+        """
+        if isinstance(dataAsDict, dict):
+            if 'style' in dataAsDict and isinstance(dataAsDict['style'], dict):
+                style=dataAsDict['style']
+
+                if 'borderColor' in style and isinstance(style['borderColor'], str):
+                    self.setBorderColor(QColor(style['borderColor']))
+
+                if 'color' in style and isinstance(style['color'], str):
+                    self.setColor(QColor(style['color']))
+
+                if 'borderSize' in style and isinstance(style['borderSize'], (int, float)):
+                    self.setBorderSize(style['borderSize'])
+
+                if 'radius' in style and isinstance(style['radius'], (int, float)):
+                    self.setRadius(style['radius'])
+
 
 
 class NodeEditorLink(QObject):
@@ -2337,31 +2894,85 @@ class NodeEditorLink(QObject):
 
             self.__grItem.setSelected(selectionStatus)
 
+    def serialize(self):
+        """Return link definition as dictionnary"""
+        return {
+                'connect': {
+                        'from': f"{self.__fromConnector.node().id()}:{self.__fromConnector.id()}",
+                        'to': f"{self.__toConnector.node().id()}:{self.__toConnector.id()}"
+                    },
+                'status': {
+                        'isSelected': self.__isSelected
+                    },
+                'style': {
+                        'renderMode': self.__renderMode,
+                        'colorUnselected': self.__color.name() if isinstance(self.__color, QColor) else None,
+                        'colorSelected': self.__colorSelected.name() if isinstance(self.__colorSelected, QColor) else None,
+                        'size': self.__size
+                    }
+            }
+
+    def deserialize(self, dataAsDict):
+        """From given dictionnary, rebuild link
+
+        => only style is taken in account; considering connectors are defined when link is created
+        """
+        if isinstance(dataAsDict, dict):
+            if 'style' in dataAsDict and isinstance(dataAsDict['style'], dict):
+                style=dataAsDict['style']
+
+                if 'colorSelected' in style and isinstance(style['colorSelected'], str):
+                    self.setSelectedColor(QColor(style['colorSelected']))
+
+                if 'colorUnselected' in style and isinstance(style['colorUnselected'], str):
+                    self.setColor(QColor(style['colorUnselected']))
+
+                if 'renderMode' in style and isinstance(style['renderMode'], int):
+                    self.setRenderMode(style['renderMode'])
+
+                if 'size' in style and isinstance(style['size'], (int, float)):
+                    self.setSize(style['size'])
+
+            if 'status' in dataAsDict and isinstance(dataAsDict['status'], dict):
+                status=dataAsDict['status']
+
+                if 'isSelected' in style and isinstance(style['isSelected'], bool):
+                    self.setSelected(style['isSelected'])
+
 
 # ------------------------------------------------------------------------------
 
 class NodeEditorNodeWidget(QWidget):
     outputUpdated=Signal(dict)
 
-    def __init__(self, parent=None):
+    __CLASSES={}
+
+    @staticmethod
+    def registeredClass(name):
+        """Return a registerd widget node class from name"""
+        if name in NodeEditorNodeWidget.__CLASSES:
+            return NodeEditorNodeWidget.__CLASSES[name]
+        return None
+
+    def __init_subclass__(cls, **kwargs):
+        """When subclass definition is initialized, register it in a dictionary
+
+        It will be used to be able to instanciate a node widget from class name
+        (especially useful during an import)
+        """
+        super().__init_subclass__(**kwargs)
+        NodeEditorNodeWidget.__CLASSES[cls.__name__]=cls
+
+    def __init__(self, scene, title, connectors=[], parent=None):
         super(NodeEditorNodeWidget, self).__init__(parent)
 
-        self.__node=None
+        self.__node=NodeEditorNode(scene, title, connectors=connectors)
+        self.__node.setWidget(self)
+        self.__node.updateOutputs()
 
     def node(self):
         """Return parent node for connector"""
         return self.__node
-
-    def setNode(self, node):
-        """Set parent node for widget
-
-        Once parent node has been defined, it's not possible anymore to modify it
-        """
-        if not isinstance(node, NodeEditorNode):
-            raise EInvalidType("Given `node` <NodeEditorNode>")
-        elif not self.__node is None:
-            raise EInvalidType("Node is is already defined for widget")
-        self.__node=node
 
     def inputUpdated(self, inputId, value):
         """An input entry has been updated
@@ -2384,6 +2995,51 @@ class NodeEditorNodeWidget(QWidget):
 
         Need to be overrided
         """
+        pass
+
+    def _serialize(self):
+        """Serialize widget
+
+        Used during export, not aimed to be used directly
+
+        This method call serialize() and update returned value
+        """
+        returned=self.serialize()
+        if isinstance(returned, dict):
+            returned['type']=self.__class__.__name__
+        else:
+            returned={'type': self.__class__.__name__}
+        return returned
+
+    def _deserialize(self, data):
+        """Deserialize widget from a node definition
+
+        Used during import, not aimed to be used directly
+
+        This method call deserialize() with 'widget' data if available
+        """
+        self.__node.deserialize(data)
+        if 'widget' in data and isinstance(data['widget'], dict):
+            self.deserialize(data['widget'])
+
+    def serialize(self):
+        """Return serialized widget
+
+        Each inherited widget must adapt returned value according to it's internal
+        properties
+
+
+        Example:
+            def serialize(self):
+                return {
+                        'value': self.__spinBox.value()
+                    }
+
+        """
+        return {}
+
+    def deserialize(self, data={}):
+        """From given dictionary, rebuild widget"""
         pass
 
 
@@ -2746,24 +3402,26 @@ class NodeEditorGrScene(QGraphicsScene):
 
     def setGridPenStyleMain(self, value):
         """Set stroke style for main grid"""
-        self.__gridPenMain.setStyle(value)
+        if value in [Qt.SolidLine, Qt.DashLine, Qt.DotLine, Qt.DashDotLine, Qt.DashDotDotLine]:
+            self.__gridPenMain.setStyle(value)
 
-        self.__propertyChanged('canvas.grid.style.main', value)
-        self.update()
+            self.__propertyChanged('canvas.grid.style.main', value)
+            self.update()
 
     def setGridPenStyleSecondary(self, value):
         """Set stroke style for secondary grid"""
-        self.__gridPenSecondary.setStyle(value)
-        self.__propertyChanged('canvas.grid.style.secondary', value)
-        self.update()
+        if value in [Qt.SolidLine, Qt.DashLine, Qt.DotLine, Qt.DashDotLine, Qt.DashDotDotLine]:
+            self.__gridPenSecondary.setStyle(value)
+            self.__propertyChanged('canvas.grid.style.secondary', value)
+            self.update()
 
     def setGridPenOpacity(self, value):
-        """Set opacity for grid"""
+        """Set opacity for grid (from 0 to 100)"""
         color=self.__gridPenMain.color()
-        color.setAlphaF(value)
+        color.setAlphaF(value/100)
         self.__gridPenMain.setColor(QColor(color))
 
-        color.setAlphaF(value*NodeEditorGrScene.__SECONDARY_FACTOR_OPACITY)
+        color.setAlphaF(value*NodeEditorGrScene.__SECONDARY_FACTOR_OPACITY/100)
         self.__gridPenSecondary.setColor(QColor(color))
 
         self.__propertyChanged('canvas.grid.opacity', value)
