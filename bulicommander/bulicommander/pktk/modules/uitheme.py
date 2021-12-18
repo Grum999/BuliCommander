@@ -55,7 +55,8 @@ class UITheme(object):
 
     STYLES_SHEET = {
         'dark': {
-                'warning-label': 'background-color: rgba(255, 255, 200, 75%); color:#440000; border: 1px solid rgba(255, 255, 200, 25%); border-radius: 3px; font-weight: bold;'
+                'warning-label': 'background-color: rgba(255, 255, 200, 75%); color:#440000; border: 1px solid rgba(255, 255, 200, 25%); border-radius: 3px; font-weight: bold;',
+                'warning-box': 'background-color: rgba(255, 255, 200, 100%); color:#440000; border: 1px solid rgba(255, 255, 200, 100%); border-radius: 3px;'
             },
         'light': {
 

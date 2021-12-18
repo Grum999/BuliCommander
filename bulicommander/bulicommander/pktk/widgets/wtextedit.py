@@ -66,9 +66,11 @@ class WTextEditDialog(QDialog):
         dbbxOkCancel.accepted.connect(self.accept)
         dbbxOkCancel.rejected.connect(self.reject)
 
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.editor)
-        layout.addWidget(dbbxOkCancel)
+        self.__btnOk=dbbxOkCancel.button(QDialogButtonBox.Ok)
+
+        self.__layout = QVBoxLayout(self)
+        self.__layout.addWidget(self.editor)
+        self.__layout.addWidget(dbbxOkCancel)
 
     def toPlainText(self):
         """Return current text as plain text"""
@@ -85,6 +87,15 @@ class WTextEditDialog(QDialog):
     def setHtml(self, text):
         """Set current text as HTML text"""
         self.editor.setHtml(text)
+
+    def layout(self):
+        """Return dialog box layout - allows to add widget if needed"""
+        return self.__layout
+
+    def setOkEnabled(self, value):
+        """Allows to change OK button status to enabled/disable"""
+        if isinstance(value, bool):
+            self.__btnOk.setEnabled(value)
 
     @staticmethod
     def edit(title, text, textColor=None, textBackgroundColor=None, toolbarBtns=None):

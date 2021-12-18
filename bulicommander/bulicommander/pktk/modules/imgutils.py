@@ -97,6 +97,38 @@ def checkerBoardImage(size, checkerSize=32):
 
     return pixmap
 
+def bullet(size=16, color=QColor(255,255,255), shape='square', scaleShape=1.0):
+    """Draw a bullet and return it as a QPixmap
+
+    Given `size` define size of pixmap (width=height)
+    Given `color` define color bullet
+    Given `shape` define bullet shape ('circle' or 'square')
+    Given `scaleShape` define size of bullet in pixmap (1.0 = 100% / 0.5=50% for example)
+    """
+    pixmap=QPixmap(size, size)
+    pixmap.fill(Qt.transparent)
+
+    canvas = QPainter()
+    canvas.begin(pixmap)
+    canvas.setPen(Qt.NoPen)
+
+    shapeWidth=size*scaleShape
+    offset=(size-shapeWidth)/2
+
+    if shape=='square':
+        canvas.fillRect(offset,offset,shapeWidth,shapeWidth,color)
+    elif shape=='roundSquare':
+        canvas.setBrush(color)
+        canvas.drawRoundedRect(QRect(offset,offset,shapeWidth,shapeWidth),25,25,Qt.RelativeSize)
+    elif shape=='circle':
+        canvas.setBrush(color)
+        canvas.drawEllipse(offset,offset,shapeWidth,shapeWidth)
+    else:
+        raise EInvalidValue("Given `shape` value is not valid")
+
+    canvas.end()
+    return pixmap
+
 def paintOpaqueAsColor(pixmap, color):
     """From given pixmap, non transparent color are replaced with given color"""
     if isinstance(pixmap, QPixmap):
@@ -178,7 +210,7 @@ def qImageToPngQByteArray(image):
         image.save(buffer, "PNG")
         buffer.close()
         return ba
-    return b''
+    return QByteArray()
 
 def imgBoxSize(imageSize, boxSize):
     """Return size of given `imageSize` to fit within `boxSize`"""

@@ -41,7 +41,7 @@ class QEColor(QColor):
     def __init__(self, value=None):
         super(QEColor, self).__init__(value)
 
-        self.__isNone=False
+        self.__isNone=(value is None)
 
     def isNone(self):
         return self.__isNone
@@ -55,7 +55,7 @@ class WColorButton(QToolButton):
     """A button to choose color"""
     colorChanged = Signal(QEColor)
 
-    def __init__(self, label, parent=None):
+    def __init__(self, label=None, parent=None):
         super(WColorButton, self).__init__(parent)
 
         def newSetText(value):

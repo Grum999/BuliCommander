@@ -56,8 +56,10 @@ class WDialogMessage(QDialog):
 
         self.setWindowTitle(title)
 
+        self.__minimumSize=QSize(0, 0)
         if isinstance(minSize, QSize):
-            self.setMinimumSize(minSize)
+            self.__minimumSize=minSize
+            self.setMinimumSize(self.__minimumSize)
 
         self._dButtonBox = QDialogButtonBox(self)
         self._dButtonBox.setOrientation(Qt.Horizontal)
@@ -92,8 +94,8 @@ class WDialogMessage(QDialog):
         maxW=rect.width() * 0.5 if rect.width() > 1920 else rect.width() * 0.7 if rect.width() > 1024 else rect.width() * 0.9
         maxH=rect.height() * 0.5 if rect.height() > 1080 else rect.height() * 0.7 if rect.height() > 1024 else rect.height() * 0.9
         # let's define some minimal dimension for dialog box...
-        minW=320
-        minH=200
+        minW=max(320, self.__minimumSize.width())
+        minH=max(200, self.__minimumSize.height())
 
         # an internal document used to calculate ideal width
         # (ie: using no-wrap for space allows to have an idea of maximum text width)
@@ -149,7 +151,7 @@ class WDialogBooleanInput(WDialogMessage):
     """
 
     def __init__(self, title, message, cancelButton=False, minSize=None, parent=None):
-        super(WDialogBooleanInput, self).__init__(title, message, parent)
+        super(WDialogBooleanInput, self).__init__(title, message, minSize, parent)
         # need to manage returned value from yes/no/cancel buttons
         # then disconnect default signal
         self._dButtonBox.accepted.disconnect(self.accept)
@@ -214,7 +216,7 @@ class WDialogStrInput(WDialogMessage):
     """
 
     def __init__(self, title, message, inputLabel='', defaultValue='', regEx='', minSize=None, parent=None):
-        super(WDialogStrInput, self).__init__(title, message, parent, minSize)
+        super(WDialogStrInput, self).__init__(title, message, minSize, parent)
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
         self.__btnOk = self._dButtonBox.button(QDialogButtonBox.Ok)
 
@@ -294,7 +296,7 @@ class WDialogIntInput(WDialogMessage):
     """
 
     def __init__(self, title, message, inputLabel='', defaultValue=0, minValue=None, maxValue=None, prefix=None, suffix=None, minSize=None, parent=None):
-        super(WDialogIntInput, self).__init__(title, message, parent, minSize)
+        super(WDialogIntInput, self).__init__(title, message, minSize, parent)
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
 
         if inputLabel!='':
@@ -385,7 +387,7 @@ class WDialogFloatInput(WDialogMessage):
     """
 
     def __init__(self, title, message, inputLabel='', defaultValue=0, decValue=None, minValue=None, maxValue=None, prefix=None, suffix=None, minSize=None, parent=None):
-        super(WDialogFloatInput, self).__init__(title, message, parent, minSize)
+        super(WDialogFloatInput, self).__init__(title, message, minSize, parent)
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
 
         if inputLabel!='':
@@ -477,7 +479,7 @@ class WDialogComboBoxChoiceInput(WDialogMessage):
     """
 
     def __init__(self, title, message, inputLabel='', choicesValue=[], defaultIndex=0, minSize=None, parent=None):
-        super(WDialogComboBoxChoiceInput, self).__init__(title, message, parent, minSize)
+        super(WDialogComboBoxChoiceInput, self).__init__(title, message, minSize, parent)
         if len(choicesValue)==0:
             self.reject()
 
@@ -543,7 +545,7 @@ class WDialogRadioButtonChoiceInput(WDialogMessage):
     """
 
     def __init__(self, title, message, inputLabel='', choicesValue=[], defaultIndex=0, minSize=None, parent=None):
-        super(WDialogRadioButtonChoiceInput, self).__init__(title, message, parent, minSize)
+        super(WDialogRadioButtonChoiceInput, self).__init__(title, message, minSize, parent)
         if len(choicesValue)==0:
             self.reject()
 
@@ -618,7 +620,7 @@ class WDialogCheckBoxChoiceInput(WDialogMessage):
     """
 
     def __init__(self, title, message, inputLabel='', choicesValue=[], defaultChecked=[], minimumChecked=0, minSize=None, parent=None):
-        super(WDialogCheckBoxChoiceInput, self).__init__(title, message, parent, minSize)
+        super(WDialogCheckBoxChoiceInput, self).__init__(title, message, minSize, parent)
         if len(choicesValue)==0:
             self.reject()
 
@@ -829,7 +831,7 @@ class WDialogFontInput(WDialogMessage):
     """
 
     def __init__(self, title, message, inputLabel='', defaultValue='', optionFilter=False, optionWritingSytem=False, parent=None, minSize=None):
-        super(WDialogFontInput, self).__init__(title, message, parent, minSize)
+        super(WDialogFontInput, self).__init__(title, message, minSize, parent)
 
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
         self.__btnOk = self._dButtonBox.button(QDialogButtonBox.Ok)

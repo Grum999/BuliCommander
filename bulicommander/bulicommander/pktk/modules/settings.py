@@ -25,7 +25,10 @@
 from enum import Enum
 
 
-from PyQt5.QtCore import QStandardPaths
+from PyQt5.Qt import *
+from PyQt5.QtCore import (
+        pyqtSignal as Signal
+    )
 
 from os.path import (join, getsize)
 import json
@@ -168,11 +171,13 @@ class SettingsRule(object):
                 self.__settingsFmt[index].check(value[index])
 
 
-class Settings(object):
+class Settings(QObject):
     """Manage all settings with open&save options
 
     Configuration is saved as JSON file
     """
+    _settingsSaved=Signal()          # settings has been saved
+    _settingsLoaded=Signal()         # settings has been loaded
 
     @classmethod
     def __init(cls):
@@ -227,9 +232,23 @@ class Settings(object):
         cls.__init()
         return cls.__settings.isModified()
 
+    @classmethod
+    def settingsSaved(cls):
+        """Get option value"""
+        cls.__init()
+        return cls.__settings._settingsSaved
+
+    @classmethod
+    def settingsLoaded(cls):
+        """Get option value"""
+        cls.__init()
+        return cls.__settings._settingsLoaded
+
+
     # --------------------------------------------------------------------------
     def __init__(self, pluginId, rules=None):
         """Initialise settings"""
+        super(Settings, self).__init__(None)
         if pluginId is None or pluginId=='':
             pluginId = ''
 
@@ -332,22 +351,28 @@ class Settings(object):
                     jsonAsStr = file.read()
                 except Exception as e:
                     Debug.print('[Settings.loadConfig] Unable to load file {0}: {1}', self.__pluginCfgFile, str(e))
+                    self.configurationLoadedEvent(False)
                     return False
 
                 try:
                     jsonAsDict = json.loads(jsonAsStr)
                 except Exception as e:
                     Debug.print('[Settings.loadConfig] Unable to parse file {0}: {1}', self.__pluginCfgFile, str(e))
+                    self.configurationLoadedEvent(False)
                     return False
         else:
+            self.configurationLoadedEvent(False)
             return False
 
         # parse all items, and set current config
         for key in jsonAsDict:
             setKeyValue(key, jsonAsDict[key])
 
+        self.configurationLoadedEvent(True)
+
         # just loaded, consider that it's not modified
         self.__modified = False
+        self._settingsLoaded.emit()
         return True
 
     def saveConfig(self):
@@ -361,12 +386,34 @@ class Settings(object):
                 file.write(json.dumps(self.__config, indent=4, sort_keys=True))
             except Exception as e:
                 Debug.print('[Settings.saveConfig] Unable to save file {0}: {1}', self.__pluginCfgFile, str(e))
+                self.configurationSavedEvent(False)
                 return False
+
+        self.configurationSavedEvent(True)
 
         # just saved, consider that it's not modified
         self.__modified = False
-
+        self._settingsSaved.emit()
         return True
+
+    def configurationLoadedEvent(self, fileLoaded):
+        """Called after configuration is loaded and before signal is emitted
+
+        If file has not been loaded (doesn't exit, can't be read, ...), the
+        given `fileLoaded` parameter will be False, otherwise True
+
+        """
+        # can overrided by classes
+        pass
+
+    def configurationSavedEvent(self, fileSaved):
+        """Called after configuration is loaded and before signal is emitted
+
+        If file has not been saved (can't be write, ...), the
+        given `fileSaved` parameter will be False, otherwise True
+        """
+        # can overrided by classes
+        pass
 
     def setOption(self, id, value):
         """Set value for given option
