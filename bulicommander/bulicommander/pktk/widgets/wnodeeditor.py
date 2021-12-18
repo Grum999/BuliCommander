@@ -78,7 +78,6 @@ class NodeEditorScene(QObject):
     IMPORT_FILE_MISSING_FORMAT_IDENTIFIER=  0b00010000
     IMPORT_FILE_MISSING_SCENE_DEFINITION=   0b00100000
 
-
     # declare signals
     sizeChanged=Signal(QSize, QSize)                    # scene size changed: newSize, oldSize
 
@@ -250,6 +249,97 @@ class NodeEditorScene(QObject):
             # selection has changed
             self.__selectedLinksCount=nbSelectedLinks
             self.linkSelection.emit()
+
+    def __copyCutToClipboard(self, cutSelection=False):
+        """Copy/Cut current selection to clipboard
+
+        If selection is empty, does nothing and return False
+        """
+        clipboard = QGuiApplication.clipboard()
+
+        nodes=self.selectedNodes()
+        links=self.selectedLinks()
+
+        if len(nodes)==0:
+            # nothing to copy in clipboard
+            return False
+
+        dataAsDict={
+                'dataCut': cutSelection,
+                'nodes': [node.serialize() for node in nodes],
+                'links': [link.serialize() for link in links]
+            }
+        dataAsJson=json.dumps(dataAsDict, indent=4, sort_keys=True).encode()
+
+        mimeContent=QMimeData()
+        for mimeType in ['application/x-pktk-scenecontent', 'text/plain']:
+            mimeContent.setData(mimeType, dataAsJson)
+
+        clipboard.setMimeData(mimeContent)
+
+        if cutSelection:
+            # remove selected item from scene
+            for link in links:
+                self.removeLink(link)
+
+            for node in nodes:
+                self.removeNode(node)
+
+        return True
+
+    def __importNodesFromDict(self, jsonAsDict):
+        """ """
+        for nodeAsDict in jsonAsDict['nodes']:
+            if isinstance(nodeAsDict, dict):
+                widget=None
+
+                # need a node title in all cases
+                title=''
+                if 'properties' in nodeAsDict and isinstance(nodeAsDict['widget'], dict):
+                    if 'title' in nodeAsDict['properties'] and isinstance(nodeAsDict['properties']['title'], str):
+                        title=nodeAsDict['properties']['title']
+
+                if 'widget' in nodeAsDict and isinstance(nodeAsDict['widget'], dict) and 'type' in nodeAsDict['widget'] and isinstance(nodeAsDict['widget']['type'], str):
+                    widgetClass=NodeEditorNodeWidget.registeredClass(nodeAsDict['widget']['type'])
+
+                    if widgetClass:
+                        # class exist, create new instance
+                        widget=widgetClass(self, title)
+                        widget._deserialize(nodeAsDict)
+
+                if widget is None:
+                    # no widget??
+                    # create Node directly
+                    node=NodeEditorNode(self, title)
+                    node.deserialize(nodeAsDict)
+
+    def __importLinksFromDict(self, jsonAsDict):
+        """ """
+        for linkAsDict in jsonAsDict['links']:
+            if isinstance(linkAsDict, dict):
+                fromConnector=None
+                toConnector=None
+
+                if 'connect' in linkAsDict and isinstance(linkAsDict['connect'], dict):
+                    # check fromConnector reference
+                    if 'from' in linkAsDict['connect'] and isinstance(linkAsDict['connect']['from'], str):
+                        fromNfo=linkAsDict['connect']['from'].split(':')
+                        if len(fromNfo)==2:
+                            node=self.nodeFromId(fromNfo[0])
+                            if node:
+                                fromConnector=node.connector(fromNfo[1])
+
+                    if 'to' in linkAsDict['connect'] and isinstance(linkAsDict['connect']['to'], str):
+                        # check toConnector reference
+                        toNfo=linkAsDict['connect']['to'].split(':')
+                        if len(toNfo)==2:
+                            node=self.nodeFromId(toNfo[0])
+                            if node:
+                                toConnector=node.connector(toNfo[1])
+
+                if fromConnector and toConnector:
+                    link=NodeEditorLink(fromConnector, toConnector)
+                    link.deserialize(linkAsDict)
 
     def clear(self):
         """Clear scene
@@ -462,6 +552,128 @@ class NodeEditorScene(QObject):
 
             for link in linksToRemove:
                 self.removeLink(link)
+
+    def copyToClipboard(self):
+        """Copy selection to clipboard
+
+        If selection is empty, does nothing and return False
+        """
+        return self.__copyCutToClipboard(False)
+
+    def cutToClipboard(self):
+        """Cut selection to clipboard
+
+        If selection is empty, does nothing and return False
+        """
+        return self.__copyCutToClipboard(True)
+
+    def pasteFromClipboard(self, offset=None):
+        """Paste content from clipboard
+
+        If clipboard content can't be pasted, does nothing and return False
+
+        If `offset` is provided (as a <QPointF>) it will be used to paste nodes
+        with offset applied
+        """
+        if not self.canPasteFromClipboard():
+            return False
+
+        clipboard = QGuiApplication.clipboard()
+        clipboardMimeContent = clipboard.mimeData(QClipboard.Clipboard)
+
+        if clipboardMimeContent is None:
+            return False
+
+        if isinstance(offset, QPoint):
+            offset=QPointF(offset)
+        elif not isinstance(offset, QPointF):
+            offset=None
+
+        if clipboardMimeContent.hasFormat('application/x-pktk-scenecontent'):
+            # clipboard contains some data taht an be pasted!
+            jsonData = bytearray(clipboardMimeContent.data('application/x-pktk-scenecontent')).decode()
+
+            try:
+                jsonAsDict = json.loads(jsonData)
+            except Exception as e:
+                Debug.print("Can't parse clipboard data: {0}", str(e))
+                return False
+
+            # we now have a dictionary
+            # before import, we need to:
+            # 1) get list of node ID
+            #       => replace each ID by a new one (from Nodes AND Links)
+            #          we need to ensure that ID is unique
+            # 2) apply offset for position
+
+            idMap={}
+
+            if 'dataCut' in jsonAsDict and jsonAsDict['dataCut']==False and offset is None:
+                gridSize, dummy=self.__grScene.gridSize()
+                offset=QPointF(2*gridSize, 2*gridSize)
+
+            if 'links' in jsonAsDict and isinstance(jsonAsDict['links'], list):
+                for linkAsDict in jsonAsDict['links']:
+                    if isinstance(linkAsDict, dict):
+                        if 'connect' in linkAsDict and isinstance(linkAsDict['connect'], dict):
+                            # check fromConnector reference
+                            if 'from' in linkAsDict['connect'] and isinstance(linkAsDict['connect']['from'], str):
+                                fromNfo=linkAsDict['connect']['from'].split(':')
+                                if len(fromNfo)==2:
+                                    if not fromNfo[0] in idMap:
+                                        idMap[fromNfo[0]]=QUuid.createUuid().toString()
+                                    linkAsDict['connect']['from']=f"{idMap[fromNfo[0]]}:{fromNfo[1]}"
+
+                            if 'to' in linkAsDict['connect'] and isinstance(linkAsDict['connect']['to'], str):
+                                # check toConnector reference
+                                toNfo=linkAsDict['connect']['to'].split(':')
+                                if len(toNfo)==2:
+                                    if not toNfo[0] in idMap:
+                                        idMap[toNfo[0]]=QUuid.createUuid().toString()
+                                    linkAsDict['connect']['to']=f"{idMap[toNfo[0]]}:{toNfo[1]}"
+
+            if 'nodes' in jsonAsDict and isinstance(jsonAsDict['nodes'], list):
+                for nodeAsDict in jsonAsDict['nodes']:
+                    if isinstance(nodeAsDict, dict):
+                        if 'properties' in nodeAsDict and isinstance(nodeAsDict['properties'], dict):
+                            if 'id' in nodeAsDict['properties'] and isinstance(nodeAsDict['properties']['id'], str):
+                                if not nodeAsDict['properties']['id'] in idMap:
+                                    idMap[nodeAsDict['properties']['id']]=QUuid.createUuid().toString()
+
+                                nodeAsDict['properties']['id']=idMap[nodeAsDict['properties']['id']]
+
+                        if offset and 'geometry' in nodeAsDict and isinstance(nodeAsDict['geometry'], dict):
+                            if 'position' in nodeAsDict['geometry'] and isinstance(nodeAsDict['geometry']['position'], dict):
+                                if 'x' in nodeAsDict['geometry']['position'] and isinstance(nodeAsDict['geometry']['position']['x'], (int, float)):
+                                    nodeAsDict['geometry']['position']['x']+=offset.x()
+                                if 'y' in nodeAsDict['geometry']['position'] and isinstance(nodeAsDict['geometry']['position']['y'], (int, float)):
+                                    nodeAsDict['geometry']['position']['y']+=offset.y()
+
+                # deselect everything before paste
+                self.deselectAll()
+
+                self.__importNodesFromDict(jsonAsDict)
+
+                if 'links' in jsonAsDict:
+                    # links are imported only if there's at least one nodes...
+                    self.__importLinksFromDict(jsonAsDict)
+
+    def canCopyCutToClipboard(self):
+        """Return True if current selection can be copied/cut to clipboard"""
+        if len(self.selectedNodes())==0:
+            return False
+        return True
+
+    def canPasteFromClipboard(self):
+        """Return True if current clipboard content can be pasted"""
+        clipboard = QGuiApplication.clipboard()
+        clipboardMimeContent = clipboard.mimeData(QClipboard.Clipboard)
+
+        if clipboardMimeContent is None:
+            return False
+
+        return clipboardMimeContent.hasFormat('application/x-pktk-scenecontent')
+
 
     # -- default render settings for items in scene --
 
@@ -1050,57 +1262,11 @@ class NodeEditorScene(QObject):
 
             # 5. import nodes, if any
             if 'nodes' in jsonAsDict and isinstance(jsonAsDict['nodes'], list):
-                for nodeAsDict in jsonAsDict['nodes']:
-                    if isinstance(nodeAsDict, dict):
-                        widget=None
-
-                        # need a node title in all cases
-                        title=''
-                        if 'properties' in nodeAsDict and isinstance(nodeAsDict['widget'], dict):
-                            if 'title' in nodeAsDict['properties'] and isinstance(nodeAsDict['properties']['title'], str):
-                                title=nodeAsDict['properties']['title']
-
-                        if 'widget' in nodeAsDict and isinstance(nodeAsDict['widget'], dict) and 'type' in nodeAsDict['widget'] and isinstance(nodeAsDict['widget']['type'], str):
-                            widgetClass=NodeEditorNodeWidget.registeredClass(nodeAsDict['widget']['type'])
-
-                            if widgetClass:
-                                # class exist, create new instance
-                                widget=widgetClass(self, title)
-                                widget._deserialize(nodeAsDict)
-
-                        if widget is None:
-                            # no widget??
-                            # create Node directly
-                            node=NodeEditorNode(self, title)
-                            node.deserialize(nodeAsDict)
+                self.__importNodesFromDict(jsonAsDict)
 
             # 6. import links, if any
             if 'links' in jsonAsDict and isinstance(jsonAsDict['links'], list):
-                for linkAsDict in jsonAsDict['links']:
-                    if isinstance(linkAsDict, dict):
-                        fromConnector=None
-                        toConnector=None
-
-                        if 'connect' in linkAsDict and isinstance(linkAsDict['connect'], dict):
-                            # check fromConnector reference
-                            if 'from' in linkAsDict['connect'] and isinstance(linkAsDict['connect']['from'], str):
-                                fromNfo=linkAsDict['connect']['from'].split(':')
-                                if len(fromNfo)==2:
-                                    node=self.nodeFromId(fromNfo[0])
-                                    if node:
-                                        fromConnector=node.connector(fromNfo[1])
-
-                            if 'to' in linkAsDict['connect'] and isinstance(linkAsDict['connect']['to'], str):
-                                # check toConnector reference
-                                toNfo=linkAsDict['connect']['to'].split(':')
-                                if len(toNfo)==2:
-                                    node=self.nodeFromId(toNfo[0])
-                                    if node:
-                                        toConnector=node.connector(toNfo[1])
-
-                        if fromConnector and toConnector:
-                            link=NodeEditorLink(fromConnector, toConnector)
-                            link.deserialize(linkAsDict)
+                self.__importLinksFromDict(jsonAsDict)
         else:
             return NodeEditorScene.IMPORT_FILE_MISSING_SCENE_DEFINITION
 
@@ -2936,8 +3102,8 @@ class NodeEditorLink(QObject):
             if 'status' in dataAsDict and isinstance(dataAsDict['status'], dict):
                 status=dataAsDict['status']
 
-                if 'isSelected' in style and isinstance(style['isSelected'], bool):
-                    self.setSelected(style['isSelected'])
+                if 'isSelected' in status and isinstance(status['isSelected'], bool):
+                    self.setSelected(status['isSelected'])
 
 
 # ------------------------------------------------------------------------------
