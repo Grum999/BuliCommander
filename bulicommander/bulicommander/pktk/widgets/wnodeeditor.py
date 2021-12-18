@@ -220,6 +220,15 @@ class NodeEditorScene(QObject):
         # -- options --
         #
 
+        # option is a <str> provided to describe "scene format"
+        # when set, this is used to determinate if imported data are compatible
+        # with current scene
+        self.__optionFormatIdentifier=None
+
+        # extra data can store any data that can be converted to json (dict, list, int, str, ...)
+        # it can be used to store any additional information about scene (title, description, date, ....)
+        self.__extraData=None
+
         # determinate if output events are enabled
         self.__optionOutputEventEnabled=True
 
@@ -274,6 +283,9 @@ class NodeEditorScene(QObject):
         mimeContent=QMimeData()
         for mimeType in ['application/x-pktk-scenecontent', 'text/plain']:
             mimeContent.setData(mimeType, dataAsJson)
+
+        if self.__optionFormatIdentifier:
+            mimeContent.setData('application/x-pktk-formatidentifier', self.__optionFormatIdentifier.encode())
 
         clipboard.setMimeData(mimeContent)
 
@@ -590,7 +602,18 @@ class NodeEditorScene(QObject):
             offset=None
 
         if clipboardMimeContent.hasFormat('application/x-pktk-scenecontent'):
-            # clipboard contains some data taht an be pasted!
+            # clipboard contains some data that an be pasted!
+
+            if self.__optionFormatIdentifier:
+                # format identifier is provided, need to check if clipboard contains format identifier informations
+                if clipboardMimeContent.hasFormat('application/x-pktk-formatidentifier'):
+                    if bytearray(clipboardMimeContent.data('application/x-pktk-formatidentifier')).decode()!=self.__optionFormatIdentifier:
+                        #format identifier is different, then scene is not compatible, cancel paste
+                        return False
+                else:
+                    # no format identifier, can't determine if compatible then cancel paste
+                    return False
+
             jsonData = bytearray(clipboardMimeContent.data('application/x-pktk-scenecontent')).decode()
 
             try:
@@ -672,8 +695,19 @@ class NodeEditorScene(QObject):
         if clipboardMimeContent is None:
             return False
 
-        return clipboardMimeContent.hasFormat('application/x-pktk-scenecontent')
-
+        if clipboardMimeContent.hasFormat('application/x-pktk-scenecontent'):
+            if self.__optionFormatIdentifier:
+                # format identifier is provided, need to check if clipboard contains format identifier informations
+                if clipboardMimeContent.hasFormat('application/x-pktk-formatidentifier'):
+                    if bytearray(clipboardMimeContent.data('application/x-pktk-formatidentifier')).decode()!=self.__optionFormatIdentifier:
+                        #format identifier is different, then scene is not compatible, cancel paste
+                        return False
+                else:
+                    # no format identifier, can't determine if compatible then cancel paste
+                    return False
+            return True
+        else:
+            return False
 
     # -- default render settings for items in scene --
 
@@ -1031,23 +1065,41 @@ class NodeEditorScene(QObject):
         """Return current mouse position over scene"""
         return self.__grScene.cursorScenePosition()
 
-    def exportToFile(self, fileName, sceneFormatIdentifier=None):
-        """Export current scene as json file
+    def extraData(self):
+        """Return extra data stored to scene"""
+        return self.__extraData
 
-        Given `fileName` define full path/file name on which exported content is saved
+    def setExtraData(self, dataAsDict=None):
+        """Set extra data stored to scene
 
-        Given `fileFormatIdentifier` is a <str> provided to define scene format:
-        => Export always produce json file, but according to nodes types, a scene
-           can be loaded or not...
-           The format identifier allows to specify "this is a ZZZ scene"
-
-           This allows to avoid loading a scene that is not compatible
+        Extra data can store any data that can be converted to json (dict, list, int, str, ...)
+        => If data can't be stored as json, function return False
+        It can be used to store any additional information about scene (title, description, date, ....)
         """
-        if not isinstance(sceneFormatIdentifier, str):
-            sceneFormatIdentifier=None
+        try:
+            # convert as Json: ensure data are serializable
+            extraData=json.dumps(dataAsDict)
+            # ok.. store data
+            self.__extraData=dataAsDict
+        except Exception as e:
+            return False
 
-        dataAsDict={
-                'sceneFormatIdentifier': sceneFormatIdentifier,
+        return True
+
+    def formatIdentifier(self):
+        """Return format identifier for scene"""
+        return self.__optionFormatIdentifier
+
+    def setFormatIdentifier(self, value):
+        """Set format identifier for scene"""
+        if value is None or isinstance(value, str):
+            self.__optionFormatIdentifier=value
+
+    def serialize(self):
+        """Serialize scene to a dictionnary"""
+        return {
+                'extraData': self.__extraData,
+                'formatIdentifier': self.__optionFormatIdentifier,
                 'scene': {
                         'geometry': {
                                 'width': self.__size.width(),
@@ -1093,52 +1145,10 @@ class NodeEditorScene(QObject):
                 'links': [link.serialize() for link in self.__links]
             }
 
-        returned=NodeEditorScene.EXPORT_OK
-        try:
-            with open(fileName, 'w') as fHandle:
-                fHandle.write(json.dumps(dataAsDict, indent=4, sort_keys=True))
-        except Exception as e:
-            returned=NodeEditorScene.EXPORT_CANT_SAVE
-
-        return returned
-
-    def importFromFile(self, fileName, sceneFormatIdentifier=None):
-        """Import scene from a json file
-
-        Given `fileName` define full path/file name on which exported content is saved
-
-        Given `fileFormatIdentifier` is a <str> provided to define scene format:
-        => If the format identifier in json file doesn't match provided value, import is cancelled
-        """
-        if not os.path.isfile(fileName):
-            return NodeEditorScene.IMPORT_FILE_NOT_FOUND
-
-        try:
-            with open(fileName, 'r') as fHandle:
-                jsonAsStr=fHandle.read()
-        except Exception as e:
-            Debug.print("Can't open/read file {0}: {1}", fileName, str(e))
-            return NodeEditorScene.IMPORT_FILE_CANT_READ
-
-        try:
-            jsonAsDict = json.loads(jsonAsStr)
-        except Exception as e:
-            Debug.print("Can't parse file {0}: {1}", fileName, str(e))
-            return NodeEditorScene.IMPORT_FILE_NOT_JSON
-
-        if not isinstance(sceneFormatIdentifier, str):
-            sceneFormatIdentifier=None
-
-        if sceneFormatIdentifier:
-            if 'sceneFormatIdentifier' in jsonAsDict:
-                if jsonAsDict['sceneFormatIdentifier']!=sceneFormatIdentifier:
-                    return NodeEditorScene.IMPORT_FILE_INVALID_FORMAT_IDENTIFIER
-            else:
-                # invalid file format
-                return NodeEditorScene.IMPORT_FILE_MISSING_FORMAT_IDENTIFIER
-
+    def deserialize(self, jsonAsDict):
+        """Deserialize given dictionnary `jsonAsDict` to a scene"""
         # deserialize scene data only scene if available
-        if 'scene' in jsonAsDict:
+        if isinstance(jsonAsDict, dict) and 'scene' in jsonAsDict:
             # 1. reset current scene content
             self.clear()
 
@@ -1267,6 +1277,83 @@ class NodeEditorScene(QObject):
             # 6. import links, if any
             if 'links' in jsonAsDict and isinstance(jsonAsDict['links'], list):
                 self.__importLinksFromDict(jsonAsDict)
+
+    def toJson(self, indent=4, sortKeys=True):
+        """Convert current scene to a json string"""
+        return json.dumps(self.serialize(), indent=indent, sort_keys=sortKeys)
+
+    def fromJson(self, jsonAsStr):
+        """Convert provided `dataAsJson` string to scene"""
+        try:
+            jsonAsDict = json.loads(jsonAsStr)
+        except Exception as e:
+            Debug.print("Can't parse json: {0}", str(e))
+            return False
+
+        if self.__optionFormatIdentifier:
+            if 'formatIdentifier' in jsonAsDict:
+                if jsonAsDict['formatIdentifier']!=self.__optionFormatIdentifier:
+                    return False
+            else:
+                return False
+
+        # deserialize scene data only scene if available
+        if 'scene' in jsonAsDict:
+            self.deserialize(jsonAsDict)
+        else:
+            return False
+
+        return True
+
+    def exportToFile(self, fileName):
+        """Export current scene as json file
+
+        Given `fileName` define full path/file name on which exported content is saved
+        """
+        returned=NodeEditorScene.EXPORT_OK
+        try:
+            with open(fileName, 'w') as fHandle:
+                fHandle.write(self.toJson())
+        except Exception as e:
+            returned=NodeEditorScene.EXPORT_CANT_SAVE
+
+        return returned
+
+    def importFromFile(self, fileName, sceneFormatIdentifier=None):
+        """Import scene from a json file
+
+        Given `fileName` define full path/file name on which exported content is saved
+
+        Given `fileFormatIdentifier` is a <str> provided to define scene format:
+        => If the format identifier in json file doesn't match provided value, import is cancelled
+        """
+        if not os.path.isfile(fileName):
+            return NodeEditorScene.IMPORT_FILE_NOT_FOUND
+
+        try:
+            with open(fileName, 'r') as fHandle:
+                jsonAsStr=fHandle.read()
+        except Exception as e:
+            Debug.print("Can't open/read file {0}: {1}", fileName, str(e))
+            return NodeEditorScene.IMPORT_FILE_CANT_READ
+
+        try:
+            jsonAsDict = json.loads(jsonAsStr)
+        except Exception as e:
+            Debug.print("Can't parse file {0}: {1}", fileName, str(e))
+            return NodeEditorScene.IMPORT_FILE_NOT_JSON
+
+        if self.__optionFormatIdentifier:
+            if 'formatIdentifier' in jsonAsDict:
+                if jsonAsDict['formatIdentifier']!=self.__optionFormatIdentifier:
+                    return NodeEditorScene.IMPORT_FILE_INVALID_FORMAT_IDENTIFIER
+            else:
+                # invalid file format
+                return NodeEditorScene.IMPORT_FILE_MISSING_FORMAT_IDENTIFIER
+
+        # deserialize scene data only scene if available
+        if 'scene' in jsonAsDict:
+            self.deserialize(jsonAsDict)
         else:
             return NodeEditorScene.IMPORT_FILE_MISSING_SCENE_DEFINITION
 
