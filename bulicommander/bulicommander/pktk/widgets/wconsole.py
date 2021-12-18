@@ -558,6 +558,9 @@ class WConsole(QPlainTextEdit):
 
         Given `type` is a WConsoleType value
         """
+        if isinstance(text, list):
+            text="\n".join(text)
+
         lines=self.__formatText(text)
         for line in lines:
             self.appendHtml(line)
@@ -570,6 +573,8 @@ class WConsole(QPlainTextEdit):
 
     def append(self, text):
         """Append to current line"""
+        if isinstance(text, list):
+            text="\n".join(text)
 
         texts=self.__formatText(text)
 
