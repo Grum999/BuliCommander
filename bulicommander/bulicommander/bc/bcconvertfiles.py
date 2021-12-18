@@ -523,18 +523,18 @@ class BCConvertFilesDialogBox(QDialog):
             newFileName=self.__parseFileNameKw(file, filePattern, self.__targetDirectory)
 
             if not newFileName[1] is None:
-                self.pteConsole.appendLine(i18n(f'Convert file <i>{fileNumber}</i> of <i>{fileTotalNumber}</i>'))
-                self.pteConsole.appendLine(i18n(f'. Source file <i>{self.__convertedFileName}</i> ({bytesSizeToStr(file.size())})'))
+                self.pteConsole.appendLine(i18n(f'Convert file *{fileNumber}* of *{fileTotalNumber}*'))
+                self.pteConsole.appendLine(i18n(f'. Source file *{self.__convertedFileName}* ({bytesSizeToStr(file.size())})'))
                 self.pteConsole.appendLine('> ')
-                self.pteConsole.append([(i18n('KO '), 'error'),  (i18n('<i>(Unable to build target file name)</i>'), 'info')])
+                self.pteConsole.append([f"#r#{i18n('KO')}# ",  f"*#y#{i18n('(Unable to build target file name)')}#*"])
             else:
                 targetName = os.path.join(self.__targetDirectory, newFileName[0])
 
                 QApplication.instance().processEvents()
 
-                self.pteConsole.appendLine(i18n(f'Convert file <i>{fileNumber}</i> of <i>{fileTotalNumber}</i>'))
-                self.pteConsole.appendLine(i18n(f'. Source file <i>{self.__convertedFileName}</i> ({bytesSizeToStr(file.size())})'))
-                self.pteConsole.appendLine(i18n(f'. Target file <i>{targetName}</i>'))
+                self.pteConsole.appendLine(i18n(f'Convert file *{fileNumber}* of *{fileTotalNumber}*'))
+                self.pteConsole.appendLine(i18n(f'. Source file *{self.__convertedFileName}* ({bytesSizeToStr(file.size())})'))
+                self.pteConsole.appendLine(i18n(f'. Target file *{targetName}*'))
 
                 if targetName != self.__convertedFileName:
                     if not os.path.exists(targetName):
@@ -542,7 +542,7 @@ class BCConvertFilesDialogBox(QDialog):
                         currentDocument = Krita.instance().openDocument(self.__convertedFileName)
 
                         if not currentDocument is None:
-                            self.pteConsole.append(i18n('OK'), 'ok')
+                            self.pteConsole.append(f"#g#{i18n('OK')}#")
 
                             currentDocument.setBatchmode(True) # no popups while saving
 
@@ -557,20 +557,20 @@ class BCConvertFilesDialogBox(QDialog):
                                 saved = currentDocument.exportImage(targetName, exportOptions)
 
                             if not saved:
-                                self.pteConsole.append(i18n('KO'), 'error')
+                                self.pteConsole.append(f"#r#{i18n('KO')}#")
                                 fileKo+=1
                             else:
-                                self.pteConsole.append(i18n('OK'), 'ok')
+                                self.pteConsole.append(f"#g#{i18n('OK')}#")
 
                             currentDocument.close()
                         else:
-                            self.pteConsole.append([(i18n('KO '), 'error'),  (i18n('<i>(Unable to open file)</i>'), 'info')])
+                            self.pteConsole.append([f"#r#{i18n('KO')}# ", f"*#y#{i18n('(Unable to open file)')}#*"])
                     else:
                         self.pteConsole.appendLine('> ')
-                        self.pteConsole.append([(i18n('SKIPPED '), 'ignore'),  (i18n('<i>(Target file already exists)</i>'), 'info')])
+                        self.pteConsole.append([f"#c#{i18n('SKIPPED')}# ", f"*#y#{i18n('(Target file already exists)')}#*"])
                 else:
                     self.pteConsole.appendLine('> ')
-                    self.pteConsole.append([(i18n('SKIPPED '), 'ignore'),  (i18n('<i>(Target and source are identical)</i>'), 'info')])
+                    self.pteConsole.append([f"#c#{i18n('SKIPPED')}# ", f"*#y#{i18n('(Target and source are identical)')}#*"])
 
                 self.pgbTargetResultExport.setValue(fileNumber)
 
@@ -583,7 +583,7 @@ class BCConvertFilesDialogBox(QDialog):
 
         if self.__processing==False:
             self.pteConsole.appendLine('> ')
-            self.pteConsole.append(i18n('Process cancelled by user!'), 'warning')
+            self.pteConsole.append(f"#y#{i18n('Process cancelled by user!')}#")
             BCSysTray.messageCritical(i18n(f"{self.__uiController.bcName()}::Convert files"),
                                       i18n(f"Convert {fileTotalNumber} as <i>{BCConvertFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> format has been cancelled by user"))
         elif fileKo == 0:
