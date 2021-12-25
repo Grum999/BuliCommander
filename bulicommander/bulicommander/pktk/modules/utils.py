@@ -24,6 +24,7 @@ import locale
 import re
 import sys
 import os
+import json
 
 import xml.etree.ElementTree as ET
 
@@ -400,6 +401,31 @@ def replaceLineEditClearButton(lineEdit):
     lineEdit.findChild(QToolButton).setIcon(buildIcon("pktk:edit_text_clear"))
 
 
+# ------------------------------------------------------------------------------
+
+class JsonQObjectEncoder(json.JSONEncoder):
+    """Json encoder class to take in account additional object
+
+    data={ x: QSize(1,2) }
+    json.dumps(data, cls=JsonQObjectEncoder)
+
+    will return string:
+        '''
+        {"x": {
+                "width": 1,
+                "height": 2,
+            }
+        }
+        '''
+    """
+    def default(self, objectToEncode):
+        if isinstance(objectToEncode, QSize):
+            return {
+                    'width': objectToEncode.width(),
+                    'height': objectToEncode.height()
+                }
+            # Let the base class default method raise the TypeError
+            return super(JsonQObjectEncoder, self).default(objectToEncode)
 
 
 # ------------------------------------------------------------------------------
