@@ -38,7 +38,7 @@ from PyQt5.QtWidgets import (
 from ..modules.utils import replaceLineEditClearButton
 
 
-class WOperatorType(Enum):
+class WOperatorType:
     OPERATOR_GT=          '>'
     OPERATOR_GE=          '>='
     OPERATOR_LT=          '<'
@@ -46,11 +46,11 @@ class WOperatorType(Enum):
     OPERATOR_EQ=          '='
     OPERATOR_NE=          '!='
     OPERATOR_BETWEEN=     'between'
-    OPERATOR_NOT_BETWEEN= '!between'
+    OPERATOR_NOT_BETWEEN= 'not between'
     OPERATOR_MATCH=       'match'
-    OPERATOR_NOT_MATCH=   '!match'
+    OPERATOR_NOT_MATCH=   'not match'
     OPERATOR_LIKE=        'like'
-    OPERATOR_NOT_LIKE=    '!like'
+    OPERATOR_NOT_LIKE=    'not like'
 
 
 class WOperatorBaseInput(QWidget):
@@ -106,7 +106,7 @@ class WOperatorBaseInput(QWidget):
                 +--------+  +--------+         +--------+
 
     """
-    operatorChanged=Signal(WOperatorType)
+    operatorChanged=Signal(str)
     valueChanged=Signal(object)
     value2Changed=Signal(object)
 
@@ -254,6 +254,7 @@ class WOperatorBaseInput(QWidget):
 
 class WOperatorBaseInputNumber(WOperatorBaseInput):
     """Search operator for Integer"""
+    suffixChanged=Signal(str)
 
     def __init__(self, parent=None):
         super(WOperatorBaseInputNumber, self).__init__(parent)
@@ -407,6 +408,7 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
         """Return current suffix"""
         self._input1.setSuffix(value)
         self._input2.setSuffix(value)
+        self.suffixChanged.emit(value)
 
     def suffixList(self):
         """Return suffix list"""
@@ -511,7 +513,7 @@ class WOperatorInputDateTime(WOperatorBaseInput):
 
     def value(self):
         """Return current value (as timestamp)"""
-        return self._input1.dateTime().toMSecsSinceEpoch()
+        return self._input1.dateTime().toMSecsSinceEpoch()/1000
 
     def setValue(self, value):
         """set current value
@@ -519,31 +521,31 @@ class WOperatorInputDateTime(WOperatorBaseInput):
         Can be a time stamp or QDateTime
         """
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value)
+            value=QDateTime.fromMSecsSinceEpoch(value*1000)
 
         if isinstance(value, QDateTime) and value!=self._input1.dateTime():
             self._input1.setDateTime(value)
 
     def value2(self):
         """Return current 2nd value (as timestamp) - (when 'between' operator)"""
-        return self._input2.dateTime().toMSecsSinceEpoch()
+        return self._input2.dateTime().toMSecsSinceEpoch()/1000
 
     def setValue2(self, value):
         """Set current 2nd value (when 'between' operator)"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value)
+            value=QDateTime.fromMSecsSinceEpoch(value*1000)
 
         if isinstance(value, QDateTime) and value!=self._input2.dateTime():
             self._input2.setDateTime(value)
 
     def minimum(self):
         """Return minimum value  (as timestamp)"""
-        return self._input1.minimumDateTime().toMSecsSinceEpoch()
+        return self._input1.minimumDateTime().toMSecsSinceEpoch()/1000
 
     def setMinimum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value)
+            value=QDateTime.fromMSecsSinceEpoch(value*1000)
 
         if isinstance(value, QDateTime):
             self._input1.setMinimumDateTime(value)
@@ -551,12 +553,12 @@ class WOperatorInputDateTime(WOperatorBaseInput):
 
     def maximum(self):
         """Return minimum value  (as timestamp)"""
-        return self._input1.maximumDateTime().toMSecsSinceEpoch()
+        return self._input1.maximumDateTime().toMSecsSinceEpoch()/1000
 
     def setMaximum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value)
+            value=QDateTime.fromMSecsSinceEpoch(value*1000)
 
         if isinstance(value, QDateTime):
             self._input1.setMaximumDateTime(value)
@@ -611,7 +613,7 @@ class WOperatorInputDate(WOperatorBaseInput):
 
     def value(self):
         """Return current value (as timestamp)"""
-        return QDateTime(self._input1.date()).toMSecsSinceEpoch()
+        return QDateTime(self._input1.date()).toMSecsSinceEpoch()/1000
 
     def setValue(self, value):
         """set current value
@@ -619,31 +621,31 @@ class WOperatorInputDate(WOperatorBaseInput):
         Can be a time stamp or QDateTime
         """
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value).date()
+            value=QDateTime.fromMSecsSinceEpoch(value*1000).date()
 
         if isinstance(value, QDate) and value!=self._input1.date():
             self._input1.setDate(value)
 
     def value2(self):
         """Return current 2nd value (as timestamp) - (when 'between' operator)"""
-        return QDateTime(self._input2.date()).toMSecsSinceEpoch()
+        return QDateTime(self._input2.date()).toMSecsSinceEpoch()/1000
 
     def setValue2(self, value):
         """Set current 2nd value (when 'between' operator)"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value).date()
+            value=QDateTime.fromMSecsSinceEpoch(value*1000).date()
 
         if isinstance(value, QDate) and value!=self._input2.date():
             self._input2.setDate(value)
 
     def minimum(self):
         """Return minimum value  (as timestamp)"""
-        return QDateTime(self._input1.minimumDate()).toMSecsSinceEpoch()
+        return QDateTime(self._input1.minimumDate()).toMSecsSinceEpoch()/1000
 
     def setMinimum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value).date()
+            value=QDateTime.fromMSecsSinceEpoch(value*1000).date()
 
         if isinstance(value, QDate):
             self._input1.setMinimumDate(value)
@@ -651,12 +653,12 @@ class WOperatorInputDate(WOperatorBaseInput):
 
     def maximum(self):
         """Return minimum value  (as timestamp)"""
-        return QDateTime(self._input1.maximumDate()).toMSecsSinceEpoch()
+        return QDateTime(self._input1.maximumDate()).toMSecsSinceEpoch()/1000
 
     def setMaximum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value).date()
+            value=QDateTime.fromMSecsSinceEpoch(value*1000).date()
 
         if isinstance(value, QDate):
             self._input1.setMaximumDate(value)
