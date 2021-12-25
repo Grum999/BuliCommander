@@ -553,9 +553,6 @@ class WConsole(QPlainTextEdit):
     def appendLine(self, text, type=WConsoleType.NORMAL, data=None):
         """Append a new line to console
 
-        Given `style` is a combination of WConsoleTextStyle
-            Example: WConsoleTextStyle.FONT_BOLD|WConsoleTextStyle.COLOR_RED
-
         Given `type` is a WConsoleType value
         """
         if isinstance(text, list):
