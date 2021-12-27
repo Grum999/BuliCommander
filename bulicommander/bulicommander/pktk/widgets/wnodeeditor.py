@@ -90,6 +90,7 @@ class NodeEditorScene(QObject):
     nodeAdded=Signal(NodeEditorNode)                    # a new node has been added: added node
     nodeRemoved=Signal(NodeEditorNode)                  # a node has been removed: removed node
     linkAdded=Signal(NodeEditorLink)                    # a new link has been added: added link
+    nodeOutputUpdated=Signal(NodeEditorNode, dict)      # a node output has been updated: emitted even if eventOutput  is disabled (Node + dict(connector, value))
     linkRemoved=Signal(NodeEditorLink)                  # a link has been removed: removed link
 
     selectionChanged=Signal()                           # selection has changed
@@ -1228,7 +1229,7 @@ class NodeEditorScene(QObject):
                             }
                     },
                 'nodes': [node.serialize() for node in self.__nodes],
-                'links': [link.serialize() for link in self.__links]
+                'links': [link.serialize() for link in self.__links if not link.serialize() is None]
             }
 
     def deserialize(self, jsonAsDict):
@@ -1480,7 +1481,7 @@ class NodeEditorNode(QObject):
     defaultConnectorInputColorChanged=Signal(QColor)                            # default color for input connector has been changed: new color value
     defaultConnectorOutputColorChanged=Signal(QColor)                           # default color for output connector has been changed: new color value
 
-    def __init__(self, scene, title, connectors=[], parent=None):
+    def __init__(self, scene, title, connectors=[], widget=None, parent=None):
         super(NodeEditorNode, self).__init__(parent)
 
         if not isinstance(scene, NodeEditorScene):
@@ -1579,9 +1580,6 @@ class NodeEditorNode(QObject):
         self.__grItem=NodeEditorGrNode(self)
         self.__grItem.setCloseButtonVisibility(self.__scene.optionNodeCloseButtonVisible())
 
-        # add curent node to scene
-        self.__scene.addNode(self)
-
         # counters maintain number of connector for each node's corners
         self.__nbLeftTop=0
         self.__nbLeftBottom=0
@@ -1611,6 +1609,13 @@ class NodeEditorNode(QObject):
         self.borderSizeChanged.emit(self.borderSize())
 
         self.__scene.optionNodeCloseButtonVisibilityChanged.connect(self.__updateCloseButtonVisibility)
+
+        #
+        if not widget is None:
+            self.setWidget(widget)
+
+        # add curent node to scene
+        self.__scene.addNode(self)
 
     def __repr__(self):
         return f"<NodeEditorNode({self.__id}, '{self.__title}')>"
@@ -1834,6 +1839,9 @@ class NodeEditorNode(QObject):
             # get connector from id
             if key in self.__connectors and self.__connectors[key].isOutput():
                 self.__connectors[key].setValue(value[key])
+        # in all case (outputEventEnabled or not) emit signal to indicate the node
+        # output is updated
+        self.__scene.nodeOutputUpdated.emit(self, value)
 
     def itemChange(self, change, value):
         """Something has been changed on graphic item
@@ -3022,15 +3030,15 @@ class NodeEditorLink(QObject):
         # QGraphicsItem for link
         self.__grItem=NodeEditorGrLink(self)
 
-        # add link to scene
-        self.__scene.addLink(self)
-
         self.sizeChanged.emit(self.size())
         self.renderModeChanged.emit(self.renderMode())
         self.colorChanged.emit(self.color())
         self.colorSelectedChanged.emit(self.selectedColor())
 
         self.__updateConnectors()
+
+        # add link to scene
+        self.__scene.addLink(self)
 
     # Deleting (Calling destructor)
     def __del__(self):
@@ -3265,6 +3273,9 @@ class NodeEditorLink(QObject):
 
     def serialize(self):
         """Return link definition as dictionnary"""
+        if self.__toConnector is None:
+            # do not serialize link if not complete
+            return None
         return {
                 'connect': {
                         'from': f"{self.__fromConnector.node().id()}:{self.__fromConnector.id()}",
@@ -3336,8 +3347,7 @@ class NodeEditorNodeWidget(QWidget):
     def __init__(self, scene, title, connectors=[], parent=None):
         super(NodeEditorNodeWidget, self).__init__(parent)
 
-        self.__node=NodeEditorNode(scene, title, connectors=connectors)
-        self.__node.setWidget(self)
+        self.__node=NodeEditorNode(scene, title, connectors=connectors, widget=self)
         self.__node.updateOutputs()
 
     def node(self):
