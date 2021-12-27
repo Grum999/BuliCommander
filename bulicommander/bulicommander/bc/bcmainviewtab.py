@@ -1415,15 +1415,15 @@ class BCMainViewTab(QFrame):
     def __filesRefresh(self, fileQuery=None):
         """update file list with current path"""
         def fileQueryStepExecuted(value):
-            if value[0] == BCFileList.STEPEXECUTED_SEARCH:
+            if value[0] == BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS:
                 # in this case, value[1] returns number of files to scan
                 if value[1] > 500:
                     self.__filesProgressStart(value[1], i18n('Analyzing file %v of %m (%p%)'))
-            elif value[0] == BCFileList.STEPEXECUTED_SCAN:
+            elif value[0] == BCFileList.STEPEXECUTED_ANALYZE_METADATA:
                 # in this case, scanning is finished
                 if self.__filesPbVisible:
                     self.__filesProgressStop()
-            elif value[0] == BCFileList.STEPEXECUTED_SCANNING:
+            elif value[0] == BCFileList.STEPEXECUTED_PROGRESS_ANALYZE:
                 # in this case, value[1] give processed index
                 if self.__filesPbVisible:
                     self.__filesProgressSetNext()

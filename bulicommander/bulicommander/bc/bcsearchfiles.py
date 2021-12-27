@@ -108,6 +108,10 @@ class BCSearchFilesDialogBox(QDialog):
     __PANEL_SEARCH_IMGFILTERRULES = 3
     __PANEL_SEARCH_CONSOLE = 4
 
+    __TAB_BASIC_SEARCH = 0
+    __TAB_ADVANCED_SEARCH = 1
+    __TAB_SEARCH_CONSOLE = 2
+
     @staticmethod
     def open(title, uicontroller):
         """Open dialog box"""
@@ -359,6 +363,10 @@ class BCSearchFilesDialogBox(QDialog):
         self.wsffpAdvanced.modified.connect(self.__advancedFileFromPathChanged)
         self.wsffrAdvanced.modified.connect(self.__advancedFileFilterRule)
         self.wsifrAdvanced.modified.connect(self.__advancedImgFilterRule)
+
+        self.wcExecutionConsole.setOptionShowGutter(False)
+        self.wcExecutionConsole.appendLine(i18n('Not search executed yet'))
+        self.pbProgress.setVisible(False)
 
         self.__basicResetSearch(True)
         self.__advancedResetSearch(True)
@@ -677,16 +685,99 @@ class BCSearchFilesDialogBox(QDialog):
         self.wsffpBasic.resetToDefault()
 
     def __executeSearchProcessSignals(self, informations):
-        self.wcExecutionConsole.appendLine(str(informations))
+        """Search is in progress...
+
+        Each information is a tuple, first item determine current search steps
+        """
+        if informations[0]==BCFileList.STEPEXECUTED_SEARCH_FROM_PATH:
+            # 0 => step identifier
+            # 1 => path
+            # 2 => flag for sub-dir. scan
+            # 3 => number of files found
+            if informations[2]:
+                self.wcExecutionConsole.appendLine(f"""&nbsp;- {i18n('Scan directory (and sub-directories)')} #y#{informations[1]}#, {i18n('found files:')} #c#{informations[3]}#""")
+            else:
+                self.wcExecutionConsole.appendLine(f"""&nbsp;- {i18n('Scan directory')} #y#{informatins[1]}#, {i18n('found files:')} #c#{informations[3]}#""")
+        elif informations[0]==BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS:
+            # 0 => step identifier
+            # 1 => total number of files
+            # 2 => total number of directories (if asked to return directories)
+            # 3 => total (number of files + number of directories)
+            # 4 => total time duration (in seconds)
+            self.wcExecutionConsole.appendLine(f"""&nbsp;{i18n('Total files:')} #c#{informations[3]}#""")
+            self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Scan executed in')}# #w#{informations[4]:0.4f}s##lk#)#*""")
+
+            self.wcExecutionConsole.appendLine("")
+            self.wcExecutionConsole.appendLine(f"""**{i18n('Analyze files:')}** """)
+            self.pbProgress.setMaximum(100)
+        elif informations[0]==BCFileList.STEPEXECUTED_PROGRESS_ANALYZE:
+            # 0 => step identifier
+            # 1 => current pct
+            print("STEPEXECUTED_PROGRESS_ANALYZE", informations[1])
+            self.pbProgress.setValue(informations[1])
+            self.pbProgress.update()
+            QApplication.processEvents()
+        elif informations[0]==BCFileList.STEPEXECUTED_ANALYZE_METADATA:
+            # 0 => step identifier
+            # 1 => total time duration (in seconds)
+            self.wcExecutionConsole.append(f"""#g#{i18n('OK')}#""")
+            self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Analysis executed in')}# #w#{informations[1]:0.4f}s##lk#)#*""")
+
+            self.wcExecutionConsole.appendLine("")
+            self.wcExecutionConsole.appendLine(f"""**{i18n('Filter files:')}** """)
+            self.pbProgress.setValue(0)
+        elif informations[0]==BCFileList.STEPEXECUTED_PROGRESS_FILTER:
+            # 0 => step identifier
+            # 1 => current pct
+            print("STEPEXECUTED_PROGRESS_FILTER", informations[1])
+            self.pbProgress.setValue(informations[1])
+            self.pbProgress.update()
+            QApplication.processEvents()
+        elif informations[0]==BCFileList.STEPEXECUTED_FILTER_FILES:
+            # 0 => step identifier
+            # 1 => number of files after filter applied
+            # 2 => total time duration (in seconds)
+            self.wcExecutionConsole.append(f"""#g#{i18n('OK')}#""")
+            self.wcExecutionConsole.appendLine(f"""&nbsp;{i18n('Total files:')} #c#{informations[1]}#""")
+            self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Filter applied in')}# #w#{informations[2]:0.4f}s##lk#)#*""")
+
+            self.wcExecutionConsole.appendLine("")
+            self.wcExecutionConsole.appendLine(f"""**{i18n('Build results:')}** """)
+
+            self.pbProgress.setValue(0)
+            self.pbProgress.setMaximum(0)
+        elif informations[0]==BCFileList.STEPEXECUTED_BUILD_RESULTS:
+            # 0 => step identifier
+            # 1 => total time duration (in seconds)
+            self.wcExecutionConsole.append(f"""#g#{i18n('OK')}#""")
+            self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Build made in')}# #w#{informations[1]:0.4f}s##lk#)#*""")
+
+            self.wcExecutionConsole.appendLine("")
+            self.wcExecutionConsole.appendLine(f"""**{i18n('Sort results:')}** """)
+
+            self.pbProgress.setMaximum(100)
+        elif informations[0]==BCFileList.STEPEXECUTED_PROGRESS_SORT:
+            # 0 => step identifier
+            # 1 => current pct
+            print("STEPEXECUTED_PROGRESS_SORT", informations[1])
+            self.pbProgress.setValue(informations[1])
+            self.pbProgress.update()
+            QApplication.processEvents()
+        elif informations[0]==BCFileList.STEPEXECUTED_SORT_RESULTS:
+            # 0 => step identifier
+            # 1 => total time duration (in seconds)
+            self.wcExecutionConsole.append(f"""#g#{i18n('OK')}#""")
+            self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Sort made in')}# #w#{informations[1]:0.4f}s##lk#)#*""")
+
 
     def executeSearch(self):
         """Execute basic/advanced search, according to current active tab"""
-        if self.twSearchModes.currentIndex()==0:
+        if self.twSearchModes.currentIndex()==BCSearchFilesDialogBox.__TAB_BASIC_SEARCH:
             dataAsDict=self.__basicExportConfig()
         else:
             dataAsDict=self.__advancedExportConfig()
 
-        if self.twSearchModes.currentIndex()==0:
+        if self.twSearchModes.currentIndex()==BCSearchFilesDialogBox.__TAB_BASIC_SEARCH:
             # for debug, to remove...
             print(json.dumps(dataAsDict, indent=4, sort_keys=True))
             self.wneAdvancedView.nodeScene().deserialize(dataAsDict)
@@ -694,29 +785,58 @@ class BCSearchFilesDialogBox(QDialog):
 
         self.wcExecutionConsole.clear()
         self.wcExecutionConsole.appendLine(i18n('Build search query:')+' ')
-        self.swAdvancedPanel.setCurrentIndex(BCSearchFilesDialogBox.__PANEL_SEARCH_CONSOLE)
+        self.twSearchModes.setCurrentIndex(BCSearchFilesDialogBox.__TAB_SEARCH_CONSOLE)
         bcFileList=BCSearchFilesDialogBox.buildBCFileList(dataAsDict)
         if bcFileList:
+            self.pbProgress.setMinimum(0)
+            self.pbProgress.setMaximum(0)
+            self.pbProgress.setValue(0)
+            self.pbProgress.setVisible(True)
+
+            self.tabBasicSearch.setEnabled(False)
+            self.tabAdvancedSearch.setEnabled(False)
+            self.pbSearch.setEnabled(False)
+            self.pbClose.setEnabled(False)
+
             bcFileList.stepExecuted.connect(self.__executeSearchProcessSignals)
 
             self.wcExecutionConsole.append(f"#g#{i18n('OK')}#")
-            self.wcExecutionConsole.appendLine(i18n('Execute search:'))
 
-            #print('--'*80)
-            print(bcFileList.exportSSQuery())
-            #print('--'*80)
-            print(bcFileList.exportHQuery())
-            #print('--'*80)
-            print(bcFileList.execute(True, True, True))
+            self.wcExecutionConsole.appendLine("")
+            self.wcExecutionConsole.appendLine(i18n('Execute search...'))
+
+            self.wcExecutionConsole.appendLine("")
+            self.wcExecutionConsole.appendLine(f"""**{i18n('Scan directories:')}** """)
+
+            print(bcFileList.execute(True, True, True, False, [
+                BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
+                BCFileList.STEPEXECUTED_SEARCH_FROM_PATH,
+                BCFileList.STEPEXECUTED_ANALYZE_METADATA,
+                BCFileList.STEPEXECUTED_FILTER_FILES,
+                BCFileList.STEPEXECUTED_BUILD_RESULTS,
+                BCFileList.STEPEXECUTED_SORT_RESULTS,
+                BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,
+                BCFileList.STEPEXECUTED_PROGRESS_FILTER,
+                BCFileList.STEPEXECUTED_PROGRESS_SORT
+            ]))
+
             #print('--'*80)
             print(bcFileList.exportTxtResults())
             #print('--'*80)
             print(bcFileList.stats())
 
+            self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(i18n('Execution done'))
 
+            self.tabBasicSearch.setEnabled(True)
+            self.tabAdvancedSearch.setEnabled(True)
+            self.pbSearch.setEnabled(True)
+            self.pbClose.setEnabled(True)
         else:
             self.wcExecutionConsole.append(f"#r#{i18n('KO')}#")
+            self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Current search definition is not valid')}#*""")
+
+        self.pbProgress.setVisible(False)
 
 
 

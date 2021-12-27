@@ -56,6 +56,7 @@ import xml.etree.ElementTree as xmlElement
 import zipfile
 import zlib
 import textwrap
+import math
 
 
 from PyQt5.Qt import *
@@ -5884,13 +5885,18 @@ class BCFileList(QObject):
     """
     stepExecuted = Signal(tuple)
 
-    STEPEXECUTED_SEARCH =   0x00
-    STEPEXECUTED_SCAN =     0x01
-    STEPEXECUTED_FILTER =   0x02
-    STEPEXECUTED_RESULT =   0x03
-    STEPEXECUTED_SORT =     0x04
+    # activated by default
+    STEPEXECUTED_SEARCH_FROM_PATHS =    0b00000100      # search files in path finished
+    STEPEXECUTED_ANALYZE_METADATA =     0b00001000      # read files for metadata finished
+    STEPEXECUTED_FILTER_FILES =         0b00010000      # filter files according to rules finished
+    STEPEXECUTED_BUILD_RESULTS =        0b00100000      # prepare results
+    STEPEXECUTED_SORT_RESULTS =         0b01000000      # sort results
 
-    STEPEXECUTED_SCANNING = 0x10
+    # not activated by default
+    STEPEXECUTED_SEARCH_FROM_PATH =     0x00000101      # during path scan, a path has been scanned (scan next directory will start)
+    STEPEXECUTED_PROGRESS_ANALYZE =     0b00001001      # each file analyzed will emit a signal; allows to track analysis progress and update a progress bar for exwample
+    STEPEXECUTED_PROGRESS_FILTER =      0b00010001      # each file filtered will emit a signal; allows to track analysis progress and update a progress bar for exwample
+    STEPEXECUTED_PROGRESS_SORT =        0b01000001      # each file sorted will emit a signal; allows to track analysis progress and update a progress bar for exwample
 
     __MTASKS_RULES = []
 
@@ -5983,6 +5989,10 @@ class BCFileList(QObject):
 
         self.__invalidated = True
 
+        self.__progressFilesPctThreshold=0
+        self.__progressFilesPctTracker=0
+        self.__progressFilesPctCurrent=0
+
     def __invalidate(self):
         self.__invalidated = True
 
@@ -5990,6 +6000,8 @@ class BCFileList(QObject):
         # if A < B : -1
         #    A > B : 1
         #    A = B : 0
+        if self.__progressFilesPctThreshold>0:
+            self.__progressSorting()
 
         # very long: need to check all sort criteria
         for sortKey in self.__sortList:
@@ -6027,6 +6039,39 @@ class BCFileList(QObject):
                     return 1
 
         return 0
+
+    def __progressScanning(self, value):
+        """Emit signal during scanning progress
+
+        Emit signal every 1%
+        """
+        self.__progressFilesPctTracker+=1
+        if self.__progressFilesPctTracker>=self.__progressFilesPctThreshold:
+            self.__progressFilesPctCurrent+=1
+            self.__progressFilesPctTracker=0
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,self.__progressFilesPctCurrent))
+
+    def __progressFiltering(self, value):
+        """Emit signal during scanning progress
+
+        Emit signal every 1%
+        """
+        self.__progressFilesPctTracker+=1
+        if self.__progressFilesPctTracker>=self.__progressFilesPctThreshold:
+            self.__progressFilesPctCurrent+=1
+            self.__progressFilesPctTracker=0
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_FILTER,self.__progressFilesPctCurrent))
+
+    def __progressSorting(self):
+        """Emit signal during scanning progress
+
+        Emit signal every 1%
+        """
+        self.__progressFilesPctTracker+=1
+        if self.__progressFilesPctTracker>=self.__progressFilesPctThreshold:
+            self.__progressFilesPctCurrent+=1
+            self.__progressFilesPctTracker=0
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_SORT,self.__progressFilesPctCurrent))
 
     def clear(self):
         """Clear everything
@@ -6544,18 +6589,13 @@ class BCFileList(QObject):
 
         Return number of files matching criteria
         """
-        def progressScanning(value):
-            #print(value[0], value[2])
-            #self.stepExecuted.emit((BCFileList.STEPEXECUTED_SCANNING,value[0],len(filesList)))
-            pass
-
         if signals is None:
             signals=[
-                BCFileList.STEPEXECUTED_SEARCH,
-                BCFileList.STEPEXECUTED_SCAN,
-                BCFileList.STEPEXECUTED_FILTER,
-                BCFileList.STEPEXECUTED_RESULT,
-                BCFileList.STEPEXECUTED_SORT
+                BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
+                BCFileList.STEPEXECUTED_ANALYZE_METADATA,
+                BCFileList.STEPEXECUTED_FILTER_FILES,
+                BCFileList.STEPEXECUTED_BUILD_RESULTS,
+                BCFileList.STEPEXECUTED_SORT_RESULTS
             ]
 
         if clearResults:
@@ -6602,6 +6642,7 @@ class BCFileList(QObject):
         foundDirectories = set()
         for processedPath in self.__pathList:
             pathName = processedPath.path()
+            nbPath=0
 
             BCFileCache.globalInstance().setDirectory(pathName)
 
@@ -6622,10 +6663,14 @@ class BCFileList(QObject):
                         fullPathName = os.path.join(path, name)
                         if self.__includeHidden or not QFileInfo(name).isHidden():
                             nbTotal+=1
+                            nbPath+=1
 
                             # check if file name match given pattern (if pattern) and is not already in file list
                             if (namePattern is None or namePattern.search(name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
                                 foundFiles.add(fullPathName)
+
+                    if nbTotal%1000==0:
+                        QApplication.processEvents()
             elif os.path.isdir(pathName):
                 # return current directory content
                 with os.scandir(pathName) as files:
@@ -6639,6 +6684,7 @@ class BCFileList(QObject):
                                 # check if file name match given pattern (if pattern) and is not already in file list
                                 if (namePattern is None or namePattern.search(file.name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
                                     foundFiles.add(fullPathName)
+                                    nbPath+=1
                             elif self.__includeDirectories and file.is_dir():
                                 # if directories are asked and file is a directory, add it
                                 nbTotal+=1
@@ -6646,11 +6692,17 @@ class BCFileList(QObject):
                                 if not fullPathName in self.__currentFilesName and not fullPathName in foundDirectories:
                                     foundDirectories.add(fullPathName)
 
+                    if nbTotal%1000==0:
+                        QApplication.processEvents()
+
+            if BCFileList.STEPEXECUTED_SEARCH_FROM_PATH in signals:
+                self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH_FROM_PATH, pathName, processedPath.recursive(), nbPath))
+
         totalMatch = len(foundFiles) + len(foundDirectories)
         Stopwatch.stop('BCFileList.execute.global')
 
-        if BCFileList.STEPEXECUTED_SEARCH in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH, len(foundFiles), len(foundDirectories), totalMatch, Stopwatch.duration("BCFileList.execute.search")))
+        if BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS in signals:
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS, len(foundFiles), len(foundDirectories), totalMatch, Stopwatch.duration("BCFileList.execute.search")))
 
         #Debug.print("Search in paths: {0}", self.__pathList)
         #Debug.print('Found {0} of {1} files in {2}s', totalMatch, nbTotal, Stopwatch.duration("BCFileList.execute.search"))
@@ -6666,20 +6718,25 @@ class BCFileList(QObject):
         filesList = set()
         directoriesList = set()
 
+        self.__progressFilesPctThreshold=math.ceil(len(foundFiles)/100)
+        self.__progressFilesPctTracker=0
+        self.__progressFilesPctCurrent=0
         pool = WorkerPool()
         pool.setWorkerClass(BCWorkerCache)
-        if BCFileList.STEPEXECUTED_SCANNING in signals:
-            pool.signals.processed.connect(progressScanning)
+        if BCFileList.STEPEXECUTED_PROGRESS_ANALYZE in signals:
+            pool.signals.processed.connect(self.__progressScanning)
         filesList = pool.mapNoNone(foundFiles, BCFileList.getBcFile, strict)
-        if BCFileList.STEPEXECUTED_SCANNING in signals:
-            pool.signals.processed.disconnect(progressScanning)
+        if BCFileList.STEPEXECUTED_PROGRESS_ANALYZE in signals:
+            if self.__progressFilesPctCurrent<100:
+                self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,100))
+            pool.signals.processed.disconnect(self.__progressScanning)
         pool.setWorkerClass()
         directoriesList = pool.mapNoNone(foundDirectories, BCFileList.getBcDirectory)
 
         Stopwatch.stop('BCFileList.execute.scan')
 
-        if BCFileList.STEPEXECUTED_SCAN in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SCAN, Stopwatch.duration("BCFileList.execute.scan")))
+        if BCFileList.STEPEXECUTED_ANALYZE_METADATA in signals:
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_ANALYZE_METADATA, Stopwatch.duration("BCFileList.execute.scan")))
 
         #Debug.print('Scan {0} files in {1}s', totalMatch, Stopwatch.duration("BCFileList.execute.scan"))
 
@@ -6694,8 +6751,19 @@ class BCFileList(QObject):
         # so pass current object rules to static class...
         if len(self.__ruleList) > 0:
             BCFileList.__MTASKS_RULES = self.__ruleList
+
+            if BCFileList.STEPEXECUTED_PROGRESS_FILTER in signals:
+                self.__progressFilesPctThreshold=math.ceil(len(filesList)/100)
+                self.__progressFilesPctTracker=0
+                self.__progressFilesPctCurrent=0
+                pool.signals.processed.connect(self.__progressFiltering)
+
             # use all processors to parallelize files analysis
             self.__currentFiles = pool.mapNoNone(filesList, BCFileList.checkBcFile)
+
+            if BCFileList.STEPEXECUTED_PROGRESS_FILTER in signals:
+                pool.signals.processed.disconnect(self.__progressFiltering)
+
             self.__currentFiles += pool.mapNoNone(directoriesList, BCFileList.checkBcFile)
         else:
             # no rules=return currents lists
@@ -6705,8 +6773,8 @@ class BCFileList(QObject):
 
         Stopwatch.stop('BCFileList.execute.filter')
 
-        if BCFileList.STEPEXECUTED_FILTER in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER,Stopwatch.duration("BCFileList.execute.filter")))
+        if BCFileList.STEPEXECUTED_FILTER_FILES in signals:
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER_FILES, len(self.__currentFiles), Stopwatch.duration("BCFileList.execute.filter")))
         #Debug.print('Filter {0} files in {1}s', len(filesList), Stopwatch.duration("BCFileList.execute.filter"))
 
         # ----
@@ -6726,15 +6794,21 @@ class BCFileList(QObject):
 
         Stopwatch.stop('BCFileList.execute.result')
 
-        if BCFileList.STEPEXECUTED_RESULT in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_RESULT,Stopwatch.duration("BCFileList.execute.result")))
+        if BCFileList.STEPEXECUTED_BUILD_RESULTS in signals:
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_BUILD_RESULTS,Stopwatch.duration("BCFileList.execute.result")))
 
         # ----
         Stopwatch.start('BCFileList.sort')
+        if BCFileList.STEPEXECUTED_PROGRESS_SORT in signals:
+            self.__progressFilesPctThreshold=math.ceil(nb/100)
+            self.__progressFilesPctTracker=0
+            self.__progressFilesPctCurrent=0
+        else:
+            self.__progressFilesPctThreshold=0
         self.sort()
         Stopwatch.stop('BCFileList.sort')
-        if BCFileList.STEPEXECUTED_SORT in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT,Stopwatch.duration("BCFileList.sort")))
+        if BCFileList.STEPEXECUTED_SORT_RESULTS in signals:
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("BCFileList.sort")))
         #Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.sort"))
 
         #Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.global"))

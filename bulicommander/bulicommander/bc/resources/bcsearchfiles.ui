@@ -627,6 +627,12 @@
              <enum>Qt::Vertical</enum>
             </property>
             <widget class="WNodeEditorView" name="wneAdvancedView">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
              <property name="frameShape">
               <enum>QFrame::StyledPanel</enum>
              </property>
@@ -648,7 +654,7 @@
               <item>
                <widget class="QStackedWidget" name="swAdvancedPanel">
                 <property name="currentIndex">
-                 <number>0</number>
+                 <number>3</number>
                 </property>
                 <widget class="QWidget" name="pageAdvancedSearchEngine">
                  <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -816,25 +822,6 @@
                   </item>
                  </layout>
                 </widget>
-                <widget class="QWidget" name="pageAdvancedConsole">
-                 <layout class="QVBoxLayout" name="verticalLayout_10">
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="topMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="rightMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="bottomMargin">
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <widget class="WConsole" name="wcExecutionConsole"/>
-                  </item>
-                 </layout>
-                </widget>
                </widget>
               </item>
              </layout>
@@ -842,6 +829,51 @@
            </widget>
           </item>
          </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabSearchExecution">
+      <attribute name="title">
+       <string>Search execution</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_10">
+       <property name="leftMargin">
+        <number>6</number>
+       </property>
+       <property name="topMargin">
+        <number>6</number>
+       </property>
+       <property name="rightMargin">
+        <number>6</number>
+       </property>
+       <property name="bottomMargin">
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="WConsole" name="wcExecutionConsole">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="pbProgress">
+         <property name="value">
+          <number>0</number>
+         </property>
+         <property name="textVisible">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
       </layout>
