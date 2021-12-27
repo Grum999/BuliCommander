@@ -184,7 +184,7 @@ class BCMainWindow(QMainWindow):
 
         # Menu TOOLS
         self.actionToolsCopyToClipboard.triggered.connect(self.__menuToolsCopyToClipboard_clicked)
-        self.actionToolsSearch.triggered.connect(self.__actionNotYetImplemented)
+        self.actionToolsSearch.triggered.connect(self.__menuToolsSearchFiles_clicked)
         self.actionToolsExportFiles.triggered.connect(self.__menuToolsExportFiles_clicked)
         self.actionToolsConvertFiles.triggered.connect(self.__menuToolsConvertFiles_clicked)
 
@@ -381,6 +381,10 @@ class BCMainWindow(QMainWindow):
     def __menuToolsConvertFiles_clicked(self, action):
         """Open convert file tool"""
         self.__uiController.commandToolsConvertFilesOpen()
+
+    def __menuToolsSearchFiles_clicked(self, action):
+        """Open search file tool"""
+        self.__uiController.commandToolsSearchFilesOpen()
 
     # endregion: define actions method -----------------------------------------
 

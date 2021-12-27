@@ -48,6 +48,7 @@ from .bcfile import (
         BCBaseFile,
         BCDirectory,
         BCFile,
+        BCFileCache,
         BCFileManagedFormat,
         BCFileManipulateName
     )
@@ -57,6 +58,7 @@ from .bcfileoperation import (
     )
 from .bcexportfiles import BCExportFilesDialogBox
 from .bcconvertfiles import BCConvertFilesDialogBox
+from .bcsearchfiles import BCSearchFilesDialogBox
 from .bchistory import BCHistory
 from .bcmainviewtab import (
         BCMainViewTab,
@@ -168,6 +170,7 @@ class BCUIController(QObject):
 
         BCFile.initialiseCache()
         BCClipboard.initialiseCache()
+        BCFileCache.initialise()
 
         self.__clipboard = BCClipboard(False)
 
@@ -1016,6 +1019,7 @@ class BCUIController(QObject):
 
     def commandQuit(self):
         """Close Buli Commander"""
+        BCFileCache.finalize()
         self.__window.close()
 
     def commandFileOpen(self, file=None):
@@ -2272,6 +2276,10 @@ class BCUIController(QObject):
     def commandToolsConvertFilesOpen(self):
         """Open window for tool 'Convert files'"""
         BCConvertFilesDialogBox.open(f'{self.__bcName}::Convert files', self)
+
+    def commandToolsSearchFilesOpen(self):
+        """Open window for tool 'Search files'"""
+        BCSearchFilesDialogBox.open(f'{self.__bcName}::Search files', self)
 
     def commandToolsListToClipboard(self):
         """Copy current selection to clipboard"""

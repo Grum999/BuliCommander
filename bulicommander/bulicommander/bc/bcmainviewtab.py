@@ -390,7 +390,7 @@ class BCMainViewFiles(QTreeView):
 
     def __updateIconsProcessed(self, processedNfo):
         """update icon in treeview list"""
-        fileIndex, icon = processedNfo
+        fileIndex, icon, nbProcessed = processedNfo
 
         if not fileIndex is None and fileIndex < self.__model.rowCount():
             if not icon is None:
