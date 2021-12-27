@@ -86,6 +86,13 @@ class Worker(QRunnable):
         """
         return item
 
+    def cleanupEvent(self):
+        """Virtual; called when all workers have finished, just before workers
+        are deleted
+        """
+        pass
+
+
     def nbProcessed(self):
         """Return number of items processed by worker"""
         return self.__nbProcessed
@@ -179,6 +186,8 @@ class WorkerPool(QObject):
         """Do something.. ?"""
         self.__started-=1
         if self.__allStarted and self.__started==0:
+            for worker in self.__workers:
+                worker.cleanupEvent()
             self.__workers.clear()
             self.signals.finished.emit()
 
@@ -249,11 +258,15 @@ class WorkerPool(QObject):
         #self.__nbWorkers = 1
 
         self.__allStarted = False
+        # initialise workers
         for index in range(self.__nbWorkers):
             self.__workers.append(self.__workerClass(self, callback, *callbackArgv))
             self.__workers[index].signals.processed.connect(self.__onProcessed)
             self.__workers[index].signals.finished.connect(self.__onFinished)
             self.__workers[index].setAutoDelete(True)
+
+        # start workers
+        for index in range(self.__nbWorkers):
             self.__started+=1
             self.__threadpool.start(self.__workers[index])
 
