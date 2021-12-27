@@ -55,6 +55,7 @@ import time
 import xml.etree.ElementTree as xmlElement
 import zipfile
 import zlib
+import textwrap
 
 
 from PyQt5.Qt import *
@@ -735,23 +736,23 @@ class BCFileProperty(Enum):
 
     def translate(self):
         if self == BCFileProperty.PATH:
-            return 'path'
+            return i18n('path')
         elif self == BCFileProperty.FULL_PATHNAME:
-            return 'full path/file name'
+            return i18n('full path/file name')
         elif self == BCFileProperty.FILE_NAME:
-            return 'file name'
+            return i18n('file name')
         elif self == BCFileProperty.FILE_FORMAT:
-            return 'file format'
+            return i18n('file format')
         elif self == BCFileProperty.FILE_SIZE:
-            return 'file size'
+            return i18n('file size')
         elif self == BCFileProperty.FILE_EXTENSION:
-            return 'file extension'
+            return i18n('file extension')
         elif self == BCFileProperty.FILE_DATE:
-            return 'file date'
+            return i18n('file date')
         elif self == BCFileProperty.IMAGE_WIDTH:
-            return 'image width'
+            return i18n('image width')
         elif self == BCFileProperty.IMAGE_HEIGHT:
-            return 'image height'
+            return i18n('image height')
         else:
             return self.value
 
@@ -1724,6 +1725,7 @@ class BCFile(BCBaseFile):
                 'sha256': None,
                 'sha512': None
             }
+        self.__metadata=None
 
         if not BCFile.__INITIALISED:
             raise EInvalidStatus('BCFile class is not initialised')
@@ -1795,25 +1797,62 @@ class BCFile(BCBaseFile):
                     self._format = BCFileManagedFormat.KRZ
 
             if self._format in BCFileManagedFormat.list(False):
-                # Use image reader
+                # Use image reader as fallback
                 self.__imgSize = imageReader.size()
+
+            if self._format==BCFileManagedFormat.PNG:
+                cacheData=self.__readMetaDataPng(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    self.__imgSize = QSize(cacheData['width'], cacheData['height'])
+                else:
+                    cacheData['width']=self.__imgSize.width()
+                    cacheData['height']=self.__imgSize.height()
+            elif self._format in (BCFileManagedFormat.JPG, BCFileManagedFormat.JPEG):
+                cacheData=self.__readMetaDataJpeg(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    self.__imgSize = QSize(cacheData['width'], cacheData['height'])
+                else:
+                    cacheData['width']=self.__imgSize.width()
+                    cacheData['height']=self.__imgSize.height()
+            elif self._format==BCFileManagedFormat.SVG:
                 cacheData={
                         'width': self.__imgSize.width(),
                         'height': self.__imgSize.height()
                     }
+            elif self._format==BCFileManagedFormat.GIF:
+                cacheData=self.__readMetaDataGif(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    self.__imgSize = QSize(cacheData['width'], cacheData['height'])
+                else:
+                    cacheData['width']=self.__imgSize.width()
+                    cacheData['height']=self.__imgSize.height()
+            elif self._format==BCFileManagedFormat.BMP:
+                cacheData=self.__readMetaDataBmp(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    self.__imgSize = QSize(cacheData['width'], cacheData['height'])
+                else:
+                    cacheData['width']=self.__imgSize.width()
+                    cacheData['height']=self.__imgSize.height()
+            elif self._format==BCFileManagedFormat.WEBP:
+                cacheData=self.__readMetaDataWebP(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    self.__imgSize = QSize(cacheData['width'], cacheData['height'])
+                else:
+                    cacheData['width']=self.__imgSize.width()
+                    cacheData['height']=self.__imgSize.height()
             elif self._format == BCFileManagedFormat.PSD:
-                cacheData = self.__readMetaDataPsd(True)
+                cacheData = self.__readMetaDataPsd(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
             elif self._format == BCFileManagedFormat.XCF:
-                cacheData = self.__readMetaDataXcf(True)
+                cacheData = self.__readMetaDataXcf(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
             elif self._format == BCFileManagedFormat.KRA or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.KRA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
                 # by qimagereader
-                cacheData = self.__readMetaDataKra()
+                cacheData = self.__readMetaDataKra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                     self._format = BCFileManagedFormat.KRA
@@ -1821,7 +1860,7 @@ class BCFile(BCBaseFile):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
                 # by qimagereader
-                cacheData = self.__readMetaDataKra()
+                cacheData = self.__readMetaDataKra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                     self._format = BCFileManagedFormat.KRZ
@@ -1829,7 +1868,7 @@ class BCFile(BCBaseFile):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
                 # by qimagereader
-                cacheData = self.__readMetaDataOra()
+                cacheData = self.__readMetaDataOra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                     self._format = BCFileManagedFormat.ORA
@@ -1837,13 +1876,13 @@ class BCFile(BCBaseFile):
                 # don't know file format by ImageReader or extension...
                 # and there's no extension
                 # try Kra..
-                cacheData = self.__readMetaDataKra()
+                cacheData = self.__readMetaDataKra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                     self._format = BCFileManagedFormat.KRA
                 else:
                     # try ora
-                    cacheData = self.__readMetaDataOra()
+                    cacheData = self.__readMetaDataOra(False)
                     if cacheData and 'width' in cacheData and 'height' in cacheData:
                         self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                         self._format = BCFileManagedFormat.ORA
@@ -1852,6 +1891,13 @@ class BCFile(BCBaseFile):
                         self.__readable = False
 
             cacheData['format']=self._format
+
+            # add some extra metadata information
+            cacheData['nbPixels']=self.__imgSize.width()*self.__imgSize.height()
+            if self.__imgSize.height()!=0:
+                cacheData['ratioWH']=self.__imgSize.width()/self.__imgSize.height()
+            else:
+                cacheData['ratioWH']=0
             self.__writeMetaCacheFile(cacheData)
         else:
             self.__readable = False
@@ -1880,6 +1926,7 @@ class BCFile(BCBaseFile):
 
                 self.__imgSize = QSize(contentAsDict['width'], contentAsDict['height'])
                 self._format=contentAsDict["format"]
+                self.__metadata=contentAsDict
 
                 return True
 
@@ -1892,12 +1939,13 @@ class BCFile(BCBaseFile):
         If file exists, load it and return True
         Otherwise return False
         """
+        self.__metadata=dataAsDict
+
         if self.__bcFileCache is None:
             return
 
         try:
             return self.__bcFileCache.setMetadata(self.__qHash, dataAsDict)
-            #print('saved to cache!')
         except Exception as e:
             # can't write meta cache file
             Debug.print('Unable to write meta cache data {0}: {1}', self.__qHash, str(e))
@@ -2136,84 +2184,6 @@ class BCFile(BCBaseFile):
             self.__qHash = ''
 
 
-    def __readKraImageSize(self):
-        """Read a krita (.kra) file and return image size
-
-        The function only unzip the maindoc.xml to speedup the process
-
-        return None if not able to read Krita file
-        return a QSize() otherwise
-        """
-        maindoc = self.__readArchiveDataFile("maindoc.xml")
-
-        if maindoc is None:
-            # unable to process file
-            return None
-
-        try:
-            xmlDoc = xmlElement.fromstring(maindoc.decode())
-        except Exception as e:
-            # can't be read (not xml?)
-            self.__readable = False
-            Debug.print('[BCFile.__readKraImageSize] Unable to parse "maindoc.xml" in file {0}: {1}', self._fullPathName, str(e))
-            return None
-
-        returned = QSize(-1, -1)
-
-        try:
-            returned.setWidth(int(xmlDoc[0].attrib['width']))
-        except Exception as e:
-            Debug.print('[BCFile.__readKraImageSize] Unable to retrieve image width in file {0}: {1}', self._fullPathName, str(e))
-            return None
-
-        try:
-            returned.setHeight(int(xmlDoc[0].attrib['height']))
-        except Exception as e:
-            Debug.print('[BCFile.__readKraImageSize] Unable to retrieve image height in file {0}: {1}', self._fullPathName, str(e))
-            return None
-
-        return returned
-
-
-    def __readOraImageSize(self):
-        """Read an OpenRaster (.ora) file and return image size
-
-        The function only unzip the stack.xml to speedup the process
-
-        return None if not able to read OpenRaster file
-        return a QSize() otherwise
-        """
-        maindoc = self.__readArchiveDataFile("stack.xml")
-
-        if not self.__readable:
-            # file must exist
-            return None
-
-        try:
-            xmlDoc = xmlElement.fromstring(maindoc.decode())
-        except Exception as e:
-            # can't be read (not xml?)
-            self.__readable = False
-            Debug.print('[BCFile.__readOraImageSize] Unable to parse "stack.xml" in file {0}: {1}', self._fullPathName, str(e))
-            return None
-
-        returned = QSize(-1, -1)
-
-        try:
-            returned.setWidth(int(xmlDoc.attrib['w']))
-        except Exception as e:
-            Debug.print('[BCFile.__readOraImageSize] Unable to retrieve image width in file {0}: {1}', self._fullPathName, str(e))
-            return None
-
-        try:
-            returned.setHeight(int(xmlDoc.attrib['h']))
-        except Exception as e:
-            Debug.print('[BCFile.__readOraImageSize] Unable to retrieve image height in file {0}: {1}', self._fullPathName, str(e))
-            return None
-
-        return returned
-
-
     def __readKraImage(self):
         """Return Krita file image
 
@@ -2349,7 +2319,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataJpeg(self):
+    def __readMetaDataJpeg(self, fromCache=True):
         """
         Read metadata from JPEG file
 
@@ -2502,6 +2472,8 @@ class BCFile(BCBaseFile):
 
             return returned
 
+        if fromCache and not self.__metadata is None:
+            return self.__metadata
 
         # by default
         # - a JPEG is always 8bit
@@ -2536,7 +2508,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataPng(self):
+    def __readMetaDataPng(self, fromCache=True):
         """Read metadata from PNG file
 
         PNG specifications: http://www.libpng.org/pub/png/spec/1.2/png-1.2-pdg.html
@@ -2794,6 +2766,8 @@ class BCFile(BCBaseFile):
 
             return returned
 
+        if fromCache and not self.__metadata is None:
+            return self.__metadata
 
         idat1Processed = False
         returned = {}
@@ -2836,7 +2810,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataGif(self):
+    def __readMetaDataGif(self, fromCache=True):
         """Read metadata from GIF file
 
         GIF specifications: https://www.w3.org/Graphics/GIF/spec-gif89a.txt
@@ -2898,6 +2872,9 @@ class BCFile(BCBaseFile):
             # return nothing, only skip block
             fHandler.seek(12, 1)
             skip_subBlock(fHandler)
+
+        if fromCache and not self.__metadata is None:
+            return self.__metadata
 
         returned = {
                 'colorType': (3, 'Indexed palette'),
@@ -2977,10 +2954,13 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataWebP(self):
+    def __readMetaDataWebP(self, fromCache=True):
         """Read metadata from GIF file
 
         """
+        if fromCache and not self.__metadata is None:
+            return self.__metadata
+
         returned = {
                 'imageCount': 0
             }
@@ -2989,7 +2969,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataPsd(self, onlySize=False):
+    def __readMetaDataPsd(self, fromCache=True):
         """Read metadata from PSD file
 
         PSD specifications: https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_pgfId-1030196
@@ -3254,6 +3234,8 @@ class BCFile(BCBaseFile):
 
             return {}
 
+        if fromCache and not self.__metadata is None:
+            return self.__metadata
 
         returned = {}
 
@@ -3265,8 +3247,6 @@ class BCFile(BCBaseFile):
                 return returned
 
             returned.update(read_header(fHandler))
-            if onlySize:
-                return returned
             read_CMD(fHandler)
             returned.update(read_IRB(fHandler))
             #returned.update(read_LMI(fHandler))
@@ -3274,7 +3254,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataXcf(self, onlySize=False):
+    def __readMetaDataXcf(self, fromCache=True):
         """Read metadata from XCF file
 
         XCF specifications: http://henning.makholm.net/xcftools/xcfspec-saved
@@ -3432,6 +3412,8 @@ class BCFile(BCBaseFile):
 
             return {}
 
+        if fromCache and not self.__metadata is None:
+            return self.__metadata
 
         returned = {}
 
@@ -3443,17 +3425,13 @@ class BCFile(BCBaseFile):
                 return returned
 
             returned.update(read_header(fHandler))
-            if onlySize:
-                return returned
 
             returned.update(read_imageProperties(fHandler))
-
-
 
         return returned
 
 
-    def __readMetaDataKra(self):
+    def __readMetaDataKra(self, fromCache=True):
         """Read metadata from Krita file"""
         def getShapeLayerList():
             # return a list of shape layer files into archive
@@ -3517,6 +3495,9 @@ class BCFile(BCBaseFile):
             archive.close()
 
             return returned
+
+        if fromCache and not self.__metadata is None:
+            return self.__metadata
 
         returned = {
             'width': 0,
@@ -3944,8 +3925,11 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataOra(self):
+    def __readMetaDataOra(self, fromCache=True):
         """Read metadata from Krita file"""
+        if fromCache and not self.__metadata is None:
+            return self.__metadata
+
         returned = {
             'width': 0,
             'height': 0,
@@ -4013,7 +3997,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataBmp(self):
+    def __readMetaDataBmp(self, fromCache=True):
         """Read metadata from BMP file
 
         BMP specifications: https://en.wikipedia.org/wiki/BMP_file_format
@@ -4022,6 +4006,9 @@ class BCFile(BCBaseFile):
                             https://formats.kaitai.io/bmp/
                             https://exiftool.org/TagNames/BMP.html
         """
+        if fromCache and not self.__metadata is None:
+            return self.__metadata
+
         returned = {}
 
         with open(self._fullPathName, 'rb') as fHandler:
@@ -4181,7 +4168,6 @@ class BCFile(BCBaseFile):
                         else:
                             returned['iccProfileName']={'en-gb': 'Linked to external file'}
                             returned['iccProfileCopyright']={'en-gb': bytes.decode('utf-8', 'ignore')}
-
 
         return returned
 
@@ -4547,7 +4533,7 @@ class BCWorkerCache(Worker):
         """Worker will start execution; begin transaction mode for BCFileCache database"""
         self.__dbFileCache.beginTransaction()
 
-    def stopEvent(self):
+    def cleanupEvent(self):
         """Worker have finished and is about to stop; close transaction mode and commit chnage for BCFileCache database"""
         # close database connexion
         self.__dbFileCache.commitTransaction()
@@ -4665,6 +4651,12 @@ class BCFileCache(QObject):
             BCFileCache.__GLOBAL_INSTANCE=BCFileCache()
 
     @staticmethod
+    def finalize():
+        if not BCFileCache.__GLOBAL_INSTANCE is None:
+            BCFileCache.__GLOBAL_INSTANCE.close()
+            BCFileCache.__GLOBAL_INSTANCE=None
+
+    @staticmethod
     def cacheDirectory():
         """Return current cache directory"""
         return BCFileCache.__BC_CACHE_PATH
@@ -4707,6 +4699,9 @@ class BCFileCache(QObject):
         self.__fileName=BCFileCache.cacheFile()
         self.__databaseInstance.setDatabaseName(self.__fileName)
 
+        # flag to determinate if there's data to flush
+        self.__dataToFlush=False
+
         if self.__databaseInstance.open():
             # database is opened, prepare database
             sqlQuery=QSqlQuery(self.__databaseInstance)
@@ -4733,6 +4728,12 @@ class BCFileCache(QObject):
                     return
 
             self.__initializeQueries()
+
+            # db settings
+            for pragma in ["PRAGMA journal_mode=WAL"]:
+                if not sqlQuery.exec(pragma):
+                    Debug.print(f"Can't set: {pragma}")
+
 
     def __initializeQueries(self):
         """Initialise default queries"""
@@ -4775,7 +4776,6 @@ class BCFileCache(QObject):
                 SELECT path, timestamp
                 FROM directories
             """)
-
 
     def __updateDatabaseVersion(self):
         """Update database version"""
@@ -4838,27 +4838,34 @@ class BCFileCache(QObject):
 
         if not upToDate:
             # unable to create/update database schema
-            print(f"[BCFileCache.__updateDatabaseVersion] Unable to create/update cache database schema: 0.00 ==> {updatedVersion/100:.2f}", )
+            Debug.print(f"[BCFileCache.__updateDatabaseVersion] Unable to create/update cache database schema: 0.00 ==> {updatedVersion/100:.2f}", )
 
         return upToDate
 
     def __flushMemoryDatabase(self):
         """Flush data from memory database"""
-        if self.__databaseInstance is None or self.__id is None:
+        if self.__databaseInstance is None or self.__id is None or not self.__dataToFlush:
             return False
 
         sqlQuery=QSqlQuery(self.__databaseInstance)
         # WHERE clause is mandatory to let parser being able to understand the ON CONFLICT statement
         #  https://www.sqlite.org/lang_upsert.html
         #  chapter 2.2 Parsing Ambiguity
-        returned=sqlQuery.exec("""
+        #sqlQuery.exec("BEGIN IMMEDIATE TRANSACTION")
+        if sqlQuery.exec("""
                 INSERT INTO metadata (hash, metadata, fileFormat)
                     SELECT hash, metadata, fileFormat FROM tmpDb.metadata
                     WHERE true
                 ON CONFLICT(hash)
                     DO UPDATE SET metadata=excluded.metadata,
                                   fileFormat=excluded.fileFormat
-            """)
+            """):
+            self.__dataToFlush=False
+            #sqlQuery.exec("COMMIT TRANSACTION")
+            return True
+        #sqlQuery.exec("ROLLBACK TRANSACTION")
+        return False
+
 
     def fileName(self):
         """Return current database file name"""
@@ -4896,6 +4903,7 @@ class BCFileCache(QObject):
         self.__databaseQuerySetMetadata.bindValue(":fileFormat", fileFormat)
 
         if self.__databaseQuerySetMetadata.exec():
+            self.__dataToFlush=(not self.__id is None)
             return True
         return False
 
@@ -5372,7 +5380,7 @@ class BCFileListRule(object):
         if len(returned) == 0:
             return ''
 
-        return " - "+"\n - ".join(returned)
+        return "- "+f"\n  {i18n('and')}\n- ".join(returned)
 
     def name(self):
         """Return current matching pattern"""
@@ -5621,6 +5629,7 @@ class BCFileListRuleCombination(object):
         self.__hash = None
 
         self.__items = []
+        self.__itemsSorted = []
 
         for item in items:
             if isinstance(item, BCFileListRuleCombination) or isinstance(item, BCFileListRule):
@@ -5653,6 +5662,31 @@ class BCFileListRuleCombination(object):
     def __updateHash(self):
         """Return a hash from rule"""
         self.__hash=hash((self.__type, *[hash(item) for item in self.__items]))
+        self.__sortRules()
+
+    def __sortRules(self):
+        """Sort items to ensure best evaluation order
+
+        If current operator is NOT, do not sort (ensure the first item is always the same)
+        If current operator is AND or OR, sort items in the following order:
+        - BCFileListRule: simplest evaluation first (from file/image)
+        - BCFileListRuleCombination: NOT
+        - BCFileListRuleCombination: AND
+        - BCFileListRuleCombination: OR
+        """
+        def sortKey(value):
+            if isinstance(value, BCFileListRule):
+                return 1
+            elif isinstance(value, BCFileListRuleCombination):
+                if value.operatorType()==BCFileListRuleCombination.OPERATOR_NOT:
+                    return 2
+                elif value.operatorType()==BCFileListRuleCombination.OPERATOR_AND:
+                    return 3
+                elif value.operatorType()==BCFileListRuleCombination.OPERATOR_OR:
+                    return 4
+            return 5
+
+        self.__itemsSorted=sorted(self.__items, key=sortKey)
 
     def translate(self, short=False):
         """Return rule as a human readable string"""
@@ -5661,14 +5695,17 @@ class BCFileListRuleCombination(object):
         if short:
             return self.__str__()
 
-        returned=[item.translate(short) for item in self.__items]
-
         if self.__type == BCFileListRuleCombination.OPERATOR_NOT:
-            return f"NOT ({returned[0]})"
+            opStr=i18n('not')+'\n'
+            return textwrap.indent(opStr+self.__items[0].translate(short),'  ')
         elif self.__type == BCFileListRuleCombination.OPERATOR_AND:
-            return f"({') AND ('.join(returned)})"
+            opStr=i18n('and')+' '
         elif self.__type == BCFileListRuleCombination.OPERATOR_OR:
-            return f"({') OR ('.join(returned)})"
+            opStr=i18n('or')+' '
+
+        opJoin=f"\n  {opStr}\n"
+        returned=[item.translate(short) for item in self.__itemsSorted]
+        return textwrap.indent(opJoin.join(returned),'  ')
 
     def fileMatch(self, file):
         """Return True if given `file` match current rule"""
@@ -5677,8 +5714,8 @@ class BCFileListRuleCombination(object):
             return True
         elif not isinstance(file, BCFile):
             raise EInvalidRuleParameter("Given `file` type must be <BCFile>")
-        elif len(self.__items)==0:
-            # if emptyu combination, then always return False
+        elif len(self.__itemsSorted)==0:
+            # if empty combination, then always return False
             return False
 
         if self.__type==BCFileListRuleCombination.OPERATOR_NOT:
@@ -5686,13 +5723,13 @@ class BCFileListRuleCombination(object):
             return not self.__items[0].fileMatch(file)
         elif self.__type==BCFileListRuleCombination.OPERATOR_AND:
             # AND => parse all rule, exit on first False
-            for item in self.__items:
+            for item in self.__itemsSorted:
                 if not item.fileMatch(file):
                     return False
             return True
         elif self.__type==BCFileListRuleCombination.OPERATOR_OR:
             # OR => parse all rules, exit on first True
-            for item in self.__items:
+            for item in self.__itemsSorted:
                 if item.fileMatch(file):
                     return True
             return False
@@ -5733,6 +5770,10 @@ class BCFileListRuleCombination(object):
                 self.__items.remove(value)
                 self.__invalidate()
         self.__updateHash()
+
+    def operatorType(self):
+        """Return operator type"""
+        return self.__type
 
 
 class BCFileListPath(object):
@@ -6240,37 +6281,49 @@ class BCFileList(QObject):
         return '\n'.join(returned)
 
     def exportHQuery(self):
-        """Export query into a human natural language
+        """Export query into a 'human natural language'
 
         Return result as a string
         """
         returned = []
 
+        # build "search from directories" declaration
         if len(self.__pathList) > 0:
             fromClause = []
 
             for path in self.__pathList:
-                clause = 'directory '
-
                 if path.recursive():
-                    clause+='(and sub-directories) '
+                    clause=i18n('directory (and sub-directories)')
+                else:
+                    clause=i18n('directory')
 
-                clause+=f'"{path.path()}"'
+                clause+=f' "{path.path()}"'
 
                 fromClause.append(clause)
 
-            returned.append('Search from '+ '\n        and '.join(fromClause) )
-        else:
-            returned.append('Search')
+            # need to work with translated strings
+            searchStr=i18n('Search files from')+' '
+            searchAnd='\n'+(' '*len(searchStr))+i18n("and")+'\n'+(' '*len(searchStr))
 
+            returned.append(searchStr+searchAnd.join(fromClause))
+            returned.append('')
+        else:
+            returned.append(i18n('Search files from [search path not defined]'))
+            returned.append('')
+
+        # build "include" declaration
         includes = []
         if self.__includeDirectories:
-            includes.append('directories')
+            includes.append(i18n('directories'))
         if self.__includeHidden:
-            includes.append('hidden files')
+            includes.append(i18n('hidden files'))
 
         if len(includes) > 0:
-            returned.append('Including {0}'.format("\n      and ".join(includes)))
+            searchStr=i18n('Including')+' '
+            searchAnd='\n'+(' '*len(searchStr))+i18n("and")+'\n'+(' '*len(searchStr))
+
+            returned.append(searchStr+searchAnd.join(includes))
+            returned.append('')
 
 
         if len(self.__ruleList) > 0:
@@ -6279,7 +6332,12 @@ class BCFileList(QObject):
             for rule in self.__ruleList:
                 whereClause.append(rule.translate())
 
-            returned.append('For which:\n'+ '\nOr for which:\n'.join(whereClause) )
+            if len(whereClause):
+                searchStr=i18n('For which')+'\n'
+                searchAnd='\n'+(' '*len(searchStr))+i18n("and")+'\n'+(' '*len(searchStr))
+
+                returned.append(searchStr+searchAnd.join(whereClause))
+                returned.append('')
 
         if len(self.__sortList) > 0:
             returned.append('Sort result by:\n - '+ '\n - '.join([v.translate() for v in self.__sortList]) )
