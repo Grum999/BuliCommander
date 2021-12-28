@@ -114,6 +114,13 @@ class Worker(QRunnable):
                 # no more item to process
                 break
 
+            # need to understand why without this print statement,
+            # UI is unresponsive when long multi-threaded process is running
+            # :-/
+            #
+            # So a "null" print allow to do a print, without printing
+            print("\0", sep="", end="", flush=True)
+
             item=self.processEvent(itemIndex, item)
 
             if not self.__callback is None:
