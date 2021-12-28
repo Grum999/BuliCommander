@@ -76,7 +76,10 @@ from bulicommander.pktk.widgets.woperatorinput import (
         WOperatorBaseInput
     )
 from bulicommander.pktk.widgets.wiodialog import WDialogBooleanInput
-from bulicommander.pktk.widgets.wconsole import WConsole
+from bulicommander.pktk.widgets.wconsole import (
+        WConsole,
+        WConsoleType
+    )
 from bulicommander.pktk.widgets.wnodeeditor import (
         NodeEditorScene,
         NodeEditorNode,
@@ -119,7 +122,7 @@ class BCSearchFilesDialogBox(QDialog):
         db.exec()
 
     @staticmethod
-    def buildBCFileList(searchRulesAsDict, forTextOnly=False):
+    def buildBCFileList(fileList, searchRulesAsDict, forTextOnly=False):
         """From a given search rule (provided as dictionnary) build and return
         a BCFileList object ready to use
 
@@ -244,7 +247,9 @@ class BCSearchFilesDialogBox(QDialog):
                 return ruleCombination
 
 
-        if not isinstance(searchRulesAsDict, dict):
+        if not isinstance(fileList, BCFileList):
+            raise EInvalidType("Given `fileList` must be a <BCFileList>")
+        elif not isinstance(searchRulesAsDict, dict):
             raise EInvalidType("Given `searchRulesAsDict` must be a <dict>")
         elif not 'nodes' in searchRulesAsDict:
             raise EInvalidValue("Given `searchRulesAsDict` must contains a 'nodes' key")
@@ -266,7 +271,7 @@ class BCSearchFilesDialogBox(QDialog):
 
         if nodeSearchEngine is None or (len(nodeSearchPaths)==0 and not forTextOnly):
             # can't continue...
-            return None
+            return False
 
         # need to search for filters relationships
         # rebuild links from Id, easier to rebuild relationship tree
@@ -296,15 +301,15 @@ class BCSearchFilesDialogBox(QDialog):
             startFromId=filterToLinks[nodeSearchEngine['properties']['id']][0]
             filterRules=buildBCFileListRules(startFromId, filterToLinks, nodeSearchFilters)
 
-        returnedFileList=BCFileList()
+        fileList.clear()
 
         if not filterRules is None:
-            returnedFileList.addRule(filterRules)
+            fileList.addRule(filterRules)
 
         for pathId in pathToLinks:
-            returnedFileList.addPath(BCFileListPath(nodeSearchPaths[pathId]['widget']["path"], nodeSearchPaths[pathId]['widget']["scanSubDirectories"]))
+            fileList.addPath(BCFileListPath(nodeSearchPaths[pathId]['widget']["path"], nodeSearchPaths[pathId]['widget']["scanSubDirectories"]))
 
-        return returnedFileList
+        return True
 
     def __init__(self, title, uicontroller, parent=None):
         super(BCSearchFilesDialogBox, self).__init__(parent)
@@ -314,7 +319,8 @@ class BCSearchFilesDialogBox(QDialog):
         self.__uiController = uicontroller
         self.__fileNfo = self.__uiController.panel().files()
 
-        self.__processing=False
+        self.__searchInProgress=False
+        self.__bcFileList=BCFileList()
 
         self.__currentSelectedNodeWidget=None
 
@@ -344,8 +350,10 @@ class BCSearchFilesDialogBox(QDialog):
 
         self.pbClose.clicked.connect(self.accept)
         self.pbSearch.clicked.connect(self.executeSearch)
+        self.pbCancel.clicked.connect(self.__executeSearchCancel)
 
         self.twSearchModes.setCurrentIndex(0)
+        self.twSearchModes.currentChanged.connect(self.__currentTabChanged)
 
         self.__scene=self.wneAdvancedView.nodeScene()
         self.__scene.setOptionSnapToGrid(True)
@@ -359,18 +367,27 @@ class BCSearchFilesDialogBox(QDialog):
         self.__scene.nodeOutputUpdated.connect(self.__advancedSearchChanged)
         self.__scene.setFormatIdentifier("bulicommander-search-filter-advanced")
 
-
         self.wsffpAdvanced.modified.connect(self.__advancedFileFromPathChanged)
         self.wsffrAdvanced.modified.connect(self.__advancedFileFilterRule)
         self.wsifrAdvanced.modified.connect(self.__advancedImgFilterRule)
 
         self.wcExecutionConsole.setOptionShowGutter(False)
         self.wcExecutionConsole.appendLine(i18n('Not search executed yet'))
-        self.pbProgress.setVisible(False)
+        self.wProgress.setVisible(False)
+
+        self.__bcFileList.stepExecuted.connect(self.__executeSearchProcessSignals)
 
         self.__basicResetSearch(True)
         self.__advancedResetSearch(True)
         self.__advancedSelectionChanged()
+
+    def __currentTabChanged(self, index):
+        """Tab changed"""
+        if self.__searchInProgress:
+            self.pbSearch.setEnabled(False)
+        else:
+            self.pbSearch.setEnabled(index!=BCSearchFilesDialogBox.__TAB_SEARCH_CONSOLE)
+
 
     def __advancedCalculateNodePosition(self):
         """Calculate position for a new node added to scene"""
@@ -415,9 +432,8 @@ class BCSearchFilesDialogBox(QDialog):
         """Search model has been modified"""
         if self.swAdvancedPanel.currentIndex()==BCSearchFilesDialogBox.__PANEL_SEARCH_ENGINE:
             dataAsDict=self.__advancedExportConfig()
-            bcFileList=BCSearchFilesDialogBox.buildBCFileList(dataAsDict, True)
-            if bcFileList:
-                self.tbSearchDescription.setPlainText(bcFileList.exportHQuery())
+            if BCSearchFilesDialogBox.buildBCFileList(self.__bcFileList, dataAsDict, True):
+                self.tbSearchDescription.setPlainText(self.__bcFileList.exportHQuery())
 
     def __advancedFileFromPathChanged(self):
         """Something has been modified, update node"""
@@ -713,7 +729,6 @@ class BCSearchFilesDialogBox(QDialog):
         elif informations[0]==BCFileList.STEPEXECUTED_PROGRESS_ANALYZE:
             # 0 => step identifier
             # 1 => current pct
-            print("STEPEXECUTED_PROGRESS_ANALYZE", informations[1])
             self.pbProgress.setValue(informations[1])
             self.pbProgress.update()
             QApplication.processEvents()
@@ -729,7 +744,6 @@ class BCSearchFilesDialogBox(QDialog):
         elif informations[0]==BCFileList.STEPEXECUTED_PROGRESS_FILTER:
             # 0 => step identifier
             # 1 => current pct
-            print("STEPEXECUTED_PROGRESS_FILTER", informations[1])
             self.pbProgress.setValue(informations[1])
             self.pbProgress.update()
             QApplication.processEvents()
@@ -768,7 +782,17 @@ class BCSearchFilesDialogBox(QDialog):
             # 1 => total time duration (in seconds)
             self.wcExecutionConsole.append(f"""#g#{i18n('OK')}#""")
             self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Sort made in')}# #w#{informations[1]:0.4f}s##lk#)#*""")
+        elif informations[0]==BCFileList.STEPEXECUTED_CANCEL:
+            # 0 => step identifier
+            self.wcExecutionConsole.appendLine('')
+            self.wcExecutionConsole.appendLine(f"""**#ly#Search cancelled!#**""", WConsoleType.WARNING)
 
+    def __executeSearchCancel(self):
+        """Cancel current search execution"""
+        self.pbCancel.setEnabled(False)
+        self.pbCancel.update()
+        QApplication.processEvents()
+        self.__bcFileList.cancelExecution()
 
     def executeSearch(self):
         """Execute basic/advanced search, according to current active tab"""
@@ -783,24 +807,21 @@ class BCSearchFilesDialogBox(QDialog):
             self.wneAdvancedView.nodeScene().deserialize(dataAsDict)
             self.wneAdvancedView.zoomToFit()
 
+        self.__searchInProgress=True
         self.wcExecutionConsole.clear()
-        self.wcExecutionConsole.appendLine(i18n('Build search query:')+' ')
         self.twSearchModes.setCurrentIndex(BCSearchFilesDialogBox.__TAB_SEARCH_CONSOLE)
-        bcFileList=BCSearchFilesDialogBox.buildBCFileList(dataAsDict)
-        if bcFileList:
+        if BCSearchFilesDialogBox.buildBCFileList(self.__bcFileList, dataAsDict):
             self.pbProgress.setMinimum(0)
             self.pbProgress.setMaximum(0)
             self.pbProgress.setValue(0)
-            self.pbProgress.setVisible(True)
+            self.wProgress.setVisible(True)
 
-            self.tabBasicSearch.setEnabled(False)
-            self.tabAdvancedSearch.setEnabled(False)
-            self.pbSearch.setEnabled(False)
+            self.twSearchModes.setTabEnabled(BCSearchFilesDialogBox.__TAB_BASIC_SEARCH, False)
+            self.twSearchModes.setTabEnabled(BCSearchFilesDialogBox.__TAB_ADVANCED_SEARCH, False)
             self.pbClose.setEnabled(False)
+            self.pbCancel.setEnabled(True)
 
-            bcFileList.stepExecuted.connect(self.__executeSearchProcessSignals)
-
-            self.wcExecutionConsole.append(f"#g#{i18n('OK')}#")
+            self.wcExecutionConsole.appendLine(f"""{i18n('Build search query:')} #g#{i18n('OK')}#""", WConsoleType.VALID)
 
             self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(i18n('Execute search...'))
@@ -808,7 +829,7 @@ class BCSearchFilesDialogBox(QDialog):
             self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(f"""**{i18n('Scan directories:')}** """)
 
-            print(bcFileList.execute(True, True, True, False, [
+            self.__bcFileList.execute(True, True, True, False, [
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATH,
                 BCFileList.STEPEXECUTED_ANALYZE_METADATA,
@@ -818,25 +839,26 @@ class BCSearchFilesDialogBox(QDialog):
                 BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,
                 BCFileList.STEPEXECUTED_PROGRESS_FILTER,
                 BCFileList.STEPEXECUTED_PROGRESS_SORT
-            ]))
+            ])
 
-            #print('--'*80)
-            print(bcFileList.exportTxtResults())
-            #print('--'*80)
-            print(bcFileList.stats())
+            print(self.__bcFileList.exportTxtResults())
+            print(self.__bcFileList.stats())
 
             self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(i18n('Execution done'))
 
-            self.tabBasicSearch.setEnabled(True)
-            self.tabAdvancedSearch.setEnabled(True)
-            self.pbSearch.setEnabled(True)
+            self.twSearchModes.setTabEnabled(BCSearchFilesDialogBox.__TAB_BASIC_SEARCH, True)
+            self.twSearchModes.setTabEnabled(BCSearchFilesDialogBox.__TAB_ADVANCED_SEARCH, True)
             self.pbClose.setEnabled(True)
-        else:
-            self.wcExecutionConsole.append(f"#r#{i18n('KO')}#")
-            self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Current search definition is not valid')}#*""")
 
-        self.pbProgress.setVisible(False)
+            self.wProgress.setVisible(False)
+            self.__searchInProgress=False
+        else:
+            self.wcExecutionConsole.appendLine(f"""{i18n('Build search query:')} #r#{i18n('KO')}#""", WConsoleType.ERROR)
+            self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Current search definition is not valid')}#*""", WConsoleType.ERROR)
+
+            self.wProgress.setVisible(False)
+            self.__searchInProgress=False
 
 
 

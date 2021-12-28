@@ -5884,6 +5884,7 @@ class BCFileList(QObject):
     multiple specifics criteria inclyuding add/exclude)
     """
     stepExecuted = Signal(tuple)
+    stepCancel = Signal()
 
     # activated by default
     STEPEXECUTED_SEARCH_FROM_PATHS =    0b00000100      # search files in path finished
@@ -5897,6 +5898,10 @@ class BCFileList(QObject):
     STEPEXECUTED_PROGRESS_ANALYZE =     0b00001001      # each file analyzed will emit a signal; allows to track analysis progress and update a progress bar for exwample
     STEPEXECUTED_PROGRESS_FILTER =      0b00010001      # each file filtered will emit a signal; allows to track analysis progress and update a progress bar for exwample
     STEPEXECUTED_PROGRESS_SORT =        0b01000001      # each file sorted will emit a signal; allows to track analysis progress and update a progress bar for exwample
+
+    STEPEXECUTED_CANCEL =               0b10000000      # execution has been cancelled
+
+    CANCELLED_SEARCH = -1
 
     __MTASKS_RULES = []
 
@@ -5972,7 +5977,7 @@ class BCFileList(QObject):
             returned['sizeKra']=file.size()
         return returned
 
-    def __init__(self, currentList=None):
+    def __init__(self):
         """Initialiser current list query"""
         super(BCFileList, self).__init__(None)
         self.__currentFiles = []
@@ -5988,6 +5993,10 @@ class BCFileList(QObject):
         self.__includeHidden = False
 
         self.__invalidated = True
+
+        self.__cancelProcess=False
+
+        self.__workerPool=WorkerPool()
 
         self.__progressFilesPctThreshold=0
         self.__progressFilesPctTracker=0
@@ -6573,6 +6582,13 @@ class BCFileList(QObject):
 
         return '\n'.join(returned)
 
+    def cancelExecution(self):
+        """Cancel current execution"""
+        if not self.__cancelProcess:
+            self.__cancelProcess=True
+            if self.__workerPool:
+                self.__workerPool.stopProcessing()
+
     def execute(self, clearResults=True, buildStats=False, strict=False, preFilterFileName=False, signals=None):
         """Search for files
 
@@ -6589,13 +6605,16 @@ class BCFileList(QObject):
 
         Return number of files matching criteria
         """
+        self.__cancelProcess=False
+
         if signals is None:
             signals=[
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
                 BCFileList.STEPEXECUTED_ANALYZE_METADATA,
                 BCFileList.STEPEXECUTED_FILTER_FILES,
                 BCFileList.STEPEXECUTED_BUILD_RESULTS,
-                BCFileList.STEPEXECUTED_SORT_RESULTS
+                BCFileList.STEPEXECUTED_SORT_RESULTS,
+                BCFileList.STEPEXECUTED_CANCEL
             ]
 
         if clearResults:
@@ -6670,6 +6689,10 @@ class BCFileList(QObject):
                                 foundFiles.add(fullPathName)
 
                     if nbTotal%1000==0:
+                        if self.__cancelProcess:
+                            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+                            self.__invalidated = False
+                            return BCFileList.CANCELLED_SEARCH
                         QApplication.processEvents()
             elif os.path.isdir(pathName):
                 # return current directory content
@@ -6693,6 +6716,10 @@ class BCFileList(QObject):
                                     foundDirectories.add(fullPathName)
 
                     if nbTotal%1000==0:
+                        if self.__cancelProcess:
+                            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+                            self.__invalidated = False
+                            return BCFileList.CANCELLED_SEARCH
                         QApplication.processEvents()
 
             if BCFileList.STEPEXECUTED_SEARCH_FROM_PATH in signals:
@@ -6721,19 +6748,24 @@ class BCFileList(QObject):
         self.__progressFilesPctThreshold=math.ceil(len(foundFiles)/100)
         self.__progressFilesPctTracker=0
         self.__progressFilesPctCurrent=0
-        pool = WorkerPool()
-        pool.setWorkerClass(BCWorkerCache)
+
+        self.__workerPool.setWorkerClass(BCWorkerCache)
         if BCFileList.STEPEXECUTED_PROGRESS_ANALYZE in signals:
-            pool.signals.processed.connect(self.__progressScanning)
-        filesList = pool.mapNoNone(foundFiles, BCFileList.getBcFile, strict)
+            self.__workerPool.signals.processed.connect(self.__progressScanning)
+        filesList = self.__workerPool.mapNoNone(foundFiles, BCFileList.getBcFile, strict)
         if BCFileList.STEPEXECUTED_PROGRESS_ANALYZE in signals:
             if self.__progressFilesPctCurrent<100:
                 self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,100))
-            pool.signals.processed.disconnect(self.__progressScanning)
-        pool.setWorkerClass()
-        directoriesList = pool.mapNoNone(foundDirectories, BCFileList.getBcDirectory)
+            self.__workerPool.signals.processed.disconnect(self.__progressScanning)
+        self.__workerPool.setWorkerClass()
+        directoriesList = self.__workerPool.mapNoNone(foundDirectories, BCFileList.getBcDirectory)
 
         Stopwatch.stop('BCFileList.execute.scan')
+
+        if self.__cancelProcess:
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+            self.__invalidated = False
+            return BCFileList.CANCELLED_SEARCH
 
         if BCFileList.STEPEXECUTED_ANALYZE_METADATA in signals:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_ANALYZE_METADATA, Stopwatch.duration("BCFileList.execute.scan")))
@@ -6756,15 +6788,20 @@ class BCFileList(QObject):
                 self.__progressFilesPctThreshold=math.ceil(len(filesList)/100)
                 self.__progressFilesPctTracker=0
                 self.__progressFilesPctCurrent=0
-                pool.signals.processed.connect(self.__progressFiltering)
+                self.__workerPool.signals.processed.connect(self.__progressFiltering)
 
             # use all processors to parallelize files analysis
-            self.__currentFiles = pool.mapNoNone(filesList, BCFileList.checkBcFile)
+            self.__currentFiles = self.__workerPool.mapNoNone(filesList, BCFileList.checkBcFile)
 
             if BCFileList.STEPEXECUTED_PROGRESS_FILTER in signals:
-                pool.signals.processed.disconnect(self.__progressFiltering)
+                self.__workerPool.signals.processed.disconnect(self.__progressFiltering)
 
-            self.__currentFiles += pool.mapNoNone(directoriesList, BCFileList.checkBcFile)
+            if self.__cancelProcess:
+                self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+                self.__invalidated = False
+                return BCFileList.CANCELLED_SEARCH
+
+            self.__currentFiles += self.__workerPool.mapNoNone(directoriesList, BCFileList.checkBcFile)
         else:
             # no rules=return currents lists
             self.__currentFiles = filesList
@@ -6772,6 +6809,11 @@ class BCFileList(QObject):
             BCFileList.__MTASKS_RULES = []
 
         Stopwatch.stop('BCFileList.execute.filter')
+
+        if self.__cancelProcess:
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+            self.__invalidated = False
+            return BCFileList.CANCELLED_SEARCH
 
         if BCFileList.STEPEXECUTED_FILTER_FILES in signals:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER_FILES, len(self.__currentFiles), Stopwatch.duration("BCFileList.execute.filter")))
@@ -6781,14 +6823,14 @@ class BCFileList(QObject):
         Stopwatch.start('BCFileList.execute.result')
         # build final result
         #   all files that match selection rules are added to current selected images
-        self.__currentFilesName=set(pool.map(self.__currentFiles, BCFileList.getBcFileName))
+        self.__currentFilesName=set(self.__workerPool.map(self.__currentFiles, BCFileList.getBcFileName))
         nb = len(self.__currentFiles)
 
         #Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.result"))
 
         if buildStats:
             Stopwatch.start('BCFileList.execute.buildStats')
-            self.__statFiles=pool.aggregate(self.__currentFiles, self.__statFiles, BCFileList.getBcFileStats)
+            self.__statFiles=self.__workerPool.aggregate(self.__currentFiles, self.__statFiles, BCFileList.getBcFileStats)
             Stopwatch.stop('BCFileList.execute.buildStats')
             #Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.buildStats"))
 
@@ -6796,6 +6838,12 @@ class BCFileList(QObject):
 
         if BCFileList.STEPEXECUTED_BUILD_RESULTS in signals:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_BUILD_RESULTS,Stopwatch.duration("BCFileList.execute.result")))
+
+
+        if self.__cancelProcess:
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+            self.__invalidated = False
+            return BCFileList.CANCELLED_SEARCH
 
         # ----
         Stopwatch.start('BCFileList.sort')
@@ -6809,8 +6857,13 @@ class BCFileList(QObject):
         Stopwatch.stop('BCFileList.sort')
         if BCFileList.STEPEXECUTED_SORT_RESULTS in signals:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("BCFileList.sort")))
-        #Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.sort"))
 
+        if self.__cancelProcess:
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+            self.__invalidated = False
+            return BCFileList.CANCELLED_SEARCH
+
+        #Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.sort"))
         #Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.global"))
 
         self.__invalidated = False
