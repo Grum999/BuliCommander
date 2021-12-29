@@ -75,6 +75,7 @@ from bulicommander.pktk.widgets.woperatorinput import (
         WOperatorType,
         WOperatorBaseInput
     )
+from bulicommander.pktk.widgets.wlabelelide import WLabelElide
 from bulicommander.pktk.widgets.wiodialog import WDialogBooleanInput
 from bulicommander.pktk.widgets.wconsole import (
         WConsole,
@@ -94,13 +95,6 @@ from bulicommander.pktk.pktk import (
     )
 
 # -----------------------------------------------------------------------------
-
-def setElidedText(wLabel, text, elideMode=Qt.ElideMiddle):
-    """Set elided text to given qlabel"""
-    metrics=QFontMetrics(wLabel.font())
-    wLabel.setText(metrics.elidedText(text, elideMode, wLabel.width()))
-
-
 
 class BCSearchFilesDialogBox(QDialog):
     """User interface to search files"""
@@ -1460,7 +1454,7 @@ class BCNodeWSearchFromPath(NodeEditorNodeWidget):
     def __init__(self, scene, title, parent=None):
         outputPathConnector=NodeEditorConnectorPath('OutputPath', NodeEditorConnector.DIRECTION_OUTPUT, NodeEditorConnector.LOCATION_RIGHT_BOTTOM)
 
-        self.__lblPath=QLabel()
+        self.__lblPath=WLabelElide(Qt.ElideLeft)
         self.__lblRecursive=QLabel()
 
         self.__lblPath.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
@@ -1490,7 +1484,7 @@ class BCNodeWSearchFromPath(NodeEditorNodeWidget):
         """Convert current given data dictionnary to update widget node properties"""
         if 'path' in data:
             self.__data['path']=data['path']
-            setElidedText(self.__lblPath, self.__data['path'], Qt.ElideLeft)
+            self.__lblPath.setText(self.__data['path'])
             self.__lblPath.setToolTip(self.__data['path'])
 
         if 'scanSubDirectories' in data:
@@ -1505,9 +1499,9 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
     def __init__(self, scene, title, parent=None):
         outputFilterRuleConnector=NodeEditorConnectorFilter('OutputFilterRule', NodeEditorConnector.DIRECTION_OUTPUT, NodeEditorConnector.LOCATION_LEFT_BOTTOM, source=i18n('file'))
 
-        self.__lblName=QLabel()
-        self.__lblSize=QLabel()
-        self.__lblDate=QLabel()
+        self.__lblName=WLabelElide(Qt.ElideRight)
+        self.__lblSize=WLabelElide(Qt.ElideRight)
+        self.__lblDate=WLabelElide(Qt.ElideRight)
 
         self.__lblName.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 
@@ -1574,7 +1568,7 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
                     text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{tsToStr(self.__data['fileDate']['value'])} or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{tsToStr(self.__data['fileDate']['value2'])}"
                 else:
                     text=f"{WOperatorBaseInput.operatorLabel(self.__data['fileDate']['operator'])}{tsToStr(self.__data['fileDate']['value'])}"
-                setElidedText(self.__lblDate, text, Qt.ElideRight)
+                self.__lblDate.setText(text)
                 self.__lblDate.setToolTip(text)
             else:
                 self.__lblDate.setText(boolYesNo(False))
@@ -1583,7 +1577,7 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
         if 'fileName' in data:
             self.__data['fileName']=copy.deepcopy(data['fileName'])
             if self.__data['fileName']['active']:
-                setElidedText(self.__lblName, WOperatorBaseInput.operatorLabel(self.__data['fileName']['operator'])+' "'+self.__data['fileName']['value']+'"', Qt.ElideRight)
+                self.__lblName.setText(WOperatorBaseInput.operatorLabel(self.__data['fileName']['operator'])+' "'+self.__data['fileName']['value']+'"')
 
                 text=f"""<i>{WOperatorBaseInput.operatorLabel(self.__data['fileName']['operator'])}</i> "{self.__data['fileName']['value']}"<br/>"""
                 if self.__data['fileName']['ignoreCase']:
@@ -1604,7 +1598,7 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
                     text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self.__data['fileSize']['value']}{self.__data['fileSize']['unit']} or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self.__data['fileSize']['value2']}{self.__data['fileSize']['unit']}"
                 else:
                     text=f"{WOperatorBaseInput.operatorLabel(self.__data['fileSize']['operator'])}{self.__data['fileSize']['value']}{self.__data['fileSize']['unit']}"
-                setElidedText(self.__lblSize, text, Qt.ElideRight)
+                self.__lblSize.setText(text)
                 self.__lblSize.setToolTip(text)
             else:
                 self.__lblSize.setText(boolYesNo(False))
@@ -1618,9 +1612,9 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
     def __init__(self, scene, title, parent=None):
         outputFilterRuleConnector=NodeEditorConnectorFilter('OutputFilterRule', NodeEditorConnector.DIRECTION_OUTPUT, NodeEditorConnector.LOCATION_LEFT_BOTTOM, source=i18n('image'))
 
-        self.__lblImgFormat=QLabel()
-        self.__lblImgWidth=QLabel()
-        self.__lblImgHeight=QLabel()
+        self.__lblImgFormat=WLabelElide(Qt.ElideRight)
+        self.__lblImgWidth=WLabelElide(Qt.ElideRight)
+        self.__lblImgHeight=WLabelElide(Qt.ElideRight)
 
         self.__layout=QFormLayout()
         self.__layout.setContentsMargins(0,0,0,0)
@@ -1670,7 +1664,7 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
                     text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self.__data['imageHeight']['value']}px or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self.__data['imageHeight']['value2']}px"
                 else:
                     text=f"{WOperatorBaseInput.operatorLabel(self.__data['imageHeight']['operator'])}{self.__data['imageHeight']['value']}px"
-                setElidedText(self.__lblImgHeight, text, Qt.ElideRight)
+                self.__lblImgHeight.setText(text)
                 self.__lblImgHeight.setToolTip(text)
             else:
                 self.__lblImgHeight.setText(boolYesNo(False))
@@ -1685,7 +1679,7 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
                     text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self.__data['imageWidth']['value']}px or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self.__data['imageWidth']['value2']}px"
                 else:
                     text=f"{WOperatorBaseInput.operatorLabel(self.__data['imageWidth']['operator'])}{self.__data['imageWidth']['value']}px"
-                setElidedText(self.__lblImgWidth, text, Qt.ElideRight)
+                self.__lblImgWidth.setText(text)
                 self.__lblImgWidth.setToolTip(text)
             else:
                 self.__lblImgWidth.setText(boolYesNo(False))
