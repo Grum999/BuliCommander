@@ -43,12 +43,14 @@ class WLabelElide(QLabel):
         self.__elipsisText='…'
         self.__elipsisWidth=0
         self.__hElipsisWidth=0
+        self.__textWidth=0
         self.__fontMetrics=QFontMetrics(self.font())
 
-        self.__hashFnt=hash(self.font())
-        self.__hashTxt=hash(self.text())
+        self.__hashFnt=None
+        self.__hashTxt=None
 
         self.setElide(elide)
+        self.__calculateMetrics()
 
     def __calculateMetrics(self):
         """Calculate metrics used during paint process"""
