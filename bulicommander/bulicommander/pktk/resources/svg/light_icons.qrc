@@ -15,6 +15,7 @@
     <file alias="brush_r90">light/32dp/brush_r90.svg</file>
     <file alias="brush_remove">light/32dp/brush_remove.svg</file>
     <file alias="cache_refresh">light/32dp/cache_refresh.svg</file>
+    <file alias="calendar_month">light/32dp/calendar_month.svg</file>
     <file alias="clear">light/32dp/clear.svg</file>
     <file alias="clipboard">light/32dp/clipboard.svg</file>
     <file alias="clipboard_new">light/32dp/clipboard_new.svg</file>
@@ -63,7 +64,9 @@
     <file alias="filter_alt">light/32dp/filter_alt.svg</file>
     <file alias="filter_backward">light/32dp/filter_backward.svg</file>
     <file alias="filter_case">light/32dp/filter_case.svg</file>
+    <file alias="filter_file">light/32dp/filter_file.svg</file>
     <file alias="filter_highlightall">light/32dp/filter_highlightall.svg</file>
+    <file alias="filter_image">light/32dp/filter_image.svg</file>
     <file alias="filter_regex">light/32dp/filter_regex.svg</file>
     <file alias="filter_wholeword">light/32dp/filter_wholeword.svg</file>
     <file alias="folder_open">light/32dp/folder_open.svg</file>
@@ -108,6 +111,7 @@
     <file alias="move_up">light/32dp/move_up.svg</file>
     <file alias="move_up_first">light/32dp/move_up_first.svg</file>
     <file alias="navigation">light/32dp/navigation.svg</file>
+    <file alias="node_add">light/32dp/node_add.svg</file>
     <file alias="note">light/32dp/note.svg</file>
     <file alias="note_add">light/32dp/note_add.svg</file>
     <file alias="note_delete">light/32dp/note_delete.svg</file>
@@ -152,6 +156,7 @@
     <file alias="warning">light/32dp/warning.svg</file>
     <file alias="zoom_1x1">light/32dp/zoom_1x1.svg</file>
     <file alias="zoom_fit">light/32dp/zoom_fit.svg</file>
+    <file alias="zoom_fit2">light/32dp/zoom_fit2.svg</file>
   </qresource>
   <qresource prefix="pktk/images/disabled">
     <file alias="animation">light/32dp-disabled/animation.svg</file>
@@ -169,6 +174,7 @@
     <file alias="brush_r90">light/32dp-disabled/brush_r90.svg</file>
     <file alias="brush_remove">light/32dp-disabled/brush_remove.svg</file>
     <file alias="cache_refresh">light/32dp-disabled/cache_refresh.svg</file>
+    <file alias="calendar_month">light/32dp-disabled/calendar_month.svg</file>
     <file alias="clear">light/32dp-disabled/clear.svg</file>
     <file alias="clipboard">light/32dp-disabled/clipboard.svg</file>
     <file alias="clipboard_new">light/32dp-disabled/clipboard_new.svg</file>
@@ -217,7 +223,9 @@
     <file alias="filter_alt">light/32dp-disabled/filter_alt.svg</file>
     <file alias="filter_backward">light/32dp-disabled/filter_backward.svg</file>
     <file alias="filter_case">light/32dp-disabled/filter_case.svg</file>
+    <file alias="filter_file">light/32dp-disabled/filter_file.svg</file>
     <file alias="filter_highlightall">light/32dp-disabled/filter_highlightall.svg</file>
+    <file alias="filter_image">light/32dp-disabled/filter_image.svg</file>
     <file alias="filter_regex">light/32dp-disabled/filter_regex.svg</file>
     <file alias="filter_wholeword">light/32dp-disabled/filter_wholeword.svg</file>
     <file alias="folder_open">light/32dp-disabled/folder_open.svg</file>
@@ -262,6 +270,7 @@
     <file alias="move_up">light/32dp-disabled/move_up.svg</file>
     <file alias="move_up_first">light/32dp-disabled/move_up_first.svg</file>
     <file alias="navigation">light/32dp-disabled/navigation.svg</file>
+    <file alias="node_add">light/32dp-disabled/node_add.svg</file>
     <file alias="note">light/32dp-disabled/note.svg</file>
     <file alias="note_add">light/32dp-disabled/note_add.svg</file>
     <file alias="note_delete">light/32dp-disabled/note_delete.svg</file>
@@ -306,6 +315,7 @@
     <file alias="warning">light/32dp-disabled/warning.svg</file>
     <file alias="zoom_1x1">light/32dp-disabled/zoom_1x1.svg</file>
     <file alias="zoom_fit">light/32dp-disabled/zoom_fit.svg</file>
+    <file alias="zoom_fit2">light/32dp-disabled/zoom_fit2.svg</file>
   </qresource>
   <qresource prefix="pktk/images-white/normal">
     <file alias="close">light/white/32dp/close.svg</file>
