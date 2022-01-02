@@ -33,7 +33,7 @@
     <number>6</number>
    </property>
    <item row="3" column="1">
-    <widget class="WOperatorInputDateTime" name="woiFileDateTime" native="true">
+    <widget class="WOperatorInputDate" name="woiFileDtDate" native="true">
      <property name="enabled">
       <bool>false</bool>
      </property>
@@ -113,7 +113,7 @@
     </widget>
    </item>
    <item row="3" column="0">
-    <widget class="QCheckBox" name="cbFileDateTime">
+    <widget class="QCheckBox" name="cbFileDtDate">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
        <horstretch>0</horstretch>
@@ -124,7 +124,7 @@
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file date/time.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="text">
-      <string>File date/time</string>
+      <string>File date</string>
      </property>
     </widget>
    </item>
@@ -144,7 +144,7 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0" colspan="4">
+   <item row="5" column="0" colspan="4">
     <spacer name="horizontalSpacer">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
@@ -166,6 +166,19 @@
      </property>
     </spacer>
    </item>
+   <item row="4" column="0">
+    <widget class="QCheckBox" name="cbFileDtTime">
+     <property name="styleSheet">
+      <string notr="true">padding-left: 30px</string>
+     </property>
+     <property name="text">
+      <string>Time</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="WOperatorInputTime" name="woiFileDtTime" native="true"/>
+   </item>
   </layout>
  </widget>
  <customwidgets>
@@ -182,7 +195,13 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>WOperatorInputDateTime</class>
+   <class>WOperatorInputDate</class>
+   <extends>QWidget</extends>
+   <header>bulicommander.pktk.widgets.woperatorinput</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>WOperatorInputTime</class>
    <extends>QWidget</extends>
    <header>bulicommander.pktk.widgets.woperatorinput</header>
    <container>1</container>

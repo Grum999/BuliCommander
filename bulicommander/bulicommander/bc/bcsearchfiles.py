@@ -121,6 +121,23 @@ class BCSearchFilesDialogBox(QDialog):
         a BCFileList object ready to use
 
         Return None if not able to parse dictionary properly
+
+
+
+        Date/Time file filter when time is not checked ('dateOnly'=True)
+
+                     | if date=2022-01-01
+            Operator | Displayed condition              | Applied condition (BCFileRule)
+            ---------+----------------------------------+--------------------------------------------------
+            >        | >   2022-01-01                   | >   2022-01-01 00:00:00.0000
+            >=       | >=  2022-01-01                   | >=  2022-01-01 00:00:00.0000
+            <        | <   2022-01-01                   | <   2022-01-01 00:00:00.0000
+            <=       | <=  2022-01-01                   | <=  2022-01-01 23:59:59.9999
+            =        | >=  2022-01-01 and <= 2022-01-01 | >=  2022-01-01 00:00:00.0000 and <= 2022-01-01 23:59:59.9999
+            !=       | <   2022-01-01 and >  2022-01-01 | <   2022-01-01 00:00:00.0000 and >  2022-01-01 23:59:59.9999
+            between  | >=  2022-01-01 and <= 2022-01-01 | >=  2022-01-01 00:00:00.0000 and <= 2022-01-01 23:59:59.9999
+            !between | <   2022-01-01 and >  2022-01-01 | <   2022-01-01 00:00:00.0000 and >  2022-01-01 23:59:59.9999
+
         """
         def buildBCFileListRule(filterRulesAsDict):
             # build BCFileListRule from a BCNodeWSearchFileFilterRule dictionary
@@ -165,16 +182,29 @@ class BCSearchFilesDialogBox(QDialog):
                 returned.setSize(ruleOperator)
 
             if 'fileDate' in filterRulesAsDict and filterRulesAsDict['fileDate']['active']:
+                ruleType = BCFileListRuleOperatorType.DATETIME
+                fmt='dt'
+                if filterRulesAsDict['fileDate']['dateOnly']:
+                    ruleType = BCFileListRuleOperatorType.DATE
+                    fmt='d'
+
                 if filterRulesAsDict['fileDate']['operator'] in ('between', 'not between'):
-                    ruleOperator=BCFileListRuleOperator((filterRulesAsDict['fileDate']['value'], filterRulesAsDict['fileDate']['value2']),
+                    value=filterRulesAsDict['fileDate']['value']
+                    value2=filterRulesAsDict['fileDate']['value2']+0.9999
+
+                    ruleOperator=BCFileListRuleOperator((value, value2),
                                                         filterRulesAsDict['fileDate']['operator'],
-                                                        BCFileListRuleOperatorType.DATETIME,
-                                                        (tsToStr(filterRulesAsDict['fileDate']['value']),tsToStr(filterRulesAsDict['fileDate']['value2'])))
+                                                        ruleType,
+                                                        (tsToStr(value, fmt),tsToStr(value2, fmt)))
                 else:
-                    ruleOperator=BCFileListRuleOperator(filterRulesAsDict['fileDate']['value'],
+                    value=filterRulesAsDict['fileDate']['value']
+                    if filterRulesAsDict['fileDate']['operator']=='<=':
+                        value+=0.9999
+
+                    ruleOperator=BCFileListRuleOperator(value,
                                                         filterRulesAsDict['fileDate']['operator'],
-                                                        BCFileListRuleOperatorType.DATETIME,
-                                                        tsToStr(filterRulesAsDict['fileDate']['value']))
+                                                        ruleType,
+                                                        tsToStr(value, fmt))
 
                 returned.setModifiedDateTime(ruleOperator)
 
@@ -975,15 +1005,18 @@ class BCWSearchFileFilterRules(QWidget):
         # option checkbox
         self.cbFileName.setMinimumHeight(self.woiFileName.minimumSizeHint().height())
         self.cbFileSize.setMinimumHeight(self.woiFileSize.minimumSizeHint().height())
-        self.cbFileDateTime.setMinimumHeight(self.woiFileDateTime.minimumSizeHint().height())
+        self.cbFileDtDate.setMinimumHeight(self.woiFileDtDate.minimumSizeHint().height())
+        self.cbFileDtTime.setMinimumHeight(self.woiFileDtTime.minimumSizeHint().height())
 
         self.cbFileName.toggled.connect(self.__fileNameToggled)
         self.cbFileSize.toggled.connect(self.__fileSizeToggled)
-        self.cbFileDateTime.toggled.connect(self.__fileDateTimeToggled)
+        self.cbFileDtDate.toggled.connect(self.__fileDtDateToggled)
+        self.cbFileDtTime.toggled.connect(self.__fileDtTimeToggled)
 
         self.__fileNameToggled(False)
         self.__fileSizeToggled(False)
-        self.__fileDateTimeToggled(False)
+        self.__fileDtTimeToggled(False)
+        self.__fileDtDateToggled(False)
 
         # file pattern
         self.woiFileName.operatorChanged.connect(self.__setModified)
@@ -1008,17 +1041,26 @@ class BCWSearchFileFilterRules(QWidget):
         self.woiFileSize.suffixChanged.connect(self.__setModified)
 
         # file date
-        self.woiFileDateTime.setMinimum(0)
-        self.woiFileDateTime.setMaximum(QDateTime.fromString("2099-12-31 23:59:59", "yyyy-MM-dd HH:mm:ss"))
-        self.woiFileDateTime.operatorChanged.connect(self.__setModified)
-        self.woiFileDateTime.valueChanged.connect(self.__setModified)
-        self.woiFileDateTime.value2Changed.connect(self.__setModified)
+        self.woiFileDtDate.setMinimum(0)
+        self.woiFileDtDate.setMaximum(QDate.fromString("2099-12-31", "yyyy-MM-dd"))
+        self.woiFileDtDate.operatorChanged.connect(lambda v: self.woiFileDtTime.setOperator(v))
+        self.woiFileDtDate.operatorChanged.connect(self.__setModified)
+        self.woiFileDtDate.valueChanged.connect(self.__setModified)
+        self.woiFileDtDate.value2Changed.connect(self.__setModified)
+
+        self.woiFileDtTime.setOperatorEnabled(False)
+        self.woiFileDtTime.setCheckRangeValues(False)
+        self.woiFileDtTime.setMinimum(0)
+        self.woiFileDtTime.setMaximum(QTime.fromString("23:59:59", "HH:mm:ss"))
+        self.woiFileDtTime.valueChanged.connect(self.__setModified)
+        self.woiFileDtTime.value2Changed.connect(self.__setModified)
 
     def __setDefaultValues(self):
         """Initialise default values"""
         self.cbFileName.setChecked(False)
         self.cbFileSize.setChecked(False)
-        self.cbFileDateTime.setChecked(False)
+        self.cbFileDtDate.setChecked(False)
+        self.cbFileDtTime.setChecked(False)
 
         self.woiFileName.setValue("")
         self.woiFileName.setOperator(WOperatorType.OPERATOR_LIKE)
@@ -1036,36 +1078,45 @@ class BCWSearchFileFilterRules(QWidget):
         dateTimeNow=QDateTime.currentDateTime()
         dateTimeYm1=QDateTime(dateTimeNow)
         dateTimeYm1.addYears(-1)
-        self.woiFileDateTime.setValue(dateTimeYm1)
-        self.woiFileDateTime.setValue2(dateTimeNow)
-        self.woiFileDateTime.setOperator(WOperatorType.OPERATOR_BETWEEN)
+        self.woiFileDtDate.setValue(dateTimeYm1)
+        self.woiFileDtDate.setValue2(dateTimeNow)
+        self.woiFileDtDate.setOperator(WOperatorType.OPERATOR_BETWEEN)
 
         self.__isModified=False
 
     def __setModified(self):
         """Set widget as modified"""
+        self.woiFileDtTime.setCheckRangeValues(self.woiFileDtDate.value()==self.woiFileDtDate.value2())
         self.__isModified=True
         self.modified.emit()
 
     def __fileNameToggled(self, checked):
         """Checkbox 'file name' has been toggled"""
-        self.__setModified()
         self.woiFileName.setEnabled(checked)
         self.woiFileName.setVisible(checked)
         self.cbFileNameIgnoreCase.setEnabled(checked)
         self.cbFileNameIgnoreCase.setVisible(checked)
+        self.__setModified()
 
     def __fileSizeToggled(self, checked):
         """Checkbox 'file size' has been toggled"""
-        self.__setModified()
         self.woiFileSize.setEnabled(checked)
         self.woiFileSize.setVisible(checked)
-
-    def __fileDateTimeToggled(self, checked):
-        """Checkbox 'file date/time' has been toggled"""
         self.__setModified()
-        self.woiFileDateTime.setEnabled(checked)
-        self.woiFileDateTime.setVisible(checked)
+
+    def __fileDtDateToggled(self, checked):
+        """Checkbox 'file date' has been toggled"""
+        self.woiFileDtDate.setEnabled(checked)
+        self.woiFileDtDate.setVisible(checked)
+        self.cbFileDtTime.setEnabled(checked)
+        self.woiFileDtTime.setVisible(checked and self.cbFileDtTime.isChecked())
+        self.__setModified()
+
+    def __fileDtTimeToggled(self, checked):
+        """Checkbox 'file time' has been toggled"""
+        self.woiFileDtTime.setEnabled(checked and self.cbFileDtTime.isEnabled())
+        self.woiFileDtTime.setVisible(checked and self.cbFileDtTime.isEnabled())
+        self.__setModified()
 
     def resetToDefault(self):
         """Reset to default values"""
@@ -1077,6 +1128,14 @@ class BCWSearchFileFilterRules(QWidget):
 
     def exportAsDict(self):
         """Export widget configuration as dictionnary"""
+        dt1=self.woiFileDtDate.value()
+        dt2=self.woiFileDtDate.value2()
+
+        if self.cbFileDtTime.isEnabled() and self.cbFileDtTime.isChecked():
+            # use time from input fields
+            dt1+=self.woiFileDtTime.value()
+            dt2+=self.woiFileDtTime.value2()
+
         returned={
                 "properties": {
                                 "id": QUuid.createUuid().toString(),
@@ -1107,10 +1166,11 @@ class BCWSearchFileFilterRules(QWidget):
                                     "unit": self.woiFileSize.suffix()
                                 },
                             "fileDate": {
-                                    "active": self.cbFileDateTime.isChecked(),
-                                    "operator": self.woiFileDateTime.operator(),
-                                    "value": self.woiFileDateTime.value(),
-                                    "value2": self.woiFileDateTime.value2()
+                                    "active": self.cbFileDtDate.isChecked(),
+                                    "dateOnly": not self.cbFileDtTime.isChecked(),
+                                    "operator": self.woiFileDtDate.operator(),
+                                    "value": dt1,
+                                    "value2": dt2
                                 }
                         }
             }
@@ -1165,10 +1225,22 @@ class BCWSearchFileFilterRules(QWidget):
             self.woiFileSize.setSuffix(dataAsDict['fileSize']['unit'])
 
         if "fileDate" in dataAsDict and isinstance(dataAsDict['fileDate'], dict):
-            self.cbFileDateTime.setChecked(dataAsDict['fileDate']['active'])
-            self.woiFileDateTime.setValue(dataAsDict['fileDate']['value'])
-            self.woiFileDateTime.setValue2(dataAsDict['fileDate']['value2'])
-            self.woiFileDateTime.setOperator(dataAsDict['fileDate']['operator'])
+            dt1=QDateTime.fromMSecsSinceEpoch(1000*dataAsDict['fileDate']['value'])
+            dt2=QDateTime.fromMSecsSinceEpoch(1000*dataAsDict['fileDate']['value2'])
+
+            tt1=dt1.time().msecsSinceStartOfDay()
+            tt2=dt2.time().msecsSinceStartOfDay()
+
+            self.cbFileDtDate.setChecked(dataAsDict['fileDate']['active'])
+            self.woiFileDtDate.setValue(dataAsDict['fileDate']['value'])
+            self.woiFileDtDate.setValue2(dataAsDict['fileDate']['value2'])
+            self.woiFileDtDate.setOperator(dataAsDict['fileDate']['operator'])
+            self.cbFileDtTime.setChecked(not dataAsDict['fileDate']['dateOnly'])
+
+            if self.cbFileDtDate.isChecked() and self.cbFileDtTime.isChecked():
+                # time is defined, then activate time input
+                self.woiFileDtTime.setValue(tt1/1000)
+                self.woiFileDtTime.setValue2(tt2/1000)
 
         self.__isModified=False
 
@@ -1499,9 +1571,11 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
     def __init__(self, scene, title, parent=None):
         outputFilterRuleConnector=NodeEditorConnectorFilter('OutputFilterRule', NodeEditorConnector.DIRECTION_OUTPUT, NodeEditorConnector.LOCATION_LEFT_BOTTOM, source=i18n('file'))
 
+        self.__lblDateTime=QLabel(f"- <b>{i18n('Date/Time')}</b>")
         self.__lblName=WLabelElide(Qt.ElideRight)
         self.__lblSize=WLabelElide(Qt.ElideRight)
         self.__lblDate=WLabelElide(Qt.ElideRight)
+        self.__lblTime=WLabelElide(Qt.ElideRight)
 
         self.__lblName.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 
@@ -1511,7 +1585,7 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
         self.__layout.addRow(QLabel(f"<b>{i18n('Filtered by:')}</b>"))
         self.__layout.addRow(f"- <b>{i18n('Name')}</b>", self.__lblName)
         self.__layout.addRow(f"- <b>{i18n('Size')}</b>", self.__lblSize)
-        self.__layout.addRow(f"- <b>{i18n('Date')}</b>", self.__lblDate)
+        self.__layout.addRow(self.__lblDateTime, self.__lblDate)
 
         if BCSettings.get(BCSettingsKey.CONFIG_GLB_FILE_UNIT)==BCSettingsValues.FILE_UNIT_KIB:
             sizeValue2=1024.00
@@ -1540,6 +1614,7 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
                         },
                     "fileDate": {
                             "active": False,
+                            "dateOnly": True,
                             "operator": WOperatorType.OPERATOR_BETWEEN,
                             "value": dateTimeYm1,
                             "value2": dateTimeNow
@@ -1561,13 +1636,22 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
         """Convert current given data dictionnary to update widget node properties"""
         if 'fileDate' in data:
             self.__data['fileDate']=copy.deepcopy(data['fileDate'])
+
             if self.__data['fileDate']['active']:
-                if self.__data['fileDate']['operator']==WOperatorType.OPERATOR_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{tsToStr(self.__data['fileDate']['value'])} and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{tsToStr(self.__data['fileDate']['value2'])}"
-                elif self.__data['fileDate']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{tsToStr(self.__data['fileDate']['value'])} or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{tsToStr(self.__data['fileDate']['value2'])}"
+                fmt='dt'
+                if self.__data['fileDate']['dateOnly']:
+                    fmt='d'
+                    self.__lblDateTime.setText(f"- <b>{i18n('Date')}</b>")
                 else:
-                    text=f"{WOperatorBaseInput.operatorLabel(self.__data['fileDate']['operator'])}{tsToStr(self.__data['fileDate']['value'])}"
+                    self.__lblDateTime.setText(f"- <b>{i18n('Date/Time')}</b>")
+
+                if self.__data['fileDate']['operator']==WOperatorType.OPERATOR_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{tsToStr(self.__data['fileDate']['value'], fmt)} and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{tsToStr(self.__data['fileDate']['value2'], fmt)}"
+                elif self.__data['fileDate']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{tsToStr(self.__data['fileDate']['value'], fmt)} or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{tsToStr(self.__data['fileDate']['value2'], fmt)}"
+                else:
+                    text=f"{WOperatorBaseInput.operatorLabel(self.__data['fileDate']['operator'])}{tsToStr(self.__data['fileDate']['value'], fmt)}"
+
                 self.__lblDate.setText(text)
                 self.__lblDate.setToolTip(text)
             else:

@@ -5367,7 +5367,10 @@ class BCFileListRule(object):
             returned.append(f"{BCFileProperty.FILE_SIZE.translate()} {self.__size.translate()}")
 
         if not self.__mdatetime is None:
-            returned.append(f"{BCFileProperty.FILE_DATE.translate()} {self.__mdatetime.translate()}")
+            if self.__mdatetime.type()== BCFileListRuleOperatorType.DATE:
+                returned.append(f"{BCFileProperty.FILE_DATE.translate()} {self.__mdatetime.translate()}")
+            else:
+                returned.append(f"{i18n('file date/time')} {self.__mdatetime.translate()}")
 
         if not self.__format is None:
             returned.append(f"{BCFileProperty.FILE_FORMAT.translate()} {self.__format.translate()}")
@@ -5466,25 +5469,26 @@ class BCFileListRule(object):
             elif not isinstance(value[0], float):
                 raise EInvalidRuleParameter("Given `date` must be a valid value")
 
-
             ruleType = BCFileListRuleOperatorType.DATETIME
 
             # now, value is a timestamp
             # reconvert it to string => YYYY-MM-DD HH:MI:SS
             # and determinate if it's a DATE (HH:MI:SS = 00:00:00) a DATETIME (HH:MI:SS <> 00:00:00)
             if isinstance(value[0], float):
-                checkHour = re.search('00:00:00', tsToStr(value[0]))
-                if not checkHour is None:
+                if QDateTime.fromMSecsSinceEpoch(1000*value[0]).time().msecsSinceStartOfDay()==0:
                     # hour = 00:00:00
                     ruleType = BCFileListRuleOperatorType.DATE
+                elif value[1] == '<=':
+                    value = (value[0]+0.9999, value[1])
             elif isinstance(value[0], tuple):
                 # interval (between)
                 # in this case, always date/time
                 # => fix end hour to 23:59:59.9999 if not already defined
-                checkHour = re.search('00:00:00', tsToStr(value[0][1]))
-                if not checkHour is None:
+                if QDateTime.fromMSecsSinceEpoch(1000*value[0]).time().msecsSinceStartOfDay()==0:
                     # hour = 00:00:00
                     value = ((value[0][0], value[0][1] + 86399.9999), value[1])
+                else:
+                    value = ((value[0][0], value[0][1] + 0.9999), value[1])
             elif isinstance(value[0], list):
                 # list (in)
                 # not possible to mix dates and date/time so consider that if all items are date, it's date
@@ -5492,8 +5496,7 @@ class BCFileListRule(object):
                 ruleType = BCFileListRuleOperatorType.DATE
 
                 for dateItem in value[0]:
-                    checkHour = re.search('00:00:00', tsToStr(dateItem))
-                    if checkHour is None:
+                    if QDateTime.fromMSecsSinceEpoch(1000*value[0]).time().msecsSinceStartOfDay()!=0:
                         ruleType = BCFileListRuleOperatorType.DATETIME
                         break
 

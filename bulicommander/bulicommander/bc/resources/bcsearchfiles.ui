@@ -20,7 +20,7 @@
    <item>
     <widget class="QTabWidget" name="twSearchModes">
      <property name="currentIndex">
-      <number>2</number>
+      <number>1</number>
      </property>
      <property name="documentMode">
       <bool>false</bool>
@@ -457,7 +457,7 @@
             </property>
             <property name="icon">
              <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
-              <normaloff>:/pktk/images/normal/filter_alt</normaloff>:/pktk/images/normal/filter_alt</iconset>
+              <normaloff>:/pktk/images/normal/filter_file</normaloff>:/pktk/images/normal/filter_file</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -480,7 +480,7 @@
             </property>
             <property name="icon">
              <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
-              <normaloff>:/pktk/images/normal/image</normaloff>:/pktk/images/normal/image</iconset>
+              <normaloff>:/pktk/images/normal/filter_image</normaloff>:/pktk/images/normal/filter_image</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -499,7 +499,12 @@
              <string>Add filter operator node</string>
             </property>
             <property name="text">
-             <string>...</string>
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normalon>:/pktk/images/normal/node_add</normalon>
+             </iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -554,7 +559,7 @@
             </property>
             <property name="icon">
              <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
-              <normaloff>:/pktk/images/normal/zoom_fit</normaloff>:/pktk/images/normal/zoom_fit</iconset>
+              <normaloff>:/pktk/images/normal/zoom_fit2</normaloff>:/pktk/images/normal/zoom_fit2</iconset>
             </property>
             <property name="iconSize">
              <size>
