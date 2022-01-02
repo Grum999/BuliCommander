@@ -38,6 +38,25 @@ from PyQt5.QtWidgets import (
 from ..modules.utils import replaceLineEditClearButton
 
 
+STYLE_DROPDOWN_BUTTON_CALENDAR="""
+::drop-down {
+        margin: 0px;
+        border: 0px solid rgb(255,0,255);
+        background: rgba(0,0,0,0);
+    }
+
+::down-arrow {
+        image: url(:/pktk/images/normal/calendar_month);
+        background: rgba(0,0,0,0);
+        border: 0px solid rgba(0,0,255,128);
+        margin:0px;
+        padding:0px;
+        left:1px;
+    }
+"""
+
+
+
 class WOperatorType:
     OPERATOR_GT=          '>'
     OPERATOR_GE=          '>='
@@ -60,24 +79,26 @@ class WOperatorBaseInput(QWidget):
     - WOperatorInputInt
     - WOperatorInputFloat
     - WOperatorInputStr
+    - WOperatorInputDate
+    - WOperatorInputTime
     - WOperatorInputDateTime
 
-             | int   |     |      |           |
-    Operator | float | str | date | date/time |
-    ---------+-------+-----+------+-----------+
-    >        | x     |     | x    | x         |
-    >=       | x     |     | x    | x         |
-    <        | x     |     | x    | x         |
-    <=       | x     |     | x    | x         |
-    =        | x     | x   | x    | x         |
-    !=       | x     | x   | x    | x         |
-    between  | x     |     | x    | x         |
-    !between | x     |     | x    | x         |
-    match    |       | x   |      |           |
-    !match   |       | x   |      |           |
-    like     |       | x   |      |           |
-    !like    |       | x   |      |           |
-             |       |     |      |           |
+             | int   |     |      |      |           |
+    Operator | float | str | date | time | date/time |
+    ---------+-------+-----+------+------+-----------+
+    >        | x     |     | x    | x    | x         |
+    >=       | x     |     | x    | x    | x         |
+    <        | x     |     | x    | x    | x         |
+    <=       | x     |     | x    | x    | x         |
+    =        | x     | x   | x    | x    | x         |
+    !=       | x     | x   | x    | x    | x         |
+    between  | x     |     | x    | x    | x         |
+    !between | x     |     | x    | x    | x         |
+    match    |       | x   |      |      |           |
+    !match   |       | x   |      |      |           |
+    like     |       | x   |      |      |           |
+    !like    |       | x   |      |      |           |
+             |       |     |      |      |           |
 
     According to searched type:
 
@@ -99,6 +120,10 @@ class WOperatorBaseInput(QWidget):
 
                 +--------+  +--------+         +--------+
     date        |       V|  |      <>|     and |      <>|      QDateEdit
+                +--------+  +--------+         +--------+
+
+                +--------+  +--------+         +--------+
+    time        |       V|  |      <>|     and |      <>|      QTimeEdit
                 +--------+  +--------+         +--------+
 
                 +--------+  +--------+         +--------+
@@ -137,6 +162,7 @@ class WOperatorBaseInput(QWidget):
         self._inInit=True
 
         self._defaultOperatorList=[]
+        self._checkRangeValue=True
 
         self.__layout=QBoxLayout(QBoxLayout.LeftToRight)
         self.__layout.setContentsMargins(0, 0, 0, 0)
@@ -169,6 +195,14 @@ class WOperatorBaseInput(QWidget):
         for operator in values:
             self._cbOperatorList.addItem(WOperatorBaseInput.__LABELS[operator], operator)
         self._inInit=False
+
+    def _input1Changed(self, value=None):
+        """Value for input1 has changed"""
+        pass
+
+    def _input2Changed(self, value=None):
+        """Value for input2 has changed"""
+        pass
 
     def __operatorChanged(self, index):
         """Operator value has been changed"""
@@ -251,6 +285,24 @@ class WOperatorBaseInput(QWidget):
         self._initOperator(validList)
         self.setOperator(self._operator)
 
+    def operatorEnabled(self):
+        """Return if the operator is enabled or not"""
+        return self._cbOperatorList.isEnabled()
+
+    def setOperatorEnabled(self, value):
+        """Set if the operator is enabled or not"""
+        self._cbOperatorList.setEnabled(value)
+
+    def checkRangeValues(self):
+        """Return if range values are checked or not"""
+        return self._checkRangeValue
+
+    def setCheckRangeValues(self, value):
+        """Set if range values are checked or not"""
+        if isinstance(value, bool) and value!=self._checkRangeValue:
+            self._checkRangeValue=value
+            if self._checkRangeValue:
+                self._input1Changed()
 
 class WOperatorBaseInputNumber(WOperatorBaseInput):
     """Search operator for Integer"""
@@ -291,19 +343,21 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
         self._input1.setAlignment(Qt.AlignRight)
         self._input2.setAlignment(Qt.AlignRight)
 
-        self._input1.valueChanged.connect(self.__input1Changed)
-        self._input2.valueChanged.connect(self.__input2Changed)
+        self._input1.valueChanged.connect(self._input1Changed)
+        self._input2.valueChanged.connect(self._input2Changed)
 
-    def __input1Changed(self, value):
+    def _input1Changed(self, value=None):
         """Value for input1 has changed"""
-        self.valueChanged.emit(value)
-        if self._input1.value()>self._input2.value():
+        if value:
+            self.valueChanged.emit(value)
+        if self._checkRangeValue and self._input1.value()>self._input2.value():
             self._input2.setValue(self._input1.value())
 
-    def __input2Changed(self, value):
+    def _input2Changed(self, value=None):
         """Value for input2 has changed"""
-        self.value2Changed.emit(value)
-        if self._input1.value()>self._input2.value():
+        if value:
+            self.value2Changed.emit(value)
+        if self._checkRangeValue and self._input1.value()>self._input2.value():
             self._input1.setValue(self._input2.value())
 
     def __contextMenuEvent1(self, event):
@@ -496,19 +550,24 @@ class WOperatorInputDateTime(WOperatorBaseInput):
         self._input1.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
         self._input2.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
 
-        self._input1.dateTimeChanged.connect(self.__input1Changed)
-        self._input2.dateTimeChanged.connect(self.__input2Changed)
+        self._input1.setStyleSheet(STYLE_DROPDOWN_BUTTON_CALENDAR)
+        self._input2.setStyleSheet(STYLE_DROPDOWN_BUTTON_CALENDAR)
 
-    def __input1Changed(self, value):
+        self._input1.dateTimeChanged.connect(self._input1Changed)
+        self._input2.dateTimeChanged.connect(self._input2Changed)
+
+    def _input1Changed(self, value=None):
         """Value for input1 has changed"""
-        self.valueChanged.emit(value.toMSecsSinceEpoch())
-        if self._input1.dateTime()>self._input2.dateTime():
+        if value:
+            self.valueChanged.emit(value.toMSecsSinceEpoch())
+        if self._checkRangeValue and self._input1.dateTime()>self._input2.dateTime():
             self._input2.setDateTime(self._input1.dateTime())
 
-    def __input2Changed(self, value):
+    def _input2Changed(self, value=None):
         """Value for input2 has changed"""
-        self.value2Changed.emit(value.toMSecsSinceEpoch())
-        if self._input1.dateTime()>self._input2.dateTime():
+        if value:
+            self.value2Changed.emit(value.toMSecsSinceEpoch())
+        if self._checkRangeValue and self._input1.dateTime()>self._input2.dateTime():
             self._input1.setDateTime(self._input2.dateTime())
 
     def value(self):
@@ -596,18 +655,23 @@ class WOperatorInputDate(WOperatorBaseInput):
         self._input1.setDisplayFormat("yyyy-MM-dd")
         self._input2.setDisplayFormat("yyyy-MM-dd")
 
-        self._input1.userDateChanged.connect(self.__input1Changed)
-        self._input2.userDateChanged.connect(self.__input2Changed)
+        self._input1.setStyleSheet(STYLE_DROPDOWN_BUTTON_CALENDAR)
+        self._input2.setStyleSheet(STYLE_DROPDOWN_BUTTON_CALENDAR)
 
-    def __input1Changed(self, value):
+        self._input1.userDateChanged.connect(self._input1Changed)
+        self._input2.userDateChanged.connect(self._input2Changed)
+
+    def _input1Changed(self, value=None):
         """Value for input1 has changed"""
-        self.valueChanged.emit(QDateTime(value).toMSecsSinceEpoch())
+        if value:
+            self.valueChanged.emit(QDateTime(value).toMSecsSinceEpoch())
         if self._input1.date()>self._input2.date():
             self._input2.setDate(self._input1.date())
 
-    def __input2Changed(self, value):
+    def _input2Changed(self, value=None):
         """Value for input2 has changed"""
-        self.value2Changed.emit(QDateTime(value).toMSecsSinceEpoch())
+        if value:
+            self.value2Changed.emit(QDateTime(value).toMSecsSinceEpoch())
         if self._input1.date()>self._input2.date():
             self._input1.setDate(self._input2.date())
 
@@ -693,24 +757,26 @@ class WOperatorInputTime(WOperatorBaseInput):
         self._input1.setDisplayFormat("HH:mm:ss")
         self._input2.setDisplayFormat("HH:mm:ss")
 
-        self._input1.userTimeChanged.connect(self.__input1Changed)
-        self._input2.userTimeChanged.connect(self.__input2Changed)
+        self._input1.userTimeChanged.connect(self._input1Changed)
+        self._input2.userTimeChanged.connect(self._input2Changed)
 
-    def __input1Changed(self, value):
+    def _input1Changed(self, value=None):
         """Value for input1 has changed"""
-        self.valueChanged.emit(value.msecsSinceStartOfDay())
-        if self._input1.time()>self._input2.time():
+        if value:
+            self.valueChanged.emit(value.msecsSinceStartOfDay())
+        if self._checkRangeValue and self._input1.time()>self._input2.time():
             self._input2.setTime(self._input1.time())
 
-    def __input2Changed(self, value):
+    def _input2Changed(self, value=None):
         """Value for input2 has changed"""
-        self.value2Changed.emit(value.msecsSinceStartOfDay())
-        if self._input1.time()>self._input2.time():
+        if value:
+            self.value2Changed.emit(value.msecsSinceStartOfDay())
+        if self._checkRangeValue and self._input1.time()>self._input2.time():
             self._input1.setTime(self._input2.time())
 
     def value(self):
         """Return current value (as number of seconds since start of day)"""
-        return self._input1.time().msecsSinceStartOfDay()
+        return self._input1.time().msecsSinceStartOfDay()/1000
 
     def setValue(self, value):
         """set current value
@@ -718,46 +784,46 @@ class WOperatorInputTime(WOperatorBaseInput):
         Can be a time stamp or QDateTime
         """
         if isinstance(value, (int, float)):
-            value=QTime.fromMSecsSinceStartOfDay(value)
+            value=QTime.fromMSecsSinceStartOfDay(1000*value)
 
         if isinstance(value, QTime) and value!=self._input1.time():
             self._input1.setTime(value)
 
     def value2(self):
         """Return current 2nd value (as timestamp) - (when 'between' operator)"""
-        return self._input2.time().msecsSinceStartOfDay()
+        return self._input2.time().msecsSinceStartOfDay()/1000
 
     def setValue2(self, value):
         """Set current 2nd value (when 'between' operator)"""
         if isinstance(value, (int, float)):
-            value=QTime.fromMSecsSinceStartOfDay(value)
+            value=QTime.fromMSecsSinceStartOfDay(1000*value)
 
         if isinstance(value, QTime) and value!=self._input2.time():
             self._input2.setTime(value)
 
     def minimum(self):
         """Return minimum value  (as timestamp)"""
-        return self._input1.minimumTime().msecsSinceStartOfDay()
+        return self._input1.minimumTime().msecsSinceStartOfDay()/1000
 
     def setMinimum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QTime.fromMSecsSinceStartOfDay(value)
+            value=QTime.fromMSecsSinceStartOfDay(1000*value)
 
-        if isinstance(value, QDate):
+        if isinstance(value, QTime):
             self._input1.setMinimumTime(value)
             self._input2.setMinimumTime(value)
 
     def maximum(self):
         """Return minimum value  (as timestamp)"""
-        return self._input1.maximumTime().msecsSinceStartOfDay()
+        return self._input1.maximumTime().msecsSinceStartOfDay()/1000
 
     def setMaximum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QTime.fromMSecsSinceStartOfDay(value)
+            value=QTime.fromMSecsSinceStartOfDay(1000*value)
 
-        if isinstance(value, QDate):
+        if isinstance(value, QTime):
             self._input1.setMaximumTime(value)
             self._input2.setMaximumTime(value)
 
@@ -783,6 +849,8 @@ class WOperatorInputStr(WOperatorBaseInput):
         self.setOperator(WOperatorType.OPERATOR_EQ)
 
         self._input1=QLineEdit()
+        self._input1.setClearButtonEnabled(True)
+        replaceLineEditClearButton(self._input1)
 
         self._input1.textChanged.connect(lambda v: self.valueChanged.emit(v))
 
