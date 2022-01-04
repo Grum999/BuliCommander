@@ -75,6 +75,7 @@ from PyQt5.QtWidgets import (
     )
 from PyQt5.QtSql import (QSqlDatabase, QSqlQuery)
 
+from bulicommander.pktk.modules.bytesrw import BytesRW
 from bulicommander.pktk.modules.languagedef import LanguageDef
 from bulicommander.pktk.modules.tokenizer import (
         Tokenizer,
@@ -2532,14 +2533,58 @@ class BCFile(BCBaseFile):
                     'data': None
                 }
             try:
-                bytes = fHandle.read(4)
-                returned['size'] = struct.unpack('!I', bytes)[0]
-                returned['id'] = fHandle.read(4).decode()
-                returned['data'] = fHandle.read(returned['size'])
-                fHandle.read(4)
-            except:
+                bytes = fHandle.read(8)
+                returned['size'] = struct.unpack('!I', bytes[0:4])[0]
+                returned['id'] = bytes[4:].decode()
+                if returned['id']!='IDAT':
+                    returned['data'] = fHandle.read(returned['size'])
+                    # ignore CRC
+                    fHandle.seek(4, os.SEEK_CUR)
+                else:
+                    returned['data'] = fHandle.read(2)
+                    # +2 ==> +4 (CRC) -2 (already read data)
+                    fHandle.seek(returned['size']+2, os.SEEK_CUR)
+
+                    # skip all IDAT chunks
+                    readIDATChunks(fHandle, returned['size']+8)
+            except Exception as e:
+                print("Exception", self._fullPathName, e)
                 returned['valid']=False
             return returned
+
+        def readIDATChunks(fHandle, chunkSize=8196):
+            """Skip all IDAT chunks
+
+            Have example of PNG files with 20000 to 60000 IDAT chunks of 8196bytes
+            Skip time using this method (on 20~30 files) is reduced from 68seconds to 1.6s
+            """
+            while True:
+                currentPosition=fHandle.tell()
+                bufferSize=max(chunkSize*100, 16777216)
+
+                # use memory reader to reduce disk read access
+                bytes = BytesRW(fHandle.read(bufferSize))
+
+                size = bytes.readUInt4()
+                id = bytes.readStr(4)
+
+                while id=='IDAT':
+                    bytes.seek(size+4, os.SEEK_CUR)
+
+                    # +12 = +8 (size + header Id) +4 (CRC)
+                    currentPosition+=size+12
+
+                    size = bytes.readUInt4()
+                    id = bytes.readStr(4)
+
+                    if bytes.tell()+size>=bufferSize:
+                        # there's still IDAT chunk but data buffer is not
+                        # complete and need to work on an another data buffer
+                        id='_next'
+
+                fHandle.seek(currentPosition, os.SEEK_SET)
+                if id!='_next':
+                    return
 
         def decodeChunk_IHDR(chunk):
             """Decode IHDR chunk and return a dictionary with:
@@ -2770,14 +2815,13 @@ class BCFile(BCBaseFile):
         if fromCache and not self.__metadata is None:
             return self.__metadata
 
-        idat1Processed = False
         returned = {}
 
-        with open(self._fullPathName , 'rb') as fHandler:
+        with open(self._fullPathName, 'rb') as fHandler:
             # check signature (8 bytes)
             bytes = fHandler.read(8)
             if bytes != b'\x89PNG\r\n\x1a\n':
-                Debug.print('[BCFile.__readMetaDataPng] Invalid header: {0}', bytes)
+                Debug.print('[BCFile.__readMetaDataPng] Invalid header ({0}): {1}', self._fullPathName, bytes)
                 return returned
 
             chunk = readChunk(fHandler)
@@ -2799,13 +2843,14 @@ class BCFile(BCBaseFile):
                     # if icc profile, ignore gamma and sRGB
                     returned.pop('gamma', None)
                     returned.pop('sRGBRendering', None)
-                elif chunk['id']=='IDAT' and not idat1Processed:
+                elif chunk['id']=='IDAT':
                     returned.update(decodeChunk_IDAT(chunk))
                     idat1Processed = True
                 elif chunk['id']=='IEND':
                     break
-                #elif chunk['id']!='IDAT':
-                #    Debug.print('[BCFile.__readMetaDataPng] Chunk: {0}', chunk)
+                #elif chunk['id']=='IDAT':
+                #    Debug.print('[BCFile.__readMetaDataPng] File: {0} // Chunk: {1}', self._fullPathName, chunk['id'])
+
                 chunk = readChunk(fHandler)
 
         return returned
