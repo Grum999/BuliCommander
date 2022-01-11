@@ -141,6 +141,8 @@
     <file alias="stop">dark/32dp/stop.svg</file>
     <file alias="swap_horiz">dark/32dp/swap_horiz.svg</file>
     <file alias="tabs">dark/32dp/tabs.svg</file>
+    <file alias="tag">dark/32dp/tag.svg</file>
+    <file alias="tags">dark/32dp/tags.svg</file>
     <file alias="text">dark/32dp/text.svg</file>
     <file alias="text_f">dark/32dp/text_f.svg</file>
     <file alias="text_f_r90">dark/32dp/text_f_r90.svg</file>
@@ -300,6 +302,8 @@
     <file alias="stop">dark/32dp-disabled/stop.svg</file>
     <file alias="swap_horiz">dark/32dp-disabled/swap_horiz.svg</file>
     <file alias="tabs">dark/32dp-disabled/tabs.svg</file>
+    <file alias="tag">dark/32dp-disabled/tag.svg</file>
+    <file alias="tags">dark/32dp-disabled/tags.svg</file>
     <file alias="text">dark/32dp-disabled/text.svg</file>
     <file alias="text_f">dark/32dp-disabled/text_f.svg</file>
     <file alias="text_f_r90">dark/32dp-disabled/text_f_r90.svg</file>
