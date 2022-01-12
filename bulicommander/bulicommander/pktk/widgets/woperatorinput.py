@@ -36,6 +36,8 @@ from PyQt5.QtWidgets import (
     )
 
 from ..modules.utils import replaceLineEditClearButton
+from ..modules.imgutils import buildIcon
+from .wtaginput import WTagInput
 
 
 STYLE_DROPDOWN_BUTTON_CALENDAR="""
@@ -52,6 +54,9 @@ STYLE_DROPDOWN_BUTTON_CALENDAR="""
         margin:0px;
         padding:0px;
         left:1px;
+    }
+::down-arrow:disabled {
+        image: url(:/pktk/images/disabled/calendar_month);
     }
 """
 
@@ -70,6 +75,8 @@ class WOperatorType:
     OPERATOR_NOT_MATCH=   'not match'
     OPERATOR_LIKE=        'like'
     OPERATOR_NOT_LIKE=    'not like'
+    OPERATOR_IN=          'in'
+    OPERATOR_NOT_IN=      'not in'
 
 
 class WOperatorBaseInput(QWidget):
@@ -79,26 +86,29 @@ class WOperatorBaseInput(QWidget):
     - WOperatorInputInt
     - WOperatorInputFloat
     - WOperatorInputStr
+    - WOperatorInputList
     - WOperatorInputDate
     - WOperatorInputTime
     - WOperatorInputDateTime
 
-             | int   |     |      |      |           |
-    Operator | float | str | date | time | date/time |
-    ---------+-------+-----+------+------+-----------+
-    >        | x     |     | x    | x    | x         |
-    >=       | x     |     | x    | x    | x         |
-    <        | x     |     | x    | x    | x         |
-    <=       | x     |     | x    | x    | x         |
-    =        | x     | x   | x    | x    | x         |
-    !=       | x     | x   | x    | x    | x         |
-    between  | x     |     | x    | x    | x         |
-    !between | x     |     | x    | x    | x         |
-    match    |       | x   |      |      |           |
-    !match   |       | x   |      |      |           |
-    like     |       | x   |      |      |           |
-    !like    |       | x   |      |      |           |
-             |       |     |      |      |           |
+             | int   |     |      |      | date |      |
+    Operator | float | str | date | time | time | list |
+    ---------+-------+-----+------+------+------+------+
+    >        |   x   |     |  x   |  x   |  x   |      |
+    >=       |   x   |     |  x   |  x   |  x   |      |
+    <        |   x   |     |  x   |  x   |  x   |      |
+    <=       |   x   |     |  x   |  x   |  x   |      |
+    =        |   x   |  x  |  x   |  x   |  x   |      |
+    !=       |   x   |  x  |  x   |  x   |  x   |      |
+    between  |   x   |     |  x   |  x   |  x   |      |
+    !between |   x   |     |  x   |  x   |  x   |      |
+    match    |       |  x  |      |      |      |      |
+    !match   |       |  x  |      |      |      |      |
+    like     |       |  x  |      |      |      |      |
+    !like    |       |  x  |      |      |      |      |
+    in       |       |     |      |      |      |  x   |
+    !in      |       |     |      |      |      |  x   |
+             |       |     |      |      |      |      |
 
     According to searched type:
 
@@ -130,6 +140,10 @@ class WOperatorBaseInput(QWidget):
     date/time   |       V|  |      <>|     and |      <>|      QDateTimeEdit
                 +--------+  +--------+         +--------+
 
+                +--------+  +--------+
+    list        |       V|  |       +|                         WTagInput
+                +--------+  +--------+
+
     """
     operatorChanged=Signal(str)
     valueChanged=Signal(object)
@@ -147,7 +161,9 @@ class WOperatorBaseInput(QWidget):
             WOperatorType.OPERATOR_MATCH:       i18n('match'),
             WOperatorType.OPERATOR_NOT_MATCH:   i18n('not match'),
             WOperatorType.OPERATOR_LIKE:        i18n('like'),
-            WOperatorType.OPERATOR_NOT_LIKE:    i18n('not like')
+            WOperatorType.OPERATOR_NOT_LIKE:    i18n('not like'),
+            WOperatorType.OPERATOR_IN:          i18n('in'),
+            WOperatorType.OPERATOR_NOT_IN:      i18n('not in'),
         }
 
     @staticmethod
@@ -169,7 +185,7 @@ class WOperatorBaseInput(QWidget):
         self.__layout.setDirection(QBoxLayout.LeftToRight)
 
         self._cbOperatorList=QComboBox()
-        self._cbOperatorList.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
+        self._cbOperatorList.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         self._cbOperatorList.currentIndexChanged.connect(self.__operatorChanged)
 
         self._input1=QWidget()
@@ -184,6 +200,11 @@ class WOperatorBaseInput(QWidget):
         self.__layout.addWidget(self._input1)
         self.__layout.addWidget(self._lblAnd)
         self.__layout.addWidget(self._input2)
+
+        self.__layout.setAlignment(self._cbOperatorList, Qt.AlignTop)
+        self.__layout.setAlignment(self._input1, Qt.AlignTop)
+        self.__layout.setAlignment(self._lblAnd, Qt.AlignTop)
+        self.__layout.setAlignment(self._input2, Qt.AlignTop)
 
         self.setLayout(self.__layout)
         self._inInit=False
@@ -304,6 +325,7 @@ class WOperatorBaseInput(QWidget):
             if self._checkRangeValue:
                 self._input1Changed()
 
+
 class WOperatorBaseInputNumber(WOperatorBaseInput):
     """Search operator for Integer"""
     suffixChanged=Signal(str)
@@ -416,7 +438,6 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
         menu.addAction(actionStepDown)
         menu.triggered.connect(executeAction)
         menu.exec(event.globalPos())
-
 
     def value(self):
         """Return current value"""
@@ -862,3 +883,38 @@ class WOperatorInputStr(WOperatorBaseInput):
         """set current value"""
         if value!=self._input1.text():
             self._input1.setText(value)
+
+
+class WOperatorInputList(WOperatorBaseInput):
+    """Search operator for DateTime"""
+
+    def _initializeUi(self):
+        """Initialise widget
+
+        - Operator list
+        - Input widgets
+        """
+        self._defaultOperatorList=[
+                WOperatorType.OPERATOR_IN,
+                WOperatorType.OPERATOR_NOT_IN
+            ]
+        self._initOperator(self._defaultOperatorList)
+        self.setOperator(WOperatorType.OPERATOR_IN)
+
+        self._input1=WTagInput()
+        self._input1.setAcceptNewTags(WTagInput.ACCEPT_NEWTAG_NO)
+        self._input1.setAutoSort(True)
+
+        self._input1.tagSelection.connect(lambda: self.valueChanged.emit( self._input1.selectedTags() ))
+
+    def value(self):
+        """Return current value (list of selected tags)"""
+        return self._input1.selectedTags()
+
+    def setValue(self, values):
+        """set current values (list of selected tags)"""
+        self._input1.setSelectedTags(values)
+
+    def tagInput(self):
+        """Expose WTagInput instance, allowing to define properties directly"""
+        return self._input1
