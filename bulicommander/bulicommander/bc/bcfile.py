@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------------
 # Buli Commander
-# Copyright (C) 2020 - Grum999
+# Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -5201,8 +5201,6 @@ class BCFileListRuleOperator(object):
         else:
             self.__value = value
 
-
-
         if displayValue is None:
             if self.__type == BCFileListRuleOperatorType.DATETIME:
                 if isinstance(self.__value, tuple):
@@ -5334,6 +5332,7 @@ class BCFileListRule(object):
     def __init__(self, source=None):
         """Initialise a rule"""
         self.__name = None
+        self.__path = None
         self.__size = None
         self.__mdatetime = None
         self.__format = None
@@ -5344,6 +5343,7 @@ class BCFileListRule(object):
 
         if isinstance(source, BCFileListRule):
             self.setName(source.name())
+            self.setPath(source.path())
             self.setSize(source.size())
             self.setModifiedDateTime(source.modifiedDateTime())
             self.setFormat(source.format())
@@ -5357,6 +5357,9 @@ class BCFileListRule(object):
 
         if not self.__name is None:
             returned.append(f"{BCFileProperty.FILE_NAME.value} {self.__name.translate(True)}")
+
+        if not self.__path is None:
+            returned.append(f"{BCFileProperty.PATH.value} {self.__path.translate(True)}")
 
         if not self.__size is None:
             returned.append(f"{BCFileProperty.FILE_SIZE.value} {self.__size.translate(True)}")
@@ -5377,7 +5380,7 @@ class BCFileListRule(object):
 
     def __repr__(self):
         """Return rule as string"""
-        return f'<BCFileListRule(name {self.__name}; fileSize {self.__size}; datetime {self.__mdatetime}; format {self.__format}; width {self.__imageWidth}; height {self.__imageHeight}; hash={self.__hash:016x})>'
+        return f'<BCFileListRule(path {self.__path}; name {self.__name}; fileSize {self.__size}; datetime {self.__mdatetime}; format {self.__format}; width {self.__imageWidth}; height {self.__imageHeight}; hash={self.__hash:016x})>'
 
     def __eq__(self, other):
         """Return if other BCFileListRule is the same than current one"""
@@ -5392,6 +5395,7 @@ class BCFileListRule(object):
     def __updateHash(self):
         """Return a hash from rule"""
         self.__hash=hash((self.__name,
+                          self.__path,
                           self.__size,
                           self.__mdatetime,
                           self.__format,
@@ -5407,6 +5411,9 @@ class BCFileListRule(object):
 
         if not self.__name is None:
             returned.append(f"{BCFileProperty.FILE_NAME.translate()} {self.__name.translate()}")
+
+        if not self.__path is None:
+            returned.append(f"{BCFileProperty.PATH.translate()} {self.__path.translate()}")
 
         if not self.__size is None:
             returned.append(f"{BCFileProperty.FILE_SIZE.translate()} {self.__size.translate()}")
@@ -5463,6 +5470,40 @@ class BCFileListRule(object):
             self.__name = value
         else:
             raise EInvalidRuleParameter("Given `name` must be a valid value")
+        self.__updateHash()
+
+    def path(self):
+        """Return current path pattern"""
+        return self.__path
+
+    def setPath(self, value):
+        """Set current path pattern"""
+        if isinstance(value, tuple):
+            displayValue = value[0]
+
+            if isinstance(value[0], str):
+                if checkIsRegEx:=re.search('^re(/i)?:(.*)', value[0]):
+                    # provided as a regular expression
+                    displayValue = checkIsRegEx.groups()[1]
+
+                    if not checkIsRegEx.groups()[0] is None:
+                        displayValue=f"(?i)(?:{displayValue})"
+                    value = (re.compile(displayValue), value[1])
+                else:
+                    # provided as a wildcard character
+                    # convert to regex
+                    displayValue = value[0]
+                    value = (re.compile( '(?i)(?:^'+value[0].replace('.', r'\.').replace('*', r'.*').replace('?', '.')+'$)'), value[1])
+            elif isinstance(value[0], re.Pattern):
+                displayValue = value[0].pattern
+            else:
+                raise EInvalidRuleParameter("Given `path` must be a valid value")
+
+            self.__path = BCFileListRuleOperator(value[0], value[1], BCFileListRuleOperatorType.REGEX, displayValue)
+        elif value is None or isinstance(value, BCFileListRuleOperator) and value.type() == BCFileListRuleOperatorType.REGEX:
+            self.__path = value
+        else:
+            raise EInvalidRuleParameter("Given `path` must be a valid value")
         self.__updateHash()
 
     def size(self):
@@ -5635,6 +5676,10 @@ class BCFileListRule(object):
 
         if not self.__name is None:
             if not self.__name.compare(file.name()):
+                return False
+
+        if not self.__path is None:
+            if not self.__path.compare(file.path()):
                 return False
 
         if not self.__size is None:

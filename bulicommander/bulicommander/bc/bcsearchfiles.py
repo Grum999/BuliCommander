@@ -164,6 +164,27 @@ class BCSearchFilesDialogBox(QDialog):
                                                         BCFileListRuleOperatorType.REGEX)
                 returned.setName(ruleOperator)
 
+            if 'filePath' in filterRulesAsDict and filterRulesAsDict['filePath']['active']:
+                if filterRulesAsDict['filePath']['ignoreCase']:
+                    ignoreCase=re.I
+                else:
+                    ignoreCase=0
+
+                # convert operator as regular expression
+                if filterRulesAsDict['filePath']['operator'] in ('match', 'not match'):
+                    ruleOperator=BCFileListRuleOperator(re.compile(filterRulesAsDict['filePath']['value'], ignoreCase),
+                                                        filterRulesAsDict['filePath']['operator'],
+                                                        BCFileListRuleOperatorType.REGEX)
+                elif filterRulesAsDict['filePath']['operator'] in ('like', 'not like'):
+                    ruleOperator=BCFileListRuleOperator(re.compile(re.escape(filterRulesAsDict['filePath']['value']).replace(r'\?', '.').replace(r'\*', '.*'), ignoreCase),
+                                                        filterRulesAsDict['filePath']['operator'].replace('like', 'match'),
+                                                        BCFileListRuleOperatorType.REGEX)
+                else:
+                    ruleOperator=BCFileListRuleOperator(re.compile(f"^{re.escape(filterRulesAsDict['filePath']['value'])}$", ignoreCase),
+                                                        'match' if filterRulesAsDict['filePath']['operator']=='=' else 'not match',
+                                                        BCFileListRuleOperatorType.REGEX)
+                returned.setPath(ruleOperator)
+
             if 'fileSize' in filterRulesAsDict and filterRulesAsDict['fileSize']['active']:
                 value=strToBytesSize(f"{filterRulesAsDict['fileSize']['value']}{filterRulesAsDict['fileSize']['unit']}")
                 value2=strToBytesSize(f"{filterRulesAsDict['fileSize']['value2']}{filterRulesAsDict['fileSize']['unit']}")
@@ -237,12 +258,14 @@ class BCSearchFilesDialogBox(QDialog):
                 returned.setImageHeight(ruleOperator)
 
             if 'imageFormat' in filterRulesAsDict and filterRulesAsDict['imageFormat']['active']:
-                ruleOperator=BCFileListRuleOperator(filterRulesAsDict['imageFormat']['value'],
-                                                    '=',
-                                                    BCFileListRuleOperatorType.STRING,
-                                                    BCFileManagedFormat.translate(filterRulesAsDict['imageFormat']['value']))
+                if len(filterRulesAsDict['imageFormat']['value'])>0:
+                    # if empty, consider it as not active
+                    ruleOperator=BCFileListRuleOperator(filterRulesAsDict['imageFormat']['value'],
+                                                        filterRulesAsDict['imageFormat']['operator'],
+                                                        BCFileListRuleOperatorType.STRING,
+                                                        [BCFileManagedFormat.translate(value) for value in filterRulesAsDict['imageFormat']['value']])
 
-                returned.setFormat(ruleOperator)
+                    returned.setFormat(ruleOperator)
 
             return returned
 
@@ -1004,11 +1027,13 @@ class BCWSearchFileFilterRules(QWidget):
         """Initialise widget interface"""
         # option checkbox
         self.cbFileName.setMinimumHeight(self.woiFileName.minimumSizeHint().height())
+        self.cbFilePath.setMinimumHeight(self.woiFilePath.minimumSizeHint().height())
         self.cbFileSize.setMinimumHeight(self.woiFileSize.minimumSizeHint().height())
         self.cbFileDtDate.setMinimumHeight(self.woiFileDtDate.minimumSizeHint().height())
         self.cbFileDtTime.setMinimumHeight(self.woiFileDtTime.minimumSizeHint().height())
 
         self.cbFileName.toggled.connect(self.__fileNameToggled)
+        self.cbFilePath.toggled.connect(self.__filePathToggled)
         self.cbFileSize.toggled.connect(self.__fileSizeToggled)
         self.cbFileDtDate.toggled.connect(self.__fileDtDateToggled)
         self.cbFileDtTime.toggled.connect(self.__fileDtTimeToggled)
@@ -1018,7 +1043,7 @@ class BCWSearchFileFilterRules(QWidget):
         self.__fileDtTimeToggled(False)
         self.__fileDtDateToggled(False)
 
-        # file pattern
+        # file name pattern
         self.woiFileName.operatorChanged.connect(self.__setModified)
         self.woiFileName.setOperators([
                 WOperatorType.OPERATOR_MATCH,
@@ -1027,6 +1052,16 @@ class BCWSearchFileFilterRules(QWidget):
                 WOperatorType.OPERATOR_NOT_LIKE
             ])
         self.woiFileName.valueChanged.connect(self.__setModified)
+
+        # file path pattern
+        self.woiFilePath.operatorChanged.connect(self.__setModified)
+        self.woiFilePath.setOperators([
+                WOperatorType.OPERATOR_MATCH,
+                WOperatorType.OPERATOR_NOT_MATCH,
+                WOperatorType.OPERATOR_LIKE,
+                WOperatorType.OPERATOR_NOT_LIKE
+            ])
+        self.woiFilePath.valueChanged.connect(self.__setModified)
 
         # file size
         self.woiFileSize.setMinimum(0)
@@ -1058,6 +1093,7 @@ class BCWSearchFileFilterRules(QWidget):
     def __setDefaultValues(self):
         """Initialise default values"""
         self.cbFileName.setChecked(False)
+        self.cbFilePath.setChecked(False)
         self.cbFileSize.setChecked(False)
         self.cbFileDtDate.setChecked(False)
         self.cbFileDtTime.setChecked(False)
@@ -1065,6 +1101,10 @@ class BCWSearchFileFilterRules(QWidget):
         self.woiFileName.setValue("")
         self.woiFileName.setOperator(WOperatorType.OPERATOR_LIKE)
         self.cbFileNameIgnoreCase.setChecked(True)
+
+        self.woiFilePath.setValue("")
+        self.woiFilePath.setOperator(WOperatorType.OPERATOR_LIKE)
+        self.cbFilePathIgnoreCase.setChecked(True)
 
         self.woiFileSize.setValue(1.00)
         self.woiFileSize.setOperator(WOperatorType.OPERATOR_GE)
@@ -1096,6 +1136,14 @@ class BCWSearchFileFilterRules(QWidget):
         self.woiFileName.setVisible(checked)
         self.cbFileNameIgnoreCase.setEnabled(checked)
         self.cbFileNameIgnoreCase.setVisible(checked)
+        self.__setModified()
+
+    def __filePathToggled(self, checked):
+        """Checkbox 'file name' has been toggled"""
+        self.woiFilePath.setEnabled(checked)
+        self.woiFilePath.setVisible(checked)
+        self.cbFilePathIgnoreCase.setEnabled(checked)
+        self.cbFilePathIgnoreCase.setVisible(checked)
         self.__setModified()
 
     def __fileSizeToggled(self, checked):
@@ -1158,6 +1206,12 @@ class BCWSearchFileFilterRules(QWidget):
                                     "value": self.woiFileName.value(),
                                     "ignoreCase": (self.cbFileNameIgnoreCase.isChecked() and self.cbFileNameIgnoreCase.isVisible()),
                                 },
+                            "filePath": {
+                                    "active": self.cbFilePath.isChecked(),
+                                    "operator": self.woiFilePath.operator(),
+                                    "value": self.woiFilePath.value(),
+                                    "ignoreCase": (self.cbFilePathIgnoreCase.isChecked() and self.cbFilePathIgnoreCase.isVisible()),
+                                },
                             "fileSize": {
                                     "active": self.cbFileSize.isChecked(),
                                     "operator": self.woiFileSize.operator(),
@@ -1195,6 +1249,12 @@ class BCWSearchFileFilterRules(QWidget):
                     "operator": "WOperatorType.OPERATOR_LIKE",
                     "value": ""
                 },
+                "filePath": {
+                    "active": true,
+                    "ignoreCase": true,
+                    "operator": "WOperatorType.OPERATOR_LIKE",
+                    "value": ""
+                },
                 "fileSize": {
                     "active": true,
                     "operator": "WOperatorType.OPERATOR_GE",
@@ -1216,6 +1276,12 @@ class BCWSearchFileFilterRules(QWidget):
             self.cbFileNameIgnoreCase.setChecked(dataAsDict['fileName']['ignoreCase'])
             self.woiFileName.setValue(dataAsDict['fileName']['value'])
             self.woiFileName.setOperator(dataAsDict['fileName']['operator'])
+
+        if "filePath" in dataAsDict and isinstance(dataAsDict['filePath'], dict):
+            self.cbFilePath.setChecked(dataAsDict['filePath']['active'])
+            self.cbFilePathIgnoreCase.setChecked(dataAsDict['filePath']['ignoreCase'])
+            self.woiFilePath.setValue(dataAsDict['filePath']['value'])
+            self.woiFilePath.setOperator(dataAsDict['filePath']['operator'])
 
         if "fileSize" in dataAsDict and isinstance(dataAsDict['fileSize'], dict):
             self.cbFileSize.setChecked(dataAsDict['fileSize']['active'])
@@ -1264,7 +1330,7 @@ class BCWSearchImgFilterRules(QWidget):
     def __initialise(self):
         """Initialise widget interface"""
         # option checkbox
-        self.cbImageFormat.setMinimumHeight(self.cblImageFormat.minimumSizeHint().height())
+        self.cbImageFormat.setMinimumHeight(self.woiImageFormat.minimumSizeHint().height())
         self.cbImageWidth.setMinimumHeight(self.woiImageWidth.minimumSizeHint().height())
         self.cbImageHeight.setMinimumHeight(self.woiImageHeight.minimumSizeHint().height())
 
@@ -1277,10 +1343,10 @@ class BCWSearchImgFilterRules(QWidget):
         self.__imageHeightToggled(False)
 
         # image format
-        for imageFormat in BCFileManagedFormat.list():
-            if imageFormat!=BCFileManagedFormat.JPEG:
-                self.cblImageFormat.addItem(BCFileManagedFormat.translate(imageFormat), imageFormat)
-        self.cblImageFormat.currentIndexChanged.connect(self.__setModified)
+        # (exclude JPEG as JPG is already in list)
+        self.woiImageFormat.tagInput().setAvailableTags([(imageFormat, BCFileManagedFormat.translate(imageFormat)) for imageFormat in BCFileManagedFormat.list() if imageFormat!=BCFileManagedFormat.JPEG] )
+        self.woiImageFormat.operatorChanged.connect(self.__setModified)
+        self.woiImageFormat.valueChanged.connect(self.__setModified)
 
         # file image width
         self.woiImageWidth.setMinimum(1)
@@ -1304,7 +1370,7 @@ class BCWSearchImgFilterRules(QWidget):
         self.cbImageWidth.setChecked(False)
         self.cbImageHeight.setChecked(False)
 
-        self.cblImageFormat.setCurrentIndex(0)
+        self.woiImageFormat.setValue([])
 
         self.woiImageWidth.setValue(320)
         self.woiImageWidth.setValue2(1920)
@@ -1324,8 +1390,8 @@ class BCWSearchImgFilterRules(QWidget):
     def __imageFormatToggled(self, checked):
         """Checkbox 'file type' has been toggled"""
         self.__setModified()
-        self.cblImageFormat.setEnabled(checked)
-        self.cblImageFormat.setVisible(checked)
+        self.woiImageFormat.setEnabled(checked)
+        self.woiImageFormat.setVisible(checked)
 
     def __imageWidthToggled(self, checked):
         """Checkbox 'file img width' has been toggled"""
@@ -1367,7 +1433,8 @@ class BCWSearchImgFilterRules(QWidget):
                             "type": "BCNodeWSearchImgFilterRule",
                             "imageFormat": {
                                     "active": self.cbImageFormat.isChecked(),
-                                    "value": self.cblImageFormat.currentData()
+                                    "operator": self.woiImageFormat.operator(),
+                                    "value": self.woiImageFormat.value()
                                 },
                             "imageWidth": {
                                     "active": self.cbImageWidth.isChecked(),
@@ -1416,10 +1483,7 @@ class BCWSearchImgFilterRules(QWidget):
 
         if "imageFormat" in dataAsDict and isinstance(dataAsDict['imageFormat'], dict):
             self.cbImageFormat.setChecked(dataAsDict['imageFormat']['active'])
-            for index in range(self.cblImageFormat.count()):
-                if self.cblImageFormat.itemData(index)==dataAsDict['imageFormat']['value']:
-                    self.cblImageFormat.setCurrentIndex(index)
-                    break
+            self.woiImageFormat.setValue(dataAsDict['imageFormat']['value'])
 
         if "imageWidth" in dataAsDict and isinstance(dataAsDict['imageWidth'], dict):
             self.cbImageWidth.setChecked(dataAsDict['imageWidth']['active'])
@@ -1573,17 +1637,20 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
 
         self.__lblDateTime=QLabel(f"- <b>{i18n('Date/Time')}</b>")
         self.__lblName=WLabelElide(Qt.ElideRight)
+        self.__lblPath=WLabelElide(Qt.ElideRight)
         self.__lblSize=WLabelElide(Qt.ElideRight)
         self.__lblDate=WLabelElide(Qt.ElideRight)
         self.__lblTime=WLabelElide(Qt.ElideRight)
 
         self.__lblName.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
+        self.__lblPath.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 
 
         self.__layout=QFormLayout()
         self.__layout.setContentsMargins(0,0,0,0)
         self.__layout.addRow(QLabel(f"<b>{i18n('Filtered by:')}</b>"))
         self.__layout.addRow(f"- <b>{i18n('Name')}</b>", self.__lblName)
+        self.__layout.addRow(f"- <b>{i18n('Path')}</b>", self.__lblPath)
         self.__layout.addRow(f"- <b>{i18n('Size')}</b>", self.__lblSize)
         self.__layout.addRow(self.__lblDateTime, self.__lblDate)
 
@@ -1605,6 +1672,12 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
                             "value": '',
                             "ignoreCase": True
                         },
+                    "filePath": {
+                            "active": False,
+                            "operator": WOperatorType.OPERATOR_LIKE,
+                            "value": '',
+                            "ignoreCase": True
+                        },
                     "fileSize": {
                             "active": False,
                             "operator": WOperatorType.OPERATOR_GE,
@@ -1616,8 +1689,8 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
                             "active": False,
                             "dateOnly": True,
                             "operator": WOperatorType.OPERATOR_BETWEEN,
-                            "value": dateTimeYm1,
-                            "value2": dateTimeNow
+                            "value": dateTimeYm1.toMSecsSinceEpoch()/1000,
+                            "value2": dateTimeNow.toMSecsSinceEpoch()/1000
                         }
                 }
 
@@ -1625,7 +1698,7 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
 
         self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 
-        self.node().setMinimumSize(QSize(400, 200))
+        self.node().setMinimumSize(QSize(400, 230))
         self.setLayout(self.__layout)
 
     def serialize(self):
@@ -1673,6 +1746,21 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
                 self.__lblName.setText(boolYesNo(False))
                 self.__lblName.setToolTip('')
 
+        if 'filePath' in data:
+            self.__data['filePath']=copy.deepcopy(data['filePath'])
+            if self.__data['filePath']['active']:
+                self.__lblPath.setText(WOperatorBaseInput.operatorLabel(self.__data['filePath']['operator'])+' "'+self.__data['filePath']['value']+'"')
+
+                text=f"""<i>{WOperatorBaseInput.operatorLabel(self.__data['filePath']['operator'])}</i> "{self.__data['filePath']['value']}"<br/>"""
+                if self.__data['filePath']['ignoreCase']:
+                    text+=i18n("(case insensitive)")
+                else:
+                    text+=i18n("(case sensitive)")
+                self.__lblPath.setToolTip(text)
+            else:
+                self.__lblPath.setText(boolYesNo(False))
+                self.__lblPath.setToolTip('')
+
         if 'fileSize' in data:
             self.__data['fileSize']=copy.deepcopy(data['fileSize'])
             if self.__data['fileSize']['active']:
@@ -1710,7 +1798,8 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
         self.__data={
                     "imageFormat": {
                             "active": False,
-                            "value": BCFileManagedFormat.KRA
+                            "operator": WOperatorType.OPERATOR_IN,
+                            "value": [BCFileManagedFormat.KRA]
                         },
                     "imageWidth": {
                             "active": False,
@@ -1771,8 +1860,9 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
 
         if 'imageFormat' in data:
             self.__data['imageFormat']=copy.deepcopy(data['imageFormat'])
-            if self.__data['imageFormat']['active']:
-                text=BCFileManagedFormat.translate(self.__data['imageFormat']['value'])
+            if self.__data['imageFormat']['active'] and len(self.__data['imageFormat']['value'])>0:
+                text=", ".join([BCFileManagedFormat.translate(value) for value in self.__data['imageFormat']['value']])
+                text=f"{WOperatorBaseInput.operatorLabel(self.__data['imageFormat']['operator'])} ({text})"
                 self.__lblImgFormat.setText(text)
                 self.__lblImgFormat.setToolTip(text)
             else:

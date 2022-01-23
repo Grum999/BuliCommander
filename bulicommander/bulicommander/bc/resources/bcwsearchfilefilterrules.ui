@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1272</width>
-    <height>237</height>
+    <height>309</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -32,34 +32,43 @@
    <property name="bottomMargin">
     <number>6</number>
    </property>
-   <item row="3" column="1">
-    <widget class="WOperatorInputDate" name="woiFileDtDate" native="true">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
+   <item row="3" column="0">
+    <widget class="QCheckBox" name="cbFileSize">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+      <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file date/time.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file size.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>File size</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="1" colspan="2">
-    <widget class="WOperatorInputStr" name="woiFileName" native="true">
+   <item row="6" column="0" colspan="4">
+    <spacer name="horizontalSpacer">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file name:&lt;/p&gt;&lt;ul style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;match&lt;/span&gt; is used to find a file for which file name match to given &lt;span style=&quot; font-style:italic;&quot;&gt;regular expression&lt;/span&gt;&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;not match&lt;/span&gt; is used to find a file for which file name doesn't match to given &lt;span style=&quot; font-style:italic;&quot;&gt;regular expression&lt;/span&gt;&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;like&lt;/span&gt; is used to find a file for which file name like given &lt;span style=&quot; font-style:italic;&quot;&gt;pattern&lt;/span&gt; (can use wildcards &lt;span style=&quot; font-weight:600;&quot;&gt;*&lt;/span&gt; and &lt;span style=&quot; font-weight:600;&quot;&gt;?&lt;/span&gt;)&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;not like&lt;/span&gt; is used to find a file for which file name doesn't like given &lt;span style=&quot; font-style:italic;&quot;&gt;pattern&lt;/span&gt; (can use wildcards &lt;span style=&quot; font-weight:600;&quot;&gt;*&lt;/span&gt; and &lt;span style=&quot; font-weight:600;&quot;&gt;?&lt;/span&gt;)&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
-    </widget>
+     <property name="sizeType">
+      <enum>QSizePolicy::MinimumExpanding</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>1</height>
+      </size>
+     </property>
+    </spacer>
    </item>
    <item row="1" column="0">
     <widget class="QCheckBox" name="cbFileName">
@@ -77,10 +86,55 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
-    <widget class="QCheckBox" name="cbFileSize">
+   <item row="5" column="0">
+    <widget class="QCheckBox" name="cbFileDtTime">
+     <property name="styleSheet">
+      <string notr="true">padding-left: 30px</string>
+     </property>
+     <property name="text">
+      <string>Time</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1" colspan="2">
+    <widget class="WOperatorInputStr" name="woiFileName" native="true">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file name:&lt;/p&gt;&lt;ul style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;match&lt;/span&gt; is used to find a file for which file name match to given &lt;span style=&quot; font-style:italic;&quot;&gt;regular expression&lt;/span&gt;&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;not match&lt;/span&gt; is used to find a file for which file name doesn't match to given &lt;span style=&quot; font-style:italic;&quot;&gt;regular expression&lt;/span&gt;&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;like&lt;/span&gt; is used to find a file for which file name like given &lt;span style=&quot; font-style:italic;&quot;&gt;pattern&lt;/span&gt; (can use wildcards &lt;span style=&quot; font-weight:600;&quot;&gt;*&lt;/span&gt; and &lt;span style=&quot; font-weight:600;&quot;&gt;?&lt;/span&gt;)&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;not like&lt;/span&gt; is used to find a file for which file name doesn't like given &lt;span style=&quot; font-style:italic;&quot;&gt;pattern&lt;/span&gt; (can use wildcards &lt;span style=&quot; font-weight:600;&quot;&gt;*&lt;/span&gt; and &lt;span style=&quot; font-weight:600;&quot;&gt;?&lt;/span&gt;)&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="WOperatorInputTime" name="woiFileDtTime" native="true"/>
+   </item>
+   <item row="4" column="1">
+    <widget class="WOperatorInputDate" name="woiFileDtDate" native="true">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file date/time.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="WOperatorInputFloat" name="woiFileSize" native="true">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -88,8 +142,21 @@
      <property name="toolTip">
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file size.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QCheckBox" name="cbFileDtDate">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file date/time.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
      <property name="text">
-      <string>File size</string>
+      <string>File date</string>
      </property>
     </widget>
    </item>
@@ -112,72 +179,35 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <widget class="QCheckBox" name="cbFileDtDate">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
+   <item row="2" column="0">
+    <widget class="QCheckBox" name="cbFilePath">
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file date/time.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file path:&lt;/p&gt;&lt;ul style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;match&lt;/span&gt; is used to find a file for which file path match to given &lt;span style=&quot; font-style:italic;&quot;&gt;regular expression&lt;/span&gt;&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;not match&lt;/span&gt; is used to find a file for which file path doesn't match to given &lt;span style=&quot; font-style:italic;&quot;&gt;regular expression&lt;/span&gt;&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;like&lt;/span&gt; is used to find a file for which file path like given &lt;span style=&quot; font-style:italic;&quot;&gt;pattern&lt;/span&gt; (can use wildcards &lt;span style=&quot; font-weight:600;&quot;&gt;*&lt;/span&gt; and &lt;span style=&quot; font-weight:600;&quot;&gt;?&lt;/span&gt;)&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;not like&lt;/span&gt; is used to find a file for which file path doesn't like given &lt;span style=&quot; font-style:italic;&quot;&gt;pattern&lt;/span&gt; (can use wildcards &lt;span style=&quot; font-weight:600;&quot;&gt;*&lt;/span&gt; and &lt;span style=&quot; font-weight:600;&quot;&gt;?&lt;/span&gt;)&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="text">
-      <string>File date</string>
+      <string>File path</string>
      </property>
     </widget>
    </item>
-   <item row="2" column="1">
-    <widget class="WOperatorInputFloat" name="woiFileSize" native="true">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
+   <item row="2" column="3">
+    <widget class="QCheckBox" name="cbFilePathIgnoreCase">
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file size.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0" colspan="4">
-    <spacer name="horizontalSpacer">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::MinimumExpanding</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>1</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="4" column="0">
-    <widget class="QCheckBox" name="cbFileDtTime">
-     <property name="styleSheet">
-      <string notr="true">padding-left: 30px</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, search made on file path is case insensitive&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="text">
-      <string>Time</string>
+      <string>Ignore case</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
-    <widget class="WOperatorInputTime" name="woiFileDtTime" native="true"/>
+   <item row="2" column="1" colspan="2">
+    <widget class="WOperatorInputStr" name="woiFilePath" native="true">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file path:&lt;/p&gt;&lt;ul style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;match&lt;/span&gt; is used to find a file for which file path match to given &lt;span style=&quot; font-style:italic;&quot;&gt;regular expression&lt;/span&gt;&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;not match&lt;/span&gt; is used to find a file for which file path doesn't match to given &lt;span style=&quot; font-style:italic;&quot;&gt;regular expression&lt;/span&gt;&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;like&lt;/span&gt; is used to find a file for which file path like given &lt;span style=&quot; font-style:italic;&quot;&gt;pattern&lt;/span&gt; (can use wildcards &lt;span style=&quot; font-weight:600;&quot;&gt;*&lt;/span&gt; and &lt;span style=&quot; font-weight:600;&quot;&gt;?&lt;/span&gt;)&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;not like&lt;/span&gt; is used to find a file for which file path doesn't like given &lt;span style=&quot; font-style:italic;&quot;&gt;pattern&lt;/span&gt; (can use wildcards &lt;span style=&quot; font-weight:600;&quot;&gt;*&lt;/span&gt; and &lt;span style=&quot; font-weight:600;&quot;&gt;?&lt;/span&gt;)&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
