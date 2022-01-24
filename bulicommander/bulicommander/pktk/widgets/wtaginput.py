@@ -137,7 +137,6 @@ QLabel:disabled {
 
     def __readOnlyModeChanged(self, value):
         """Parent read only mode has been modified"""
-        print("__readOnlyModeChanged", value)
         self.__btRemove.setVisible(value)
 
     def __removeClicked(self):
