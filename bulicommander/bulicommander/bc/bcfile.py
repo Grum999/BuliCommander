@@ -735,6 +735,8 @@ class BCFileProperty(Enum):
     FILE_EXTENSION = 'fileExtension'
     IMAGE_WIDTH = 'imageWidth'
     IMAGE_HEIGHT = 'imageHeight'
+    IMAGE_RATIO = 'imageRatio'
+    IMAGE_PIXELS = 'imagePixels'
 
     def translate(self):
         if self == BCFileProperty.PATH:
@@ -755,6 +757,10 @@ class BCFileProperty(Enum):
             return i18n('image width')
         elif self == BCFileProperty.IMAGE_HEIGHT:
             return i18n('image height')
+        elif self == BCFileProperty.IMAGE_RATIO:
+            return i18n('image aspect ratio')
+        elif self == BCFileProperty.IMAGE_PIXELS:
+            return i18n('image number of pixels')
         else:
             return self.value
 
@@ -1727,7 +1733,7 @@ class BCFile(BCBaseFile):
                 'sha256': None,
                 'sha512': None
             }
-        self.__metadata=None
+        self.__metadata={}
 
         if not BCFile.__INITIALISED:
             raise EInvalidStatus('BCFile class is not initialised')
@@ -1895,11 +1901,11 @@ class BCFile(BCBaseFile):
             cacheData['format']=self._format
 
             # add some extra metadata information
-            cacheData['nbPixels']=self.__imgSize.width()*self.__imgSize.height()
+            cacheData[BCFileProperty.IMAGE_PIXELS.value]=self.__imgSize.width()*self.__imgSize.height()
             if self.__imgSize.height()!=0:
-                cacheData['ratioWH']=self.__imgSize.width()/self.__imgSize.height()
+                cacheData[BCFileProperty.IMAGE_RATIO.value]=self.__imgSize.width()/self.__imgSize.height()
             else:
-                cacheData['ratioWH']=0
+                cacheData[BCFileProperty.IMAGE_RATIO.value]=0
             self.__writeMetaCacheFile(cacheData)
         else:
             self.__readable = False
@@ -4501,6 +4507,10 @@ class BCFile(BCBaseFile):
             return self.__imgSize.width()
         elif property == BCFileProperty.IMAGE_HEIGHT:
             return self.__imgSize.height()
+        elif isinstance(property, str) and property in self.__metadata:
+            return self.__metadata[property]
+        elif isinstance(property, BCFileProperty) and property.value in self.__metadata:
+            return self.__metadata[property.value]
         else:
             return super(BCFile, self).getProperty(property)
 
@@ -5338,6 +5348,8 @@ class BCFileListRule(object):
         self.__format = None
         self.__imageWidth = None
         self.__imageHeight = None
+        self.__imageRatio = None
+        self.__imagePixels = None
         self.__hash=0
         self.__updateHash()
 
@@ -5376,6 +5388,12 @@ class BCFileListRule(object):
         if not self.__imageHeight is None:
             returned.append(f"{BCFileProperty.IMAGE_HEIGHT.value} {self.__imageHeight.translate(True)}")
 
+        if not self.__imageRatio is None:
+            returned.append(f"{BCFileProperty.IMAGE_RATIO.value} {self.__imageRatio.translate(True)}")
+
+        if not self.__imagePixels is None:
+            returned.append(f"{BCFileProperty.IMAGE_PIXELS.value} {self.__imagePixels.translate(True)}")
+
         return ' and '.join(returned)
 
     def __repr__(self):
@@ -5400,7 +5418,9 @@ class BCFileListRule(object):
                           self.__mdatetime,
                           self.__format,
                           self.__imageWidth,
-                          self.__imageHeight))
+                          self.__imageHeight,
+                          self.__imageRatio,
+                          self.__imagePixels))
 
     def translate(self, short=False):
         """Return rule as a human readable string"""
@@ -5432,6 +5452,12 @@ class BCFileListRule(object):
 
         if not self.__imageHeight is None:
             returned.append(f"{BCFileProperty.IMAGE_HEIGHT.translate()} {self.__imageHeight.translate()}")
+
+        if not self.__imageRatio is None:
+            returned.append(f"{BCFileProperty.IMAGE_RATIO.translate()} {self.__imageRatio.translate()}")
+
+        if not self.__imagePixels is None:
+            returned.append(f"{BCFileProperty.IMAGE_PIXELS.translate()} {self.__imagePixels.translate()}")
 
         if len(returned) == 0:
             return ''
@@ -5666,6 +5692,56 @@ class BCFileListRule(object):
             raise EInvalidRuleParameter("Given `image height` must be a valid value")
         self.__updateHash()
 
+    def imageRatio(self):
+        """Return current image width/height ratio"""
+        return self.__imageRatio
+
+    def setImageRatio(self, value):
+        """set current image with/height ratio"""
+        if isinstance(value, tuple):
+            if isinstance(value[0], str):
+                value = (int(value[0]), value[1])
+            elif isinstance(value[0], float):
+                value = (int(value[0]), value[1])
+            elif isinstance(value[0], tuple):
+                value = (tuple([int(v) for v in value[0]]), value[1])
+            elif isinstance(value[0], list):
+                value = ([int(v) for v in value[0]], value[1])
+            elif not isinstance(value[0], int):
+                raise EInvalidRuleParameter("Given `image height` must be a valid value")
+
+            self.__imageRatio = BCFileListRuleOperator(value[0], value[1], BCFileListRuleOperatorType.FLOAT)
+        elif value is None or isinstance(value, BCFileListRuleOperator) and value.type() == BCFileListRuleOperatorType.FLOAT:
+            self.__imageRatio = value
+        else:
+            raise EInvalidRuleParameter("Given `image ratio` must be a valid value")
+        self.__updateHash()
+
+    def imagePixels(self):
+        """Return current image width*height pixels"""
+        return self.__imagePixels
+
+    def setImagePixels(self, value):
+        """set current image with*height pixels"""
+        if isinstance(value, tuple):
+            if isinstance(value[0], str):
+                value = (int(value[0]), value[1])
+            elif isinstance(value[0], float):
+                value = (int(value[0]), value[1])
+            elif isinstance(value[0], tuple):
+                value = (tuple([int(v) for v in value[0]]), value[1])
+            elif isinstance(value[0], list):
+                value = ([int(v) for v in value[0]], value[1])
+            elif not isinstance(value[0], int):
+                raise EInvalidRuleParameter("Given `image pixels` must be a valid value")
+
+            self.__imagePixels = BCFileListRuleOperator(value[0], value[1], BCFileListRuleOperatorType.INT)
+        elif value is None or isinstance(value, BCFileListRuleOperator) and value.type() == BCFileListRuleOperatorType.INT:
+            self.__imagePixels = value
+        else:
+            raise EInvalidRuleParameter("Given `image pixels` must be a valid value")
+        self.__updateHash()
+
     def fileMatch(self, file):
         """Return True if given `file` match current rule"""
         if isinstance(file, BCDirectory):
@@ -5700,6 +5776,16 @@ class BCFileListRule(object):
 
         if not self.__imageHeight is None:
             if not self.__imageHeight.compare(file.imageSize().width()):
+                return False
+
+        if not self.__imageRatio is None:
+            property=file.getProperty(BCFileProperty.IMAGE_RATIO)
+            if property is None or not self.__imageRatio.compare(property):
+                return False
+
+        if not self.__imagePixels is None:
+            property=file.getProperty(BCFileProperty.IMAGE_PIXELS)
+            if property is None or not self.__imagePixels.compare(property):
                 return False
 
         return True

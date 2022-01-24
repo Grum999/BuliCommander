@@ -32,7 +32,7 @@
    <property name="bottomMargin">
     <number>6</number>
    </property>
-   <item row="4" column="0" colspan="3">
+   <item row="6" column="0" colspan="3">
     <spacer name="horizontalSpacer">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
@@ -54,19 +54,6 @@
      </property>
     </spacer>
    </item>
-   <item row="2" column="1">
-    <widget class="WOperatorInputInt" name="woiImageWidth" native="true">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-    </widget>
-   </item>
    <item row="2" column="0">
     <widget class="QCheckBox" name="cbImageWidth">
      <property name="sizePolicy">
@@ -80,6 +67,22 @@
      </property>
      <property name="text">
       <string>Width</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="WOperatorInputInt" name="woiImageWidth" native="true">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on image width.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>
@@ -126,6 +129,9 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on image height.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
     </widget>
    </item>
    <item row="1" column="1">
@@ -135,6 +141,43 @@
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on file type.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: file type filter is not based on extension (use appropriate file name for that) but on file format; this filter allows to search images files for which extension is not correct&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QCheckBox" name="cbImageRatio">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on image aspect ratio (width / height).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;=&amp;gt; Right click for predefined aspect ratio search definition.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>Aspect ratio</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QCheckBox" name="cbImagePixels">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on image number of pixels (width * height).&lt;/p&gt;&lt;p&gt;Search value is defined in megapixel (MP)&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;=&amp;gt; Right click for predefined pixels search definition.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>Pixels</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="WOperatorInputFloat" name="woiImageRatio" native="true">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on image aspect ratio (width / height).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;=&amp;gt; Right click for predefined aspect ratio search definition.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="WOperatorInputFloat" name="woiImagePixels" native="true">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, will apply search filter based on image number of pixels (width * height).&lt;/p&gt;&lt;p&gt;Search value is defined in megapixel (MP)&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;=&amp;gt; Right click for predefined pixels search definition.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>
@@ -149,6 +192,12 @@
   </customwidget>
   <customwidget>
    <class>WOperatorInputList</class>
+   <extends>QWidget</extends>
+   <header>bulicommander.pktk.widgets.woperatorinput</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>WOperatorInputFloat</class>
    <extends>QWidget</extends>
    <header>bulicommander.pktk.widgets.woperatorinput</header>
    <container>1</container>

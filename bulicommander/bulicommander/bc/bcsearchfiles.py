@@ -73,7 +73,8 @@ from bulicommander.pktk.modules.strutils import (
 from bulicommander.pktk.modules.timeutils import tsToStr
 from bulicommander.pktk.widgets.woperatorinput import (
         WOperatorType,
-        WOperatorBaseInput
+        WOperatorBaseInput,
+        WOperatorCondition
     )
 from bulicommander.pktk.widgets.wlabelelide import WLabelElide
 from bulicommander.pktk.widgets.wiodialog import WDialogBooleanInput
@@ -266,6 +267,34 @@ class BCSearchFilesDialogBox(QDialog):
                                                         [BCFileManagedFormat.translate(value) for value in filterRulesAsDict['imageFormat']['value']])
 
                     returned.setFormat(ruleOperator)
+
+            if 'imageRatio' in filterRulesAsDict and filterRulesAsDict['imageRatio']['active']:
+                if filterRulesAsDict['imageRatio']['operator'] in ('between', 'not between'):
+                    ruleOperator=BCFileListRuleOperator((filterRulesAsDict['imageRatio']['value'], filterRulesAsDict['imageRatio']['value2']),
+                                                        filterRulesAsDict['imageRatio']['operator'],
+                                                        BCFileListRuleOperatorType.FLOAT,
+                                                        (f"{filterRulesAsDict['imageRatio']['value']:.4f}",f"{filterRulesAsDict['imageRatio']['value2']:.4f}"))
+                else:
+                    ruleOperator=BCFileListRuleOperator(filterRulesAsDict['imageRatio']['value'],
+                                                        filterRulesAsDict['imageRatio']['operator'],
+                                                        BCFileListRuleOperatorType.FLOAT,
+                                                        f"{filterRulesAsDict['imageRatio']['value']:.4f}")
+
+                returned.setImageRatio(ruleOperator)
+
+            if 'imagePixels' in filterRulesAsDict and filterRulesAsDict['imagePixels']['active']:
+                if filterRulesAsDict['imagePixels']['operator'] in ('between', 'not between'):
+                    ruleOperator=BCFileListRuleOperator((round(filterRulesAsDict['imagePixels']['value']*1000000), round(filterRulesAsDict['imagePixels']['value2']*1000000)),
+                                                        filterRulesAsDict['imagePixels']['operator'],
+                                                        BCFileListRuleOperatorType.INT,
+                                                        (f"{filterRulesAsDict['imagePixels']['value']:.2f}MP",f"{filterRulesAsDict['imagePixels']['value2']:.2f}MP"))
+                else:
+                    ruleOperator=BCFileListRuleOperator(round(filterRulesAsDict['imagePixels']['value']*1000000),
+                                                        filterRulesAsDict['imagePixels']['operator'],
+                                                        BCFileListRuleOperatorType.INT,
+                                                        f"{filterRulesAsDict['imagePixels']['value']:.2f}MP")
+
+                returned.setImagePixels(ruleOperator)
 
             return returned
 
@@ -1039,6 +1068,7 @@ class BCWSearchFileFilterRules(QWidget):
         self.cbFileDtTime.toggled.connect(self.__fileDtTimeToggled)
 
         self.__fileNameToggled(False)
+        self.__filePathToggled(False)
         self.__fileSizeToggled(False)
         self.__fileDtTimeToggled(False)
         self.__fileDtDateToggled(False)
@@ -1333,14 +1363,20 @@ class BCWSearchImgFilterRules(QWidget):
         self.cbImageFormat.setMinimumHeight(self.woiImageFormat.minimumSizeHint().height())
         self.cbImageWidth.setMinimumHeight(self.woiImageWidth.minimumSizeHint().height())
         self.cbImageHeight.setMinimumHeight(self.woiImageHeight.minimumSizeHint().height())
+        self.cbImageRatio.setMinimumHeight(self.woiImageRatio.minimumSizeHint().height())
+        self.cbImagePixels.setMinimumHeight(self.woiImagePixels.minimumSizeHint().height())
 
         self.cbImageFormat.toggled.connect(self.__imageFormatToggled)
         self.cbImageWidth.toggled.connect(self.__imageWidthToggled)
         self.cbImageHeight.toggled.connect(self.__imageHeightToggled)
+        self.cbImageRatio.toggled.connect(self.__imageRatioToggled)
+        self.cbImagePixels.toggled.connect(self.__imagePixelsToggled)
 
         self.__imageFormatToggled(False)
         self.__imageWidthToggled(False)
         self.__imageHeightToggled(False)
+        self.__imageRatioToggled(False)
+        self.__imagePixelsToggled(False)
 
         # image format
         # (exclude JPEG as JPG is already in list)
@@ -1364,6 +1400,23 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImageHeight.valueChanged.connect(self.__setModified)
         self.woiImageHeight.value2Changed.connect(self.__setModified)
 
+        # file image ratio
+        self.woiImageRatio.setMinimum(0.0001)
+        self.woiImageRatio.setMaximum(9999.9999)
+        self.woiImageRatio.setDecimals(4)
+        self.woiImageRatio.operatorChanged.connect(self.__setModified)
+        self.woiImageRatio.valueChanged.connect(self.__setModified)
+        self.woiImageRatio.value2Changed.connect(self.__setModified)
+
+        # file image pixels
+        self.woiImagePixels.setMinimum(0.01)
+        self.woiImagePixels.setMaximum(9999.99)
+        self.woiImagePixels.setDecimals(2)
+        self.woiImagePixels.setSuffix('MP')
+        self.woiImagePixels.operatorChanged.connect(self.__setModified)
+        self.woiImagePixels.valueChanged.connect(self.__setModified)
+        self.woiImagePixels.value2Changed.connect(self.__setModified)
+
     def __setDefaultValues(self):
         """Initialise default values"""
         self.cbImageFormat.setChecked(False)
@@ -1379,6 +1432,14 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImageHeight.setValue(200)
         self.woiImageHeight.setValue2(1080)
         self.woiImageHeight.setOperator(WOperatorType.OPERATOR_GE)
+
+        self.woiImageRatio.setValue(1)
+        self.woiImageRatio.setValue2(1)
+        self.woiImageRatio.setOperator(WOperatorType.OPERATOR_GT)
+
+        self.woiImagePixels.setValue(1)
+        self.woiImagePixels.setValue2(10)
+        self.woiImagePixels.setOperator(WOperatorType.OPERATOR_GE)
 
         self.__isModified=False
 
@@ -1404,6 +1465,18 @@ class BCWSearchImgFilterRules(QWidget):
         self.__setModified()
         self.woiImageHeight.setEnabled(checked)
         self.woiImageHeight.setVisible(checked)
+
+    def __imageRatioToggled(self, checked):
+        """Checkbox 'file img ratio' has been toggled"""
+        self.__setModified()
+        self.woiImageRatio.setEnabled(checked)
+        self.woiImageRatio.setVisible(checked)
+
+    def __imagePixelsToggled(self, checked):
+        """Checkbox 'file img pixels' has been toggled"""
+        self.__setModified()
+        self.woiImagePixels.setEnabled(checked)
+        self.woiImagePixels.setVisible(checked)
 
     def resetToDefault(self):
         """Reset to default values"""
@@ -1447,6 +1520,18 @@ class BCWSearchImgFilterRules(QWidget):
                                     "operator": self.woiImageHeight.operator(),
                                     "value": self.woiImageHeight.value(),
                                     "value2": self.woiImageHeight.value2()
+                                },
+                            "imageRatio": {
+                                    "active": self.cbImageRatio.isChecked(),
+                                    "operator": self.woiImageRatio.operator(),
+                                    "value": self.woiImageRatio.value(),
+                                    "value2": self.woiImageRatio.value2()
+                                },
+                            "imagePixels": {
+                                    "active": self.cbImagePixels.isChecked(),
+                                    "operator": self.woiImagePixels.operator(),
+                                    "value": self.woiImagePixels.value(),
+                                    "value2": self.woiImagePixels.value2()
                                 }
                         }
             }
@@ -1469,8 +1554,7 @@ class BCWSearchImgFilterRules(QWidget):
                     "active": false
                 },
                 "imageFormat": {
-                    "active": true,
-                    "value": "kra"
+                    "active": true
                 }
             }
         """
@@ -1496,6 +1580,18 @@ class BCWSearchImgFilterRules(QWidget):
             self.woiImageHeight.setValue(dataAsDict['imageHeight']['value'])
             self.woiImageHeight.setValue2(dataAsDict['imageHeight']['value2'])
             self.woiImageHeight.setOperator(dataAsDict['imageHeight']['operator'])
+
+        if "imageRatio" in dataAsDict and isinstance(dataAsDict['imageRatio'], dict):
+            self.cbImageRatio.setChecked(dataAsDict['imageRatio']['active'])
+            self.woiImageRatio.setValue(dataAsDict['imageRatio']['value'])
+            self.woiImageRatio.setValue2(dataAsDict['imageRatio']['value2'])
+            self.woiImageRatio.setOperator(dataAsDict['imageRatio']['operator'])
+
+        if "imagePixels" in dataAsDict and isinstance(dataAsDict['imagePixels'], dict):
+            self.cbImagePixels.setChecked(dataAsDict['imagePixels']['active'])
+            self.woiImagePixels.setValue(dataAsDict['imagePixels']['value'])
+            self.woiImagePixels.setValue2(dataAsDict['imagePixels']['value2'])
+            self.woiImagePixels.setOperator(dataAsDict['imagePixels']['operator'])
 
         self.__isModified=False
 
@@ -1787,6 +1883,8 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
         self.__lblImgFormat=WLabelElide(Qt.ElideRight)
         self.__lblImgWidth=WLabelElide(Qt.ElideRight)
         self.__lblImgHeight=WLabelElide(Qt.ElideRight)
+        self.__lblImgRatio=WLabelElide(Qt.ElideRight)
+        self.__lblImgPixels=WLabelElide(Qt.ElideRight)
 
         self.__layout=QFormLayout()
         self.__layout.setContentsMargins(0,0,0,0)
@@ -1794,6 +1892,8 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
         self.__layout.addRow(f"- <b>{i18n('Format')}</b>", self.__lblImgFormat)
         self.__layout.addRow(f"- <b>{i18n('Width')}</b>", self.__lblImgWidth)
         self.__layout.addRow(f"- <b>{i18n('Height')}</b>", self.__lblImgHeight)
+        self.__layout.addRow(f"- <b>{i18n('Aspect ratio')}</b>", self.__lblImgRatio)
+        self.__layout.addRow(f"- <b>{i18n('Pixels')}</b>", self.__lblImgPixels)
 
         self.__data={
                     "imageFormat": {
@@ -1812,6 +1912,18 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
                             "operator": WOperatorType.OPERATOR_GE,
                             "value": 200,
                             "value2": 1080
+                        },
+                    "imageRatio": {
+                            "active": False,
+                            "operator": WOperatorType.OPERATOR_GE,
+                            "value": 1,
+                            "value2": 1
+                        },
+                    "imagePixels": {
+                            "active": False,
+                            "operator": WOperatorType.OPERATOR_GE,
+                            "value": 1,
+                            "value2": 8.3
                         }
                 }
 
@@ -1819,7 +1931,7 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
 
         self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 
-        self.node().setMinimumSize(QSize(400, 200))
+        self.node().setMinimumSize(QSize(400, 250))
         self.setLayout(self.__layout)
 
     def serialize(self):
@@ -1857,6 +1969,36 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
             else:
                 self.__lblImgWidth.setText(boolYesNo(False))
                 self.__lblImgWidth.setToolTip('')
+
+        if 'imageRatio' in data:
+            self.__data['imageRatio']=copy.deepcopy(data['imageRatio'])
+            if self.__data['imageRatio']['active']:
+                if self.__data['imageRatio']['operator']==WOperatorType.OPERATOR_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self.__data['imageRatio']['value']:.4f} and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self.__data['imageRatio']['value2']:.4f}"
+                elif self.__data['imageRatio']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self.__data['imageRatio']['value']:.4f} or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self.__data['imageRatio']['value2']:.4f}"
+                else:
+                    text=f"{WOperatorBaseInput.operatorLabel(self.__data['imageRatio']['operator'])}{self.__data['imageRatio']['value']:.4f}"
+                self.__lblImgRatio.setText(text)
+                self.__lblImgRatio.setToolTip(text)
+            else:
+                self.__lblImgRatio.setText(boolYesNo(False))
+                self.__lblImgRatio.setToolTip('')
+
+        if 'imagePixels' in data:
+            self.__data['imagePixels']=copy.deepcopy(data['imagePixels'])
+            if self.__data['imagePixels']['active']:
+                if self.__data['imagePixels']['operator']==WOperatorType.OPERATOR_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self.__data['imagePixels']['value']:.2f}MP and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self.__data['imagePixels']['value2']:.2f}MP"
+                elif self.__data['imagePixels']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self.__data['imagePixels']['value']:.2f}MP or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self.__data['imagePixels']['value2']:.2f}MP"
+                else:
+                    text=f"{WOperatorBaseInput.operatorLabel(self.__data['imagePixels']['operator'])}{self.__data['imagePixels']['value']:.2f}MP"
+                self.__lblImgPixels.setText(text)
+                self.__lblImgPixels.setToolTip(text)
+            else:
+                self.__lblImgPixels.setText(boolYesNo(False))
+                self.__lblImgPixels.setToolTip('')
 
         if 'imageFormat' in data:
             self.__data['imageFormat']=copy.deepcopy(data['imageFormat'])
