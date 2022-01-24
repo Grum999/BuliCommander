@@ -83,10 +83,24 @@ class WOperatorCondition:
     """A condition defition that can be used to define predefined conditions"""
 
     @staticmethod
-    def fromFmtString(value):
+    def fromFmtString(value, converter=None):
         """Return a WOperatorCondition from a formatted string
 
-        If string can't be parsed, return None
+        If `value` given as string can't be parsed, return None
+
+        string format:
+        (label)//(operator)//(value)//(value2)
+
+        values:
+            's:XXXX' ==> string 'XXXX'
+            'i:9999' ==> integer 9999
+            'f:9.99' ==> float 9.99
+            'l:s:X1;;s:X2' ==> list ['X1', 'X2']
+
+        if `converter` is provided, must be a callable with 2 parameters:
+            x(value, input)
+                => value: the value to convert
+                => input: the WOperatorBaseInput instance for which value will be set
         """
         def parsedValue(parameter):
             if len(parameter)>2:
@@ -111,13 +125,16 @@ class WOperatorCondition:
         if len(parameters)==3:
             parameters.append(parameters[2])
 
-        return WOperatorCondition(parameters[0], parameters[1], parsedValue(parameters[2]), parsedValue(parameters[3]))
+        return WOperatorCondition(parameters[0], parameters[1], parsedValue(parameters[2]), parsedValue(parameters[3]), converter)
 
-    def __init__(self, label, operator, value, value2=None):
+    def __init__(self, label, operator, value, value2=None, converter=None):
         self.__label=label
         self.__operator=operator
         self.__value=value
         self.__value2=value2
+        self.__converter=None
+        if callable(converter):
+            self.__converter=converter
 
     def __toStr(self, value):
         if isinstance(value, str):
@@ -140,6 +157,9 @@ class WOperatorCondition:
 
     def value2(self):
         return self.__value2
+
+    def converter(self):
+        return self.__converter
 
     def asFmtString(self):
         """Return as formatted string"""
@@ -343,8 +363,14 @@ class WOperatorBaseInput(QWidget):
         def applyCondition(condition):
             # apply condition...
             self.setOperator(condition.operator())
-            self.setValue(condition.value())
-            self.setValue2(condition.value2())
+            if condition.converter() is None:
+                self.setValue(condition.value())
+                self.setValue2(condition.value2())
+            else:
+                converter=condition.converter()
+
+                self.setValue(converter(condition.value(), self))
+                self.setValue2(converter(condition.value2(), self))
 
         def executeAction(action):
             if action.data():
