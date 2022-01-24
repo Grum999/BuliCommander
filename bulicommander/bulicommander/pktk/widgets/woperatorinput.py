@@ -79,6 +79,77 @@ class WOperatorType:
     OPERATOR_NOT_IN=      'not in'
 
 
+class WOperatorCondition:
+    """A condition defition that can be used to define predefined conditions"""
+
+    @staticmethod
+    def fromFmtString(value):
+        """Return a WOperatorCondition from a formatted string
+
+        If string can't be parsed, return None
+        """
+        def parsedValue(parameter):
+            if len(parameter)>2:
+                if parameter[0]=='s':
+                    return parameter[2:].replace('^/^/', '//')
+                elif parameter[0]=='i':
+                    return int(parameter[2:])
+                elif parameter[0]=='f':
+                    return float(parameter[2:])
+                elif parameter[0]=='l':
+                    return [parsedValue(v) for v in parameter[2:].split(';;')]
+            else:
+                return None
+
+        if not isinstance(value, str):
+            raise EInvalidType("Given `value` must be <str>")
+
+        parameters=value.split('//')
+        if len(parameters)<3:
+            raise EInvalidValue("Given `value` can't be parsed")
+
+        if len(parameters)==3:
+            parameters.append(parameters[2])
+
+        return WOperatorCondition(parameters[0], parameters[1], parsedValue(parameters[2]), parsedValue(parameters[3]))
+
+    def __init__(self, label, operator, value, value2=None):
+        self.__label=label
+        self.__operator=operator
+        self.__value=value
+        self.__value2=value2
+
+    def __toStr(self, value):
+        if isinstance(value, str):
+            return f"s:{value.replace('//', '^/^/').replace(';;', '^;^;')}"
+        elif isinstance(value, float):
+            return f"f:{value}"
+        elif isinstance(value, int):
+            return f"i:{value}"
+        elif isinstance(value, list):
+            return f"l:{';;'.join([self.__toStr(v) for v in value])}"
+
+    def label(self):
+        return self.__label
+
+    def operator(self):
+        return self.__operator
+
+    def value(self):
+        return self.__value
+
+    def value2(self):
+        return self.__value2
+
+    def asFmtString(self):
+        """Return as formatted string"""
+        returned=[self.__label, self.__operator, self.__toStr(self.__value)]
+        if not self.__value2 is None:
+            returned.append(self.__toStr(self.__value2))
+
+        return "//".join(returned)
+
+
 class WOperatorBaseInput(QWidget):
     """A widget to define search condition using operator
 
@@ -177,6 +248,10 @@ class WOperatorBaseInput(QWidget):
         super(WOperatorBaseInput, self).__init__(parent)
         self._inInit=True
 
+        self.__predefinedConditionsSubMenu=None
+        self.__predefinedConditions=[]
+        self.__predefinedConditionsLabel=i18n("Predefined conditions")
+
         self._defaultOperatorList=[]
         self._checkRangeValue=True
 
@@ -196,6 +271,14 @@ class WOperatorBaseInput(QWidget):
         # initialise UI
         self._initializeUi()
 
+        # keep a pointer to original contextMenuEvent method
+        self._input1._contextMenuEvent=self._input1.contextMenuEvent
+        self._input2._contextMenuEvent=self._input2.contextMenuEvent
+
+        # define dedicated contextMenuEvent method to manage suffix
+        self._input1.contextMenuEvent=self.__contextMenuEvent1
+        self._input2.contextMenuEvent=self.__contextMenuEvent2
+
         self.__layout.addWidget(self._cbOperatorList)
         self.__layout.addWidget(self._input1)
         self.__layout.addWidget(self._lblAnd)
@@ -203,7 +286,7 @@ class WOperatorBaseInput(QWidget):
 
         self.__layout.setAlignment(self._cbOperatorList, Qt.AlignTop)
         self.__layout.setAlignment(self._input1, Qt.AlignTop)
-        self.__layout.setAlignment(self._lblAnd, Qt.AlignTop)
+        self.__layout.setAlignment(self._lblAnd, Qt.AlignVCenter)
         self.__layout.setAlignment(self._input2, Qt.AlignTop)
 
         self.setLayout(self.__layout)
@@ -243,6 +326,63 @@ class WOperatorBaseInput(QWidget):
     def _initializeUi(self):
         """Implemented by sub classes to initialise interface"""
         raise EInvalidStatus("Method '_initialize' must be overrided by sub-classes")
+
+    def __contextMenuEvent1(self, event):
+        """Manage context menu event for input 1"""
+        self._contextMenuEvent(self._input1, event)
+
+    def __contextMenuEvent2(self, event):
+        """Manage context menu event for input 2"""
+        self._contextMenuEvent(self._input2, event)
+
+    def _contextMenuEvent(self, input, event, display=True):
+        """Display context menu for given input
+
+        If suffix list is not empty, add action to select a suffix
+        """
+        def applyCondition(condition):
+            # apply condition...
+            self.setOperator(condition.operator())
+            self.setValue(condition.value())
+            self.setValue2(condition.value2())
+
+        def executeAction(action):
+            if action.data():
+                data=action.data()
+                # data=tuple (function, parameter)
+                data[0](data[1])
+
+        if isinstance(input, QLineEdit):
+            menu=input.createStandardContextMenu()
+        elif isinstance(input, (QSpinBox, QDoubleSpinBox, QDateEdit)):
+            menu=input.lineEdit().createStandardContextMenu()
+        elif isinstance(input, WTagInput):
+            menu=input.lineEdit().createStandardContextMenu()
+        else:
+            menu=QMenu()
+
+        fAction=menu.actions()[0]
+
+        if len(self.__predefinedConditions)==0 and display:
+            input._contextMenuEvent(event)
+            return
+        elif len(self.__predefinedConditions)>0:
+            self.__predefinedConditionsSubMenu=QMenu(self.__predefinedConditionsLabel)
+            for predefinedCondition in self.__predefinedConditions:
+                action=None
+                if isinstance(predefinedCondition, WOperatorCondition):
+                    action=self.__predefinedConditionsSubMenu.addAction(predefinedCondition.label())
+                    action.setData((applyCondition, predefinedCondition))
+
+            menu.insertMenu(fAction, self.__predefinedConditionsSubMenu)
+            menu.insertSeparator(fAction)
+
+        menu.triggered.connect(executeAction)
+        if display:
+            menu.exec(event.globalPos())
+            return None
+        else:
+            return menu
 
     def operator(self):
         """Return current operator"""
@@ -325,6 +465,33 @@ class WOperatorBaseInput(QWidget):
             if self._checkRangeValue:
                 self._input1Changed()
 
+    def predefinedConditions(self):
+        """Return list of predefined values
+
+        Each item is a tuple (label, condition)
+        """
+        return self.__predefinedConditions
+
+    def setPredefinedConditions(self, values):
+        """Set list of predefined values
+
+        Each item is a WOperatorCondition
+        """
+        self.__predefinedConditions=[]
+        for value in values:
+            if isinstance(value, WOperatorCondition):
+                self.__predefinedConditions.append(value)
+
+    def predefinedConditionsLabel(self):
+        """Return predefined label displayed in menu"""
+        return self.__predefinedConditionsLabel
+
+    def setPredefinedConditionsLabel(self, value):
+        """Set predefined label displayed in menu"""
+        if isinstance(value, str):
+            self.__predefinedConditionsLabel=value
+
+
 
 class WOperatorBaseInputNumber(WOperatorBaseInput):
     """Search operator for Integer"""
@@ -354,14 +521,6 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
         self._initOperator(self._defaultOperatorList)
         self.setOperator(WOperatorType.OPERATOR_GT)
 
-        # keep a pointer to original contextMenuEvent method
-        self._input1._contextMenuEvent=self._input1.contextMenuEvent
-        self._input2._contextMenuEvent=self._input1.contextMenuEvent
-
-        # define dedicated contextMenuEvent method to manage suffix
-        self._input1.contextMenuEvent=self.__contextMenuEvent1
-        self._input2.contextMenuEvent=self.__contextMenuEvent2
-
         self._input1.setAlignment(Qt.AlignRight)
         self._input2.setAlignment(Qt.AlignRight)
 
@@ -382,61 +541,53 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
         if self._checkRangeValue and self._input1.value()>self._input2.value():
             self._input1.setValue(self._input2.value())
 
-    def __contextMenuEvent1(self, event):
-        """Manage context menu event for input 1"""
-        self.__contextMenuEvent(self._input1, event)
-
-    def __contextMenuEvent2(self, event):
-        """Manage context menu event for input 2"""
-        self.__contextMenuEvent(self._input2, event)
-
-    def __contextMenuEvent(self, input, event):
+    def _contextMenuEvent(self, input, event):
         """Display context menu for given input
 
         If suffix list is not empty, add action to select a suffix
         """
-        def executeAction(action):
-            if action.data():
-                self.setSuffix(action.data())
-
-        if len(self._suffixList)==0:
-            input._contextMenuEvent(event)
+        if len(self._suffixList)==0 and len(self.predefinedConditions())==0:
+            super(WOperatorBaseInputNumber, self)._contextMenuEvent(input, event)
             return
 
-        group=QActionGroup(self)
-        group.setExclusive(True)
-        subMenu=QMenu(self._suffixLabel)
-        for suffix in self._suffixList:
-            action=None
-            if isinstance(suffix, str):
-                action=QAction(suffix)
-                action.setData(suffix)
-                action.setCheckable(True)
-            elif isinstance(suffix, (tuple, list)) and len(suffix)==2:
-                action=QAction(suffix[0])
-                action.setData(suffix[1])
-                action.setCheckable(True)
-
-            if action:
-                group.addAction(action)
-                subMenu.addAction(action)
-
-                if self._input1.suffix()==action.data():
-                    action.setChecked(True)
+        menu=super(WOperatorBaseInputNumber, self)._contextMenuEvent(input, event, False)
 
         actionStepUp=QAction(i18n('Step up'))
         actionStepUp.triggered.connect(input.stepUp)
         actionStepDown=QAction(i18n('Step down'))
         actionStepDown.triggered.connect(input.stepDown)
 
-        menu=input.lineEdit().createStandardContextMenu()
-        fAction=menu.actions()[0]
-        menu.insertMenu(fAction, subMenu)
-        menu.insertSeparator(fAction)
+        if len(self._suffixList)>0:
+            group=QActionGroup(self)
+            group.setExclusive(True)
+            subMenu=QMenu(self._suffixLabel)
+            for suffix in self._suffixList:
+                action=None
+                if isinstance(suffix, str):
+                    action=QAction(suffix)
+                    action.setData((self.setSuffix, suffix))
+                    action.setCheckable(True)
+                elif isinstance(suffix, (tuple, list)) and len(suffix)==2:
+                    action=QAction(suffix[0])
+                    action.setData((self.setSuffix, suffix[1]))
+                    action.setCheckable(True)
+
+                if action:
+                    group.addAction(action)
+                    subMenu.addAction(action)
+
+                    if self._input1.suffix()==action.data()[1]:
+                        action.setChecked(True)
+
+            fAction=menu.actions()[0]
+            menu.insertMenu(fAction, subMenu)
+
+            if len(self.predefinedConditions())==0:
+                menu.insertSeparator(fAction)
+
         menu.addSeparator()
         menu.addAction(actionStepUp)
         menu.addAction(actionStepDown)
-        menu.triggered.connect(executeAction)
         menu.exec(event.globalPos())
 
     def value(self):
@@ -904,6 +1055,7 @@ class WOperatorInputList(WOperatorBaseInput):
         self._input1=WTagInput()
         self._input1.setAcceptNewTags(WTagInput.ACCEPT_NEWTAG_NO)
         self._input1.setAutoSort(True)
+        self._input1.lineEdit().setContextMenuPolicy(Qt.NoContextMenu)
 
         self._input1.tagSelection.connect(lambda: self.valueChanged.emit( self._input1.selectedTags() ))
 
