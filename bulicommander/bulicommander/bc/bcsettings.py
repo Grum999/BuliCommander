@@ -343,6 +343,16 @@ class BCSettingsKey(SettingsKey):
     CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE =       'config.defaultSession.information.clipboard.minWidthActive'
     CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE =       'config.defaultSession.information.clipboard.maxWidthActive'
 
+    CONFIG_SEARCHFILES_PREDEFINED_FILEPATH =                 'config.searchFiles.predefined.filePath'
+    CONFIG_SEARCHFILES_PREDEFINED_FILENAME =                 'config.searchFiles.predefined.fileName'
+    CONFIG_SEARCHFILES_PREDEFINED_FILESIZE =                 'config.searchFiles.predefined.fileSize'
+    CONFIG_SEARCHFILES_PREDEFINED_FILEDATE =                 'config.searchFiles.predefined.fileDate'
+    CONFIG_SEARCHFILES_PREDEFINED_IMGFORMAT =                'config.searchFiles.predefined.imageFormat'
+    CONFIG_SEARCHFILES_PREDEFINED_IMGWIDTH =                 'config.searchFiles.predefined.imageWidth'
+    CONFIG_SEARCHFILES_PREDEFINED_IMGHEIGHT =                'config.searchFiles.predefined.imageHeight'
+    CONFIG_SEARCHFILES_PREDEFINED_IMGRATIO =                 'config.searchFiles.predefined.imageRatio'
+    CONFIG_SEARCHFILES_PREDEFINED_IMGPIXELS =                'config.searchFiles.predefined.imagePixels'
+
     SESSION_INFO_TOCLIPBOARD_BORDER =                        'session.information.clipboard.border'
     SESSION_INFO_TOCLIPBOARD_HEADER =                        'session.information.clipboard.header'
     SESSION_INFO_TOCLIPBOARD_MINWIDTH =                      'session.information.clipboard.minWidth'
@@ -677,6 +687,21 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC,                False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION,                     BCSettingsValues.CLIPBOARD_ACTION_NLAYER,
                                                                                                                         SettingsFmt(str, [BCSettingsValues.CLIPBOARD_ACTION_NLAYER,BCSettingsValues.CLIPBOARD_ACTION_NDOCUMENT])),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILEPATH,              [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILENAME,              [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILESIZE,              [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILEDATE,              [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGFORMAT,             [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGWIDTH,              [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGHEIGHT,             [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGRATIO,              [f"{i18n('Portrait')}//<//f:1.0",
+                                                                                             f"{i18n('Landscape')}//>//f:1.0",
+                                                                                             f"{i18n('Square')}//=//f:1.0"],
+                                                                                                                        SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGPIXELS,             [f"{i18n('Small')}//<//f:1.0",
+                                                                                             f"{i18n('Medium')}//between//f:1.0//f:8.3",
+                                                                                             f"{i18n('Large')}//>//f:8.3"],
+                                                                                                                        SettingsFmt(list, str)),
 
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER,                     3,                          SettingsFmt(int, [0,1,2,3])),
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER,                     True,                       SettingsFmt(bool)),

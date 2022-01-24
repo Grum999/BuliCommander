@@ -1130,14 +1130,20 @@ class BCWSearchFileFilterRules(QWidget):
 
         self.woiFileName.setValue("")
         self.woiFileName.setOperator(WOperatorType.OPERATOR_LIKE)
+        self.woiFileName.setPredefinedConditionsLabel(i18n("Predefined name"))
+        self.woiFileName.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILENAME)])
         self.cbFileNameIgnoreCase.setChecked(True)
 
         self.woiFilePath.setValue("")
         self.woiFilePath.setOperator(WOperatorType.OPERATOR_LIKE)
+        self.woiFilePath.setPredefinedConditionsLabel(i18n("Predefined path"))
+        self.woiFilePath.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILEPATH)])
         self.cbFilePathIgnoreCase.setChecked(True)
 
         self.woiFileSize.setValue(1.00)
         self.woiFileSize.setOperator(WOperatorType.OPERATOR_GE)
+        self.woiFileSize.setPredefinedConditionsLabel(i18n("Predefined size"))
+        self.woiFileSize.setPredefinedConditions([WOperatorCondition.fromFmtString(v, self.__convertToUnit) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILESIZE)])
         if BCSettings.get(BCSettingsKey.CONFIG_GLB_FILE_UNIT)==BCSettingsValues.FILE_UNIT_KIB:
             self.woiFileSize.setValue2(1024.00)
             self.woiFileSize.setSuffix('KiB')
@@ -1151,6 +1157,8 @@ class BCWSearchFileFilterRules(QWidget):
         self.woiFileDtDate.setValue(dateTimeYm1)
         self.woiFileDtDate.setValue2(dateTimeNow)
         self.woiFileDtDate.setOperator(WOperatorType.OPERATOR_BETWEEN)
+        self.woiFileDtDate.setPredefinedConditionsLabel(i18n("Predefined date"))
+        self.woiFileDtDate.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILEDATE)])
 
         self.__isModified=False
 
@@ -1195,6 +1203,24 @@ class BCWSearchFileFilterRules(QWidget):
         self.woiFileDtTime.setEnabled(checked and self.cbFileDtTime.isEnabled())
         self.woiFileDtTime.setVisible(checked and self.cbFileDtTime.isEnabled())
         self.__setModified()
+
+    def __convertToUnit(self, value, input):
+        """Convert given value (in bytes) to unit defined in given input (here input=woiFileSize)"""
+        unit=input.suffix().lower()
+        if unit == 'gib':
+            return value/1073741824
+        elif unit == 'mib':
+            return value/1048576
+        elif unit == 'kib':
+            return value/1024
+        elif unit == 'gb':
+            return value/1000000000
+        elif unit == 'mb':
+            return value/1000000
+        elif unit == 'kb':
+            return value/1000
+        else:
+            return value
 
     def resetToDefault(self):
         """Reset to default values"""
@@ -1381,6 +1407,8 @@ class BCWSearchImgFilterRules(QWidget):
         # image format
         # (exclude JPEG as JPG is already in list)
         self.woiImageFormat.tagInput().setAvailableTags([(imageFormat, BCFileManagedFormat.translate(imageFormat)) for imageFormat in BCFileManagedFormat.list() if imageFormat!=BCFileManagedFormat.JPEG] )
+        self.woiImageFormat.setPredefinedConditionsLabel(i18n("Predefined format"))
+        self.woiImageFormat.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGFORMAT)])
         self.woiImageFormat.operatorChanged.connect(self.__setModified)
         self.woiImageFormat.valueChanged.connect(self.__setModified)
 
@@ -1388,6 +1416,8 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImageWidth.setMinimum(1)
         self.woiImageWidth.setMaximum(9999999)
         self.woiImageWidth.setSuffix('px')
+        self.woiImageWidth.setPredefinedConditionsLabel(i18n("Predefined width"))
+        self.woiImageWidth.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGWIDTH)])
         self.woiImageWidth.operatorChanged.connect(self.__setModified)
         self.woiImageWidth.valueChanged.connect(self.__setModified)
         self.woiImageWidth.value2Changed.connect(self.__setModified)
@@ -1396,6 +1426,8 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImageHeight.setMinimum(1)
         self.woiImageHeight.setMaximum(9999999)
         self.woiImageHeight.setSuffix('px')
+        self.woiImageHeight.setPredefinedConditionsLabel(i18n("Predefined height"))
+        self.woiImageHeight.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGHEIGHT)])
         self.woiImageHeight.operatorChanged.connect(self.__setModified)
         self.woiImageHeight.valueChanged.connect(self.__setModified)
         self.woiImageHeight.value2Changed.connect(self.__setModified)
@@ -1404,6 +1436,8 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImageRatio.setMinimum(0.0001)
         self.woiImageRatio.setMaximum(9999.9999)
         self.woiImageRatio.setDecimals(4)
+        self.woiImageRatio.setPredefinedConditionsLabel(i18n("Predefined aspect ratio"))
+        self.woiImageRatio.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGRATIO)])
         self.woiImageRatio.operatorChanged.connect(self.__setModified)
         self.woiImageRatio.valueChanged.connect(self.__setModified)
         self.woiImageRatio.value2Changed.connect(self.__setModified)
@@ -1413,6 +1447,8 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImagePixels.setMaximum(9999.99)
         self.woiImagePixels.setDecimals(2)
         self.woiImagePixels.setSuffix('MP')
+        self.woiImagePixels.setPredefinedConditionsLabel(i18n("Predefined pixel sizes"))
+        self.woiImagePixels.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGPIXELS)])
         self.woiImagePixels.operatorChanged.connect(self.__setModified)
         self.woiImagePixels.valueChanged.connect(self.__setModified)
         self.woiImagePixels.value2Changed.connect(self.__setModified)
