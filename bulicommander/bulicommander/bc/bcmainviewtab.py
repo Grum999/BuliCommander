@@ -87,6 +87,7 @@ from .bcfile import (
         BCFileList,
         BCFileListRule,
         BCFileListSortRule,
+        BCFileListPath,
         BCFileManagedFormat,
         BCFileProperty,
         BCFileThumbnailSize,
@@ -1474,30 +1475,17 @@ class BCMainViewTab(QFrame):
             # MODE_PATH
             if fileQuery is None:
                 if self.__filesQuery is None:
-                    filter = BCFileListRule()
-
-                    if self.__uiController.optionViewFileManagedOnly():
-                        reBase = [fr'\.{extension}' for extension in BCFileManagedFormat.list()]
-                        if self.__uiController.optionViewFileBackup():
-                            bckSufRe=BCFileManagedFormat.backupSuffixRe()
-                            reBase+=[fr'\.{extension}{bckSufRe}' for extension in BCFileManagedFormat.list()]
-
-                        filter.setName((r're/i:({0})$'.format('|'.join(reBase)), 'match'))
-                    else:
-                        filter.setName((r're:.*', 'match'))
-
                     self.__filesQuery = BCFileList()
-                    self.__filesQuery.addPath(path)
+                    self.__filesQuery.addPath(BCFileListPath(path,
+                                                             False,
+                                                             self.__uiController.optionViewFileHidden(),
+                                                             self.__uiController.optionViewFileManagedOnly(),
+                                                             self.__uiController.optionViewFileBackup()))
                     self.__filesQuery.setIncludeDirectories(True)
-
-                    if self.__uiController.optionViewFileHidden():
-                        self.__filesQuery.setIncludeHidden(True)
-                    self.__filesQuery.addRule(filter)
             elif not isinstance(fileQuery, BCFileList):
                 raise EInvalidType('Given `fileQuery` must be a <BCFileList>')
             else:
                 self.__filesQuery = fileQuery
-
 
             try:
                 # ensure there's no current connection before create a new one
@@ -1510,7 +1498,7 @@ class BCMainViewTab(QFrame):
             self.treeViewFiles.clear()
             self.treeViewFiles.endUpdate()
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            self.__filesQuery.execute(True)
+            self.__filesQuery.execute()
             QApplication.restoreOverrideCursor()
 
         # sort files according to columns + add to treeview
@@ -1815,7 +1803,6 @@ class BCMainViewTab(QFrame):
             rePattern = f"re/i:{filePattern}(?:\.\d+)?{backupSuffix}$"
             searchBackupRule = BCFileListRule()
             searchBackupRule.setName((rePattern, 'match'))
-
 
             backupList = BCFileList()
             backupList.addPath(file.path())

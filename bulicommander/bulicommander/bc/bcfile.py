@@ -5959,12 +5959,18 @@ class BCFileListRuleCombination(object):
 class BCFileListPath(object):
     """A search path definition"""
 
-    def __init__(self, path=None, recursive=False):
+    def __init__(self, path=None, recursive=False, hiddenFiles=False, managedFilesOnly=False, managedFilesBackup=False):
         self.__path = ''
         self.__recursive = False
+        self.__hiddenFiles = False
+        self.__managedFilesOnly = False
+        self.__managedFilesBackup = False
 
         self.setPath(path)
         self.setRecursive(recursive)
+        self.setHiddenFiles(hiddenFiles)
+        self.setManagedFilesOnly(managedFilesOnly)
+        self.setManagedFilesBackup(managedFilesBackup)
 
     def __repr__(self):
         return f"<BCFileListPath('{self.__path}', {self.__recursive})>"
@@ -5990,6 +5996,39 @@ class BCFileListPath(object):
             self.__recursive = value
         else:
             raise EInvalidRuleParameter("Given `recursive` must be a valid boolean")
+
+    def hiddenFiles(self):
+        """Return if search is include hidden files or not"""
+        return self.__hiddenFiles
+
+    def setHiddenFiles(self, value):
+        """Set if search is include hidden files or not"""
+        if isinstance(value, bool):
+            self.__hiddenFiles = value
+        else:
+            raise EInvalidRuleParameter("Given `hiddenFiles` must be a valid boolean")
+
+    def managedFilesOnly(self):
+        """Return if search is made on managed files only or not"""
+        return self.__managedFilesOnly
+
+    def setManagedFilesOnly(self, value):
+        """Set if search is made on managed files only or not"""
+        if isinstance(value, bool):
+            self.__managedFilesOnly = value
+        else:
+            raise EInvalidRuleParameter("Given `managedFilesOnly` must be a valid boolean")
+
+    def managedFilesBackup(self):
+        """Return if search is made on managed files include backup files or not"""
+        return self.__managedFilesBackup
+
+    def setManagedFilesBackup(self, value):
+        """Set if search is made on managed files i nclude backup files or not"""
+        if isinstance(value, bool):
+            self.__managedFilesBackup = value
+        else:
+            raise EInvalidRuleParameter("Given `managedFilesBackup` must be a valid boolean")
 
 
 class BCFileListSortRule(object):
@@ -6169,7 +6208,6 @@ class BCFileList(QObject):
         self.__statFiles=None
 
         self.__includeDirectories = False
-        self.__includeHidden = False
 
         self.__invalidated = True
 
@@ -6302,17 +6340,6 @@ class BCFileList(QObject):
             if self.__includeDirectories != value:
                 self.__invalidate()
             self.__includeDirectories = value
-
-    def includeHidden(self):
-        """Return if query include hidden files or not"""
-        return self.__includeHidden
-
-    def setIncludeHidden(self, value):
-        """Set if query should include hidden files or not"""
-        if isinstance(value, bool):
-            if self.__includeHidden != value:
-                self.__invalidate()
-            self.__includeHidden = value
 
     def paths(self):
         """Return current defined paths where to search files"""
@@ -6459,60 +6486,6 @@ class BCFileList(QObject):
                 self.__sortList.remove(value)
                 self.__invalidate()
 
-    def exportJsonQuery(self):
-        """Export query into JSON format
-
-        Return result as a string
-        """
-        returned = []
-
-        return '\n'.join(returned)
-
-    def exportSSQuery(self):
-        """Export query into Simple Selection Query format
-
-        Return result as a string
-        """
-        returned = []
-
-        if len(self.__pathList) > 0:
-            fromClause = []
-
-            for path in self.__pathList:
-                clause = f'DIRECTORY "{path.path()}"'
-                if path.recursive():
-                    clause+=' RECURSIVELY'
-
-                fromClause.append(clause)
-
-            returned.append('SEARCH FROM '+ textwrap.indent(',\n'.join(fromClause), '            ').strip() )
-        else:
-            returned.append('SEARCH')
-
-        includes = []
-        if self.__includeDirectories:
-            includes.append('DIRECTORIES')
-        if self.__includeHidden:
-            includes.append('HIDDEN FILES')
-
-        if len(includes) > 0:
-            returned.append(f'INCLUDE {", ".join(includes)}')
-
-        if len(self.__ruleList) > 0:
-            whereClause = []
-
-            for rule in self.__ruleList:
-                whereClause.append(
-                    textwrap.indent(rule.translate(True).replace(' and ', ',\n'), '              ').strip()
-                )
-
-            returned.append('MATCHING RULE '+ '\n      OR RULE '.join(whereClause) )
-
-        if len(self.__sortList) > 0:
-            returned.append('SORT BY '+ ',\n        '.join([str(v) for v in self.__sortList]) )
-
-        return '\n'.join(returned)
-
     def exportHQuery(self):
         """Export query into a 'human natural language'
 
@@ -6524,19 +6497,29 @@ class BCFileList(QObject):
         if len(self.__pathList) > 0:
             fromClause = []
 
-            for path in self.__pathList:
-                if path.recursive():
-                    clause=i18n('directory (and sub-directories)')
-                else:
-                    clause=i18n('directory')
-
-                clause+=f' "{path.path()}"'
-
-                fromClause.append(clause)
-
             # need to work with translated strings
             searchStr=i18n('Search files from')+' '
-            searchAnd='\n'+(' '*len(searchStr))+i18n("and")+'\n'+(' '*len(searchStr))
+            andFromStr=i18n("and from")+' '
+            searchAnd='\n'+(' '*(len(searchStr)-len(andFromStr)))+andFromStr
+
+            directoryStr=i18n('directory')
+            clauseIncludingStr="\n" + (' ' * (len(directoryStr) + len(searchAnd))) + "- "
+
+            for path in self.__pathList:
+                clause=f'{directoryStr} "{path.path()}"'
+
+                if path.recursive():
+                    clause+=clauseIncludingStr+i18n('including sub-directories')
+
+                if path.hiddenFiles():
+                    clause+=clauseIncludingStr+i18n('including hidden files')
+
+                if path.managedFilesOnly():
+                    clause+=clauseIncludingStr+i18n('looking for managed files only')
+                    if path.managedFilesBackup():
+                        clause+=f" ({i18n('including backup files')})"
+
+                fromClause.append(clause)
 
             returned.append(searchStr+searchAnd.join(fromClause))
             returned.append('')
@@ -6548,8 +6531,6 @@ class BCFileList(QObject):
         includes = []
         if self.__includeDirectories:
             includes.append(i18n('directories'))
-        if self.__includeHidden:
-            includes.append(i18n('hidden files'))
 
         if len(includes) > 0:
             searchStr=i18n('Including')+' '
@@ -6557,7 +6538,6 @@ class BCFileList(QObject):
 
             returned.append(searchStr+searchAnd.join(includes))
             returned.append('')
-
 
         if len(self.__ruleList) > 0:
             whereClause = []
@@ -6575,62 +6555,7 @@ class BCFileList(QObject):
         if len(self.__sortList) > 0:
             returned.append('Sort result by:\n - '+ '\n - '.join([v.translate() for v in self.__sortList]) )
 
-
-
         return '\n'.join(returned)
-
-    def exportJsonResults(self, compact=True):
-        """Export image list result as a json string
-
-        If `compact` is True, returned json string is formatted as small as possible
-        Otherwise json is returned to be easy to read by human (but bigger string!)
-        """
-        if self.__invalidated:
-            raise EInvalidQueryResult("Current query results are not up to date: query has been modified but not yet executed")
-
-        returned = {
-            'exportQuery': self.exportSSQuery(),
-            'exportDate': tsToStr(time.time()),
-            'exportFiles': {
-                    'count': len(self.__currentFiles),
-                    'files': []
-                }
-            }
-
-        for file in self.__currentFiles:
-            if file.format() == BCFileManagedFormat.DIRECTORY:
-                returned['exportFiles']['files'].append({
-                    'path': file.path(),
-                    'name': file.name(),
-                    'date': tsToStr(file.lastModificationDateTime()),
-                    'date_ts': file.lastModificationDateTime(),
-                    'format': '<dir>'
-                })
-            elif file.format() == BCFileManagedFormat.UNKNOWN:
-                returned['exportFiles']['files'].append({
-                    'path': file.path(),
-                    'name': file.name(),
-                    'size': file.size(),
-                    'date': tsToStr(file.lastModificationDateTime()),
-                    'date_ts': file.lastModificationDateTime(),
-                    'format': 'unknown'
-                })
-            else:
-                returned['exportFiles']['files'].append({
-                    'path': file.path(),
-                    'name': file.name(),
-                    'size': file.size(),
-                    'date': tsToStr(file.lastModificationDateTime()),
-                    'date_ts': file.lastModificationDateTime(),
-                    'format': file.format(),
-                    'width': file.imageSize().width(),
-                    'height': file.imageSize().height()
-                })
-
-        if compact:
-            return json.dumps(returned)
-        else:
-            return json.dumps(returned, indent=2)
 
     def exportCsvResults(self, csvSeparator='\t', header=True):
         """Export image list result as a csv string
@@ -6768,7 +6693,7 @@ class BCFileList(QObject):
             if self.__workerPool:
                 self.__workerPool.stopProcessing()
 
-    def execute(self, clearResults=True, buildStats=False, strict=False, preFilterFileName=False, signals=None):
+    def execute(self, clearResults=True, buildStats=False, signals=None):
         """Search for files
 
         Files matching criteria are added to selection.
@@ -6778,9 +6703,6 @@ class BCFileList(QObject):
 
         If `buildStats` is True, calculate statistics from file query
         => use stats() method to get statistics (nbDir, NbKra files, nb other files, sizes, ...)
-
-        If `strict` is True, check only files for which extension is known
-        If `strict` is False, try to determinate file format even if there's no extension
 
         Return number of files matching criteria
         """
@@ -6815,94 +6737,107 @@ class BCFileList(QObject):
         # stopwatches are just used to measure execution time performances
         Stopwatch.start('BCFileList.execute.global')
 
-        namePattern = None
-        namePatterns = []
-        if preFilterFileName:
-            # to reduce execution times on filtering, test if file name is matching
-            # rule is applied in directory scan
-            # regular expression for matching pattern is built from all rules for
-            # which file name must match a pattern
+        managedFilesOnly = None
 
-            # this can only be used on 'simple' search rule
-            # (simplest case: only one file filter rule)
-            # deactivated by default, should be explicitely activated
-            for rule in self.__ruleList:
-                if isinstance(rule, BCFileListRule) and not rule.name() is None:
-                    namePatterns.append(rule.name().value().pattern)
-
-            if len(namePatterns) > 0:
-                namePattern = re.compile( '|'.join(namePatterns) )
-
-        # search for ALL files matching pattern in given path(s)
+        # nbTotal=counter used to determinate when to process application events
         nbTotal = 0
+
         # work on a set, faster for searching if a file is already in list
         foundFiles = set()
         foundDirectories = set()
         for processedPath in self.__pathList:
+            # counter for files (exclufing directories) founds in current path
+            nbFilesInPath=0
+
             pathName = processedPath.path()
-            nbPath=0
+            includeHidden=processedPath.hiddenFiles()
+
+            # build regex to prefilter files if needed
+            if processedPath.managedFilesOnly():
+                extensionList=[fr'\.{extension}' for extension in BCFileManagedFormat.list()]
+
+                if processedPath.managedFilesBackup():
+                    bckSufRe=BCFileManagedFormat.backupSuffixRe()
+                    extensionList+=[fr'\.{extension}{bckSufRe}' for extension in BCFileManagedFormat.list()]
+
+                managedFilesOnly = re.compile(f"({'|'.join(extensionList)})$", re.I)
+            else:
+                managedFilesOnly=None
 
             BCFileCache.globalInstance().setDirectory(pathName)
 
             if processedPath.recursive():
                 # recursive search for path, need to use os.walk()
                 for path, subdirs, files in os.walk(pathName):
+                    if not includeHidden:
+                        # do not include hidden files/directories then need to remove hidden items from subdirs/files
+                        # trick from https://stackoverflow.com/a/13454267
+                        # > Note the dirs[:] = slice assignment; os.walk recursively traverses the subdirectories listed in dirs.
+                        # >                    By replacing the elements of dirs with those that satisfy a criteria (e.g., directories whose names don't begin with .),
+                        # >                    os.walk() will not visit directories that fail to meet the criteria.
+                        # >                    This only works if you keep the topdown keyword argument to True
+                        subdirs[:]=[dirName for dirName in subdirs if not QFileInfo(os.path.join(path, dirName)).isHidden()]
+
                     if self.__includeDirectories:
                         for dir in subdirs:
+                            nbTotal+=1
                             fullPathName = os.path.join(path, dir)
 
-                            if self.__includeHidden or not QFileInfo(dir).isHidden():
-                                nbTotal+=1
+                            if not fullPathName in self.__currentFilesName and not fullPathName in foundDirectories:
+                                foundDirectories.add(fullPathName)
 
-                                if not fullPathName in self.__currentFilesName and not fullPathName in foundDirectories:
-                                    foundDirectories.add(fullPathName)
+                            if nbTotal%1000==0:
+                                if self.__cancelProcess:
+                                    self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+                                    self.__invalidated = False
+                                    return BCFileList.CANCELLED_SEARCH
+                                QApplication.processEvents()
 
                     for name in files:
-                        fullPathName = os.path.join(path, name)
-                        if self.__includeHidden or not QFileInfo(name).isHidden():
-                            nbTotal+=1
-                            nbPath+=1
+                        nbTotal+=1
+                        fullPathName=os.path.join(path, name)
 
+                        if includeHidden or not QFileInfo(name).isHidden():
                             # check if file name match given pattern (if pattern) and is not already in file list
-                            if (namePattern is None or namePattern.search(name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
+                            if (managedFilesOnly is None or managedFilesOnly.search(name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
                                 foundFiles.add(fullPathName)
+                                nbFilesInPath+=1
 
-                    if nbTotal%1000==0:
-                        if self.__cancelProcess:
-                            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
-                            self.__invalidated = False
-                            return BCFileList.CANCELLED_SEARCH
-                        QApplication.processEvents()
+                        if nbTotal%1000==0:
+                            if self.__cancelProcess:
+                                self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+                                self.__invalidated = False
+                                return BCFileList.CANCELLED_SEARCH
+                            QApplication.processEvents()
+
+
             elif os.path.isdir(pathName):
                 # return current directory content
                 with os.scandir(pathName) as files:
-
                     for file in files:
-                        fullPathName = os.path.join(pathName, file.name)
-                        if self.__includeHidden or not QFileInfo(fullPathName).isHidden():
-                            if file.is_file():
-                                nbTotal+=1
+                        nbTotal+=1
 
+                        fullPathName = os.path.join(pathName, file.name)
+                        if includeHidden or not QFileInfo(fullPathName).isHidden():
+                            if file.is_file():
                                 # check if file name match given pattern (if pattern) and is not already in file list
-                                if (namePattern is None or namePattern.search(file.name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
+                                if (managedFilesOnly is None or managedFilesOnly.search(file.name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
                                     foundFiles.add(fullPathName)
-                                    nbPath+=1
+                                    nbFilesInPath+=1
                             elif self.__includeDirectories and file.is_dir():
                                 # if directories are asked and file is a directory, add it
-                                nbTotal+=1
-
                                 if not fullPathName in self.__currentFilesName and not fullPathName in foundDirectories:
                                     foundDirectories.add(fullPathName)
 
-                    if nbTotal%1000==0:
-                        if self.__cancelProcess:
-                            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
-                            self.__invalidated = False
-                            return BCFileList.CANCELLED_SEARCH
-                        QApplication.processEvents()
+                        if nbTotal%1000==0:
+                            if self.__cancelProcess:
+                                self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+                                self.__invalidated = False
+                                return BCFileList.CANCELLED_SEARCH
+                            QApplication.processEvents()
 
             if BCFileList.STEPEXECUTED_SEARCH_FROM_PATH in signals:
-                self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH_FROM_PATH, pathName, processedPath.recursive(), nbPath))
+                self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH_FROM_PATH, pathName, processedPath.recursive(), nbFilesInPath))
 
         totalMatch = len(foundFiles) + len(foundDirectories)
         Stopwatch.stop('BCFileList.execute.global')

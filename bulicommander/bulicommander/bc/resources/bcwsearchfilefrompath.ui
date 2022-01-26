@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1223</width>
-    <height>70</height>
+    <height>168</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,25 +26,6 @@
    <property name="bottomMargin">
     <number>6</number>
    </property>
-   <item row="1" column="2">
-    <widget class="QCheckBox" name="cbBasicSubDirScan">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="toolTip">
-      <string>When checked, sub-directories will also be parsed to search image files</string>
-     </property>
-     <property name="text">
-      <string>Scan sub-directories</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="2">
     <widget class="BCWPathBar" name="bcwpbBasicPath">
      <property name="sizePolicy">
@@ -74,6 +55,61 @@
      </property>
      <property name="text">
       <string>Path</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QCheckBox" name="cbSubDirScan">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>When checked, sub-directories will also be parsed to search image files</string>
+     </property>
+     <property name="text">
+      <string>Scan sub-directories</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2">
+    <widget class="QCheckBox" name="cbManagedFilesOnlyScan">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, only image files that are managed by BuliCommander are searched in directory &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;This pre-filter is based on image file extension and can speed-up search&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>BuliCommander managed image files only</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QCheckBox" name="cbHiddenFilesScan">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, hidden paths and files are included in search&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>Include hidden paths/files</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="2">
+    <widget class="QCheckBox" name="cbManagedFilesBackupScan">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When checked, managed files search will also include backups files&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;This pre-filter is based on image file extension and can speed-up search&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">padding-left: 25px</string>
+     </property>
+     <property name="text">
+      <string>Include backup files</string>
      </property>
     </widget>
    </item>

@@ -383,7 +383,11 @@ class BCSearchFilesDialogBox(QDialog):
             fileList.addRule(filterRules)
 
         for pathId in pathToLinks:
-            fileList.addPath(BCFileListPath(nodeSearchPaths[pathId]['widget']["path"], nodeSearchPaths[pathId]['widget']["scanSubDirectories"]))
+            fileList.addPath(BCFileListPath(nodeSearchPaths[pathId]['widget']["path"],
+                                            nodeSearchPaths[pathId]['widget']["scanSubDirectories"],
+                                            nodeSearchPaths[pathId]['widget']["scanHiddenFiles"],
+                                            nodeSearchPaths[pathId]['widget']["scanManagedFilesOnly"],
+                                            nodeSearchPaths[pathId]['widget']["scanManagedFilesBackup"]))
 
         return True
 
@@ -905,7 +909,7 @@ class BCSearchFilesDialogBox(QDialog):
             self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(f"""**{i18n('Scan directories:')}** """)
 
-            self.__bcFileList.execute(True, True, True, False, [
+            self.__bcFileList.execute(True, True, [
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATH,
                 BCFileList.STEPEXECUTED_ANALYZE_METADATA,
@@ -959,18 +963,25 @@ class BCWSearchFileFromPath(QWidget):
         """Initialise widget interface"""
         # option checkbox
         self.bcwpbBasicPath.pathChanged.connect(self.__setModified)
-        self.cbBasicSubDirScan.toggled.connect(self.__setModified)
+        self.cbSubDirScan.toggled.connect(self.__setModified)
+        self.cbManagedFilesOnlyScan.toggled.connect(self.__setModified)
+        self.cbManagedFilesBackupScan.toggled.connect(self.__setModified)
+        self.cbHiddenFilesScan.toggled.connect(self.__setModified)
 
     def __setDefaultValues(self):
         """Initialise default values"""
         self.bcwpbBasicPath.setPath()
-        self.cbBasicSubDirScan.setChecked(True)
+        self.cbSubDirScan.setChecked(True)
+        self.cbManagedFilesOnlyScan.setChecked(True)
+        self.cbManagedFilesBackupScan.setChecked(False)
+        self.cbHiddenFilesScan.setChecked(False)
 
         self.__isModified=False
 
     def __setModified(self):
         """Set widget as modified"""
         self.__isModified=True
+        self.cbManagedFilesBackupScan.setEnabled(self.cbManagedFilesOnlyScan.isChecked())
         self.modified.emit()
 
     def resetToDefault(self):
@@ -1000,7 +1011,10 @@ class BCWSearchFileFromPath(QWidget):
                 "widget": {
                             "type": "BCNodeWSearchFromPath",
                             "path": self.bcwpbBasicPath.path(),
-                            "scanSubDirectories": self.cbBasicSubDirScan.isChecked()
+                            "scanSubDirectories": self.cbSubDirScan.isChecked(),
+                            "scanManagedFilesOnly": self.cbManagedFilesOnlyScan.isChecked(),
+                            "scanManagedFilesBackup": self.cbManagedFilesBackupScan.isChecked(),
+                            "scanHiddenFiles": self.cbHiddenFilesScan.isChecked(),
                         }
             }
 
@@ -1031,7 +1045,16 @@ class BCWSearchFileFromPath(QWidget):
             self.bcwpbBasicPath.setPath(dataAsDict['path'])
 
         if "scanSubDirectories" in dataAsDict and isinstance(dataAsDict['scanSubDirectories'], bool):
-            self.cbBasicSubDirScan.setChecked(dataAsDict['scanSubDirectories'])
+            self.cbSubDirScan.setChecked(dataAsDict['scanSubDirectories'])
+
+        if "scanManagedFilesOnly" in dataAsDict and isinstance(dataAsDict['scanManagedFilesOnly'], bool):
+            self.cbManagedFilesOnlyScan.setChecked(dataAsDict['scanManagedFilesOnly'])
+
+        if "scanManagedFilesBackup" in dataAsDict and isinstance(dataAsDict['scanManagedFilesBackup'], bool):
+            self.cbManagedFilesBackupScan.setChecked(dataAsDict['scanManagedFilesBackup'])
+
+        if "scanHiddenFiles" in dataAsDict and isinstance(dataAsDict['scanHiddenFiles'], bool):
+            self.cbHiddenFilesScan.setChecked(dataAsDict['scanHiddenFiles'])
 
         self.__isModified=False
 
@@ -1724,24 +1747,33 @@ class BCNodeWSearchFromPath(NodeEditorNodeWidget):
 
         self.__lblPath=WLabelElide(Qt.ElideLeft)
         self.__lblRecursive=QLabel()
+        self.__lblHiddenFiles=QLabel()
+        self.__lblManagedFilesOnly=QLabel()
+        self.__lblManagesFilesBackup=QLabel()
 
         self.__lblPath.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 
         self.__layout=QFormLayout()
         self.__layout.setContentsMargins(0,0,0,0)
         self.__layout.addRow(f"<b>{i18n('Path')}</b>", self.__lblPath)
-        self.__layout.addRow(f"<b>{i18n('Scan sub-dir.')}</b>", self.__lblRecursive)
+        self.__layout.addRow(f"<b>{i18n('Scan Sub-directories')}</b>", self.__lblRecursive)
+        self.__layout.addRow(f"<b>{i18n('Include hidden files')}</b>", self.__lblHiddenFiles)
+        self.__layout.addRow(f"<b>{i18n('Search managed files only')}</b>", self.__lblManagedFilesOnly)
+        self.__layout.addRow(f"└<b><i>{i18n('Including backup files')}</i></b>", self.__lblManagesFilesBackup)
 
         self.__data={
                 'path': os.path.expanduser("~"),
-                'scanSubDirectories': True
+                'scanSubDirectories': True,
+                'scanManagedFilesOnly': True,
+                'scanManagedFilesBackup': False,
+                'scanHiddenFiles': False
             }
 
         super(BCNodeWSearchFromPath, self).__init__(scene, title, connectors=[outputPathConnector], parent=parent)
 
         self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 
-        self.node().setMinimumSize(QSize(400, 150))
+        self.node().setMinimumSize(QSize(640, 230))
         self.setLayout(self.__layout)
 
     def serialize(self):
@@ -1758,6 +1790,18 @@ class BCNodeWSearchFromPath(NodeEditorNodeWidget):
         if 'scanSubDirectories' in data:
             self.__data['scanSubDirectories']=data['scanSubDirectories']
             self.__lblRecursive.setText(boolYesNo(self.__data['scanSubDirectories']))
+
+        if 'scanHiddenFiles' in data:
+            self.__data['scanHiddenFiles']=data['scanHiddenFiles']
+            self.__lblHiddenFiles.setText(boolYesNo(self.__data['scanHiddenFiles']))
+
+        if 'scanManagedFilesOnly' in data:
+            self.__data['scanManagedFilesOnly']=data['scanManagedFilesOnly']
+            self.__lblManagedFilesOnly.setText(boolYesNo(self.__data['scanManagedFilesOnly']))
+
+        if 'scanManagedFilesBackup' in data:
+            self.__data['scanManagedFilesBackup']=data['scanManagedFilesBackup']
+            self.__lblManagesFilesBackup.setText(boolYesNo(self.__data['scanManagedFilesBackup']))
 
 
 
