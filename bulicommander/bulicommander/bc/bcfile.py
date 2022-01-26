@@ -2128,7 +2128,8 @@ class BCFile(BCBaseFile):
         except Exception as e:
             # can't be read (not exist, not a zip file?)
             self.__readable = False
-            Debug.print('[BCFile.__readArchiveDataFile] Unable to open file {0}: {1}', self._fullPathName, str(e))
+            if re.match(fr"\.(kra|krz|ora)({BCFileManagedFormat.backupSuffixRe()})?$", source):
+                Debug.print('[BCFile.__readArchiveDataFile] Unable to open file {0}: {1}', self._fullPathName, str(e))
             return None
 
         try:
@@ -3797,7 +3798,11 @@ class BCFile(BCBaseFile):
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers "referenceimage" in file {0}: {1}', self._fullPathName, str(e))
 
-
+        else:
+            # unable to read maindoc??
+            # don't try to analyse file more..
+            self.__readable = False
+            return returned
 
         infoDoc = self.__readArchiveDataFile("documentinfo.xml")
         if not infoDoc is None:
@@ -6859,6 +6864,9 @@ class BCFileList(QObject):
         filesList = set()
         directoriesList = set()
 
+        print('===========================================')
+        print('start worker pool')
+        print('===========================================')
         self.__progressFilesPctThreshold=math.ceil(len(foundFiles)/100)
         self.__progressFilesPctTracker=0
         self.__progressFilesPctCurrent=0
@@ -6866,7 +6874,7 @@ class BCFileList(QObject):
         self.__workerPool.setWorkerClass(BCWorkerCache)
         if BCFileList.STEPEXECUTED_PROGRESS_ANALYZE in signals:
             self.__workerPool.signals.processed.connect(self.__progressScanning)
-        filesList = self.__workerPool.mapNoNone(foundFiles, BCFileList.getBcFile, strict)
+        filesList = self.__workerPool.mapNoNone(foundFiles, BCFileList.getBcFile)
         if BCFileList.STEPEXECUTED_PROGRESS_ANALYZE in signals:
             if self.__progressFilesPctCurrent<100:
                 self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,100))
@@ -7078,4 +7086,4 @@ class BCFileIcon(object):
         return BCFileIcon.__IconProvider.icon(fileInfo)
 
 
-#Debug.setEnabled(True)
+Debug.setEnabled(True)

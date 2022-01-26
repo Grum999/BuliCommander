@@ -586,13 +586,13 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show &amp;Krita managed image files only</string>
+    <string>Show managed image files only</string>
    </property>
    <property name="toolTip">
-    <string>Only image files recognized by Krita will be shown in list</string>
+    <string>Only image files recognized by BuliCommander will be shown in list</string>
    </property>
    <property name="statusTip">
-    <string>Only image files recognized by Krita will be shown in list</string>
+    <string>Only image files recognized by BuliCommander will be shown in list</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+K</string>
