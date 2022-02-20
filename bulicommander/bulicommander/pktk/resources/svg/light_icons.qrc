@@ -124,6 +124,7 @@
     <file alias="pause">light/32dp/pause.svg</file>
     <file alias="pinned">light/32dp/pinned.svg</file>
     <file alias="play">light/32dp/play.svg</file>
+    <file alias="process_out">light/32dp/process_out.svg</file>
     <file alias="saved_view_file">light/32dp/saved_view_file.svg</file>
     <file alias="saved_view_last">light/32dp/saved_view_last.svg</file>
     <file alias="saved_view_search">light/32dp/saved_view_search.svg</file>
@@ -138,6 +139,9 @@
     <file alias="select_all">light/32dp/select_all.svg</file>
     <file alias="select_invert">light/32dp/select_invert.svg</file>
     <file alias="select_none">light/32dp/select_none.svg</file>
+    <file alias="sort_ascending">light/32dp/sort_ascending.svg</file>
+    <file alias="sort_bidirectional">light/32dp/sort_bidirectional.svg</file>
+    <file alias="sort_descending">light/32dp/sort_descending.svg</file>
     <file alias="stop">light/32dp/stop.svg</file>
     <file alias="swap_horiz">light/32dp/swap_horiz.svg</file>
     <file alias="tabs">light/32dp/tabs.svg</file>
@@ -285,6 +289,7 @@
     <file alias="pause">light/32dp-disabled/pause.svg</file>
     <file alias="pinned">light/32dp-disabled/pinned.svg</file>
     <file alias="play">light/32dp-disabled/play.svg</file>
+    <file alias="process_out">light/32dp-disabled/process_out.svg</file>
     <file alias="saved_view_file">light/32dp-disabled/saved_view_file.svg</file>
     <file alias="saved_view_last">light/32dp-disabled/saved_view_last.svg</file>
     <file alias="saved_view_search">light/32dp-disabled/saved_view_search.svg</file>
@@ -299,6 +304,9 @@
     <file alias="select_all">light/32dp-disabled/select_all.svg</file>
     <file alias="select_invert">light/32dp-disabled/select_invert.svg</file>
     <file alias="select_none">light/32dp-disabled/select_none.svg</file>
+    <file alias="sort_ascending">light/32dp-disabled/sort_ascending.svg</file>
+    <file alias="sort_bidirectional">light/32dp-disabled/sort_bidirectional.svg</file>
+    <file alias="sort_descending">light/32dp-disabled/sort_descending.svg</file>
     <file alias="stop">light/32dp-disabled/stop.svg</file>
     <file alias="swap_horiz">light/32dp-disabled/swap_horiz.svg</file>
     <file alias="tabs">light/32dp-disabled/tabs.svg</file>
