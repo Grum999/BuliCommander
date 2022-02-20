@@ -36,7 +36,7 @@ from PyQt5.QtCore import (
     )
 
 from ..modules.imgutils import (buildIcon, paintOpaqueAsColor)
-from ..modules.utils import Debug
+from ..modules.utils import (JsonQObjectEncoder, JsonQObjectDecoder, Debug)
 from ..pktk import *
 
 # forward declaration of classes (needed for NodeEditorScene Signal declaration...)
@@ -297,7 +297,7 @@ class NodeEditorScene(QObject):
                 'nodes': [node.serialize() for node in nodes],
                 'links': [link.serialize() for link in links]
             }
-        dataAsJson=json.dumps(dataAsDict, indent=4, sort_keys=True).encode()
+        dataAsJson=json.dumps(dataAsDict, indent=4, sort_keys=True, cls=JsonQObjectEncoder).encode()
 
         mimeContent=QMimeData()
         for mimeType in ['application/x-pktk-scenecontent', 'text/plain']:
@@ -687,7 +687,7 @@ class NodeEditorScene(QObject):
             jsonData = bytearray(clipboardMimeContent.data('application/x-pktk-scenecontent')).decode()
 
             try:
-                jsonAsDict = json.loads(jsonData)
+                jsonAsDict = json.loads(jsonData, cls=JsonQObjectDecoder)
             except Exception as e:
                 Debug.print("Can't parse clipboard data: {0}", str(e))
                 return False
@@ -1165,7 +1165,7 @@ class NodeEditorScene(QObject):
         """
         try:
             # convert as Json: ensure data are serializable
-            extraData=json.dumps(dataAsDict)
+            extraData=json.dumps(dataAsDict, cls=JsonQObjectEncoder)
             # ok.. store data
             self.__extraData=dataAsDict
         except Exception as e:
@@ -1373,12 +1373,12 @@ class NodeEditorScene(QObject):
 
     def toJson(self, indent=4, sortKeys=True):
         """Convert current scene to a json string"""
-        return json.dumps(self.serialize(), indent=indent, sort_keys=sortKeys)
+        return json.dumps(self.serialize(), indent=indent, sort_keys=sortKeys, cls=JsonQObjectEncoder)
 
     def fromJson(self, jsonAsStr):
         """Convert provided `dataAsJson` string to scene"""
         try:
-            jsonAsDict = json.loads(jsonAsStr)
+            jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
         except Exception as e:
             Debug.print("Can't parse json: {0}", str(e))
             return False
@@ -1431,7 +1431,7 @@ class NodeEditorScene(QObject):
             return NodeEditorScene.IMPORT_FILE_CANT_READ
 
         try:
-            jsonAsDict = json.loads(jsonAsStr)
+            jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
         except Exception as e:
             Debug.print("Can't parse file {0}: {1}", fileName, str(e))
             return NodeEditorScene.IMPORT_FILE_NOT_JSON
