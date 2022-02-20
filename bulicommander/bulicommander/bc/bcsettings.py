@@ -141,8 +141,8 @@ class BCSettingsKey(SettingsKey):
     CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED =           'config.export.filesList.textMd.thumbnails.included'
     CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE =               'config.export.filesList.textMd.thumbnails.size'
 
-    CONFIG_EXPORTFILESLIST_DOCPDF_RESOLUTION =               'config.export.filesList.doc.pdf.resolution'
-    CONFIG_EXPORTFILESLIST_DOCPDF_UNIT =                     'config.export.filesList.doc.pdf.unit'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_RESOLUTION =         'config.export.filesList.doc.pdf.paper.resolution'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_UNIT =               'config.export.filesList.doc.pdf.paper.unit'
     CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE =               'config.export.filesList.doc.pdf.paper.size'
     CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION =        'config.export.filesList.doc.pdf.paper.orientation'
     CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE =       'config.export.filesList.doc.pdf.paper.color.active'
@@ -182,8 +182,8 @@ class BCSettingsKey(SettingsKey):
     CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD =            'config.export.filesList.doc.pdf.thumbnails.image.displayMode'
     CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE =             'config.export.filesList.doc.pdf.preview.mode'
 
-    CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION =               'config.export.filesList.img.kra.resolution'
-    CONFIG_EXPORTFILESLIST_IMGKRA_UNIT =                     'config.export.filesList.img.kra.unit'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_RESOLUTION =         'config.export.filesList.img.kra.paper.resolution'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_UNIT =               'config.export.filesList.img.kra.paper.unit'
     CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE =               'config.export.filesList.img.kra.paper.size'
     CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION =        'config.export.filesList.img.kra.paper.orientation'
     CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE =       'config.export.filesList.img.kra.paper.color.active'
@@ -224,8 +224,8 @@ class BCSettingsKey(SettingsKey):
     CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE =             'config.export.filesList.img.kra.options.openFileInKrita'
     CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE =             'config.export.filesList.img.kra.preview.mode'
 
-    CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION =               'config.export.filesList.img.png.resolution'
-    CONFIG_EXPORTFILESLIST_IMGPNG_UNIT =                     'config.export.filesList.img.png.unit'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_RESOLUTION =         'config.export.filesList.img.png.paper.resolution'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_UNIT =               'config.export.filesList.img.png.paper.unit'
     CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE =               'config.export.filesList.img.png.paper.size'
     CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION =        'config.export.filesList.img.png.paper.orientation'
     CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE =       'config.export.filesList.img.png.paper.color.active'
@@ -266,8 +266,8 @@ class BCSettingsKey(SettingsKey):
     CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE =             'config.export.filesList.img.png.options.openFileInKrita'
     CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE =             'config.export.filesList.img.png.preview.mode'
 
-    CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION =               'config.export.filesList.img.jpg.resolution'
-    CONFIG_EXPORTFILESLIST_IMGJPG_UNIT =                     'config.export.filesList.img.jpg.unit'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_RESOLUTION =         'config.export.filesList.img.jpg.paper.resolution'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_UNIT =               'config.export.filesList.img.jpg.paper.unit'
     CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE =               'config.export.filesList.img.jpg.paper.size'
     CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION =        'config.export.filesList.img.jpg.paper.orientation'
     CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE =       'config.export.filesList.img.jpg.paper.color.active'
@@ -468,8 +468,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED,        True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE,            0,                          SettingsFmt(int, [0,1,2,3])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_RESOLUTION,            300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_UNIT,                  'mm',                       SettingsFmt(str, ['mm','cm','in'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
@@ -509,8 +509,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD,         'fit',                      SettingsFmt(str, ['fit', 'crop'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE,          0,                          SettingsFmt(int, [0,1])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION,            300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_UNIT,                  'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
@@ -551,8 +551,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE,          True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE,          0,                          SettingsFmt(int, [0,1])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION,            300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_UNIT,                  'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
@@ -593,8 +593,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE,          False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE,          0,                          SettingsFmt(int, [0,1])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION,            300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_UNIT,                  'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
