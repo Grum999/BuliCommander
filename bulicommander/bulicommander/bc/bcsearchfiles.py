@@ -56,6 +56,10 @@ from .bcfile import (
         BCFileListRuleOperator,
         BCFileListRuleOperatorType
     )
+from .bcexportfiles import (
+        BCExportFormat,
+        BCExportFilesDialogBox
+    )
 from .bcsettings import (
         BCSettingsValues,
         BCSettingsKey,
@@ -82,6 +86,7 @@ from bulicommander.pktk.widgets.wconsole import (
         WConsole,
         WConsoleType
     )
+from bulicommander.pktk.widgets.worderedlist import OrderedItem
 from bulicommander.pktk.widgets.wnodeeditor import (
         NodeEditorScene,
         NodeEditorNode,
@@ -89,6 +94,8 @@ from bulicommander.pktk.widgets.wnodeeditor import (
         NodeEditorLink,
         NodeEditorNodeWidget
     )
+from bulicommander.pktk.widgets.wcolorbutton import QEColor
+
 
 from bulicommander.pktk.pktk import (
         EInvalidType,
@@ -104,7 +111,8 @@ class BCSearchFilesDialogBox(QDialog):
     __PANEL_SEARCH_FROMPATH = 1
     __PANEL_SEARCH_FILEFILTERRULES = 2
     __PANEL_SEARCH_IMGFILTERRULES = 3
-    __PANEL_SEARCH_CONSOLE = 4
+    __PANEL_SEARCH_SORTRULES = 4
+    __PANEL_SEARCH_OUTPUTENGINE = 5
 
     __TAB_BASIC_SEARCH = 0
     __TAB_ADVANCED_SEARCH = 1
@@ -421,6 +429,8 @@ class BCSearchFilesDialogBox(QDialog):
         self.tbAdvancedAddFileFilter.clicked.connect(self.__advancedAddFileFilterRule)
         self.tbAdvancedAddImgFilter.clicked.connect(self.__advancedAddImgFilterRule)
         self.tbAdvancedAddFilterOperator.clicked.connect(self.__advancedAddFilterRuleOperator)
+        self.tbAdvancedAddSortRules.clicked.connect(self.__advancedAddSortRules)
+        self.tbAdvancedAddOutputEngine.clicked.connect(self.__advancedAddOutputEngine)
         self.tbAdvancedDeleteItems.clicked.connect(self.__advancedDelete)
         self.tbAdvancedZoomToFit.clicked.connect(self.wneAdvancedView.zoomToFit)
         self.tbAdvancedZoom1_1.clicked.connect(self.wneAdvancedView.resetZoom)
@@ -448,8 +458,13 @@ class BCSearchFilesDialogBox(QDialog):
         self.__scene.setFormatIdentifier("bulicommander-search-filter-advanced")
 
         self.wsffpAdvanced.modified.connect(self.__advancedFileFromPathChanged)
-        self.wsffrAdvanced.modified.connect(self.__advancedFileFilterRule)
-        self.wsifrAdvanced.modified.connect(self.__advancedImgFilterRule)
+        self.wsffrAdvanced.modified.connect(self.__advancedFileFilterRuleChanged)
+        self.wsifrAdvanced.modified.connect(self.__advancedImgFilterRuleChanged)
+        self.wssrAdvanced.modified.connect(self.__advancedSortRuleChanged)
+        self.wsoeAdvanced.modified.connect(self.__advancedOutputEngineChanged)
+
+        self.wsoeAdvanced.setTitle(self.__title)
+        self.wsoeAdvanced.setUiController(self.__uiController)
 
         self.wcExecutionConsole.setOptionShowGutter(False)
         self.wcExecutionConsole.appendLine(i18n('Not search executed yet'))
@@ -467,7 +482,6 @@ class BCSearchFilesDialogBox(QDialog):
             self.pbSearch.setEnabled(False)
         else:
             self.pbSearch.setEnabled(index!=BCSearchFilesDialogBox.__TAB_SEARCH_CONSOLE)
-
 
     def __advancedCalculateNodePosition(self):
         """Calculate position for a new node added to scene"""
@@ -501,6 +515,14 @@ class BCSearchFilesDialogBox(QDialog):
             self.__currentSelectedNodeWidget=selectedNodes[0].widget()
             self.wsifrAdvanced.importFromDict(selectedNodes[0].serialize()['widget'])
             self.swAdvancedPanel.setCurrentIndex(BCSearchFilesDialogBox.__PANEL_SEARCH_IMGFILTERRULES)
+        elif nbSelectedNodes==1 and isinstance(selectedNodes[0].widget(), BCNodeWSearchSortRule):
+            self.__currentSelectedNodeWidget=selectedNodes[0].widget()
+            self.wssrAdvanced.importFromDict(selectedNodes[0].serialize()['widget'])
+            self.swAdvancedPanel.setCurrentIndex(BCSearchFilesDialogBox.__PANEL_SEARCH_SORTRULES)
+        elif nbSelectedNodes==1 and isinstance(selectedNodes[0].widget(), BCNodeWSearchOutputEngine):
+            self.__currentSelectedNodeWidget=selectedNodes[0].widget()
+            self.wsoeAdvanced.importFromDict(selectedNodes[0].serialize()['widget'])
+            self.swAdvancedPanel.setCurrentIndex(BCSearchFilesDialogBox.__PANEL_SEARCH_OUTPUTENGINE)
         else:
             # in all other case (None selected or more than one selected, or search engine selected)
             # display search engine panel
@@ -522,19 +544,33 @@ class BCSearchFilesDialogBox(QDialog):
 
         self.__currentSelectedNodeWidget.deserialize(self.wsffpAdvanced.exportAsDict()['widget'])
 
-    def __advancedFileFilterRule(self):
+    def __advancedFileFilterRuleChanged(self):
         """Something has been modified, update node"""
         if self.__currentSelectedNodeWidget is None:
             return
 
         self.__currentSelectedNodeWidget.deserialize(self.wsffrAdvanced.exportAsDict()['widget'])
 
-    def __advancedImgFilterRule(self):
+    def __advancedImgFilterRuleChanged(self):
         """Something has been modified, update node"""
         if self.__currentSelectedNodeWidget is None:
             return
 
         self.__currentSelectedNodeWidget.deserialize(self.wsifrAdvanced.exportAsDict()['widget'])
+
+    def __advancedSortRuleChanged(self):
+        """Something has been modified, update node"""
+        if self.__currentSelectedNodeWidget is None:
+            return
+
+        self.__currentSelectedNodeWidget.deserialize(self.wssrAdvanced.exportAsDict()['widget'])
+
+    def __advancedOutputEngineChanged(self):
+        """Something has been modified, update node"""
+        if self.__currentSelectedNodeWidget is None:
+            return
+
+        self.__currentSelectedNodeWidget.deserialize(self.wsoeAdvanced.exportAsDict()['widget'])
 
     def __advancedExportConfig(self):
         """Export current node schema"""
@@ -583,6 +619,22 @@ class BCSearchFilesDialogBox(QDialog):
         nwFilterRuleOperator=BCNodeWSearchFileFilterRuleOperator(self.__scene, i18n("Filter operator"))
         nwFilterRuleOperator.node().setPosition(position)
         nwFilterRuleOperator.node().setSelected(True, False)
+
+    def __advancedAddSortRules(self):
+        """Add a BCNodeWSearchSortRule node"""
+        position=self.__advancedCalculateNodePosition()
+
+        nwFilterRuleOperator=BCNodeWSearchSortRule(self.__scene, i18n("Sort rules"))
+        nwFilterRuleOperator.node().setPosition(position)
+        nwFilterRuleOperator.node().setSelected(True, False)
+
+    def __advancedAddOutputEngine(self):
+        """Add a BCNodeWSearchOutputEngine node"""
+        position=self.__advancedCalculateNodePosition()
+
+        nwOutputEngine=BCNodeWSearchOutputEngine(self.__scene, i18n("Output engine"))
+        nwOutputEngine.node().setPosition(position)
+        nwOutputEngine.node().setSelected(True, False)
 
     def __advancedDelete(self):
         """Delete all selected items"""
@@ -942,31 +994,65 @@ class BCSearchFilesDialogBox(QDialog):
 
 
 
-class BCWSearchFileFromPath(QWidget):
-    """A widget to define search file from path source"""
+class BCWSearchWidget(QWidget):
+    """Base widget for all BCWSearch* widgets"""
     modified=Signal()
 
-    def __init__(self, parent=None):
-        super(BCWSearchFileFromPath, self).__init__(parent)
-        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcwsearchfilefrompath.ui')
-        PyQt5.uic.loadUi(uiFileName, self)
+    def __init__(self, uiFileName, parent=None):
+        super(BCWSearchWidget, self).__init__(parent)
 
-        self.bcwpbBasicPath.setOptions(BCWPathBar.OPTION_SHOW_NONE)
+        uiFullPathFileName = os.path.join(os.path.dirname(__file__), 'resources', uiFileName)
+        PyQt5.uic.loadUi(uiFullPathFileName, self)
 
         # flag to determinate if values has been modified
         self.__isModified=False
+        self.__inUpdate=0
 
+    def _setModified(self, value=True):
+        """Set widget as modified"""
+        self.__isModified=value
+
+        if self.__inUpdate==0 and self.__isModified:
+            self.modified.emit()
+
+    def _startUpdate(self):
+        """In an update, do not emit modification"""
+        self.__inUpdate+=1
+
+    def _endUpdate(self):
+        """End of update, emit modification if needed"""
+        self.__inUpdate-=1
+        if self.__inUpdate==0:
+            self._setModified()
+
+    def isModified(self):
+        """Return true if values has been modified"""
+        return self.__isModified
+
+
+
+class BCWSearchFileFromPath(BCWSearchWidget):
+    """A widget to define search file from path source"""
+
+    def __init__(self, parent=None):
+        super(BCWSearchFileFromPath, self).__init__('bcwsearchfilefrompath.ui', parent)
+
+        self.bcwpbBasicPath.setOptions(BCWPathBar.OPTION_SHOW_NONE)
+
+        self._startUpdate()
         self.__initialise()
         self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
 
     def __initialise(self):
         """Initialise widget interface"""
         # option checkbox
-        self.bcwpbBasicPath.pathChanged.connect(self.__setModified)
-        self.cbSubDirScan.toggled.connect(self.__setModified)
-        self.cbManagedFilesOnlyScan.toggled.connect(self.__setModified)
-        self.cbManagedFilesBackupScan.toggled.connect(self.__setModified)
-        self.cbHiddenFilesScan.toggled.connect(self.__setModified)
+        self.bcwpbBasicPath.pathChanged.connect(lambda: self._setModified(True))
+        self.cbSubDirScan.toggled.connect(lambda: self._setModified(True))
+        self.cbManagedFilesOnlyScan.toggled.connect(lambda: self._setModified(True))
+        self.cbManagedFilesBackupScan.toggled.connect(lambda: self._setModified(True))
+        self.cbHiddenFilesScan.toggled.connect(lambda: self._setModified(True))
 
     def __setDefaultValues(self):
         """Initialise default values"""
@@ -976,21 +1062,14 @@ class BCWSearchFileFromPath(QWidget):
         self.cbManagedFilesBackupScan.setChecked(False)
         self.cbHiddenFilesScan.setChecked(False)
 
-        self.__isModified=False
-
-    def __setModified(self):
+    def _setModified(self, value=True):
         """Set widget as modified"""
-        self.__isModified=True
         self.cbManagedFilesBackupScan.setEnabled(self.cbManagedFilesOnlyScan.isChecked())
-        self.modified.emit()
+        super(BCWSearchFileFromPath, self)._setModified(value)
 
     def resetToDefault(self):
         """Reset to default values"""
         self.__setDefaultValues()
-
-    def isModified(self):
-        """Return true if values has been modified"""
-        return self.__isModified
 
     def exportAsDict(self):
         """Export widget configuration as dictionnary"""
@@ -1038,7 +1117,7 @@ class BCWSearchFileFromPath(QWidget):
         elif not ("type" in dataAsDict and dataAsDict["type"]=="BCNodeWSearchFromPath"):
             raise EInvalidValue("Given `dataAsDict` must contains key 'type' with value 'BCNodeWSearchFromPath'")
 
-        # reset to default
+        self._startUpdate()
         self.__setDefaultValues()
 
         if "path" in dataAsDict and isinstance(dataAsDict['path'], str):
@@ -1056,24 +1135,22 @@ class BCWSearchFileFromPath(QWidget):
         if "scanHiddenFiles" in dataAsDict and isinstance(dataAsDict['scanHiddenFiles'], bool):
             self.cbHiddenFilesScan.setChecked(dataAsDict['scanHiddenFiles'])
 
-        self.__isModified=False
+        self._endUpdate()
+        self._setModified(False)
 
 
 
-class BCWSearchFileFilterRules(QWidget):
+class BCWSearchFileFilterRules(BCWSearchWidget):
     """A widget to define file filter rules"""
-    modified=Signal()
 
     def __init__(self, parent=None):
-        super(BCWSearchFileFilterRules, self).__init__(parent)
-        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcwsearchfilefilterrules.ui')
-        PyQt5.uic.loadUi(uiFileName, self)
+        super(BCWSearchFileFilterRules, self).__init__('bcwsearchfilefilterrules.ui', parent)
 
-        # flag to determinate if values has been modified
-        self.__isModified=False
-
+        self._startUpdate()
         self.__initialise()
         self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
 
     def __initialise(self):
         """Initialise widget interface"""
@@ -1097,24 +1174,24 @@ class BCWSearchFileFilterRules(QWidget):
         self.__fileDtDateToggled(False)
 
         # file name pattern
-        self.woiFileName.operatorChanged.connect(self.__setModified)
+        self.woiFileName.operatorChanged.connect(lambda: self._setModified(True))
         self.woiFileName.setOperators([
                 WOperatorType.OPERATOR_MATCH,
                 WOperatorType.OPERATOR_NOT_MATCH,
                 WOperatorType.OPERATOR_LIKE,
                 WOperatorType.OPERATOR_NOT_LIKE
             ])
-        self.woiFileName.valueChanged.connect(self.__setModified)
+        self.woiFileName.valueChanged.connect(lambda: self._setModified(True))
 
         # file path pattern
-        self.woiFilePath.operatorChanged.connect(self.__setModified)
+        self.woiFilePath.operatorChanged.connect(lambda: self._setModified(True))
         self.woiFilePath.setOperators([
                 WOperatorType.OPERATOR_MATCH,
                 WOperatorType.OPERATOR_NOT_MATCH,
                 WOperatorType.OPERATOR_LIKE,
                 WOperatorType.OPERATOR_NOT_LIKE
             ])
-        self.woiFilePath.valueChanged.connect(self.__setModified)
+        self.woiFilePath.valueChanged.connect(lambda: self._setModified(True))
 
         # file size
         self.woiFileSize.setMinimum(0)
@@ -1123,25 +1200,25 @@ class BCWSearchFileFilterRules(QWidget):
         self.woiFileSize.setSuffixLabel("Unit")
         self.woiFileSize.setSuffixList([('Kilobyte (kB)', 'kB'), ('Megabyte (MB)', 'MB'), ('Gigabytes (GB)', 'GB'),
                                         ('Kibibyte (KiB)', 'KiB'), ('Mebibyte (MiB)', 'MiB'), ('Gibibyte (GiB)', 'GiB')])
-        self.woiFileSize.operatorChanged.connect(self.__setModified)
-        self.woiFileSize.valueChanged.connect(self.__setModified)
-        self.woiFileSize.value2Changed.connect(self.__setModified)
-        self.woiFileSize.suffixChanged.connect(self.__setModified)
+        self.woiFileSize.operatorChanged.connect(lambda: self._setModified(True))
+        self.woiFileSize.valueChanged.connect(lambda: self._setModified(True))
+        self.woiFileSize.value2Changed.connect(lambda: self._setModified(True))
+        self.woiFileSize.suffixChanged.connect(lambda: self._setModified(True))
 
         # file date
         self.woiFileDtDate.setMinimum(0)
         self.woiFileDtDate.setMaximum(QDate.fromString("2099-12-31", "yyyy-MM-dd"))
         self.woiFileDtDate.operatorChanged.connect(lambda v: self.woiFileDtTime.setOperator(v))
-        self.woiFileDtDate.operatorChanged.connect(self.__setModified)
-        self.woiFileDtDate.valueChanged.connect(self.__setModified)
-        self.woiFileDtDate.value2Changed.connect(self.__setModified)
+        self.woiFileDtDate.operatorChanged.connect(lambda: self._setModified(True))
+        self.woiFileDtDate.valueChanged.connect(lambda: self._setModified(True))
+        self.woiFileDtDate.value2Changed.connect(lambda: self._setModified(True))
 
         self.woiFileDtTime.setOperatorEnabled(False)
         self.woiFileDtTime.setCheckRangeValues(False)
         self.woiFileDtTime.setMinimum(0)
         self.woiFileDtTime.setMaximum(QTime.fromString("23:59:59", "HH:mm:ss"))
-        self.woiFileDtTime.valueChanged.connect(self.__setModified)
-        self.woiFileDtTime.value2Changed.connect(self.__setModified)
+        self.woiFileDtTime.valueChanged.connect(lambda: self._setModified(True))
+        self.woiFileDtTime.value2Changed.connect(lambda: self._setModified(True))
 
     def __setDefaultValues(self):
         """Initialise default values"""
@@ -1183,13 +1260,10 @@ class BCWSearchFileFilterRules(QWidget):
         self.woiFileDtDate.setPredefinedConditionsLabel(i18n("Predefined date"))
         self.woiFileDtDate.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILEDATE)])
 
-        self.__isModified=False
-
-    def __setModified(self):
+    def _setModified(self, value=True):
         """Set widget as modified"""
         self.woiFileDtTime.setCheckRangeValues(self.woiFileDtDate.value()==self.woiFileDtDate.value2())
-        self.__isModified=True
-        self.modified.emit()
+        super(BCWSearchFileFilterRules, self)._setModified(value)
 
     def __fileNameToggled(self, checked):
         """Checkbox 'file name' has been toggled"""
@@ -1197,7 +1271,7 @@ class BCWSearchFileFilterRules(QWidget):
         self.woiFileName.setVisible(checked)
         self.cbFileNameIgnoreCase.setEnabled(checked)
         self.cbFileNameIgnoreCase.setVisible(checked)
-        self.__setModified()
+        self._setModified()
 
     def __filePathToggled(self, checked):
         """Checkbox 'file name' has been toggled"""
@@ -1205,13 +1279,13 @@ class BCWSearchFileFilterRules(QWidget):
         self.woiFilePath.setVisible(checked)
         self.cbFilePathIgnoreCase.setEnabled(checked)
         self.cbFilePathIgnoreCase.setVisible(checked)
-        self.__setModified()
+        self._setModified()
 
     def __fileSizeToggled(self, checked):
         """Checkbox 'file size' has been toggled"""
         self.woiFileSize.setEnabled(checked)
         self.woiFileSize.setVisible(checked)
-        self.__setModified()
+        self._setModified()
 
     def __fileDtDateToggled(self, checked):
         """Checkbox 'file date' has been toggled"""
@@ -1219,13 +1293,13 @@ class BCWSearchFileFilterRules(QWidget):
         self.woiFileDtDate.setVisible(checked)
         self.cbFileDtTime.setEnabled(checked)
         self.woiFileDtTime.setVisible(checked and self.cbFileDtTime.isChecked())
-        self.__setModified()
+        self._setModified()
 
     def __fileDtTimeToggled(self, checked):
         """Checkbox 'file time' has been toggled"""
         self.woiFileDtTime.setEnabled(checked and self.cbFileDtTime.isEnabled())
         self.woiFileDtTime.setVisible(checked and self.cbFileDtTime.isEnabled())
-        self.__setModified()
+        self._setModified()
 
     def __convertToUnit(self, value, input):
         """Convert given value (in bytes) to unit defined in given input (here input=woiFileSize)"""
@@ -1248,10 +1322,6 @@ class BCWSearchFileFilterRules(QWidget):
     def resetToDefault(self):
         """Reset to default values"""
         self.__setDefaultValues()
-
-    def isModified(self):
-        """Return true if values has been modified"""
-        return self.__isModified
 
     def exportAsDict(self):
         """Export widget configuration as dictionnary"""
@@ -1348,6 +1418,7 @@ class BCWSearchFileFilterRules(QWidget):
         elif not ("type" in dataAsDict and dataAsDict["type"]=="BCNodeWSearchFileFilterRule"):
             raise EInvalidValue("Given `dataAsDict` must contains key 'type' with value 'BCNodeWSearchFileFilterRule'")
 
+        self._startUpdate()
         self.__setDefaultValues()
 
         if "fileName" in dataAsDict and isinstance(dataAsDict['fileName'], dict):
@@ -1387,24 +1458,23 @@ class BCWSearchFileFilterRules(QWidget):
                 self.woiFileDtTime.setValue(tt1/1000)
                 self.woiFileDtTime.setValue2(tt2/1000)
 
-        self.__isModified=False
+        self._endUpdate()
+        self._setModified(False)
 
 
 
-class BCWSearchImgFilterRules(QWidget):
+class BCWSearchImgFilterRules(BCWSearchWidget):
     """A widget to define image filter rules"""
     modified=Signal()
 
     def __init__(self, parent=None):
-        super(BCWSearchImgFilterRules, self).__init__(parent)
-        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcwsearchimgfilterrules.ui')
-        PyQt5.uic.loadUi(uiFileName, self)
+        super(BCWSearchImgFilterRules, self).__init__('bcwsearchimgfilterrules.ui', parent)
 
-        # flag to determinate if values has been modified
-        self.__isModified=False
-
+        self._startUpdate()
         self.__initialise()
         self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
 
     def __initialise(self):
         """Initialise widget interface"""
@@ -1432,8 +1502,8 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImageFormat.tagInput().setAvailableTags([(imageFormat, BCFileManagedFormat.translate(imageFormat)) for imageFormat in BCFileManagedFormat.list() if imageFormat!=BCFileManagedFormat.JPEG] )
         self.woiImageFormat.setPredefinedConditionsLabel(i18n("Predefined format"))
         self.woiImageFormat.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGFORMAT)])
-        self.woiImageFormat.operatorChanged.connect(self.__setModified)
-        self.woiImageFormat.valueChanged.connect(self.__setModified)
+        self.woiImageFormat.operatorChanged.connect(lambda: self._setModified(True))
+        self.woiImageFormat.valueChanged.connect(lambda: self._setModified(True))
 
         # file image width
         self.woiImageWidth.setMinimum(1)
@@ -1441,9 +1511,9 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImageWidth.setSuffix('px')
         self.woiImageWidth.setPredefinedConditionsLabel(i18n("Predefined width"))
         self.woiImageWidth.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGWIDTH)])
-        self.woiImageWidth.operatorChanged.connect(self.__setModified)
-        self.woiImageWidth.valueChanged.connect(self.__setModified)
-        self.woiImageWidth.value2Changed.connect(self.__setModified)
+        self.woiImageWidth.operatorChanged.connect(lambda: self._setModified(True))
+        self.woiImageWidth.valueChanged.connect(lambda: self._setModified(True))
+        self.woiImageWidth.value2Changed.connect(lambda: self._setModified(True))
 
         # file image height
         self.woiImageHeight.setMinimum(1)
@@ -1451,9 +1521,9 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImageHeight.setSuffix('px')
         self.woiImageHeight.setPredefinedConditionsLabel(i18n("Predefined height"))
         self.woiImageHeight.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGHEIGHT)])
-        self.woiImageHeight.operatorChanged.connect(self.__setModified)
-        self.woiImageHeight.valueChanged.connect(self.__setModified)
-        self.woiImageHeight.value2Changed.connect(self.__setModified)
+        self.woiImageHeight.operatorChanged.connect(lambda: self._setModified(True))
+        self.woiImageHeight.valueChanged.connect(lambda: self._setModified(True))
+        self.woiImageHeight.value2Changed.connect(lambda: self._setModified(True))
 
         # file image ratio
         self.woiImageRatio.setMinimum(0.0001)
@@ -1461,9 +1531,9 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImageRatio.setDecimals(4)
         self.woiImageRatio.setPredefinedConditionsLabel(i18n("Predefined aspect ratio"))
         self.woiImageRatio.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGRATIO)])
-        self.woiImageRatio.operatorChanged.connect(self.__setModified)
-        self.woiImageRatio.valueChanged.connect(self.__setModified)
-        self.woiImageRatio.value2Changed.connect(self.__setModified)
+        self.woiImageRatio.operatorChanged.connect(lambda: self._setModified(True))
+        self.woiImageRatio.valueChanged.connect(lambda: self._setModified(True))
+        self.woiImageRatio.value2Changed.connect(lambda: self._setModified(True))
 
         # file image pixels
         self.woiImagePixels.setMinimum(0.01)
@@ -1472,9 +1542,9 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImagePixels.setSuffix('MP')
         self.woiImagePixels.setPredefinedConditionsLabel(i18n("Predefined pixel sizes"))
         self.woiImagePixels.setPredefinedConditions([WOperatorCondition.fromFmtString(v) for v in BCSettings.get(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGPIXELS)])
-        self.woiImagePixels.operatorChanged.connect(self.__setModified)
-        self.woiImagePixels.valueChanged.connect(self.__setModified)
-        self.woiImagePixels.value2Changed.connect(self.__setModified)
+        self.woiImagePixels.operatorChanged.connect(lambda: self._setModified(True))
+        self.woiImagePixels.valueChanged.connect(lambda: self._setModified(True))
+        self.woiImagePixels.value2Changed.connect(lambda: self._setModified(True))
 
     def __setDefaultValues(self):
         """Initialise default values"""
@@ -1500,50 +1570,39 @@ class BCWSearchImgFilterRules(QWidget):
         self.woiImagePixels.setValue2(10)
         self.woiImagePixels.setOperator(WOperatorType.OPERATOR_GE)
 
-        self.__isModified=False
-
-    def __setModified(self):
-        """Set widget as modified"""
-        self.__isModified=True
-        self.modified.emit()
-
     def __imageFormatToggled(self, checked):
         """Checkbox 'file type' has been toggled"""
-        self.__setModified()
+        self._setModified()
         self.woiImageFormat.setEnabled(checked)
         self.woiImageFormat.setVisible(checked)
 
     def __imageWidthToggled(self, checked):
         """Checkbox 'file img width' has been toggled"""
-        self.__setModified()
+        self._setModified()
         self.woiImageWidth.setEnabled(checked)
         self.woiImageWidth.setVisible(checked)
 
     def __imageHeightToggled(self, checked):
         """Checkbox 'file img height' has been toggled"""
-        self.__setModified()
+        self._setModified()
         self.woiImageHeight.setEnabled(checked)
         self.woiImageHeight.setVisible(checked)
 
     def __imageRatioToggled(self, checked):
         """Checkbox 'file img ratio' has been toggled"""
-        self.__setModified()
+        self._setModified()
         self.woiImageRatio.setEnabled(checked)
         self.woiImageRatio.setVisible(checked)
 
     def __imagePixelsToggled(self, checked):
         """Checkbox 'file img pixels' has been toggled"""
-        self.__setModified()
+        self._setModified()
         self.woiImagePixels.setEnabled(checked)
         self.woiImagePixels.setVisible(checked)
 
     def resetToDefault(self):
         """Reset to default values"""
         self.__setDefaultValues()
-
-    def isModified(self):
-        """Return true if values has been modified"""
-        return self.__isModified
 
     def exportAsDict(self):
         """Export widget configuration as dictionnary"""
@@ -1622,6 +1681,7 @@ class BCWSearchImgFilterRules(QWidget):
         elif not ("type" in dataAsDict and dataAsDict["type"]=="BCNodeWSearchImgFilterRule"):
             raise EInvalidValue("Given `dataAsDict` must contains key 'type' with value 'BCNodeWSearchImgFilterRule'")
 
+        self._startUpdate()
         self.__setDefaultValues()
 
         if "imageFormat" in dataAsDict and isinstance(dataAsDict['imageFormat'], dict):
@@ -1652,7 +1712,309 @@ class BCWSearchImgFilterRules(QWidget):
             self.woiImagePixels.setValue2(dataAsDict['imagePixels']['value2'])
             self.woiImagePixels.setOperator(dataAsDict['imagePixels']['operator'])
 
+        self._endUpdate()
+        self._setModified(False)
+
+
+
+class BCWSearchSortRules(BCWSearchWidget):
+    """A widget to define sort rules"""
+
+    MAP_VALUE_LABEL={
+            'fileFullPathName': i18n('Full path/name'),
+            'filePath': i18n('File path'),
+            'fileName': i18n('File name'),
+            'fileSize': i18n('File size'),
+            'fileDate': i18n('File date'),
+            'imageFormat': i18n('Image format'),
+            'imageWidth': i18n('Image width'),
+            'imageHeight': i18n('Image height'),
+            'imageRatio': i18n('Image ratio'),
+            'imagePixels': i18n('Image pixels')
+        }
+
+    def __init__(self, parent=None):
+        super(BCWSearchSortRules, self).__init__('bcwsearchsortrules.ui', parent)
+
+        self._startUpdate()
+        self.__initialise()
+        self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
+
+    def __initialise(self):
+        """Initialise widget interface"""
+        # option checkbox
+        self.cbPropertiesSortCaseInsensitive.toggled.connect(lambda: self._setModified(True))
+        self.lwPropertiesSortList.itemOrderChanged.connect(lambda: self._setModified(True))
+        self.lwPropertiesSortList.itemChanged.connect(lambda: self._setModified(True))
+
+    def __setDefaultValues(self):
+        """Initialise default values"""
+        self.cbPropertiesSortCaseInsensitive.setChecked(True)
+        self.lwPropertiesSortList.clear()
+        self.lwPropertiesSortList.addItems([
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileFullPathName'], 'fileFullPathName', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['filePath'], 'filePath', True, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileName'], 'fileName', True, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileSize'], 'fileSize', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileDate'], 'fileDate', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageFormat'], 'imageFormat', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageWidth'], 'imageWidth', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageHeight'], 'imageHeight', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageRatio'], 'imageRatio', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imagePixels'], 'imagePixels', False, True)
+            ])
+
+    def resetToDefault(self):
+        """Reset to default values"""
+        self.__setDefaultValues()
+
+    def exportAsDict(self):
+        """Export widget configuration as dictionnary"""
+        returned={
+                "properties": {
+                                "id": QUuid.createUuid().toString(),
+                                "title": i18n("Sort condition")
+                            },
+                "connectors": [
+                            {
+                                "id": "InputSortRule",
+                                "properties": {
+                                    "direction": NodeEditorConnector.DIRECTION_INPUT,
+                                    "location": NodeEditorConnector.LOCATION_TOP_LEFT
+                                }
+                            },
+                            {
+                                "id": "OutputSortRule",
+                                "properties": {
+                                    "direction": NodeEditorConnector.DIRECTION_OUTPUT,
+                                    "location": NodeEditorConnector.LOCATION_BOTTOM_RIGHT
+                                }
+                            }
+                        ],
+                "widget": {
+                            "type": "BCNodeWSearchSortRule",
+                            "sortProperties": {
+                                "list":[{
+                                        "value": orderedItem.value(),
+                                        "checked": orderedItem.checked(),
+                                        "ascending": orderedItem.isSortAscending()
+                                        } for orderedItem in self.lwPropertiesSortList.items(False)],
+                                "caseInsensitive": self.cbPropertiesSortCaseInsensitive.isChecked()
+                            }
+                    }
+            }
+        return returned
+
+    def importFromDict(self, dataAsDict):
+        """Import widget configuration from dictionnary
+
+        Note: only "widget" key content is expected for input
+
+
+        Example of expected dictionary:
+            "widget": {
+                "type": "BCWSearchSortRules",
+                "sortProperties": [],
+                "sortCaseInsensitive": true
+            }
+        """
+        if not isinstance(dataAsDict, dict):
+            raise EInvalidType("Given `dataAsDict` must be a <dict>")
+        elif not ("type" in dataAsDict and dataAsDict["type"]=="BCNodeWSearchSortRule"):
+            raise EInvalidValue("Given `dataAsDict` must contains key 'type' with value 'BCNodeWSearchSortRule'")
+
+        self._startUpdate()
+        self.__setDefaultValues()
+
+        if "sortProperties" in dataAsDict and isinstance(dataAsDict['sortProperties'], dict):
+            self.cbPropertiesSortCaseInsensitive.setChecked(dataAsDict['sortProperties']['caseInsensitive'])
+
+            # build list of properties
+            # need to check is given properties are valid
+            validatedList=[]
+            validatedProperties=[]
+            for properties in dataAsDict['sortProperties']['list']:
+                if properties["value"] in BCWSearchSortRules.MAP_VALUE_LABEL:
+                    validatedList.append(OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL[properties["value"]], properties["value"], properties["checked"], properties["ascending"]))
+                    validatedProperties.append(properties["value"])
+
+            if len(validatedList)<len(BCWSearchSortRules.MAP_VALUE_LABEL):
+                # some properties are missing...
+                # search them an add to list
+                for properties in self.lwPropertiesSortList.items(False):
+                    if not properties.value() in validatedProperties:
+                        validatedList.append(OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL[properties.value()], properties.value(), properties.checked(), properties.isSortAscending()))
+
+            self.lwPropertiesSortList.clear()
+            self.lwPropertiesSortList.addItems(validatedList)
+
+        self._endUpdate()
+        self._setModified(False)
+
+
+
+class BCWSearchOutputEngine(BCWSearchWidget):
+    """A widget to define output engine"""
+
+    OUTPUT_TARGET={
+            "aPanel": i18n("Active panel"),
+            "lPanel": i18n("Left panel"),
+            "rPanel": i18n("Right panel"),
+            "doc": i18n("Document"),
+        }
+
+    def __init__(self, parent=None):
+        super(BCWSearchOutputEngine, self).__init__('bcwsearchoutputengine.ui', parent)
+
+        self.__title=''
+        self.__uiController=None
+
+        # document settings informations
+        # set default minimal keys
+        # all other keys will be defined dynamically from BCExportFilesDialogBox
+        # (or when imported from dict) according to defined export format
+        self.__documentExportInfo={
+                'exportFormat': BCExportFormat.EXPORT_FMT_TEXT,
+                'exportFileName': '@clipboard',
+                'exportConfig': {}
+            }
+
+        self._startUpdate()
+        self.__initialise()
+        self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
+
+    def __initialise(self):
+        """Initialise widget interface"""
+        self.cbOutputTarget.addItem(BCWSearchOutputEngine.OUTPUT_TARGET['aPanel'], "aPanel")
+        self.cbOutputTarget.addItem(BCWSearchOutputEngine.OUTPUT_TARGET['lPanel'], "lPanel")
+        self.cbOutputTarget.addItem(BCWSearchOutputEngine.OUTPUT_TARGET['rPanel'], "rPanel")
+        self.cbOutputTarget.addItem(BCWSearchOutputEngine.OUTPUT_TARGET['doc'], "doc")
+        self.cbOutputTarget.currentIndexChanged.connect(self.__cbOutputTargetChanged)
+
+        self.wTgtDoc.setVisible(False)
+        self.lblTgtDocFmtValue.setText('')
+        self.leTgtDocFileName.setText('')
+        self.pbTgtDocConfigure.clicked.connect(self.__pbTgtDocConfigureClicked)
+
+    def __setDefaultValues(self):
+        """Initialise default values"""
+        self.__setOutputTarget('aPanel')
         self.__isModified=False
+
+    def __cbOutputTargetChanged(self, index):
+        """Current output target has been modified"""
+        self.__setOutputTarget(self.cbOutputTarget.currentData())
+        self._setModified(True)
+
+    def __pbTgtDocConfigureClicked(self):
+        """Edit current 'document output' settings"""
+        returned=BCExportFilesDialogBox.openAsExportConfig(self.__title, self.__uiController, self.__documentExportInfo)
+        if not returned is None:
+            # apply returned configuration
+            self.__documentExportInfo=returned
+            # update view
+            self.__setOutputTarget('doc')
+            self._setModified(True)
+
+    def __setOutputTarget(self, value):
+        """Define output target format"""
+        if value in ('aPanel', 'lPanel', 'rPanel'):
+            if value == 'aPanel':
+                self.cbOutputTarget.setCurrentIndex(0)
+            elif value == 'lPanel':
+                self.cbOutputTarget.setCurrentIndex(1)
+            elif value == 'rPanel':
+                self.cbOutputTarget.setCurrentIndex(2)
+            self.wTgtDoc.setVisible(False)
+        elif value == 'doc':
+            self.lblTgtDocFmtValue.setText(BCExportFilesDialogBox.FMT_PROPERTIES[self.__documentExportInfo['exportFormat']]['label'])
+            if self.__documentExportInfo['exportFileName'] == '@clipboard':
+                self.leTgtDocFileName.setText(f"[{i18n('Clipboard')}]")
+            else:
+                self.leTgtDocFileName.setText(self.__documentExportInfo['exportFileName'])
+            self.cbOutputTarget.setCurrentIndex(3)
+            self.wTgtDoc.setVisible(True)
+
+    def resetToDefault(self):
+        """Reset to default values"""
+        self.__setDefaultValues()
+
+    def setTitle(self, title):
+        """Set title used for BCExportFilesDialogBox"""
+        self.__title=f"{title}::{i18n('Output result export settings')}"
+
+    def setUiController(self, uiController):
+        """Set uiController used for BCExportFilesDialogBox"""
+        self.__uiController=uiController
+
+    def exportAsDict(self):
+        """Export widget configuration as dictionnary"""
+        returned={
+                "properties": {
+                                "id": QUuid.createUuid().toString(),
+                                "title": i18n("Output engine")
+                            },
+                "connectors": [
+                            {
+                                "id": "InputResults",
+                                "properties": {
+                                    "direction": NodeEditorConnector.DIRECTION_INPUT,
+                                    "location": NodeEditorConnector.LOCATION_TOP_LEFT
+                                }
+                            }
+                        ],
+                "widget": {
+                            "type": "BCNodeWSearchOutputEngine",
+                            "outputProperties": {
+                                "target": self.cbOutputTarget.currentData(),
+                                "documentExportInfo": self.__documentExportInfo
+                            }
+                    }
+            }
+
+        return returned
+
+    def importFromDict(self, dataAsDict):
+        """Import widget configuration from dictionnary
+
+        Note: only "widget" key content is expected for input
+
+
+        Example of expected dictionary:
+            "widget": {
+                "type": "BCNodeWSearchOutputEngine",
+                "outputProperties": {[]}
+            }
+        """
+        if not isinstance(dataAsDict, dict):
+            raise EInvalidType("Given `dataAsDict` must be a <dict>")
+        elif not ("type" in dataAsDict and dataAsDict["type"]=="BCNodeWSearchOutputEngine"):
+            raise EInvalidValue("Given `dataAsDict` must contains key 'type' with value 'BCNodeWSearchOutputEngine'")
+
+        self._startUpdate()
+        self.__setDefaultValues()
+
+        if "outputProperties" in dataAsDict and isinstance(dataAsDict['outputProperties'], dict):
+
+            if "target" in dataAsDict['outputProperties'] and dataAsDict['outputProperties']['target'] in ('aPanel', 'lPanel', 'rPanel', 'doc'):
+                if "documentExportInfo" in dataAsDict['outputProperties']:
+                    self.__documentExportInfo=dataAsDict['outputProperties']['documentExportInfo']
+                    self.__setOutputTarget(dataAsDict['outputProperties']['target'])
+                else:
+                    # fallback
+                    self.__documentExportInfo={
+                            'exportFormat': BCExportFormat.EXPORT_FMT_TEXT,
+                            'exportFileName': '@clipboard',
+                            'exportConfig': {}
+                        }
+                    self.__setOutputTarget('aPanel')
+
+        self._endUpdate()
+        self._setModified(False)
 
 
 
@@ -1690,17 +2052,34 @@ class NodeEditorConnectorFilter(NodeEditorConnector):
 
 
 
+class NodeEditorConnectorResults(NodeEditorConnector):
+    # a sort connector
+    def __init__(self, id=None, direction=0x01, location=0x01, color=None, borderColor=None, borderSize=None, parent=None):
+        super(NodeEditorConnectorResults, self).__init__(id, direction, location, color, borderColor, borderSize, parent)
+        if direction==NodeEditorConnector.DIRECTION_INPUT:
+            tooltip="".join(["<b>", i18n("Input results"), "</b><br/><br/>", i18n("Should be connected from an&nbsp;<b>Output results</b>&nbsp;connector of &nbsp;<i>Search engine</i>")])
+        else:
+            tooltip="".join(["<b>", i18n(f"Output results"), "</b><br/><br/>",
+                             i18n("Should be connected to an&nbsp;<b>Input results</b>&nbsp;connector of:"), "<ul><li>",
+                             i18n("a <i>Sort rule</i>"),
+                             "</li><li>",
+                             i18n("a <i>Output engine</i>")])
+        self.setToolTip(tooltip)
+
+
+
 class BCNodeWSearchEngine(NodeEditorNodeWidget):
     """Main search engine node"""
 
     def __init__(self, scene, title, parent=None):
         inputPathConnector=NodeEditorConnectorPath('InputPath1', NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.LOCATION_LEFT_TOP)
         inputFilterRuleConnector=NodeEditorConnectorFilter('InputFilterRule', NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.LOCATION_RIGHT_TOP)
+        outputResults=NodeEditorConnectorResults('OutputResults', NodeEditorConnector.DIRECTION_OUTPUT, NodeEditorConnector.LOCATION_BOTTOM_RIGHT)
 
         inputPathConnector.addAcceptedConnectionFrom(NodeEditorConnectorPath)
         inputFilterRuleConnector.addAcceptedConnectionFrom(NodeEditorConnectorFilter)
 
-        super(BCNodeWSearchEngine, self).__init__(scene, title, connectors=[inputPathConnector, inputFilterRuleConnector], parent=parent)
+        super(BCNodeWSearchEngine, self).__init__(scene, title, connectors=[inputPathConnector, inputFilterRuleConnector, outputResults], parent=parent)
 
         self.node().setRemovable(False)
 
@@ -1811,7 +2190,7 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
     def __init__(self, scene, title, parent=None):
         outputFilterRuleConnector=NodeEditorConnectorFilter('OutputFilterRule', NodeEditorConnector.DIRECTION_OUTPUT, NodeEditorConnector.LOCATION_LEFT_BOTTOM, source=i18n('file'))
 
-        self.__lblDateTime=QLabel(f"- <b>{i18n('Date/Time')}</b>")
+        self.__lblDateTime=QLabel(f"<b>{i18n('Date/Time')}</b>")
         self.__lblName=WLabelElide(Qt.ElideRight)
         self.__lblPath=WLabelElide(Qt.ElideRight)
         self.__lblSize=WLabelElide(Qt.ElideRight)
@@ -1824,10 +2203,9 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
 
         self.__layout=QFormLayout()
         self.__layout.setContentsMargins(0,0,0,0)
-        self.__layout.addRow(QLabel(f"<b>{i18n('Filtered by:')}</b>"))
-        self.__layout.addRow(f"- <b>{i18n('Name')}</b>", self.__lblName)
-        self.__layout.addRow(f"- <b>{i18n('Path')}</b>", self.__lblPath)
-        self.__layout.addRow(f"- <b>{i18n('Size')}</b>", self.__lblSize)
+        self.__layout.addRow(f"<b>{i18n('Name')}</b>", self.__lblName)
+        self.__layout.addRow(f"<b>{i18n('Path')}</b>", self.__lblPath)
+        self.__layout.addRow(f"<b>{i18n('Size')}</b>", self.__lblSize)
         self.__layout.addRow(self.__lblDateTime, self.__lblDate)
 
         if BCSettings.get(BCSettingsKey.CONFIG_GLB_FILE_UNIT)==BCSettingsValues.FILE_UNIT_KIB:
@@ -1968,12 +2346,11 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
 
         self.__layout=QFormLayout()
         self.__layout.setContentsMargins(0,0,0,0)
-        self.__layout.addRow(QLabel(f"<b>{i18n('Filtered by:')}</b>"))
-        self.__layout.addRow(f"- <b>{i18n('Format')}</b>", self.__lblImgFormat)
-        self.__layout.addRow(f"- <b>{i18n('Width')}</b>", self.__lblImgWidth)
-        self.__layout.addRow(f"- <b>{i18n('Height')}</b>", self.__lblImgHeight)
-        self.__layout.addRow(f"- <b>{i18n('Aspect ratio')}</b>", self.__lblImgRatio)
-        self.__layout.addRow(f"- <b>{i18n('Pixels')}</b>", self.__lblImgPixels)
+        self.__layout.addRow(f"<b>{i18n('Format')}</b>", self.__lblImgFormat)
+        self.__layout.addRow(f"<b>{i18n('Width')}</b>", self.__lblImgWidth)
+        self.__layout.addRow(f"<b>{i18n('Height')}</b>", self.__lblImgHeight)
+        self.__layout.addRow(f"<b>{i18n('Aspect ratio')}</b>", self.__lblImgRatio)
+        self.__layout.addRow(f"<b>{i18n('Pixels')}</b>", self.__lblImgPixels)
 
         self.__data={
                     "imageFormat": {
@@ -2214,3 +2591,150 @@ class BCNodeWSearchFileFilterRuleOperator(NodeEditorNodeWidget):
                 if self.__cbValue.itemData(index)==data['value']:
                     self.__cbValue.setCurrentIndex(index)
                     break
+
+
+
+class BCNodeWSearchSortRule(NodeEditorNodeWidget):
+    """A sort source node"""
+
+    def __init__(self, scene, title, parent=None):
+        inputSortRuleConnector=NodeEditorConnectorResults('InputSortRule', NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.LOCATION_TOP_LEFT)
+        outputSortRuleConnector=NodeEditorConnectorResults('OutputSortRule', NodeEditorConnector.DIRECTION_OUTPUT, NodeEditorConnector.LOCATION_BOTTOM_RIGHT)
+
+        inputSortRuleConnector.addAcceptedConnectionFrom(NodeEditorConnectorResults)
+
+        self.__lblSortedProperties=QLabel()
+        self.__lblSortCaseInsensitive=QLabel()
+
+        self.__layout=QFormLayout()
+        self.__layout.setLabelAlignment(Qt.AlignLeft|Qt.AlignTop)
+        self.__layout.setContentsMargins(0,0,0,0)
+        self.__layout.addRow(f"<b>{i18n('Case insensitive')}</b>", self.__lblSortCaseInsensitive)
+        self.__layout.addRow(f"<b>{i18n('Sort by')}</b>", self.__lblSortedProperties)
+
+        self.__data={
+                    "sortProperties": {
+                            "list": [],
+                            "caseInsensitive": True
+                        },
+                }
+
+        super(BCNodeWSearchSortRule, self).__init__(scene, title, connectors=[inputSortRuleConnector, outputSortRuleConnector], parent=parent)
+
+        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
+
+        self.node().setMinimumSize(QSize(400, 250))
+        self.setLayout(self.__layout)
+
+    def serialize(self):
+        """Convert current widget node properties to dictionnary"""
+        return copy.deepcopy(self.__data)
+
+    def deserialize(self, data):
+        """Convert current given data dictionnary to update widget node properties"""
+        if 'sortProperties' in data:
+            self.__data['sortProperties']=copy.deepcopy(data['sortProperties'])
+
+            self.__lblSortCaseInsensitive.setText(boolYesNo(self.__data['sortProperties']['caseInsensitive']))
+
+            text=[]
+            tooltipText=[]
+            if isinstance(self.__data['sortProperties']['list'], list) and len(self.__data['sortProperties']['list'])>0:
+                for item in self.__data['sortProperties']['list']:
+                    if item['checked']:
+                        if item['ascending']:
+                            sortArrow='⬆'
+                            sortText=i18n('Ascending')
+                        else:
+                            sortArrow='⬇'
+                            sortText=i18n('Descending')
+                        text.append(f"{sortArrow}{BCWSearchSortRules.MAP_VALUE_LABEL[item['value']]}")
+                        tooltipText.append(f"{BCWSearchSortRules.MAP_VALUE_LABEL[item['value']]} [{sortText}]")
+
+            if len(text)>0:
+                self.__lblSortedProperties.setText("<br>".join(text))
+                self.__lblSortedProperties.setToolTip("<br>".join(tooltipText))
+            else:
+                self.__lblSortedProperties.setText(i18n('No sort rule defined!'))
+                self.__lblSortedProperties.setToolTip('No properties have been selected to define sort rules')
+
+
+
+class BCNodeWSearchOutputEngine(NodeEditorNodeWidget):
+    """An output engine node"""
+
+    def __init__(self, scene, title, parent=None):
+        inputResultsConnector=NodeEditorConnectorResults('InputResults', NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.LOCATION_TOP_LEFT)
+        inputResultsConnector.addAcceptedConnectionFrom(NodeEditorConnectorResults)
+
+        self.__data={
+                    "outputProperties": {
+                            "target": "aPanel",
+                            "documentExportInfo": {
+                                    'exportFormat': BCExportFormat.EXPORT_FMT_TEXT,
+                                    'exportFileName': '@clipboard',
+                                    'exportConfig': {}
+                                }
+                        },
+                }
+
+        super(BCNodeWSearchOutputEngine, self).__init__(scene, title, connectors=[inputResultsConnector], parent=parent)
+
+        self.__lblOutputTarget=WLabelElide(Qt.ElideRight)
+
+        self.__lblLblOutputDocFmt=QLabel(f"<b>{i18n('Format')}</b>")
+        self.__lblLblOutputDocFileName=QLabel(f"<b>{i18n('File')}</b>")
+        self.__lblOutputDocFmt=WLabelElide(Qt.ElideRight)
+        self.__lblOutputDocFileName=WLabelElide(Qt.ElideLeft)
+
+        self.__lblLblOutputDocFmt.setVisible(False)
+        self.__lblLblOutputDocFileName.setVisible(False)
+        self.__lblOutputDocFmt.setVisible(False)
+        self.__lblOutputDocFileName.setVisible(False)
+
+        self.__layout=QFormLayout()
+        self.__layout.setContentsMargins(0,0,0,0)
+        self.__layout.addRow(f"<b>{i18n('Output target')}</b>", self.__lblOutputTarget)
+
+        self.__layout.addRow(self.__lblLblOutputDocFmt, self.__lblOutputDocFmt)
+        self.__layout.addRow(self.__lblLblOutputDocFileName, self.__lblOutputDocFileName)
+
+        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
+
+        self.node().setMinimumSize(QSize(400, 250))
+        self.setLayout(self.__layout)
+
+    def serialize(self):
+        """Convert current widget node properties to dictionnary"""
+        return copy.deepcopy(self.__data)
+
+    def deserialize(self, data):
+        """Convert current given data dictionnary to update widget node properties"""
+
+        if 'outputProperties' in data:
+            self.__data['outputProperties']=copy.deepcopy(data['outputProperties'])
+
+            self.__lblOutputTarget.setText(BCWSearchOutputEngine.OUTPUT_TARGET[self.__data['outputProperties']['target']])
+            self.__lblOutputTarget.setToolTip(BCWSearchOutputEngine.OUTPUT_TARGET[self.__data['outputProperties']['target']])
+
+            if self.__data['outputProperties']['target']!='doc':
+                # panel
+                self.__lblLblOutputDocFmt.setVisible(False)
+                self.__lblLblOutputDocFileName.setVisible(False)
+                self.__lblOutputDocFmt.setVisible(False)
+                self.__lblOutputDocFileName.setVisible(False)
+            else:
+                self.__lblOutputDocFmt.setText(BCExportFilesDialogBox.FMT_PROPERTIES[self.__data['outputProperties']['documentExportInfo']['exportFormat']]['label'])
+                self.__lblOutputDocFmt.setToolTip(BCExportFilesDialogBox.FMT_PROPERTIES[self.__data['outputProperties']['documentExportInfo']['exportFormat']]['label'])
+
+                if self.__data['outputProperties']['documentExportInfo']['exportFileName']=='@clipboard':
+                    self.__lblOutputDocFileName.setText(f"[{i18n('Clipboard')}]")
+                    self.__lblOutputDocFileName.setToolTip(f"[{i18n('Clipboard')}]")
+                else:
+                    self.__lblOutputDocFileName.setText(self.__data['outputProperties']['documentExportInfo']['exportFileName'])
+                    self.__lblOutputDocFileName.setToolTip(self.__data['outputProperties']['documentExportInfo']['exportFileName'])
+
+                self.__lblLblOutputDocFmt.setVisible(True)
+                self.__lblLblOutputDocFileName.setVisible(True)
+                self.__lblOutputDocFmt.setVisible(True)
+                self.__lblOutputDocFileName.setVisible(True)

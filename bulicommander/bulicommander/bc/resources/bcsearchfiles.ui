@@ -518,6 +518,52 @@
            </widget>
           </item>
           <item>
+           <widget class="QToolButton" name="tbAdvancedAddSortRules">
+            <property name="toolTip">
+             <string>Add sort rules node</string>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+              <normaloff>:/pktk/images/normal/sort_bidirectional</normaloff>:/pktk/images/normal/sort_bidirectional</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="tbAdvancedAddOutputEngine">
+            <property name="toolTip">
+             <string>Add output engine node</string>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+              <normaloff>:/pktk/images/normal/process_out</normaloff>:/pktk/images/normal/process_out</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QToolButton" name="tbAdvancedDeleteItems">
             <property name="toolTip">
              <string>Delete selected items</string>
@@ -659,7 +705,7 @@
               <item>
                <widget class="QStackedWidget" name="swAdvancedPanel">
                 <property name="currentIndex">
-                 <number>3</number>
+                 <number>5</number>
                 </property>
                 <widget class="QWidget" name="pageAdvancedSearchEngine">
                  <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -814,6 +860,46 @@
                   </item>
                   <item>
                    <spacer name="verticalSpacer_4">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="pageAdvancedSortRules">
+                 <layout class="QVBoxLayout" name="verticalLayout_11">
+                  <item>
+                   <widget class="BCWSearchSortRules" name="wssrAdvanced" native="true"/>
+                  </item>
+                  <item>
+                   <spacer name="verticalSpacer_5">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="pageAdvancedOutputEngine">
+                 <layout class="QVBoxLayout" name="verticalLayout_12">
+                  <item>
+                   <widget class="BCWSearchOutputEngine" name="wsoeAdvanced" native="true"/>
+                  </item>
+                  <item>
+                   <spacer name="verticalSpacer_6">
                     <property name="orientation">
                      <enum>Qt::Vertical</enum>
                     </property>
@@ -1004,6 +1090,18 @@
   </customwidget>
   <customwidget>
    <class>BCWSearchImgFilterRules</class>
+   <extends>QWidget</extends>
+   <header>bulicommander.bc.bcsearchfiles</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>BCWSearchSortRules</class>
+   <extends>QWidget</extends>
+   <header>bulicommander.bc.bcsearchfiles</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>BCWSearchOutputEngine</class>
    <extends>QWidget</extends>
    <header>bulicommander.bc.bcsearchfiles</header>
    <container>1</container>
