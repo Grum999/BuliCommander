@@ -25,6 +25,7 @@ import re
 import sys
 import os
 import json
+import base64
 
 import xml.etree.ElementTree as ET
 
@@ -441,6 +442,18 @@ class JsonQObjectEncoder(json.JSONEncoder):
                     'color': objectToEncode.name(),
                     'isNone': objectToEncode.isNone()
                 }
+        elif isinstance(objectToEncode, QImage):
+            ptr = objectToEncode.bits()
+            ptr.setsize(objectToEncode.byteCount())
+            return {
+                    'objType': "QImage",
+                    'b64': base64.b64encode(ptr.asstring()).decode()
+                }
+        elif isinstance(objectToEncode, bytes):
+            return {
+                    'objType': "bytes",
+                    'b64': base64.b64encode(objectToEncode).decode()
+                }
         # Let the base class default method raise the TypeError
         return super(JsonQObjectEncoder, self).default(objectToEncode)
 
@@ -483,6 +496,12 @@ class JsonQObjectDecoder(json.JSONDecoder):
             returned=QEColor(objectToDecode['color'])
             returned.setNone(objectToDecode['isNone'])
             return returned
+        elif ('objType' in objectToDecode and objectToDecode['objType']=="QImage" and
+              'b64' in objectToDecode):
+            return QImage.fromData(base64.b64decode(objectToDecode['b64']))
+        elif ('objType' in objectToDecode and objectToDecode['objType']=="bytes" and
+              'b64' in objectToDecode):
+            return base64.b64decode(objectToDecode['b64'])
 
         # Let the base class default method raise the TypeError
         return objectToDecode
