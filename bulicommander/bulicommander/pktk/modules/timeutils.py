@@ -117,9 +117,14 @@ class Stopwatch(object):
     __current = {}
 
     @staticmethod
-    def reset():
+    def reset(reKey=None):
         """Reset all Stopwatches"""
-        Stopwatch.__current = {}
+        if reKey is None:
+            Stopwatch.__current = {}
+        else:
+            for key in list(Stopwatch.__current.keys()):
+                if re.search(reKey, key):
+                    Stopwatch.__current.pop(key)
 
     @staticmethod
     def start(name):
@@ -152,3 +157,16 @@ class Stopwatch(object):
                 return time.time() - Stopwatch.__current[name]['start']
             else:
                 return Stopwatch.__current[name]['stop'] - Stopwatch.__current[name]['start']
+
+    @staticmethod
+    def list():
+        """Return all stopwatch durations with a list of tuple(key, duration in seconds)
+
+        If stopwatch doesn't exist, return None
+        If stopwatch is not stopped, return current duration from start time
+        """
+        returned=[]
+        for name in Stopwatch.__current:
+            returned.append((name, Stopwatch.duration(name) ))
+
+        return returned
