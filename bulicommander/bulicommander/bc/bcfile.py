@@ -57,6 +57,7 @@ import zipfile
 import zlib
 import textwrap
 import math
+import copy
 
 
 from PyQt5.Qt import *
@@ -91,6 +92,7 @@ from bulicommander.pktk.modules.imgutils import buildIcon
 from bulicommander.pktk.modules.utils import (
         Debug,
         JsonQObjectEncoder,
+        JsonQObjectDecoder,
         regExIsValid,
         intDefault
     )
@@ -1953,7 +1955,18 @@ class BCFile(BCBaseFile):
             return
 
         try:
-            return self.__bcFileCache.setMetadata(self.__qHash, dataAsDict)
+            if 'iccProfile' in dataAsDict or 'document.referenceImages.data' in dataAsDict:
+                # exclude extradata from cache (can be heavy data)
+                dataAsDictToPass=copy.copy(dataAsDict)
+
+                if 'iccProfile' in dataAsDictToPass:
+                    dataAsDictToPass['iccProfile']=b''
+                if 'document.referenceImages.data' in dataAsDict:
+                    dataAsDictToPass['document.referenceImages.data']=[]
+            else:
+                dataAsDictToPass=dataAsDict
+
+            return self.__bcFileCache.setMetadata(self.__qHash, dataAsDictToPass)
         except Exception as e:
             # can't write meta cache file
             Debug.print('Unable to write meta cache data {0}: {1}', self.__qHash, str(e))
@@ -2328,7 +2341,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataJpeg(self, fromCache=True):
+    def __readMetaDataJpeg(self, fromCache=True, getExtraData=False):
         """
         Read metadata from JPEG file
 
@@ -2417,7 +2430,7 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        def decodeChunk_APP2(markerSegment, returned):
+        def decodeChunk_APP2(markerSegment, returned, getExtraData):
             """Decode APP2 marker:
 
             {
@@ -2439,6 +2452,9 @@ class BCFile(BCBaseFile):
 
                 if chunkNum == chunkTotal:
                     tmp = self.__readICCData(returned['iccProfile'])
+                    if getExtraData==False:
+                        # don't want icc profile data (for performance, memory, ... don't need it)
+                        returned['iccProfile']=b'Y'
                     returned.update(tmp)
             return returned
 
@@ -2481,7 +2497,7 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        if fromCache and not self.__metadata is None:
+        if getExtraData==False and fromCache and not self.__metadata is None:
             return self.__metadata
 
         # by default
@@ -2506,7 +2522,7 @@ class BCFile(BCBaseFile):
                 if markerSegment['id'] == b'\xFF\xE0':
                     returned.update(decodeChunk_APP0(markerSegment))
                 elif markerSegment['id'] == b'\xFF\xE2':
-                    returned.update(decodeChunk_APP2(markerSegment, returned))
+                    returned.update(decodeChunk_APP2(markerSegment, returned, getExtraData))
                 elif markerSegment['id'] in [b'\xFF\xC0', b'\xFF\xC2']:
                     returned.update(decodeChunk_SOFx(markerSegment))
                 #else:
@@ -2517,7 +2533,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataPng(self, fromCache=True):
+    def __readMetaDataPng(self, fromCache=True, getExtraData=False):
         """Read metadata from PNG file
 
         PNG specifications: http://www.libpng.org/pub/png/spec/1.2/png-1.2-pdg.html
@@ -2788,7 +2804,7 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        def decodeChunk_iCCP(chunk):
+        def decodeChunk_iCCP(chunk, getExtraData):
             """Decode iCCP chunk and return a dictionary with:
 
             {
@@ -2813,13 +2829,17 @@ class BCFile(BCBaseFile):
             zData = chunk['data'][index:]
 
             iccData = zlib.decompress(zData)
-            returned['iccProfile']=iccData
+
+            if getExtraData==False:
+                returned['iccProfile']=b'Y'
+            else:
+                returned['iccProfile']=iccData
 
             returned.update(self.__readICCData(iccData))
 
             return returned
 
-        if fromCache and not self.__metadata is None:
+        if getExtraData==False and fromCache and not self.__metadata is None:
             return self.__metadata
 
         returned = {}
@@ -2846,7 +2866,7 @@ class BCFile(BCBaseFile):
                     # if sRGB, ignore gamma
                     returned.pop('gamma', None)
                 elif chunk['id']=='iCCP':
-                    returned.update(decodeChunk_iCCP(chunk))
+                    returned.update(decodeChunk_iCCP(chunk, getExtraData))
                     # if icc profile, ignore gamma and sRGB
                     returned.pop('gamma', None)
                     returned.pop('sRGBRendering', None)
@@ -2863,7 +2883,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataGif(self, fromCache=True):
+    def __readMetaDataGif(self, fromCache=True, getExtraData=False):
         """Read metadata from GIF file
 
         GIF specifications: https://www.w3.org/Graphics/GIF/spec-gif89a.txt
@@ -2926,6 +2946,8 @@ class BCFile(BCBaseFile):
             fHandler.seek(12, 1)
             skip_subBlock(fHandler)
 
+        # if getExtraData==False and fromCache and not self.__metadata is None:
+        # => no extradata for gif files
         if fromCache and not self.__metadata is None:
             return self.__metadata
 
@@ -3007,10 +3029,12 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataWebP(self, fromCache=True):
+    def __readMetaDataWebP(self, fromCache=True, getExtraData=False):
         """Read metadata from GIF file
 
         """
+        # if getExtraData==False and fromCache and not self.__metadata is None:
+        # => no extradata for webp files
         if fromCache and not self.__metadata is None:
             return self.__metadata
 
@@ -3022,7 +3046,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataPsd(self, fromCache=True):
+    def __readMetaDataPsd(self, fromCache=True, getExtraData=False):
         """Read metadata from PSD file
 
         PSD specifications: https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_pgfId-1030196
@@ -3228,7 +3252,7 @@ class BCFile(BCBaseFile):
                     if resId == 0x03ED:
                         returned.update(decode_IRB_03ED(data))
                     elif resId == 0x040F:
-                        returned.update(decode_IRB_040F(data))
+                        returned.update(decode_IRB_040F(data, getExtraData))
                 else:
                     # skip data
                     fHandle.seek(length, 1)
@@ -3262,7 +3286,7 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        def decode_IRB_040F(data):
+        def decode_IRB_040F(data, getExtraData):
             # 0x040F = ICC profile
 
             returned = {
@@ -3270,7 +3294,11 @@ class BCFile(BCBaseFile):
                 'iccProfileCopyright': {},
                 'iccProfile': b''
             }
-            returned['iccProfile']=data
+
+            if getExtraData==False:
+                returned['iccProfile']=b'Y'
+            else:
+                returned['iccProfile']=data
             returned.update(self.__readICCData(data))
 
             return returned
@@ -3287,7 +3315,7 @@ class BCFile(BCBaseFile):
 
             return {}
 
-        if fromCache and not self.__metadata is None:
+        if getExtraData==False and fromCache and not self.__metadata is None:
             return self.__metadata
 
         returned = {}
@@ -3307,7 +3335,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataXcf(self, fromCache=True):
+    def __readMetaDataXcf(self, fromCache=True, getExtraData=False):
         """Read metadata from XCF file
 
         XCF specifications: http://henning.makholm.net/xcftools/xcfspec-saved
@@ -3380,7 +3408,7 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        def read_imageProperties(fHandle):
+        def read_imageProperties(fHandle, getExtraData):
             # read xcf image properties
             returned = {}
 
@@ -3403,7 +3431,7 @@ class BCFile(BCBaseFile):
                         returned.update(read_imageProperties_13(bytes))
                     elif id == 0x15:
                         # parasite
-                        returned.update(read_imageProperties_15(bytes))
+                        returned.update(read_imageProperties_15(bytes, getExtraData))
                 else:
                     # ignore properties and skip data
                     fHandle.seek(length, 1)
@@ -3435,7 +3463,7 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        def read_imageProperties_15(data):
+        def read_imageProperties_15(data, getExtraData):
             # read a parasite (#21)
             # can contains N parasites...
 
@@ -3456,6 +3484,8 @@ class BCFile(BCBaseFile):
                 if name == b'icc-profile':
                     returned['iccProfile']=data[position:position+parasiteSize]
                     returned.update(self.__readICCData(returned['iccProfile']))
+                    if getExtraData==False:
+                        returned['iccProfile']=b'Y'
                 else:
                     pass
                     #print(name, 'skip')
@@ -3465,7 +3495,7 @@ class BCFile(BCBaseFile):
 
             return {}
 
-        if fromCache and not self.__metadata is None:
+        if getExtraData==False and fromCache and not self.__metadata is None:
             return self.__metadata
 
         returned = {}
@@ -3479,12 +3509,12 @@ class BCFile(BCBaseFile):
 
             returned.update(read_header(fHandler))
 
-            returned.update(read_imageProperties(fHandler))
+            returned.update(read_imageProperties(fHandler, getExtraData))
 
         return returned
 
 
-    def __readMetaDataKra(self, fromCache=True):
+    def __readMetaDataKra(self, fromCache=True, getExtraData=False):
         """Read metadata from Krita file"""
         def getShapeLayerList():
             # return a list of shape layer files into archive
@@ -3549,7 +3579,7 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        if fromCache and not self.__metadata is None:
+        if getExtraData==False and fromCache and not self.__metadata is None:
             return self.__metadata
 
         returned = {
@@ -3572,7 +3602,8 @@ class BCFile(BCBaseFile):
             'document.fileLayers': [],
             'document.usedFonts': [],
             'document.embeddedPalettes': {},
-            'document.referenceImages': [],
+            'document.referenceImages.data': [],
+            'document.referenceImages.count': 0,
 
             'about.title': '',
             'about.subject': '',
@@ -3960,30 +3991,34 @@ class BCFile(BCBaseFile):
                         Debug.print('[BCFile.__readMetaDataKra] Malformed palette {2} in file {0}: {1}', self._fullPathName, str(e), filename)
 
         # load reference image details
-        for refImg in tmpRefImgList:
-            if not re.match(r'file://', refImg):
-                # embedded file
-                imageData = self.__readArchiveDataFile(refImg)
-                if imageData:
+        returned['document.referenceImages.count']=len(tmpRefImgList)
+        if getExtraData:
+            for refImg in tmpRefImgList:
+                if not re.match(r'file://', refImg):
+                    # embedded file
+                    imageData = self.__readArchiveDataFile(refImg)
+                    if imageData:
+                        image = QImage()
+                        if image.loadFromData(imageData):
+                            returned['document.referenceImages.data'].append(image)
+                else:
                     image = QImage()
-                    if image.loadFromData(imageData):
-                        returned['document.referenceImages'].append(image)
-            else:
-                image = QImage()
-                if image.load(refImg.replace('file://', '')):
-                    returned['document.referenceImages'].append(image)
+                    if image.load(refImg.replace('file://', '')):
+                        returned['document.referenceImages.data'].append(image)
 
 
         # References images are stored in a layer
-        # Do not consider it as a layer because reference image latyer is not visible in layer tree
-        returned['document.layerCount']-=len(returned['document.referenceImages'])
+        # Do not consider it as a layer because reference image layer is not visible in layer tree
+        returned['document.layerCount']-=returned['document.referenceImages.count']
 
 
         return returned
 
 
-    def __readMetaDataOra(self, fromCache=True):
-        """Read metadata from Krita file"""
+    def __readMetaDataOra(self, fromCache=True, getExtraData=False):
+        """Read metadata from Open Raster file"""
+        # if getExtraData==False and fromCache and not self.__metadata is None:
+        # => no extradata for ora files
         if fromCache and not self.__metadata is None:
             return self.__metadata
 
@@ -4054,7 +4089,7 @@ class BCFile(BCBaseFile):
         return returned
 
 
-    def __readMetaDataBmp(self, fromCache=True):
+    def __readMetaDataBmp(self, fromCache=True, getExtraData=False):
         """Read metadata from BMP file
 
         BMP specifications: https://en.wikipedia.org/wiki/BMP_file_format
@@ -4222,6 +4257,10 @@ class BCFile(BCBaseFile):
                         if embedded:
                             iccNfo=self.__readICCData(bytes)
                             returned.update(iccNfo)
+                            if getExtraData==False:
+                                returned['iccProfile']=b'Y'
+                            else:
+                                returned['iccProfile']=bytes
                         else:
                             returned['iccProfileName']={'en-gb': 'Linked to external file'}
                             returned['iccProfileCopyright']={'en-gb': bytes.decode('utf-8', 'ignore')}
@@ -4524,26 +4563,26 @@ class BCFile(BCBaseFile):
             imageReader = QImage(self._fullPathName)
             keys = imageReader.textKeys()
 
-    def getMetaInformation(self):
+    def getMetaInformation(self, getExtraData=False):
         """Return metadata informations"""
         if self._format in (BCFileManagedFormat.KRA, BCFileManagedFormat.KRZ):
-            return self.__readMetaDataKra()
+            return self.__readMetaDataKra(True, getExtraData)
         elif self._format == BCFileManagedFormat.ORA:
-            return self.__readMetaDataOra()
+            return self.__readMetaDataOra(True, getExtraData)
         elif self._format == BCFileManagedFormat.PNG:
-            return self.__readMetaDataPng()
+            return self.__readMetaDataPng(True, getExtraData)
         elif self._format == BCFileManagedFormat.JPEG:
-            return self.__readMetaDataJpeg()
+            return self.__readMetaDataJpeg(True, getExtraData)
         elif self._format == BCFileManagedFormat.GIF:
-            return self.__readMetaDataGif()
+            return self.__readMetaDataGif(True, getExtraData)
         elif self._format == BCFileManagedFormat.WEBP:
-            return self.__readMetaDataWebP()
+            return self.__readMetaDataWebP(True, getExtraData)
         elif self._format == BCFileManagedFormat.PSD:
-            return self.__readMetaDataPsd()
+            return self.__readMetaDataPsd(True, getExtraData)
         elif self._format == BCFileManagedFormat.XCF:
-            return self.__readMetaDataXcf()
+            return self.__readMetaDataXcf(True, getExtraData)
         elif self._format == BCFileManagedFormat.BMP:
-            return self.__readMetaDataBmp()
+            return self.__readMetaDataBmp(True, getExtraData)
         else:
             return {}
 
@@ -4955,9 +4994,13 @@ class BCFileCache(QObject):
         if isinstance(metadata, dict) and 'format' in metadata:
             fileFormat=metadata['format']
             # convert it to string
-            metadata=json.dumps(metadata, cls=JsonQObjectEncoder)
+            try:
+                metadata=json.dumps(metadata, cls=JsonQObjectEncoder)
+            except Exception as e:
+                metadata='{isNotValidJson:true}'
         else:
             fileFormat=BCFileManagedFormat.UNKNOWN
+            metadata='{}'
 
         self.__databaseQuerySetMetadata.bindValue(":hash", hash)
         self.__databaseQuerySetMetadata.bindValue(":metadata", metadata)
@@ -4982,9 +5025,9 @@ class BCFileCache(QObject):
         if self.__databaseQueryGetMetadata.exec():
             while self.__databaseQueryGetMetadata.next():
                 try:
-                    return json.loads(self.__databaseQueryGetMetadata.value('metadata'))
+                    return json.loads(self.__databaseQueryGetMetadata.value('metadata'), cls=JsonQObjectDecoder)
                 except Exception as e:
-                    Debug.print('Unable to load meta cache data {0}: {1}', self.__databaseQueryGetMetadata.value('metadata'), str(e))
+                    Debug.print('Unable to load meta cache data ({2}) {0}: {1}', self.__databaseQueryGetMetadata.value('metadata'), str(e), hash)
                     return None
         return None
 
@@ -6110,26 +6153,29 @@ class BCFileList(QObject):
     stepCancel = Signal()
 
     # activated by default
-    STEPEXECUTED_SEARCH_FROM_PATHS =    0b00000100      # search files in path finished
-    STEPEXECUTED_ANALYZE_METADATA =     0b00001000      # read files for metadata finished
-    STEPEXECUTED_FILTER_FILES =         0b00010000      # filter files according to rules finished
-    STEPEXECUTED_BUILD_RESULTS =        0b00100000      # prepare results
-    STEPEXECUTED_SORT_RESULTS =         0b01000000      # sort results
+    STEPEXECUTED_SEARCH_FROM_PATHS = 0b0000000000000100      # search files in path finished
+    STEPEXECUTED_ANALYZE_METADATA =  0b0000000000001000      # read files for metadata finished
+    STEPEXECUTED_FILTER_FILES =      0b0000000000010000      # filter files according to rules finished
+    STEPEXECUTED_BUILD_RESULTS =     0b0000000000100000      # prepare results
+    STEPEXECUTED_SORT_RESULTS =      0b0000000001000000      # sort results
+    STEPEXECUTED_OUTPUT_RESULTS =    0b0000000010000000
 
     # not activated by default
-    STEPEXECUTED_SEARCH_FROM_PATH =     0x00000101      # during path scan, a path has been scanned (scan next directory will start)
-    STEPEXECUTED_PROGRESS_ANALYZE =     0b00001001      # each file analyzed will emit a signal; allows to track analysis progress and update a progress bar for exwample
-    STEPEXECUTED_PROGRESS_FILTER =      0b00010001      # each file filtered will emit a signal; allows to track analysis progress and update a progress bar for exwample
-    STEPEXECUTED_PROGRESS_SORT =        0b01000001      # each file sorted will emit a signal; allows to track analysis progress and update a progress bar for exwample
+    STEPEXECUTED_SEARCH_FROM_PATH =  0b0000000000000101      # during path scan, a path has been scanned (scan next directory will start)
+    STEPEXECUTED_PROGRESS_ANALYZE =  0b0000000000001001      # each file analyzed will emit a signal; allows to track analysis progress and update a progress bar for exwample
+    STEPEXECUTED_PROGRESS_FILTER =   0b0000000000010001      # each file filtered will emit a signal; allows to track analysis progress and update a progress bar for exwample
+    STEPEXECUTED_PROGRESS_SORT =     0b0000000001000001      # each file sorted will emit a signal; allows to track analysis progress and update a progress bar for exwample
+    STEPEXECUTED_PROGRESS_OUTPUT =   0b0000000010000001
 
-    STEPEXECUTED_CANCEL =               0b10000000      # execution has been cancelled
+    STEPEXECUTED_FINISHED_OUTPUT =   0b0000000010000010
+
+    STEPEXECUTED_CANCEL =            0b0000000100000000      # execution has been cancelled
 
     CANCELLED_SEARCH = -1
 
     __MTASKS_RULES = []
 
     @staticmethod
-    #def getBcFile(itemIndex, fileName, bcFileCache=None, strict=False):
     def getBcFile(itemIndex, fileName, bcFileCache=None, strict=False):
         """Return a BCFile from given fileName
 
@@ -6209,6 +6255,7 @@ class BCFileList(QObject):
         self.__pathList = []
         self.__ruleList = []
         self.__sortList = []
+        self.__sortCaseInsensitive=False
 
         self.__statFiles=None
 
@@ -6238,6 +6285,12 @@ class BCFileList(QObject):
         for sortKey in self.__sortList:
             pA = fileA.getProperty(sortKey.property())
             pB = fileB.getProperty(sortKey.property())
+
+            if self.__sortCaseInsensitive:
+                if isinstance(pA, str):
+                    pA=pA.lower()
+                if isinstance(pB, str):
+                    pB=pB.lower()
 
             # note: directories are always before files
             if fileA.format() == BCFileManagedFormat.DIRECTORY and fileB.format() != BCFileManagedFormat.DIRECTORY:
@@ -6713,6 +6766,9 @@ class BCFileList(QObject):
         """
         self.__cancelProcess=False
 
+        Stopwatch.reset('^BCFileList.execute')
+        Stopwatch.start('BCFileList.execute.99-global')
+
         if signals is None:
             signals=[
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
@@ -6726,7 +6782,6 @@ class BCFileList(QObject):
         if clearResults:
             # reset current list if asked
             self.clearResults()
-            Stopwatch.start('BCFileList.execute.search')
 
         if buildStats:
             self.__statFiles={
@@ -6739,14 +6794,17 @@ class BCFileList(QObject):
         else:
             self.__statFiles=None
 
-        # stopwatches are just used to measure execution time performances
-        Stopwatch.start('BCFileList.execute.global')
+        Debug.print('===========================================')
+        Debug.print('BCFileList.execute')
+        Debug.print('...........................................')
 
+        # stopwatches are just used to measure execution time performances
         managedFilesOnly = None
 
         # nbTotal=counter used to determinate when to process application events
         nbTotal = 0
 
+        Stopwatch.start('BCFileList.execute.01-search')
         # work on a set, faster for searching if a file is already in list
         foundFiles = set()
         foundDirectories = set()
@@ -6845,28 +6903,25 @@ class BCFileList(QObject):
                 self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH_FROM_PATH, pathName, processedPath.recursive(), nbFilesInPath))
 
         totalMatch = len(foundFiles) + len(foundDirectories)
-        Stopwatch.stop('BCFileList.execute.global')
 
+        Stopwatch.stop("BCFileList.execute.01-search")
         if BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS, len(foundFiles), len(foundDirectories), totalMatch, Stopwatch.duration("BCFileList.execute.search")))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS, len(foundFiles), len(foundDirectories), totalMatch, Stopwatch.duration("BCFileList.execute.01-search")))
 
         #Debug.print("Search in paths: {0}", self.__pathList)
-        #Debug.print('Found {0} of {1} files in {2}s', totalMatch, nbTotal, Stopwatch.duration("BCFileList.execute.search"))
+        #Debug.print('Found {0} of {1} files in {2}s', totalMatch, nbTotal, Stopwatch.duration("BCFileList.execute.01-search"))
 
         if totalMatch == 0:
             self.__invalidated = False
             return totalMatch
 
         # ----
-        Stopwatch.start('BCFileList.execute.scan')
+        Stopwatch.start('BCFileList.execute.02-scan')
         # list file is built, now scan files to retrieve all file/image properties
         # the returned filesList is an array of BCFile if file is readable, otherwise it contain a None value
         filesList = set()
         directoriesList = set()
 
-        print('===========================================')
-        print('start worker pool')
-        print('===========================================')
         self.__progressFilesPctThreshold=math.ceil(len(foundFiles)/100)
         self.__progressFilesPctTracker=0
         self.__progressFilesPctCurrent=0
@@ -6882,7 +6937,7 @@ class BCFileList(QObject):
         self.__workerPool.setWorkerClass()
         directoriesList = self.__workerPool.mapNoNone(foundDirectories, BCFileList.getBcDirectory)
 
-        Stopwatch.stop('BCFileList.execute.scan')
+        Stopwatch.stop('BCFileList.execute.02-scan')
 
         if self.__cancelProcess:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
@@ -6890,12 +6945,12 @@ class BCFileList(QObject):
             return BCFileList.CANCELLED_SEARCH
 
         if BCFileList.STEPEXECUTED_ANALYZE_METADATA in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_ANALYZE_METADATA, Stopwatch.duration("BCFileList.execute.scan")))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_ANALYZE_METADATA, Stopwatch.duration("BCFileList.execute.02-scan")))
 
-        #Debug.print('Scan {0} files in {1}s', totalMatch, Stopwatch.duration("BCFileList.execute.scan"))
+        #Debug.print('Scan {0} files in {1}s', totalMatch, Stopwatch.duration("BCFileList.execute.02-scan"))
 
         # ----
-        Stopwatch.start('BCFileList.execute.filter')
+        Stopwatch.start('BCFileList.execute.03-filter')
         # filter files
         # will apply a filter on filesList BCFiles
         #   all files that don't match rule are replaced by None value
@@ -6930,7 +6985,7 @@ class BCFileList(QObject):
             self.__currentFiles += directoriesList
             BCFileList.__MTASKS_RULES = []
 
-        Stopwatch.stop('BCFileList.execute.filter')
+        Stopwatch.stop('BCFileList.execute.03-filter')
 
         if self.__cancelProcess:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
@@ -6938,28 +6993,29 @@ class BCFileList(QObject):
             return BCFileList.CANCELLED_SEARCH
 
         if BCFileList.STEPEXECUTED_FILTER_FILES in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER_FILES, len(self.__currentFiles), Stopwatch.duration("BCFileList.execute.filter")))
-        #Debug.print('Filter {0} files in {1}s', len(filesList), Stopwatch.duration("BCFileList.execute.filter"))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER_FILES, len(self.__currentFiles), Stopwatch.duration("BCFileList.execute.03-filter")))
+        #Debug.print('Filter {0} files in {1}s', len(filesList), Stopwatch.duration("BCFileList.execute.03-filter"))
 
         # ----
-        Stopwatch.start('BCFileList.execute.result')
+        Stopwatch.start('BCFileList.execute.04-result')
         # build final result
         #   all files that match selection rules are added to current selected images
         self.__currentFilesName=set(self.__workerPool.map(self.__currentFiles, BCFileList.getBcFileName))
         nb = len(self.__currentFiles)
 
-        #Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.result"))
+        #Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.04-result"))
+
+        Stopwatch.stop('BCFileList.execute.04-result')
 
         if buildStats:
-            Stopwatch.start('BCFileList.execute.buildStats')
+            Stopwatch.start('BCFileList.execute.05-buildStats')
             self.__statFiles=self.__workerPool.aggregate(self.__currentFiles, self.__statFiles, BCFileList.getBcFileStats)
-            Stopwatch.stop('BCFileList.execute.buildStats')
+            Stopwatch.stop('BCFileList.execute.05-buildStats')
             #Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.buildStats"))
 
-        Stopwatch.stop('BCFileList.execute.result')
 
         if BCFileList.STEPEXECUTED_BUILD_RESULTS in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_BUILD_RESULTS,Stopwatch.duration("BCFileList.execute.result")))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_BUILD_RESULTS,Stopwatch.duration("BCFileList.execute.04-result")))
 
 
         if self.__cancelProcess:
@@ -6968,7 +7024,7 @@ class BCFileList(QObject):
             return BCFileList.CANCELLED_SEARCH
 
         # ----
-        Stopwatch.start('BCFileList.sort')
+        Stopwatch.start('BCFileList.execute.06-sort')
         if BCFileList.STEPEXECUTED_PROGRESS_SORT in signals:
             self.__progressFilesPctThreshold=math.ceil(nb/100)
             self.__progressFilesPctTracker=0
@@ -6976,24 +7032,32 @@ class BCFileList(QObject):
         else:
             self.__progressFilesPctThreshold=0
         self.sort()
-        Stopwatch.stop('BCFileList.sort')
+        Stopwatch.stop('BCFileList.execute.06-sort')
         if BCFileList.STEPEXECUTED_SORT_RESULTS in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("BCFileList.sort")))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("BCFileList.execute.06-sort")))
 
         if self.__cancelProcess:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
             self.__invalidated = False
             return BCFileList.CANCELLED_SEARCH
 
-        #Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.sort"))
-        #Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.global"))
+        #Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.06-sort"))
+        #Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.99-global"))
+
+        Stopwatch.stop('BCFileList.execute.99-global')
+
+        dummy=list(map(Debug.print, [f"{d[0]}: {d[1]:.4f}" for d in Stopwatch.list()]))
+        Debug.print('===========================================')
 
         self.__invalidated = False
 
         return nb
 
-    def sort(self):
+    def sort(self, caseInsensitive=False):
         """Sort current result using current sort rules"""
+        if isinstance(caseInsensitive, bool):
+            self.__sortCaseInsensitive=caseInsensitive
+
         if len(self.__sortList) > 0:
             self.__currentFiles = sorted(self.__currentFiles, key=cmp_to_key(self.__sort))
 
@@ -7041,6 +7105,7 @@ class BCFileList(QObject):
 
         #Debug.print('[BCFileList.setResult] FoundFile: {0}', foundFiles)
         pool = WorkerPool()
+        pool.setWorkerClass(BCWorkerCache)
         if len(foundFiles)>0:
             filesList = filesList.union( pool.map(foundFiles, BCFileList.getBcFile) )
         if len(foundDirectories)>0:

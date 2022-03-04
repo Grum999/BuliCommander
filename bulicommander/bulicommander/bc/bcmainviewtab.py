@@ -1864,7 +1864,7 @@ class BCMainViewTab(QFrame):
                 else:
                     self.lblImgSize.setText(f'{file.imageSize().width()}x{file.imageSize().height()}')
 
-                imgNfo = file.getMetaInformation()
+                imgNfo = file.getMetaInformation(True)
 
                 if 'resolution' in imgNfo:
                     self.lblImgResolution.setText(imgNfo['resolution'])
@@ -2050,11 +2050,11 @@ class BCMainViewTab(QFrame):
 
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
-                    if len(imgNfo['document.referenceImages']) > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', str(len(imgNfo['document.referenceImages'])))
+                    if imgNfo['document.referenceImages.count'] > 0:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', str(imgNfo['document.referenceImages.count']))
 
                         refNumber=1
-                        for image in imgNfo['document.referenceImages']:
+                        for image in imgNfo['document.referenceImages.data']:
                             label=BCWImageLabel(image)
                             label.clicked.connect(loadReferenceImageAsnewDocument)
                             label.setToolTip(i18n("Click to open as a new document"))
