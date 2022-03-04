@@ -388,7 +388,7 @@ class BCExportFiles(QObject):
             return QSize(size.height(), size.width())
         return size
 
-    def __init__(self, uiController, parent=None):
+    def __init__(self, uiController, filesNfo=None, parent=None):
         super(BCExportFiles, self).__init__(parent)
 
         # extra data are defined as global to class...
@@ -407,7 +407,10 @@ class BCExportFiles(QObject):
         self.__bcVersion=self.__uiController.bcVersion()
         self.__bcTitle=self.__uiController.bcTitle()
 
-        self.__fileNfo = self.__uiController.panel().files()
+        if isinstance(filesNfo, list):
+            self.__fileNfo = filesNfo
+        else:
+            self.__fileNfo = self.__uiController.panel().files()
 
     def __exportDataToFile(self, fileName, data):
         """Save data to file :)
@@ -1033,6 +1036,7 @@ class BCExportFiles(QObject):
         tableSettings.setMaxWidth(config.get('maximumWidth.value', defaultConfig['maximumWidth.value']))
         tableSettings.setColumnsAlignment([BCExportFields.ID[key]['alignment'] for key in config.get('fields', defaultConfig['fields'])])
 
+        self.exportStart.emit(-1)
         try:
             table = self.__getTable(config.get('fields', defaultConfig['fields']),
                                     config.get('files', defaultConfig['files']),
@@ -1062,6 +1066,8 @@ class BCExportFiles(QObject):
             if returned['exported']:
                 returned['exported'] = self.__exportDataToFile(target, content)
 
+        self.exportEnd.emit()
+
         return returned
 
     def exportAsTextCsv(self, target, config=None):
@@ -1084,10 +1090,13 @@ class BCExportFiles(QObject):
         if not isinstance(config, dict):
             config = defaultConfig
 
+        self.exportStart.emit(-1)
+
         tableSettings = TextTableSettingsTextCsv()
         tableSettings.setHeaderActive(config.get('header.active', defaultConfig['header.active']))
         tableSettings.setEnclosedField(config.get('fields.enclosed', defaultConfig['fields.enclosed']))
         tableSettings.setSeparator(config.get('fields.separator', defaultConfig['fields.separator']))
+
 
         try:
             table = self.__getTable(config.get('fields', defaultConfig['fields']),
@@ -1109,6 +1118,8 @@ class BCExportFiles(QObject):
             returned['message'] = f'to file <b>{os.path.basename(target)}</b>'
             if returned['exported']:
                 returned['exported'] = self.__exportDataToFile(target, content)
+
+        self.exportEnd.emit()
 
         return returned
 
@@ -1134,6 +1145,8 @@ class BCExportFiles(QObject):
             config = defaultConfig
 
         includeThumbnails = config.get('thumbnails.included', defaultConfig['thumbnails.included'])
+
+        self.exportStart.emit(-1)
 
         if includeThumbnails and target != BCExportFilesDialogBox.CLIPBOARD:
             targetBaseName=os.path.basename(target)
@@ -1199,6 +1212,8 @@ class BCExportFiles(QObject):
                             shutil.copy2(thumbnailFileName, os.path.join(targetPath, os.path.basename(thumbnailFileName)))
                     except Exception as e:
                         Debug.print('[BCExportFilesDialogBox.exportAsTextMd] Unable to copy thumbnails: {0}', e)
+
+        self.exportEnd.emit()
 
         return returned
 
@@ -1330,13 +1345,13 @@ class BCExportFiles(QObject):
             drawLayer(newPage, pagesInformation, config, defaultConfig, currentPage, totalPage)
             rootNode.addChildNode(newPage, bgNode)
 
-        self.exportEnd.emit()
-
         returned['exported']=kraDocument.save()
 
         if config.get('file.openInKrita', defaultConfig['file.openInKrita']):
             kraDocument.refreshProjection()
             Krita.instance().activeWindow().addView(kraDocument)
+
+        self.exportEnd.emit()
 
         return returned
 
@@ -1936,6 +1951,8 @@ class BCExportFilesDialogBox(QDialog):
                 else:
                     self.rbPerimeterSelectSel.setEnabled(False)
                     self.lblPerimeterSelectSelNfo.setEnabled(False)
+
+
             else:
                 # export configuration from a file selection
                 self.lblPerimeterSelectPathNfo.setVisible(False)
@@ -2132,7 +2149,10 @@ class BCExportFilesDialogBox(QDialog):
     def __exportStart(self, totalPage):
         """Called during export"""
         self.pgbTargetResultExport.setValue(0)
-        self.pgbTargetResultExport.setMaximum(totalPage)
+        if totalPage==-1:
+            self.pgbTargetResultExport.setMaximum(0)
+        else:
+            self.pgbTargetResultExport.setMaximum(totalPage)
         self.pgbTargetResultExport.setVisible(True)
 
     def __exportProgress(self, currentPage):
@@ -2178,6 +2198,11 @@ class BCExportFilesDialogBox(QDialog):
 
             if not settingKey2 in self.__options['exportConfig']:
                 return BCSettings.get(settingKey)
+
+            if settingKey2=='fields.separator' :
+                return [',', ';', '\t', '|'].index(self.__options['exportConfig'][settingKey2])
+            elif settingKey2=='thumbnails.size':
+                return [64,128,256,512].index(self.__options['exportConfig'][settingKey2])
 
             return self.__options['exportConfig'][settingKey2]
 
@@ -3649,6 +3674,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                     fileOpenAllowed['tooltip'] = i18n(f'Please be aware that {self.__formatPdfImgEstimatedPages} documents will be opened if option is checked!')
 
             if not fileOpenAllowed['status']:
+                self.cbTargetResultFileOpen.setChecked(False)
                 self.cbTargetResultFileOpen.setVisible(False)
             else:
                 self.cbTargetResultFileOpen.setVisible(True)

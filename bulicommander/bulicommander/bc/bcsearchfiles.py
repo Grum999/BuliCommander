@@ -58,6 +58,7 @@ from .bcfile import (
     )
 from .bcexportfiles import (
         BCExportFormat,
+        BCExportFiles,
         BCExportFilesDialogBox
     )
 from .bcsettings import (
@@ -74,7 +75,11 @@ from bulicommander.pktk.modules.strutils import (
         strDefault,
         boolYesNo
     )
-from bulicommander.pktk.modules.timeutils import tsToStr
+from bulicommander.pktk.modules.timeutils import (
+        tsToStr,
+        Stopwatch
+    )
+
 from bulicommander.pktk.widgets.woperatorinput import (
         WOperatorType,
         WOperatorBaseInput,
@@ -890,8 +895,10 @@ class BCSearchFilesDialogBox(QDialog):
             self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(f"""**{i18n('Build results:')}** """)
 
+            # infinite progress bar
             self.pbProgress.setValue(0)
             self.pbProgress.setMaximum(0)
+            QApplication.processEvents()
         elif informations[0]==BCFileList.STEPEXECUTED_BUILD_RESULTS:
             # 0 => step identifier
             # 1 => total time duration (in seconds)
@@ -899,25 +906,112 @@ class BCSearchFilesDialogBox(QDialog):
             self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Build made in')}# #w#{informations[1]:0.4f}s##lk#)#*""")
 
             self.wcExecutionConsole.appendLine("")
-            self.wcExecutionConsole.appendLine(f"""**{i18n('Sort results:')}** """)
+            self.wcExecutionConsole.appendLine(f"#lk#...{i18n('Exporting results')}...#")
 
-            self.pbProgress.setMaximum(100)
+            # infinite progress bar
+            self.pbProgress.setValue(0)
+            self.pbProgress.setMaximum(0)
+            QApplication.processEvents()
         elif informations[0]==BCFileList.STEPEXECUTED_PROGRESS_SORT:
             # 0 => step identifier
-            # 1 => current pct
-            print("STEPEXECUTED_PROGRESS_SORT", informations[1])
-            self.pbProgress.setValue(informations[1])
-            self.pbProgress.update()
+            self.wcExecutionConsole.appendLine("")
+            self.wcExecutionConsole.appendLine(f"""**{i18n('Sort results:')}** """)
+
+            # infinite progress bar
+            self.pbProgress.setValue(0)
+            self.pbProgress.setMaximum(0)
             QApplication.processEvents()
         elif informations[0]==BCFileList.STEPEXECUTED_SORT_RESULTS:
             # 0 => step identifier
             # 1 => total time duration (in seconds)
+            # 2 => list of <str>
             self.wcExecutionConsole.append(f"""#g#{i18n('OK')}#""")
+            self.wcExecutionConsole.appendLine(f"""&nbsp;{i18n('Sorted by:')}""")
+            for sortNfo in informations[2]:
+                sortNfo=re.sub('^\[([^\]]+)\]', r'[##y#\1##c#]', sortNfo).replace(' ', '&nbsp;')
+                self.wcExecutionConsole.appendLine(f"""&nbsp;. #c#{sortNfo}#""")
+
             self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Sort made in')}# #w#{informations[1]:0.4f}s##lk#)#*""")
         elif informations[0]==BCFileList.STEPEXECUTED_CANCEL:
             # 0 => step identifier
             self.wcExecutionConsole.appendLine('')
             self.wcExecutionConsole.appendLine(f"""**#ly#Search cancelled!#**""", WConsoleType.WARNING)
+        elif informations[0]==BCFileList.STEPEXECUTED_OUTPUT_RESULTS:
+            # 0 => step identifier
+            # 1 => total number of pages (-1 if no pages)
+            # 2 => output file name (@clipboard if clipboard, @panel:ref if panel output)
+            # 3 => output format
+            self.wcExecutionConsole.appendLine("")
+
+            asFormat=''
+            if informations[3]==BCExportFormat.EXPORT_FMT_TEXT:
+                asFormat=i18n("as #y#text#")
+            elif informations[3]==BCExportFormat.EXPORT_FMT_TEXT_MD:
+                asFormat=i18n("as #y#Markdown#")
+            elif informations[3]==BCExportFormat.EXPORT_FMT_TEXT_CSV:
+                asFormat=i18n("as #y#CSV#")
+            elif informations[3]==BCExportFormat.EXPORT_FMT_DOC_PDF:
+                asFormat=i18n("as #y#PDF# document")
+            elif informations[3]==BCExportFormat.EXPORT_FMT_IMG_KRA:
+                asFormat=i18n("as #y#Krita# document")
+            elif informations[3]==BCExportFormat.EXPORT_FMT_IMG_PNG:
+                asFormat=i18n("as #y#PNG# files sequence")
+            elif informations[3]==BCExportFormat.EXPORT_FMT_IMG_JPG:
+                asFormat=i18n("as #y#JPEG# files sequence")
+
+
+            if informations[2]=='@clipboard':
+                self.wcExecutionConsole.appendLine(f"""**{i18n(f'Export results {asFormat} to clipboard:')}** """)
+            elif informations[2]=='@panel:a':
+                self.wcExecutionConsole.appendLine(f"""**{i18n('Export results to active panel:')}** """)
+            elif informations[2]=='@panel:l':
+                self.wcExecutionConsole.appendLine(f"""**{i18n('Export results to left panel:')}** """)
+            elif informations[2]=='@panel:r':
+                self.wcExecutionConsole.appendLine(f"""**{i18n('Export results to right panel:')}** """)
+            else:
+                if informations[1]==-1:
+                    self.wcExecutionConsole.appendLine(f"""**{i18n(f'Export results {asFormat} document:')}** """)
+                else:
+                    self.wcExecutionConsole.appendLine(f"""**{i18n(f'Export results {asFormat}:')}** """)
+
+            self.pbProgress.setValue(0)
+            if informations[1]==-1:
+                # infinite progress bar
+                self.pbProgress.setMaximum(0)
+            else:
+                self.pbProgress.setMaximum(informations[1])
+            self.pbProgress.update()
+            QApplication.processEvents()
+        elif informations[0]==BCFileList.STEPEXECUTED_PROGRESS_OUTPUT:
+            # 0 => step identifier
+            # 1 => current pages (-1 if no pages)
+            if informations[1]>-1:
+                self.pbProgress.setValue(informations[1])
+                self.pbProgress.update()
+                QApplication.processEvents()
+        elif informations[0]==BCFileList.STEPEXECUTED_FINISHED_OUTPUT:
+            # 0 => step identifier
+            # 1 => total time duration (in seconds)
+            # 2 => output file name (@clipboard if clipboard, @panel:ref if panel output)
+            # 3 => total number of pages (-1 if no pages)
+            # 4 => output format
+            self.wcExecutionConsole.append(f"""#g#{i18n('OK')}#""")
+
+            pageName=i18n('Exported pages')
+            if informations[4]==BCExportFormat.EXPORT_FMT_IMG_KRA:
+                pageName=i18n('Exported layers')
+            elif informations[4]==BCExportFormat.EXPORT_FMT_IMG_PNG:
+                pageName=i18n('Exported files')
+            elif informations[4]==BCExportFormat.EXPORT_FMT_IMG_JPG:
+                pageName=i18n('Exported files')
+
+            if not re.match("^@", informations[2]):
+                self.wcExecutionConsole.appendLine(f"""&nbsp;{i18n('Exported file:')} #c#{informations[2]}#""")
+            if informations[3]>0:
+                self.wcExecutionConsole.appendLine(f"""&nbsp;{pageName} #c#{informations[3]}#""")
+
+            self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Export made in')}# #w#{informations[1]:0.4f}s##lk#)#*""")
+            QApplication.processEvents()
 
     def __executeSearchCancel(self):
         """Cancel current search execution"""
@@ -925,6 +1019,190 @@ class BCSearchFilesDialogBox(QDialog):
         self.pbCancel.update()
         QApplication.processEvents()
         self.__bcFileList.cancelExecution()
+
+    def __executeSortAndExport(self, searchRulesAsDict):
+        """Sort results and export
+
+        Execute 'output engine' linked to 'search engine'
+
+        Apply 'sort rules' linked to 'search engine' and for which at least,
+        one 'output engine' is linked to
+        Then, for each sort, execute 'output engine' linked to 'search engine'
+        """
+        def executeOutputEngine(outputEngineRules):
+            # export current files results
+            def exportStart(nbPages):
+                self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_OUTPUT_RESULTS, nbPages, outputEngineRules['documentExportInfo']['exportFileName'], outputEngineRules['documentExportInfo']['exportFormat']])
+                outputEngineRules['documentExportInfo']['exportPages']=nbPages
+
+            def exportEnd():
+                self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_FINISHED_OUTPUT, Stopwatch.duration("executeSortAndExport.export"), outputEngineRules['documentExportInfo']['exportFileName'], outputEngineRules['documentExportInfo']['exportPages'], outputEngineRules['documentExportInfo']['exportFormat']])
+
+            def exportProgress(currentPage):
+                self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_PROGRESS_OUTPUT, currentPage])
+
+            if outputEngineRules['target']=='doc':
+                # export as a document
+                Stopwatch.start('executeSortAndExport.export')
+
+                fileStats=self.__bcFileList.stats()
+                filesNfo=[
+                        [],
+                        fileStats['nbDir'],
+                        fileStats['nbKra'] + fileStats['nbOther'],
+                        fileStats['nbKra'] + fileStats['nbOther'] + fileStats['nbDir'],
+                        fileStats['nbKra'] + fileStats['nbOther'],
+                        [],
+                        fileStats['sizeKra'] + fileStats['sizeOther']
+                    ]
+
+                exportFiles=BCExportFiles(self.__uiController, filesNfo)
+                exportFiles.exportStart.connect(exportStart)
+                exportFiles.exportEnd.connect(exportEnd)
+                exportFiles.exportProgress.connect(exportProgress)
+
+                outputEngineRules['documentExportInfo']['exportConfig']['files']=self.__bcFileList.files()
+                outputEngineRules['documentExportInfo']['exportConfig']['source']=i18n('Search query')
+
+                if outputEngineRules['documentExportInfo']['exportFormat']==BCExportFormat.EXPORT_FMT_TEXT:
+                    result=exportFiles.exportAsText(outputEngineRules['documentExportInfo']['exportFileName'], outputEngineRules['documentExportInfo']['exportConfig'])
+                elif outputEngineRules['documentExportInfo']['exportFormat']==BCExportFormat.EXPORT_FMT_TEXT_MD:
+                    result=exportFiles.exportAsTextMd(outputEngineRules['documentExportInfo']['exportFileName'], outputEngineRules['documentExportInfo']['exportConfig'])
+                elif outputEngineRules['documentExportInfo']['exportFormat']==BCExportFormat.EXPORT_FMT_TEXT_CSV:
+                    result=exportFiles.exportAsTextCsv(outputEngineRules['documentExportInfo']['exportFileName'], outputEngineRules['documentExportInfo']['exportConfig'])
+                elif outputEngineRules['documentExportInfo']['exportFormat']==BCExportFormat.EXPORT_FMT_DOC_PDF:
+                    result=exportFiles.exportAsDocumentPdf(outputEngineRules['documentExportInfo']['exportFileName'], outputEngineRules['documentExportInfo']['exportConfig'])
+                elif outputEngineRules['documentExportInfo']['exportFormat']==BCExportFormat.EXPORT_FMT_IMG_KRA:
+                    result=exportFiles.exportAsImageKra(outputEngineRules['documentExportInfo']['exportFileName'], outputEngineRules['documentExportInfo']['exportConfig'])
+                elif outputEngineRules['documentExportInfo']['exportFormat']==BCExportFormat.EXPORT_FMT_IMG_PNG:
+                    result=exportFiles.exportAsImageSeq(outputEngineRules['documentExportInfo']['exportFileName'], outputEngineRules['documentExportInfo']['exportConfig'], 'PNG')
+                elif outputEngineRules['documentExportInfo']['exportFormat']==BCExportFormat.EXPORT_FMT_IMG_JPG:
+                    result=exportFiles.exportAsImageSeq(outputEngineRules['documentExportInfo']['exportFileName'], outputEngineRules['documentExportInfo']['exportConfig'], 'JPEG')
+
+                Stopwatch.stop('executeSortAndExport.export')
+
+            else:
+                # to panel
+                outputEngineRules['documentExportInfo']['exportFileName']=f"@panel:{outputEngineRules['target'][0]}"
+                Stopwatch.start('executeSortAndExport.export')
+                exportStart(-1)
+
+                print("executeOutputEngine-1", outputEngineRules['target'][0])
+                if outputEngineRules['target'][0]=='a':
+                    # active panel
+                    if self.__uiController.panelId()==0:
+                        searchResultId='searchresult:left'
+                        panelId=0
+                    else:
+                        searchResultId='searchresult:right'
+                        panelId=1
+                elif outputEngineRules['target'][0]=='l':
+                    searchResultId='searchresult:left'
+                    panelId=0
+                elif outputEngineRules['target'][0]=='r':
+                    searchResultId='searchresult:right'
+                    panelId=1
+
+                print("executeOutputEngine-2", searchResultId, panelId, {searchResultId: [file.fullPathName() for file in self.__bcFileList.files()]})
+
+                self.__uiController.savedViews().set({searchResultId: [file.fullPathName() for file in self.__bcFileList.files()]})
+
+                print("executeOutputEngine-3", self.__uiController.savedViews().list())
+
+                self.__uiController.commandGoTo(panelId, f"@{searchResultId}")
+
+                print("executeOutputEngine-4")
+
+                Stopwatch.stop('executeSortAndExport.export')
+                exportEnd()
+
+
+        def executeSort(sortRules):
+            # prepare and execute sort for file results
+            txtAscending=f"[{i18n('Ascending')}]"
+            txtDescending=f"[{i18n('Descending')}]"
+            textMaxLen=1+max(len(txtAscending), len(txtDescending))
+
+            txtAscending=f"{txtAscending:{textMaxLen}}"
+            txtDescending=f"{txtDescending:{textMaxLen}}"
+
+            sortNfoList=[]
+            self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_PROGRESS_SORT])
+            Stopwatch.start('executeSortAndExport.sort')
+            self.__bcFileList.clearSortRules()
+            for sortRule in sortRules['list']:
+                if sortRule['checked']:
+                    # need a conversion from BCWSearchSortRules.MAP_VALUE_LABEL and BCFileProperty
+                    # as BCFile is more "generic" and BCWSearchSortRules is more oriented to image...
+                    # maybe not a good thing, but currently prefer to keep it as is it
+                    value=sortRule['value']
+                    if value=='filePath':
+                        value=BCFileProperty.PATH
+                    elif value=='fileFullPathName':
+                        value=BCFileProperty.FULL_PATHNAME
+                    elif value=='imageFormat':
+                        value=BCFileProperty.FILE_FORMAT
+                    fileListSortRule=BCFileListSortRule(value, sortRule['ascending'])
+                    self.__bcFileList.addSortRule(fileListSortRule)
+
+                    if sortRule['ascending']:
+                        sortNfoList.append(f"{txtAscending}{BCWSearchSortRules.MAP_VALUE_LABEL[sortRule['value']]}")
+                    else:
+                        sortNfoList.append(f"{txtDescending}{BCWSearchSortRules.MAP_VALUE_LABEL[sortRule['value']]}")
+            self.__bcFileList.sort(sortRules['caseInsensitive'])
+            Stopwatch.stop('executeSortAndExport.sort')
+            self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("executeSortAndExport.sort"),sortNfoList])
+
+        # need to parse dictionary to get references
+        nodeSearchEngine=None
+        nodeSearchSortRules={}
+        nodeSearchOutputEngine={}
+
+        for node in searchRulesAsDict['nodes']:
+            if node['widget']['type']=='BCNodeWSearchEngine':
+                nodeSearchEngine=node
+            elif node['widget']['type'] == 'BCNodeWSearchOutputEngine':
+                nodeSearchOutputEngine[node['properties']['id']]=node
+            elif node['widget']['type']=='BCNodeWSearchSortRule':
+                nodeSearchSortRules[node['properties']['id']]=node
+
+        if nodeSearchEngine is None or (len(nodeSearchSortRules)==0 and len(nodeSearchOutputEngine)==0):
+            # nothing to do...
+            return False
+
+        processOutputEngines=[]
+        processSortRules=[]
+
+        # rebuild links
+        #   search engine --> output engine
+        #   sort rules --> output engine
+        for link in searchRulesAsDict['links']:
+            linkTo, dummy=link['connect']['to'].split(':')
+            linkFrom, dummy=link['connect']['from'].split(':')
+
+
+            if linkTo in nodeSearchOutputEngine:
+                # connection to output engine
+                if linkFrom in nodeSearchSortRules:
+                    # from a sort engine: add sort engine to process list
+                    if not 'outputEngines' in nodeSearchSortRules[linkFrom]:
+                        nodeSearchSortRules[linkFrom]['outputEngines']=[]
+                        processSortRules.append(nodeSearchSortRules[linkFrom])
+                    nodeSearchSortRules[linkFrom]['outputEngines'].append(nodeSearchOutputEngine[linkTo])
+                elif linkFrom==nodeSearchEngine['properties']['id']:
+                    # directly from search engine: add output engine to process list
+                    processOutputEngines.append(nodeSearchOutputEngine[linkTo])
+
+        # process direct output engines
+        for outputEngine in processOutputEngines:
+            executeOutputEngine(outputEngine['widget']['outputProperties'])
+
+        # process sorts, then output engines
+        for sortRule in processSortRules:
+            # do sort...
+            executeSort(sortRule['widget']['sortProperties'])
+            for outputEngine in sortRule['outputEngines']:
+                executeOutputEngine(outputEngine['widget']['outputProperties'])
 
     def executeSearch(self):
         """Execute basic/advanced search, according to current active tab"""
@@ -935,7 +1213,7 @@ class BCSearchFilesDialogBox(QDialog):
 
         if self.twSearchModes.currentIndex()==BCSearchFilesDialogBox.__TAB_BASIC_SEARCH:
             # for debug, to remove...
-            print(json.dumps(dataAsDict, indent=4, sort_keys=True))
+            #print("executeSearch", json.dumps(dataAsDict, indent=4, sort_keys=True))
             self.wneAdvancedView.nodeScene().deserialize(dataAsDict)
             self.wneAdvancedView.zoomToFit()
 
@@ -956,7 +1234,7 @@ class BCSearchFilesDialogBox(QDialog):
             self.wcExecutionConsole.appendLine(f"""{i18n('Build search query:')} #g#{i18n('OK')}#""", WConsoleType.VALID)
 
             self.wcExecutionConsole.appendLine("")
-            self.wcExecutionConsole.appendLine(i18n('Execute search...'))
+            self.wcExecutionConsole.appendLine(f"#lk#...{i18n('Executing search')}...#")
 
             self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(f"""**{i18n('Scan directories:')}** """)
@@ -967,17 +1245,21 @@ class BCSearchFilesDialogBox(QDialog):
                 BCFileList.STEPEXECUTED_ANALYZE_METADATA,
                 BCFileList.STEPEXECUTED_FILTER_FILES,
                 BCFileList.STEPEXECUTED_BUILD_RESULTS,
-                BCFileList.STEPEXECUTED_SORT_RESULTS,
                 BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,
-                BCFileList.STEPEXECUTED_PROGRESS_FILTER,
-                BCFileList.STEPEXECUTED_PROGRESS_SORT
+                BCFileList.STEPEXECUTED_PROGRESS_FILTER
             ])
 
             print(self.__bcFileList.exportTxtResults())
             print(self.__bcFileList.stats())
 
+            # Even if BCFileList.execute can do sort, it's not used because only
+            # one sort van be applied
+            # Call to __executeSortAndExport is used instead to let the function
+            # being able to manage more than one sort+linked exports
+            self.__executeSortAndExport(dataAsDict)
+
             self.wcExecutionConsole.appendLine("")
-            self.wcExecutionConsole.appendLine(i18n('Execution done'))
+            self.wcExecutionConsole.appendLine(f"#lk#...{i18n('Execution done')}...#")
 
             self.twSearchModes.setTabEnabled(BCSearchFilesDialogBox.__TAB_BASIC_SEARCH, True)
             self.twSearchModes.setTabEnabled(BCSearchFilesDialogBox.__TAB_ADVANCED_SEARCH, True)

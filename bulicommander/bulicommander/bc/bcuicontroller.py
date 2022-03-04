@@ -576,6 +576,7 @@ class BCUIController(QObject):
         """
         iconSavedView = buildIcon("pktk:saved_view_file")
         iconBookmark = buildIcon("pktk:bookmark")
+        iconSearchResult = buildIcon("pktk:search")
 
         returned = {'@home': (BCWPathBar.QUICKREF_RESERVED_HOME, buildIcon("pktk:home"), 'Home'),
                     '@last': (BCWPathBar.QUICKREF_RESERVED_LAST_ALL, buildIcon("pktk:saved_view_last"), 'Last opened/saved documents'),
@@ -592,7 +593,10 @@ class BCUIController(QObject):
 
         if not self.__savedView is None and self.__savedView.length() > 0:
             for savedView in self.__savedView.list():
-                returned[f'@{savedView[0].lower()}']=(BCWPathBar.QUICKREF_SAVEDVIEW_LIST, iconSavedView, savedView[0])
+                if not re.match("^searchresult:", savedView[0]):
+                    returned[f'@{savedView[0].lower()}']=(BCWPathBar.QUICKREF_SAVEDVIEW_LIST, iconSavedView, savedView[0])
+                else:
+                    returned[f'@{savedView[0].lower()}']=(BCWPathBar.QUICKREF_SAVEDVIEW_LIST, iconSearchResult, savedView[0])
 
         return returned
 
@@ -724,7 +728,7 @@ class BCUIController(QObject):
                 BCSettings.set(BCSettingsKey.SESSION_FILES_HISTORY_ITEMS, [])
 
             BCSettings.set(BCSettingsKey.SESSION_FILES_BOOKMARK_ITEMS, self.__bookmark.list())
-            BCSettings.set(BCSettingsKey.SESSION_FILES_SAVEDVIEWS_ITEMS, self.__savedView.list())
+            BCSettings.set(BCSettingsKey.SESSION_FILES_SAVEDVIEWS_ITEMS, [savedViewItem for savedViewItem in self.__savedView.list() if not re.match("^searchresult:", savedViewItem[0])] )
             BCSettings.set(BCSettingsKey.SESSION_FILES_LASTDOC_O_ITEMS, self.__lastDocumentsOpened.list())
             BCSettings.set(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS, self.__lastDocumentsSaved.list())
 
