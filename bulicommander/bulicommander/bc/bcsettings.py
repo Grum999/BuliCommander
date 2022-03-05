@@ -366,6 +366,11 @@ class BCSettingsKey(SettingsKey):
     SESSION_MAINWINDOW_WINDOW_GEOMETRY =                     'session.mainwindow.window.geometry'
     SESSION_MAINWINDOW_WINDOW_MAXIMIZED =                    'session.mainwindow.window.maximized'
 
+    SESSION_SEARCHWINDOW_SPLITTER_POSITION =                 'session.searchwindow.splitter.position'
+    SESSION_SEARCHWINDOW_TAB_ACTIVE =                        'session.searchwindow.tab.active'
+    SESSION_SEARCHWINDOW_WINDOW_GEOMETRY =                   'session.searchwindow.window.geometry'
+    SESSION_SEARCHWINDOW_WINDOW_MAXIMIZED =                  'session.searchwindow.window.maximized'
+
     SESSION_PANELS_VIEW_FILES_MANAGEDONLY =                  'session.panels.view.files.managedOnly'
     SESSION_PANELS_VIEW_FILES_BACKUP =                       'session.panels.view.files.backup'
     SESSION_PANELS_VIEW_FILES_HIDDEN =                       'session.panels.view.files.hidden'
@@ -715,6 +720,12 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_PANEL_HIGHLIGHTED,                0,                          SettingsFmt(int, [0, 1])),
             SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY,                  [-1,-1,-1,-1],              SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
             SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED,                 False,                      SettingsFmt(bool)),
+
+
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_SPLITTER_POSITION,              [800, 200]  ,               SettingsFmt(int), SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_TAB_ACTIVE,                     'basic',                    SettingsFmt(str, ['basic','advanced'])),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_GEOMETRY,                [-1,-1,-1,-1],              SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_MAXIMIZED,               False,                      SettingsFmt(bool)),
 
 
             SettingsRule(BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY,               True,                       SettingsFmt(bool)),

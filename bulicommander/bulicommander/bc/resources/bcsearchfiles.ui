@@ -20,7 +20,7 @@
    <item>
     <widget class="QTabWidget" name="twSearchModes">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <property name="documentMode">
       <bool>false</bool>
@@ -737,7 +737,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QSplitter" name="splitter">
+           <widget class="QSplitter" name="sAdvTopBottomSplitter">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>

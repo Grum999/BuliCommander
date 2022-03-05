@@ -127,7 +127,7 @@ class BCSearchFilesDialogBox(QDialog):
     def open(title, uicontroller):
         """Open dialog box"""
         db = BCSearchFilesDialogBox(title, uicontroller)
-        db.exec()
+        db.show()
 
     @staticmethod
     def buildBCFileList(fileList, searchRulesAsDict, forTextOnly=False):
@@ -427,6 +427,8 @@ class BCSearchFilesDialogBox(QDialog):
 
     def __initialise(self):
         """Initialise user interface"""
+        self.__uiController.bcWindowClosed.connect(self.close)
+
         self.tbBasicNewSearch.clicked.connect(self.__basicResetSearch)
 
         self.tbAdvancedNewSearch.clicked.connect(self.__advancedResetSearch)
@@ -443,7 +445,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.tbAdvancedSearchSave.clicked.connect(lambda x: self.__scene.exportToFile('/home/grum/Temporaire/tmp_search.json'))
         self.tbAdvancedSearchOpen.clicked.connect(lambda x: self.__scene.importFromFile('/home/grum/Temporaire/tmp_search.json'))
 
-        self.pbClose.clicked.connect(self.accept)
+        self.pbClose.clicked.connect(self.close)
         self.pbSearch.clicked.connect(self.executeSearch)
         self.pbCancel.clicked.connect(self.__executeSearchCancel)
 
@@ -481,12 +483,105 @@ class BCSearchFilesDialogBox(QDialog):
         self.__advancedResetSearch(True)
         self.__advancedSelectionChanged()
 
+        self.__viewAdvSplitterPosition(BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_SPLITTER_POSITION))
+        self.__viewWindowMaximized(BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_MAXIMIZED))
+        self.__viewWindowGeometry(BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_GEOMETRY))
+        self.__viewWindowActiveTab(BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_TAB_ACTIVE))
+
+    def closeEvent(self, event):
+        """Dialog is closed"""
+        self.__saveSettings()
+        event.accept()
+
+    def __saveSettings(self):
+        """Save current search window settings"""
+        # note: for current tab, value is defined when tab is selected
+        BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_SPLITTER_POSITION, self.sAdvTopBottomSplitter.sizes())
+        BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_MAXIMIZED, self.isMaximized())
+        if not self.isMaximized():
+            # when maximized geometry is full screen geometry, then do it only if not in maximized
+            BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_GEOMETRY, [self.geometry().x(), self.geometry().y(), self.geometry().width(), self.geometry().height()])
+
+    def __viewAdvSplitterPosition(self, positions=None):
+        """Set advanced tab splitter position
+
+        Given `positions` is a list [<top size>,<bottom size>]
+        If value is None, will define a default 80%-20%
+        """
+        if positions is None:
+            positions = [800, 200]
+
+        if not isinstance(positions, list) or len(positions) != 2:
+            raise EInvalidValue('Given `positions` must be a list [t,b]')
+
+        self.sAdvTopBottomSplitter.setSizes(positions)
+
+        return positions
+
+    def __viewWindowMaximized(self, maximized=False):
+        """Set the window state"""
+        if not isinstance(maximized, bool):
+            raise EInvalidValue('Given `maximized` must be a <bool>')
+
+        if maximized:
+            # store current geometry now because after window is maximized, it's lost
+            BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_GEOMETRY, [self.geometry().x(), self.geometry().y(), self.geometry().width(), self.geometry().height()])
+            self.showMaximized()
+        else:
+            self.showNormal()
+
+        return maximized
+
+    def __viewWindowGeometry(self, geometry=[-1,-1,-1,-1]):
+        """Set the window geometry
+
+        Given `geometry` is a list [x,y,width,height] or a QRect()
+        """
+        if isinstance(geometry, QRect):
+            geometry = [geometry.x(), geometry.y(), geometry.width(), geometry.height()]
+
+        if not isinstance(geometry, list) or len(geometry)!=4:
+            raise EInvalidValue('Given `geometry` must be a <list[x,y,w,h]>')
+
+        rect = self.geometry()
+
+        if geometry[0] >= 0:
+            rect.setX(geometry[0])
+
+        if geometry[1] >= 0:
+            rect.setY(geometry[1])
+
+        if geometry[2] >= 0:
+            rect.setWidth(geometry[2])
+
+        if geometry[3] >= 0:
+            rect.setHeight(geometry[3])
+
+        self.setGeometry(rect)
+
+        return [self.geometry().x(), self.geometry().y(), self.geometry().width(), self.geometry().height()]
+
+    def __viewWindowActiveTab(self, tabId='basic'):
+        """Set the current tab"""
+        if not isinstance(tabId, str):
+            raise EInvalidValue('Given `tabId` must be a <str>')
+
+        if tabId=='advanced':
+            self.twSearchModes.setCurrentIndex(BCSearchFilesDialogBox.__TAB_ADVANCED_SEARCH)
+        else:
+            self.twSearchModes.setCurrentIndex(BCSearchFilesDialogBox.__TAB_BASIC_SEARCH)
+
     def __currentTabChanged(self, index):
         """Tab changed"""
         if self.__searchInProgress:
             self.pbSearch.setEnabled(False)
         else:
             self.pbSearch.setEnabled(index!=BCSearchFilesDialogBox.__TAB_SEARCH_CONSOLE)
+
+            if index==BCSearchFilesDialogBox.__TAB_BASIC_SEARCH:
+                BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_TAB_ACTIVE, 'basic')
+            elif index==BCSearchFilesDialogBox.__TAB_ADVANCED_SEARCH:
+                BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_TAB_ACTIVE, 'advanced')
 
     def __advancedCalculateNodePosition(self):
         """Calculate position for a new node added to scene"""
@@ -509,7 +604,7 @@ class BCSearchFilesDialogBox(QDialog):
         for selectedNode in selectedNodes:
             if selectedNode.isRemovable():
                 removableNodes+=1
-            
+
         self.tbAdvancedDeleteItems.setEnabled(removableNodes>0 or len(self.__scene.selectedLinks())>0)
 
         # switch to right panel according to current selection
