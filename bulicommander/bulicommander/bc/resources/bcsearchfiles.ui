@@ -117,6 +117,12 @@
           </item>
           <item>
            <widget class="QToolButton" name="tbBasicSearchSave">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="toolTip">
              <string>Save basic search</string>
             </property>
@@ -132,6 +138,9 @@
               <width>24</width>
               <height>24</height>
              </size>
+            </property>
+            <property name="popupMode">
+             <enum>QToolButton::MenuButtonPopup</enum>
             </property>
             <property name="autoRaise">
              <bool>true</bool>
@@ -171,7 +180,7 @@
             <x>0</x>
             <y>0</y>
             <width>1774</width>
-            <height>962</height>
+            <height>961</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -460,6 +469,12 @@
           </item>
           <item>
            <widget class="QToolButton" name="tbAdvancedSearchSave">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="toolTip">
              <string>Save advanced search</string>
             </property>
@@ -475,6 +490,9 @@
               <width>24</width>
               <height>24</height>
              </size>
+            </property>
+            <property name="popupMode">
+             <enum>QToolButton::MenuButtonPopup</enum>
             </property>
             <property name="autoRaise">
              <bool>true</bool>

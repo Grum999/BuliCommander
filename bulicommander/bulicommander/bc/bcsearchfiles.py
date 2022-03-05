@@ -79,6 +79,11 @@ from bulicommander.pktk.modules.timeutils import (
         tsToStr,
         Stopwatch
     )
+from bulicommander.pktk.modules.utils import (
+        JsonQObjectEncoder,
+        JsonQObjectDecoder,
+        Debug
+    )
 
 from bulicommander.pktk.widgets.woperatorinput import (
         WOperatorType,
@@ -86,7 +91,10 @@ from bulicommander.pktk.widgets.woperatorinput import (
         WOperatorCondition
     )
 from bulicommander.pktk.widgets.wlabelelide import WLabelElide
-from bulicommander.pktk.widgets.wiodialog import WDialogBooleanInput
+from bulicommander.pktk.widgets.wiodialog import (
+        WDialogBooleanInput,
+        WDialogMessage
+    )
 from bulicommander.pktk.widgets.wconsole import (
         WConsole,
         WConsoleType
@@ -415,6 +423,9 @@ class BCSearchFilesDialogBox(QDialog):
         self.__searchInProgress=False
         self.__bcFileList=BCFileList()
 
+        self.__currentFileBasic=None
+        self.__currentFileAdvanced=None
+
         self.__currentSelectedNodeWidget=None
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcsearchfiles.ui')
@@ -442,8 +453,10 @@ class BCSearchFilesDialogBox(QDialog):
         self.tbAdvancedZoomToFit.clicked.connect(self.wneAdvancedView.zoomToFit)
         self.tbAdvancedZoom1_1.clicked.connect(self.wneAdvancedView.resetZoom)
 
-        self.tbAdvancedSearchSave.clicked.connect(lambda x: self.__scene.exportToFile('/home/grum/Temporaire/tmp_search.json'))
-        self.tbAdvancedSearchOpen.clicked.connect(lambda x: self.__scene.importFromFile('/home/grum/Temporaire/tmp_search.json'))
+        self.tbAdvancedSearchSave.clicked.connect(lambda: self.saveFile('advanced'))
+        self.tbAdvancedSearchOpen.clicked.connect(lambda: self.openFile('advanced'))
+        self.tbBasicSearchSave.clicked.connect(lambda: self.saveFile('basic'))
+        self.tbBasicSearchOpen.clicked.connect(lambda: self.openFile('basic'))
 
         self.pbClose.clicked.connect(self.close)
         self.pbSearch.clicked.connect(self.executeSearch)
@@ -685,13 +698,18 @@ class BCSearchFilesDialogBox(QDialog):
         """reset current advanced search"""
         if not force and self.wneAdvancedView.nodeScene().isModified():
             if not WDialogBooleanInput.display(f"{self.__title}::{i18n('Reset advanced search')}", i18n("Current search has been modified, do you confirm to reset to default values?")):
-                return
+                return False
 
-        scene=self.wneAdvancedView.nodeScene()
+        self.__scene.clear()
 
-        scene.clear()
-        nwSearchEngine=BCNodeWSearchEngine(scene, i18n("Search engine"))
+        # instanciate default search engine
+        nwSearchEngine=BCNodeWSearchEngine(self.__scene, i18n("Search engine"))
+
         self.wneAdvancedView.resetZoom()
+
+        self.__scene.setModified(False)
+
+        self.__currentFileAdvanced=None
 
     def __advancedAddPath(self):
         """Add a BCNodeWSearchFromPath node"""
@@ -987,12 +1005,14 @@ class BCSearchFilesDialogBox(QDialog):
                       or  self.wsifrBasic.isModified()
                       or  self.wssrBasic.isModified()):
             if not WDialogBooleanInput.display(f"{self.__title}::{i18n('Reset basic search')}", i18n("Current search has been modified, do you confirm to reset to default values?")):
-                return
+                return False
 
         self.wsffrBasic.resetToDefault()
         self.wsffpBasic.resetToDefault()
         self.wsifrBasic.resetToDefault()
         self.wssrBasic.resetToDefault()
+
+        self.__currentFileBasic=None
 
     def __executeSearchProcessSignals(self, informations):
         """Search is in progress...
@@ -1354,6 +1374,104 @@ class BCSearchFilesDialogBox(QDialog):
             for outputEngine in sortRule['outputEngines']:
                 executeOutputEngine(outputEngine['widget']['outputProperties'])
 
+    def __openFileBasic(self, fileName, title):
+        """Open basic search file"""
+        if (self.wsffrBasic.isModified()
+            or  self.wsffpBasic.isModified()
+            or  self.wsifrBasic.isModified()
+            or  self.wssrBasic.isModified()):
+            if not WDialogBooleanInput.display(title, i18n("Current search has been modified and will be lost, continue?")):
+                return False
+
+        try:
+            with open(fileName, 'r') as fHandle:
+                jsonAsStr=fHandle.read()
+        except Exception as e:
+            Debug.print("Can't open/read file {0}: {1}", fileName, str(e))
+            return NodeEditorScene.IMPORT_FILE_CANT_READ
+
+        try:
+            jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
+        except Exception as e:
+            Debug.print("Can't parse file {0}: {1}", fileName, str(e))
+            return NodeEditorScene.IMPORT_FILE_NOT_JSON
+
+        if not "formatIdentifier" in jsonAsDict:
+            Debug.print("Missing format identifier file {0}", fileName)
+            return NodeEditorScene.IMPORT_FILE_MISSING_FORMAT_IDENTIFIER
+
+        if jsonAsDict["formatIdentifier"]!="bulicommander-search-filter-basic":
+            Debug.print("Invalid format identifier file {0}", fileName)
+            return NodeEditorScene.IMPORT_FILE_INVALID_FORMAT_IDENTIFIER
+
+        self.wsffrBasic.resetToDefault()
+        self.wsffpBasic.resetToDefault()
+        self.wsifrBasic.resetToDefault()
+        self.wssrBasic.resetToDefault()
+
+        if "nodes" in jsonAsDict:
+            for node in jsonAsDict['nodes']:
+                if "widget" in node and "type" in node["widget"]:
+                    if node["widget"]["type"]=="BCNodeWSearchFromPath":
+                        self.wsffpBasic.importFromDict(node["widget"])
+                    elif node["widget"]["type"]=="BCNodeWSearchFileFilterRule":
+                        self.wsffrBasic.importFromDict(node["widget"])
+                    elif node["widget"]["type"]=="BCNodeWSearchImgFilterRule":
+                        self.wsifrBasic.importFromDict(node["widget"])
+                    elif node["widget"]["type"]=="BCNodeWSearchSortRule":
+                        self.wssrBasic.importFromDict(node["widget"])
+
+        BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_BASIC, fileName)
+        self.__currentFileBasic=fileName
+
+    def __openFileAdvanced(self, fileName, title):
+        """Open advanced search file"""
+        if self.wneAdvancedView.nodeScene().isModified():
+            if not WDialogBooleanInput.display(title, i18n("Current search has been modified and will be lost, continue?")):
+                return False
+
+        importResult=self.__scene.importFromFile(fileName)
+
+        if importResult==NodeEditorScene.IMPORT_OK:
+            self.__scene.setModified(False)
+            BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_ADVANCED, fileName)
+            self.__currentFileAdvanced=fileName
+
+        return importResult
+
+    def __saveFileBasic(self, fileName):
+        """Save basic search file"""
+        toExport={
+                'formatIdentifier': "bulicommander-search-filter-basic",
+                'nodes': [
+                        self.wsffpBasic.exportAsDict(True),
+                        self.wsffrBasic.exportAsDict(True),
+                        self.wsifrBasic.exportAsDict(True),
+                        self.wssrBasic.exportAsDict(True)
+                    ]
+            }
+
+        returned=NodeEditorScene.EXPORT_OK
+        try:
+            with open(fileName, 'w') as fHandle:
+                fHandle.write(json.dumps(toExport, indent=4, sort_keys=True, cls=JsonQObjectEncoder))
+        except Exception as e:
+            Debug.print("Can't save file {0}: {1}", fileName, str(e))
+            returned=NodeEditorScene.EXPORT_CANT_SAVE
+
+        return returned
+
+    def __saveFileAdvanced(self, fileName):
+        """Save advanced search file"""
+        exportResult=self.__scene.exportToFile(fileName)
+
+        if exportResult==NodeEditorScene.IMPORT_OK:
+            self.__scene.setModified(False)
+            BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_ADVANCED, fileName)
+            self.__currentFileAdvanced=fileName
+
+        return exportResult
+
     def executeSearch(self):
         """Execute basic/advanced search, according to current active tab"""
         if self.twSearchModes.currentIndex()==BCSearchFilesDialogBox.__TAB_BASIC_SEARCH:
@@ -1423,6 +1541,117 @@ class BCSearchFilesDialogBox(QDialog):
 
             self.wProgress.setVisible(False)
             self.__searchInProgress=False
+
+    def openFile(self, searchTab, fileName=None):
+        """Open file designed by `fileName` to `searchTab`
+
+        Value for `searchTab` can be 'basic' or 'advanced'
+
+        If fileName is None, open dialog box with predefined last opened/saved file
+        """
+        if not searchTab in ('basic', 'advanced'):
+            raise EInvalidValue("Given `searchTab` value is not valid")
+
+        if fileName is None:
+            if searchTab=='basic':
+                fileName=BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_BASIC)
+            else:
+                fileName=BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_ADVANCED)
+
+        if fileName is None:
+            fileName=''
+
+
+        if searchTab=='basic':
+            title=i18n(f"{self.__title}::{i18n('Open basic search file definition')}")
+            extension=i18n("BuliCommander Basic Search (*.bcbs)")
+        else:
+            title=i18n(f"{self.__title}::{i18n('Open advanced search file definition')}")
+            extension=i18n("BuliCommander Advanced Search (*.bcas)")
+
+        fileName, dummy = QFileDialog.getOpenFileName(self, title, fileName, extension)
+
+        if fileName != '':
+            if not os.path.isfile(fileName):
+                openResult=NodeEditorScene.IMPORT_FILE_NOT_FOUND
+            elif searchTab=='basic':
+                openResult=self.__openFileBasic(fileName, title)
+            else:
+                openResult=self.__openFileAdvanced(fileName, title)
+
+            if NodeEditorScene.IMPORT_OK:
+                return True
+            elif openResult==NodeEditorScene.IMPORT_FILE_NOT_FOUND:
+                WDialogMessage.display(title, "<br>".join(
+                    [i18n("<h1>Can't open file!</h1>"),
+                     i18n("File not found!"),
+                    ]))
+            elif openResult==NodeEditorScene.IMPORT_FILE_CANT_READ:
+                WDialogMessage.display(title, "<br>".join(
+                    [i18n("<h1>Can't open file!</h1>"),
+                     i18n("File can't be read!"),
+                    ]))
+            elif openResult in (NodeEditorScene.IMPORT_FILE_NOT_JSON,
+                                NodeEditorScene.IMPORT_FILE_INVALID_FORMAT_IDENTIFIER,
+                                NodeEditorScene.IMPORT_FILE_MISSING_FORMAT_IDENTIFIER,
+                                NodeEditorScene.IMPORT_FILE_MISSING_SCENE_DEFINITION):
+                WDialogMessage.display(title, "<br>".join(
+                    [i18n("<h1>Can't open file!</h1>"),
+                     i18n("Invalid file format!"),
+                    ]))
+
+        return False
+
+    def saveFile(self, searchTab, saveAs=False, fileName=None):
+        """Save current search to designed file name
+
+        If fileName is None
+
+        """
+        if not searchTab in ('basic', 'advanced'):
+            raise EInvalidValue("Given `searchTab` value is not valid")
+
+        if searchTab=='basic':
+            if fileName is None and not self.__currentFileBasic is None:
+                # a file is currently opened
+                fileName=self.__currentFileBasic
+            else:
+                fileName=BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_BASIC)
+                saveAs=True
+        else:
+            if fileName is None and not self.__currentFileAdvanced is None:
+                # a file is currently opened
+                fileName=self.__currentFileAdvanced
+            else:
+                fileName=BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_ADVANCED)
+                saveAs=True
+
+        if fileName is None:
+            fileName=''
+            saveAs=True
+
+        if searchTab=='basic':
+            title=i18n(f"{self.__title}::{i18n('Save basic search file definition')}")
+            extension=i18n("BuliCommander Basic Search (*.bcbs)")
+        else:
+            title=i18n(f"{self.__title}::{i18n('Save advanced search file definition')}")
+            extension=i18n("BuliCommander Advanced Search (*.bcas)")
+
+        if saveAs:
+            fileName, dummy = QFileDialog.getSaveFileName(self, title, fileName, extension)
+
+        if fileName != '':
+            if searchTab=='basic':
+                saveResult=self.__saveFileBasic(fileName)
+            else:
+                saveResult=self.__saveFileAdvanced(fileName)
+
+            if NodeEditorScene.EXPORT_OK:
+                return True
+            elif saveResult==NodeEditorScene.EXPORT_CANT_SAVE:
+                WDialogMessage.display(title, i18n("<h1>Can't save file!</h1>"))
+
+        return False
 
 
 
@@ -1501,9 +1730,12 @@ class BCWSearchFileFromPath(BCWSearchWidget):
 
     def resetToDefault(self):
         """Reset to default values"""
+        self._startUpdate()
         self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
 
-    def exportAsDict(self):
+    def exportAsDict(self, setUnmodified=False):
         """Export widget configuration as dictionnary"""
         returned={
                 "properties": {
@@ -1528,6 +1760,9 @@ class BCWSearchFileFromPath(BCWSearchWidget):
                             "scanHiddenFiles": self.cbHiddenFilesScan.isChecked(),
                         }
             }
+
+        if setUnmodified:
+            self._setModified(False)
 
         return returned
 
@@ -1753,9 +1988,12 @@ class BCWSearchFileFilterRules(BCWSearchWidget):
 
     def resetToDefault(self):
         """Reset to default values"""
+        self._startUpdate()
         self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
 
-    def exportAsDict(self):
+    def exportAsDict(self, setUnmodified=False):
         """Export widget configuration as dictionnary"""
         dt1=self.woiFileDtDate.value()
         dt2=self.woiFileDtDate.value2()
@@ -1809,6 +2047,9 @@ class BCWSearchFileFilterRules(BCWSearchWidget):
                                 }
                         }
             }
+
+        if setUnmodified:
+            self._setModified(False)
 
         return returned
 
@@ -2034,9 +2275,12 @@ class BCWSearchImgFilterRules(BCWSearchWidget):
 
     def resetToDefault(self):
         """Reset to default values"""
+        self._startUpdate()
         self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
 
-    def exportAsDict(self):
+    def exportAsDict(self, setUnmodified=False):
         """Export widget configuration as dictionnary"""
         returned={
                 "properties": {
@@ -2085,6 +2329,9 @@ class BCWSearchImgFilterRules(BCWSearchWidget):
                                 }
                         }
             }
+
+        if setUnmodified:
+            self._setModified(False)
 
         return returned
 
@@ -2200,9 +2447,12 @@ class BCWSearchSortRules(BCWSearchWidget):
 
     def resetToDefault(self):
         """Reset to default values"""
+        self._startUpdate()
         self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
 
-    def exportAsDict(self):
+    def exportAsDict(self, setUnmodified=False):
         """Export widget configuration as dictionnary"""
         returned={
                 "properties": {
@@ -2237,6 +2487,10 @@ class BCWSearchSortRules(BCWSearchWidget):
                             }
                     }
             }
+
+        if setUnmodified:
+            self._setModified(False)
+
         return returned
 
     def importFromDict(self, dataAsDict):
@@ -2373,7 +2627,10 @@ class BCWSearchOutputEngine(BCWSearchWidget):
 
     def resetToDefault(self):
         """Reset to default values"""
+        self._startUpdate()
         self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
 
     def setTitle(self, title):
         """Set title used for BCExportFilesDialogBox"""
@@ -2383,7 +2640,7 @@ class BCWSearchOutputEngine(BCWSearchWidget):
         """Set uiController used for BCExportFilesDialogBox"""
         self.__uiController=uiController
 
-    def exportAsDict(self):
+    def exportAsDict(self, setUnmodified=False):
         """Export widget configuration as dictionnary"""
         returned={
                 "properties": {
@@ -2407,6 +2664,9 @@ class BCWSearchOutputEngine(BCWSearchWidget):
                             }
                     }
             }
+
+        if setUnmodified:
+            self._setModified(False)
 
         return returned
 

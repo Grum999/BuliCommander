@@ -370,6 +370,8 @@ class BCSettingsKey(SettingsKey):
     SESSION_SEARCHWINDOW_TAB_ACTIVE =                        'session.searchwindow.tab.active'
     SESSION_SEARCHWINDOW_WINDOW_GEOMETRY =                   'session.searchwindow.window.geometry'
     SESSION_SEARCHWINDOW_WINDOW_MAXIMIZED =                  'session.searchwindow.window.maximized'
+    SESSION_SEARCHWINDOW_LASTFILE_BASIC =                    'session.searchwindow.lastFile.basic'
+    SESSION_SEARCHWINDOW_LASTFILE_ADVANCED =                 'session.searchwindow.lastFile.advanced'
 
     SESSION_PANELS_VIEW_FILES_MANAGEDONLY =                  'session.panels.view.files.managedOnly'
     SESSION_PANELS_VIEW_FILES_BACKUP =                       'session.panels.view.files.backup'
@@ -726,6 +728,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_TAB_ACTIVE,                     'basic',                    SettingsFmt(str, ['basic','advanced'])),
             SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_GEOMETRY,                [-1,-1,-1,-1],              SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
             SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_MAXIMIZED,               False,                      SettingsFmt(bool)),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_BASIC,                 '',                         SettingsFmt(str)),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_ADVANCED,              '',                         SettingsFmt(str)),
 
 
             SettingsRule(BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY,               True,                       SettingsFmt(bool)),

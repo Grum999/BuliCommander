@@ -2106,7 +2106,7 @@ class BCExportFilesDialogBox(QDialog):
                     # need to determinate a directory
                     fileName = ''
 
-                fileName = QFileDialog.getSaveFileName(self, 'Save file', fileName, BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['dialogExtensions'])
+                fileName = QFileDialog.getSaveFileName(self, i18n('Save file'), fileName, BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['dialogExtensions'])
 
                 if fileName != '':
                     self.leTargetResultFile.setText(fileName[0])
