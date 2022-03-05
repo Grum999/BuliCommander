@@ -17,15 +17,15 @@ class FilenameModel(QtCore.QStringListModel):
     """
     def __init__(self, filter_=None, fs_engine='qt', icon_provider='internal', breadcrumbs=None):
         super().__init__()
+        self.icon_provider=self.get_icon
+        self.icons = QtWidgets.QFileIconProvider()
+
         self.current_path = ''
         self.fs_engine = fs_engine
         self.filter = filter_
         self.__hiddenPath = 0
         self.__breadcrumbs = breadcrumbs
-        if icon_provider == 'internal':
-            self.icons = QtWidgets.QFileIconProvider()
-            self.icon_provider = self.get_icon
-        else:
+        if icon_provider != 'internal':
             self.icon_provider = icon_provider
 
     def data(self, index, role):

@@ -6674,7 +6674,7 @@ class BCFileList(QObject):
     def exportTxtResults(self, header=True):
         """Export image list result as a text string"""
         if self.__invalidated:
-            raise EInvalidQueryResult("Current query results are not up to date: query has been modified but not yet executed")
+            Debug.print("Warning: Current query results are not up to date: query has been modified but not yet executed")
 
         returned = []
 

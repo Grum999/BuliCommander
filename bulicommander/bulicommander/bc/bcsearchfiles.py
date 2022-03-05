@@ -654,10 +654,12 @@ class BCSearchFilesDialogBox(QDialog):
         """
         # define Uuid for main nodes
         idNodeWSearchEngine=QUuid.createUuid().toString()
+        idNodeWOutputEngine=QUuid.createUuid().toString()
 
         nodeFileFilterRule=self.wsffrBasic.exportAsDict()
         nodeImgFilterRule=self.wsifrBasic.exportAsDict()
         nodeFromPath=self.wsffpBasic.exportAsDict()
+        nodeSortRules=self.wssrBasic.exportAsDict()
 
         filterList=[]
         for nodeProperties in [nodeFileFilterRule, nodeImgFilterRule]:
@@ -725,8 +727,22 @@ class BCSearchFilesDialogBox(QDialog):
                         "connect": {
                             "from": f"{nodeFromPath['properties']['id']}:OutputPath",
                             "to": f"{idNodeWSearchEngine}:InputPath1"
+                        },
+                      },
+                      {
+                        # Link between [SearchEngine] and [SortRules] is always present and hard-coded
+                        "connect": {
+                            "from": f"{idNodeWSearchEngine}:OutputResults",
+                            "to": f"{nodeSortRules['properties']['id']}:InputSortRule"
                         }
-                    }],
+                      },
+                      {
+                        # Link between [SortRules] and [OutputEngine] is always present and hard-coded
+                        "connect": {
+                            "from": f"{nodeSortRules['properties']['id']}:OutputSortRule",
+                            "to": f"{idNodeWOutputEngine}:InputResults",
+                        }
+                      }],
             "nodes": [
                         # search engine is always provided, and hard-coded
                         {
@@ -748,9 +764,45 @@ class BCSearchFilesDialogBox(QDialog):
                                                 "direction": NodeEditorConnector.DIRECTION_INPUT,
                                                 "location": NodeEditorConnector.LOCATION_RIGHT_TOP
                                             }
+                                        },
+                                        {
+                                            "id": "OutputResults",
+                                            "properties": {
+                                                "direction": NodeEditorConnector.DIRECTION_OUTPUT,
+                                                "location": NodeEditorConnector.LOCATION_BOTTOM_RIGHT
+                                            }
                                         }
                                     ],
                             "widget": {"type": "BCNodeWSearchEngine"}
+                        },
+                        # sort rules is always provided with data from BCWSearchSortRules widget
+                        nodeSortRules,
+                        # search engine is always provided, and hard-coded
+                        {
+                            "properties": {
+                                            "id": f"{idNodeWOutputEngine}",
+                                            "title": i18n("Output engine")
+                                        },
+                            "connectors": [
+                                        {
+                                            "id": "InputResults",
+                                            "properties": {
+                                                "direction": NodeEditorConnector.DIRECTION_INPUT,
+                                                "location": NodeEditorConnector.LOCATION_TOP_LEFT
+                                            }
+                                        }
+                                    ],
+                            "widget": {
+                                        "type": "BCNodeWSearchOutputEngine",
+                                        "outputProperties": {
+                                            "target": 'aPanel',
+                                            "documentExportInfo": {
+                                                    'exportFormat': BCExportFormat.EXPORT_FMT_TEXT,
+                                                    'exportFileName': '@clipboard',
+                                                    'exportConfig': {}
+                                                }
+                                        }
+                                }
                         },
                         # from path is always provided with data from BCWSearchFileFromPath widget
                         nodeFromPath
@@ -830,12 +882,17 @@ class BCSearchFilesDialogBox(QDialog):
 
     def __basicResetSearch(self, force=False):
         """reset current basic search"""
-        if not force and (self.wsffrBasic.isModified() or self.wsffpBasic.isModified()):
+        if not force and (self.wsffrBasic.isModified()
+                      or  self.wsffpBasic.isModified()
+                      or  self.wsifrBasic.isModified()
+                      or  self.wssrBasic.isModified()):
             if not WDialogBooleanInput.display(f"{self.__title}::{i18n('Reset basic search')}", i18n("Current search has been modified, do you confirm to reset to default values?")):
                 return
 
         self.wsffrBasic.resetToDefault()
         self.wsffpBasic.resetToDefault()
+        self.wsifrBasic.resetToDefault()
+        self.wssrBasic.resetToDefault()
 
     def __executeSearchProcessSignals(self, informations):
         """Search is in progress...
@@ -850,7 +907,7 @@ class BCSearchFilesDialogBox(QDialog):
             if informations[2]:
                 self.wcExecutionConsole.appendLine(f"""&nbsp;- {i18n('Scan directory (and sub-directories)')} #y#{informations[1]}#, {i18n('found files:')} #c#{informations[3]}#""")
             else:
-                self.wcExecutionConsole.appendLine(f"""&nbsp;- {i18n('Scan directory')} #y#{informatins[1]}#, {i18n('found files:')} #c#{informations[3]}#""")
+                self.wcExecutionConsole.appendLine(f"""&nbsp;- {i18n('Scan directory')} #y#{informations[1]}#, {i18n('found files:')} #c#{informations[3]}#""")
         elif informations[0]==BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS:
             # 0 => step identifier
             # 1 => total number of files
@@ -1087,7 +1144,6 @@ class BCSearchFilesDialogBox(QDialog):
                 Stopwatch.start('executeSortAndExport.export')
                 exportStart(-1)
 
-                print("executeOutputEngine-1", outputEngineRules['target'][0])
                 if outputEngineRules['target'][0]=='a':
                     # active panel
                     if self.__uiController.panelId()==0:
@@ -1103,15 +1159,9 @@ class BCSearchFilesDialogBox(QDialog):
                     searchResultId='searchresult:right'
                     panelId=1
 
-                print("executeOutputEngine-2", searchResultId, panelId, {searchResultId: [file.fullPathName() for file in self.__bcFileList.files()]})
-
                 self.__uiController.savedViews().set({searchResultId: [file.fullPathName() for file in self.__bcFileList.files()]})
 
-                print("executeOutputEngine-3", self.__uiController.savedViews().list())
-
                 self.__uiController.commandGoTo(panelId, f"@{searchResultId}")
-
-                print("executeOutputEngine-4")
 
                 Stopwatch.stop('executeSortAndExport.export')
                 exportEnd()
@@ -1249,14 +1299,14 @@ class BCSearchFilesDialogBox(QDialog):
                 BCFileList.STEPEXECUTED_PROGRESS_FILTER
             ])
 
-            print(self.__bcFileList.exportTxtResults())
-            print(self.__bcFileList.stats())
-
             # Even if BCFileList.execute can do sort, it's not used because only
             # one sort van be applied
             # Call to __executeSortAndExport is used instead to let the function
             # being able to manage more than one sort+linked exports
             self.__executeSortAndExport(dataAsDict)
+
+            print(self.__bcFileList.exportTxtResults())
+            print(self.__bcFileList.stats())
 
             self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(f"#lk#...{i18n('Execution done')}...#")
