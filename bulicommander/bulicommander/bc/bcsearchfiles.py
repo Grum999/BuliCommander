@@ -505,7 +505,12 @@ class BCSearchFilesDialogBox(QDialog):
         nbSelectedNodes=len(selectedNodes)
 
         # if nothing selected, disable delete button
-        self.tbAdvancedDeleteItems.setEnabled(nbSelectedNodes>0 or len(self.__scene.selectedLinks())>0)
+        removableNodes=0
+        for selectedNode in selectedNodes:
+            if selectedNode.isRemovable():
+                removableNodes+=1
+            
+        self.tbAdvancedDeleteItems.setEnabled(removableNodes>0 or len(self.__scene.selectedLinks())>0)
 
         # switch to right panel according to current selection
         if nbSelectedNodes==1 and isinstance(selectedNodes[0].widget(), BCNodeWSearchFromPath):
