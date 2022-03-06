@@ -80,7 +80,7 @@
      <item>
       <widget class="QStackedWidget" name="swCatPages">
        <property name="currentIndex">
-        <number>1</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="pageCatGeneral">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -112,8 +112,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>980</width>
-              <height>784</height>
+              <width>495</width>
+              <height>473</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout">
@@ -1210,7 +1210,7 @@
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Clipboard content is always catched, even if &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; is not opened&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>A&amp;lways</string>
+            <string>Alwa&amp;ys</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -1337,7 +1337,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="pageCatCachedImages">
+       <widget class="QWidget" name="pageCatCachedData">
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <property name="leftMargin">
           <number>0</number>
@@ -1353,44 +1353,20 @@
          </property>
          <item>
           <layout class="QGridLayout" name="gridLayout_2">
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_6">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
+           <item row="4" column="0" colspan="4">
+            <widget class="QLabel" name="label_25">
              <property name="font">
               <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>Files in cache</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="0" colspan="4">
-            <widget class="QLabel" name="label_18">
-             <property name="font">
-              <font>
-               <family>DejaVu Sans</family>
                <pointsize>9</pointsize>
-               <italic>true</italic>
               </font>
              </property>
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Clipboard cache contains all images copied to clipboard, from Krita and/or another softwares&lt;/p&gt;&lt;p&gt;It also contains reference to images files copied from file manager and/or urls copied from web page&lt;/p&gt;&lt;p&gt;- Session cache: items in cache for current session only&lt;/p&gt;&lt;p&gt;- Persistant cache: items kept in cache across sessions&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="textFormat">
-              <enum>Qt::RichText</enum>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Images metadata (file size, image size, ...) are stored in a cache to improve load &amp;amp; search performances&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
            </item>
-           <item row="6" column="0">
-            <widget class="QLabel" name="label_19">
+           <item row="9" column="0">
+            <widget class="QLabel" name="label_21">
              <property name="font">
               <font>
                <weight>75</weight>
@@ -1398,7 +1374,7 @@
               </font>
              </property>
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Items in cache &lt;span style=&quot; font-style:italic;&quot;&gt;(session)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Items in cache &lt;span style=&quot; font-style:italic;&quot;&gt;(persistant)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
            </item>
@@ -1418,31 +1394,41 @@
               </font>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string/>
              </property>
              <property name="styleSheet">
               <string notr="true">background-color: palette(light);padding: 6;</string>
              </property>
              <property name="text">
-              <string>Thumbnails cache content</string>
+              <string>Thumbnails cache</string>
              </property>
              <property name="margin">
               <number>4</number>
              </property>
             </widget>
            </item>
-           <item row="8" column="0" colspan="4">
-            <spacer name="verticalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
+           <item row="8" column="0">
+            <widget class="QLabel" name="label_19">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
              </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Items in cache &lt;span style=&quot; font-style:italic;&quot;&gt;(session)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
-            </spacer>
+            </widget>
+           </item>
+           <item row="8" column="1" colspan="2">
+            <widget class="QLabel" name="lblCCINbItemsAndSizeCS">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Number of clipboard items in cache and total used size&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
            </item>
            <item row="1" column="0" colspan="4">
             <widget class="QLabel" name="label_9">
@@ -1465,18 +1451,28 @@
              </property>
             </widget>
            </item>
-           <item row="6" column="1" colspan="2">
-            <widget class="QLabel" name="lblCCINbItemsAndSizeCS">
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Number of clipboard items in cache and total used size&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <item row="6" column="0" colspan="4">
+            <widget class="QLabel" name="label_17">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: palette(light);padding: 6;</string>
              </property>
              <property name="text">
-              <string>TextLabel</string>
+              <string>Clipboard cache</string>
+             </property>
+             <property name="margin">
+              <number>4</number>
              </property>
             </widget>
            </item>
-           <item row="6" column="3">
-            <widget class="QPushButton" name="pbCCIClearCacheCS">
+           <item row="9" column="3">
+            <widget class="QPushButton" name="pbCCIClearCacheCP">
              <property name="text">
               <string>Clear cache content</string>
              </property>
@@ -1495,36 +1491,46 @@
              </property>
             </widget>
            </item>
-           <item row="4" column="0" colspan="4">
-            <widget class="QLabel" name="label_17">
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_6">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="font">
               <font>
-               <pointsize>12</pointsize>
                <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: palette(light);padding: 6;</string>
-             </property>
              <property name="text">
-              <string>Clipboard cache content</string>
-             </property>
-             <property name="margin">
-              <number>4</number>
+              <string>Files in cache</string>
              </property>
             </widget>
            </item>
-           <item row="7" column="0">
-            <widget class="QLabel" name="label_21">
+           <item row="7" column="0" colspan="4">
+            <widget class="QLabel" name="label_18">
              <property name="font">
               <font>
-               <weight>75</weight>
-               <bold>true</bold>
+               <family>DejaVu Sans</family>
+               <pointsize>9</pointsize>
+               <italic>true</italic>
               </font>
              </property>
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Items in cache &lt;span style=&quot; font-style:italic;&quot;&gt;(persistant)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Clipboard cache contains all images copied to clipboard, from Krita and/or another softwares&lt;/p&gt;&lt;p&gt;It also contains reference to images files copied from file manager and/or urls copied from web page&lt;/p&gt;&lt;p&gt;- Session cache: items in cache for current session only&lt;/p&gt;&lt;p&gt;- Persistant cache: items kept in cache across sessions&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::RichText</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="8" column="3">
+            <widget class="QPushButton" name="pbCCIClearCacheCS">
+             <property name="text">
+              <string>Clear cache content</string>
              </property>
             </widget>
            </item>
@@ -1538,7 +1544,7 @@
              </property>
             </widget>
            </item>
-           <item row="7" column="1" colspan="2">
+           <item row="9" column="1" colspan="2">
             <widget class="QLabel" name="lblCCINbItemsAndSizeCP">
              <property name="toolTip">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Number of clipboard items in cache and total used size&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1548,8 +1554,61 @@
              </property>
             </widget>
            </item>
-           <item row="7" column="3">
-            <widget class="QPushButton" name="pbCCIClearCacheCP">
+           <item row="10" column="0" colspan="4">
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="3" column="0" colspan="4">
+            <widget class="QLabel" name="label_24">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: palette(light);padding: 6;</string>
+             </property>
+             <property name="text">
+              <string>Metadata cache</string>
+             </property>
+             <property name="margin">
+              <number>4</number>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_26">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Database</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1" colspan="2">
+            <widget class="QLabel" name="lblCCIDbCache">
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="3">
+            <widget class="QPushButton" name="pbCCIClearCacheMD">
              <property name="text">
               <string>Clear cache content</string>
              </property>
@@ -1686,11 +1745,11 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="buttonGroupGenSysTray"/>
+  <buttongroup name="buttonGroupClpMode"/>
+  <buttongroup name="buttonGroupImgDefaultKrita"/>
   <buttongroup name="buttonGroupClpDefaultAction"/>
   <buttongroup name="buttonGroupImgDefaultOther"/>
   <buttongroup name="buttonGroupNavHomeDir"/>
-  <buttongroup name="buttonGroupImgDefaultKrita"/>
-  <buttongroup name="buttonGroupGenSysTray"/>
-  <buttongroup name="buttonGroupClpMode"/>
  </buttongroups>
 </ui>

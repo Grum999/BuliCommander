@@ -99,7 +99,8 @@ from bulicommander.pktk.modules.utils import (
 from bulicommander.pktk.modules.timeutils import (
         Stopwatch,
         strToTs,
-        tsToStr
+        tsToStr,
+        Timer
     )
 from bulicommander.pktk.modules.strutils import (
         strToBytesSize,
@@ -4797,43 +4798,11 @@ class BCFileCache(QObject):
 
         # database filename
         self.__fileName=BCFileCache.cacheFile()
-        self.__databaseInstance.setDatabaseName(self.__fileName)
 
         # flag to determinate if there's data to flush
         self.__dataToFlush=False
 
-        if self.__databaseInstance.open():
-            # database is opened, prepare database
-            sqlQuery=QSqlQuery(self.__databaseInstance)
-
-            # create a temporary database in memory
-            # will be used to insert/update cache data in multithread mode
-            if not sqlQuery.exec(f"ATTACH DATABASE ':memory:' AS tmpDb"):
-                # can't attach memory database??
-                # do not continue
-                self.__databaseInstance.close()
-                self.__databaseInstance=None
-                return
-
-            # need to check version
-            if sqlQuery.exec("PRAGMA user_version"):
-                while sqlQuery.next():
-                    self.__db_version=sqlQuery.value('user_version')
-                    break
-
-                if not self.__updateDatabaseVersion():
-                    # database schema is not correct and/or unable to create/update database schema
-                    self.__databaseInstance.close()
-                    self.__databaseInstance=None
-                    return
-
-            self.__initializeQueries()
-
-            # db settings
-            for pragma in ["PRAGMA journal_mode=WAL"]:
-                if not sqlQuery.exec(pragma):
-                    Debug.print(f"Can't set: {pragma}")
-
+        self.__open()
 
     def __initializeQueries(self):
         """Initialise default queries"""
@@ -4940,6 +4909,8 @@ class BCFileCache(QObject):
             # unable to create/update database schema
             Debug.print(f"[BCFileCache.__updateDatabaseVersion] Unable to create/update cache database schema: 0.00 ==> {updatedVersion/100:.2f}", )
 
+        sqlQuery.finish()
+
         return upToDate
 
     def __flushMemoryDatabase(self):
@@ -4962,9 +4933,59 @@ class BCFileCache(QObject):
             """):
             self.__dataToFlush=False
             #sqlQuery.exec("COMMIT TRANSACTION")
+            sqlQuery.finish()
             return True
         #sqlQuery.exec("ROLLBACK TRANSACTION")
+        sqlQuery.finish()
         return False
+
+    def __open(self):
+        """Open database"""
+        if self.__databaseInstance is None:
+            if isinstance(self.__id, str):
+                self.__databaseInstance=QSqlDatabase.addDatabase("QSQLITE", f"dbBCFileCache{self.__id}")
+            else:
+                self.__databaseInstance=QSqlDatabase.addDatabase("QSQLITE",  "dbBCFileCache")
+
+        self.__databaseInstance.setDatabaseName(self.__fileName)
+
+        if self.__databaseInstance.open():
+            # database is opened, prepare database
+            sqlQuery=QSqlQuery(self.__databaseInstance)
+
+            # create a temporary database in memory
+            # will be used to insert/update cache data in multithread mode
+            if not sqlQuery.exec(f"ATTACH DATABASE ':memory:' AS tmpDb"):
+                # can't attach memory database??
+                # do not continue
+                self.__databaseInstance.close()
+                self.__databaseInstance=None
+                return False
+
+            # need to check version
+            if sqlQuery.exec("PRAGMA user_version"):
+                while sqlQuery.next():
+                    self.__db_version=sqlQuery.value('user_version')
+                    break
+
+                if not self.__updateDatabaseVersion():
+                    # database schema is not correct and/or unable to create/update database schema
+                    self.__databaseInstance.close()
+                    self.__databaseInstance=None
+                    return False
+
+            self.__initializeQueries()
+
+            # db settings
+            for pragma in ["PRAGMA journal_mode=WAL"]:
+                if not sqlQuery.exec(pragma):
+                    Debug.print(f"Can't set: {pragma}")
+
+            return True
+        else:
+            return False
+
+
 
 
     def fileName(self):
@@ -4979,6 +5000,11 @@ class BCFileCache(QObject):
                 self.__databaseInstance.exec(f"DETACH DATABASE tmpDb")
             self.__databaseInstance.close()
             self.__databaseInstance=None
+
+            if isinstance(self.__id, str):
+                QSqlDatabase.removeDatabase(f"dbBCFileCache{self.__id}")
+            else:
+                QSqlDatabase.removeDatabase("dbBCFileCache")
 
     def setMetadata(self, hash, metadata):
         """Set `metadata` for `hash`
@@ -5094,6 +5120,95 @@ class BCFileCache(QObject):
         if self.__databaseInstance is None or not self.__databaseInstance.driver().hasFeature(QSqlDriver.Transactions):
             return False
         return self.__databaseInstance.exec("ROLLBACK TRANSACTION")
+
+
+    def getStats(self):
+        """Return statistics about database cache"""
+        returned={
+                'dbFile': self.__fileName,
+                'dbSize': 0,
+                'nbHash': 0,
+                'nbDir': 0,
+            }
+        print('getStats')
+
+        if os.path.isfile(self.__fileName):
+            returned['dbSize']=os.path.getsize(self.__fileName)
+
+            for ext in ('-shm', '-wal'):
+                fileName=f"{self.__fileName}{ext}"
+                if os.path.isfile(fileName):
+                    returned['dbSize']+=os.path.getsize(fileName)
+
+        if self.__databaseInstance is None:
+            print('getStats: self.__databaseInstance is None')
+            return returned
+
+        query=QSqlQuery(self.__databaseInstance)
+
+        if query.exec("SELECT count(*) AS nbHash FROM metadata"):
+            print('getStats: metadata')
+            while query.next():
+                print('getStats: metadata - '+str(query.value('nbHash')))
+                returned['nbHash']=int(query.value('nbHash'))
+
+        if query.exec("SELECT count(*) AS nbDir FROM directories"):
+            while query.next():
+                returned['nbDir']=int(query.value('nbDir'))
+
+        query.finish()
+
+        print('getStats', returned)
+
+        return returned
+
+    def clearDbContent(self):
+        """Clear database content"""
+        if self.__databaseInstance is None:
+            return False
+
+        query=QSqlQuery(self.__databaseInstance)
+
+        self.beginTransaction()
+        query.prepare("DELETE FROM metadata")
+        if query.exec():
+            query.prepare("DELETE FROM directories")
+            self.commitTransaction()
+            if query.exec():
+                return self.vacuum()
+        self.rollbackTransaction()
+        return False
+
+    def vacuum(self):
+        """Rebuild database content"""
+        if self.__databaseInstance is None:
+            return
+
+
+        # to avoid SQL error: "cannot VACUUM - SQL statements in progress Unable to fetch row"
+        # need to be seure that all SQL statement are processed
+
+        # to be sure:
+        # - close the current SQL connection
+        # - open a new connection (do not used method __open(); we just need a simple connection without all checks & temp db)
+        # - do VACUUM
+        # - force WAL checkpoint
+        # - close connection
+        # - reopen standard connection using __open() method
+        self.close()
+
+        tmpDbVacuum=QSqlDatabase.addDatabase("QSQLITE",  "tmpDbVacuum")
+        tmpDbVacuum.setDatabaseName(self.__fileName)
+        tmpDbVacuum.open()
+        tmpDbVacuum.exec("VACUUM")
+        tmpDbVacuum.exec("PRAGMA wal_checkpoint(TRUNCATE)")
+        tmpDbVacuum.close()
+        tmpDbVacuum=QSqlDatabase.removeDatabase("tmpDbVacuum")
+
+        self.__open()
+
+
+
 
 
 # ------------------------------------------------------------------------------

@@ -41,7 +41,8 @@ import sys
 import shutil
 
 from .bcfile import (
-        BCFile
+        BCFile,
+        BCFileCache
     )
 
 from .bcwpathbar import BCWPathBar
@@ -797,16 +798,16 @@ class BCSettingsDialogBox(QDialog):
         self.setWindowTitle(self.__title)
         self.lvCategory.itemSelectionChanged.connect(self.__categoryChanged)
 
-        self.__itemCatGeneral = QListWidgetItem(buildIcon("pktk:tune"), "General")
+        self.__itemCatGeneral = QListWidgetItem(buildIcon("pktk:tune"), i18n("General"))
         self.__itemCatGeneral.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_GENERAL)
-        self.__itemCatNavigation = QListWidgetItem(buildIcon("pktk:navigation"), "Navigation")
+        self.__itemCatNavigation = QListWidgetItem(buildIcon("pktk:navigation"), i18n("Navigation"))
         self.__itemCatNavigation.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_NAVIGATION)
-        self.__itemCatImageFiles = QListWidgetItem(buildIcon("pktk:image"), "Image files")
+        self.__itemCatImageFiles = QListWidgetItem(buildIcon("pktk:image"), i18n("Image files"))
         self.__itemCatImageFiles.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_IMAGES)
-        self.__itemCatClipboard = QListWidgetItem(buildIcon("pktk:clipboard"), "Clipboard")
+        self.__itemCatClipboard = QListWidgetItem(buildIcon("pktk:clipboard"), i18n("Clipboard"))
         self.__itemCatClipboard.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CLIPBOARD)
-        self.__itemCatCachedImages = QListWidgetItem(buildIcon("pktk:cache_refresh"), "Cached images")
-        self.__itemCatCachedImages.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CACHE)
+        self.__itemCatCachedData = QListWidgetItem(buildIcon("pktk:cache_refresh"), i18n("Cached data"))
+        self.__itemCatCachedData.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CACHE)
 
         self.__uiController = uicontroller
 
@@ -815,6 +816,7 @@ class BCSettingsDialogBox(QDialog):
         self.pbCCIClearCache.clicked.connect(self.__clearCache)
         self.pbCCIClearCacheCS.clicked.connect(self.__clearCacheCS)
         self.pbCCIClearCacheCP.clicked.connect(self.__clearCacheCP)
+        self.pbCCIClearCacheMD.clicked.connect(self.__clearCacheMD)
 
         self.bbOkCancel.accepted.connect(self.__applySettings)
 
@@ -871,7 +873,7 @@ class BCSettingsDialogBox(QDialog):
         self.lvCategory.addItem(self.__itemCatNavigation)
         self.lvCategory.addItem(self.__itemCatImageFiles)
         self.lvCategory.addItem(self.__itemCatClipboard)
-        self.lvCategory.addItem(self.__itemCatCachedImages)
+        self.lvCategory.addItem(self.__itemCatCachedData)
         self.__setCategory(BCSettingsDialogBox.CATEGORY_GENERAL)
 
         # --- NAV Category -----------------------------------------------------
@@ -1163,6 +1165,13 @@ class BCSettingsDialogBox(QDialog):
             self.lblCCINbItemsAndSizeCP.setText(f'{nbItemsP} items, {bytesSizeToStr(sizeItemsP, BCSettingsValues.FILE_UNIT_KB)}')
         self.pbCCIClearCacheCP.setEnabled(sizeItemsP>0)
 
+        dbStats=BCFileCache.globalInstance().getStats()
+        if self.rbCGFileUnitBinary.isChecked():
+            self.lblCCIDbCache.setText(f"{dbStats['nbHash']} images, {bytesSizeToStr(dbStats['dbSize'], BCSettingsValues.FILE_UNIT_KIB)}")
+        else:
+            self.lblCCIDbCache.setText(f"{dbStats['nbHash']} images, {bytesSizeToStr(dbStats['dbSize'], BCSettingsValues.FILE_UNIT_KB)}")
+        self.pbCCIClearCacheMD.setEnabled(dbStats['nbHash']>0)
+
 
     def __clearCache(self):
         """Clear cache after user confirmation"""
@@ -1173,6 +1182,7 @@ class BCSettingsDialogBox(QDialog):
                 ):
             shutil.rmtree(BCFile.thumbnailCacheDirectory(), ignore_errors=True)
             BCFile.initialiseCache()
+            BCFileCache.initialise()
             self.__calculateCacheSize()
 
 
@@ -1195,6 +1205,17 @@ class BCSettingsDialogBox(QDialog):
                 ):
             self.__uiController.clipboard().cachePersistentFlush()
             BCClipboard.initialiseCache()
+            self.__calculateCacheSize()
+
+
+    def __clearCacheMD(self):
+        """Clear metadata cache after user confirmation"""
+
+        if WDialogBooleanInput.display(
+                    i18n(f"{self.__title}::Clear Metadata Cache"),
+                    i18n(f"Current metadata cache content will be cleared ({self.lblCCIDbCache.text()})<br><br>Do you confirm action?")
+                ):
+            BCFileCache.globalInstance().clearDbContent()
             self.__calculateCacheSize()
 
 
