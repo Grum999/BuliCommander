@@ -41,7 +41,8 @@ import sys
 import shutil
 
 from .bcfile import (
-        BCFile
+        BCFile,
+        BCFileCache
     )
 
 from .bcwpathbar import BCWPathBar
@@ -141,8 +142,8 @@ class BCSettingsKey(SettingsKey):
     CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED =           'config.export.filesList.textMd.thumbnails.included'
     CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE =               'config.export.filesList.textMd.thumbnails.size'
 
-    CONFIG_EXPORTFILESLIST_DOCPDF_RESOLUTION =               'config.export.filesList.doc.pdf.resolution'
-    CONFIG_EXPORTFILESLIST_DOCPDF_UNIT =                     'config.export.filesList.doc.pdf.unit'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_RESOLUTION =         'config.export.filesList.doc.pdf.paper.resolution'
+    CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_UNIT =               'config.export.filesList.doc.pdf.paper.unit'
     CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE =               'config.export.filesList.doc.pdf.paper.size'
     CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION =        'config.export.filesList.doc.pdf.paper.orientation'
     CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE =       'config.export.filesList.doc.pdf.paper.color.active'
@@ -182,8 +183,8 @@ class BCSettingsKey(SettingsKey):
     CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD =            'config.export.filesList.doc.pdf.thumbnails.image.displayMode'
     CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE =             'config.export.filesList.doc.pdf.preview.mode'
 
-    CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION =               'config.export.filesList.img.kra.resolution'
-    CONFIG_EXPORTFILESLIST_IMGKRA_UNIT =                     'config.export.filesList.img.kra.unit'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_RESOLUTION =         'config.export.filesList.img.kra.paper.resolution'
+    CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_UNIT =               'config.export.filesList.img.kra.paper.unit'
     CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE =               'config.export.filesList.img.kra.paper.size'
     CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION =        'config.export.filesList.img.kra.paper.orientation'
     CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE =       'config.export.filesList.img.kra.paper.color.active'
@@ -224,8 +225,8 @@ class BCSettingsKey(SettingsKey):
     CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE =             'config.export.filesList.img.kra.options.openFileInKrita'
     CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE =             'config.export.filesList.img.kra.preview.mode'
 
-    CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION =               'config.export.filesList.img.png.resolution'
-    CONFIG_EXPORTFILESLIST_IMGPNG_UNIT =                     'config.export.filesList.img.png.unit'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_RESOLUTION =         'config.export.filesList.img.png.paper.resolution'
+    CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_UNIT =               'config.export.filesList.img.png.paper.unit'
     CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE =               'config.export.filesList.img.png.paper.size'
     CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION =        'config.export.filesList.img.png.paper.orientation'
     CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE =       'config.export.filesList.img.png.paper.color.active'
@@ -266,8 +267,8 @@ class BCSettingsKey(SettingsKey):
     CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE =             'config.export.filesList.img.png.options.openFileInKrita'
     CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE =             'config.export.filesList.img.png.preview.mode'
 
-    CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION =               'config.export.filesList.img.jpg.resolution'
-    CONFIG_EXPORTFILESLIST_IMGJPG_UNIT =                     'config.export.filesList.img.jpg.unit'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_RESOLUTION =         'config.export.filesList.img.jpg.paper.resolution'
+    CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_UNIT =               'config.export.filesList.img.jpg.paper.unit'
     CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE =               'config.export.filesList.img.jpg.paper.size'
     CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION =        'config.export.filesList.img.jpg.paper.orientation'
     CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE =       'config.export.filesList.img.jpg.paper.color.active'
@@ -343,6 +344,16 @@ class BCSettingsKey(SettingsKey):
     CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE =       'config.defaultSession.information.clipboard.minWidthActive'
     CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE =       'config.defaultSession.information.clipboard.maxWidthActive'
 
+    CONFIG_SEARCHFILES_PREDEFINED_FILEPATH =                 'config.searchFiles.predefined.filePath'
+    CONFIG_SEARCHFILES_PREDEFINED_FILENAME =                 'config.searchFiles.predefined.fileName'
+    CONFIG_SEARCHFILES_PREDEFINED_FILESIZE =                 'config.searchFiles.predefined.fileSize'
+    CONFIG_SEARCHFILES_PREDEFINED_FILEDATE =                 'config.searchFiles.predefined.fileDate'
+    CONFIG_SEARCHFILES_PREDEFINED_IMGFORMAT =                'config.searchFiles.predefined.imageFormat'
+    CONFIG_SEARCHFILES_PREDEFINED_IMGWIDTH =                 'config.searchFiles.predefined.imageWidth'
+    CONFIG_SEARCHFILES_PREDEFINED_IMGHEIGHT =                'config.searchFiles.predefined.imageHeight'
+    CONFIG_SEARCHFILES_PREDEFINED_IMGRATIO =                 'config.searchFiles.predefined.imageRatio'
+    CONFIG_SEARCHFILES_PREDEFINED_IMGPIXELS =                'config.searchFiles.predefined.imagePixels'
+
     SESSION_INFO_TOCLIPBOARD_BORDER =                        'session.information.clipboard.border'
     SESSION_INFO_TOCLIPBOARD_HEADER =                        'session.information.clipboard.header'
     SESSION_INFO_TOCLIPBOARD_MINWIDTH =                      'session.information.clipboard.minWidth'
@@ -355,6 +366,13 @@ class BCSettingsKey(SettingsKey):
     SESSION_MAINWINDOW_PANEL_HIGHLIGHTED =                   'session.mainwindow.panel.highlighted'
     SESSION_MAINWINDOW_WINDOW_GEOMETRY =                     'session.mainwindow.window.geometry'
     SESSION_MAINWINDOW_WINDOW_MAXIMIZED =                    'session.mainwindow.window.maximized'
+
+    SESSION_SEARCHWINDOW_SPLITTER_POSITION =                 'session.searchwindow.splitter.position'
+    SESSION_SEARCHWINDOW_TAB_ACTIVE =                        'session.searchwindow.tab.active'
+    SESSION_SEARCHWINDOW_WINDOW_GEOMETRY =                   'session.searchwindow.window.geometry'
+    SESSION_SEARCHWINDOW_WINDOW_MAXIMIZED =                  'session.searchwindow.window.maximized'
+    SESSION_SEARCHWINDOW_LASTFILE_BASIC =                    'session.searchwindow.lastFile.basic'
+    SESSION_SEARCHWINDOW_LASTFILE_ADVANCED =                 'session.searchwindow.lastFile.advanced'
 
     SESSION_PANELS_VIEW_FILES_MANAGEDONLY =                  'session.panels.view.files.managedOnly'
     SESSION_PANELS_VIEW_FILES_BACKUP =                       'session.panels.view.files.backup'
@@ -458,8 +476,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED,        True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE,            0,                          SettingsFmt(int, [0,1,2,3])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_RESOLUTION,            300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_UNIT,                  'mm',                       SettingsFmt(str, ['mm','cm','in'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
@@ -499,8 +517,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD,         'fit',                      SettingsFmt(str, ['fit', 'crop'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE,          0,                          SettingsFmt(int, [0,1])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_RESOLUTION,            300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_UNIT,                  'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
@@ -541,8 +559,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE,          True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE,          0,                          SettingsFmt(int, [0,1])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_RESOLUTION,            300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_UNIT,                  'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
@@ -583,8 +601,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE,          False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE,          0,                          SettingsFmt(int, [0,1])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_RESOLUTION,            300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_UNIT,                  'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
@@ -677,6 +695,21 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC,                False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION,                     BCSettingsValues.CLIPBOARD_ACTION_NLAYER,
                                                                                                                         SettingsFmt(str, [BCSettingsValues.CLIPBOARD_ACTION_NLAYER,BCSettingsValues.CLIPBOARD_ACTION_NDOCUMENT])),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILEPATH,              [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILENAME,              [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILESIZE,              [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILEDATE,              [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGFORMAT,             [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGWIDTH,              [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGHEIGHT,             [],                         SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGRATIO,              [f"{i18n('Portrait')}//<//f:1.0",
+                                                                                             f"{i18n('Landscape')}//>//f:1.0",
+                                                                                             f"{i18n('Square')}//=//f:1.0"],
+                                                                                                                        SettingsFmt(list, str)),
+            SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_IMGPIXELS,             [f"{i18n('Small')}//<//f:1.0",
+                                                                                             f"{i18n('Medium')}//between//f:1.0//f:8.3",
+                                                                                             f"{i18n('Large')}//>//f:8.3"],
+                                                                                                                        SettingsFmt(list, str)),
 
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER,                     3,                          SettingsFmt(int, [0,1,2,3])),
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER,                     True,                       SettingsFmt(bool)),
@@ -690,6 +723,14 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_PANEL_HIGHLIGHTED,                0,                          SettingsFmt(int, [0, 1])),
             SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY,                  [-1,-1,-1,-1],              SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
             SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED,                 False,                      SettingsFmt(bool)),
+
+
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_SPLITTER_POSITION,              [800, 200]  ,               SettingsFmt(int), SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_TAB_ACTIVE,                     'basic',                    SettingsFmt(str, ['basic','advanced'])),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_GEOMETRY,                [-1,-1,-1,-1],              SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_MAXIMIZED,               False,                      SettingsFmt(bool)),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_BASIC,                 '',                         SettingsFmt(str)),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_ADVANCED,              '',                         SettingsFmt(str)),
 
 
             SettingsRule(BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY,               True,                       SettingsFmt(bool)),
@@ -757,16 +798,16 @@ class BCSettingsDialogBox(QDialog):
         self.setWindowTitle(self.__title)
         self.lvCategory.itemSelectionChanged.connect(self.__categoryChanged)
 
-        self.__itemCatGeneral = QListWidgetItem(buildIcon("pktk:tune"), "General")
+        self.__itemCatGeneral = QListWidgetItem(buildIcon("pktk:tune"), i18n("General"))
         self.__itemCatGeneral.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_GENERAL)
-        self.__itemCatNavigation = QListWidgetItem(buildIcon("pktk:navigation"), "Navigation")
+        self.__itemCatNavigation = QListWidgetItem(buildIcon("pktk:navigation"), i18n("Navigation"))
         self.__itemCatNavigation.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_NAVIGATION)
-        self.__itemCatImageFiles = QListWidgetItem(buildIcon("pktk:image"), "Image files")
+        self.__itemCatImageFiles = QListWidgetItem(buildIcon("pktk:image"), i18n("Image files"))
         self.__itemCatImageFiles.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_IMAGES)
-        self.__itemCatClipboard = QListWidgetItem(buildIcon("pktk:clipboard"), "Clipboard")
+        self.__itemCatClipboard = QListWidgetItem(buildIcon("pktk:clipboard"), i18n("Clipboard"))
         self.__itemCatClipboard.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CLIPBOARD)
-        self.__itemCatCachedImages = QListWidgetItem(buildIcon("pktk:cache_refresh"), "Cached images")
-        self.__itemCatCachedImages.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CACHE)
+        self.__itemCatCachedData = QListWidgetItem(buildIcon("pktk:cache_refresh"), i18n("Cached data"))
+        self.__itemCatCachedData.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CACHE)
 
         self.__uiController = uicontroller
 
@@ -775,6 +816,7 @@ class BCSettingsDialogBox(QDialog):
         self.pbCCIClearCache.clicked.connect(self.__clearCache)
         self.pbCCIClearCacheCS.clicked.connect(self.__clearCacheCS)
         self.pbCCIClearCacheCP.clicked.connect(self.__clearCacheCP)
+        self.pbCCIClearCacheMD.clicked.connect(self.__clearCacheMD)
 
         self.bbOkCancel.accepted.connect(self.__applySettings)
 
@@ -831,7 +873,7 @@ class BCSettingsDialogBox(QDialog):
         self.lvCategory.addItem(self.__itemCatNavigation)
         self.lvCategory.addItem(self.__itemCatImageFiles)
         self.lvCategory.addItem(self.__itemCatClipboard)
-        self.lvCategory.addItem(self.__itemCatCachedImages)
+        self.lvCategory.addItem(self.__itemCatCachedData)
         self.__setCategory(BCSettingsDialogBox.CATEGORY_GENERAL)
 
         # --- NAV Category -----------------------------------------------------
@@ -1123,6 +1165,13 @@ class BCSettingsDialogBox(QDialog):
             self.lblCCINbItemsAndSizeCP.setText(f'{nbItemsP} items, {bytesSizeToStr(sizeItemsP, BCSettingsValues.FILE_UNIT_KB)}')
         self.pbCCIClearCacheCP.setEnabled(sizeItemsP>0)
 
+        dbStats=BCFileCache.globalInstance().getStats()
+        if self.rbCGFileUnitBinary.isChecked():
+            self.lblCCIDbCache.setText(f"{dbStats['nbHash']} images, {bytesSizeToStr(dbStats['dbSize'], BCSettingsValues.FILE_UNIT_KIB)}")
+        else:
+            self.lblCCIDbCache.setText(f"{dbStats['nbHash']} images, {bytesSizeToStr(dbStats['dbSize'], BCSettingsValues.FILE_UNIT_KB)}")
+        self.pbCCIClearCacheMD.setEnabled(dbStats['nbHash']>0)
+
 
     def __clearCache(self):
         """Clear cache after user confirmation"""
@@ -1133,6 +1182,7 @@ class BCSettingsDialogBox(QDialog):
                 ):
             shutil.rmtree(BCFile.thumbnailCacheDirectory(), ignore_errors=True)
             BCFile.initialiseCache()
+            BCFileCache.initialise()
             self.__calculateCacheSize()
 
 
@@ -1155,6 +1205,17 @@ class BCSettingsDialogBox(QDialog):
                 ):
             self.__uiController.clipboard().cachePersistentFlush()
             BCClipboard.initialiseCache()
+            self.__calculateCacheSize()
+
+
+    def __clearCacheMD(self):
+        """Clear metadata cache after user confirmation"""
+
+        if WDialogBooleanInput.display(
+                    i18n(f"{self.__title}::Clear Metadata Cache"),
+                    i18n(f"Current metadata cache content will be cleared ({self.lblCCIDbCache.text()})<br><br>Do you confirm action?")
+                ):
+            BCFileCache.globalInstance().clearDbContent()
             self.__calculateCacheSize()
 
 

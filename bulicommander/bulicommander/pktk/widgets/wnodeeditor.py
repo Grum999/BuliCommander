@@ -28,6 +28,7 @@
 import math
 import json
 import os.path
+import hashlib
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -35,7 +36,7 @@ from PyQt5.QtCore import (
     )
 
 from ..modules.imgutils import (buildIcon, paintOpaqueAsColor)
-from ..modules.utils import Debug
+from ..modules.utils import (JsonQObjectEncoder, JsonQObjectDecoder, Debug)
 from ..pktk import *
 
 # forward declaration of classes (needed for NodeEditorScene Signal declaration...)
@@ -81,16 +82,20 @@ class NodeEditorScene(QObject):
     # declare signals
     sizeChanged=Signal(QSize, QSize)                    # scene size changed: newSize, oldSize
 
+    sceneModified=Signal(bool)                          # scene content has been modified
+
     startLinkingItem=Signal()                           # linking item started: 'from' connector
     endLinkingItem=Signal()                             # linking item stopped: 'to' connector  (or None if no connector)
 
     nodeAdded=Signal(NodeEditorNode)                    # a new node has been added: added node
     nodeRemoved=Signal(NodeEditorNode)                  # a node has been removed: removed node
     linkAdded=Signal(NodeEditorLink)                    # a new link has been added: added link
+    nodeOutputUpdated=Signal(NodeEditorNode, dict)      # a node output has been updated: emitted even if eventOutput  is disabled (Node + dict(connector, value))
     linkRemoved=Signal(NodeEditorLink)                  # a link has been removed: removed link
 
-    nodeSelection=Signal()                              # node selection has changed
-    linkSelection=Signal()                              # link selection has changed
+    selectionChanged=Signal()                           # selection has changed
+    nodeSelectionChanged=Signal()                       # node selection has changed
+    linkSelectionChanged=Signal()                       # link selection has changed
 
     defaultLinkRenderModeChanged=Signal(int)            # default render mode for links has been modified
     defaultLinkColorChanged=Signal(QColor)              # default color value for links has been modified
@@ -124,10 +129,10 @@ class NodeEditorScene(QObject):
         self.__nodes=[]
         self.__links=[]
 
-        # number of current selected nodes
-        self.__selectedNodesCount=0
-        # number of current selected links
-        self.__selectedLinksCount=0
+        # hash of current selected nodes
+        self.__selectedNodesHash=''
+        # hash of current selected links
+        self.__selectedLinksHash=''
 
         # current linking item (link currently created/updated)
         self.__linkingItem=None
@@ -145,6 +150,11 @@ class NodeEditorScene(QObject):
         # cut line
         self.__cutLine=NodeEditorGrCutLine()
         self.__grScene.addItem(self.__cutLine)
+
+        # flag to determinate if scene has been modified
+        self.__isModified=False
+        # flag set to True if scene is being modified
+        self.__inModification=None
 
         #
         # -- default style options --
@@ -184,7 +194,7 @@ class NodeEditorScene(QObject):
 
         # default padding value; when None, use default from scene
         # (will be used by new NodeEditorNode if none is defined)
-        self.__defaultNodePadding=6.0
+        self.__defaultNodePadding=4.0
 
         # default render mode for links
         # (will be used by new NodeEditorLink if none is defined)
@@ -246,18 +256,27 @@ class NodeEditorScene(QObject):
 
     def __checkSelection(self):
         """Check current selected items"""
-        nbSelectedNodes=len(self.selectedNodes())
-        nbSelectedLinks=len(self.selectedNodes())
+        if self.__inClearMode or not self.__inModification is None:
+            # in mass modification state, do not check
+            return
 
-        if nbSelectedNodes!=self.__selectedNodesCount:
-            # selection has changed
-            self.__selectedNodesCount=nbSelectedNodes
-            self.nodeSelection.emit()
+        hash=hashlib.blake2b(digest_size=32)
+        hash.update("".join([node.id() for node in self.selectedNodes()]).encode())
+        selectedNodes=hash.hexdigest()
 
-        if nbSelectedLinks!=self.__selectedLinksCount:
+        hash=hashlib.blake2b(digest_size=32)
+        hash.update("".join([link.id() for link in self.selectedLinks()]).encode())
+        selectedLinks=hash.hexdigest()
+
+        if selectedNodes!=self.__selectedNodesHash:
             # selection has changed
-            self.__selectedLinksCount=nbSelectedLinks
-            self.linkSelection.emit()
+            self.__selectedNodesHash=selectedNodes
+            self.nodeSelectionChanged.emit()
+
+        if selectedLinks!=self.__selectedLinksHash:
+            # selection has changed
+            self.__selectedLinksHash=selectedLinks
+            self.linkSelectionChanged.emit()
 
     def __copyCutToClipboard(self, cutSelection=False):
         """Copy/Cut current selection to clipboard
@@ -278,7 +297,7 @@ class NodeEditorScene(QObject):
                 'nodes': [node.serialize() for node in nodes],
                 'links': [link.serialize() for link in links]
             }
-        dataAsJson=json.dumps(dataAsDict, indent=4, sort_keys=True).encode()
+        dataAsJson=json.dumps(dataAsDict, indent=4, sort_keys=True, cls=JsonQObjectEncoder).encode()
 
         mimeContent=QMimeData()
         for mimeType in ['application/x-pktk-scenecontent', 'text/plain']:
@@ -290,12 +309,14 @@ class NodeEditorScene(QObject):
         clipboard.setMimeData(mimeContent)
 
         if cutSelection:
+            self.__startModification()
             # remove selected item from scene
             for link in links:
                 self.removeLink(link)
 
             for node in nodes:
                 self.removeNode(node)
+            self.__stopModification()
 
         return True
 
@@ -353,6 +374,34 @@ class NodeEditorScene(QObject):
                     link=NodeEditorLink(fromConnector, toConnector)
                     link.deserialize(linkAsDict)
 
+    def __startModification(self):
+        """Start scene modification"""
+        self.__inModification=self.__isModified
+
+    def __stopModification(self):
+        """Stop scene modification"""
+        if self.__inModification!=self.__isModified:
+            # emit signal only if modification has really been made
+            self.__checkSelection()
+            self.sceneModified.emit(self.__isModified)
+        self.__inModification=None
+
+    def isModified(self):
+        """Return is scene content has been modified
+
+        note: modification to scene style (color, grid, ...) are not considered
+              as a modification of scene
+        """
+        return self.__isModified
+
+    def setModified(self, value=True):
+        """Set modification status for scene"""
+        if isinstance(value, bool) and value!=self.__isModified:
+            self.__isModified=value
+            if self.__inModification is None and not self.__inClearMode:
+                self.__checkSelection()
+                self.sceneModified.emit(self.__isModified)
+
     def clear(self):
         """Clear scene
 
@@ -368,6 +417,7 @@ class NodeEditorScene(QObject):
             self.removeNode(self.__nodes[-1])
 
         self.__inClearMode=False
+        self.__checkSelection()
 
     def addNode(self, node):
         """Add node to current scene"""
@@ -375,6 +425,8 @@ class NodeEditorScene(QObject):
             self.__nodes.append(node)
             self.__grScene.addItem(node.graphicItem())
             self.nodeAdded.emit(node)
+            self.__checkSelection()
+            self.setModified()
 
     def removeNode(self, node):
         """Remove node from current scene
@@ -392,6 +444,8 @@ class NodeEditorScene(QObject):
             self.__grScene.removeItem(node.graphicItem())
             self.__nodes.remove(node)
             self.nodeRemoved.emit(node)
+            self.__checkSelection()
+            self.setModified()
 
     def addLink(self, link):
         """Add link to current scene"""
@@ -400,6 +454,8 @@ class NodeEditorScene(QObject):
             self.__grScene.addItem(link.graphicItem())
             if link!=self.__linkingItem and not link.connectorTo() is None:
                 self.linkAdded.emit(link)
+                self.__checkSelection()
+                self.setModified()
 
     def removeLink(self, link):
         """Remove `link` from current scene
@@ -410,7 +466,10 @@ class NodeEditorScene(QObject):
             self.__grScene.removeItem(link.graphicItem())
             self.__links.remove(link)
             if link!=self.__linkingItem and not link.connectorTo() is None:
+                #link.setConnectorTo(None)
+                self.__checkSelection()
                 self.linkRemoved.emit(link)
+                self.setModified()
             # need to force cleanup
             del link
 
@@ -431,6 +490,7 @@ class NodeEditorScene(QObject):
             oldSize=self.__size
             self.__size=size
             self.sizeChanged.emit(self.__size, oldSize)
+            self.setModified()
 
     def linkingItem(self):
         """Return current linking item if any (a link that is currently linked
@@ -480,6 +540,7 @@ class NodeEditorScene(QObject):
         - NodeEditorScene.SELECTION_NODES: all nodes are selected
         - NodeEditorScene.SELECTION_LINKS: all links are selected
         """
+        self.__startModification()
         if perimeter is None or perimeter&NodeEditorScene.SELECTION_NODES:
             for node in self.__nodes:
                 node.setSelected(True)
@@ -487,6 +548,9 @@ class NodeEditorScene(QObject):
         if perimeter is None or perimeter&NodeEditorScene.SELECTION_LINKS:
             for link in self.__links:
                 link.setSelected(True)
+
+        self.__stopModification()
+        self.__checkSelection()
 
     def deselectAll(self, perimeter=None):
         """Unselect all items in scene
@@ -496,6 +560,7 @@ class NodeEditorScene(QObject):
         - NodeEditorScene.SELECTION_NODES: all nodes are deselected
         - NodeEditorScene.SELECTION_LINKS: all links are deselected
         """
+        self.__startModification()
         if perimeter is None or perimeter&NodeEditorScene.SELECTION_NODES:
             for node in self.__nodes:
                 node.setSelected(False)
@@ -503,6 +568,9 @@ class NodeEditorScene(QObject):
         if perimeter is None or perimeter&NodeEditorScene.SELECTION_LINKS:
             for link in self.__links:
                 link.setSelected(False)
+
+        self.__stopModification()
+        self.__checkSelection()
 
     def links(self, item=None):
         """Return links
@@ -562,8 +630,10 @@ class NodeEditorScene(QObject):
                 if path.intersects(link.graphicItem().path()):
                     linksToRemove.append(link)
 
+            self.__startModification()
             for link in linksToRemove:
                 self.removeLink(link)
+            self.__stopModification()
 
     def copyToClipboard(self):
         """Copy selection to clipboard
@@ -617,7 +687,7 @@ class NodeEditorScene(QObject):
             jsonData = bytearray(clipboardMimeContent.data('application/x-pktk-scenecontent')).decode()
 
             try:
-                jsonAsDict = json.loads(jsonData)
+                jsonAsDict = json.loads(jsonData, cls=JsonQObjectDecoder)
             except Exception as e:
                 Debug.print("Can't parse clipboard data: {0}", str(e))
                 return False
@@ -672,6 +742,8 @@ class NodeEditorScene(QObject):
                                 if 'y' in nodeAsDict['geometry']['position'] and isinstance(nodeAsDict['geometry']['position']['y'], (int, float)):
                                     nodeAsDict['geometry']['position']['y']+=offset.y()
 
+                self.__startModification()
+
                 # deselect everything before paste
                 self.deselectAll()
 
@@ -680,6 +752,8 @@ class NodeEditorScene(QObject):
                 if 'links' in jsonAsDict:
                     # links are imported only if there's at least one nodes...
                     self.__importLinksFromDict(jsonAsDict)
+
+                self.__stopModification()
 
     def canCopyCutToClipboard(self):
         """Return True if current selection can be copied/cut to clipboard"""
@@ -708,6 +782,19 @@ class NodeEditorScene(QObject):
             return True
         else:
             return False
+
+    def nodesBoundingRect(self):
+        """Return bounding rect for nodes (QRectF)
+
+        Normally QGraphicsScene.itemsBoundingRect() should be enough but don't know
+        why, in some case the returned bounding rect is completely weird...
+        boundingRect=self.__scene.grScene().itemsBoundingRect()
+        """
+        returned=QRectF()
+        for node in self.__nodes:
+            returned=returned.united(node.graphicItem().sceneBoundingRect())
+
+        return returned
 
     # -- default render settings for items in scene --
 
@@ -1078,7 +1165,7 @@ class NodeEditorScene(QObject):
         """
         try:
             # convert as Json: ensure data are serializable
-            extraData=json.dumps(dataAsDict)
+            extraData=json.dumps(dataAsDict, cls=JsonQObjectEncoder)
             # ok.. store data
             self.__extraData=dataAsDict
         except Exception as e:
@@ -1142,13 +1229,15 @@ class NodeEditorScene(QObject):
                             }
                     },
                 'nodes': [node.serialize() for node in self.__nodes],
-                'links': [link.serialize() for link in self.__links]
+                'links': [link.serialize() for link in self.__links if not link.serialize() is None]
             }
 
     def deserialize(self, jsonAsDict):
         """Deserialize given dictionnary `jsonAsDict` to a scene"""
         # deserialize scene data only scene if available
         if isinstance(jsonAsDict, dict) and 'scene' in jsonAsDict:
+            self.__startModification()
+
             # 1. reset current scene content
             self.clear()
 
@@ -1278,14 +1367,18 @@ class NodeEditorScene(QObject):
             if 'links' in jsonAsDict and isinstance(jsonAsDict['links'], list):
                 self.__importLinksFromDict(jsonAsDict)
 
+            # consider after import that scene is not modified
+            self.setModified(False)
+            self.__stopModification()
+
     def toJson(self, indent=4, sortKeys=True):
         """Convert current scene to a json string"""
-        return json.dumps(self.serialize(), indent=indent, sort_keys=sortKeys)
+        return json.dumps(self.serialize(), indent=indent, sort_keys=sortKeys, cls=JsonQObjectEncoder)
 
     def fromJson(self, jsonAsStr):
         """Convert provided `dataAsJson` string to scene"""
         try:
-            jsonAsDict = json.loads(jsonAsStr)
+            jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
         except Exception as e:
             Debug.print("Can't parse json: {0}", str(e))
             return False
@@ -1338,7 +1431,7 @@ class NodeEditorScene(QObject):
             return NodeEditorScene.IMPORT_FILE_CANT_READ
 
         try:
-            jsonAsDict = json.loads(jsonAsStr)
+            jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
         except Exception as e:
             Debug.print("Can't parse file {0}: {1}", fileName, str(e))
             return NodeEditorScene.IMPORT_FILE_NOT_JSON
@@ -1388,7 +1481,7 @@ class NodeEditorNode(QObject):
     defaultConnectorInputColorChanged=Signal(QColor)                            # default color for input connector has been changed: new color value
     defaultConnectorOutputColorChanged=Signal(QColor)                           # default color for output connector has been changed: new color value
 
-    def __init__(self, scene, title, connectors=[], parent=None):
+    def __init__(self, scene, title, connectors=[], widget=None, parent=None):
         super(NodeEditorNode, self).__init__(parent)
 
         if not isinstance(scene, NodeEditorScene):
@@ -1487,9 +1580,6 @@ class NodeEditorNode(QObject):
         self.__grItem=NodeEditorGrNode(self)
         self.__grItem.setCloseButtonVisibility(self.__scene.optionNodeCloseButtonVisible())
 
-        # add curent node to scene
-        self.__scene.addNode(self)
-
         # counters maintain number of connector for each node's corners
         self.__nbLeftTop=0
         self.__nbLeftBottom=0
@@ -1519,6 +1609,16 @@ class NodeEditorNode(QObject):
         self.borderSizeChanged.emit(self.borderSize())
 
         self.__scene.optionNodeCloseButtonVisibilityChanged.connect(self.__updateCloseButtonVisibility)
+
+        #
+        if not widget is None:
+            self.setWidget(widget)
+
+        # add curent node to scene
+        self.__scene.addNode(self)
+
+    def __repr__(self):
+        return f"<NodeEditorNode({self.__id}, '{self.__title}')>"
 
     def __updateCloseButtonVisibility(self, value):
         """Update close button visibility"""
@@ -1739,6 +1839,9 @@ class NodeEditorNode(QObject):
             # get connector from id
             if key in self.__connectors and self.__connectors[key].isOutput():
                 self.__connectors[key].setValue(value[key])
+        # in all case (outputEventEnabled or not) emit signal to indicate the node
+        # output is updated
+        self.__scene.nodeOutputUpdated.emit(self, value)
 
     def itemChange(self, change, value):
         """Something has been changed on graphic item
@@ -1756,6 +1859,7 @@ class NodeEditorNode(QObject):
             self.selectionChanged.emit(self.__isSelected)
         elif change==QGraphicsItem.ItemPositionHasChanged:
             self.positionChanged.emit(value)
+            self.__scene.setModified()
 
     def isRemovable(self):
         """Return if node is removable"""
@@ -1936,7 +2040,8 @@ class NodeEditorNode(QObject):
             connector.valueChanged.disconnect(self.__connectorValueChanged)
             # remove connector only if exists
             self.__connectors.pop(connector.id())
-            self.__connectorsId.pop(connector.id())
+            self.__connectorsId.pop(self.__connectorsId.index(connector.id()))
+            self.__scene.grScene().removeItem(connector.graphicItem())
             # need to recalculate positions
             self.__updateAllConnectorPosition()
             return True
@@ -2515,6 +2620,9 @@ class NodeEditorConnector(QObject):
 
         self.checkLinks()
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__}({self.__id}, {self.__direction}, {len(self.links())})>"
+
     def __updatePosition(self):
         """Update position for graphic item
 
@@ -2835,6 +2943,14 @@ class NodeEditorConnector(QObject):
                 if 'radius' in style and isinstance(style['radius'], (int, float)):
                     self.setRadius(style['radius'])
 
+    def toolTip(self):
+        """Return tooltip set fot connector"""
+        return self.__grItem.toolTip()
+
+    def setToolTip(self, value):
+        """Set tooltip for connector"""
+        self.__grItem.setToolTip(value)
+
 
 
 class NodeEditorLink(QObject):
@@ -2862,6 +2978,9 @@ class NodeEditorLink(QObject):
             raise EInvalidType("Given `fromConnector` must be an output connector")
         elif not toConnector is None and toConnector.isOutput():
             raise EInvalidType("Given `toConnector` must be an input connector")
+
+        # link's unique Id
+        self.__id=QUuid.createUuid().toString()
 
         # QGraphicsItem definition
         self.__grItem=None
@@ -2911,9 +3030,6 @@ class NodeEditorLink(QObject):
         # QGraphicsItem for link
         self.__grItem=NodeEditorGrLink(self)
 
-        # add link to scene
-        self.__scene.addLink(self)
-
         self.sizeChanged.emit(self.size())
         self.renderModeChanged.emit(self.renderMode())
         self.colorChanged.emit(self.color())
@@ -2921,10 +3037,14 @@ class NodeEditorLink(QObject):
 
         self.__updateConnectors()
 
+        # add link to scene
+        self.__scene.addLink(self)
+
     # Deleting (Calling destructor)
     def __del__(self):
         if self.__grItem and self.__grItem.scene():
             self.__grItem.scene().removeItem(self)
+            self.setConnectorTo(None)
             del self.__grItem
 
     def __defaultSceneLinkRenderModeChanged(self, value):
@@ -3147,8 +3267,15 @@ class NodeEditorLink(QObject):
 
             self.__grItem.setSelected(selectionStatus)
 
+    def id(self):
+        """Return Unique Id for node"""
+        return self.__id
+
     def serialize(self):
         """Return link definition as dictionnary"""
+        if self.__toConnector is None:
+            # do not serialize link if not complete
+            return None
         return {
                 'connect': {
                         'from': f"{self.__fromConnector.node().id()}:{self.__fromConnector.id()}",
@@ -3193,6 +3320,7 @@ class NodeEditorLink(QObject):
                     self.setSelected(status['isSelected'])
 
 
+
 # ------------------------------------------------------------------------------
 
 class NodeEditorNodeWidget(QWidget):
@@ -3219,8 +3347,7 @@ class NodeEditorNodeWidget(QWidget):
     def __init__(self, scene, title, connectors=[], parent=None):
         super(NodeEditorNodeWidget, self).__init__(parent)
 
-        self.__node=NodeEditorNode(scene, title, connectors=connectors)
-        self.__node.setWidget(self)
+        self.__node=NodeEditorNode(scene, title, connectors=connectors, widget=self)
         self.__node.updateOutputs()
 
     def node(self):
@@ -3362,6 +3489,7 @@ class NodeEditorGrTitleButton(QGraphicsWidget):
             self.__size=size
             self.updateColor()
             self.resize(QSizeF(self.__size))
+
 
 
 class NodeEditorGrScene(QGraphicsScene):
@@ -3696,6 +3824,7 @@ class NodeEditorGrScene(QGraphicsScene):
         self.update()
 
 
+
 class NodeEditorGrNode(QGraphicsItem):
     """A default rendered node"""
 
@@ -3806,6 +3935,7 @@ class NodeEditorGrNode(QGraphicsItem):
         rectF=QRectF(padding, titleHeight+padding, self.__boundingRect.width()-padding2, self.__boundingRect.height()-padding2-titleHeight)
         self.__proxyWidget.setGeometry(rectF)
         self.__proxyWidget.setMaximumSize(rectF.size())
+        self.__proxyWidget.setMinimumSize(rectF.size())
 
     def __updateTitle(self, node=None):
         """Update title from node"""
@@ -4081,6 +4211,7 @@ class NodeEditorGrNode(QGraphicsItem):
         self.__updateSize()
 
 
+
 class NodeEditorGrConnector(QGraphicsItem):
     """A default rendered connector"""
 
@@ -4239,6 +4370,7 @@ class NodeEditorGrConnector(QGraphicsItem):
         self.__borderColor=value
         self.__borderPen.setColor(value)
         self.update()
+
 
 
 class NodeEditorGrLink(QGraphicsPathItem):
@@ -4443,6 +4575,7 @@ class NodeEditorGrLink(QGraphicsPathItem):
         painter.drawPath(self.path())
 
 
+
 class NodeEditorGrCutLine(QGraphicsItem):
     """A cut line"""
 
@@ -4549,7 +4682,10 @@ class WNodeEditorView(QGraphicsView):
     """A graphic view dedicated to render scene"""
     zoomChanged=Signal(float)
 
-    def __init__(self, scene, parent=None):
+    def __init__(self, parent=None, scene=None):
+        if scene is None:
+            scene=NodeEditorScene()
+
         if not isinstance(scene, NodeEditorScene):
             raise EInvalidType("Given `scene` must be a <NodeEditorScene>")
 
@@ -4634,13 +4770,19 @@ class WNodeEditorView(QGraphicsView):
 
         super(WNodeEditorView, self).mouseMoveEvent(event)
 
-    def wheelEvent(self, event:QWheelEvent):
+    def wheelEvent(self, event):
         """Manage to zoom with wheel"""
+        hoverItem=self.itemAt(event.pos())
 
-        if event.angleDelta().y() > 0:
-            self.setZoom(self.__currentZoomFactor + self.__zoomStep)
+        if not isinstance(hoverItem, (QGraphicsProxyWidget, NodeEditorGrNode)):
+            # zoom in/zoom out if not hover a node
+            if event.angleDelta().y() > 0:
+                self.setZoom(self.__currentZoomFactor + self.__zoomStep)
+            else:
+                self.setZoom(self.__currentZoomFactor - self.__zoomStep)
         else:
-            self.setZoom(self.__currentZoomFactor - self.__zoomStep)
+            # hover a node, let node's widget manage event
+            super(WNodeEditorView, self).wheelEvent(event)
 
     def zoom(self):
         """Return current zoom property
@@ -4707,18 +4849,31 @@ class WNodeEditorView(QGraphicsView):
 
     def zoomToFit(self):
         """Zoom to fit scene content"""
-        boundingRect=self.__scene.grScene().itemsBoundingRect()
+        boundingRect=self.__scene.nodesBoundingRect()
         scale=round(min((self.frameSize().width()-50) / boundingRect.width(), (self.frameSize().height()-50) / boundingRect.height()), 2)
 
         self.setZoom(scale)
-        self.centerToContent()
+        self.centerToContent(boundingRect)
 
-    def centerToContent(self):
-        """Center view to content"""
-        boundingRect=self.__scene.grScene().itemsBoundingRect()
+    def centerToContent(self, content=None):
+        """Center view to `content`
+
+        If None, get nodes bounding rect
+        Otherwise use given content (QRect/QRectF)
+        """
+        if isinstance(content, QRectF):
+            boundingRect=content
+        elif isinstance(content, QRect):
+            boundingRect=QRectF(content)
+        else:
+            boundingRect=self.__scene.nodesBoundingRect()
         self.centerOn(boundingRect.center())
 
     def resetZoom(self):
         """reset zoom to 1:1 + center to content"""
         self.setZoom(1.0)
         self.centerToContent()
+
+    def nodeScene(self):
+        """Return NodeEditorScene"""
+        return self.__scene

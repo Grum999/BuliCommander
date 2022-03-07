@@ -73,7 +73,7 @@ class SettingsFmt(object):
                 else:
                     # check items values
                     for item in value:
-                        self.check(item)
+                        self.check(item, self.__values)
             elif isinstance(self.__values, list):
                 # check if given value is in list of defined values
                 if not value in self.__values:

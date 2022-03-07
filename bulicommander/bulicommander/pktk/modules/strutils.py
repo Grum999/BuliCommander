@@ -66,7 +66,7 @@ def strToBytesSize(value):
     elif isinstance(value, float):
         return int(value)
     elif isinstance(value, str):
-        fmt = re.match("^(\d*\.\d*|\d+)(gb|gib|mb|mib|kb|kib|b)?$", value.lower())
+        fmt = re.match("^(\d*\.\d*|\d+)\s*(gb|gib|mb|mib|kb|kib|b)?$", value.lower())
 
         if not fmt is None:
             returned = float(fmt.group(1))
@@ -278,3 +278,7 @@ def indent(text, firstIndent='', nextIndent='', strip=False):
         result.append(line)
 
     return os.linesep.join(result)
+
+def boolYesNo(value):
+    """Return yes or no according to value is True or False"""
+    return i18n("Yes") if value else i18n("No")

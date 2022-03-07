@@ -87,6 +87,7 @@ from .bcfile import (
         BCFileList,
         BCFileListRule,
         BCFileListSortRule,
+        BCFileListPath,
         BCFileManagedFormat,
         BCFileProperty,
         BCFileThumbnailSize,
@@ -390,7 +391,7 @@ class BCMainViewFiles(QTreeView):
 
     def __updateIconsProcessed(self, processedNfo):
         """update icon in treeview list"""
-        fileIndex, icon = processedNfo
+        fileIndex, icon, nbProcessed = processedNfo
 
         if not fileIndex is None and fileIndex < self.__model.rowCount():
             if not icon is None:
@@ -1415,15 +1416,15 @@ class BCMainViewTab(QFrame):
     def __filesRefresh(self, fileQuery=None):
         """update file list with current path"""
         def fileQueryStepExecuted(value):
-            if value[0] == BCFileList.STEPEXECUTED_SEARCH:
+            if value[0] == BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS:
                 # in this case, value[1] returns number of files to scan
                 if value[1] > 500:
                     self.__filesProgressStart(value[1], i18n('Analyzing file %v of %m (%p%)'))
-            elif value[0] == BCFileList.STEPEXECUTED_SCAN:
+            elif value[0] == BCFileList.STEPEXECUTED_ANALYZE_METADATA:
                 # in this case, scanning is finished
                 if self.__filesPbVisible:
                     self.__filesProgressStop()
-            elif value[0] == BCFileList.STEPEXECUTED_SCANNING:
+            elif value[0] == BCFileList.STEPEXECUTED_PROGRESS_ANALYZE:
                 # in this case, value[1] give processed index
                 if self.__filesPbVisible:
                     self.__filesProgressSetNext()
@@ -1474,30 +1475,17 @@ class BCMainViewTab(QFrame):
             # MODE_PATH
             if fileQuery is None:
                 if self.__filesQuery is None:
-                    filter = BCFileListRule()
-
-                    if self.__uiController.optionViewFileManagedOnly():
-                        reBase = [fr'\.{extension}' for extension in BCFileManagedFormat.list()]
-                        if self.__uiController.optionViewFileBackup():
-                            bckSufRe=BCFileManagedFormat.backupSuffixRe()
-                            reBase+=[fr'\.{extension}{bckSufRe}' for extension in BCFileManagedFormat.list()]
-
-                        filter.setName((r're/i:({0})$'.format('|'.join(reBase)), 'match'))
-                    else:
-                        filter.setName((r're:.*', 'match'))
-
                     self.__filesQuery = BCFileList()
-                    self.__filesQuery.addPath(path)
+                    self.__filesQuery.addPath(BCFileListPath(path,
+                                                             False,
+                                                             self.__uiController.optionViewFileHidden(),
+                                                             self.__uiController.optionViewFileManagedOnly(),
+                                                             self.__uiController.optionViewFileBackup()))
                     self.__filesQuery.setIncludeDirectories(True)
-
-                    if self.__uiController.optionViewFileHidden():
-                        self.__filesQuery.setIncludeHidden(True)
-                    self.__filesQuery.addRule(filter)
             elif not isinstance(fileQuery, BCFileList):
                 raise EInvalidType('Given `fileQuery` must be a <BCFileList>')
             else:
                 self.__filesQuery = fileQuery
-
 
             try:
                 # ensure there's no current connection before create a new one
@@ -1510,7 +1498,7 @@ class BCMainViewTab(QFrame):
             self.treeViewFiles.clear()
             self.treeViewFiles.endUpdate()
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            self.__filesQuery.execute(True)
+            self.__filesQuery.execute()
             QApplication.restoreOverrideCursor()
 
         # sort files according to columns + add to treeview
@@ -1816,7 +1804,6 @@ class BCMainViewTab(QFrame):
             searchBackupRule = BCFileListRule()
             searchBackupRule.setName((rePattern, 'match'))
 
-
             backupList = BCFileList()
             backupList.addPath(file.path())
             backupList.addRule(searchBackupRule)
@@ -1877,7 +1864,7 @@ class BCMainViewTab(QFrame):
                 else:
                     self.lblImgSize.setText(f'{file.imageSize().width()}x{file.imageSize().height()}')
 
-                imgNfo = file.getMetaInformation()
+                imgNfo = file.getMetaInformation(True)
 
                 if 'resolution' in imgNfo:
                     self.lblImgResolution.setText(imgNfo['resolution'])
@@ -2063,11 +2050,11 @@ class BCMainViewTab(QFrame):
 
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
-                    if len(imgNfo['document.referenceImages']) > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', str(len(imgNfo['document.referenceImages'])))
+                    if imgNfo['document.referenceImages.count'] > 0:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', str(imgNfo['document.referenceImages.count']))
 
                         refNumber=1
-                        for image in imgNfo['document.referenceImages']:
+                        for image in imgNfo['document.referenceImages.data']:
                             label=BCWImageLabel(image)
                             label.clicked.connect(loadReferenceImageAsnewDocument)
                             label.setToolTip(i18n("Click to open as a new document"))

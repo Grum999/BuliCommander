@@ -24,6 +24,8 @@ import locale
 import re
 import sys
 import os
+import json
+import base64
 
 import xml.etree.ElementTree as ET
 
@@ -36,6 +38,7 @@ from PyQt5.QtCore import (
     )
 
 from .imgutils import buildIcon
+from ..widgets.wcolorbutton import QEColor
 from ..pktk import *
 
 # -----------------------------------------------------------------------------
@@ -400,6 +403,108 @@ def replaceLineEditClearButton(lineEdit):
     lineEdit.findChild(QToolButton).setIcon(buildIcon("pktk:edit_text_clear"))
 
 
+# ------------------------------------------------------------------------------
+
+class JsonQObjectEncoder(json.JSONEncoder):
+    """Json encoder class to take in account additional object
+
+    data={
+        v1: QSize(1,2),
+        v2: QEColor('#ffff00')
+    }
+    json.dumps(data, cls=JsonQObjectEncoder)
+
+    will return string:
+        '''
+        {"v1": {
+                "objType": 'QSize',
+                "width": 1,
+                "height": 2,
+            },
+         "v2": {
+                "objType": 'QEColor',
+                "color": '#ffff00',
+                "isNone": false,
+            }
+        }
+        '''
+    """
+    def default(self, objectToEncode):
+        if isinstance(objectToEncode, QSize):
+            return {
+                    'objType': "QSize",
+                    'width': objectToEncode.width(),
+                    'height': objectToEncode.height()
+                }
+        elif isinstance(objectToEncode, QEColor):
+            return {
+                    'objType': "QEColor",
+                    'color': objectToEncode.name(),
+                    'isNone': objectToEncode.isNone()
+                }
+        elif isinstance(objectToEncode, QImage):
+            ptr = objectToEncode.bits()
+            ptr.setsize(objectToEncode.byteCount())
+            return {
+                    'objType': "QImage",
+                    'b64': base64.b64encode(ptr.asstring()).decode()
+                }
+        elif isinstance(objectToEncode, bytes):
+            return {
+                    'objType': "bytes",
+                    'b64': base64.b64encode(objectToEncode).decode()
+                }
+        # Let the base class default method raise the TypeError
+        return super(JsonQObjectEncoder, self).default(objectToEncode)
+
+
+class JsonQObjectDecoder(json.JSONDecoder):
+    """Json decoder class to take in account additional object
+
+    json string:
+        '''
+        {"v1": {
+                "objType": 'QSize',
+                "width": 1,
+                "height": 2,
+            },
+         "v2": {
+                "objType": 'QEColor',
+                "color": '#ffff00',
+                "isNone": false,
+            }
+        }
+        '''
+
+    json.loads(data, cls=JsonQObjectDecoder)
+
+    will return dict:
+        {
+            v1: QSize(1,2),
+            v2: QEColor('#ffff00')
+        }
+    """
+    def __init__(self):
+        json.JSONDecoder.__init__(self, object_hook=self.dict2obj)
+
+    def dict2obj(self, objectToDecode):
+        if ('objType' in objectToDecode and objectToDecode['objType']=="QSize" and
+            'width' in objectToDecode and 'height' in objectToDecode):
+            return QSize(objectToDecode['width'], objectToDecode['height'])
+        elif ('objType' in objectToDecode and objectToDecode['objType']=="QEColor" and
+              'color' in objectToDecode and 'isNone' in objectToDecode):
+            returned=QEColor(objectToDecode['color'])
+            returned.setNone(objectToDecode['isNone'])
+            return returned
+        elif ('objType' in objectToDecode and objectToDecode['objType']=="QImage" and
+              'b64' in objectToDecode):
+            return QImage.fromData(base64.b64decode(objectToDecode['b64']))
+        elif ('objType' in objectToDecode and objectToDecode['objType']=="bytes" and
+              'b64' in objectToDecode):
+            return base64.b64decode(objectToDecode['b64'])
+
+        # Let the base class default method raise the TypeError
+        return objectToDecode
 
 
 # ------------------------------------------------------------------------------

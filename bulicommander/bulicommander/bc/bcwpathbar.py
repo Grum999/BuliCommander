@@ -89,6 +89,7 @@ class BCWPathBar(QFrame):
     QUICKREF_RESERVED_HISTORY = 7
     QUICKREF_RESERVED_BACKUPFILTERDVIEW = 8
     QUICKREF_RESERVED_FLAYERFILTERDVIEW = 9 # file layer
+    QUICKREF_SEARCHRESULTS_LIST = 10 # search results
 
     OPTION_SHOW_NONE        =       0b0000000000000000
     OPTION_SHOW_ALL         =       0b0000000111111111
@@ -482,30 +483,31 @@ class BCWPathBar(QFrame):
 
             for view in self.__savedView.list():
                 # view = (name, files)
-                action = buildQAction([("pktk:saved_view_file", QIcon.Normal),
-                                       ("pktk:saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
-                action.setFont(self.__font)
-                action.setStatusTip(i18n(f"Add selected files to view '{view[0].replace('&', '&&')}' (Current files in view: {len(view[1])})" ))
-                action.setProperty('action', 'add_to_view')
-                action.setProperty('path', f'@{view[0]}')
+                if not re.match("^searchresult:", view[0]):
+                    action = buildQAction([("pktk:saved_view_file", QIcon.Normal),
+                                           ("pktk:saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
+                    action.setFont(self.__font)
+                    action.setStatusTip(i18n(f"Add selected files to view '{view[0].replace('&', '&&')}' (Current files in view: {len(view[1])})" ))
+                    action.setProperty('action', 'add_to_view')
+                    action.setProperty('path', f'@{view[0]}')
 
-                if isSavedView and self.__savedView.current(True) == view[0] or not allowAddRemove:
-                    action.setEnabled(False)
+                    if isSavedView and self.__savedView.current(True) == view[0] or not allowAddRemove:
+                        action.setEnabled(False)
 
-                menu2.addAction(action)
+                    menu2.addAction(action)
 
-                action = buildQAction([("pktk:saved_view_file", QIcon.Normal),
-                                       ("pktk:saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
-                action.setFont(self.__font)
-                action.setCheckable(True)
-                action.setStatusTip(i18n(f'Files in view: {len(view[1])}'))
-                action.setProperty('action', 'go_to_view')
-                action.setProperty('path', f'@{view[0]}')
+                    action = buildQAction([("pktk:saved_view_file", QIcon.Normal),
+                                           ("pktk:saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
+                    action.setFont(self.__font)
+                    action.setCheckable(True)
+                    action.setStatusTip(i18n(f'Files in view: {len(view[1])}'))
+                    action.setProperty('action', 'go_to_view')
+                    action.setProperty('path', f'@{view[0]}')
 
-                if isSavedView and self.__savedView.current(True) == view[0]:
-                    action.setChecked(True)
+                    if isSavedView and self.__savedView.current(True) == view[0]:
+                        action.setChecked(True)
 
-                menu.addAction(action)
+                    menu.addAction(action)
 
         if isSavedView:
             self.__actionSavedViewsClear.setEnabled(True)
@@ -719,7 +721,7 @@ class BCWPathBar(QFrame):
 
     def setPath(self, path=None, force=False):
         """Set current path
-        
+
         If `force` is True, force to set path even if path already set with given value (do a "refresh")
         """
         self.frameBreacrumbPath.set_path(path, force)

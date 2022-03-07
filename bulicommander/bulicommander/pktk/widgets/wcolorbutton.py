@@ -43,6 +43,13 @@ class QEColor(QColor):
 
         self.__isNone=(value is None)
 
+    def __deepcopy__(self, memo):
+        """Used by pickle from copy.deepcopy()"""
+        returned=QEColor()
+        returned.setNamedColor(self.name())
+        returned.setNone(self.__isNone)
+        return returned
+
     def isNone(self):
         return self.__isNone
 

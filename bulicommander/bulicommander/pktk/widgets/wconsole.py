@@ -553,11 +553,11 @@ class WConsole(QPlainTextEdit):
     def appendLine(self, text, type=WConsoleType.NORMAL, data=None):
         """Append a new line to console
 
-        Given `style` is a combination of WConsoleTextStyle
-            Example: WConsoleTextStyle.FONT_BOLD|WConsoleTextStyle.COLOR_RED
-
         Given `type` is a WConsoleType value
         """
+        if isinstance(text, list):
+            text="\n".join(text)
+
         lines=self.__formatText(text)
         for line in lines:
             self.appendHtml(line)
@@ -570,6 +570,8 @@ class WConsole(QPlainTextEdit):
 
     def append(self, text):
         """Append to current line"""
+        if isinstance(text, list):
+            text="\n".join(text)
 
         texts=self.__formatText(text)
 
