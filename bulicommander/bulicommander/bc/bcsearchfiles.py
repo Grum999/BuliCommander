@@ -453,6 +453,26 @@ class BCSearchFilesDialogBox(QDialog):
         self.tbAdvancedZoomToFit.clicked.connect(self.wneAdvancedView.zoomToFit)
         self.tbAdvancedZoom1_1.clicked.connect(self.wneAdvancedView.resetZoom)
 
+        actionBasicSearchSave=QAction(i18n("Save"), self)
+        actionBasicSearchSave.triggered.connect(lambda: self.saveFile('basic'))
+        actionBasicSearchSaveAs=QAction(i18n("Save as..."), self)
+        actionBasicSearchSaveAs.triggered.connect(lambda: self.saveFile('basic', True))
+
+        actionAdvancedSearchSave=QAction(i18n("Save"), self)
+        actionAdvancedSearchSave.triggered.connect(lambda: self.saveFile('advanced'))
+        actionAdvancedSearchSaveAs=QAction(i18n("Save as..."), self)
+        actionAdvancedSearchSaveAs.triggered.connect(lambda: self.saveFile('advanced', True))
+
+        menuBasicSearchSave = QMenu(self.tbBasicSearchSave)
+        menuBasicSearchSave.addAction(actionBasicSearchSave)
+        menuBasicSearchSave.addAction(actionBasicSearchSaveAs)
+        self.tbBasicSearchSave.setMenu(menuBasicSearchSave)
+
+        menuAdvancedSearchSave = QMenu(self.tbAdvancedSearchSave)
+        menuAdvancedSearchSave.addAction(actionAdvancedSearchSave)
+        menuAdvancedSearchSave.addAction(actionAdvancedSearchSaveAs)
+        self.tbAdvancedSearchSave.setMenu(menuAdvancedSearchSave)
+
         self.tbAdvancedSearchSave.clicked.connect(lambda: self.saveFile('advanced'))
         self.tbAdvancedSearchOpen.clicked.connect(lambda: self.openFile('advanced'))
         self.tbBasicSearchSave.clicked.connect(lambda: self.saveFile('basic'))
@@ -475,6 +495,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.__scene.linkAdded.connect(self.__advancedSearchChanged)
         self.__scene.linkRemoved.connect(self.__advancedSearchChanged)
         self.__scene.nodeOutputUpdated.connect(self.__advancedSearchChanged)
+        self.__scene.sceneModified.connect(self.__updateFileNameLabel)
         self.__scene.setFormatIdentifier("bulicommander-search-filter-advanced")
 
         self.wsffpAdvanced.modified.connect(self.__advancedFileFromPathChanged)
@@ -492,6 +513,11 @@ class BCSearchFilesDialogBox(QDialog):
 
         self.__bcFileList.stepExecuted.connect(self.__executeSearchProcessSignals)
 
+        self.wsffrBasic.modified.connect(self.__updateFileNameLabel)
+        self.wsffpBasic.modified.connect(self.__updateFileNameLabel)
+        self.wsifrBasic.modified.connect(self.__updateFileNameLabel)
+        self.wssrBasic.modified.connect(self.__updateFileNameLabel)
+
         self.__basicResetSearch(True)
         self.__advancedResetSearch(True)
         self.__advancedSelectionChanged()
@@ -505,6 +531,31 @@ class BCSearchFilesDialogBox(QDialog):
         """Dialog is closed"""
         self.__saveSettings()
         event.accept()
+
+    def __updateFileNameLabel(self):
+        """Update file name in status bar according to current tab"""
+        modified=''
+        if self.twSearchModes.currentIndex()==BCSearchFilesDialogBox.__TAB_BASIC_SEARCH:
+            if (self.wsffrBasic.isModified()
+                or  self.wsffpBasic.isModified()
+                or  self.wsifrBasic.isModified()
+                or  self.wssrBasic.isModified()):
+                modified=f" ({i18n('modified')})"
+
+            if self.__currentFileBasic is None or self.__currentFileBasic=='':
+                self.lblFileName.setText(f"[{i18n('Not saved')}]")
+            else:
+                self.lblFileName.setText(f"{self.__currentFileBasic}{modified}")
+        elif self.twSearchModes.currentIndex()==BCSearchFilesDialogBox.__TAB_ADVANCED_SEARCH:
+            if self.__scene.isModified():
+                modified=f" ({i18n('modified')})"
+
+            if self.__currentFileAdvanced is None or self.__currentFileAdvanced=='':
+                self.lblFileName.setText(f"[{i18n('Not saved')}]")
+            else:
+                self.lblFileName.setText(f"{self.__currentFileAdvanced}{modified}")
+        else:
+            self.lblFileName.setText('')
 
     def __saveSettings(self):
         """Save current search window settings"""
@@ -596,6 +647,8 @@ class BCSearchFilesDialogBox(QDialog):
             elif index==BCSearchFilesDialogBox.__TAB_ADVANCED_SEARCH:
                 BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_TAB_ACTIVE, 'advanced')
 
+            self.__updateFileNameLabel()
+
     def __advancedCalculateNodePosition(self):
         """Calculate position for a new node added to scene"""
         width, freq=self.__scene.gridSize()
@@ -651,6 +704,7 @@ class BCSearchFilesDialogBox(QDialog):
     def __advancedSearchChanged(self, modified=None):
         """Search model has been modified"""
         if self.swAdvancedPanel.currentIndex()==BCSearchFilesDialogBox.__PANEL_SEARCH_ENGINE:
+            self.__updateFileNameLabel()
             dataAsDict=self.__advancedExportConfig()
             if BCSearchFilesDialogBox.buildBCFileList(self.__bcFileList, dataAsDict, True):
                 self.tbSearchDescription.setPlainText(self.__bcFileList.exportHQuery())
@@ -661,6 +715,7 @@ class BCSearchFilesDialogBox(QDialog):
             return
 
         self.__currentSelectedNodeWidget.deserialize(self.wsffpAdvanced.exportAsDict()['widget'])
+        self.__scene.setModified(True)
 
     def __advancedFileFilterRuleChanged(self):
         """Something has been modified, update node"""
@@ -668,6 +723,7 @@ class BCSearchFilesDialogBox(QDialog):
             return
 
         self.__currentSelectedNodeWidget.deserialize(self.wsffrAdvanced.exportAsDict()['widget'])
+        self.__scene.setModified(True)
 
     def __advancedImgFilterRuleChanged(self):
         """Something has been modified, update node"""
@@ -675,6 +731,7 @@ class BCSearchFilesDialogBox(QDialog):
             return
 
         self.__currentSelectedNodeWidget.deserialize(self.wsifrAdvanced.exportAsDict()['widget'])
+        self.__scene.setModified(True)
 
     def __advancedSortRuleChanged(self):
         """Something has been modified, update node"""
@@ -682,6 +739,7 @@ class BCSearchFilesDialogBox(QDialog):
             return
 
         self.__currentSelectedNodeWidget.deserialize(self.wssrAdvanced.exportAsDict()['widget'])
+        self.__scene.setModified(True)
 
     def __advancedOutputEngineChanged(self):
         """Something has been modified, update node"""
@@ -689,6 +747,7 @@ class BCSearchFilesDialogBox(QDialog):
             return
 
         self.__currentSelectedNodeWidget.deserialize(self.wsoeAdvanced.exportAsDict()['widget'])
+        self.__scene.setModified(True)
 
     def __advancedExportConfig(self):
         """Export current node schema"""
@@ -710,6 +769,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.__scene.setModified(False)
 
         self.__currentFileAdvanced=None
+        self.__updateFileNameLabel()
 
     def __advancedAddPath(self):
         """Add a BCNodeWSearchFromPath node"""
@@ -1013,6 +1073,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.wssrBasic.resetToDefault()
 
         self.__currentFileBasic=None
+        self.__updateFileNameLabel()
 
     def __executeSearchProcessSignals(self, informations):
         """Search is in progress...
@@ -1423,6 +1484,7 @@ class BCSearchFilesDialogBox(QDialog):
 
         BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_BASIC, fileName)
         self.__currentFileBasic=fileName
+        self.__updateFileNameLabel()
 
     def __openFileAdvanced(self, fileName, title):
         """Open advanced search file"""
@@ -1436,6 +1498,7 @@ class BCSearchFilesDialogBox(QDialog):
             self.__scene.setModified(False)
             BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_ADVANCED, fileName)
             self.__currentFileAdvanced=fileName
+            self.__updateFileNameLabel()
 
         return importResult
 
@@ -1459,6 +1522,10 @@ class BCSearchFilesDialogBox(QDialog):
             Debug.print("Can't save file {0}: {1}", fileName, str(e))
             returned=NodeEditorScene.EXPORT_CANT_SAVE
 
+        BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_BASIC, fileName)
+        self.__currentFileBasic=fileName
+        self.__updateFileNameLabel()
+
         return returned
 
     def __saveFileAdvanced(self, fileName):
@@ -1469,6 +1536,7 @@ class BCSearchFilesDialogBox(QDialog):
             self.__scene.setModified(False)
             BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_ADVANCED, fileName)
             self.__currentFileAdvanced=fileName
+            self.__updateFileNameLabel()
 
         return exportResult
 
@@ -1680,11 +1748,11 @@ class BCWSearchWidget(QWidget):
         """In an update, do not emit modification"""
         self.__inUpdate+=1
 
-    def _endUpdate(self):
+    def _endUpdate(self, modified=False):
         """End of update, emit modification if needed"""
         self.__inUpdate-=1
         if self.__inUpdate==0:
-            self._setModified()
+            self._setModified(modified)
 
     def isModified(self):
         """Return true if values has been modified"""
