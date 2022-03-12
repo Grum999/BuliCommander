@@ -297,6 +297,8 @@ class BCUIController(QObject):
             self.__window.panels[panelId].setFilesBackupFilterDView(self.__backupFilterDView)
             self.__window.panels[panelId].setFilesLayerFilterDView(self.__fileLayerFilterDView)
 
+            self.__window.panels[panelId].setFilesImageNfoSizeUnit(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_IMGSIZEUNIT.id(panelId=panelId)))
+
             self.commandPanelTabActive(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId)))
             self.commandPanelTabPosition(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId)))
 
@@ -703,6 +705,8 @@ class BCUIController(QObject):
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].filesColumnOrder())
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId), self.__window.panels[panelId].filesColumnSize())
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE.id(panelId=panelId), self.__window.panels[panelId].filesIconSize())
+
+                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_IMGSIZEUNIT.id(panelId=panelId), self.__window.panels[panelId].filesImageNfoSizeUnit())
 
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].clipboardTabLayout().value)
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSORT.id(panelId=panelId), self.__window.panels[panelId].clipboardColumnSort())
