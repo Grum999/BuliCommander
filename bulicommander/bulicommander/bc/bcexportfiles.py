@@ -35,6 +35,7 @@ import os
 import re
 import shutil
 import time
+import json
 from math import (
         ceil,
         floor
@@ -74,12 +75,17 @@ from bulicommander.pktk.modules.imgutils import (
     )
 from bulicommander.pktk.modules.timeutils import tsToStr
 from bulicommander.pktk.modules.utils import (
+        JsonQObjectEncoder,
+        JsonQObjectDecoder,
         cloneRect,
         replaceLineEditClearButton,
         Debug
     )
 from bulicommander.pktk.modules.ekrita import EKritaNode
-from bulicommander.pktk.widgets.wiodialog import WDialogBooleanInput
+from bulicommander.pktk.widgets.wiodialog import (
+        WDialogBooleanInput,
+        WDialogMessage
+    )
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -122,7 +128,7 @@ class BCExportFields:
                                                     # label:        value displayed in listbox
                                                     # tooltip:      tooltip affected to item in list
                                                     # data:         data to return in exported result
-                                                    # alignment:    for format that support colupmn alignment, define
+                                                    # alignment:    for format that support column alignment, define
                                                     #               data alignment (0: left / 1: right)
                                                     # format:       how to format data (use markdown notation)
                                                     # inList:       visible in selection list or not,
@@ -289,7 +295,7 @@ class BCExportFields:
                                                     },
         'image.size.full':                          {'label':       i18n('Image size (width x height)'),
                                                      'toolTip':     i18n('The current image size (<span style="font-family:''monospace''"></i>width</i>x<i>height</i></span>)'),
-                                                     'data':        '{str(file.imageSize().width()) + "x" + str(file.imageSize().height()) if not isinstance(file, BCDirectory) else ""}',
+                                                     'data':        '{BCExportFields.imgSize(file.imageSize().width(), file.imageSize().height()) if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
                                                      'inList':      True,
@@ -297,21 +303,100 @@ class BCExportFields:
                                                     },
         'image.size.width':                         {'label':       i18n('Image size (width)'),
                                                      'toolTip':     i18n('The current image size (width)'),
-                                                     'data':        '{file.imageSize().width() if not isinstance(file, BCDirectory) else ""}',
+                                                     'data':        '{BCExportFields.numberOrEmpty(file.imageSize().width()) if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
                                                     },
-        'image.size.height':                         {'label':      i18n('Image size (height)'),
+        'image.size.height':                        {'label':       i18n('Image size (height)'),
                                                      'toolTip':     i18n('The current image size (height)'),
-                                                     'data':        '{file.imageSize().height() if not isinstance(file, BCDirectory) else ""}',
+                                                     'data':        '{BCExportFields.numberOrEmpty(file.imageSize().height()) if not isinstance(file, BCDirectory) else ""}',
+                                                     'alignment':   1,
+                                                     'format':      None,
+                                                     'inList':      True,
+                                                     'selected':    False
+                                                    },
+        'image.ratio.value':                        {'label':       i18n('Image ratio (value)'),
+                                                     'toolTip':     i18n('The current image ratio (width/height)<br/>Value is rounded to 4 decimals'),
+                                                     'data':        '{BCExportFields.getRoundedValue(file.getProperty(BCFileProperty.IMAGE_RATIO), 4, False) if not isinstance(file, BCDirectory) else ""}',
+                                                     'alignment':   1,
+                                                     'format':      None,
+                                                     'inList':      True,
+                                                     'selected':    False
+                                                    },
+        'image.ratio.type':                         {'label':       i18n('Image ratio (portrait, landscape, square)'),
+                                                     'toolTip':     i18n('The current image ratio'),
+                                                     'data':        '{BCExportFields.getRatioText(file.getProperty(BCFileProperty.IMAGE_RATIO)) if not isinstance(file, BCDirectory) else ""}',
+                                                     'alignment':   0,
+                                                     'format':      None,
+                                                     'inList':      True,
+                                                     'selected':    False
+                                                    },
+        'image.pixels.count':                       {'label':       i18n('Image pixels'),
+                                                     'toolTip':     i18n('The current number of pixels (width * height)'),
+                                                     'data':        '{BCExportFields.numberOrEmpty(file.getProperty(BCFileProperty.IMAGE_PIXELS), False) if not isinstance(file, BCDirectory) else ""}',
+                                                     'alignment':   1,
+                                                     'format':      None,
+                                                     'inList':      True,
+                                                     'selected':    False
+                                                    },
+        'image.pixels.countMP':                     {'label':       i18n('Image pixels (in Megapixel)'),
+                                                     'toolTip':     i18n('The current number of pixels (width * height), in megapixel (MP)<br/>Value is rounded to 2 decimals'),
+                                                     'data':        '{BCExportFields.megaPixel(file.getProperty(BCFileProperty.IMAGE_PIXELS), 2) if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
                                                     }
     }
+
+    @staticmethod
+    def imgSize(width, height):
+        """return value width x height is number are valid
+        Otherwise return empty string
+        """
+        if width is None or width<0 or height is None or height<0:
+            return ""
+        return f"{width}x{height}"
+
+    @staticmethod
+    def numberOrEmpty(value, acceptZero=True):
+        """return value
+        If value is None or negative, return empty string
+        """
+        if value is None or value<0 or value==0 and not acceptZero:
+            return ""
+        return value
+
+    @staticmethod
+    def getRoundedValue(value, roundDec=4, acceptZero=True):
+        """return value rounded to given number of decimal
+
+        If value is None or negative, return empty string
+        """
+        if value is None or value<0 or value==0 and not acceptZero:
+            return ""
+        return f"{value:.0{roundDec}f}"
+
+    @staticmethod
+    def megaPixel(value, roundDec=2):
+        """return value (in pixels) as megapixels rounded to given number of decimal"""
+        if value is None or value==0:
+            return ""
+        return f"{value/1048576:.0{roundDec}f}"
+
+    @staticmethod
+    def getRatioText(ratio):
+        """return ratio text for a given ratio value"""
+        if ratio is None:
+            return ""
+        elif ratio<1:
+            return i18n("Portrait")
+        elif ratio>1:
+            return i18n("Landscape")
+        else:
+            return i18n("Square")
 
 
 
@@ -563,6 +648,21 @@ class BCExportFiles(QObject):
 
         return returnedTable
 
+    def __cleanupField(self, fields):
+        """Cleanup given field list
+
+        Example:
+            ['.file.Name', '*file.path']
+            will return ['file.path']
+        """
+        returned=[]
+        for fieldId in fields:
+            if fieldId[0]=='*':
+                returned.append(fieldId[1:])
+            elif fieldId[0]!='.':
+                returned.append(fieldId)
+        return returned
+
     def drawPage(self, painter, pagesInformation, config, defaultConfig, currentPage, totalPage):
         """Draw given page to `painter` (QPainter) using givens properties
 
@@ -754,7 +854,7 @@ class BCExportFiles(QObject):
             document.drawContents(painter)
 
         # thumbnails
-        thumbFields = config.get('fields', defaultConfig['fields'])
+        thumbFields = self.__cleanupField(config.get('fields', defaultConfig['fields']))
         thumbFiles = config.get('files', defaultConfig['files'])
         nbThumbFiles = len(thumbFiles)
 
@@ -1027,6 +1127,8 @@ class BCExportFiles(QObject):
         if not isinstance(config, dict):
             config = defaultConfig
 
+        fieldsList=self.__cleanupField(config.get('fields', defaultConfig['fields']))
+
         tableSettings = TextTableSettingsText()
         tableSettings.setHeaderActive(config.get('header.active', defaultConfig['header.active']))
         tableSettings.setBorder(config.get('borders.style', defaultConfig['borders.style']))
@@ -1034,11 +1136,11 @@ class BCExportFiles(QObject):
         tableSettings.setMaxWidthActive(config.get('maximumWidth.active', defaultConfig['maximumWidth.active']))
         tableSettings.setMinWidth(config.get('minimumWidth.value', defaultConfig['minimumWidth.value']))
         tableSettings.setMaxWidth(config.get('maximumWidth.value', defaultConfig['maximumWidth.value']))
-        tableSettings.setColumnsAlignment([BCExportFields.ID[key]['alignment'] for key in config.get('fields', defaultConfig['fields'])])
+        tableSettings.setColumnsAlignment([BCExportFields.ID[key]['alignment'] for key in fieldsList])
 
         self.exportStart.emit(-1)
         try:
-            table = self.__getTable(config.get('fields', defaultConfig['fields']),
+            table = self.__getTable(fieldsList,
                                     config.get('files', defaultConfig['files']),
                                     None)
 
@@ -1099,7 +1201,7 @@ class BCExportFiles(QObject):
 
 
         try:
-            table = self.__getTable(config.get('fields', defaultConfig['fields']),
+            table = self.__getTable(self.__cleanupField(config.get('fields', defaultConfig['fields'])),
                                     config.get('files', defaultConfig['files']),
                                     None)
 
@@ -1156,7 +1258,7 @@ class BCExportFiles(QObject):
             fieldsList=['file.thumbnailMD']
         else:
             fieldsList=[]
-        fieldsList+=config.get('fields', defaultConfig['fields'])
+        fieldsList+=self.__cleanupField(config.get('fields', defaultConfig['fields']))
 
         tableSettings = TextTableSettingsTextMarkdown()
         tableSettings.setColumnsFormatting([BCExportFields.ID[key]['format'] for key in fieldsList])
@@ -1290,8 +1392,6 @@ class BCExportFiles(QObject):
         if not isinstance(config, dict):
             config = defaultConfig
 
-        fieldsList=config.get('fields', defaultConfig['fields'])
-
         # 1) Create KRA file
         # 2) Set white Background layer
         # While all thumbnails are not processed
@@ -1414,8 +1514,6 @@ class BCExportFiles(QObject):
 
         imageFormat = imageFormat.upper()
 
-        fieldsList=config.get('fields', defaultConfig['fields'])
-
         imageResolution = config.get('paper.resolution', defaultConfig['paper.resolution'])
 
         # need image size in pixels
@@ -1530,9 +1628,6 @@ class BCExportFiles(QObject):
         if not isinstance(config, dict):
             config = defaultConfig
 
-        fieldsList=config.get('fields', defaultConfig['fields'])
-
-
         imageResolution = config.get('paper.resolution', defaultConfig['paper.resolution'])
         imageSizeUnit = config.get('paper.unit', defaultConfig['paper.unit'])
 
@@ -1641,6 +1736,18 @@ class BCExportFiles(QObject):
 
 class BCExportFilesDialogBox(QDialog):
     """User interface for export"""
+
+    # note: IMPORT/EXPORT results codes identical to NodeEditorScene IMPORT/EXPORT results codes
+    IMPORT_OK=                              0b00000000
+    IMPORT_FILE_NOT_FOUND=                  0b00000001
+    IMPORT_FILE_CANT_READ=                  0b00000010
+    IMPORT_FILE_NOT_JSON=                   0b00000100
+    IMPORT_FILE_INVALID_FORMAT_IDENTIFIER=  0b00001000
+    IMPORT_FILE_MISSING_FORMAT_IDENTIFIER=  0b00010000
+    IMPORT_FILE_MISSING_SCENE_DEFINITION=   0b00100000
+
+    EXPORT_OK=       0b00000000
+    EXPORT_CANT_SAVE=0b00000001
 
     __PAGE_PERIMETER = 0
     __PAGE_FORMAT = 1
@@ -1913,6 +2020,8 @@ class BCExportFilesDialogBox(QDialog):
         self.__formatPdfImgConfig = None
 
         self.__exportedFileName = ''
+        self.__currentLoadedConfigurationFile=''
+        self.__isModified=False
 
         self.__blockedSlots = True
 
@@ -1935,6 +2044,9 @@ class BCExportFilesDialogBox(QDialog):
         def __initialisePagePerimeter():
             # Initialise interface widgets for page perimeter
             # interface widgets that don't depend of users settings
+            self.lwPerimeterProperties.setSortOptionAvailable(False)
+            self.lwPerimeterProperties.setCheckOptionAvailable(True)
+            self.lwPerimeterProperties.setReorderOptionAvailable(True)
 
             if self.__options is None:
                 # export
@@ -1951,8 +2063,6 @@ class BCExportFilesDialogBox(QDialog):
                 else:
                     self.rbPerimeterSelectSel.setEnabled(False)
                     self.lblPerimeterSelectSelNfo.setEnabled(False)
-
-
             else:
                 # export configuration from a file selection
                 self.lblPerimeterSelectPathNfo.setVisible(False)
@@ -1966,16 +2076,8 @@ class BCExportFilesDialogBox(QDialog):
             self.lwPerimeterProperties.clear()
             for field in BCExportFields.ID:
                 if BCExportFields.ID[field]['inList']:
-                    item = QListWidgetItem(BCExportFields.ID[field]['label'])
-
-                    item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-                    if BCExportFields.ID[field]['selected']:
-                        item.setCheckState(Qt.Checked)
-                    else:
-                        item.setCheckState(Qt.Unchecked)
-                    item.setData(BCExportFilesDialogBox.__FIELD_ID, field)   # store field ID
+                    item=self.lwPerimeterProperties.addItem(BCExportFields.ID[field]['label'], field, BCExportFields.ID[field]['selected'])
                     item.setToolTip(BCExportFields.ID[field]['toolTip'])
-                    self.lwPerimeterProperties.addItem(item)
 
             # connectors
             self.pbPerimeterReset.clicked.connect(self.__slotPagePerimeterResetFields)
@@ -2132,11 +2234,24 @@ class BCExportFilesDialogBox(QDialog):
             else:
                 self.pbExport.setText(i18n('Apply'))
 
+            actionSave=QAction(i18n("Save"), self)
+            actionSave.triggered.connect(lambda: self.saveFile())
+            actionSaveAs=QAction(i18n("Save as..."), self)
+            actionSaveAs.triggered.connect(lambda: self.saveFile(True))
+
+            menuSave = QMenu(self.tbSaveExportDefinition)
+            menuSave.addAction(actionSave)
+            menuSave.addAction(actionSaveAs)
+            self.tbSaveExportDefinition.setMenu(menuSave)
+
+            self.tbNewExportDefinition.clicked.connect(self.__newExportDefinition)
+            self.tbSaveExportDefinition.clicked.connect(lambda: self.saveFile())
+            self.tbOpenExportDefinition.clicked.connect(lambda: self.openFile())
+
             self.pbPrevious.clicked.connect(self.__goPreviousPage)
             self.pbNext.clicked.connect(self.__goNextPage)
             self.pbCancel.clicked.connect(self.reject)
             self.pbExport.clicked.connect(self.__export)
-            self.pbOptionsLoadDefault.clicked.connect(self.__resetSettings)
             self.__updateBtn()
 
         __initialisePagePerimeter()
@@ -2145,6 +2260,7 @@ class BCExportFilesDialogBox(QDialog):
         __initialiseButtonBar()
 
         self.__blockSlot(False)
+        self.__setModified(False)
 
     def __exportStart(self, totalPage):
         """Called during export"""
@@ -2212,14 +2328,23 @@ class BCExportFilesDialogBox(QDialog):
         # reload default properties list
         self.swPages.setCurrentIndex(BCExportFilesDialogBox.__PAGE_PERIMETER)
 
-        for itemIndex in range(self.lwPerimeterProperties.count()):
-            if BCExportFields.ID[self.lwPerimeterProperties.item(itemIndex).data(BCExportFilesDialogBox.__FIELD_ID)]['selected']:
-                self.lwPerimeterProperties.item(itemIndex).setCheckState(Qt.Checked)
-            else:
-                self.lwPerimeterProperties.item(itemIndex).setCheckState(Qt.Unchecked)
+        self.lwPerimeterProperties.clear()
+        for field in BCExportFields.ID:
+            if BCExportFields.ID[field]['inList']:
+                item=self.lwPerimeterProperties.addItem(BCExportFields.ID[field]['label'], field, BCExportFields.ID[field]['selected'])
+                item.setToolTip(BCExportFields.ID[field]['toolTip'])
 
     def __loadSettingsPagePerimeter(self):
         """Load saved settings for page perimeter"""
+        # a list of string '<checked><value>'
+        # example:
+        #   '.file.path'    unchecked
+        #   '*file.name'    checked
+        # items order in list define sort
+        # if some ID are missing in list, by default:
+        #   - added in usual order/checked value
+        checkedList=[]
+
         if isinstance(self.__options, dict) and 'exportConfig' in self.__options and 'fields' in self.__options['exportConfig']:
             # options has been provided, use it as settings
             self.swPages.setCurrentIndex(BCExportFilesDialogBox.__PAGE_PERIMETER)
@@ -2234,29 +2359,43 @@ class BCExportFilesDialogBox(QDialog):
 
         self.swPages.setCurrentIndex(BCExportFilesDialogBox.__PAGE_PERIMETER)
 
-        for itemIndex in range(self.lwPerimeterProperties.count()):
-            if self.lwPerimeterProperties.item(itemIndex).data(BCExportFilesDialogBox.__FIELD_ID) in checkedList:
-                self.lwPerimeterProperties.item(itemIndex).setCheckState(Qt.Checked)
-            else:
-                self.lwPerimeterProperties.item(itemIndex).setCheckState(Qt.Unchecked)
+        checkedListId=[]
+        # add items from settings
+        self.lwPerimeterProperties.clear()
+        for itemIndex in checkedList:
+            fieldId=itemIndex[1:]
+            if fieldId in BCExportFields.ID:
+                checkedListId.append(fieldId)
+                item=self.lwPerimeterProperties.addItem(BCExportFields.ID[fieldId]['label'], fieldId, (itemIndex[0]=='*'))
+                item.setToolTip(BCExportFields.ID[fieldId]['toolTip'])
+
+        # check all default items idf alaready set from settings or not; add them if not defined from settings
+        for fieldId in BCExportFields.ID:
+            if BCExportFields.ID[fieldId]['inList'] and not fieldId in checkedListId:
+                item=self.lwPerimeterProperties.addItem(BCExportFields.ID[fieldId]['label'], fieldId, BCExportFields.ID[fieldId]['selected'])
+                item.setToolTip(BCExportFields.ID[fieldId]['toolTip'])
 
     # -- slots
     def __slotPagePerimeterCheckAll(self):
         # check all properties
-        for itemIndex in range(self.lwPerimeterProperties.count()):
-            self.lwPerimeterProperties.item(itemIndex).setCheckState(Qt.Checked)
+        for item in self.lwPerimeterProperties.items(False):
+            item.setCheckState(True)
+        self.__setModified(True)
 
     def __slotPagePerimeterUncheckAll(self):
         # uncheck all properties
-        for itemIndex in range(self.lwPerimeterProperties.count()):
-            self.lwPerimeterProperties.item(itemIndex).setCheckState(Qt.Unchecked)
+        for item in self.lwPerimeterProperties.items(False):
+            item.setCheckState(False)
+        self.__setModified(True)
 
     def __slotPagePerimeterResetFields(self):
         # reset field list check state
         self.__loadSettingsPagePerimeter()
+        self.__setModified(True)
 
     def __slotPagePerimeterPropertiesChanged(self, widget):
         self.__updateBtn()
+        self.__setModified(True)
 
     # -- Manage page Format -------------------------------------------------
 
@@ -2865,7 +3004,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.__options={
                     'exportFormat': self.cbxFormat.currentIndex(),
                     'exportFileName': exportedFileName,
-                    'exportConfig': self.__generateConfig()
+                    'exportConfig': self.__generateConfig(True)
                 }
 
             self.accept()
@@ -2882,7 +3021,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        self.pbOptionsLoadDefault.setEnabled(False)
+        self.wToolbar.setEnabled(False)
         self.pbPrevious.setEnabled(False)
         self.pbNext.setEnabled(False)
         self.pbExport.setEnabled(False)
@@ -2936,7 +3075,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             ##### DON'T UNCOMMENT! :-)
             ##### self.reject()
 
-            self.pbOptionsLoadDefault.setEnabled(True)
+            self.wToolbar.setEnabled(True)
             self.pbPrevious.setEnabled(True)
             self.pbExport.setEnabled(True)
             self.pbCancel.setEnabled(True)
@@ -3335,6 +3474,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if index is None:
             index = self.cbxFormat.currentIndex()
 
+        if index!=self.cbxFormat.currentIndex():
+            self.__setModified(True)
+
         text = BCExportFilesDialogBox.FMT_PROPERTIES[index]['label']
 
         self.lblFormatDescription.setText(BCExportFilesDialogBox.FMT_PROPERTIES[index]['description'])
@@ -3368,6 +3510,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if checked is None:
             checked = self.cbFormatTextLayoutUserDefined.isChecked()
 
+        if checked!=self.cbFormatTextLayoutUserDefined.isChecked():
+            self.__setModified(True)
+
         self.teFormatTextLayoutUserDefined.setEnabled(checked)
 
     def __slotPageFormatTextBordersCheck(self, checked=None):
@@ -3375,16 +3520,23 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if checked is None:
             checked = self.cbFormatTextBorders.isChecked()
 
+        if checked!=self.cbFormatTextBorders.isChecked():
+            self.__setModified(True)
+
         if not checked:
             self.rbFormatTextBorderNone.setChecked(True)
 
     def __slotPageFormatTextBordersStyleCheck(self, checked=None):
+        self.__setModified(True)
         self.cbFormatTextBorders.setChecked(not self.rbFormatTextBorderNone.isChecked())
 
     def __slotPageFormatTextMinWidthCheck(self, checked=None):
         # State of checkbox Minimum width has been changed
         if checked is None:
             checked = self.cbFormatTextMinWidth.isChecked()
+
+        if checked!=self.cbFormatTextMinWidth.isChecked():
+            self.__setModified(True)
 
         self.hsFormatTextMinWidth.setEnabled(checked)
         self.spFormatTextMinWidth.setEnabled(checked)
@@ -3393,6 +3545,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         # State of checkbox Maximum width has been changed
         if checked is None:
             checked = self.cbFormatTextMaxWidth.isChecked()
+
+        if checked!=self.cbFormatTextMaxWidth.isChecked():
+            self.__setModified(True)
 
         self.hsFormatTextMaxWidth.setEnabled(checked)
         self.spFormatTextMaxWidth.setEnabled(checked)
@@ -3403,6 +3558,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if value is None:
             value = self.hsFormatTextMinWidth.value()
 
+        if value!=self.hsFormatTextMinWidth.value():
+            self.__setModified(True)
+
         if value > self.hsFormatTextMaxWidth.value():
             self.hsFormatTextMaxWidth.setValue(value)
 
@@ -3412,6 +3570,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if value is None:
             value = self.hsFormatTextMaxWidth.value()
 
+        if value!=self.hsFormatTextMaxWidth.value():
+            self.__setModified(True)
+
         if value < self.hsFormatTextMinWidth.value():
             self.hsFormatTextMinWidth.setValue(value)
 
@@ -3420,6 +3581,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if checked is None:
             checked = self.cbFormatTextMDLayoutUserDefined.isChecked()
 
+        if checked!=self.cbFormatTextMDLayoutUserDefined.isChecked():
+            self.__setModified(True)
+
         self.teFormatTextMDLayoutUserDefined.setEnabled(checked)
 
     def __slotPageFormatTextMDIncludeThumbnails(self, checked=None):
@@ -3427,21 +3591,27 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if checked is None:
             checked = self.cbFormatTextMDIncludeThumbnails.isChecked()
 
+        if checked!=self.cbFormatTextMDIncludeThumbnails.isChecked():
+            self.__setModified(True)
+
         self.cbxFormatTextMDThumbnailsSize.setEnabled(checked)
 
     def __slotPageFormatDocImgRefChanged(self):
         """Set page according to current configuration type"""
+        self.__setModified(True)
         self.swFormatDocImgRef.setCurrentIndex(self.lvFormatDocImgRef.currentIndex().data(Qt.UserRole))
         self.__updateFormatDocImgConfigurationPreview()
 
     def __slotPageFormatDocImgPageSetupResolutionChanged(self):
         """Resolution has been changed"""
+        self.__setModified(True)
         self.__formatPdfImgPaperResolution = BCExportFilesDialogBox.IMAGE_RESOLUTIONS[self.cbxFormatDocImgPaperResolution.currentText()]
         self.__slotPageFormatDocImgPageSetupSizeChanged()
         self.__slotPageFormatDocImgPageSetupUnitChanged()
 
     def __slotPageFormatDocImgPageSetupUnitChanged(self, dummy=None):
         """Choice of unit has been modified"""
+        self.__setModified(True)
         unit=self.cbxFormatDocImgPaperUnit.currentData()
         if self.__blockedSlots or unit is None:
             return
@@ -3507,6 +3677,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __slotPageFormatDocImgPageSetupSizeChanged(self, dummy=None):
         """Choice of size has been modified"""
+        self.__setModified(True)
         if self.__formatPdfImgPaperSizeUnit is None or self.cbxFormatDocImgPaperSize.currentData() is None:
             return
 
@@ -3530,6 +3701,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __slotPageFormatDocImgPageSetupOrientationChanged(self, dummy=None):
         """Choice of orientation has been modified"""
+        self.__setModified(True)
         self.__formatPdfImgPaperOrientation = self.cbxFormatDocImgPaperOrientation.currentIndex()
 
         if self.__blockedSlots:
@@ -3542,6 +3714,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __slotPageFormatDocImgPageSetupMarginLChanged(self, dummy=None):
         """Margin LEFT has been modified"""
+        self.__setModified(True)
         if self.__blockedSlots:
             return
         self.__blockSlot(True)
@@ -3554,6 +3727,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __slotPageFormatDocImgPageSetupMarginRChanged(self, dummy=None):
         """Margin RIGHT has been modified"""
+        self.__setModified(True)
         if self.__blockedSlots:
             return
         self.__blockSlot(True)
@@ -3566,6 +3740,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __slotPageFormatDocImgPageSetupMarginTChanged(self, dummy=None):
         """Margin TOP has been modified"""
+        self.__setModified(True)
         if self.__blockedSlots:
             return
         self.__blockSlot(True)
@@ -3578,6 +3753,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __slotPageFormatDocImgPageSetupMarginBChanged(self, dummy=None):
         """Margin BOTTOM has been modified"""
+        self.__setModified(True)
         if self.__blockedSlots:
             return
         self.__blockSlot(True)
@@ -3590,6 +3766,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __slotPageFormatDocImgPageSetupMarginLinkChanged(self, dummy=None):
         """Margins linked has been modified"""
+        self.__setModified(True)
         if self.__blockedSlots:
             return
         self.__blockSlot(True)
@@ -3603,6 +3780,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __slotPageFormatDocImgPageLayoutChanged(self, dummy=None):
         """page layout has been modified"""
+        self.__setModified(True)
         self.bcsteFormatDocImgHeader.setEnabled(self.cbFormatDocImgHeader.isChecked())
         self.bcsteFormatDocImgFooter.setEnabled(self.cbFormatDocImgFooter.isChecked())
         self.bcsteFormatDocImgFPageNotes.setEnabled(self.cbFormatDocImgFPageNotes.isChecked())
@@ -3613,6 +3791,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __slotPageFormatDocImgPropertiesFontChanged(self, dummy=None):
         """Font family/size changed"""
+        self.__setModified(True)
         self.__formatPdfImgFontSize = self.dsbFormatDocImgTextFontSize.value()
         self.__updateFormatDocImgConfigurationPreview()
 
@@ -3645,9 +3824,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         if self.swPages.currentIndex() == BCExportFilesDialogBox.__PAGE_FORMAT:
             self.__formatPdfImgNbProperties = 0
-            for itemIndex in range(self.lwPerimeterProperties.count()):
-                if  self.lwPerimeterProperties.item(itemIndex).checkState() == Qt.Checked:
-                    self.__formatPdfImgNbProperties+=1
+
+            self.__formatPdfImgNbProperties=len(self.lwPerimeterProperties.items(True))
             self.__updateFormatDocImgConfigurationPreview()
 
         if self.swPages.currentIndex() == BCExportFilesDialogBox.__PAGE_TARGET:
@@ -3720,13 +3898,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if self.swPages.currentIndex() == 0:
             # first page
             # need to check if, at least, one properties is checked for export :)
-            noneChecked = True
-            for itemIndex in range(self.lwPerimeterProperties.count()):
-                if self.lwPerimeterProperties.item(itemIndex).checkState() == Qt.Checked:
-                    noneChecked = False
-                    break
-
-            self.pbNext.setEnabled(not noneChecked)
+            self.pbNext.setEnabled(len(self.lwPerimeterProperties.items(True))>0)
         elif self.swPages.currentIndex() == self.swPages.count() - 1:
             # Last page / next button disabled
             self.pbNext.setEnabled(False)
@@ -3751,14 +3923,14 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             # do not check if provided path/filename make sense...
             return (self.leTargetResultFile.text().strip() != '')
 
-    def __generateConfig(self):
+    def __generateConfig(self, fullFields=False):
         """Generate export config"""
-        def getFields():
-            fields = []
-            for itemIndex in range(self.lwPerimeterProperties.count()):
-                if  self.lwPerimeterProperties.item(itemIndex).checkState() == Qt.Checked:
-                    fields.append(self.lwPerimeterProperties.item(itemIndex).data(BCExportFilesDialogBox.__FIELD_ID))
-            return fields
+        def getFields(fullFields):
+            if fullFields:
+                checkedChar={True:'*', False:'.'}
+                return [f"{checkedChar[item.checked()]}{item.value()}" for item in self.lwPerimeterProperties.items(False)]
+            else:
+                return [item.value() for item in self.lwPerimeterProperties.items(True)]
 
         def getFiles():
             if self.rbPerimeterSelectPath.isChecked():
@@ -3789,7 +3961,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                     'maximumWidth.active': self.cbFormatTextMaxWidth.isChecked(),
                     'maximumWidth.value': self.spFormatTextMaxWidth.value(),
 
-                    'fields': getFields(),
+                    'fields': getFields(fullFields),
                     'files': getFiles(),
                     'source': getSource()
                 }
@@ -3808,7 +3980,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                     'fields.enclosed': self.cbFormatTextCSVEnclosedFields.isChecked(),
                     'fields.separator': [',', ';', '\t', '|'][self.cbxFormatTextCSVSeparator.currentIndex()],
 
-                    'fields': getFields(),
+                    'fields': getFields(fullFields),
                     'files': getFiles(),
                     'source': getSource()
                 }
@@ -3820,7 +3992,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                     'thumbnails.included': self.cbFormatTextMDIncludeThumbnails.isChecked(),
                     'thumbnails.size': [64,128,256,512][self.cbxFormatTextMDThumbnailsSize.currentIndex()],
 
-                    'fields': getFields(),
+                    'fields': getFields(fullFields),
                     'files': getFiles(),
                     'source': getSource()
                 }
@@ -3871,7 +4043,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
                     'file.openInKrita': self.cbTargetResultFileOpen.isChecked(),
 
-                    'fields': getFields(),
+                    'fields': getFields(fullFields),
                     'files': getFiles(),
                     'source': getSource()
                 }
@@ -3881,7 +4053,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
     def __saveSettings(self):
         """Save current export configuration to settings"""
         def __savePagePerimeter():
-            BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES, [self.lwPerimeterProperties.item(itemIndex).data(BCExportFilesDialogBox.__FIELD_ID) for itemIndex in range(self.lwPerimeterProperties.count()) if self.lwPerimeterProperties.item(itemIndex).checkState() == Qt.Checked])
+            checkedChar={True:'*', False:'.'}
+            BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES, [f"{checkedChar[item.checked()]}{item.value()}" for item in self.lwPerimeterProperties.items(False)])
 
         def __savePageFormat():
             BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT, self.cbxFormat.currentIndex())
@@ -4151,15 +4324,179 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED, True)
         self.__uiController.saveSettings()
 
-    def __resetSettings(self):
+    def __newExportDefinition(self):
         """Reset export configuration to default settings"""
+        if self.__isModified:
+            if not WDialogBooleanInput.display(i18n(f"{self.__title}::{i18n('New export files list definition')}"), i18n("Current export files list definition has been modified and will be lost, continue?")):
+                return False
+
         self.__loadDefaultPagePerimeter()
         self.__loadDefaultPageFormat()
         self.__loadDefaultPageTarget()
+        self.__currentLoadedConfigurationFile=''
+        self.__setModified(False)
+
+
+    def __openFile(self, fileName, title):
+        """Open & load export files list definition defined by `fileName`"""
+        if self.__isModified:
+            if not WDialogBooleanInput.display(title, i18n("Current export files list definition has been modified and will be lost, continue?")):
+                return False
+
+        try:
+            with open(fileName, 'r') as fHandle:
+                jsonAsStr=fHandle.read()
+        except Exception as e:
+            Debug.print("Can't open/read file {0}: {1}", fileName, str(e))
+            return BCExportFilesDialogBox.IMPORT_FILE_CANT_READ
+
+        try:
+            jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
+        except Exception as e:
+            Debug.print("Can't parse file {0}: {1}", fileName, str(e))
+            return BCExportFilesDialogBox.IMPORT_FILE_NOT_JSON
+
+        if not "formatIdentifier" in jsonAsDict:
+            Debug.print("Missing format identifier file {0}", fileName)
+            return BCExportFilesDialogBox.IMPORT_FILE_MISSING_FORMAT_IDENTIFIER
+
+        if jsonAsDict["formatIdentifier"]!="bulicommander-export-file-list-definition":
+            Debug.print("Invalid format identifier file {0}", fileName)
+            return BCExportFilesDialogBox.IMPORT_FILE_INVALID_FORMAT_IDENTIFIER
+
+        self.__options=jsonAsDict
+
+        self.__loadSettingsPagePerimeter()
+        self.__loadSettingsPageFormat()
+        self.__loadSettingsPageTarget()
+
+        self.leTargetResultFile.setText(self.__options['exportFileName'])
+        self.rbTargetResultClipboard.setChecked(self.__options['exportClipboard'])
+
+        BCSettings.set(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE, fileName)
+        self.__currentLoadedConfigurationFile=fileName
+        self.__setModified(False)
+
+    def __saveFile(self, fileName, description=''):
+        """Save export files list definition to defined `fileName`"""
+        toExport={
+                'formatIdentifier': "bulicommander-export-file-list-definition",
+                'contentDescription': description,
+                'exportFormat': self.cbxFormat.currentIndex(),
+                'exportFileName': self.leTargetResultFile.text(),
+                'exportClipboard': self.rbTargetResultClipboard.isChecked(),
+                'exportConfig': self.__generateConfig(True)
+            }
+        # do not save file list!
+        toExport['exportConfig'].pop('files')
+
+        returned=BCExportFilesDialogBox.EXPORT_OK
+        try:
+            with open(fileName, 'w') as fHandle:
+                fHandle.write(json.dumps(toExport, indent=4, sort_keys=True, cls=JsonQObjectEncoder))
+        except Exception as e:
+            Debug.print("Can't save file {0}: {1}", fileName, str(e))
+            returned=BCExportFilesDialogBox.EXPORT_CANT_SAVE
+
+        BCSettings.set(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE, fileName)
+        self.__currentLoadedConfigurationFile=fileName
+        self.__setModified(False)
+
+        return returned
+
+    def __updateFileNameLabel(self):
+        """Update file name in status bar according to current tab"""
+        modified=''
+        if self.__isModified:
+            modified=f" ({i18n('modified')})"
+
+        if self.__currentLoadedConfigurationFile is None or self.__currentLoadedConfigurationFile=='':
+            self.lblExportDefinitionFileName.setText(f"")
+        else:
+            self.lblExportDefinitionFileName.setText(f"{self.__currentLoadedConfigurationFile}{modified}")
+
+    def __setModified(self, value):
+        """Set if export file list definition has been modified"""
+        if self.__isModified!=value:
+            self.__isModified=value
+            self.__updateFileNameLabel()
 
     def options(self):
         """Return current defined options"""
         return self.__options
+
+    def openFile(self, fileName=None):
+        """Open file designed by `fileName`
+
+        If fileName is None, open dialog box with predefined last opened/saved file
+        """
+        if fileName is None:
+            fileName=BCSettings.get(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE)
+
+        if fileName is None:
+            fileName=''
+
+        title=i18n(f"{self.__title}::{i18n('Open export files list definition')}")
+        extension=i18n("BuliCommander Export Files List (*.bcefl)")
+
+        fileName, dummy = QFileDialog.getOpenFileName(self, title, fileName, extension)
+
+        if fileName != '':
+            if not os.path.isfile(fileName):
+                openResult=BCExportFilesDialogBox.IMPORT_FILE_NOT_FOUND
+            else:
+                openResult=self.__openFile(fileName, title)
+
+            if BCExportFilesDialogBox.IMPORT_OK:
+                return True
+            elif openResult==BCExportFilesDialogBox.IMPORT_FILE_NOT_FOUND:
+                WDialogMessage.display(title, "<br>".join(
+                    [i18n("<h1>Can't open file!</h1>"),
+                     i18n("File not found!"),
+                    ]))
+            elif openResult==BCExportFilesDialogBox.IMPORT_FILE_CANT_READ:
+                WDialogMessage.display(title, "<br>".join(
+                    [i18n("<h1>Can't open file!</h1>"),
+                     i18n("File can't be read!"),
+                    ]))
+            elif openResult==BCExportFilesDialogBox.IMPORT_FILE_NOT_JSON:
+                WDialogMessage.display(title, "<br>".join(
+                    [i18n("<h1>Can't open file!</h1>"),
+                     i18n("Invalid file format!"),
+                    ]))
+
+        return False
+
+    def saveFile(self, saveAs=False, fileName=None):
+        """Save current search to designed file name"""
+        if fileName is None and self.__currentLoadedConfigurationFile!='':
+            # a file is currently opened
+            fileName=self.__currentLoadedConfigurationFile
+        else:
+            fileName=BCSettings.get(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE)
+            saveAs=True
+
+        if fileName is None:
+            fileName=''
+            saveAs=True
+
+        title=i18n(f"{self.__title}::{i18n('Save export files list definition')}")
+        extension=i18n("BuliCommander Export Files List (*.bcefl)")
+
+        if saveAs:
+            fileName, dummy = QFileDialog.getSaveFileName(self, title, fileName, extension)
+
+        if fileName != '':
+            saveResult=self.__saveFile(fileName)
+
+            if saveResult==BCExportFilesDialogBox.EXPORT_OK:
+                return True
+            elif saveResult==BCExportFilesDialogBox.EXPORT_CANT_SAVE:
+                WDialogMessage.display(title, i18n("<h1>Can't save file!</h1>"))
+
+        return False
+
+
 
     @staticmethod
     def open(title, uicontroller):

@@ -29,6 +29,133 @@
    <bool>true</bool>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>6</number>
+   </property>
+   <property name="topMargin">
+    <number>6</number>
+   </property>
+   <property name="rightMargin">
+    <number>6</number>
+   </property>
+   <property name="bottomMargin">
+    <number>6</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="wToolbar" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_7">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QToolButton" name="tbNewExportDefinition">
+        <property name="toolTip">
+         <string>New export definition</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/file_new</normaloff>:/pktk/images/normal/file_new</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="tbOpenExportDefinition">
+        <property name="toolTip">
+         <string>Open an export definition</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/folder_open</normaloff>:/pktk/images/normal/folder_open</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="tbSaveExportDefinition">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Save export definition</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/file_save</normaloff>:/pktk/images/normal/file_save</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+        <property name="popupMode">
+         <enum>QToolButton::MenuButtonPopup</enum>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>1023</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
    <item>
     <widget class="QStackedWidget" name="swPages">
      <property name="sizePolicy">
@@ -41,7 +168,7 @@
       <enum>Qt::LeftToRight</enum>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="pagePerimeter">
       <layout class="QGridLayout" name="gridLayout">
@@ -185,7 +312,7 @@
         </widget>
        </item>
        <item row="7" column="0" colspan="2">
-        <widget class="QListWidget" name="lwPerimeterProperties">
+        <widget class="WOrderedList" name="lwPerimeterProperties">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
            <horstretch>0</horstretch>
@@ -204,73 +331,8 @@ Drag'n'drop properties to reorganize order.</string>
           <bool>false</bool>
          </property>
          <property name="selectionMode">
-          <enum>QAbstractItemView::NoSelection</enum>
+          <enum>QAbstractItemView::SingleSelection</enum>
          </property>
-         <item>
-          <property name="text">
-           <string>Path</string>
-          </property>
-          <property name="checkState">
-           <enum>Checked</enum>
-          </property>
-          <property name="flags">
-           <set>ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>File</string>
-          </property>
-          <property name="checkState">
-           <enum>Checked</enum>
-          </property>
-          <property name="flags">
-           <set>ItemIsDragEnabled|ItemIsUserCheckable</set>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Type</string>
-          </property>
-          <property name="checkState">
-           <enum>Checked</enum>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Date/Time</string>
-          </property>
-          <property name="checkState">
-           <enum>Checked</enum>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Size (bytes)</string>
-          </property>
-          <property name="checkState">
-           <enum>Checked</enum>
-          </property>
-          <property name="flags">
-           <set>ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Size (best unit)</string>
-          </property>
-          <property name="checkState">
-           <enum>Checked</enum>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Image size</string>
-          </property>
-          <property name="checkState">
-           <enum>Checked</enum>
-          </property>
-         </item>
         </widget>
        </item>
        <item row="8" column="0" colspan="2">
@@ -2814,12 +2876,14 @@ Files:         {items:files.count} ({items:files.size(KiB)})
        <number>0</number>
       </property>
       <item>
-       <widget class="QPushButton" name="pbOptionsLoadDefault">
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reset all configurations settings to Buli Commander default values&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <widget class="QLabel" name="lblExportDefinitionFileName">
+        <property name="font">
+         <font>
+          <italic>true</italic>
+         </font>
         </property>
         <property name="text">
-         <string>Load default</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -2906,6 +2970,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
    <header>bulicommander.pktk.widgets.wtextedit</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>WOrderedList</class>
+   <extends>QListWidget</extends>
+   <header>bulicommander.pktk.widgets.worderedlist</header>
+  </customwidget>
  </customwidgets>
  <resources>
   <include location="dark_icons.qrc"/>
@@ -2978,8 +3047,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="buttonGroupTargetResult"/>
   <buttongroup name="buttonGroupFormatTextBorder"/>
   <buttongroup name="buttonGroupPerimeterSelection"/>
-  <buttongroup name="buttonGroupTargetResult"/>
  </buttongroups>
 </ui>
