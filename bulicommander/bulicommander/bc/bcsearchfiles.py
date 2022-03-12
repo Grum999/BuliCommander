@@ -1714,7 +1714,7 @@ class BCSearchFilesDialogBox(QDialog):
             else:
                 saveResult=self.__saveFileAdvanced(fileName)
 
-            if NodeEditorScene.EXPORT_OK:
+            if saveResult==NodeEditorScene.EXPORT_OK:
                 return True
             elif saveResult==NodeEditorScene.EXPORT_CANT_SAVE:
                 WDialogMessage.display(title, i18n("<h1>Can't save file!</h1>"))
