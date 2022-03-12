@@ -3043,7 +3043,7 @@ class NodeEditorLink(QObject):
     # Deleting (Calling destructor)
     def __del__(self):
         if self.__grItem and self.__grItem.scene():
-            self.__grItem.scene().removeItem(self)
+            self.__grItem.scene().removeItem(self.__grItem)
             self.setConnectorTo(None)
             del self.__grItem
 

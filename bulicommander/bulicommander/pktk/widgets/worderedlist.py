@@ -202,7 +202,7 @@ class WOrderedList(QListWidget):
         | [X] Item 03                                 ▼ |               with drag'n'drop
         | [X] Item 04                                 ▲ |
         +-----------------------------------------------+
-        When an item is unchecked, sort arrow is "empty" => mean that sort order is ignored 
+        When an item is unchecked, sort arrow is "empty" => mean that sort order is ignored
 
 
     """
@@ -251,7 +251,7 @@ class WOrderedList(QListWidget):
 
     def setSortOptionAvailable(self, value):
         """Set if ascending/descending sort option is available for items"""
-        if isinstance(value, bool) and self.__optionSort!=value:
+        if isinstance(value, bool):
             self.__optionSort=value
             model=self.model()
             # need to update each item from model; update() made on QListWidget didn't update anything
@@ -264,7 +264,7 @@ class WOrderedList(QListWidget):
 
     def setCheckOptionAvailable(self, value):
         """Set if ascending/descending sort option is available for items"""
-        if isinstance(value, bool) and self.__optionCheck!=value:
+        if isinstance(value, bool):
             self.__optionCheck=value
             for index in range(self.count()):
                 self.item(index).setCheckable(self.__optionCheck)
@@ -275,7 +275,7 @@ class WOrderedList(QListWidget):
 
     def setReorderOptionAvailable(self, value):
         """Set if ordering items option is available"""
-        if isinstance(value, bool) and self.__optionReorder!=value:
+        if isinstance(value, bool):
             self.__optionReorder=value
             if self.__optionReorder:
                 self.setDragDropMode(QAbstractItemView.InternalMove)
