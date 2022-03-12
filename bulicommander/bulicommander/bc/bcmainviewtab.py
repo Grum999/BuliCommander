@@ -26,7 +26,7 @@
 #from .pktk import PkTk
 
 from enum import Enum
-from math import floor
+from math import (floor, ceil)
 from pathlib import Path
 
 import krita
@@ -1902,6 +1902,21 @@ class BCMainViewTab(QFrame):
                 self.cbImgSizeRes.setProperty('inUpdate', False)
                 self.__filesUpdateImageNfoSizeUnit()
 
+                ratio=file.getProperty(BCFileProperty.IMAGE_RATIO.value)
+                orientation=''
+                if ratio>1:
+                    orientation=i18n("Landscape")
+                elif ratio<1:
+                    orientation=i18n("Portrait")
+
+                if orientation!='':
+                    orientation=f" ({orientation})"
+
+                self.lblImgRatio.setText(f"{ratio:.04f}{orientation}")
+
+                nbPixels=file.getProperty(BCFileProperty.IMAGE_PIXELS.value)
+                self.lblImgNbPixels.setText(f"{nbPixels} (~{ceil(10*nbPixels/1000000)/10:.02f}MP)")
+
                 if 'colorType' in imgNfo:
                     if 'paletteSize' in imgNfo:
                         if 'paletteCount' in imgNfo:
@@ -2177,6 +2192,8 @@ class BCMainViewTab(QFrame):
                 self.cbImgSizeRes.setVisible(False)
                 self.lblImgSize.setText('-')
                 self.lblImgResolution.setText('-')
+                self.lblImgRatio.setText('-')
+                self.lblImgNbPixels.setText('-')
                 self.lblImgMode.setText('-')
                 self.lblImgDepth.setText('-')
                 self.lblImgProfile.setText('-')
@@ -2216,6 +2233,8 @@ class BCMainViewTab(QFrame):
             self.lblImgFormat.setText('-')
             self.lblImgSize.setText('-')
             self.lblImgResolution.setText('-')
+            self.lblImgRatio.setText('-')
+            self.lblImgNbPixels.setText('-')
             self.lblImgMode.setText('-')
             self.lblImgDepth.setText('-')
             self.lblImgProfile.setText('-')
