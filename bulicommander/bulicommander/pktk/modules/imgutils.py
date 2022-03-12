@@ -275,3 +275,69 @@ def combineChannels(bytesPerChannel, *channels):
         channelNumber+=1
 
     return target
+
+def convertSize(value, fromUnit, toUnit, resolution, roundValue=None):
+    """Return converted `value` from given `fromUnit` to `toUnit`, using given `resolution` (if unit conversion implies px)
+
+    Given `fromUnit` and `toUnit` can be:
+        px: pixels
+        mm: millimeters
+        cm: centimeters
+        in: inchs
+
+    Given `fromUnit` can also be provided as 'pt' (points)
+
+    The `roundValue` allows to define number of decimals for conversion
+    If None is provided, according to `toUnit`:
+        px: 0
+        mm: 0
+        cm: 2
+        in: 4
+    """
+    if roundValue is None:
+        if toUnit=='in':
+            roundValue = 4
+        elif toUnit=='cm':
+            roundValue = 2
+        else:
+            roundValue = 0
+
+    if fromUnit == 'mm':
+        if toUnit == 'cm':
+            return round(value/10, roundValue)
+        elif toUnit == 'in':
+            return round(value/25.4, roundValue)
+        elif toUnit == 'px':
+            return round(convertSize(value, fromUnit, 'in', resolution) * resolution, roundValue)
+    elif fromUnit == 'cm':
+        if toUnit == 'mm':
+            return round(value*10, roundValue)
+        elif toUnit == 'in':
+            return round(value/2.54, roundValue)
+        elif toUnit == 'px':
+            return round(convertSize(value, fromUnit, 'in', resolution) * resolution, roundValue)
+    elif fromUnit == 'in':
+        if toUnit == 'mm':
+            return round(value*25.4, roundValue)
+        elif toUnit == 'cm':
+            return round(value*2.54, roundValue)
+        elif toUnit == 'px':
+            return round(value * resolution, roundValue)
+    elif fromUnit == 'px':
+        if toUnit == 'mm':
+            return round(convertSize(value, fromUnit, 'in', resolution)*25.4, roundValue)
+        elif toUnit == 'cm':
+            return round(convertSize(value, fromUnit, 'in', resolution)*2.54, roundValue)
+        elif toUnit == 'in':
+            return round(value / resolution, roundValue)
+    elif fromUnit == 'pt':
+        if toUnit == 'mm':
+            return round(value * 0.35277777777777775, roundValue)   # 25.4/72
+        elif toUnit == 'cm':
+            return round(value * 0.035277777777777775, roundValue)  #2.54/72
+        elif toUnit == 'in':
+            return round(value / 72, roundValue)
+        elif toUnit == 'px':
+            return round(resolution * convertSize(value, fromUnit, 'in', resolution)/72, roundValue)
+    # all other combination are not valid, return initial value
+    return value

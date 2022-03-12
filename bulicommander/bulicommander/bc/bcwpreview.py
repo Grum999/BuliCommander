@@ -83,7 +83,6 @@ class BCWPreview(QWidget):
 
         # Allow zooming with right mouse button.
         # Drag for zoom box, doubleclick to view full image.
-        self.gvPreview.setCacheMode(QGraphicsView.CacheBackground)
         self.gvPreview.zoomChanged.connect(self.__zoomChanged)
         self.hsAnimatedFrameNumber.valueChanged.connect(self.__animatedFrameChange)
         self.tbPlayPause.clicked.connect(self.__playPauseAnimation)

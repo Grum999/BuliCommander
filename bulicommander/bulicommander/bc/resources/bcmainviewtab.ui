@@ -345,7 +345,7 @@
                            <item>
                             <widget class="QTabWidget" name="twInfo">
                              <property name="currentIndex">
-                              <number>3</number>
+                              <number>1</number>
                              </property>
                              <property name="tabBarAutoHide">
                               <bool>false</bool>
@@ -391,8 +391,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1494</width>
-                                    <height>639</height>
+                                    <width>1535</width>
+                                    <height>644</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -613,8 +613,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1494</width>
-                                    <height>639</height>
+                                    <width>1535</width>
+                                    <height>644</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -640,6 +640,9 @@
                                       <font>
                                        <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
+                                     </property>
+                                     <property name="toolTip">
+                                      <string>Image format</string>
                                      </property>
                                      <property name="text">
                                       <string>TextLabel</string>
@@ -667,15 +670,82 @@
                                     </widget>
                                    </item>
                                    <item row="2" column="1">
-                                    <widget class="QLabel" name="lblImgSize">
-                                     <property name="font">
-                                      <font>
-                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
-                                      </font>
+                                    <widget class="QWidget" name="widget_3" native="true">
+                                     <property name="sizePolicy">
+                                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                                       <horstretch>0</horstretch>
+                                       <verstretch>0</verstretch>
+                                      </sizepolicy>
                                      </property>
-                                     <property name="text">
-                                      <string>TextLabel</string>
+                                     <property name="minimumSize">
+                                      <size>
+                                       <width>0</width>
+                                       <height>0</height>
+                                      </size>
                                      </property>
+                                     <layout class="QHBoxLayout" name="horizontalLayout_9">
+                                      <property name="spacing">
+                                       <number>-1</number>
+                                      </property>
+                                      <property name="leftMargin">
+                                       <number>0</number>
+                                      </property>
+                                      <property name="topMargin">
+                                       <number>0</number>
+                                      </property>
+                                      <property name="rightMargin">
+                                       <number>0</number>
+                                      </property>
+                                      <property name="bottomMargin">
+                                       <number>0</number>
+                                      </property>
+                                      <item>
+                                       <widget class="QLabel" name="lblImgSize">
+                                        <property name="font">
+                                         <font>
+                                          <family>DejaVu Sans Mono, Consolas, Courier New</family>
+                                         </font>
+                                        </property>
+                                        <property name="toolTip">
+                                         <string>Image size in pixels</string>
+                                        </property>
+                                        <property name="text">
+                                         <string>TextLabel</string>
+                                        </property>
+                                       </widget>
+                                      </item>
+                                      <item>
+                                       <widget class="QComboBox" name="cbImgSizeRes">
+                                        <property name="sizePolicy">
+                                         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                                          <horstretch>0</horstretch>
+                                          <verstretch>0</verstretch>
+                                         </sizepolicy>
+                                        </property>
+                                        <property name="font">
+                                         <font>
+                                          <family>DejaVu Sans Mono, Consolas, Courier New</family>
+                                         </font>
+                                        </property>
+                                        <property name="toolTip">
+                                         <string>Image size in unit</string>
+                                        </property>
+                                       </widget>
+                                      </item>
+                                      <item>
+                                       <spacer name="horizontalSpacer">
+                                        <property name="orientation">
+                                         <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                         <size>
+                                          <width>40</width>
+                                          <height>20</height>
+                                         </size>
+                                        </property>
+                                       </spacer>
+                                      </item>
+                                     </layout>
                                     </widget>
                                    </item>
                                    <item row="3" column="0">
@@ -698,19 +768,22 @@
                                        <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
+                                     <property name="toolTip">
+                                      <string>Resolution</string>
+                                     </property>
                                      <property name="text">
                                       <string>TextLabel</string>
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="4" column="0" colspan="2">
+                                   <item row="6" column="0" colspan="2">
                                     <widget class="Line" name="line_4">
                                      <property name="orientation">
                                       <enum>Qt::Horizontal</enum>
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="5" column="0">
+                                   <item row="7" column="0">
                                     <widget class="QLabel" name="label_8">
                                      <property name="font">
                                       <font>
@@ -723,7 +796,7 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="5" column="1">
+                                   <item row="7" column="1">
                                     <widget class="QLabel" name="lblImgMode">
                                      <property name="font">
                                       <font>
@@ -735,7 +808,7 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="6" column="0">
+                                   <item row="8" column="0">
                                     <widget class="QLabel" name="label_6">
                                      <property name="font">
                                       <font>
@@ -748,7 +821,7 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="6" column="1">
+                                   <item row="8" column="1">
                                     <widget class="QLabel" name="lblImgDepth">
                                      <property name="font">
                                       <font>
@@ -760,7 +833,7 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="7" column="0">
+                                   <item row="9" column="0">
                                     <widget class="QLabel" name="label_12">
                                      <property name="font">
                                       <font>
@@ -773,7 +846,7 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="7" column="1">
+                                   <item row="9" column="1">
                                     <widget class="QLabel" name="lblImgProfile">
                                      <property name="font">
                                       <font>
@@ -785,10 +858,66 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="8" column="0" colspan="2">
+                                   <item row="10" column="0" colspan="2">
                                     <widget class="Line" name="lineImgExtraNfo">
                                      <property name="orientation">
                                       <enum>Qt::Horizontal</enum>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="4" column="0">
+                                    <widget class="QLabel" name="label_19">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Ratio</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="4" column="1">
+                                    <widget class="QLabel" name="lblImgRatio">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
+                                      </font>
+                                     </property>
+                                     <property name="toolTip">
+                                      <string>Ratio Width/Height</string>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="0">
+                                    <widget class="QLabel" name="label_22">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Pixels</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="1">
+                                    <widget class="QLabel" name="lblImgNbPixels">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
+                                      </font>
+                                     </property>
+                                     <property name="toolTip">
+                                      <string>Number of pixels</string>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
                                      </property>
                                     </widget>
                                    </item>
@@ -842,8 +971,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1494</width>
-                                    <height>639</height>
+                                    <width>1535</width>
+                                    <height>644</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1100,8 +1229,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1494</width>
-                                    <height>639</height>
+                                    <width>1535</width>
+                                    <height>644</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">

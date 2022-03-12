@@ -26,7 +26,7 @@
 #from .pktk import PkTk
 
 from enum import Enum
-from math import floor
+from math import (floor, ceil)
 from pathlib import Path
 
 import krita
@@ -106,7 +106,10 @@ from .bcwpreview import (
 
 from bulicommander.pktk.modules.timeutils import Timer
 from bulicommander.pktk.modules.workers import WorkerPool
-from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.imgutils import (
+        buildIcon,
+        convertSize
+    )
 from bulicommander.pktk.modules.strtable import (
         TextTable,
         TextTableSettingsText
@@ -959,6 +962,8 @@ class BCMainViewTab(QFrame):
         self.__filesFsWatcher = QFileSystemWatcher()
         self.__filesFsWatcherTmpList = []
 
+        self.__filesImageNfoSizeUnit='mm'
+
         self.__actionFilesApplyTabLayoutFull = QAction(buildIcon("pktk:dashboard_full"), i18n('Full mode'), self)
         self.__actionFilesApplyTabLayoutFull.setCheckable(True)
         self.__actionFilesApplyTabLayoutFull.setProperty('layout', BCMainViewTabFilesLayout.FULL)
@@ -1153,6 +1158,12 @@ class BCMainViewTab(QFrame):
         def treeViewFiles_iconProcessed():
             self.__filesProgressSetNext()
 
+        @pyqtSlot(int)
+        def cbImgSizeRes_changed(index):
+            if index<0 or self.cbImgSizeRes.property('inUpdate')==True:
+                return
+            self.setFilesImageNfoSizeUnit(self.cbImgSizeRes.currentData())
+
         # -- files --
 
         # hide progress bar
@@ -1233,6 +1244,8 @@ class BCMainViewTab(QFrame):
         self.tvDirectoryTree.contextMenuEvent = self.__filesContextMenuDirectoryTree
         self.tvDirectoryTree.hideColumn(1) # gide 'size'
         self.tvDirectoryTree.hideColumn(2) # gide 'type'
+
+        self.cbImgSizeRes.currentIndexChanged.connect(cbImgSizeRes_changed)
 
         # -- clipboard --
         self.__actionClipboardApplyTabLayoutTop.triggered.connect(children_Clicked)
@@ -1440,7 +1453,6 @@ class BCMainViewTab(QFrame):
                 self.__filesQuery = BCFileList()
 
             refType = self.__uiController.quickRefType(self.filesPath())
-
 
             if refType == BCWPathBar.QUICKREF_RESERVED_LAST_OPENED:
                 self.__filesQuery.setResult(self.filesLastDocumentsOpened().list())
@@ -1859,6 +1871,9 @@ class BCMainViewTab(QFrame):
                 self.lblImgFormat.setText("Unknown file type")
 
             if file.format() in BCFileManagedFormat.list():
+                self.cbImgSizeRes.setProperty('inUpdate', True)
+                self.cbImgSizeRes.clear()
+
                 if file.imageSize().width() == -1 or file.imageSize().height() == -1:
                     self.lblImgSize.setText('-')
                 else:
@@ -1868,8 +1883,39 @@ class BCMainViewTab(QFrame):
 
                 if 'resolution' in imgNfo:
                     self.lblImgResolution.setText(imgNfo['resolution'])
+
+                    if 'resolutionX' in imgNfo and 'resolutionY' in imgNfo:
+                        if file.imageSize().width() > -1 and file.imageSize().height() > -1:
+                            for unit in ('mm', 'cm', 'in'):
+                                if unit=='in':
+                                    txt = f"{convertSize(file.imageSize().width(), 'px', unit, imgNfo['resolutionX'][0], 4):.04f}x{convertSize(file.imageSize().height(), 'px', unit, imgNfo['resolutionY'][0], 4):.04f}{unit}  "
+                                elif unit=='cm':
+                                    txt = f"{convertSize(file.imageSize().width(), 'px', unit, imgNfo['resolutionX'][0], 2):.02f}x{convertSize(file.imageSize().height(), 'px', unit, imgNfo['resolutionY'][0], 2):.02f}{unit}  "
+                                else:
+                                    txt = f"{convertSize(file.imageSize().width(), 'px', unit, imgNfo['resolutionX'][0], 0):.0f}x{convertSize(file.imageSize().height(), 'px', unit, imgNfo['resolutionY'][0], 0):.0f}{unit}  "
+
+                                self.cbImgSizeRes.addItem(txt, unit)
                 else:
                     self.lblImgResolution.setText('-')
+
+                self.cbImgSizeRes.setVisible(self.cbImgSizeRes.count()>0)
+                self.cbImgSizeRes.setProperty('inUpdate', False)
+                self.__filesUpdateImageNfoSizeUnit()
+
+                ratio=file.getProperty(BCFileProperty.IMAGE_RATIO.value)
+                orientation=''
+                if ratio>1:
+                    orientation=i18n("Landscape")
+                elif ratio<1:
+                    orientation=i18n("Portrait")
+
+                if orientation!='':
+                    orientation=f" ({orientation})"
+
+                self.lblImgRatio.setText(f"{ratio:.04f}{orientation}")
+
+                nbPixels=file.getProperty(BCFileProperty.IMAGE_PIXELS.value)
+                self.lblImgNbPixels.setText(f"{nbPixels} (~{ceil(10*nbPixels/1000000)/10:.02f}MP)")
 
                 if 'colorType' in imgNfo:
                     if 'paletteSize' in imgNfo:
@@ -2143,8 +2189,11 @@ class BCMainViewTab(QFrame):
                     self.wFilesPreview.hidePreview("Unable to read image")
 
             else:
+                self.cbImgSizeRes.setVisible(False)
                 self.lblImgSize.setText('-')
                 self.lblImgResolution.setText('-')
+                self.lblImgRatio.setText('-')
+                self.lblImgNbPixels.setText('-')
                 self.lblImgMode.setText('-')
                 self.lblImgDepth.setText('-')
                 self.lblImgProfile.setText('-')
@@ -2180,9 +2229,12 @@ class BCMainViewTab(QFrame):
                 self.lblOwner.setToolTip('')
 
             # image
+            self.cbImgSizeRes.setVisible(False)
             self.lblImgFormat.setText('-')
             self.lblImgSize.setText('-')
             self.lblImgResolution.setText('-')
+            self.lblImgRatio.setText('-')
+            self.lblImgNbPixels.setText('-')
             self.lblImgMode.setText('-')
             self.lblImgDepth.setText('-')
             self.lblImgProfile.setText('-')
@@ -2788,6 +2840,13 @@ class BCMainViewTab(QFrame):
 
         contextMenu.exec_(event.globalPos())
 
+
+    def __filesUpdateImageNfoSizeUnit(self):
+        """Set current image information size unit"""
+        for index in range(self.cbImgSizeRes.count()):
+            if self.cbImgSizeRes.itemData(index)==self.__filesImageNfoSizeUnit:
+                self.cbImgSizeRes.setCurrentIndex(index)
+                return
 
     # -- PRIVATE CLIPBOARD -----------------------------------------------------
 
@@ -3832,6 +3891,19 @@ class BCMainViewTab(QFrame):
     def filesShowMenuLastDocuments(self, menu):
         """Build menu last documents views"""
         self.framePathBar.menuLastDocumentsShow(menu)
+
+
+    def filesImageNfoSizeUnit(self):
+        """Return current image information size unit"""
+        return self.__filesImageNfoSizeUnit
+
+
+    def setFilesImageNfoSizeUnit(self, value):
+        """Set current image information size unit"""
+        if value in ('mm', 'cm', 'in'):
+            self.__filesImageNfoSizeUnit=value
+            self.__filesUpdateImageNfoSizeUnit()
+
 
     # -- PUBLIC CLIPBOARD ----------------------------------------------------------
 

@@ -32,7 +32,7 @@
       <string notr="true"/>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="pgPreviewImg">
       <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -52,9 +52,12 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="WImageView" name="gvPreview">
-         <property name="statusTip">
-          <string>Double-click: zoom to fit/scale 1:1 | Drag: pan | Ctrl+Drag: select and zoom</string>
+        <widget class="WImageView" name="gvPreview" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
         </widget>
        </item>
@@ -286,8 +289,9 @@ QSlider::handle:horizontal {
  <customwidgets>
   <customwidget>
    <class>WImageView</class>
-   <extends>QGraphicsView</extends>
+   <extends>QWidget</extends>
    <header>bulicommander.pktk.widgets.wimageview</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>
