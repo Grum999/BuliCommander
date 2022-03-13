@@ -1647,7 +1647,7 @@ class BCSearchFilesDialogBox(QDialog):
             else:
                 openResult=self.__openFileAdvanced(fileName, title)
 
-            if NodeEditorScene.IMPORT_OK:
+            if openResult==NodeEditorScene.IMPORT_OK:
                 return True
             elif openResult==NodeEditorScene.IMPORT_FILE_NOT_FOUND:
                 WDialogMessage.display(title, "<br>".join(
