@@ -1424,6 +1424,8 @@ class BCBaseFile(object):
             self._mdatetime = None
         self._format = BCFileManagedFormat.UNKNOWN
         self._tag = {}
+        # a unique Id for BCBaseFile object based on file name
+        self.__uuid=BCBaseFile.getUuid(self._fullPathName)
 
     @staticmethod
     def fullPathNameCmpAsc(f1, f2):
@@ -1438,6 +1440,10 @@ class BCBaseFile(object):
         if f1.fullPathName()>f2.fullPathName():
             return -1
         return 1
+
+    @staticmethod
+    def getUuid(fullPathName):
+        return hashlib.sha1(fullPathName.encode()).digest()
 
     def path(self):
         """Return file path"""
@@ -1574,6 +1580,10 @@ class BCBaseFile(object):
             return '0' * 64
         elif method=='sha512':
             return '0' * 128
+
+    def uuid(self):
+        """Return UUID defined for BCBaseFile"""
+        return self.__uuid
 
 
 class BCDirectory(BCBaseFile):
@@ -2174,7 +2184,8 @@ class BCFile(BCBaseFile):
 
 
     def __calculateQuickHash(self):
-        """Calculate a 'quick' hash on file with Blake2B method
+        """Calculate a 'quick' hash on file with SHA256 method
+        (fastest than Blake2b)
 
         To improve speedup on hash calculation, read only first and last 8.00KB from file
         => most of file have their image properties (size and other technical information) at the beginning of file
@@ -2188,7 +2199,7 @@ class BCFile(BCBaseFile):
             try:
                 with open(self._fullPathName, "rb") as fileHandle:
                     # digest = 256bits (32Bytes)
-                    fileHash = hashlib.blake2b(digest_size=32)
+                    fileHash = hashlib.sha256()
 
                     # file size is the first part of hash (ie: file size changed then ensure that hash is not the same event if 1st/last 8KB of file are the same)
                     fileHash.update(f"{self.__size}".encode())
@@ -6338,12 +6349,12 @@ class BCFileList(QObject):
         return None
 
     @staticmethod
-    def getBcFileName(itemIndex, file):
+    def getBcFileUuid(itemIndex, file):
         """Return fullPathName
 
         > Used for multiprocessing task
         """
-        return file.fullPathName()
+        return file.uuid()
 
     @staticmethod
     def getBcFileStats(itemIndex, file):
@@ -6362,7 +6373,7 @@ class BCFileList(QObject):
         """Initialiser current list query"""
         super(BCFileList, self).__init__(None)
         self.__currentFiles = []
-        self.__currentFilesName = set()
+        self.__currentFilesUuid = set()
 
         self.__pathList = []
         self.__ruleList = []
@@ -6497,7 +6508,7 @@ class BCFileList(QObject):
     def clearResults(self, emitSignal=True):
         """Clear current results"""
         self.__currentFiles = []
-        self.__currentFilesName = set()
+        self.__currentFilesUuid = set()
         self.__invalidate()
         if emitSignal:
             self.resultsUpdatedReset.emit()
@@ -6831,7 +6842,7 @@ class BCFileList(QObject):
                             nbTotal+=1
                             fullPathName = os.path.join(path, dir)
 
-                            if not fullPathName in self.__currentFilesName and not fullPathName in foundDirectories:
+                            if not BCBaseFile.getUuid(fullPathName) in self.__currentFilesUuid and not fullPathName in foundDirectories:
                                 foundDirectories.add(fullPathName)
 
                             if nbTotal%1000==0:
@@ -6847,7 +6858,7 @@ class BCFileList(QObject):
 
                         if includeHidden or not QFileInfo(name).isHidden():
                             # check if file name match given pattern (if pattern) and is not already in file list
-                            if (managedFilesOnly is None or managedFilesOnly.search(name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
+                            if (managedFilesOnly is None or managedFilesOnly.search(name)) and not BCBaseFile.getUuid(fullPathName) in self.__currentFilesUuid and not fullPathName in foundFiles:
                                 foundFiles.add(fullPathName)
                                 nbFilesInPath+=1
 
@@ -6869,12 +6880,12 @@ class BCFileList(QObject):
                         if includeHidden or not QFileInfo(fullPathName).isHidden():
                             if file.is_file():
                                 # check if file name match given pattern (if pattern) and is not already in file list
-                                if (managedFilesOnly is None or managedFilesOnly.search(file.name)) and not fullPathName in self.__currentFilesName and not fullPathName in foundFiles:
+                                if (managedFilesOnly is None or managedFilesOnly.search(file.name)) and not BCBaseFile.getUuid(fullPathName) in self.__currentFilesUuid and not fullPathName in foundFiles:
                                     foundFiles.add(fullPathName)
                                     nbFilesInPath+=1
                             elif self.__includeDirectories and file.is_dir():
                                 # if directories are asked and file is a directory, add it
-                                if not fullPathName in self.__currentFilesName and not fullPathName in foundDirectories:
+                                if not BCBaseFile.getUuid(fullPathName) in self.__currentFilesUuid and not fullPathName in foundDirectories:
                                     foundDirectories.add(fullPathName)
 
                         if nbTotal%1000==0:
@@ -6985,7 +6996,7 @@ class BCFileList(QObject):
         Stopwatch.start('BCFileList.execute.04-result')
         # build final result
         #   all files that match selection rules are added to current selected images
-        self.__currentFilesName=set(self.__workerPool.map(self.__currentFiles, BCFileList.getBcFileName))
+        self.__currentFilesUuid=set(self.__workerPool.map(self.__currentFiles, BCFileList.getBcFileUuid))
         nb = len(self.__currentFiles)
 
         #Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.04-result"))
