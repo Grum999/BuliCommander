@@ -1205,6 +1205,12 @@ class BCMainViewTab(QFrame):
         # reset animation values
         self.wFilesPreview.hideAnimatedFrames()
 
+        # Disable page updates while preparing content (avoid flickering effect)
+        self.pageFileNfoGeneric.setUpdatesEnabled(False)
+        self.pageFileNfoImage.setUpdatesEnabled(False)
+        self.pageFileNfoKraAbout.setUpdatesEnabled(False)
+        self.pageFileNfoKraAuthor.setUpdatesEnabled(False)
+
         # ------------------- !!!!! Here start the noodle spaghetti !!!!! -------------------
         if self.__filesSelectedNbTotal == 1:
             # ------------------------------ File ------------------------------
@@ -1261,34 +1267,29 @@ class BCMainViewTab(QFrame):
                     self.lblOwner.setToolTip(self.lblOwner.text())
 
             # Search for backup files...
-            backupSuffix = Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.')
-            filePattern = file.name().replace('.', r'\.')
-            rePattern = f"re/i:{filePattern}(?:\.\d+)?{backupSuffix}$"
-            searchBackupRule = BCFileListRule()
-            searchBackupRule.setName((rePattern, 'match'))
+            backupSuffix = re.escape(Krita.instance().readSetting('', 'backupfilesuffix', '~'))
+            filePattern = re.escape(file.name())
+            rePattern = f"{filePattern}(?:\.\d+)?{backupSuffix}$"
+            backupList=[]
+            pathName=file.path()
+            with os.scandir(pathName) as files:
+                for foundFile in files:
+                    if re.match(rePattern, foundFile.name):
+                        backupList.append(BCFile(os.path.join(pathName, foundFile.name)))
 
-            backupList = BCFileList()
-            backupList.addPath(file.path())
-            backupList.addRule(searchBackupRule)
-            backupList.addSortRule(BCFileListSortRule(BCFileProperty.FILE_DATE, False))
-
-            backupList.execute()
-
-            if backupList.nbFiles()>0:
+            if len(backupList)>0:
                 backupList.sort()
-
                 filterButton = QPushButton(i18n("Show"))
                 filterButton.setToolTip(i18n("Show in opposite panel"))
                 filterButton.setStatusTip(i18n("Show backup files list in opposite panel"))
                 filterButton.clicked.connect(applyBackupFilter)
-
                 addSeparator(self.scrollAreaWidgetContentsNfoGeneric)
-                if backupList.nbFiles() == 1:
+                if len(backupList) == 1:
                     addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n("1 backup file found"), filterButton)
                 else:
-                    addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n(f"{backupList.nbFiles()} backup files found"), filterButton)
+                    addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n(f"{len(backupList)} backup files found"), filterButton)
 
-                for fileBackup in backupList.files():
+                for fileBackup in backupList:
                     addSeparator(self.scrollAreaWidgetContentsNfoGeneric, shifted=True)
                     addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup file"), fileBackup.name(), shifted=True)
 
@@ -1694,6 +1695,12 @@ class BCMainViewTab(QFrame):
                 self.wFilesPreview.hidePreview("No preview for multiple selection")
             else:
                 self.wFilesPreview.hidePreview("No image selected")
+
+        # Enable page updates again
+        self.pageFileNfoGeneric.setUpdatesEnabled(True)
+        self.pageFileNfoImage.setUpdatesEnabled(True)
+        self.pageFileNfoKraAbout.setUpdatesEnabled(True)
+        self.pageFileNfoKraAuthor.setUpdatesEnabled(True)
 
 
     def __filesUpdateStats(self):
