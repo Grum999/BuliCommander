@@ -325,6 +325,7 @@ class BCUIController(QObject):
             self.__window.panels[panelId].setFilesColumnSort(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId)))
             self.__window.panels[panelId].setFilesColumnOrder(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId)))
             self.__window.panels[panelId].setFilesColumnSize(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId)))
+            self.__window.panels[panelId].setFilesColumnVisible(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE.id(panelId=panelId)))
             self.__window.panels[panelId].setFilesIconSize(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE.id(panelId=panelId)))
 
             self.__window.panels[panelId].setClipboardColumnSort(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSORT.id(panelId=panelId)))
@@ -704,6 +705,7 @@ class BCUIController(QObject):
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId), self.__window.panels[panelId].filesColumnSort())
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].filesColumnOrder())
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId), self.__window.panels[panelId].filesColumnSize())
+                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE.id(panelId=panelId), self.__window.panels[panelId].filesColumnVisible())
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE.id(panelId=panelId), self.__window.panels[panelId].filesIconSize())
 
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_IMGSIZEUNIT.id(panelId=panelId), self.__window.panels[panelId].filesImageNfoSizeUnit())
@@ -1968,7 +1970,7 @@ class BCUIController(QObject):
         """Clear saved views content"""
         cleared, name = self.__savedView.uiClearContent(name)
         if cleared:
-            self.panel().filesRefresh(False)
+            self.panel().filesRefresh()
 
     def commandGoSavedViewAppend(self, name, files):
         """append files to saved view"""
@@ -1982,7 +1984,7 @@ class BCUIController(QObject):
         """remove files from saved view"""
         removed, name = self.__savedView.uiRemoveContent(name, files)
         if removed:
-            self.panel().filesRefresh(False)
+            self.panel().filesRefresh()
         return removed
 
     def commandGoSavedViewCreate(self, name, files):
