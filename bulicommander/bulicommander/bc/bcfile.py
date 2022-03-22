@@ -6393,6 +6393,9 @@ class BCFileList(QObject):
         self.__progressFilesPctThreshold=0
         self.__progressFilesPctTracker=0
         self.__progressFilesPctCurrent=0
+        self.__progressFilesTracker=0
+
+        self.__massProcess=False
 
     def __invalidate(self):
         self.__invalidated = True
@@ -6416,9 +6419,10 @@ class BCFileList(QObject):
                     pB=pB.lower()
 
             # note: directories are always before files
-            if fileA.format() == BCFileManagedFormat.DIRECTORY and fileB.format() != BCFileManagedFormat.DIRECTORY:
+            #       if directories and "..", always first...
+            if fileA.format() == BCFileManagedFormat.DIRECTORY and (fileB.format() != BCFileManagedFormat.DIRECTORY or fileA.name()=='..'):
                 return -1
-            elif fileB.format() == BCFileManagedFormat.DIRECTORY and fileA.format() != BCFileManagedFormat.DIRECTORY:
+            elif fileB.format() == BCFileManagedFormat.DIRECTORY and (fileA.format() != BCFileManagedFormat.DIRECTORY or fileB.name()=='..'):
                 return 1
 
             # both are directories OR both are not directories
@@ -6453,10 +6457,11 @@ class BCFileList(QObject):
         Emit signal every 1%
         """
         self.__progressFilesPctTracker+=1
+        self.__progressFilesTracker+=1
         if self.__progressFilesPctTracker>=self.__progressFilesPctThreshold:
             self.__progressFilesPctCurrent+=1
             self.__progressFilesPctTracker=0
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,self.__progressFilesPctCurrent))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,self.__progressFilesPctCurrent,self.__progressFilesTracker))
 
     def __progressFiltering(self, value):
         """Emit signal during scanning progress
@@ -6464,10 +6469,11 @@ class BCFileList(QObject):
         Emit signal every 1%
         """
         self.__progressFilesPctTracker+=1
+        self.__progressFilesTracker+=1
         if self.__progressFilesPctTracker>=self.__progressFilesPctThreshold:
             self.__progressFilesPctCurrent+=1
             self.__progressFilesPctTracker=0
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_FILTER,self.__progressFilesPctCurrent))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_FILTER,self.__progressFilesPctCurrent,self.__progressFilesTracker))
 
     def __progressSorting(self):
         """Emit signal during scanning progress
@@ -6475,10 +6481,11 @@ class BCFileList(QObject):
         Emit signal every 1%
         """
         self.__progressFilesPctTracker+=1
+        self.__progressFilesTracker+=1
         if self.__progressFilesPctTracker>=self.__progressFilesPctThreshold:
             self.__progressFilesPctCurrent+=1
             self.__progressFilesPctTracker=0
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_SORT,self.__progressFilesPctCurrent))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_SORT,self.__progressFilesPctCurrent,self.__progressFilesTracker))
 
     def clear(self):
         """Clear everything
@@ -6921,6 +6928,7 @@ class BCFileList(QObject):
         self.__progressFilesPctThreshold=math.ceil(len(foundFiles)/100)
         self.__progressFilesPctTracker=0
         self.__progressFilesPctCurrent=0
+        self.__progressFilesTracker=0
 
         self.__workerPool.setWorkerClass(BCWorkerCache)
         if BCFileList.STEPEXECUTED_PROGRESS_ANALYZE in signals:
@@ -6928,7 +6936,7 @@ class BCFileList(QObject):
         filesList = self.__workerPool.mapNoNone(foundFiles, BCFileList.getBcFile)
         if BCFileList.STEPEXECUTED_PROGRESS_ANALYZE in signals:
             if self.__progressFilesPctCurrent<100:
-                self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,100))
+                self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,100,len(foundFiles)))
             self.__workerPool.signals.processed.disconnect(self.__progressScanning)
         self.__workerPool.setWorkerClass()
         directoriesList = self.__workerPool.mapNoNone(foundDirectories, BCFileList.getBcDirectory)
@@ -6961,6 +6969,7 @@ class BCFileList(QObject):
                 self.__progressFilesPctThreshold=math.ceil(len(filesList)/100)
                 self.__progressFilesPctTracker=0
                 self.__progressFilesPctCurrent=0
+                self.__progressFilesTracker=0
                 self.__workerPool.signals.processed.connect(self.__progressFiltering)
 
             # use all processors to parallelize files analysis
@@ -7025,6 +7034,7 @@ class BCFileList(QObject):
             self.__progressFilesPctThreshold=math.ceil(nb/100)
             self.__progressFilesPctTracker=0
             self.__progressFilesPctCurrent=0
+            self.__progressFilesTracker=0
         else:
             self.__progressFilesPctThreshold=0
         self.sortResults(None, False)
@@ -7108,22 +7118,187 @@ class BCFileList(QObject):
         pool = WorkerPool()
         pool.setWorkerClass(BCWorkerCache)
         if len(foundFiles)>0:
-            filesList = filesList.union( pool.map(foundFiles, BCFileList.getBcFile) )
+            filesList = filesList.union( pool.mapNoNone(foundFiles, BCFileList.getBcFile) )
         if len(foundDirectories)>0:
-            directoriesList = directoriesList.union( pool.map(foundDirectories, BCFileList.getBcDirectory) )
+            directoriesList = directoriesList.union( pool.mapNoNone(foundDirectories, BCFileList.getBcDirectory) )
 
-        for file in filesList:
-            if not file is None:
-                self.__currentFiles.append(file)
-                self.__currentFilesName.add(file.fullPathName())
-        for file in directoriesList:
-            if not file is None:
-                self.__currentFiles.append(file)
-                self.__currentFilesName.add(file.fullPathName())
+        self.addResults(filesList.union(directoriesList))
 
         self.__invalidated = False
 
         return len(self.__currentFiles)
+
+    def addResults(self, files, position=-1):
+        """Add files to current results
+
+        Given `files` can be list or unique item of:
+        - fullpath name <str>
+        - <BCFile> and/or <BCDirectory>
+
+        Files can be added to given `position`:
+        - If value is -1, added at the end
+        - If value > 0, inserted to position
+
+        A file already in list is not added
+        """
+        currentFilesCount=len(self.__currentFiles)
+
+        if isinstance(files, (list, tuple, set)):
+            added=[]
+            self.__massProcess=True
+            for file in files:
+                if self.addResults(file):
+                    added.append(file)
+            self.__massProcess=False
+            if len(added)>0:
+                if currentFilesCount==0:
+                    # list was empty, then it's a reset
+                    self.resultsUpdatedReset.emit()
+                else:
+                    # list wasn't empty, then it's an addition
+                    self.resultsUpdatedAdd.emit(added)
+                return True
+            return False
+
+        if isinstance(files, str):
+            if os.path.isdir():
+                files=BCDirectory(files)
+            elif os.path.isfile():
+                files=BCFile(files)
+            else:
+                files=BCMissingFile(files)
+
+        if isinstance(files, BCBaseFile):
+            if not files.uuid() in self.__currentFilesUuid:
+                # add only if not already in current results
+                if position<0:
+                    self.__currentFiles.append(files)
+                else:
+                    self.__currentFiles.insert(files, position)
+
+                self.__currentFilesUuid.add(files.uuid())
+
+                if not self.__massProcess:
+                    if currentFilesCount==0:
+                        # list was empty, then it's a reset
+                        self.resultsUpdatedReset.emit()
+                    else:
+                        # list wasn't empty, then it's an addition
+                        self.resultsUpdatedAdd.emit([files])
+
+                return True
+            return False
+        else:
+            raise EInvalidType("Given `files` must be <BCBaseFile> or <list>")
+
+    def removeResults(self, files):
+        """Remove files from current results
+
+        Given `files` can be list or unique item of:
+        - <int> (define current position in result list)
+        - fullpath name <str>
+        - a file uuid
+        - <BCFile> and/or <BCDirectory>
+        """
+        if isinstance(files, (list, tuple, set)):
+            removed=[]
+            self.__massProcess=True
+            # first we need to process values given as row number
+            # need reverse order to avoid index being broken when removed
+            nbFiles=len(self.__currentFiles)
+            intList=sorted([v for v in files if isinstance(v, int) and (v>=0 and v<nbFiles)], reverse=True)
+
+            for index in intList:
+                removed.append(self.__currentFiles.pop(index))
+
+            notIntList=[v for v in files if not isinstance(v, int)]
+
+            for file in notIntList:
+                if self.removeResults(file):
+                    removed.append(file)
+            self.__massProcess=False
+            if len(removed)>0:
+                if len(self.__currentFiles)==0:
+                    # everything was removed, then it's a reset
+                    self.resultsUpdatedReset.emit()
+                else:
+                    # list wasn't empty, then it's an remove
+                    self.resultsUpdatedRemove.emit(removed)
+                return True
+            return False
+
+        if isinstance(files, str):
+            if os.path.isdir():
+                files=BCDirectory(files)
+            elif os.path.isfile():
+                files=BCFile(files)
+            else:
+                files=BCMissingFile(files)
+
+        if isinstance(files, BCBaseFile):
+            files=files.uuid()
+
+        if isinstance(files, bytes):
+            index=self.inResults(files)
+
+            if index>=0:
+                # remove only if found in current results
+                file=self.__currentFiles.pop(index)
+
+                if not self.__massProcess:
+                    if len(self.__currentFiles)==0:
+                        # everything was removed, then it's a reset
+                        self.resultsUpdatedReset.emit()
+                    else:
+                        # list wasn't empty, then it's an remove
+                        self.resultsUpdatedRemove.emit([file])
+
+                return True
+            return False
+        else:
+            raise EInvalidType("Given `files` must be <BCBaseFile> or <list>")
+
+    def inResults(self, bcFileUuid):
+        """Return if `bcFileUuid` is in current results
+
+        Given `bcFileUuid` can be:
+        - An item: in this case, returned value is an integer
+        - A list of items: in this case, returned value is a list of integer
+
+        Provided values for `bcFileUuid` can be:
+        - A uuid (as byte-string, BCBaseFile.uuid() )
+        - A BCBaseFile object
+
+        If found, index of first occurence is returned (note we don't expect to have duplicates values in a BCFileList)
+        Otherwise return -1
+
+        Examples:
+
+            p=xx.inResults(bcfile0.uuid())
+
+            If uuid not found in results, p=-1
+            If uuid found in results at position 10, p=10
+
+
+            p=xx.inResults([bcfile0.uuid(), bcfile1, bcfile2])
+
+            If p=[-1,5,-1]
+            It mean that uuid and bcfile2 were not found in results, and bcfile1 was found in position 5
+        """
+        if isinstance(bcFileUuid, (list, tuple)):
+            return [self.inResults(item) for item in bcFileUuid]
+
+        if isinstance(bcFileUuid, BCBaseFile):
+            bcFileUuid=bcFileUuid.uuid()
+
+        if isinstance(bcFileUuid, bytes):
+            if bcFileUuid in self.__currentFilesUuid:
+                for index, file in enumerate(self.__currentFiles):
+                    if file.uuid()==bcFileUuid:
+                        return index
+            return -1
+        else:
+            raise EInvalidType("Given `bcFileUuid` must be <BCBaseFile> of <bytes>")
 
     def stats(self):
         """Return stats from last execution, if any (otherwise return None)"""
