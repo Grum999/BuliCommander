@@ -133,7 +133,7 @@ class BCWPreview(QWidget):
     def __animatedFrameChange(self, value):
         """Slider for animated frame has been moved"""
         self.__currentAnimatedFrame = value
-        nbZ=len(str(self.__maxAnimatedFrame))
+        nbZ=len(f"{self.__maxAnimatedFrame}")
         self.lblAnimatedFrameNumber.setText(f'Frame {self.__currentAnimatedFrame:>0{nbZ}}/{self.__maxAnimatedFrame} ')
 
         if not self.__imgReaderAnimated is None:

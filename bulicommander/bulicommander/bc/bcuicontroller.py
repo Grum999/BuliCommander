@@ -1058,7 +1058,7 @@ class BCUIController(QObject):
                 view = Krita.instance().activeWindow().addView(document)
                 Krita.instance().activeWindow().showView(view)
             except Exception as e:
-                Debug.print('[BCUIController.commandFileOpen] unable to open file {0}: {1}', file, str(e))
+                Debug.print('[BCUIController.commandFileOpen] unable to open file {0}: {1}', file, f"{e}")
                 return False
             return True
         else:
@@ -1115,7 +1115,7 @@ class BCUIController(QObject):
                 view = Krita.instance().activeWindow().addView(document)
                 Krita.instance().activeWindow().showView(view)
             except Exception as e:
-                Debug.print('[BCUIController.commandFileOpenAsNew] unable to open file {0}: {1}', file, str(e))
+                Debug.print('[BCUIController.commandFileOpenAsNew] unable to open file {0}: {1}', file, f"{e}")
                 return False
             return True
         else:

@@ -1475,7 +1475,7 @@ class BCMainViewTab(QFrame):
                 # directory has been deleted?
                 # get parent; at least go up until root ^_^''
                 while True:
-                    path=str(Path(path).parent)
+                    path=f"{Path(path).parent}"
 
                     if os.path.isdir(path):
                         break
@@ -1976,7 +1976,7 @@ class BCMainViewTab(QFrame):
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Interlace mode', '-')
                 elif file.format() == BCFileManagedFormat.ORA:
                     if imgNfo['document.layerCount'] > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', str(imgNfo['document.layerCount']))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', f"{imgNfo['document.layerCount']}")
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
                 elif file.format() in [BCFileManagedFormat.GIF,
@@ -2036,7 +2036,7 @@ class BCMainViewTab(QFrame):
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
                     if len(imgNfo['document.usedFonts']) > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', str(len(imgNfo['document.usedFonts'])))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', f"{len(imgNfo['document.usedFonts'])}")
 
                         fontList=QFontDatabase().families()
 
@@ -2051,7 +2051,7 @@ class BCMainViewTab(QFrame):
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
                     if imgNfo['document.layerCount'] > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', str(imgNfo['document.layerCount']))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', f"{imgNfo['document.layerCount']}")
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
 
@@ -2097,7 +2097,7 @@ class BCMainViewTab(QFrame):
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
                     if imgNfo['document.referenceImages.count'] > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', str(imgNfo['document.referenceImages.count']))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', f"{imgNfo['document.referenceImages.count']}")
 
                         refNumber=1
                         for image in imgNfo['document.referenceImages.data']:
@@ -2114,14 +2114,14 @@ class BCMainViewTab(QFrame):
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
                     if len(imgNfo['document.embeddedPalettes']) > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', str(len(imgNfo['document.embeddedPalettes'])))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', f"{len(imgNfo['document.embeddedPalettes'])}")
 
                         for paletteName in imgNfo['document.embeddedPalettes']:
                             palette = imgNfo['document.embeddedPalettes'][paletteName]
                             addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
                             addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Palette'), paletteName, shifted=True)
                             addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Dimension'), f'{palette["columns"]}x{palette["rows"]}', shifted=True)
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Colors'), str(palette["colors"]), shifted=True)
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Colors'), f"{palette['colors']}", shifted=True)
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', 'None')
 
@@ -2267,7 +2267,7 @@ class BCMainViewTab(QFrame):
 
                 if self.__filesCurrentStats['nbSelectedDir'] > 0:
                     text+=i18n(f"{self.__filesCurrentStats['nbSelectedDir']} out of ")
-                text+=str(self.__filesCurrentStats[f'nb{key}Dir'])
+                text+=f"{self.__filesCurrentStats[f'nb{key}Dir']}"
                 statusFileText.append(text)
 
             if self.__filesCurrentStats[f'nb{key}Files'] > 0:
@@ -2275,7 +2275,7 @@ class BCMainViewTab(QFrame):
 
                 if self.__filesCurrentStats['nbSelectedFiles'] > 0:
                     text+=i18n(f"{self.__filesCurrentStats['nbSelectedFiles']} out of ")
-                text+=str(self.__filesCurrentStats[f'nb{key}Files'])
+                text+=f"{self.__filesCurrentStats[f'nb{key}Files']}"
 
                 if self.__filesCurrentStats[f'size{key}Files'] > 0:
                     text+=' ('

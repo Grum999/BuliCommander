@@ -980,7 +980,7 @@ class BCFileManipulateName(object):
             else:
                 nbFiles = max(fileList) + 1
 
-            fileName = re.sub(r"(?i)\{counter\}", str(nbFiles),   fileName)
+            fileName = re.sub(r"(?i)\{counter\}", f"{nbFiles}",   fileName)
 
             for replaceHash in resultCounter.groups():
                 if not replaceHash is None:
@@ -1390,7 +1390,7 @@ class BCFileManipulateName(object):
                 returnedValue+=processToken(token)
                 token=tokens.next()
         except Exception as e:
-            return (None, str(e))
+            return (None, f"{e}")
 
         if manageCounter:
             # 5)
@@ -1531,7 +1531,7 @@ class BCBaseFile(object):
                 try:
                     thumbnailImg.save(thumbnailFile, quality=BCFile.thumbnailCacheCompression())
                 except Exception as e:
-                    Debug.print('[BCBaseFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, str(e))
+                    Debug.print('[BCBaseFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, f"{e}")
 
             return thumbnailFile
 
@@ -1542,7 +1542,7 @@ class BCBaseFile(object):
             # https://stackoverflow.com/a/59925828
             returned = ""
             letters = [(4, "r"), (2, "w"), (1, "x")]
-            for permission in [int(n) for n in str(octalPerm)]:
+            for permission in [int(n) for n in f"{octalPerm}"]:
                 for value, letter in letters:
                     if permission >= value:
                         returned += letter
@@ -1970,7 +1970,7 @@ class BCFile(BCBaseFile):
             return self.__bcFileCache.setMetadata(self.__qHash, dataAsDictToPass)
         except Exception as e:
             # can't write meta cache file
-            Debug.print('Unable to write meta cache data {0}: {1}', self.__qHash, str(e))
+            Debug.print('Unable to write meta cache data {0}: {1}', self.__qHash, f"{e}")
             return False
 
         return True
@@ -2035,7 +2035,7 @@ class BCFile(BCBaseFile):
 
                     returned[f'{langCode}-{countryCode}'] = text.rstrip('\x00')
                 except Exception as a:
-                    Debug.print('[BCFile...decode_mluc] Unable to decode MLUC: {0}', str(e))
+                    Debug.print('[BCFile...decode_mluc] Unable to decode MLUC: {0}', f"{e}")
                     continue
             return returned
 
@@ -2056,7 +2056,7 @@ class BCFile(BCBaseFile):
             try:
                 returned['en-US'] = data[8:].decode().rstrip('\x00')
             except Exception as a:
-                Debug.print('[BCFile...decode_mluc] Unable to decode TEXT: {0}', str(e))
+                Debug.print('[BCFile...decode_mluc] Unable to decode TEXT: {0}', f"{e}")
 
             return returned
 
@@ -2082,7 +2082,7 @@ class BCFile(BCBaseFile):
                 txtLen = struct.unpack('!I', data[8:12])[0]
                 returned['en-US'] = data[12:11+txtLen].decode().rstrip('\x00')
             except Exception as e:
-                Debug.print('[BCFile...decode_mluc] Unable to decode DESC: {0}', str(e))
+                Debug.print('[BCFile...decode_mluc] Unable to decode DESC: {0}', f"{e}")
 
             return returned
 
@@ -2143,7 +2143,7 @@ class BCFile(BCBaseFile):
             # can't be read (not exist, not a zip file?)
             self.__readable = False
             if re.match(fr"\.(kra|krz|ora)({BCFileManagedFormat.backupSuffixRe()})?$", source):
-                Debug.print('[BCFile.__readArchiveDataFile] Unable to open file {0}: {1}', self._fullPathName, str(e))
+                Debug.print('[BCFile.__readArchiveDataFile] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
             return None
 
         try:
@@ -2152,7 +2152,7 @@ class BCFile(BCBaseFile):
             # can't be read (not exist, not a Kra file?)
             self.__readable = False
             archive.close()
-            Debug.print('[BCFile.__readArchiveDataFile] Unable to find "{2}" in file {0}: {1}', self._fullPathName, str(e), file)
+            Debug.print('[BCFile.__readArchiveDataFile] Unable to find "{2}" in file {0}: {1}', self._fullPathName, f"{e}", file)
             return None
 
         try:
@@ -2162,7 +2162,7 @@ class BCFile(BCBaseFile):
             self.__readable = False
             imgfile.close()
             archive.close()
-            Debug.print('[BCFile.__readArchiveDataFile] Unable to read "{2}" in file {0}: {1}', self._fullPathName, str(e), file)
+            Debug.print('[BCFile.__readArchiveDataFile] Unable to read "{2}" in file {0}: {1}', self._fullPathName, f"{e}", file)
             return None
 
         imgfile.close()
@@ -2201,7 +2201,7 @@ class BCFile(BCBaseFile):
 
                     self.__qHash = fileHash.hexdigest()
             except Exception as e:
-                Debug.print('[BCFile.__calculateQuickHash] Unable to calculate hash file {0}: {1}', self._fullPathName, str(e))
+                Debug.print('[BCFile.__calculateQuickHash] Unable to calculate hash file {0}: {1}', self._fullPathName, f"{e}")
                 self.__qHash = ''
         else:
             self.__qHash = ''
@@ -2225,7 +2225,7 @@ class BCFile(BCBaseFile):
         except Exception as e:
             # can't be read (not exist, not a zip file?)
             self.__readable = False
-            Debug.print('[BCFile.__readKraImage] Unable to open file {0}: {1}', self._fullPathName, str(e))
+            Debug.print('[BCFile.__readKraImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
             return None
 
         pngFound = True
@@ -2257,7 +2257,7 @@ class BCFile(BCBaseFile):
             self.__readable = False
             imgfile.close()
             archive.close()
-            Debug.print('[BCFile.__readKraImage] Unable to read "mergedimage.png" in file {0}: {1}', self._fullPathName, str(e))
+            Debug.print('[BCFile.__readKraImage] Unable to read "mergedimage.png" in file {0}: {1}', self._fullPathName, f"{e}")
             return None
 
         imgfile.close()
@@ -2269,7 +2269,7 @@ class BCFile(BCBaseFile):
         except Exception as e:
             # can't be read (not png?)
             self.__readable = False
-            Debug.print('[BCFile.__readKraImage] Unable to parse "mergedimage.png" in file {0}: {1}', self._fullPathName, str(e))
+            Debug.print('[BCFile.__readKraImage] Unable to parse "mergedimage.png" in file {0}: {1}', self._fullPathName, f"{e}")
             return None
 
         return returned
@@ -2293,7 +2293,7 @@ class BCFile(BCBaseFile):
         except Exception as e:
             # can't be read (not exist, not a zip file?)
             self.__readable = False
-            Debug.print('[BCFile.__readOraImage] Unable to open file {0}: {1}', self._fullPathName, str(e))
+            Debug.print('[BCFile.__readOraImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
             return None
 
         try:
@@ -2313,7 +2313,7 @@ class BCFile(BCBaseFile):
                 # can't be read (not exist, not a Kra file?)
                 self.__readable = False
                 archive.close()
-                Debug.print('[BCFile.__readOraImage] Unable to find "thumbnail.png" in file {0}: {1}', self._fullPathName, str(e))
+                Debug.print('[BCFile.__readOraImage] Unable to find "thumbnail.png" in file {0}: {1}', self._fullPathName, f"{e}")
                 return None
 
 
@@ -2324,7 +2324,7 @@ class BCFile(BCBaseFile):
             self.__readable = False
             imgfile.close()
             archive.close()
-            Debug.print('[BCFile.__readOraImage] Unable to read "thumbnail.png" in file {0}: {1}', self._fullPathName, str(e))
+            Debug.print('[BCFile.__readOraImage] Unable to read "thumbnail.png" in file {0}: {1}', self._fullPathName, f"{e}")
             return None
 
         imgfile.close()
@@ -2336,7 +2336,7 @@ class BCFile(BCBaseFile):
         except Exception as e:
             # can't be read (not png?)
             self.__readable = False
-            Debug.print('[BCFile.__readOraImage] Unable to parse "thumbnail.png" in file {0}: {1}', self._fullPathName, str(e))
+            Debug.print('[BCFile.__readOraImage] Unable to parse "thumbnail.png" in file {0}: {1}', self._fullPathName, f"{e}")
             return None
 
         return returned
@@ -2572,7 +2572,7 @@ class BCFile(BCBaseFile):
                     # skip all IDAT chunks
                     readIDATChunks(fHandle, returned['size']+8)
             except Exception as e:
-                print("Exception", self._fullPathName, e)
+                Debug.print("Exception {0}: {1}", self._fullPathName, f"{e}")
                 returned['valid']=False
             return returned
 
@@ -2759,7 +2759,7 @@ class BCFile(BCBaseFile):
                     level = (chunk['data'][1] & 0b11000000) >> 6
                     returned['compressionLevel'] = (level, __COMPRESSION_LEVEL[level])
                 except Exception as e:
-                    Debug.print('[BCFile..decodeChunk_IDAT] Unable to decode compression level: {0}', str(e))
+                    Debug.print('[BCFile..decodeChunk_IDAT] Unable to decode compression level: {0}', f"{e}")
 
             return returned
 
@@ -3525,7 +3525,7 @@ class BCFile(BCBaseFile):
             except Exception as e:
                 # can't be read (not exist, not a zip file?)
                 self.__readable = False
-                Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, str(e))
+                Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return []
 
             # notes:
@@ -3546,7 +3546,7 @@ class BCFile(BCBaseFile):
             except Exception as e:
                 # can't be read (not exist, not a zip file?)
                 self.__readable = False
-                Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, str(e))
+                Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return []
 
             # notes:
@@ -3567,7 +3567,7 @@ class BCFile(BCBaseFile):
             except Exception as e:
                 # can't be read (not exist, not a zip file?)
                 self.__readable = False
-                Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, str(e))
+                Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return []
 
             # notes:
@@ -3638,23 +3638,23 @@ class BCFile(BCBaseFile):
             except Exception as e:
                 # can't be read (not xml?)
                 self.__readable = False
-                Debug.print('[BCFile.__readMetaDataKra] Unable to parse "maindoc.xml" in file {0}: {1}', self._fullPathName, str(e))
+                Debug.print('[BCFile.__readMetaDataKra] Unable to parse "maindoc.xml" in file {0}: {1}', self._fullPathName, f"{e}")
 
             if parsed:
                 try:
                     returned['kritaVersion'] = xmlDoc.attrib['kritaVersion']
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve Krita version in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve Krita version in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
                     returned['width']=int(xmlDoc[0].attrib['width'])
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image width in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image width in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
                     returned['height']=int(xmlDoc[0].attrib['height'])
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image height in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image height in file {0}: {1}', self._fullPathName, f"{e}")
                     return None
 
                 try:
@@ -3662,14 +3662,14 @@ class BCFile(BCBaseFile):
                     ppX = float(xmlDoc[0].attrib['x-res'])
                     returned['resolutionX'] = (ppX, f'{ppX:.3f}ppi')
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
                     ppY = 0
                     ppY = float(xmlDoc[0].attrib['y-res'])
                     returned['resolutionY'] = (ppY, f'{ppX:.3f}ppi')
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-y in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-y in file {0}: {1}', self._fullPathName, f"{e}")
 
                 if ppX == ppY:
                     returned['resolution'] = f'{ppX:.3f}ppi'
@@ -3787,12 +3787,12 @@ class BCFile(BCBaseFile):
 
 
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image colorspacename in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image colorspacename in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
                     returned['iccProfileName'] = {'en-US': xmlDoc[0].attrib['profile']}
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, f"{e}")
 
 
                 try:
@@ -3804,31 +3804,31 @@ class BCFile(BCBaseFile):
                             returned['imageFrom'] = int(node.attrib['from'])
                             returned['imageTo'] = int(node.attrib['to'])
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve currentTime in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve currentTime in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
                     node=xmlDoc.find(".//{*}animation/{*}framerate")
                     if not node is None:
                         returned['imageDelay'] = int(node.attrib['value'])
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve framerate in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve framerate in file {0}: {1}', self._fullPathName, f"{e}")
 
 
                 try:
                     returned['document.fileLayers']=[node.attrib['source'] for node in xmlDoc.findall(".//{*}layer[@nodetype='filelayer']")]
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers "filelayer" in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers "filelayer" in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
                     returned['document.layerCount']=len(xmlDoc.findall(".//{*}layer"))
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers in file {0}: {1}', self._fullPathName, f"{e}")
 
 
                 try:
                     tmpRefImgList=[node.attrib['src'] for node in xmlDoc.findall(".//{*}layer[@nodetype='referenceimages']/{*}referenceimage")]
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers "referenceimage" in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers "referenceimage" in file {0}: {1}', self._fullPathName, f"{e}")
 
         else:
             # unable to read maindoc??
@@ -3845,7 +3845,7 @@ class BCFile(BCBaseFile):
             except Exception as e:
                 # can't be read (not xml?)
                 self.__readable = False
-                Debug.print('[BCFile.__readMetaDataKra] Unable to parse "documentinfo.xml" in file {0}: {1}', self._fullPathName, str(e))
+                Debug.print('[BCFile.__readMetaDataKra] Unable to parse "documentinfo.xml" in file {0}: {1}', self._fullPathName, f"{e}")
 
             if parsed:
                 node = xmlDoc.find('{*}about/{*}title')
@@ -3934,7 +3934,7 @@ class BCFile(BCBaseFile):
                 except Exception as e:
                     # can't be read (not xml?)
                     self.__readable = False
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, str(e), filename)
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, f"{e}", filename)
 
                 if parsed:
                     nodes = xmlDoc.findall(".//{*}channel/{*}keyframe[@time]")
@@ -3955,7 +3955,7 @@ class BCFile(BCBaseFile):
                 except Exception as e:
                     # can't be read (not xml?)
                     self.__readable = False
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, str(e), filename)
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, f"{e}", filename)
 
                 if parsed:
                     fontList=[node.attrib['font-family'] for node in xmlDoc.findall('.//*[@font-family]')]
@@ -3979,7 +3979,7 @@ class BCFile(BCBaseFile):
                 except Exception as e:
                     # can't be read (not xml?)
                     self.__readable = False
-                    Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, str(e), filename)
+                    Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, f"{e}", filename)
 
                 if parsed:
                     try:
@@ -3989,7 +3989,7 @@ class BCFile(BCBaseFile):
                                             'columns': int(xmlDoc.attrib['columns'])
                                         }
                     except Exception as e:
-                        Debug.print('[BCFile.__readMetaDataKra] Malformed palette {2} in file {0}: {1}', self._fullPathName, str(e), filename)
+                        Debug.print('[BCFile.__readMetaDataKra] Malformed palette {2} in file {0}: {1}', self._fullPathName, f"{e}", filename)
 
         # load reference image details
         returned['document.referenceImages.count']=len(tmpRefImgList)
@@ -4044,32 +4044,32 @@ class BCFile(BCBaseFile):
             except Exception as e:
                 # can't be read (not xml?)
                 self.__readable = False
-                Debug.print('[BCFile.__readMetaDataOra] Unable to parse "stack.xml" in file {0}: {1}', self._fullPathName, str(e))
+                Debug.print('[BCFile.__readMetaDataOra] Unable to parse "stack.xml" in file {0}: {1}', self._fullPathName, f"{e}")
 
             if parsed:
                 try:
                     returned['width']=int(xmlDoc.attrib['w'])
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image width in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image width in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
                     returned['height']=int(xmlDoc.attrib['h'])
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image height in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image height in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
                     ppX = 0
                     ppX = float(xmlDoc.attrib['xres'])
                     returned['resolutionX'] = (ppX, f'{ppX:.3f}ppi')
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
                     ppY = 0
                     ppY = float(xmlDoc.attrib['yres'])
                     returned['resolutionY'] = (ppY, f'{ppX:.3f}ppi')
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image resolution-y in file {0}: {1}', self._fullPathName, str(e))
+                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image resolution-y in file {0}: {1}', self._fullPathName, f"{e}")
 
                 if ppX == 0 and ppY ==0:
                     # no resolution information
@@ -4084,8 +4084,7 @@ class BCFile(BCBaseFile):
                 try:
                     returned['document.layerCount']=len(xmlDoc.findall(".//{*}layer"))
                 except Exception as e:
-                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve layers in file {0}: {1}', self._fullPathName, str(e))
-
+                    Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve layers in file {0}: {1}', self._fullPathName, f"{e}")
 
         return returned
 
@@ -4284,7 +4283,7 @@ class BCFile(BCBaseFile):
             # return root path
             return BCFile.__BC_CACHE_PATH
         else:
-            return os.path.join(BCFile.__BC_CACHE_PATH, str(size.value))
+            return os.path.join(BCFile.__BC_CACHE_PATH, f"{size.value}")
 
     @staticmethod
     def metaCacheDirectory():
@@ -4313,7 +4312,7 @@ class BCFile(BCBaseFile):
                 os.makedirs(BCFile.thumbnailCacheDirectory(size), exist_ok=True)
             os.makedirs(BCFile.metaCacheDirectory(), exist_ok=True)
         except Exception as e:
-            Debug.print('[BCFile.setCacheDirectory] Unable to create directory {0}: {1}', bcCachePath, str(e))
+            Debug.print('[BCFile.setCacheDirectory] Unable to create directory {0}: {1}', bcCachePath, f"{e}")
             return
 
     @staticmethod
@@ -4496,7 +4495,7 @@ class BCFile(BCBaseFile):
                     try:
                         imageSrc.save(thumbnailFile, quality=BCFile.__THUMBNAIL_CACHE_COMPRESSION)
                     except Exception as e:
-                        Debug.print('[BCFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, str(e))
+                        Debug.print('[BCFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, f"{e}")
 
                     if size == buildSize:
                         thumbnailImg = QImage(imageSrc)
@@ -4531,7 +4530,7 @@ class BCFile(BCBaseFile):
         try:
             thumbnailImg.save(thumbnailFile, quality=BCFile.__THUMBNAIL_CACHE_COMPRESSION)
         except Exception as e:
-            Debug.print('[BCFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, str(e))
+            Debug.print('[BCFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, f"{e}")
 
         # finally, return thumbnail
         if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
@@ -4739,7 +4738,7 @@ class BCFileCache(QObject):
 
             os.makedirs(bcCachePath, exist_ok=True)
         except Exception as e:
-            print('[BCFile.setCacheDirectory] Unable to create directory: ', bcCachePath, str(e))
+            Debug.print('[BCFile.setCacheDirectory] Unable to create directory: {0} / {1}', bcCachePath, f"{e}")
 
     @staticmethod
     def initialise(bcCachePath=None):
@@ -4985,9 +4984,6 @@ class BCFileCache(QObject):
         else:
             return False
 
-
-
-
     def fileName(self):
         """Return current database file name"""
         return self.__fileName
@@ -5053,7 +5049,7 @@ class BCFileCache(QObject):
                 try:
                     return json.loads(self.__databaseQueryGetMetadata.value('metadata'), cls=JsonQObjectDecoder)
                 except Exception as e:
-                    Debug.print('Unable to load meta cache data ({2}) {0}: {1}', self.__databaseQueryGetMetadata.value('metadata'), str(e), hash)
+                    Debug.print('Unable to load meta cache data ({2}) {0}: {1}', self.__databaseQueryGetMetadata.value('metadata'), f"{e}", hash)
                     return None
         return None
 
@@ -5093,7 +5089,6 @@ class BCFileCache(QObject):
 
         return returned
 
-
     def beginTransaction(self):
         """Begin a transaction if possible, otherwise is ignored
 
@@ -5120,7 +5115,6 @@ class BCFileCache(QObject):
         if self.__databaseInstance is None or not self.__databaseInstance.driver().hasFeature(QSqlDriver.Transactions):
             return False
         return self.__databaseInstance.exec("ROLLBACK TRANSACTION")
-
 
     def getStats(self):
         """Return statistics about database cache"""
@@ -5206,9 +5200,6 @@ class BCFileCache(QObject):
         tmpDbVacuum=QSqlDatabase.removeDatabase("tmpDbVacuum")
 
         self.__open()
-
-
-
 
 
 # ------------------------------------------------------------------------------
@@ -5983,7 +5974,7 @@ class BCFileListRuleCombination(object):
 
     def __str__(self):
         """Return rule as string"""
-        returned=[str(item) for item in self.__items]
+        returned=[f"{item}" for item in self.__items]
 
         if self.__type == BCFileListRuleCombination.OPERATOR_NOT:
             return f"NOT ({returned[0]})"

@@ -178,7 +178,7 @@ class BreadcrumbsAddressBar(QFrame):
             else:
                 dat = refDict[path][1]
         else:
-            fileinfo = QtCore.QFileInfo(str(path))
+            fileinfo = QtCore.QFileInfo(f"{path}")
             dat = self.file_ico_prov.icon(fileinfo)
             currentSize = dat.actualSize(self.__iconSize, QIcon.Normal, QIcon.Off)
             if fileinfo.isHidden():
@@ -213,7 +213,7 @@ class BreadcrumbsAddressBar(QFrame):
 
     def _browse_for_folder(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(
-            self, "Choose folder", str(self.path()))
+            self, "Choose folder", f"{self.path()}")
         if path:
             self.set_path(path)
 
@@ -230,7 +230,7 @@ class BreadcrumbsAddressBar(QFrame):
             self._show_address_field(False)
         # elif event.text() == os.path.sep:  # FIXME: separator cannot be pasted
         #     print('fill completer data here')
-        #     paths = [str(i) for i in
+        #     paths = [f"{i}" for i in
         #              Path(self.line_address.text()).iterdir() if i.is_dir()]
         #     self.completer.model().setStringList(paths)
         else:
@@ -259,10 +259,10 @@ class BreadcrumbsAddressBar(QFrame):
 
         # FIXME: C:\ has no name. Use rstrip on Windows only?
         # Grum999: for linux, return '/' for root directory
-        if str(path) == '/':
+        if f"{path}" == '/':
             crumb_text = '/'
         else:
-            crumb_text = path.name or str(path).upper().rstrip(os.path.sep)
+            crumb_text = path.name or f"{path}".upper().rstrip(os.path.sep)
 
         btn.setText(crumb_text)
         btn.setFont(self.font)
@@ -302,7 +302,7 @@ class BreadcrumbsAddressBar(QFrame):
     def crumb_menu_show(self):
         "SLOT: fill subdirectory list on menu open"
         menu = self.sender()
-        self.fs_model.setPathPrefix(str(menu.parent().path) + os.path.sep)
+        self.fs_model.setPathPrefix(f"{menu.parent().path}" + os.path.sep)
 
     def set_path(self, path=None, force=False):
         """
@@ -314,7 +314,7 @@ class BreadcrumbsAddressBar(QFrame):
         """
         if path is None or path == '':
             try:
-                path = str(self.sender().path)
+                path = f"{self.sender().path}"
             except:
                 path = '.'
 
@@ -352,7 +352,7 @@ class BreadcrumbsAddressBar(QFrame):
             self.view_selected.emit(path)
             return True
 
-        elif force or str(path) != str(self.path_):
+        elif force or f"{path}" != f"{self.path_}":
             self.__quickRef=None
             path, emit_err = Path(path), None
             try:  # C: -> C:\, folder\..\folder -> folder
@@ -367,7 +367,7 @@ class BreadcrumbsAddressBar(QFrame):
                 return False
             self._clear_crumbs()
             self.path_ = path
-            self.line_address.setText(str(path))
+            self.line_address.setText(f"{path}")
             self._insert_crumb(path)
             while path.parent != path:
                 path = path.parent
@@ -380,7 +380,7 @@ class BreadcrumbsAddressBar(QFrame):
 
     def _cancel_edit(self):
         "Set edit line text back to current path and switch to view mode"
-        self.line_address.setText(str(self.path()))  # revert path
+        self.line_address.setText(f"{self.path()}")  # revert path
         self._show_address_field(False)  # switch back to breadcrumbs view
 
     def path(self):

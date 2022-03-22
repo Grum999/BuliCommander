@@ -640,8 +640,8 @@ class BCWPathBar(QFrame):
 
     def __updateUpBtn(self):
         """Update up button status"""
-        if str(self.frameBreacrumbPath.path()) != '' and str(self.frameBreacrumbPath.path())[0] != '@':
-            self.btUp.setEnabled(str(self.frameBreacrumbPath.path()) != self.frameBreacrumbPath.path().root)
+        if f"{self.frameBreacrumbPath.path()}" != '' and f"{self.frameBreacrumbPath.path()}"[0] != '@':
+            self.btUp.setEnabled(f"{self.frameBreacrumbPath.path()}" != self.frameBreacrumbPath.path().root)
         else:
             self.btUp.setEnabled(False)
 
@@ -712,7 +712,7 @@ class BCWPathBar(QFrame):
     def path(self):
         """Return current path"""
         if self.__mode in [BCWPathBar.MODE_PATH, BCWPathBar.MODE_SAVEDVIEW]:
-            return str(self.frameBreacrumbPath.path())
+            return f"{self.frameBreacrumbPath.path()}"
         elif not self.__savedView is None:
             # BCWPathBar.MODE_SAVEDVIEW
             return f"@{self.__savedView.current()}"
@@ -745,7 +745,7 @@ class BCWPathBar(QFrame):
 
         If no previous path found, return False, otherwise True
         """
-        self.setPath(str(self.frameBreacrumbPath.path().parent))
+        self.setPath(f"{self.frameBreacrumbPath.path().parent}")
         return self.btUp.isEnabled()
 
     def history(self):

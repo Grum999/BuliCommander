@@ -200,7 +200,7 @@ class BuliCommander(Extension):
         if not self.__isKritaVersionOk:
             QMessageBox.information(QWidget(),
                                       PLUGIN_MENU_ENTRY,
-                                      "At least, Krita version {0} is required to use plugin...".format('.'.join([str(v) for v in REQUIRED_KRITA_VERSION]))
+                                      "At least, Krita version {0} is required to use plugin...".format('.'.join([f"{v}" for v in REQUIRED_KRITA_VERSION]))
                                     )
             return
 

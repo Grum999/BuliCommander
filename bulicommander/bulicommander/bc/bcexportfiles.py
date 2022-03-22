@@ -597,10 +597,10 @@ class BCExportFiles(QObject):
         returned = re.sub("(?i)\{time:mm\}",                        tsToStr(currentDateTime, "%M" ),                    returned)
         returned = re.sub("(?i)\{time:ss\}",                        tsToStr(currentDateTime, "%S" ),                    returned)
 
-        returned = re.sub("(?i)\{items:total\.count\}",             str(self.__fileNfo[3]),                             returned)
-        returned = re.sub("(?i)\{items:directories\.count\}",       str(self.__fileNfo[1]),                             returned)
-        returned = re.sub("(?i)\{items:files\.count\}",             str(self.__fileNfo[2]),                             returned)
-        returned = re.sub("(?i)\{items:files\.size\}",              str(self.__fileNfo[6]),                             returned)
+        returned = re.sub("(?i)\{items:total\.count\}",             f"{self.__fileNfo[3]}",                             returned)
+        returned = re.sub("(?i)\{items:directories\.count\}",       f"{self.__fileNfo[3]}",                             returned)
+        returned = re.sub("(?i)\{items:files\.count\}",             f"{self.__fileNfo[3]}",                             returned)
+        returned = re.sub("(?i)\{items:files\.size\}",              f"{self.__fileNfo[3]}",                             returned)
         returned = re.sub("(?i)\{items:files\.size\(KiB\)\}",       bytesSizeToStr(self.__fileNfo[6], 'autobin'),       returned)
         returned = re.sub("(?i)\{items:files\.size\(KB\)\}",        bytesSizeToStr(self.__fileNfo[6], 'auto'),          returned)
 
@@ -903,7 +903,7 @@ class BCExportFiles(QObject):
         def repPt(v):
             point = float(v.groups()[1])
             newValue = round(point * ratio, 2)
-            return v.groups()[0].replace(v.groups()[1], str(newValue))
+            return v.groups()[0].replace(v.groups()[1], f"{newValue}")
 
         ratio = self.__formatPdfImgPaperResolution / self.__formatPdfImgPixmapResolution
 
@@ -4347,13 +4347,13 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             with open(fileName, 'r') as fHandle:
                 jsonAsStr=fHandle.read()
         except Exception as e:
-            Debug.print("Can't open/read file {0}: {1}", fileName, str(e))
+            Debug.print("Can't open/read file {0}: {1}", fileName, f"{e}")
             return BCExportFilesDialogBox.IMPORT_FILE_CANT_READ
 
         try:
             jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
         except Exception as e:
-            Debug.print("Can't parse file {0}: {1}", fileName, str(e))
+            Debug.print("Can't parse file {0}: {1}", fileName, f"{e}")
             return BCExportFilesDialogBox.IMPORT_FILE_NOT_JSON
 
         if not "formatIdentifier" in jsonAsDict:
@@ -4395,7 +4395,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             with open(fileName, 'w') as fHandle:
                 fHandle.write(json.dumps(toExport, indent=4, sort_keys=True, cls=JsonQObjectEncoder))
         except Exception as e:
-            Debug.print("Can't save file {0}: {1}", fileName, str(e))
+            Debug.print("Can't save file {0}: {1}", fileName, f"{e}")
             returned=BCExportFilesDialogBox.EXPORT_CANT_SAVE
 
         BCSettings.set(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE, fileName)

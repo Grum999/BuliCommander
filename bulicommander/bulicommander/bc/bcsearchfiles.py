@@ -1448,13 +1448,13 @@ class BCSearchFilesDialogBox(QDialog):
             with open(fileName, 'r') as fHandle:
                 jsonAsStr=fHandle.read()
         except Exception as e:
-            Debug.print("Can't open/read file {0}: {1}", fileName, str(e))
+            Debug.print("Can't open/read file {0}: {1}", fileName, f"{e}")
             return NodeEditorScene.IMPORT_FILE_CANT_READ
 
         try:
             jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
         except Exception as e:
-            Debug.print("Can't parse file {0}: {1}", fileName, str(e))
+            Debug.print("Can't parse file {0}: {1}", fileName, f"{e}")
             return NodeEditorScene.IMPORT_FILE_NOT_JSON
 
         if not "formatIdentifier" in jsonAsDict:
@@ -1519,7 +1519,7 @@ class BCSearchFilesDialogBox(QDialog):
             with open(fileName, 'w') as fHandle:
                 fHandle.write(json.dumps(toExport, indent=4, sort_keys=True, cls=JsonQObjectEncoder))
         except Exception as e:
-            Debug.print("Can't save file {0}: {1}", fileName, str(e))
+            Debug.print("Can't save file {0}: {1}", fileName, f"{e}")
             returned=NodeEditorScene.EXPORT_CANT_SAVE
 
         BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_BASIC, fileName)

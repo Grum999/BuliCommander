@@ -156,7 +156,7 @@ class BCImportAnimated(object):
                     groupLayer = document.createGroupLayer('Frames')
                     document.rootNode().addChildNode(groupLayer, None)
 
-                    nbZ=len(str(imgReaderAnimated.frameCount()))
+                    nbZ=len(f"{imgReaderAnimated.frameCount()}")
                     for frameNumber in range(imgReaderAnimated.frameCount()):
                         imgReaderAnimated.jumpToFrame(frameNumber)
 
@@ -208,7 +208,7 @@ class BCImportAnimated(object):
 
                     fileNames=[]
                     with tempfile.TemporaryDirectory() as tmpDirName:
-                        nbZ=len(str(imgReaderAnimated.frameCount()))
+                        nbZ=len(f"{imgReaderAnimated.frameCount()}")
                         for frameNumber in range(imgReaderAnimated.frameCount()):
                             fileName = os.path.join(tmpDirName, f'frame-{frameNumber:>0{nbZ}}.png')
 
@@ -264,7 +264,7 @@ class BCImportAnimated(object):
 
                     imgReaderAnimated.jumpToFrame(frameNumber-1)
 
-                    nbZ=len(str(imgReaderAnimated.frameCount()))
+                    nbZ=len(f"{imgReaderAnimated.frameCount()}")
                     frameLayer = document.createNode(f"Frame {frameNumber:>0{nbZ}}/{imgReaderAnimated.frameCount()}", "paintLayer")
                     EKritaNode.fromQImage(frameLayer, imgReaderAnimated.currentImage())
 

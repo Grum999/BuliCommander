@@ -168,7 +168,7 @@ class BCClipboardItem(QObject):
                 try:
                     shutil.move(file, targetPath)
                 except Exception as e:
-                    Debug.print('[BCClipboardItem.setPersistent] Unable to move file {0} to {1}: {2}', file, targetPath, str(e))
+                    Debug.print('[BCClipboardItem.setPersistent] Unable to move file {0} to {1}: {2}', file, targetPath, f"{e}")
 
             self.__persistent=value
             self.updateBcFile()
@@ -184,7 +184,7 @@ class BCClipboardItem(QObject):
             try:
                 file.write(json.dumps(data, indent=4, sort_keys=True))
             except Exception as e:
-                Debug.print('[BCClipboardItem.saveToCache] Unable to save file {0}: {1}', fileName, str(e))
+                Debug.print('[BCClipboardItem.saveToCache] Unable to save file {0}: {1}', fileName, f"{e}")
                 return False
 
         return True
@@ -323,7 +323,7 @@ class BCClipboardItemUrl(BCClipboardItem):
             try:
                 shutil.move(self.__downloader.target(), self.cachePath())
             except Exception as e:
-                Debug.print('[BCClipboardItem.__downloadFinished] Unable to move file {0} to {1}: {2}', self.__downloader.target(), self.cachePath(), str(e))
+                Debug.print('[BCClipboardItem.__downloadFinished] Unable to move file {0} to {1}: {2}', self.__downloader.target(), self.cachePath(), f"{e}")
                 self.__status=BCClipboardItemUrl.URL_STATUS_NOTDOWNLOADED
                 self.downloadFinished.emit(self)
                 return
@@ -758,7 +758,7 @@ class BCClipboardItemSvg(BCClipboardItem):
             try:
                 file.write(svgData)
             except Exception as e:
-                Debug.print('[BCClipboardItemSvg.saveToCache] Unable to save file {0}: {1}', self.fileName(True), str(e))
+                Debug.print('[BCClipboardItemSvg.saveToCache] Unable to save file {0}: {1}', self.fileName(True), f"{e}")
                 saved=False
 
         return saved
@@ -852,7 +852,7 @@ class BCClipboardItemKra(BCClipboardItem):
             try:
                 file.write(kraData)
             except Exception as e:
-                Debug.print('[BCClipboardItemKra.saveToCache] Unable to save file {0}: {1}', fileName, str(e))
+                Debug.print('[BCClipboardItemKra.saveToCache] Unable to save file {0}: {1}', fileName, f"{e}")
                 saved=False
 
         return saved
@@ -942,7 +942,7 @@ class BCClipboard(QObject):
             os.makedirs(BCClipboard.sessionCacheDirectory(), exist_ok=True)
             os.makedirs(BCClipboard.downloadingCacheDirectory(), exist_ok=True)
         except Exception as e:
-            Debug.print('[BCClipboard.initialiseCache] Unable to create directory: {0}', str(e))
+            Debug.print('[BCClipboard.initialiseCache] Unable to create directory: {0}', f"{e}")
             return
 
         # cleanup downloading directory to ensure there's nothing left inside...
@@ -952,7 +952,7 @@ class BCClipboard(QObject):
                     os.remove(os.path.join(root, fileName))
                     updated=True
                 except Exception as e:
-                    Debug.print('[BCClipboard.cacheDownloadFlush] Unable to delete file {0}: {1}', fileName, str(e))
+                    Debug.print('[BCClipboard.cacheDownloadFlush] Unable to delete file {0}: {1}', fileName, f"{e}")
 
 
         BCClipboard.__INITIALISED = True
@@ -1172,13 +1172,13 @@ class BCClipboard(QObject):
                         try:
                             jsonAsStr = file.read()
                         except Exception as e:
-                            Debug.print('[BCClipboard.__poolFromCache] Unable to load file {0}: {1}', fileName, str(e))
+                            Debug.print('[BCClipboard.__poolFromCache] Unable to load file {0}: {1}', fileName, f"{e}")
                             continue
 
                     try:
                         jsonAsDict = json.loads(jsonAsStr)
                     except Exception as e:
-                        Debug.print('[BCClipboard.__poolFromCache] Unable to parse file {0}: {1}', fileName, str(e))
+                        Debug.print('[BCClipboard.__poolFromCache] Unable to parse file {0}: {1}', fileName, f"{e}")
                         continue
 
                     item=None
@@ -1556,7 +1556,7 @@ class BCClipboard(QObject):
                     os.remove(os.path.join(root, fileName))
                     updated=True
                 except Exception as e:
-                    Debug.print('[BCClipboard.cacheSessionFlush] Unable to delete file {0}: {1}', fileName, str(e))
+                    Debug.print('[BCClipboard.cacheSessionFlush] Unable to delete file {0}: {1}', fileName, f"{e}")
 
         if updated:
             self.__poolFromCache()
@@ -1572,7 +1572,7 @@ class BCClipboard(QObject):
                     os.remove(os.path.join(root, fileName))
                     updated=True
                 except Exception as e:
-                    Debug.print('[BCClipboard.cachePersistentFlush] Unable to delete file {0}: {1}', fileName, str(e))
+                    Debug.print('[BCClipboard.cachePersistentFlush] Unable to delete file {0}: {1}', fileName, f"{e}")
 
         if updated:
             self.__poolFromCache()
@@ -1641,6 +1641,7 @@ class BCClipboard(QObject):
     def checkContent(self):
         """Check clipboard content manually"""
         self.__clipboardMimeContentChanged()
+
 
 class BCClipboardModel(QAbstractTableModel):
     """A model provided by clipboard"""
