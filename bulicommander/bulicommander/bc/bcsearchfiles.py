@@ -401,10 +401,10 @@ class BCSearchFilesDialogBox(QDialog):
         fileList.clear()
 
         if not filterRules is None:
-            fileList.addRule(filterRules)
+            fileList.addSearchRules(filterRules)
 
         for pathId in pathToLinks:
-            fileList.addPath(BCFileListPath(nodeSearchPaths[pathId]['widget']["path"],
+            fileList.addSearchPaths(BCFileListPath(nodeSearchPaths[pathId]['widget']["path"],
                                             nodeSearchPaths[pathId]['widget']["scanSubDirectories"],
                                             nodeSearchPaths[pathId]['widget']["scanHiddenFiles"],
                                             nodeSearchPaths[pathId]['widget']["scanManagedFilesOnly"],
@@ -1256,7 +1256,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.pbCancel.setEnabled(False)
         self.pbCancel.update()
         QApplication.processEvents()
-        self.__bcFileList.cancelExecution()
+        self.__bcFileList.cancelSearchExecution()
 
     def __executeSortAndExport(self, searchRulesAsDict):
         """Sort results and export
@@ -1380,7 +1380,7 @@ class BCSearchFilesDialogBox(QDialog):
                         sortNfoList.append(f"{txtAscending}{BCWSearchSortRules.MAP_VALUE_LABEL[sortRule['value']]}")
                     else:
                         sortNfoList.append(f"{txtDescending}{BCWSearchSortRules.MAP_VALUE_LABEL[sortRule['value']]}")
-            self.__bcFileList.sort(sortRules['caseInsensitive'])
+            self.__bcFileList.sortResults(sortRules['caseInsensitive'])
             Stopwatch.stop('executeSortAndExport.sort')
             self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("executeSortAndExport.sort"),sortNfoList])
 
@@ -1575,7 +1575,7 @@ class BCSearchFilesDialogBox(QDialog):
             self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(f"""**{i18n('Scan directories:')}** """)
 
-            self.__bcFileList.execute(True, True, [
+            self.__bcFileList.searchExecute(True, True, [
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATH,
                 BCFileList.STEPEXECUTED_ANALYZE_METADATA,

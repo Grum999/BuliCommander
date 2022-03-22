@@ -1371,20 +1371,19 @@ class BCMainViewTab(QFrame):
             refType = self.__uiController.quickRefType(self.filesPath())
 
             if refType == BCWPathBar.QUICKREF_RESERVED_LAST_OPENED:
-                self.__filesQuery.setResult(self.filesLastDocumentsOpened().list())
+                self.__filesQuery.setResults(self.filesLastDocumentsOpened().list())
             elif refType == BCWPathBar.QUICKREF_RESERVED_LAST_SAVED:
-                self.__filesQuery.setResult(self.filesLastDocumentsSaved().list())
+                self.__filesQuery.setResults(self.filesLastDocumentsSaved().list())
             elif refType == BCWPathBar.QUICKREF_RESERVED_LAST_ALL:
-                self.__filesQuery.setResult(list(set(self.filesLastDocumentsOpened().list() + self.filesLastDocumentsSaved().list())))
+                self.__filesQuery.setResults(list(set(self.filesLastDocumentsOpened().list() + self.filesLastDocumentsSaved().list())))
             elif refType == BCWPathBar.QUICKREF_RESERVED_HISTORY:
-                self.__filesQuery.setResult([directory for directory in self.filesHistory().list() if not directory.startswith('@')])
+                self.__filesQuery.setResults([directory for directory in self.filesHistory().list() if not directory.startswith('@')])
             elif refType == BCWPathBar.QUICKREF_SAVEDVIEW_LIST:
-                self.__filesQuery.setResult(self.filesSavedView().get())
+                self.__filesQuery.setResults(self.filesSavedView().get())
             elif refType == BCWPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW:
-                self.__filesQuery.setResult(self.filesBackupFilterDView().list())
+                self.__filesQuery.setResults(self.filesBackupFilterDView().list())
             elif refType == BCWPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW:
-                self.__filesQuery.setResult(self.filesLayerFilterDView().list())
-
+                self.__filesQuery.setResults(self.filesLayerFilterDView().list())
         else:
             path=self.filesPath()
             if not os.path.isdir(path):

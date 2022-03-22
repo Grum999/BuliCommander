@@ -6259,6 +6259,10 @@ class BCFileList(QObject):
     """
     stepExecuted = Signal(tuple)        # signals emitted during searchExecute, tuple varies according to search step
     stepCancel = Signal()               # search execution is cancelled
+    resultsUpdatedReset = Signal()
+    resultsUpdatedSort = Signal()
+    resultsUpdatedAdd = Signal(list)        # results are updated: list of added items (BCBaseFile)
+    resultsUpdatedRemove = Signal(list)     # results are updated: list of removed items (BCBaseFile)
 
     # activated by default
     STEPEXECUTED_SEARCH_FROM_PATHS = 0b0000000000000100      # search files in path finished
@@ -6471,16 +6475,16 @@ class BCFileList(QObject):
         - rules
         - results
         """
-        self.clearPaths()
-        self.clearRules()
+        self.clearSearchPaths()
+        self.clearSearchRules()
         self.clearResults()
 
-    def clearPaths(self):
+    def clearSearchPaths(self):
         """Clear paths definitions"""
         self.__pathList = []
         self.__invalidate()
 
-    def clearRules(self):
+    def clearSearchRules(self):
         """Clear rules definitions"""
         self.__ruleList = []
         self.__invalidate()
@@ -6490,28 +6494,30 @@ class BCFileList(QObject):
         self.__sortList = []
         self.__invalidate()
 
-    def clearResults(self):
+    def clearResults(self, emitSignal=True):
         """Clear current results"""
         self.__currentFiles = []
         self.__currentFilesName = set()
         self.__invalidate()
+        if emitSignal:
+            self.resultsUpdatedReset.emit()
 
-    def includeDirectories(self):
+    def searchIncludeDirectories(self):
         """Return if query include directories or not"""
         return self.__includeDirectories
 
-    def setIncludeDirectories(self, value):
+    def searchSetIncludeDirectories(self, value):
         """Set if query should include directories or not"""
         if isinstance(value, bool):
             if self.__includeDirectories != value:
                 self.__invalidate()
             self.__includeDirectories = value
 
-    def paths(self):
+    def searchPaths(self):
         """Return current defined paths where to search files"""
         return self.__pathList
 
-    def inPaths(self, value):
+    def inSearchPaths(self, value):
         """Return True if a path is defined in list"""
         if isinstance(value, str):
             refValue = value
@@ -6523,7 +6529,7 @@ class BCFileList(QObject):
                 return True
         return False
 
-    def addPath(self, value):
+    def addSearchPaths(self, value):
         """Add a new path in path list
 
         If path already exist in list, it will be ignored
@@ -6535,19 +6541,19 @@ class BCFileList(QObject):
         """
         if isinstance(value, list):
             for path in value:
-                self.addPath(path)
+                self.addSearchPaths(path)
         elif isinstance(value, str):
-            if not self.inPaths(value):
+            if not self.inSearchPaths(value):
                 self.__pathList.append( BCFileListPath(value) )
                 self.__invalidate()
         elif isinstance(value, BCFileListPath):
-            if not self.inPaths(value):
+            if not self.inSearchPaths(value):
                 self.__pathList.append( value )
                 self.__invalidate()
         else:
             raise EInvalidType("Given path is not valid")
 
-    def removePath(self, value):
+    def removeSearchPaths(self, value):
         """Remove given path from list
 
         If path is not found, do nothing
@@ -6559,9 +6565,9 @@ class BCFileList(QObject):
         """
         if isinstance(value, list):
             for path in value:
-                self.removePath(path)
+                self.removeSearchPaths(path)
         else:
-            if self.inPaths(value):
+            if self.inSearchPaths(value):
                 if isinstance(value, str):
                     refValue = value
                 else:
@@ -6572,18 +6578,18 @@ class BCFileList(QObject):
                         self.__pathList.remove(path)
                         self.__invalidate()
 
-    def rules(self):
+    def searchRules(self):
         """Return current defined rules used to filter files"""
         return self.__ruleList
 
-    def inRules(self, value):
+    def inSearchRules(self, value):
         """Return True if a rule is already defined in list"""
         if isinstance(value, (BCFileListRuleCombination, BCFileListRule)):
             return value in self.__ruleList
         else:
             raise EInvalidType("Given `value` is not a valid rule")
 
-    def addRule(self, value):
+    def addSearchRules(self, value):
         """Add a new filtering rule
 
         If rule is already defined, ignore it
@@ -6592,24 +6598,24 @@ class BCFileList(QObject):
         """
         if isinstance(value, list):
             for rule in value:
-                self.addRule(rule)
+                self.addSearchRules(rule)
         elif isinstance(value, (BCFileListRule, BCFileListRuleCombination)):
-            if not self.inRules(value):
+            if not self.inSearchRules(value):
                 self.__ruleList.append(value)
                 self.__invalidate()
         else:
             raise EInvalidType("Given rule is not valid")
 
-    def removeRule(self, value):
+    def removeSearchRules(self, value):
         """Remove given rule from list
 
         If rule is not found, do nothing
         """
         if isinstance(value, list):
             for rule in value:
-                self.removeRule(rule)
+                self.removeSearchRules(rule)
         else:
-            if self.inRules(value):
+            if self.inSearchRules(value):
                 self.__ruleList.remove(value)
                 self.__invalidate()
 
@@ -6723,14 +6729,14 @@ class BCFileList(QObject):
 
         return '\n'.join(returned)
 
-    def cancelExecution(self):
+    def cancelSearchExecution(self):
         """Cancel current execution"""
         if not self.__cancelProcess:
             self.__cancelProcess=True
             if self.__workerPool:
                 self.__workerPool.stopProcessing()
 
-    def execute(self, clearResults=True, buildStats=False, signals=None):
+    def searchExecute(self, clearResults=True, buildStats=False, signals=None):
         """Search for files
 
         Files matching criteria are added to selection.
@@ -6760,7 +6766,7 @@ class BCFileList(QObject):
 
         if clearResults:
             # reset current list if asked
-            self.clearResults()
+            self.clearResults(False)
 
         if buildStats:
             self.__statFiles={
@@ -7010,7 +7016,7 @@ class BCFileList(QObject):
             self.__progressFilesPctCurrent=0
         else:
             self.__progressFilesPctThreshold=0
-        self.sort()
+        self.sortResults(None, False)
         Stopwatch.stop('BCFileList.execute.06-sort')
         if BCFileList.STEPEXECUTED_SORT_RESULTS in signals:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("BCFileList.execute.06-sort")))
@@ -7030,15 +7036,20 @@ class BCFileList(QObject):
 
         self.__invalidated = False
 
+        self.resultsUpdatedReset.emit()
+
         return nb
 
-    def sort(self, caseInsensitive=False):
+    def sortResults(self, caseInsensitive=False, emitSignal=True):
         """Sort current result using current sort rules"""
         if isinstance(caseInsensitive, bool):
             self.__sortCaseInsensitive=caseInsensitive
 
         if len(self.__sortList) > 0:
             self.__currentFiles = sorted(self.__currentFiles, key=cmp_to_key(self.__sort))
+
+            if emitSignal==True:
+                self.resultsUpdatedSort.emit()
 
     def nbFiles(self):
         """Return number of found image files"""
@@ -7048,7 +7059,7 @@ class BCFileList(QObject):
         """Return found image files"""
         return self.__currentFiles
 
-    def setResult(self, files):
+    def setResults(self, files):
         """Allows to build result from a predefined list of files (fullpath name string and/or BCFile and/or BCDirectory)
 
         Note: when result is set:
@@ -7059,9 +7070,9 @@ class BCFileList(QObject):
         if not isinstance(files, list):
             raise EInvalidType("Given `files` must be a <list> of <str>, <BCFile> or <BCDirectory> items")
 
-        self.clearPaths()
-        self.clearRules()
-        self.clearResults()
+        self.clearSearchPaths()
+        self.clearSearchRules()
+        self.clearResults(False)
 
         foundFiles = set()
         foundDirectories = set()

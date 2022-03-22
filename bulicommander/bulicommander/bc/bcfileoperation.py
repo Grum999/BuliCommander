@@ -523,9 +523,9 @@ class BCFileOperationUi(object):
                 if full:
                     # build informations about directory content
                     pathFileList=BCFileList()
-                    pathFileList.addPath(BCFileListPath(file.fullPathName(), True, True))
-                    pathFileList.setIncludeDirectories(True)
-                    pathFileList.execute(True, True) # build stats
+                    pathFileList.addSearchPaths(BCFileListPath(file.fullPathName(), True, True))
+                    pathFileList.searchSetIncludeDirectories(True)
+                    pathFileList.searchExecute(True, True) # build stats
 
                     stats = pathFileList.stats()
                     for key in stats:
@@ -792,9 +792,9 @@ class BCFileOperation(object):
             # in this case, search all sub-directories & files and continue to feed list of items to process
             for srcPath in pathsList:
                 fileList=BCFileList()
-                fileList.addPath(BCFileListPath(srcPath, True, True))
-                fileList.setIncludeDirectories(True)
-                fileList.execute()
+                fileList.addSearchPaths(BCFileListPath(srcPath, True, True))
+                fileList.searchSetIncludeDirectories(True)
+                fileList.searchExecute()
                 srcPath = os.path.dirname(srcPath)
                 for file in fileList.files():
                     file.setTag('newPath', os.path.join(targetPath, file.path().replace(srcPath, '').strip(os.sep)))
