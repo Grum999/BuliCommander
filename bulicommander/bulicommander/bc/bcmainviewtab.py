@@ -72,6 +72,7 @@ from PyQt5.QtWidgets import (
     )
 
 from .bcbookmark import BCBookmark
+from .bciconsizes import BCIconSizes
 from .bcclipboard import (
         BCClipboard,
         BCClipboardModel,
@@ -208,91 +209,6 @@ class BCMainViewTabTabs(Enum):
     FILES = 'files'
     DOCUMENTS = 'documents'
     CLIPBOARD = 'clipboard'
-
-class BCIconSizes(object):
-    def __init__(self, values, currentIndex=0):
-        if not (isinstance(values, list) or isinstance(values, tuple)):
-            raise EInvalidType('Given `values` must be a <list>')
-        self.__values=[value for value in values if isinstance(value, int)]
-
-        if len(self.__values) == 0:
-            raise EInvalidValue('Given `values` must be a non empty list of <int>')
-
-        self.__index = 0
-
-        self.setIndex(currentIndex)
-
-    def __repr__(self):
-        return f"<BCIconSizes({self.__index}, {self.__values[self.__index]})>"
-
-    def next(self):
-        """Go to next value
-
-        return True if current index has been modified, otherwise false
-        """
-        if self.__index < len(self.__values) - 1:
-            self.__index+=1
-            return True
-        return False
-
-    def prev(self):
-        """Go to previous value
-
-        return True if current index has been modified, otherwise false
-        """
-        if self.__index > 0:
-            self.__index-=1
-            return True
-        return False
-
-    def index(self):
-        """Return current index"""
-        return self.__index
-
-    def setIndex(self, index):
-        """Set current index
-
-        return True if current index has been modified, otherwise false
-        """
-        if index == self.__index:
-            return False
-        if not isinstance(index, int):
-            raise EInvalidType('Given `values` must be a <int>')
-
-        if index < 0:
-            self.__index = 0
-        elif index > len(self.__values) - 1:
-            self.__index = len(self.__values) - 1
-        else:
-            self.__index = index
-
-        return True
-
-    def value(self):
-        """Return current value"""
-        return self.__values[self.__index]
-
-    def setValue(self, value):
-        """Set current value
-
-        If value doesn't exist in list of values, return the first value less than current
-
-        return True if current index has been modified, otherwise false
-        """
-        currentIndex = self.__index
-        if value in self.__values:
-            self.__index = self.__values.index(value)
-        else:
-            self.__index=0
-            for v in self.__values:
-                if v < value:
-                    self.__index+=1
-                else:
-                    break
-        if currentIndex == self.__index:
-            return False
-        return True
-
 
 # -----------------------------------------------------------------------------
 # create a model from abstract model
@@ -1903,11 +1819,7 @@ class BCMainViewTab(QFrame):
                 self.__filesUpdateImageNfoSizeUnit()
 
                 ratio=file.getProperty(BCFileProperty.IMAGE_RATIO.value)
-                orientation=''
-                if ratio>1:
-                    orientation=i18n("Landscape")
-                elif ratio<1:
-                    orientation=i18n("Portrait")
+                orientation=ratioOrientation(ratio)
 
                 if orientation!='':
                     orientation=f" ({orientation})"
@@ -1915,7 +1827,7 @@ class BCMainViewTab(QFrame):
                 self.lblImgRatio.setText(f"{ratio:.04f}{orientation}")
 
                 nbPixels=file.getProperty(BCFileProperty.IMAGE_PIXELS.value)
-                self.lblImgNbPixels.setText(f"{nbPixels} (~{ceil(10*nbPixels/1000000)/10:.02f}MP)")
+                self.lblImgNbPixels.setText(f"{nbPixels} (~{ceil(nbPixels/100000)/10:.02f}MP)")
 
                 if 'colorType' in imgNfo:
                     if 'paletteSize' in imgNfo:
@@ -3683,7 +3595,7 @@ class BCMainViewTab(QFrame):
 
 
     def setFilesColumnSort(self, value):
-        """Set current column sort status
+        """Set current columns sort status
 
         Given `value` is a list or a tuple(int, bool):
          - column index (int, 0 to 6)
@@ -3717,7 +3629,7 @@ class BCMainViewTab(QFrame):
 
 
     def setFilesColumnOrder(self, value):
-        """Set current column order
+        """Set current columns order
 
         Given `value` is a list or logical index
         Index in list provide position in header
@@ -3736,7 +3648,7 @@ class BCMainViewTab(QFrame):
 
 
     def setFilesColumnSize(self, value):
-        """Set current column size
+        """Set current columns size
 
         Given `value` is a list or logical index
         Index in list provide position in header

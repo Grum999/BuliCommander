@@ -55,7 +55,6 @@ import time
 import xml.etree.ElementTree as xmlElement
 import zipfile
 import zlib
-import textwrap
 import math
 import copy
 
@@ -120,7 +119,6 @@ if sys.platform == 'linux':
 
 # ------------------------------------------------------------------------------
 
-# ------------------------------------------------------------------------------
 class EInvalidExpression(Exception):
     """An invalid expression is detected"""
     pass
@@ -135,6 +133,8 @@ class EInvalidQueryResult(Exception):
     """Query result is not valid"""
     pass
 
+
+# ------------------------------------------------------------------------------
 
 class BCFileManipulateNameLanguageDef(LanguageDef):
 
@@ -580,7 +580,7 @@ class BCFileManagedFormat(object):
             'MD': 'Markdown document',
             'PDF': 'PDF document',
 
-            'DIRECTORY': 'Directory',
+            'DIRECTORY': (i18n('<DIR>'), i18n('Directory')),
             'MISSING': 'Missing file'
         }
 
@@ -1403,6 +1403,8 @@ class BCFileManipulateName(object):
                 returnedValue=re.sub(r'[*\\/<>?:;"|]', '', returnedValue)
         return (returnedValue, None)
 
+
+# ------------------------------------------------------------------------------
 
 class BCBaseFile(object):
     """Base class for directories and files"""
@@ -5141,9 +5143,9 @@ class BCFileCache(QObject):
         query=QSqlQuery(self.__databaseInstance)
 
         if query.exec("SELECT count(*) AS nbHash FROM metadata"):
-            print('getStats: metadata')
+            #print('getStats: metadata')
             while query.next():
-                print('getStats: metadata - '+str(query.value('nbHash')))
+                #print('getStats: metadata - '+f"{query.value('nbHash'}"))
                 returned['nbHash']=int(query.value('nbHash'))
 
         if query.exec("SELECT count(*) AS nbDir FROM directories"):
@@ -5152,7 +5154,7 @@ class BCFileCache(QObject):
 
         query.finish()
 
-        print('getStats', returned)
+        #print('getStats', returned)
 
         return returned
 
@@ -6255,8 +6257,8 @@ class BCFileList(QObject):
     Allows to manage from the simplest query (files in a directory) to the most complex (search in multiple path with
     multiple specifics criteria inclyuding add/exclude)
     """
-    stepExecuted = Signal(tuple)
-    stepCancel = Signal()
+    stepExecuted = Signal(tuple)        # signals emitted during searchExecute, tuple varies according to search step
+    stepCancel = Signal()               # search execution is cancelled
 
     # activated by default
     STEPEXECUTED_SEARCH_FROM_PATHS = 0b0000000000000100      # search files in path finished
@@ -6721,135 +6723,6 @@ class BCFileList(QObject):
 
         return '\n'.join(returned)
 
-    def exportCsvResults(self, csvSeparator='\t', header=True):
-        """Export image list result as a csv string
-
-        The `csvSeparator` parameter allows to define which character is used as separator
-        When `header` is True, first line define columns names, otherwise no header is defined
-        """
-        if self.__invalidated:
-            raise EInvalidQueryResult("Current query results are not up to date: query has been modified but not yet executed")
-
-        returned = []
-
-        if header:
-            returned.append(csvSeparator.join([
-                'Path',
-                'File name',
-                'File size',
-                'File date',
-                'Image format',
-                'Image Width',
-                'Image Height'
-            ]))
-
-        for file in self.__currentFiles:
-            if file.format() == BCFileManagedFormat.DIRECTORY:
-                returned.append(csvSeparator.join([
-                    file.path(),
-                    file.name(),
-                    '',
-                    tsToStr(file.lastModificationDateTime()),
-                    '<dir>',
-                    '',
-                    ''
-                ]))
-            elif file.format() == BCFileManagedFormat.UNKNOWN:
-                returned.append(csvSeparator.join([
-                    file.path(),
-                    file.name(),
-                    str(file.size()),
-                    tsToStr(file.lastModificationDateTime()),
-                    '',
-                    '',
-                    ''
-                ]))
-            else:
-                returned.append(csvSeparator.join([
-                    file.path(),
-                    file.name(),
-                    str(file.size()),
-                    tsToStr(file.lastModificationDateTime()),
-                    file.format(),
-                    str(file.imageSize().width()),
-                    str(file.imageSize().height())
-                ]))
-
-        return '\n'.join(returned)
-
-    def exportTxtResults(self, header=True):
-        """Export image list result as a text string"""
-        if self.__invalidated:
-            Debug.print("Warning: Current query results are not up to date: query has been modified but not yet executed")
-
-        returned = []
-
-        colWidths=[4, 9]
-        for file in self.__currentFiles:
-            if len(file.path()) > colWidths[0]:
-                colWidths[0] = len(file.path())
-
-            if len(file.name()) > colWidths[1]:
-                colWidths[1] = len(file.name())
-
-        #                 path                       name                      file size    file date     img format   img width    img height
-        rowString = f'| {{{0}:<{colWidths[0]}}} | {{{1}:<{colWidths[1]}}} | {{{2}:>9}} | {{{3}:<19}} | {{{4}:<12}} | {{{5}:>12}} | {{{6}:>12}} |'
-        sepString = f'+-{{{0}:<{colWidths[0]}}}-+-{{{1}:<{colWidths[1]}}}-+-{{{2}:>9}}-+-{{{3}:<19}}-+-{{{4}:<12}}-+-{{{5}:>11}}-+-{{{6}:>11}}-+'.format('-'*colWidths[0], '-'*colWidths[1], '-'*9, '-'*19, '-'*12, '-'*12, '-'*12)
-
-        if header:
-            returned.append( 'Exported query:  ' + textwrap.indent(self.exportHQuery(), '                 ').strip())
-            returned.append(f'Exported at:     {tsToStr(time.time())}')
-            returned.append(f'Number of files: {len(self.__currentFiles)}')
-
-            returned.append(sepString)
-            returned.append(rowString.format(
-                    'Path',
-                    'File name',
-                    'File size',
-                    'File date',
-                    'Image format',
-                    'Image Width ',
-                    'Image Height'
-                ))
-
-        returned.append(sepString)
-
-        for file in self.__currentFiles:
-            if file.format() == BCFileManagedFormat.DIRECTORY:
-                returned.append(rowString.format(
-                        file.path(),
-                        file.name(),
-                        '<dir>',
-                        tsToStr(file.lastModificationDateTime()),
-                        '',
-                        '',
-                        ''
-                    ))
-            elif file.format() == BCFileManagedFormat.UNKNOWN:
-                returned.append(rowString.format(
-                        file.path(),
-                        file.name(),
-                        bytesSizeToStr(file.size()),
-                        tsToStr(file.lastModificationDateTime()),
-                        '',
-                        '',
-                        ''
-                    ))
-            else:
-                returned.append(rowString.format(
-                        file.path(),
-                        file.name(),
-                        bytesSizeToStr(file.size()),
-                        tsToStr(file.lastModificationDateTime()),
-                        file.format(),
-                        file.imageSize().width(),
-                        file.imageSize().height()
-                    ))
-
-        returned.append(sepString)
-
-        return '\n'.join(returned)
-
     def cancelExecution(self):
         """Cancel current execution"""
         if not self.__cancelProcess:
@@ -7231,9 +7104,11 @@ class BCFileList(QObject):
         return len(self.__currentFiles)
 
     def stats(self):
-        """Return stats from last execution, if any (otherwise return None"""
+        """Return stats from last execution, if any (otherwise return None)"""
         return self.__statFiles
 
+
+# ------------------------------------------------------------------------------
 
 class BCFileIcon(object):
     """Provide icon for a BCBaseFile"""

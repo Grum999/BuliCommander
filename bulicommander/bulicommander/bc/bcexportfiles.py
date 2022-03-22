@@ -71,7 +71,9 @@ from bulicommander.pktk.modules.strutils import (
     )
 from bulicommander.pktk.modules.imgutils import (
         checkerBoardBrush,
-        buildIcon
+        buildIcon,
+        megaPixels,
+        ratioOrientation
     )
 from bulicommander.pktk.modules.timeutils import tsToStr
 from bulicommander.pktk.modules.utils import (
@@ -327,7 +329,7 @@ class BCExportFields:
                                                     },
         'image.ratio.type':                         {'label':       i18n('Image ratio (portrait, landscape, square)'),
                                                      'toolTip':     i18n('The current image ratio'),
-                                                     'data':        '{BCExportFields.getRatioText(file.getProperty(BCFileProperty.IMAGE_RATIO)) if not isinstance(file, BCDirectory) else ""}',
+                                                     'data':        '{ratioOrientation(file.getProperty(BCFileProperty.IMAGE_RATIO)) if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   0,
                                                      'format':      None,
                                                      'inList':      True,
@@ -343,7 +345,7 @@ class BCExportFields:
                                                     },
         'image.pixels.countMP':                     {'label':       i18n('Image pixels (in Megapixel)'),
                                                      'toolTip':     i18n('The current number of pixels (width * height), in megapixel (MP)<br/>Value is rounded to 2 decimals'),
-                                                     'data':        '{BCExportFields.megaPixel(file.getProperty(BCFileProperty.IMAGE_PIXELS), 2) if not isinstance(file, BCDirectory) else ""}',
+                                                     'data':        '{megaPixels(file.getProperty(BCFileProperty.IMAGE_PIXELS), 2) if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
                                                      'inList':      True,
@@ -378,25 +380,6 @@ class BCExportFields:
         if value is None or value<0 or value==0 and not acceptZero:
             return ""
         return f"{value:.0{roundDec}f}"
-
-    @staticmethod
-    def megaPixel(value, roundDec=2):
-        """return value (in pixels) as megapixels rounded to given number of decimal"""
-        if value is None or value==0:
-            return ""
-        return f"{value/1048576:.0{roundDec}f}"
-
-    @staticmethod
-    def getRatioText(ratio):
-        """return ratio text for a given ratio value"""
-        if ratio is None:
-            return ""
-        elif ratio<1:
-            return i18n("Portrait")
-        elif ratio>1:
-            return i18n("Landscape")
-        else:
-            return i18n("Square")
 
 
 

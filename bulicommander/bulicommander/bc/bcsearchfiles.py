@@ -1591,9 +1591,6 @@ class BCSearchFilesDialogBox(QDialog):
             # being able to manage more than one sort+linked exports
             self.__executeSortAndExport(dataAsDict)
 
-            print(self.__bcFileList.exportTxtResults())
-            print(self.__bcFileList.stats())
-
             self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(f"#lk#...{i18n('Execution done')}...#")
 
