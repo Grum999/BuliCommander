@@ -269,12 +269,12 @@ class WDialogStrInput(WDialogMessage):
         if inputLabel is None:
             inputLabel=''
         elif not isinstance(inputLabel, str):
-            inputLabel=str(inputLabel)
+            inputLabel=f"{inputLabel}"
 
         if defaultValue is None:
             defaultValue=''
         elif not isinstance(defaultValue, str):
-            defaultValue=str(defaultValue)
+            defaultValue=f"{defaultValue}"
 
         if regEx is None:
             regEx=''
@@ -349,7 +349,7 @@ class WDialogIntInput(WDialogMessage):
         if inputLabel is None:
             inputLabel=''
         elif not isinstance(inputLabel, str):
-            inputLabel=str(inputLabel)
+            inputLabel=f"{inputLabel}"
 
         if isinstance(defaultValue, float):
             defaultValue=round(defaultValue)
@@ -444,7 +444,7 @@ class WDialogFloatInput(WDialogMessage):
         if inputLabel is None:
             inputLabel=''
         elif not isinstance(inputLabel, str):
-            inputLabel=str(inputLabel)
+            inputLabel=f"{inputLabel}"
 
         if not isinstance(defaultValue, (int, float)):
             defaultValue=0.0
@@ -523,7 +523,7 @@ class WDialogComboBoxChoiceInput(WDialogMessage):
         if inputLabel is None:
             inputLabel=''
         elif not isinstance(inputLabel, str):
-            inputLabel=str(inputLabel)
+            inputLabel=f"{inputLabel}"
 
         if not isinstance(defaultIndex, int):
             defaultIndex=0
@@ -598,7 +598,7 @@ class WDialogRadioButtonChoiceInput(WDialogMessage):
         if inputLabel is None:
             inputLabel=''
         elif not isinstance(inputLabel, str):
-            inputLabel=str(inputLabel)
+            inputLabel=f"{inputLabel}"
 
         if not isinstance(defaultIndex, int):
             defaultIndex=0
@@ -690,7 +690,7 @@ class WDialogCheckBoxChoiceInput(WDialogMessage):
         if inputLabel is None:
             inputLabel=''
         elif not isinstance(inputLabel, str):
-            inputLabel=str(inputLabel)
+            inputLabel=f"{inputLabel}"
 
         if not isinstance(minimumChecked, int):
             defaultIndex=0
@@ -813,7 +813,7 @@ class WDialogColorInput(WDialogMessage):
         if inputLabel is None:
             inputLabel=''
         elif not isinstance(inputLabel, str):
-            inputLabel=str(inputLabel)
+            inputLabel=f"{inputLabel}"
 
         dlgBox=WDialogColorInput(title, message, inputLabel, defaultValue, options, minSize, None)
 
@@ -1005,7 +1005,7 @@ class WDialogFontInput(WDialogMessage):
         if inputLabel is None:
             inputLabel=''
         elif not isinstance(inputLabel, str):
-            inputLabel=str(inputLabel)
+            inputLabel=f"{inputLabel}"
 
         dlgBox=WDialogFontInput(title, message, inputLabel, defaultValue, optionFilter, optionWritingSytem, minSize, None)
 

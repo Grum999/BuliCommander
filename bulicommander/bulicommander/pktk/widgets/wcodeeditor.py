@@ -465,7 +465,7 @@ class WCodeEditor(QPlainTextEdit):
             # Check if the block is visible in addition to check if it is in the areas viewport
             #   a block can, for example, be hidden by a window placed over the text edit
             if block.isVisible() and bottom >= event.rect().top():
-                number = str(blockNumber + 1)
+                number = f"{blockNumber + 1}"
                 painter.setPen(self.__optionGutterText.foreground().color())
                 painter.drawText(0, top, self.__lineNumberArea.width(), self.fontMetrics().height(), Qt.AlignRight, number)
 

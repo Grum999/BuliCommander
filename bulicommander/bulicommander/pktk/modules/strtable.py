@@ -363,7 +363,7 @@ class TextTable(object):
                     returned[index] = 0
                 else:
                     # ensure that column content is text
-                    asText=str(column.content())
+                    asText=f"{column.content()}"
                     if os.linesep in asText:
                         sizeText=0
                         for line in asText.split(os.linesep):

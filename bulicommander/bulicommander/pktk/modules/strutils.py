@@ -98,7 +98,7 @@ def strDefault(value, default=''):
     """
     if value is None or value == '' or value == 0:
         return default
-    return str(value)
+    return f"{value}"
 
 def bytesSizeToStr(value, unit=None, decimals=2):
     """Convert a size (given in Bytes) to given unit
@@ -263,7 +263,7 @@ def indent(text, firstIndent='', nextIndent='', strip=False):
         text=text.split(os.linesep)
 
     if not isinstance(text, list):
-        return str(text)
+        return f"{text}"
 
     result=[]
     for index, line in enumerate(text):
