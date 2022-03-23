@@ -35,7 +35,8 @@ from .bcfile import (
         BCFile,
         BCFileList,
         BCFileManagedFormat,
-        BCFileProperty
+        BCFileProperty,
+        BCFileThumbnailSize
     )
 from .bciconsizes import BCIconSizes
 
@@ -139,11 +140,8 @@ class BCFileModel(QAbstractTableModel):
         ]
 
     @staticmethod
-    def getIcon(itemIndex, file, viewThumbnail=False, size=0):
-         if viewThumbnail:
-             return file.thumbnail(size=size, thumbType=BCBaseFile.THUMBTYPE_ICON)
-         else:
-             return file.icon()
+    def getIcon(itemIndex, file, size=None):
+        return file.thumbnail(size=size, thumbType=BCBaseFile.THUMBTYPE_ICON)
 
     def __init__(self, fileList, parent=None):
         """Initialise list"""
@@ -153,7 +151,7 @@ class BCFileModel(QAbstractTableModel):
             raise EInvalidType("Given `fileList` must be <BCFileList>")
 
         self.__iconAsThumbnail=False
-        self.__iconSize=32
+        self.__iconSize=BCFileThumbnailSize.SMALL
 
         self.__updatingIcons = BCFileModel.__STATUS_ICON_LOADED
 
@@ -185,9 +183,7 @@ class BCFileModel(QAbstractTableModel):
         if not fileIndex is None and fileIndex < self.rowCount():
             if not icon is None:
                 self.setData(fileIndex, icon, Qt.DecorationRole)
-
-        if self.rowCount() > 100:
-            self.iconProcessed.emit()
+                self.iconProcessed.emit()
 
     def __updateIconsStarted(self):
         """updating icon in treeview list is started"""
@@ -220,11 +216,13 @@ class BCFileModel(QAbstractTableModel):
         self.__stopUpdatingIcons()
 
         if not self.__iconAsThumbnail:
+            self.__updatingIcons = BCFileModel.__STATUS_ICON_LOADED
+            self.iconStopLoad.emit()
             return
 
         self.__updatingIcons=BCFileModel.__STATUS_ICON_LOADING
 
-        self.__iconPool.startProcessing([item for item in self.__items if not item.uuid() in self.__icons], BCFileModel.getIcon, True, self.__iconSize)
+        self.__iconPool.startProcessing([item for item in self.__items], BCFileModel.getIcon, self.__iconSize)
 
     def __dataUpdateReset(self):
         """Data has entirely been changed (reset/reload)"""
@@ -288,6 +286,7 @@ class BCFileModel(QAbstractTableModel):
                         return self.__icons[file.uuid()]
                     except:
                         pass
+
                 return file.icon()
         elif role == Qt.DisplayRole:
             if column==BCFileModel.COLNUM_FILE_PATH:
@@ -390,7 +389,8 @@ class BCFileModel(QAbstractTableModel):
             return
 
         self.__iconSize=size
-        self.__icons={}
+        # do not reset icons => avoid flickering when icon size is modified
+        #self.__icons={}
 
         if self.rowCount()==0:
             # nothing to update
@@ -435,11 +435,12 @@ class BCMainViewFiles(QTreeView):
         self.__changed = False
         self.__showPath = False
 
-
         self.__visibleColumns=[True,False,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,False]
 
-
+        self.__delegate=BCMainViewFilesDelegate(self)
+        self.setItemDelegate(self.__delegate)
         self.setAutoScroll(True)
+        self.setUniformRowHeights(True)
 
     def keyPressEvent(self, event):
         """Emit signal on keyPressed"""
@@ -593,17 +594,19 @@ class BCMainViewFiles(QTreeView):
         """Set icon size from index value"""
         if index is None or self.__iconSize.setIndex(index):
             # new size defined
-            self.setIconSize(QSize(self.__iconSize.value(), self.__iconSize.value()))
 
             # made asynchronously...
-            self.__model.setIconSize(self.__iconSize.value())
+            # update model before treeview
+            self.__model.setIconSize(BCFileThumbnailSize.fromValue(self.__iconSize.value()))
+
+            self.__delegate.setIconSize(self.__iconSize.value())
+            self.setIconSize(QSize(self.__iconSize.value(), self.__iconSize.value()))
 
             header = self.header()
             # ...then not possible to determinate column ICON width from content
             # and fix it to icon size
             header.resizeSection(BCFileModel.COLNUM_ICON, self.__iconSize.value())
-            ## TODO:
-            ## review this part and use self.__visibleColumns
+
             if self.__iconSize.index() < self.__viewNfoRowLimit:
                 # user defined columns model
                 header.setStretchLastSection(False)
@@ -691,3 +694,23 @@ class BCMainViewFiles(QTreeView):
             self.setIconSizeIndex()
         else:
             raise EInvalidType("Given `value` must be a <bool>")
+
+
+class BCMainViewFilesDelegate(QStyledItemDelegate):
+    """Extend QStyledItemDelegate class to return properly row height"""
+
+    def __init__(self, parent=None):
+        """Constructor, nothingspecial"""
+        super(BCMainViewFilesDelegate, self).__init__(parent)
+        self.__iconSize=QSize(64, 64)
+
+    def setIconSize(self, value):
+        self.__iconSize=QSize(value, value)
+        self.sizeHintChanged.emit(self.parent().model().createIndex(0, BCFileModel.COLNUM_ICON))
+
+    def sizeHint(self, option, index):
+        """Calculate size for items"""
+        if index.column() == BCFileModel.COLNUM_ICON:
+            return self.__iconSize
+
+        return QStyledItemDelegate.sizeHint(self, option, index)

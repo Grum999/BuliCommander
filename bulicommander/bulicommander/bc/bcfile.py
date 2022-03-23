@@ -4784,6 +4784,8 @@ class BCFileCache(QObject):
     @staticmethod
     def globalInstance():
         """Return a global instance of cache database"""
+        if BCFileCache.__GLOBAL_INSTANCE is None:
+            BCFileCache.initialise()
         return BCFileCache.__GLOBAL_INSTANCE
 
     def __init__(self, id=None):
