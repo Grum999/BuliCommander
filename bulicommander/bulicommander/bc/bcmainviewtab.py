@@ -3194,7 +3194,7 @@ class BCMainViewTab(QFrame):
 
         for columnTo, logicalIndex in enumerate(value):
             columnFrom = self.treeViewFiles.header().visualIndex(logicalIndex)
-            self.treeViewFiles.header().moveSection(columnFrom, columnTo)
+            self.treeViewFiles.setColumnPosition(columnFrom, columnTo)
 
 
     def filesColumnSize(self):

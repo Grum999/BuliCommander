@@ -106,8 +106,11 @@ class BCFileModel(QAbstractTableModel):
     COLNUM_FULLNFO = 18
     COLNUM_LAST = 18
 
+    DEFAULT_COLUMN_VISIBILITY=[True,False,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,False]
+
     ROLE_ICON = Qt.UserRole + 1
     ROLE_FILE = Qt.UserRole + 2
+    ROLE_FULLNFO = Qt.UserRole + 3
 
     __STATUS_READY = 0
     __STATUS_UPDATING = 1
@@ -161,6 +164,7 @@ class BCFileModel(QAbstractTableModel):
         self.__fileList.resultsUpdatedRemove.connect(self.__dataUpdateRemove)
         self.__fileList.resultsUpdatedSort.connect(self.__dataUpdateSort)
 
+        self.__fileNfoCache={}
         self.__icons={}
         self.__items=self.__fileList.files()
         self.__headerRightAlign=(BCFileModel.COLNUM_FILE_SIZE,
@@ -175,6 +179,12 @@ class BCFileModel(QAbstractTableModel):
         self.__iconPool.signals.started.connect(self.__updateIconsStarted)
         self.__iconPool.signals.processed.connect(self.__updateIconsProcessed)
         self.__iconPool.signals.finished.connect(self.__updateIconsFinished)
+
+        # index = logical index
+        self.__columnsVisibility=[v for v in BCFileModel.DEFAULT_COLUMN_VISIBILITY]     # value: visible=True, otherwise False
+        self.__columnsPosition=[column for column in range(BCFileModel.COLNUM_LAST+1)]  # value: visual index
+
+        self.__headerMaxCharacters=max([len(v) for v in BCFileModel.HEADERS])
 
     def __updateIconsProcessed(self, processedNfo):
         """update icon in treeview list"""
@@ -228,6 +238,7 @@ class BCFileModel(QAbstractTableModel):
         """Data has entirely been changed (reset/reload)"""
         self.__stopUpdatingIcons()
         self.beginResetModel()
+        self.__fileNfoCache={}
         self.__icons={}
         self.__items=self.__fileList.files()
         self.endResetModel()
@@ -248,6 +259,70 @@ class BCFileModel(QAbstractTableModel):
     def __dataUpdateRemove(self, items):
         """Remove file from model"""
         self.modelReset.emit()
+
+    def __getValueForColumn(self, file, column):
+        """Return value of file for given role"""
+        if column==BCFileModel.COLNUM_FILE_PATH:
+            return file.path()
+        elif column==BCFileModel.COLNUM_FILE_NAME:
+            return file.name()
+        elif column==BCFileModel.COLNUM_FILE_BASENAME:
+            return file.baseName()
+        elif column==BCFileModel.COLNUM_FILE_EXTENSION:
+            if not isinstance(file, BCDirectory):
+                return file.extension(False)
+        elif column==BCFileModel.COLNUM_FILE_FORMAT_SHORT:
+            return BCFileManagedFormat.translate(file.format(), True)
+        elif column==BCFileModel.COLNUM_FILE_FORMAT_LONG:
+            return BCFileManagedFormat.translate(file.format(), False)
+        elif column==BCFileModel.COLNUM_FILE_DATETIME:
+            if not (isinstance(file, BCDirectory) and file.name()=='..'):
+                return tsToStr(file.lastModificationDateTime())
+        elif column==BCFileModel.COLNUM_FILE_DATE:
+            if not (isinstance(file, BCDirectory) and file.name()=='..'):
+                return tsToStr(file.lastModificationDateTime(), 'd')
+        elif column==BCFileModel.COLNUM_FILE_TIME:
+            if not (isinstance(file, BCDirectory) and file.name()=='..'):
+                return tsToStr(file.lastModificationDateTime(), 't')
+        elif column==BCFileModel.COLNUM_FILE_SIZE:
+            if isinstance(file, BCFile):
+                return bytesSizeToStr(file.size())
+        elif column==BCFileModel.COLNUM_IMAGE_SIZE:
+            if isinstance(file, BCFile):
+                valueW=file.imageSize().width()
+                if valueW>=0:
+                    valueH=file.imageSize().height()
+                    if valueH>=0:
+                        return f"{valueW}x{valueH}"
+        elif column==BCFileModel.COLNUM_IMAGE_WIDTH:
+            if isinstance(file, BCFile):
+                value=file.imageSize().width()
+                if value>=0:
+                    return f"{value}"
+        elif column==BCFileModel.COLNUM_IMAGE_HEIGHT:
+            if isinstance(file, BCFile):
+                value=file.imageSize().height()
+                if value>=0:
+                    return f"{value}"
+        elif column==BCFileModel.COLNUM_IMAGE_RATIO:
+            if isinstance(file, BCFile):
+                ratio=file.getProperty(BCFileProperty.IMAGE_RATIO)
+                if not ratio is None:
+                    return f"{ratio:0.4f}"
+        elif column==BCFileModel.COLNUM_IMAGE_ORIENTATION:
+            if isinstance(file, BCFile):
+                return ratioOrientation(file.getProperty(BCFileProperty.IMAGE_RATIO))
+        elif column==BCFileModel.COLNUM_IMAGE_PIXELS:
+            if isinstance(file, BCFile):
+                nbPixels=file.getProperty(BCFileProperty.IMAGE_PIXELS)
+                if not nbPixels is None:
+                    return f"{nbPixels}"
+        elif column==BCFileModel.COLNUM_IMAGE_PIXELSMP:
+            if isinstance(file, BCFile):
+                nbPixels=file.getProperty(BCFileProperty.IMAGE_PIXELS)
+                if not nbPixels is None:
+                    return megaPixels(nbPixels)
+        return None
 
     def columnCount(self, parent=QModelIndex()):
         """Return total number of column"""
@@ -289,68 +364,7 @@ class BCFileModel(QAbstractTableModel):
 
                 return file.icon()
         elif role == Qt.DisplayRole:
-            if column==BCFileModel.COLNUM_FILE_PATH:
-                return file.path()
-            elif column==BCFileModel.COLNUM_FILE_NAME:
-                return file.name()
-            elif column==BCFileModel.COLNUM_FILE_BASENAME:
-                return file.baseName()
-            elif column==BCFileModel.COLNUM_FILE_EXTENSION:
-                if not isinstance(file, BCDirectory):
-                    return file.extension(False)
-            elif column==BCFileModel.COLNUM_FILE_FORMAT_SHORT:
-                return BCFileManagedFormat.translate(file.format(), True)
-            elif column==BCFileModel.COLNUM_FILE_FORMAT_LONG:
-                return BCFileManagedFormat.translate(file.format(), False)
-            elif column==BCFileModel.COLNUM_FILE_DATETIME:
-                if not (isinstance(file, BCDirectory) and file.name()=='..'):
-                    return tsToStr(file.lastModificationDateTime())
-            elif column==BCFileModel.COLNUM_FILE_DATE:
-                if not (isinstance(file, BCDirectory) and file.name()=='..'):
-                    return tsToStr(file.lastModificationDateTime(), 'd')
-            elif column==BCFileModel.COLNUM_FILE_TIME:
-                if not (isinstance(file, BCDirectory) and file.name()=='..'):
-                    return tsToStr(file.lastModificationDateTime(), 't')
-            elif column==BCFileModel.COLNUM_FILE_SIZE:
-                if isinstance(file, BCFile):
-                    return bytesSizeToStr(file.size())
-            elif column==BCFileModel.COLNUM_IMAGE_SIZE:
-                if isinstance(file, BCFile):
-                    valueW=file.imageSize().width()
-                    if valueW>=0:
-                        valueH=file.imageSize().height()
-                        if valueH>=0:
-                            return f"{valueW}x{valueH}"
-            elif column==BCFileModel.COLNUM_IMAGE_WIDTH:
-                if isinstance(file, BCFile):
-                    value=file.imageSize().width()
-                    if value>=0:
-                        return f"{value}"
-            elif column==BCFileModel.COLNUM_IMAGE_HEIGHT:
-                if isinstance(file, BCFile):
-                    value=file.imageSize().height()
-                    if value>=0:
-                        return f"{value}"
-            elif column==BCFileModel.COLNUM_IMAGE_RATIO:
-                if isinstance(file, BCFile):
-                    ratio=file.getProperty(BCFileProperty.IMAGE_RATIO)
-                    if not ratio is None:
-                        return f"{ratio:0.4f}"
-            elif column==BCFileModel.COLNUM_IMAGE_ORIENTATION:
-                if isinstance(file, BCFile):
-                    return ratioOrientation(file.getProperty(BCFileProperty.IMAGE_RATIO))
-            elif column==BCFileModel.COLNUM_IMAGE_PIXELS:
-                if isinstance(file, BCFile):
-                    nbPixels=file.getProperty(BCFileProperty.IMAGE_PIXELS)
-                    if not nbPixels is None:
-                        return f"{nbPixels}"
-            elif column==BCFileModel.COLNUM_IMAGE_PIXELSMP:
-                if isinstance(file, BCFile):
-                    nbPixels=file.getProperty(BCFileProperty.IMAGE_PIXELS)
-                    if not nbPixels is None:
-                        return megaPixels(nbPixels)
-            elif column==BCFileModel.COLNUM_FULLNFO:
-                pass
+            return self.__getValueForColumn(file, column)
         elif role== Qt.TextAlignmentRole:
             if column in self.__headerRightAlign:
                 return Qt.AlignRight
@@ -358,15 +372,61 @@ class BCFileModel(QAbstractTableModel):
                 return Qt.AlignLeft
         elif role == BCFileModel.ROLE_FILE:
             return file
+        elif role == BCFileModel.ROLE_FULLNFO:
+            try:
+                return self.__fileNfoCache[file.uuid()]
+            except:
+                pass
+            # not in cache: build it
+
+            # tmpDict:
+            #   key=visibleIndex
+            #   value=info to display
+            tmpDict={}
+            for logicalIndex in range(1, BCFileModel.COLNUM_LAST):
+                # exclude first index (icon)
+                # exclude COLNUM_LAST as is currently COLNUM_FULLNFO
+                # if new columns are added, should exclude logicalIndex==COLNUM_FULLNFO
+                # and loop over COLNUM_LAST+1
+
+                if self.__columnsVisibility[logicalIndex]:
+                    # column is visible
+                    position=self.__columnsPosition[logicalIndex]
+                    if not position is None:
+                        tmpDict[position]=(BCFileModel.HEADERS[logicalIndex], self.__getValueForColumn(file, logicalIndex))
+
+            self.__fileNfoCache[file.uuid()]=([tmpDict[visualIndex] for visualIndex in sorted(tmpDict.keys())], self.__headerMaxCharacters)
+
+            return self.__fileNfoCache[file.uuid()]
 
         return None
 
     def headerData(self, section, orientation, role):
         """Return information for header according to role"""
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal and section>0:
+        if orientation == Qt.Horizontal and section>=0 and role == Qt.DisplayRole:
             return BCFileModel.HEADERS[section]
 
-        return None
+        return QAbstractTableModel.headerData(self, section, orientation, role)
+
+    def columnsVisibility(self):
+        """Return columns positions"""
+        return self.__columnsVisibility
+
+    def setColumnsVisibility(self, values):
+        """Set information for columns visibility to role"""
+        self.__columnsVisibility=[value for value in values]
+        self.__fileNfoCache={}
+        self.headerDataChanged.emit(Qt.Horizontal, BCFileModel.COLNUM_FULLNFO, BCFileModel.COLNUM_FULLNFO)
+
+    def columnsPosition(self):
+        """Return columns positions"""
+        return self.__columnsPosition
+
+    def setColumnsPosition(self, values):
+        """Set information for header according to role"""
+        self.__columnsPosition=[value for value in values]
+        self.__fileNfoCache={}
+        self.headerDataChanged.emit(Qt.Horizontal, BCFileModel.COLNUM_FULLNFO, BCFileModel.COLNUM_FULLNFO)
 
     def iconAsThumbnail(self):
         """Return if icons are displayed as thumbnail or mime type"""
@@ -435,12 +495,23 @@ class BCMainViewFiles(QTreeView):
         self.__changed = False
         self.__showPath = False
 
-        self.__visibleColumns=[True,False,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,False]
+        self.__visibleColumns=[v for v in BCFileModel.DEFAULT_COLUMN_VISIBILITY]
 
         self.__delegate=BCMainViewFilesDelegate(self)
         self.setItemDelegate(self.__delegate)
         self.setAutoScroll(True)
         self.setUniformRowHeights(True)
+
+        # set colums size rules
+        self.__header = self.header()
+        self.__header.setStretchLastSection(False)
+        self.__header.setSortIndicatorShown(True)
+        self.__header.setSectionsClickable(True)
+        self.__header.sectionMoved.connect(self.__headerSectionMoved)
+
+    def __headerSectionMoved(self, logicalIndex, oldVisualIndex, newVisualIndex):
+        """Column position has been changed"""
+        self.__model.setColumnsPosition([self.header().visualIndex(column) for column in range(BCFileModel.COLNUM_LAST)])
 
     def keyPressEvent(self, event):
         """Emit signal on keyPressed"""
@@ -476,43 +547,36 @@ class BCMainViewFiles(QTreeView):
         self.__proxyModel.setFilterKeyColumn(BCFileModel.COLNUM_FILE_NAME)
 
         QTreeView.setModel(self, self.__proxyModel)
-        #QTreeView.setModel(self, self.__model)
 
-        # set colums size rules
-        header = self.header()
-        header.setStretchLastSection(False)
-        header.setSectionResizeMode(BCFileModel.COLNUM_ICON, QHeaderView.Fixed)
-        header.setSectionResizeMode(BCFileModel.COLNUM_FILE_PATH, QHeaderView.Interactive)
-        header.setSectionResizeMode(BCFileModel.COLNUM_FILE_NAME, QHeaderView.Interactive)
-        header.setSectionResizeMode(BCFileModel.COLNUM_FILE_BASENAME, QHeaderView.Interactive)
-        header.setSectionResizeMode(BCFileModel.COLNUM_FILE_EXTENSION, QHeaderView.Interactive)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_ICON, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_FILE_PATH, QHeaderView.Interactive)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_FILE_NAME, QHeaderView.Interactive)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_FILE_BASENAME, QHeaderView.Interactive)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_FILE_EXTENSION, QHeaderView.Interactive)
 
-        header.setSectionResizeMode(BCFileModel.COLNUM_FILE_FORMAT_SHORT, QHeaderView.Fixed)
-        header.setSectionResizeMode(BCFileModel.COLNUM_FILE_FORMAT_LONG, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_FILE_FORMAT_SHORT, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_FILE_FORMAT_LONG, QHeaderView.Fixed)
 
-        header.setSectionResizeMode(BCFileModel.COLNUM_FILE_DATETIME, QHeaderView.Fixed)
-        header.setSectionResizeMode(BCFileModel.COLNUM_FILE_DATE, QHeaderView.Fixed)
-        header.setSectionResizeMode(BCFileModel.COLNUM_FILE_TIME, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_FILE_DATETIME, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_FILE_DATE, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_FILE_TIME, QHeaderView.Fixed)
 
-        header.setSectionResizeMode(BCFileModel.COLNUM_FILE_SIZE, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_FILE_SIZE, QHeaderView.Fixed)
 
-        header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_SIZE, QHeaderView.Fixed)
-        header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_WIDTH, QHeaderView.Fixed)
-        header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_HEIGHT, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_SIZE, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_WIDTH, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_HEIGHT, QHeaderView.Fixed)
 
-        header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_RATIO, QHeaderView.Fixed)
-        header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_ORIENTATION, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_RATIO, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_ORIENTATION, QHeaderView.Fixed)
 
-        header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_PIXELS, QHeaderView.Fixed)
-        header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_PIXELSMP, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_PIXELS, QHeaderView.Fixed)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_IMAGE_PIXELSMP, QHeaderView.Fixed)
 
-        header.setSectionResizeMode(BCFileModel.COLNUM_FULLNFO, QHeaderView.Interactive)
+        self.__header.setSectionResizeMode(BCFileModel.COLNUM_FULLNFO, QHeaderView.Interactive)
 
-        header.setSectionHidden(BCFileModel.COLNUM_FILE_PATH, True)
-        header.setSectionHidden(BCFileModel.COLNUM_FULLNFO, True)
-
-        header.setSortIndicatorShown(True)
-        header.setSectionsClickable(True)
+        self.__header.setSectionHidden(BCFileModel.COLNUM_FILE_PATH, True)
+        self.__header.setSectionHidden(BCFileModel.COLNUM_FULLNFO, True)
 
     def resizeColumns(self, fixedOnly=True):
         """Resize columns to content"""
@@ -622,10 +686,7 @@ class BCMainViewFiles(QTreeView):
                 # specific columns model
                 header.setStretchLastSection(True)
                 for logicalIndex, visible in enumerate(self.__visibleColumns):
-                    if logicalIndex in (BCFileModel.COLNUM_FULLNFO, BCFileModel.COLNUM_ICON):
-                        header.setSectionHidden(logicalIndex, False)
-                    else:
-                        header.setSectionHidden(logicalIndex, True)
+                    header.setSectionHidden(logicalIndex, not logicalIndex in (BCFileModel.COLNUM_FULLNFO, BCFileModel.COLNUM_ICON))
                 self.resizeColumns(False)
 
     def setFilter(self, filter):
@@ -674,14 +735,21 @@ class BCMainViewFiles(QTreeView):
         # column PATH is displayed in specific case only: view (manually built, search result, ...); visiblity is defined by self.__showPath, defined according current view type
         if column>=0 and column<len(self.__visibleColumns) and isinstance(isVisible, bool) and not column in (BCFileModel.COLNUM_ICON, BCFileModel.COLNUM_FILE_PATH):
             self.__visibleColumns[column]=isVisible
-            if isVisible:
-                self.header().showSection(column)
-            else:
-                self.header().hideSection(column)
+            self.header().setSectionHidden(column, not isVisible)
+            self.__model.setColumnsVisibility(self.__visibleColumns)
 
     def columnsVisibility(self):
         """Return list of columns visibility"""
         return self.__visibleColumns
+
+    def columnPosition(self, column):
+        """Return visual position for logical index column"""
+        return self.header().visualIndex(column)
+
+    def setColumnPosition(self, column, visualPosition):
+        """Set visual position for logical index column"""
+        self.header().moveSection(column, visualPosition)
+        self.__headerSectionMoved(column, -1, visualPosition)
 
     def showPath(self):
         """Is path is visible or not"""
@@ -691,6 +759,7 @@ class BCMainViewFiles(QTreeView):
         """Set if path is visible or not"""
         if isinstance(value, bool):
             self.__showPath = value
+            self.__model.setColumnsVisibility([self.__visibleColumns[column] if column!=BCFileModel.COLNUM_FILE_PATH else self.__showPath for column in range(BCFileModel.COLNUM_LAST)])
             self.setIconSizeIndex()
         else:
             raise EInvalidType("Given `value` must be a <bool>")
@@ -703,14 +772,56 @@ class BCMainViewFilesDelegate(QStyledItemDelegate):
         """Constructor, nothingspecial"""
         super(BCMainViewFilesDelegate, self).__init__(parent)
         self.__iconSize=QSize(64, 64)
+        self.__charHeight=0
 
     def setIconSize(self, value):
         self.__iconSize=QSize(value, value)
         self.sizeHintChanged.emit(self.parent().model().createIndex(0, BCFileModel.COLNUM_ICON))
 
+    def paint(self, painter, option, index):
+        """Paint list item"""
+        if index.column() == BCFileModel.COLNUM_FULLNFO:
+            # render full information
+            self.initStyleOption(option, index)
+
+            rectTxt = QRect(option.rect.left(), option.rect.top(), option.rect.width(), option.rect.height())
+
+            # tuple (data(label, value), header max characters)
+            dataNfo=index.data(BCFileModel.ROLE_FULLNFO)
+
+            fntBold=QFont(option.font)
+            fntBold.setBold(True)
+            fm=QFontMetrics(fntBold)
+            hOffset=fm.height()
+            wOffset=5+fm.horizontalAdvance('W')*dataNfo[1]
+
+            painter.save()
+
+            painter.translate(QPointF(option.rect.topLeft()))
+
+            top=0
+            for nfo in dataNfo[0]:
+                painter.setFont(fntBold)
+                painter.drawText(5, top, option.rect.width(), option.rect.height(), Qt.AlignLeft, nfo[0])
+
+                painter.setFont(option.font)
+                painter.drawText(wOffset, top, option.rect.width(), option.rect.height(), Qt.AlignLeft, nfo[1])
+
+                top+=hOffset
+
+            painter.restore()
+            return
+
+        QStyledItemDelegate.paint(self, painter, option, index)
+
+
     def sizeHint(self, option, index):
         """Calculate size for items"""
         if index.column() == BCFileModel.COLNUM_ICON:
             return self.__iconSize
+        elif index.column() == BCFileModel.COLNUM_FULLNFO:
+            currentSize=QStyledItemDelegate.sizeHint(self, option, index)
+            currentSize.setHeight(option.fontMetrics.height() * len(index.data(BCFileModel.ROLE_FULLNFO)[0]))
+            return currentSize
 
         return QStyledItemDelegate.sizeHint(self, option, index)
