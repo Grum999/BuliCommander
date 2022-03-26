@@ -106,7 +106,7 @@ from .bcwpreview import (
     )
 from .bcwfile import (
         BCFileModel,
-        BCMainViewFiles
+        BCViewFilesTv
     )
 
 from bulicommander.pktk.modules.timeutils import Timer

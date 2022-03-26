@@ -489,13 +489,13 @@ class BCFileModel(QAbstractTableModel):
         return [index(position) for position in uuidPositions]
 
 
-class BCMainViewFiles(QTreeView):
+class BCViewFilesTv(QTreeView):
     """Tree view files"""
     focused = Signal()
     keyPressed = Signal(int)
 
     def __init__(self, parent=None):
-        super(BCMainViewFiles, self).__init__(parent)
+        super(BCViewFilesTv, self).__init__(parent)
         self.__model = None
         self.__proxyModel = None
         self.__filesFilter = ''
@@ -506,7 +506,7 @@ class BCMainViewFiles(QTreeView):
 
         self.__visibleColumns=[v for v in BCFileModel.DEFAULT_COLUMN_VISIBILITY]
 
-        self.__delegate=BCMainViewFilesDelegate(self)
+        self.__delegate=BCViewFilesTvDelegate(self)
         self.setItemDelegate(self.__delegate)
         self.setAutoScroll(True)
         self.setUniformRowHeights(True)
@@ -558,7 +558,7 @@ class BCMainViewFiles(QTreeView):
 
     def keyPressEvent(self, event):
         """Emit signal on keyPressed"""
-        super(BCMainViewFiles, self).keyPressEvent(event)
+        super(BCViewFilesTv, self).keyPressEvent(event)
         self.keyPressed.emit(event.key())
 
     def wheelEvent(self, event):
@@ -574,11 +574,11 @@ class BCMainViewFiles(QTreeView):
             if sizeChanged:
                 self.setIconSizeIndex()
         else:
-            super(BCMainViewFiles, self).wheelEvent(event)
+            super(BCViewFilesTv, self).wheelEvent(event)
 
     def focusInEvent(self, event):
         """Emit signal when treeview get focused"""
-        super(BCMainViewFiles, self).focusInEvent(event)
+        super(BCViewFilesTv, self).focusInEvent(event)
         self.focused.emit()
 
     def setModel(self, model):
@@ -808,12 +808,12 @@ class BCMainViewFiles(QTreeView):
             raise EInvalidType("Given `value` must be a <bool>")
 
 
-class BCMainViewFilesDelegate(QStyledItemDelegate):
+class BCViewFilesTvDelegate(QStyledItemDelegate):
     """Extend QStyledItemDelegate class to return properly row height"""
 
     def __init__(self, parent=None):
         """Constructor, nothingspecial"""
-        super(BCMainViewFilesDelegate, self).__init__(parent)
+        super(BCViewFilesTvDelegate, self).__init__(parent)
         self.__iconSize=QSize(64, 64)
         self.__charHeight=0
 
