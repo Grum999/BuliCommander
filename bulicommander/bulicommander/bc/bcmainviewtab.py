@@ -1278,7 +1278,7 @@ class BCMainViewTab(QFrame):
                         backupList.append(BCFile(os.path.join(pathName, foundFile.name)))
 
             if len(backupList)>0:
-                backupList.sort()
+                backupList.sort(key=lambda file: file.name())
                 filterButton = QPushButton(i18n("Show"))
                 filterButton.setToolTip(i18n("Show in opposite panel"))
                 filterButton.setStatusTip(i18n("Show backup files list in opposite panel"))
