@@ -5139,7 +5139,7 @@ class BCFileCache(QObject):
                 'nbHash': 0,
                 'nbDir': 0,
             }
-        print('getStats')
+        #print('getStats')
 
         if os.path.isfile(self.__fileName):
             returned['dbSize']=os.path.getsize(self.__fileName)
@@ -5150,7 +5150,7 @@ class BCFileCache(QObject):
                     returned['dbSize']+=os.path.getsize(fileName)
 
         if self.__databaseInstance is None:
-            print('getStats: self.__databaseInstance is None')
+            #print('getStats: self.__databaseInstance is None')
             return returned
 
         query=QSqlQuery(self.__databaseInstance)
@@ -6276,6 +6276,7 @@ class BCFileList(QObject):
     resultsUpdatedSort = Signal()
     resultsUpdatedAdd = Signal(list)        # results are updated: list of added items (BCBaseFile)
     resultsUpdatedRemove = Signal(list)     # results are updated: list of removed items (BCBaseFile)
+    resultsUpdatedUpdate = Signal(list)     # results are updated: list of updates items (BCBaseFile)
 
     # activated by default
     STEPEXECUTED_SEARCH_FROM_PATHS = 0b0000000000000100      # search files in path finished
@@ -6809,6 +6810,8 @@ class BCFileList(QObject):
         # nbTotal=counter used to determinate when to process application events
         nbTotal = 0
 
+        # same search rule than in BCMainViewTab.__filesDirectoryContentChanged()
+        # if updated here, must be updated in BCMainViewTab too
         Stopwatch.start('BCFileList.execute.01-search')
         # work on a set, faster for searching if a file is already in list
         foundFiles = set()
@@ -6851,8 +6854,10 @@ class BCFileList(QObject):
                             nbTotal+=1
                             fullPathName = os.path.join(path, dir)
 
-                            if not BCBaseFile.getUuid(fullPathName) in self.__currentFilesUuid and not fullPathName in foundDirectories:
+                            uuid=BCBaseFile.getUuid(fullPathName)
+                            if not uuid in self.__currentFilesUuid and not fullPathName in foundDirectories:
                                 foundDirectories.add(fullPathName)
+                                self.__currentFilesUuid.add(uuid)
 
                             if nbTotal%1000==0:
                                 if self.__cancelProcess:
@@ -6867,9 +6872,12 @@ class BCFileList(QObject):
 
                         if includeHidden or not QFileInfo(name).isHidden():
                             # check if file name match given pattern (if pattern) and is not already in file list
-                            if (managedFilesOnly is None or managedFilesOnly.search(name)) and not BCBaseFile.getUuid(fullPathName) in self.__currentFilesUuid and not fullPathName in foundFiles:
-                                foundFiles.add(fullPathName)
-                                nbFilesInPath+=1
+                            if (managedFilesOnly is None or managedFilesOnly.search(name)) and not fullPathName in foundFiles:
+                                uuid=BCBaseFile.getUuid(fullPathName)
+                                if not uuid in self.__currentFilesUuid:
+                                    foundFiles.add(fullPathName)
+                                    self.__currentFilesUuid.add(uuid)
+                                    nbFilesInPath+=1
 
                         if nbTotal%1000==0:
                             if self.__cancelProcess:
@@ -6889,13 +6897,18 @@ class BCFileList(QObject):
                         if includeHidden or not QFileInfo(fullPathName).isHidden():
                             if file.is_file():
                                 # check if file name match given pattern (if pattern) and is not already in file list
-                                if (managedFilesOnly is None or managedFilesOnly.search(file.name)) and not BCBaseFile.getUuid(fullPathName) in self.__currentFilesUuid and not fullPathName in foundFiles:
-                                    foundFiles.add(fullPathName)
-                                    nbFilesInPath+=1
+                                if (managedFilesOnly is None or managedFilesOnly.search(file.name)) and not fullPathName in foundFiles:
+                                    uuid=BCBaseFile.getUuid(fullPathName)
+                                    if not uuid in self.__currentFilesUuid:
+                                        foundFiles.add(fullPathName)
+                                        self.__currentFilesUuid.add(uuid)
+                                        nbFilesInPath+=1
                             elif self.__includeDirectories and file.is_dir():
                                 # if directories are asked and file is a directory, add it
-                                if not BCBaseFile.getUuid(fullPathName) in self.__currentFilesUuid and not fullPathName in foundDirectories:
+                                uuid=BCBaseFile.getUuid(fullPathName)
+                                if not uuid in self.__currentFilesUuid and not fullPathName in foundDirectories:
                                     foundDirectories.add(fullPathName)
+                                    self.__currentFilesUuid.add(uuid)
 
                         if nbTotal%1000==0:
                             if self.__cancelProcess:
@@ -7193,6 +7206,48 @@ class BCFileList(QObject):
         else:
             raise EInvalidType("Given `files` must be <BCBaseFile> or <list>")
 
+    def updateResults(self, files):
+        """Update files to current results
+
+        Given `files` can be list or unique item of:
+        - fullpath name <str>
+        - <BCFile> and/or <BCDirectory>
+        """
+        if isinstance(files, (list, tuple, set)):
+            updated=[]
+            self.__massProcess=True
+            for file in files:
+                if self.updateResults(file):
+                    updated.append(file)
+            self.__massProcess=False
+            if len(updated)>0:
+                # list wasn't empty, then it's an addition
+                self.resultsUpdatedUpdate.emit(updated)
+                return True
+            return False
+
+        if isinstance(files, str):
+            if os.path.isdir():
+                files=BCDirectory(files)
+            elif os.path.isfile():
+                files=BCFile(files)
+            else:
+                files=BCMissingFile(files)
+
+        if isinstance(files, BCBaseFile):
+            if files.uuid() in self.__currentFilesUuid:
+                # update only if in current results
+
+                self.__currentFiles[self.inResults(files.uuid())]=files
+
+                if not self.__massProcess:
+                    # list wasn't empty, then it's an addition
+                    self.resultsUpdatedUpdate.emit([files])
+                return True
+            return False
+        else:
+            raise EInvalidType("Given `files` must be <BCBaseFile> or <list>")
+
     def removeResults(self, files):
         """Remove files from current results
 
@@ -7246,6 +7301,7 @@ class BCFileList(QObject):
             if index>=0:
                 # remove only if found in current results
                 file=self.__currentFiles.pop(index)
+                self.__currentFilesUuid.discard(files)
 
                 if not self.__massProcess:
                     if len(self.__currentFiles)==0:

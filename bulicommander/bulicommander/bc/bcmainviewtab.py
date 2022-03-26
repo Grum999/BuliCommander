@@ -177,6 +177,7 @@ class BCMainViewTabFilesLayout(Enum):
             index = len(members) - 1
         return members[index]
 
+
 class BCMainViewTabClipboardLayout(Enum):
     TOP = 'top'
     LEFT = 'left'
@@ -201,14 +202,17 @@ class BCMainViewTabClipboardLayout(Enum):
             index = len(members) - 1
         return members[index]
 
+
 class BCMainViewTabFilesTabs(Enum):
     INFORMATIONS = 'info'
     DIRECTORIES_TREE = 'dirtree'
+
 
 class BCMainViewTabFilesNfoTabs(Enum):
     GENERIC = 'generic'
     IMAGE = 'image'
     KRA = 'kra'
+
 
 class BCMainViewTabTabs(Enum):
     FILES = 'files'
@@ -364,7 +368,6 @@ class BCWImageLabel(QLabel):
     def image(self):
         return self.__image
 
-
 # -----------------------------------------------------------------------------
 class BCMainViewTab(QFrame):
     """Buli Commander main view tab panel (left or right)"""
@@ -430,6 +433,7 @@ class BCMainViewTab(QFrame):
 
         self.__filesFsWatcher = QFileSystemWatcher()
         self.__filesFsWatcherTmpList = []
+        self.__filesFsWatcherTimerCount=0
 
         self.__filesImageNfoSizeUnit='mm'
 
@@ -596,7 +600,16 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot('QString')
         def filesDirectory_changed(value):
-            self.filesRefresh()
+            self.__filesFsWatcherTimerCount+=1
+            if self.__filesFsWatcherTimerCount==1:
+                # wait 100ms before refreshing directory content
+                # when many change occurs in a directory (example: 1000 files copied)
+                # this allows to avoid to update directory on each change signal (avoid 1000 updates)
+                QTimer.singleShot(100, filesDirectory_timerEvent)
+
+        def filesDirectory_timerEvent():
+            self.__filesFsWatcherTimerCount=0
+            self.__filesDirectoryContentChanged(self.filesPath())
 
         @pyqtSlot('QString')
         def filesIconSize_changed(value):
@@ -748,6 +761,89 @@ class BCMainViewTab(QFrame):
 
     # -- PRIVATE FILES ---------------------------------------------------------
 
+    def __filesDirectoryContentChanged(self, path):
+        """Content of directory has changed (from __filesFsWatcher)
+
+        Do comparison with current directory content and add/remove file from model
+        """
+        # build regex to prefilter files if needed
+        if self.__uiController.optionViewFileManagedOnly():
+            extensionList=[fr'\.{extension}' for extension in BCFileManagedFormat.list()]
+
+            if self.__uiController.optionViewFileBackup():
+                bckSufRe=BCFileManagedFormat.backupSuffixRe()
+                extensionList+=[fr'\.{extension}{bckSufRe}' for extension in BCFileManagedFormat.list()]
+
+            managedFilesOnly = re.compile(f"({'|'.join(extensionList)})$", re.I)
+        else:
+            managedFilesOnly=None
+
+        includeHidden=self.__uiController.optionViewFileHidden()
+
+        # same search rule than in BCFileList.searchExecute()
+        # if updated in BCFileList, must be updated here too
+        foundFiles=[]
+        foundDirectories=[]
+        with os.scandir(path) as files:
+            for foundFile in files:
+                fullPathName = os.path.join(path, foundFile.name)
+                if includeHidden or not QFileInfo(fullPathName).isHidden():
+                    if foundFile.is_file():
+                        # check if file name match given pattern (if pattern) and is not already in file list
+                        if (managedFilesOnly is None or managedFilesOnly.search(foundFile.name)):
+                            foundFiles.append(fullPathName)
+                    elif foundFile.is_dir():
+                        foundDirectories.append(fullPathName)
+
+        # now we have a list of files+directories, matching current rules
+        toAdd=[]
+        toRemove=[]
+        toUpdate=[]
+        toCheck=[]
+
+        # check if found files&directories are already in current view
+        # if not, they have to be added, otherwise ignore it
+        for fullPathName in foundFiles:
+            uuid=BCBaseFile.getUuid(fullPathName)
+            if self.__filesQuery.inResults(uuid)==-1:
+                toAdd.append(BCFile(fullPathName))
+            else:
+                toCheck.append(uuid)
+
+        for fullPathName in foundDirectories:
+            uuid=BCBaseFile.getUuid(fullPathName)
+            if self.__filesQuery.inResults(uuid)==-1:
+                toAdd.append(BCDirectory(fullPathName))
+            else:
+                toCheck.append(uuid)
+
+        # check if files&directories from current view are already in current view
+        # if not, they have to be added, otherwise ignore it
+        for file in self.__filesQuery.files():
+            if not file.uuid() in toCheck:
+                toRemove.append(file)
+            elif isinstance(file, BCFile):
+                # need to check if file has been modified...
+                newFile=BCFile(file.fullPathName())
+                if newFile.qHash()!=file.qHash():
+                    toUpdate.append(newFile)
+
+        refresh=False
+        # now we have list of files to add/remove to current view
+        if len(toAdd)>0:
+            self.__filesQuery.addResults(toAdd)
+            refresh=True
+        if len(toRemove)>0:
+            self.__filesQuery.removeResults(toRemove)
+            refresh=True
+        if len(toUpdate)>0:
+            self.__filesQuery.updateResults(toUpdate)
+            refresh=True
+        # sort with current selection kept (do not sort directly on BCFileList)
+        if refresh:
+            self.__filesSort()
+
+
     def __filesSort(self, index=None):
         """Sort files according to column index"""
         if self.__filesQuery is None:
@@ -838,6 +934,8 @@ class BCMainViewTab(QFrame):
         self.__filesModelIgnoreSelectionSignals=True
         # get current selected files uuid
         selectedUuid=[selectedIndex.data(BCFileModel.ROLE_FILE).uuid() for selectedIndex in self.treeViewFiles.selectionModel().selectedRows()]
+        # disable treeview update t oavoid flickering effect
+        self.treeViewFiles.setUpdatesEnabled(False)
         # clear current selection
         self.treeViewFiles.selectionModel().clearSelection()
         # do sort (selection will be lost)
@@ -851,6 +949,7 @@ class BCMainViewTab(QFrame):
             selection.select(position, position)
         self.treeViewFiles.selectionModel().select(selection, QItemSelectionModel.Select|QItemSelectionModel.Rows)
         self.__filesModelIgnoreSelectionSignals=False
+        self.treeViewFiles.setUpdatesEnabled(True)
         self.__filesUpdate()
 
 
@@ -2321,6 +2420,7 @@ class BCMainViewTab(QFrame):
             if self.cbImgSizeRes.itemData(index)==self.__filesImageNfoSizeUnit:
                 self.cbImgSizeRes.setCurrentIndex(index)
                 return
+
 
     # -- PRIVATE CLIPBOARD -----------------------------------------------------
 

@@ -162,6 +162,7 @@ class BCFileModel(QAbstractTableModel):
         self.__fileList.resultsUpdatedReset.connect(self.__dataUpdateReset)
         self.__fileList.resultsUpdatedAdd.connect(self.__dataUpdatedAdd)
         self.__fileList.resultsUpdatedRemove.connect(self.__dataUpdateRemove)
+        self.__fileList.resultsUpdatedUpdate.connect(self.__dataUpdateUpdate)
         self.__fileList.resultsUpdatedSort.connect(self.__dataUpdateSort)
 
         self.__fileNfoCache={}
@@ -254,11 +255,15 @@ class BCFileModel(QAbstractTableModel):
 
     def __dataUpdatedAdd(self, items):
         """Add a new file to model"""
-        self.modelReset.emit()
+        pass
 
     def __dataUpdateRemove(self, items):
         """Remove file from model"""
-        self.modelReset.emit()
+        pass
+
+    def __dataUpdateUpdate(self, items):
+        """Update file from model"""
+        pass
 
     def __getValueForColumn(self, file, column):
         """Return value of file for given role"""
