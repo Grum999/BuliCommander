@@ -690,17 +690,14 @@ class BCMainViewTab(QFrame):
 
         self.treeViewFiles.setModel(self.__filesModel)
         self.treeViewFiles.focused.connect(children_Clicked)
-        self.treeViewFiles.header().sectionClicked.connect(children_Clicked)
-        self.treeViewClipboard.focused.connect(children_Clicked)
-        self.treeViewClipboard.header().sectionClicked.connect(children_Clicked)
-
-        self.treeViewFiles.header().setSectionsClickable(True)
-        self.treeViewFiles.header().sectionClicked.connect(self.__filesSort)
         self.treeViewFiles.doubleClicked.connect(self.__filesDoubleClick)
         self.treeViewFiles.keyPressed.connect(self.__filesKeyPressed)
         self.treeViewFiles.contextMenuEvent=self.__filesContextMenuEvent
-
         self.treeViewFiles.selectionModel().selectionChanged.connect(self.__filesSelectionChanged)
+        self.treeViewFiles.header().sectionClicked.connect(children_Clicked)
+
+        self.treeViewClipboard.focused.connect(children_Clicked)
+        self.treeViewClipboard.header().sectionClicked.connect(children_Clicked)
 
         self.widgetFilePreview.setContextMenuPolicy(Qt.DefaultContextMenu)
         self.widgetFilePreview.contextMenuEvent = self.__filesContextMenuInformations

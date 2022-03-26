@@ -57,6 +57,10 @@ from bulicommander.pktk.modules.timeutils import (
 from bulicommander.pktk.modules.strutils import (
         bytesSizeToStr
     )
+from bulicommander.pktk.modules.menuutils import (
+        buildQAction,
+        buildQMenu
+    )
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
@@ -512,7 +516,41 @@ class BCMainViewFiles(QTreeView):
         self.__header.setStretchLastSection(False)
         self.__header.setSortIndicatorShown(True)
         self.__header.setSectionsClickable(True)
+        self.__header.setContextMenuPolicy(Qt.CustomContextMenu)
         self.__header.sectionMoved.connect(self.__headerSectionMoved)
+        self.__header.customContextMenuRequested.connect(self.__headerContextMenu)
+
+    def __headerContextMenu(self, position):
+        """Display context menu on treeview header"""
+        def columnVisible(visible):
+            action=self.sender()
+            self.setColumnVisible(action.property('logicalIndex'), visible)
+
+        contextMenu = QMenu(self.__header)
+
+        menuShowColumns = buildQMenu("pktk:tune", i18n('Visible columns'), contextMenu)
+        contextMenu.addMenu(menuShowColumns)
+
+        for logicalIndex in range(1, BCFileModel.COLNUM_LAST+1):
+            if not logicalIndex in (BCFileModel.COLNUM_FILE_PATH, BCFileModel.COLNUM_FULLNFO):
+                # use checkbox as widgetaction to prevent menu being hidden after action is clicked
+                checkBox=QCheckBox(BCFileModel.HEADERS[logicalIndex])
+                checkBox.setChecked(self.__visibleColumns[logicalIndex])
+                checkBox.setProperty('logicalIndex', logicalIndex)
+                checkBox.toggled.connect(columnVisible)
+                checkBox.setStyleSheet("padding-left: 4px;")
+
+                checkableAction=QWidgetAction(menuShowColumns)
+                checkableAction.setDefaultWidget(checkBox)
+                menuShowColumns.addAction(checkableAction)
+
+        action=buildQAction('pktk:column_resize', i18n('Resize columns to content'), self)
+        action.triggered.connect(lambda: self.resizeColumns(False))
+
+        contextMenu.addSeparator()
+        contextMenu.addAction(action)
+
+        contextMenu.exec(self.__header.mapToGlobal(position))
 
     def __headerSectionMoved(self, logicalIndex, oldVisualIndex, newVisualIndex):
         """Column position has been changed"""
