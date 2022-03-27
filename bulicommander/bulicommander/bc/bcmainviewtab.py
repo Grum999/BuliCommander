@@ -637,12 +637,19 @@ class BCMainViewTab(QFrame):
         def filesIconSize_changed(value):
             if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
                 self.treeViewFiles.setIconSizeIndex(value)
+                size=self.treeViewFiles.iconSize().width()
             else:
                 self.listViewFiles.setIconSizeIndex(value)
+                size=self.listViewFiles.iconSize().width()
+
+            self.__actionFilesApplyIconSize.setLabelText(i18n(f"Icon size: {size}px"))
 
         @pyqtSlot('QString')
         def clipboardIconSize_changed(value):
             self.treeViewClipboard.setIconSizeIndex(value)
+            size=self.treeViewClipboard.iconSize().width()
+
+            self.__actionClipboardApplyIconSize.setLabelText(i18n(f"Icon size: {size}px"))
 
         @pyqtSlot('QString')
         def filesIconSize_update():
