@@ -20,6 +20,7 @@
 # -----------------------------------------------------------------------------
 
 import re
+import html
 
 from multiprocessing import Pool
 
@@ -412,7 +413,7 @@ class BCFileModel(QAbstractTableModel):
                 returned=[]
                 for nfo in cacheData[0]:
                     if nfo[1] is not None:
-                        returned.append(f"<tr><td><b>{nfo[0].replace(' ', '&nbsp;')}</b></td><td>{nfo[1].replace(' ', '&nbsp;')}</td></tr>")
+                        returned.append(f"<tr><td><b>{html.escape(nfo[0]).replace(' ', '&nbsp;')}</b></td><td>{html.escape(nfo[1]).replace(' ', '&nbsp;')}</td></tr>")
 
                 return f"<table style='font-family:monospace'>{''.join(returned)}</table>"
         elif role == BCFileModel.ROLE_FILE:
