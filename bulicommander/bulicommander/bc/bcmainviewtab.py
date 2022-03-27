@@ -791,7 +791,6 @@ class BCMainViewTab(QFrame):
         self.widgetFilePreview.setContextMenuPolicy(Qt.DefaultContextMenu)
         self.widgetFilePreview.contextMenuEvent = self.__filesContextMenuInformations
 
-        self.__filesAddParentDirectory()
         self.treeViewFiles.resizeColumns(False)
 
         self.__filesDirTreeModel.setRootPath(QDir.currentPath())
@@ -1152,7 +1151,7 @@ class BCMainViewTab(QFrame):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             self.__filesQuery.clearSortRules()
             self.__filesQuery.searchExecute(True, True, [BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS, BCFileList.STEPEXECUTED_ANALYZE_METADATA, BCFileList.STEPEXECUTED_PROGRESS_ANALYZE])
-            #self.__filesAddParentDirectory()
+            self.__filesAddParentDirectory()
             QApplication.restoreOverrideCursor()
 
         # sort files according to columns + add to treeview
