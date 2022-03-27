@@ -54,12 +54,31 @@ class WMenuSlider(QWidgetAction):
         self.__layout = QVBoxLayout()
         self.__slider = QSlider()
         self.__slider.setOrientation(Qt.Horizontal)
+        self.__label = QLabel()
 
-        if not label is None and label != '':
-            self.__layout.addWidget(QLabel(label))
+        self.__layout.setSpacing(0)
+        self.__layout.addWidget(self.__label)
+
+        self.setLabelText(label)
+
         self.__layout.addWidget(self.__slider)
         self.__widget.setLayout(self.__layout)
         self.setDefaultWidget(self.__widget)
+
+    def labelText(self):
+        """Return current label text"""
+        return self.__label.text()
+
+    def setLabelText(self, value):
+        """Set current label text"""
+        if value=='' or value is None:
+            self.__label.setVisible(False)
+            return
+        elif isinstance(value, QPixmap):
+            self.__label.setPixmap(value)
+        else:
+            self.__label.setText(value)
+        self.__label.setVisible(True)
 
     def slider(self):
         return self.__slider
