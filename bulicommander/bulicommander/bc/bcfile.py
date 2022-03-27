@@ -1532,7 +1532,7 @@ class BCBaseFile(object):
             fileHash.update(ptrBits)
             hash=fileHash.hexdigest()
 
-            thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(size), f'{hash}.{BCFile.thumbnailCacheFormat().value}')
+            thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(size), hash)
 
             if not os.path.isfile(thumbnailFile):
                 # generate thumbnail file
@@ -1699,12 +1699,11 @@ class BCFile(BCBaseFile):
     __BC_CACHE_PATH = ''
     __THUMBNAIL_CACHE_FMT = BCFileThumbnailFormat.PNG
     __THUMBNAIL_CACHE_DEFAULTSIZE = BCFileThumbnailSize.MEDIUM
-    __THUMBNAIL_CACHE_COMPRESSION = 100
 
     __INITIALISED = False
 
     @staticmethod
-    def initialiseCache(bcCachePath=None, thumbnailCacheFormat=None, thumbnailCacheDefaultSize=None):
+    def initialiseCache(bcCachePath=None, thumbnailCacheDefaultSize=None):
         """Initialise thumbnails cache properties
 
 
@@ -1715,7 +1714,6 @@ class BCFile(BCBaseFile):
         """
 
         BCFile.setCacheDirectory(bcCachePath)
-        BCFile.setThumbnailCacheFormat(thumbnailCacheFormat)
         BCFile.setThumbnailCacheDefaultSize(thumbnailCacheDefaultSize)
 
         BCFile.__INITIALISED = True
@@ -4329,35 +4327,18 @@ class BCFile(BCBaseFile):
             return
 
     @staticmethod
-    def thumbnailCacheCompression():
+    def thumbnailCacheCompression(format, size):
         """Return current thumbnail cache compression parameter"""
-        return BCFile.__THUMBNAIL_CACHE_COMPRESSION
-
-    @staticmethod
-    def thumbnailCacheFormat():
-        """Return current thumbnail cache format"""
-        return BCFile.__THUMBNAIL_CACHE_FMT
-
-    @staticmethod
-    def setThumbnailCacheFormat(thumbnailCacheFormat=None):
-        """Set current thumbnail cache format
-
-        If no file format is provided or if invalid, set default format JPEG
-        """
-        if not isinstance(thumbnailCacheFormat, BCFileThumbnailFormat):
-            BCFile.__THUMBNAIL_CACHE_FMT = BCFileThumbnailFormat.PNG
-        else:
-            BCFile.__THUMBNAIL_CACHE_FMT = thumbnailCacheFormat
-
-        if BCFile.__THUMBNAIL_CACHE_FMT == BCFileThumbnailFormat.PNG:
-            BCFile.__THUMBNAIL_CACHE_COMPRESSION = 100
-        else:
-            if BCFile.__THUMBNAIL_CACHE_DEFAULTSIZE in [BCFileThumbnailSize.SMALL, BCFileThumbnailSize.MEDIUM]:
+        if format== BCFileThumbnailFormat.JPEG:
+            if size in [BCFileThumbnailSize.SMALL, BCFileThumbnailSize.MEDIUM]:
                 # on smaller image, jpeg compression artifact are more visible, so reduce compression
-                BCFile.__THUMBNAIL_CACHE_COMPRESSION = 95
+                return 95
             else:
-                # on bigger image, we can reduce quality to get a better compression and sve disk :)
-                BCFile.__THUMBNAIL_CACHE_COMPRESSION = 85
+                # on bigger image, we can reduce quality to get a better compression and save disk :)
+                return 85
+        else:
+            # PNG compression
+            return 80
 
     @staticmethod
     def thumbnailCacheDefaultSize():
@@ -4374,14 +4355,6 @@ class BCFile(BCBaseFile):
             BCFile.__THUMBNAIL_CACHE_DEFAULTSIZE = BCFileThumbnailSize.MEDIUM
         else:
             BCFile.__THUMBNAIL_CACHE_DEFAULTSIZE = thumbnailCacheDefaultSize
-
-        if BCFile.__THUMBNAIL_CACHE_FMT == BCFileThumbnailFormat.JPEG:
-            if BCFile.__THUMBNAIL_CACHE_DEFAULTSIZE in [BCFileThumbnailSize.SMALL, BCFileThumbnailSize.MEDIUM]:
-                # on smaller image, jpeg compression artifact are more visible, so reduce compression
-                BCFile.__THUMBNAIL_CACHE_COMPRESSION = 95
-            else:
-                # on bigger image, we can reduce quality to get a better compression and sve disk :)
-                BCFile.__THUMBNAIL_CACHE_COMPRESSION = 85
 
     def baseName(self):
         return self.__baseName
@@ -4464,7 +4437,7 @@ class BCFile(BCBaseFile):
             sourceSize = size
 
             while not sourceSize is None:
-                thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(sourceSize), f'{self.__qHash}.{BCFile.__THUMBNAIL_CACHE_FMT.value}')
+                thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(sourceSize), f'{self.__qHash}')
 
                 if os.path.isfile(thumbnailFile):
                     # thumbnail found!
@@ -4489,7 +4462,7 @@ class BCFile(BCBaseFile):
             # no image cache found
             # load full image size from file
             imageSrc = self.image()
-            if imageSrc is None:
+            if imageSrc is None or imageSrc.isNull():
                 return None
 
             if cache:
@@ -4500,13 +4473,16 @@ class BCFile(BCBaseFile):
                         # when image is smaller than thumbnail
                         # create a thumbnail bigger than thumbnail o_O'
                         # without antialiasing
-                        imageSrc = imageSrc.scaled(QSize(buildSize.value, buildSize.value), Qt.KeepAspectRatio, Qt.FastTransformation)
+                        imageSrc = QImage(imageSrc.scaled(QSize(buildSize.value, buildSize.value), Qt.KeepAspectRatio, Qt.FastTransformation))
                     else:
-                        imageSrc = imageSrc.scaled(QSize(buildSize.value, buildSize.value), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                        imageSrc = QImage(imageSrc.scaled(QSize(buildSize.value, buildSize.value), Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
-                    thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(buildSize), f'{self.__qHash}.{BCFile.__THUMBNAIL_CACHE_FMT.value}')
+                    thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(buildSize), f'{self.__qHash}')
                     try:
-                        imageSrc.save(thumbnailFile, quality=BCFile.__THUMBNAIL_CACHE_COMPRESSION)
+                        if imageSrc.hasAlphaChannel():
+                            imageSrc.save(thumbnailFile, BCFileThumbnailFormat.PNG.value, BCFile.thumbnailCacheCompression(BCFileThumbnailFormat.PNG, buildSize))
+                        else:
+                            imageSrc.save(thumbnailFile, BCFileThumbnailFormat.JPEG.value, BCFile.thumbnailCacheCompression(BCFileThumbnailFormat.JPEG, buildSize))
                     except Exception as e:
                         Debug.print('[BCFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, f"{e}")
 
@@ -4524,6 +4500,9 @@ class BCFile(BCBaseFile):
                         # BCBaseFile.THUMBTYPE_FILENAME
                         return thumbnailFile
 
+        if imageSrc.isNull():
+            return None
+
         if thumbnailImg is None:
             # make thumbnail
             thumbnailImg = imageSrc.scaled(QSize(size.value, size.value), Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -4539,9 +4518,12 @@ class BCFile(BCBaseFile):
                 # in this case (no cache + asked for file name?) return None -- this should not occurs, otherwise I'm a dumb :)
                 return None
 
-        thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(size), f'{self.__qHash}.{BCFile.__THUMBNAIL_CACHE_FMT.value}')
+        thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(size), f'{self.__qHash}')
         try:
-            thumbnailImg.save(thumbnailFile, quality=BCFile.__THUMBNAIL_CACHE_COMPRESSION)
+            if thumbnailImg.hasAlphaChannel():
+                thumbnailImg.save(thumbnailFile, BCFileThumbnailFormat.PNG.value, BCFile.thumbnailCacheCompression(BCFileThumbnailFormat.PNG, size))
+            else:
+                thumbnailImg.save(thumbnailFile, BCFileThumbnailFormat.JPEG.value, BCFile.thumbnailCacheCompression(BCFileThumbnailFormat.JPEG, size))
         except Exception as e:
             Debug.print('[BCFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, f"{e}")
 
