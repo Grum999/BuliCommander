@@ -326,12 +326,15 @@ class BCUIController(QObject):
             self.__window.panels[panelId].setFilesColumnOrder(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId)))
             self.__window.panels[panelId].setFilesColumnSize(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId)))
             self.__window.panels[panelId].setFilesColumnVisible(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE.id(panelId=panelId)))
-            self.__window.panels[panelId].setFilesIconSize(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE.id(panelId=panelId)))
+            self.__window.panels[panelId].setFilesIconSizeTv(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_TV.id(panelId=panelId)))
+            self.__window.panels[panelId].setFilesIconSizeLv(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_LV.id(panelId=panelId)))
 
             self.__window.panels[panelId].setClipboardColumnSort(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSORT.id(panelId=panelId)))
             self.__window.panels[panelId].setClipboardColumnOrder(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNORDER.id(panelId=panelId)))
             self.__window.panels[panelId].setClipboardColumnSize(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSIZE.id(panelId=panelId)))
             self.__window.panels[panelId].setClipboardIconSize(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_ICONSIZE.id(panelId=panelId)))
+
+            self.commandPanelFilesTabViewMode(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_VIEWMODE.id(panelId=panelId)))
 
         self.__window.initMenu()
 
@@ -695,6 +698,7 @@ class BCUIController(QObject):
 
             for panelId in self.__window.panels:
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].filesTabLayout().value)
+                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_VIEWMODE.id(panelId=panelId), self.__window.panels[panelId].filesTabViewMode())
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId), self.__window.panels[panelId].filesPath())
 
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_THUMBNAIL.id(panelId=panelId), self.__window.panels[panelId].filesViewThumbnail())
@@ -706,7 +710,8 @@ class BCUIController(QObject):
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].filesColumnOrder())
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId), self.__window.panels[panelId].filesColumnSize())
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE.id(panelId=panelId), self.__window.panels[panelId].filesColumnVisible())
-                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE.id(panelId=panelId), self.__window.panels[panelId].filesIconSize())
+                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_TV.id(panelId=panelId), self.__window.panels[panelId].filesIconSizeTv())
+                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_LV.id(panelId=panelId), self.__window.panels[panelId].filesIconSizeLv())
 
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_IMGSIZEUNIT.id(panelId=panelId), self.__window.panels[panelId].filesImageNfoSizeUnit())
 
@@ -1670,6 +1675,15 @@ class BCUIController(QObject):
 
         return value
 
+    def commandPanelFilesTabViewMode(self, panel, value):
+        """Set panel view mode"""
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        self.__window.panels[panel].setFilesTabViewMode(value)
+
+        return value
+
     def commandPanelFilesTabLayout(self, panel, value):
         """Set panel layout"""
         if not panel in self.__window.panels:
@@ -2201,7 +2215,8 @@ class BCUIController(QObject):
             self.__window.panels[panelId].setFilesColumnSort([1, True])
             self.__window.panels[panelId].setFilesColumnOrder([0,1,2,3,4,5,6,7,8])
             self.__window.panels[panelId].setFilesColumnSize([0,0,0,0,0,0,0,0,0])
-            self.__window.panels[panelId].setFilesIconSize(BCSettings.get(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE))
+            self.__window.panels[panelId].setFilesIconSizeTv(BCSettings.get(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_TV))
+            self.__window.panels[panelId].setFilesIconSizeLv(BCSettings.get(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_LV))
 
             self.__window.panels[panelId].setClipboardColumnSort([3, False])
             self.__window.panels[panelId].setClipboardColumnOrder([0,1,2,3,4,5,6])

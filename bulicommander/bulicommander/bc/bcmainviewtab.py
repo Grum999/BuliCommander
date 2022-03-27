@@ -106,7 +106,8 @@ from .bcwpreview import (
     )
 from .bcwfile import (
         BCFileModel,
-        BCViewFilesTv
+        BCViewFilesTv,
+        BCViewFilesLv
     )
 
 from bulicommander.pktk.modules.timeutils import Timer
@@ -377,6 +378,9 @@ class BCMainViewTab(QFrame):
     filesPathChanged = Signal(str)
     filesFilterChanged = Signal(str)
 
+    VIEWMODE_TV=0
+    VIEWMODE_LV=1
+
     def __init__(self, parent=None):
         super(BCMainViewTab, self).__init__(parent)
 
@@ -388,7 +392,8 @@ class BCMainViewTab(QFrame):
         self.__filesQuery.searchSetIncludeDirectories(True)
         self.__filesQuery.stepExecuted.connect(self.__fileQueryStepExecuted)
 
-        self.__filesModel=BCFileModel(self.__filesQuery)
+        self.__filesModelTv=BCFileModel(self.__filesQuery)
+        self.__filesModelLv=BCFileModel(self.__filesQuery)
         self.__filesModelIgnoreSelectionSignals=False
 
         self.__filesTabLayout = BCMainViewTabFilesLayout.TOP
@@ -456,6 +461,18 @@ class BCMainViewTab(QFrame):
         self.__actionFilesApplyTabLayoutRight = QAction(buildIcon("pktk:dashboard_rl"), i18n('Right/Left'), self)
         self.__actionFilesApplyTabLayoutRight.setCheckable(True)
         self.__actionFilesApplyTabLayoutRight.setProperty('layout', BCMainViewTabFilesLayout.RIGHT)
+
+        self.__actionFilesApplyTabLayoutViewTv = QAction(buildIcon("pktk:list_view_details"), i18n('View as list'), self)
+        self.__actionFilesApplyTabLayoutViewTv.setCheckable(True)
+        self.__actionFilesApplyTabLayoutViewTv.setChecked(True)
+
+        self.__actionFilesApplyTabLayoutViewLv = QAction(buildIcon("pktk:list_view_icon"), i18n('View as grid'), self)
+        self.__actionFilesApplyTabLayoutViewLv.setCheckable(True)
+
+        groupViewMode=QActionGroup(self)
+        groupViewMode.addAction(self.__actionFilesApplyTabLayoutViewTv)
+        groupViewMode.addAction(self.__actionFilesApplyTabLayoutViewLv)
+        groupViewMode.setExclusive(True)
 
         self.__actionFilesApplyIconSize = WMenuSlider(i18n("Icon size"))
         self.__actionFilesApplyIconSize.slider().setMinimum(0)
@@ -529,7 +546,12 @@ class BCMainViewTab(QFrame):
     def __initialise(self):
         @pyqtSlot('QString')
         def filesTabLayoutModel_Clicked(value):
-            self.setFilesTabLayout(value.property('layout'))
+            if value==self.__actionFilesApplyTabLayoutViewTv:
+                self.setFilesTabViewMode(BCMainViewTab.VIEWMODE_TV)
+            elif value==self.__actionFilesApplyTabLayoutViewLv:
+                self.setFilesTabViewMode(BCMainViewTab.VIEWMODE_LV)
+            else:
+                self.setFilesTabLayout(value.property('layout'))
 
         @pyqtSlot('QString')
         def clipboardTabLayoutModel_Clicked(value):
@@ -613,7 +635,10 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot('QString')
         def filesIconSize_changed(value):
-            self.treeViewFiles.setIconSizeIndex(value)
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.setIconSizeIndex(value)
+            else:
+                self.listViewFiles.setIconSizeIndex(value)
 
         @pyqtSlot('QString')
         def clipboardIconSize_changed(value):
@@ -621,7 +646,10 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot('QString')
         def filesIconSize_update():
-            self.__actionFilesApplyIconSize.slider().setValue(self.treeViewFiles.iconSizeIndex())
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.__actionFilesApplyIconSize.slider().setValue(self.treeViewFiles.iconSizeIndex())
+            else:
+                self.__actionFilesApplyIconSize.slider().setValue(self.listViewFiles.iconSizeIndex())
 
         @pyqtSlot('QString')
         def clipboardIconSize_update():
@@ -638,10 +666,44 @@ class BCMainViewTab(QFrame):
                 return
             self.setFilesImageNfoSizeUnit(self.cbImgSizeRes.currentData())
 
+        def filesSelection_Changed(selection):
+            # selection has changed on treeViewFiles or listViewFiles
+            # need to synchronize selections according to current view mode
+            if self.__filesModelIgnoreSelectionSignals:
+                # currently doing some synchronization, avoid recursives calls
+                return
+
+            self.__filesModelIgnoreSelectionSignals=True
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                # selection changed on treeview, need to update listview selection
+                selectedUuid=[selectedIndex.data(BCFileModel.ROLE_FILE).uuid() for selectedIndex in self.treeViewFiles.selectionModel().selectedRows()]
+                self.listViewFiles.selectionModel().clearSelection()
+                positions=[self.listViewFiles.model().mapFromSource(index) for index in self.__filesModelLv.indexUuid(selectedUuid)]
+                selection=QItemSelection()
+                for position in positions:
+                    selection.select(position, position)
+                self.listViewFiles.selectionModel().select(selection, QItemSelectionModel.Select|QItemSelectionModel.Rows)
+            else:
+                # selection changed on listview, need to update treeview selection
+                selectedUuid=[selectedIndex.data(BCFileModel.ROLE_FILE).uuid() for selectedIndex in self.listViewFiles.selectionModel().selectedIndexes()]
+                self.treeViewFiles.selectionModel().clearSelection()
+                positions=[self.treeViewFiles.model().mapFromSource(index) for index in self.__filesModelTv.indexUuid(selectedUuid)]
+                selection=QItemSelection()
+                for position in positions:
+                    selection.select(position, position)
+                self.treeViewFiles.selectionModel().select(selection, QItemSelectionModel.Select|QItemSelectionModel.Rows)
+
+            self.__filesModelIgnoreSelectionSignals=False
+            self.__filesSelectionChanged(selection)
+
         # -- files --
-        self.__filesModel.iconStartLoad.connect(model_iconStartLoad)
-        self.__filesModel.iconStopLoad.connect(self.__filesProgressStop)
-        self.__filesModel.iconProcessed.connect(self.__filesProgressSetNext)
+        self.__filesModelTv.iconStartLoad.connect(model_iconStartLoad)
+        self.__filesModelTv.iconStopLoad.connect(self.__filesProgressStop)
+        self.__filesModelTv.iconProcessed.connect(self.__filesProgressSetNext)
+
+        self.__filesModelLv.iconStartLoad.connect(model_iconStartLoad)
+        self.__filesModelLv.iconStopLoad.connect(self.__filesProgressStop)
+        self.__filesModelLv.iconProcessed.connect(self.__filesProgressSetNext)
 
         # hide progress bar
         self.__filesProgressStop()
@@ -653,6 +715,10 @@ class BCMainViewTab(QFrame):
         self.__actionFilesApplyTabLayoutLeft.triggered.connect(children_Clicked)
         self.__actionFilesApplyTabLayoutBottom.triggered.connect(children_Clicked)
         self.__actionFilesApplyTabLayoutRight.triggered.connect(children_Clicked)
+
+        self.__actionFilesApplyTabLayoutViewTv.triggered.connect(children_Clicked)
+        self.__actionFilesApplyTabLayoutViewLv.triggered.connect(children_Clicked)
+
         self.__actionFilesApplyIconSize.slider().valueChanged.connect(filesIconSize_changed)
 
         # create menu for layout model button
@@ -662,6 +728,9 @@ class BCMainViewTab(QFrame):
         menu.addAction(self.__actionFilesApplyTabLayoutLeft)
         menu.addAction(self.__actionFilesApplyTabLayoutBottom)
         menu.addAction(self.__actionFilesApplyTabLayoutRight)
+        menu.addSeparator()
+        menu.addAction(self.__actionFilesApplyTabLayoutViewTv)
+        menu.addAction(self.__actionFilesApplyTabLayoutViewLv)
         menu.addSeparator()
         menu.addAction(self.__actionFilesApplyIconSize)
         menu.triggered.connect(filesTabLayoutModel_Clicked)
@@ -688,13 +757,25 @@ class BCMainViewTab(QFrame):
         self.framePathBar.filterVisibilityChanged.connect(filesFilterVisibility_Changed)
         self.framePathBar.setPanel(self)
 
-        self.treeViewFiles.setModel(self.__filesModel)
+        self.treeViewFiles.setModel(self.__filesModelTv)
         self.treeViewFiles.focused.connect(children_Clicked)
         self.treeViewFiles.doubleClicked.connect(self.__filesDoubleClick)
         self.treeViewFiles.keyPressed.connect(self.__filesKeyPressed)
         self.treeViewFiles.contextMenuEvent=self.__filesContextMenuEvent
-        self.treeViewFiles.selectionModel().selectionChanged.connect(self.__filesSelectionChanged)
+        self.treeViewFiles.selectionModel().selectionChanged.connect(filesSelection_Changed)
+        self.treeViewFiles.header().setSectionsClickable(True)
         self.treeViewFiles.header().sectionClicked.connect(children_Clicked)
+        self.treeViewFiles.header().sectionClicked.connect(self.__filesSort)
+
+        self.listViewFiles.setModel(self.__filesModelLv)
+        self.listViewFiles.focused.connect(children_Clicked)
+        self.listViewFiles.doubleClicked.connect(self.__filesDoubleClick)
+        self.listViewFiles.keyPressed.connect(self.__filesKeyPressed)
+        self.listViewFiles.contextMenuEvent=self.__filesContextMenuEvent
+        self.listViewFiles.selectionModel().selectionChanged.connect(filesSelection_Changed)
+
+        self.treeViewFiles.columnVisibilityChanged.connect(self.listViewFiles.setColumnsVisibility)
+        self.treeViewFiles.columnPositionChanged.connect(self.listViewFiles.setColumnsPosition)
 
         self.treeViewClipboard.focused.connect(children_Clicked)
         self.treeViewClipboard.header().sectionClicked.connect(children_Clicked)
@@ -753,6 +834,12 @@ class BCMainViewTab(QFrame):
         self.framePathBar.setHighlighted(self.__isHighlighted)
         if self.__isHighlighted:
             self.highlightedStatusChanged.emit(self)
+
+            if not isinstance(QApplication.focusWidget(), QLineEdit):
+                if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                    self.treeViewFiles.setFocus()
+                else:
+                    self.listViewFiles.setFocus()
 
 
 
@@ -933,13 +1020,14 @@ class BCMainViewTab(QFrame):
         selectedUuid=[selectedIndex.data(BCFileModel.ROLE_FILE).uuid() for selectedIndex in self.treeViewFiles.selectionModel().selectedRows()]
         # disable treeview update t oavoid flickering effect
         self.treeViewFiles.setUpdatesEnabled(False)
+        self.listViewFiles.setUpdatesEnabled(False)
         # clear current selection
         self.treeViewFiles.selectionModel().clearSelection()
         # do sort (selection will be lost)
         self.__filesQuery.sortResults()
         # find current index in model for (previously selected) uuid
         # need to do conversion with proxymodel
-        positions=[self.treeViewFiles.model().mapFromSource(index) for index in self.__filesModel.indexUuid(selectedUuid)]
+        positions=[self.treeViewFiles.model().mapFromSource(index) for index in self.__filesModelTv.indexUuid(selectedUuid)]
         # rebuild selection
         selection=QItemSelection()
         for position in positions:
@@ -947,6 +1035,7 @@ class BCMainViewTab(QFrame):
         self.treeViewFiles.selectionModel().select(selection, QItemSelectionModel.Select|QItemSelectionModel.Rows)
         self.__filesModelIgnoreSelectionSignals=False
         self.treeViewFiles.setUpdatesEnabled(True)
+        self.listViewFiles.setUpdatesEnabled(True)
         self.__filesUpdate()
 
 
@@ -1271,6 +1360,8 @@ class BCMainViewTab(QFrame):
         self.__filesCurrentStats['nbSelectedTotal'] = 0
         self.__filesCurrentStats['sizeSelectedFiles'] = 0
 
+        # consider at this point treeViewFiles & listViewFiles have same selection
+        # and then get selection from treeViewFiles
         self.__filesSelected = self.treeViewFiles.selectedFiles()
         self.__filesSelectedNbDir = 0
         self.__filesSelectedNbFile = 0
@@ -1870,6 +1961,7 @@ class BCMainViewTab(QFrame):
     def __filesApplyFilter(self, filter):
         """Apply filter to current file list"""
         self.treeViewFiles.setFilter(filter)
+        self.listViewFiles.setFilter(filter)
 
         self.__filesCurrentStats['nbFilteredFiles'] = 0
         self.__filesCurrentStats['nbFilteredDir'] = 0
@@ -2419,6 +2511,35 @@ class BCMainViewTab(QFrame):
                 return
 
 
+    def __filesSwitchViewFileMode(self, mode):
+        """Switch view file mode
+
+        Given `mode` can be:
+        - BCMainViewTab.VIEWMODE_TV
+        - BCMainViewTab.VIEWMODE_LV
+
+        """
+        if not mode in (BCMainViewTab.VIEWMODE_TV, BCMainViewTab.VIEWMODE_LV):
+            return
+
+        self.stackFiles.setCurrentIndex(mode)
+
+        if mode==BCMainViewTab.VIEWMODE_TV:
+            self.__actionFilesApplyIconSize.slider().setMinimum(0)
+            self.__actionFilesApplyIconSize.slider().setMaximum(8)
+            self.setFilesIconSizeTv(self.filesIconSizeTv())
+            self.__actionFilesApplyTabLayoutViewTv.setChecked(True)
+            if self.listViewFiles.hasFocus():
+                self.treeViewFiles.setFocus()
+        else:
+            self.setFilesIconSizeLv(self.filesIconSizeLv())
+            self.__actionFilesApplyIconSize.slider().setMinimum(0)
+            self.__actionFilesApplyIconSize.slider().setMaximum(5)
+            self.__actionFilesApplyTabLayoutViewLv.setChecked(True)
+            if self.treeViewFiles.hasFocus():
+                self.listViewFiles.setFocus()
+
+
     # -- PRIVATE CLIPBOARD -----------------------------------------------------
 
     def __clipboardUpdateDownloadInformation(self, item):
@@ -2862,7 +2983,10 @@ class BCMainViewTab(QFrame):
     def selectAll(self):
         """Select all items in current tab"""
         if self.tabActive()==BCMainViewTabTabs.FILES:
-            self.treeViewFiles.selectAll()
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.selectAll()
+            else:
+                self.listViewFiles.selectAll()
         elif self.tabActive()==BCMainViewTabTabs.CLIPBOARD:
             self.treeViewClipboard.selectAll()
 
@@ -2870,7 +2994,10 @@ class BCMainViewTab(QFrame):
     def selectNone(self):
         """Unselect all items in current tab"""
         if self.tabActive()==BCMainViewTabTabs.FILES:
-            self.treeViewFiles.clearSelection()
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.clearSelection()
+            else:
+                self.listViewFiles.clearSelection()
         elif self.tabActive()==BCMainViewTabTabs.CLIPBOARD:
             self.treeViewClipboard.clearSelection()
 
@@ -2878,7 +3005,10 @@ class BCMainViewTab(QFrame):
     def selectInvert(self):
         """Invert selection all items in current tab"""
         if self.tabActive()==BCMainViewTabTabs.FILES:
-            self.treeViewFiles.invertSelection()
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.invertSelection()
+            else:
+                self.listViewFiles.invertSelection()
         elif self.tabActive()==BCMainViewTabTabs.CLIPBOARD:
             self.treeViewClipboard.invertSelection()
 
@@ -3337,14 +3467,25 @@ class BCMainViewTab(QFrame):
             self.treeViewFiles.setColumnVisible(logicalIndex, visible)
 
 
-    def filesIconSize(self):
-        """Return current icon size"""
+    def filesIconSizeTv(self):
+        """Return current icon size (treeview)"""
         return self.treeViewFiles.iconSizeIndex()
 
 
-    def setFilesIconSize(self, value=None):
-        """Set current icon size"""
+    def setFilesIconSizeTv(self, value=None):
+        """Set current icon size (treeview)"""
         self.treeViewFiles.setIconSizeIndex(value)
+        self.__actionFilesApplyIconSize.slider().setValue(value)
+
+
+    def filesIconSizeLv(self):
+        """Return current icon size (listview)"""
+        return self.listViewFiles.iconSizeIndex()
+
+
+    def setFilesIconSizeLv(self, value=None):
+        """Set current icon size (listview)"""
+        self.listViewFiles.setIconSizeIndex(value)
         self.__actionFilesApplyIconSize.slider().setValue(value)
 
 
@@ -3486,6 +3627,15 @@ class BCMainViewTab(QFrame):
             self.__filesImageNfoSizeUnit=value
             self.__filesUpdateImageNfoSizeUnit()
 
+
+    def filesTabViewMode(self):
+        """Return current view mode list/grid"""
+        return self.stackFiles.currentIndex()
+
+
+    def setFilesTabViewMode(self, value):
+        """Return current view mode list/grid"""
+        self.__filesSwitchViewFileMode(value)
 
     # -- PUBLIC CLIPBOARD ----------------------------------------------------------
 

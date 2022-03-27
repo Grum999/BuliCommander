@@ -132,7 +132,7 @@
                 <enum>QFrame::NoFrame</enum>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="pageTvFiles">
                 <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -212,6 +212,37 @@
                  <property name="bottomMargin">
                   <number>4</number>
                  </property>
+                 <item>
+                  <widget class="BCViewFilesLv" name="listViewFiles">
+                   <property name="editTriggers">
+                    <set>QAbstractItemView::NoEditTriggers</set>
+                   </property>
+                   <property name="showDropIndicator" stdset="0">
+                    <bool>false</bool>
+                   </property>
+                   <property name="defaultDropAction">
+                    <enum>Qt::IgnoreAction</enum>
+                   </property>
+                   <property name="selectionMode">
+                    <enum>QAbstractItemView::ExtendedSelection</enum>
+                   </property>
+                   <property name="movement">
+                    <enum>QListView::Snap</enum>
+                   </property>
+                   <property name="resizeMode">
+                    <enum>QListView::Adjust</enum>
+                   </property>
+                   <property name="spacing">
+                    <number>20</number>
+                   </property>
+                   <property name="viewMode">
+                    <enum>QListView::IconMode</enum>
+                   </property>
+                   <property name="uniformItemSizes">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
                 </layout>
                </widget>
               </widget>
@@ -392,7 +423,7 @@
                                     <x>0</x>
                                     <y>0</y>
                                     <width>1535</width>
-                                    <height>644</height>
+                                    <height>664</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -614,7 +645,7 @@
                                     <x>0</x>
                                     <y>0</y>
                                     <width>1535</width>
-                                    <height>644</height>
+                                    <height>664</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -972,7 +1003,7 @@
                                     <x>0</x>
                                     <y>0</y>
                                     <width>1535</width>
-                                    <height>644</height>
+                                    <height>664</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1230,7 +1261,7 @@
                                     <x>0</x>
                                     <y>0</y>
                                     <width>1535</width>
-                                    <height>644</height>
+                                    <height>664</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1949,11 +1980,6 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>BCViewFilesTv</class>
-   <extends>QTreeView</extends>
-   <header>bulicommander.bc.bcmainviewtab</header>
-  </customwidget>
-  <customwidget>
    <class>BCMainViewClipboard</class>
    <extends>QTreeView</extends>
    <header>bulicommander.bc.bcmainviewtab</header>
@@ -1963,6 +1989,16 @@
    <extends>QWidget</extends>
    <header>bulicommander.bc.bcwpreview</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>BCViewFilesTv</class>
+   <extends>QTreeView</extends>
+   <header>bulicommander.bc.bcmainviewtab</header>
+  </customwidget>
+  <customwidget>
+   <class>BCViewFilesLv</class>
+   <extends>QListView</extends>
+   <header>bulicommander.bc.bcmainviewtab</header>
   </customwidget>
  </customwidgets>
  <resources>
