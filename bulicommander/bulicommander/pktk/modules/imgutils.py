@@ -31,6 +31,7 @@ from PyQt5.QtGui import (
         QColor
     )
 
+from math import ceil
 import re
 
 from ..pktk import *
@@ -302,6 +303,10 @@ def convertSize(value, fromUnit, toUnit, resolution, roundValue=None):
         else:
             roundValue = 0
 
+    if resolution==0:
+        # avoid division by zero
+        resolution=1.0
+
     if fromUnit == 'mm':
         if toUnit == 'cm':
             return round(value/10, roundValue)
@@ -341,3 +346,22 @@ def convertSize(value, fromUnit, toUnit, resolution, roundValue=None):
             return round(resolution * convertSize(value, fromUnit, 'in', resolution)/72, roundValue)
     # all other combination are not valid, return initial value
     return value
+
+def megaPixels(value, roundDec=2):
+    """return value (in pixels) as megapixels rounded to given number of decimal"""
+    if value is None or value==0:
+        return ""
+    if value<100000:
+        return f"{ceil(value/10000)/100:.0{roundDec}f}"
+    return f"{ceil(value/100000)/10:.0{roundDec}f}"
+
+def ratioOrientation(ratio):
+    """return ratio text for a given ratio value"""
+    if ratio is None:
+        return ""
+    elif ratio<1:
+        return i18n("Portrait")
+    elif ratio>1:
+        return i18n("Landscape")
+    else:
+        return i18n("Square")

@@ -301,7 +301,7 @@ class Tokens(EList):
 
     def __repr__(self):
         nl='\n'
-        return f"<Tokens({self.length()}, [{nl}{f'{nl}'.join([str(token) for token in self.list()])}{nl}])>"
+        return f"<Tokens({self.length()}, [{nl}{f'{nl}'.join([f'{token}' for token in self.list()])}{nl}])>"
 
     def text(self):
         """Return original tokenized text"""
@@ -715,7 +715,7 @@ class Tokenizer(object):
 
     def __repr__(self):
         NL='\n'
-        return f"<Tokenizer(Cache={len(self.__cache)}, Rules={len(self.__rules)}{NL}{NL.join([str(rule) for rule in self.__rules])}{NL}RegEx={self.regEx()})>"
+        return f"<Tokenizer(Cache={len(self.__cache)}, Rules={len(self.__rules)}{NL}{NL.join([f'{rule}' for rule in self.__rules])}{NL}RegEx={self.regEx()})>"
 
     def __searchAddIndex(self, mode, type):
         """Search index for given `type` according to defined search `mode`"""

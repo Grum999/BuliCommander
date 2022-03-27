@@ -334,7 +334,8 @@ class BCSettingsKey(SettingsKey):
     CONFIG_DSESSION_PANELS_VIEW_FILES_HIDDEN =               'config.defaultSession.panels.view.files.hidden'
     CONFIG_DSESSION_PANELS_VIEW_FILES_LAYOUT =               'config.defaultSession.panels.view.files.layout'
     CONFIG_DSESSION_PANELS_VIEW_FILES_THUMBNAIL =            'config.defaultSession.panels.view.files.thumbnail'
-    CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE =             'config.defaultSession.panels.view.files.iconSize'
+    CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_TV =          'config.defaultSession.panels.view.files.iconSize.tv'
+    CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_LV =          'config.defaultSession.panels.view.files.iconSize.lv'
     CONFIG_DSESSION_PANELS_VIEW_FILES_NFOROW =               'config.defaultSession.panels.view.files.rowInformation'
     CONFIG_DSESSION_PANELS_VIEW_CLIPBOARD_ICONSIZE =         'config.defaultSession.panels.view.clipboard.iconSize'
     CONFIG_DSESSION_INFO_TOCLIPBOARD_BORDER =                'config.defaultSession.information.clipboard.border'
@@ -381,14 +382,17 @@ class BCSettingsKey(SettingsKey):
     SESSION_PANELS_VIEW_FILES_HIDDEN =                       'session.panels.view.files.hidden'
 
     SESSION_PANEL_VIEW_FILES_LAYOUT =                        'session.panels.panel-{panelId}.view.files.layout'
+    SESSION_PANEL_VIEW_FILES_VIEWMODE =                      'session.panels.panel-{panelId}.view.files.viewMode'
     SESSION_PANEL_VIEW_FILES_CURRENTPATH =                   'session.panels.panel-{panelId}.view.files.currentPath'
     SESSION_PANEL_VIEW_FILES_FILTERVISIBLE =                 'session.panels.panel-{panelId}.view.files.filterVisible'
     SESSION_PANEL_VIEW_FILES_FILTERVALUE =                   'session.panels.panel-{panelId}.view.files.filterValue'
     SESSION_PANEL_VIEW_FILES_COLUMNSORT =                    'session.panels.panel-{panelId}.view.files.columnSort'
     SESSION_PANEL_VIEW_FILES_COLUMNORDER =                   'session.panels.panel-{panelId}.view.files.columnOrder'
     SESSION_PANEL_VIEW_FILES_COLUMNSIZE =                    'session.panels.panel-{panelId}.view.files.columnSize'
+    SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE =                 'session.panels.panel-{panelId}.view.files.columnVisible'
     SESSION_PANEL_VIEW_FILES_THUMBNAIL =                     'session.panels.panel-{panelId}.view.files.thumbnail'
-    SESSION_PANEL_VIEW_FILES_ICONSIZE =                      'session.panels.panel-{panelId}.view.files.iconSize'
+    SESSION_PANEL_VIEW_FILES_ICONSIZE_TV =                   'session.panels.panel-{panelId}.view.files.iconSize.tv'
+    SESSION_PANEL_VIEW_FILES_ICONSIZE_LV =                   'session.panels.panel-{panelId}.view.files.iconSize.lv'
     SESSION_PANEL_VIEW_FILES_IMGSIZEUNIT =                   'session.panels.panel-{panelId}.view.files.image.sizeUnit'
     SESSION_PANEL_VIEW_CLIPBOARD_LAYOUT =                    'session.panels.panel-{panelId}.view.clipboard.layout'
     SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSORT =                'session.panels.panel-{panelId}.view.clipboard.columnSort'
@@ -677,7 +681,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_HIDDEN,            False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_LAYOUT,            'top',                      SettingsFmt(str, ['full','top','left','right','bottom'])),
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_THUMBNAIL,         False,                      SettingsFmt(bool)),
-            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE,          1,                          SettingsFmt(int, [0,1,2,3,4,5,6,7,8])),
+            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_TV,       1,                          SettingsFmt(int, [0,1,2,3,4,5,6,7,8])),
+            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_LV,       2,                          SettingsFmt(int, [0,1,2,3,4,5])),
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_NFOROW,            7,                          SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9])),
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_CLIPBOARD_ICONSIZE,      1,                          SettingsFmt(int, [0,1,2,3,4,5,6,7,8])),
 
@@ -750,13 +755,73 @@ class BCSettings(Settings):
         for panelId in panelIds:
             rules+=[
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_LAYOUT.id(panelId=panelId),             'top',                      SettingsFmt(str, ['full','top','left','right','bottom'])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_VIEWMODE.id(panelId=panelId),           0,                          SettingsFmt(int, [0, 1])),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId),        '@home',                    SettingsFmt(str)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId),      True,                       SettingsFmt(bool)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId),        '*',                        SettingsFmt(str)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId),         [1,True],                   SettingsFmt(int, [0,1,2,3,4,5,6,7,8]), SettingsFmt(bool)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId),        [0,1,2,3,4,5,6,7,8],        SettingsFmt(int, [0,1,2,3,4,5,6,7,8]), SettingsFmt(int, [0,1,2,3,4,5,6,7,8]), SettingsFmt(int, [0,1,2,3,4,5,6,7,8]), SettingsFmt(int, [0,1,2,3,4,5,6,7,8]), SettingsFmt(int, [0,1,2,3,4,5,6,7,8]), SettingsFmt(int, [0,1,2,3,4,5,6,7,8]), SettingsFmt(int, [0,1,2,3,4,5,6,7,8]), SettingsFmt(int, [0,1,2,3,4,5,6,7,8]), SettingsFmt(int, [0,1,2,3,4,5,6,7,8])),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId),         [0,0,0,0,0,0,0,0,0],        SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE.id(panelId=panelId),           0,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId),         [1,True],                   SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]), SettingsFmt(bool)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId),        [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
+                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId),         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE.id(panelId=panelId),      [True,False,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,False],
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool),
+                                                                                                                                            SettingsFmt(bool)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_TV.id(panelId=panelId),        0,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_LV.id(panelId=panelId),        0,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
 
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_IMGSIZEUNIT.id(panelId=panelId),        'mm',                       SettingsFmt(str, ['mm', 'cm', 'in'])),
 

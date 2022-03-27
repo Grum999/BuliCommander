@@ -72,6 +72,7 @@ from PyQt5.QtWidgets import (
     )
 
 from .bcbookmark import BCBookmark
+from .bciconsizes import BCIconSizes
 from .bcclipboard import (
         BCClipboard,
         BCClipboardModel,
@@ -103,12 +104,18 @@ from .bcsettings import (
 from .bcwpreview import (
         BCWPreview
     )
+from .bcwfile import (
+        BCFileModel,
+        BCViewFilesTv,
+        BCViewFilesLv
+    )
 
 from bulicommander.pktk.modules.timeutils import Timer
 from bulicommander.pktk.modules.workers import WorkerPool
 from bulicommander.pktk.modules.imgutils import (
         buildIcon,
-        convertSize
+        convertSize,
+        ratioOrientation
     )
 from bulicommander.pktk.modules.strtable import (
         TextTable,
@@ -171,6 +178,7 @@ class BCMainViewTabFilesLayout(Enum):
             index = len(members) - 1
         return members[index]
 
+
 class BCMainViewTabClipboardLayout(Enum):
     TOP = 'top'
     LEFT = 'left'
@@ -195,562 +203,24 @@ class BCMainViewTabClipboardLayout(Enum):
             index = len(members) - 1
         return members[index]
 
+
 class BCMainViewTabFilesTabs(Enum):
     INFORMATIONS = 'info'
     DIRECTORIES_TREE = 'dirtree'
+
 
 class BCMainViewTabFilesNfoTabs(Enum):
     GENERIC = 'generic'
     IMAGE = 'image'
     KRA = 'kra'
 
+
 class BCMainViewTabTabs(Enum):
     FILES = 'files'
     DOCUMENTS = 'documents'
     CLIPBOARD = 'clipboard'
 
-class BCIconSizes(object):
-    def __init__(self, values, currentIndex=0):
-        if not (isinstance(values, list) or isinstance(values, tuple)):
-            raise EInvalidType('Given `values` must be a <list>')
-        self.__values=[value for value in values if isinstance(value, int)]
-
-        if len(self.__values) == 0:
-            raise EInvalidValue('Given `values` must be a non empty list of <int>')
-
-        self.__index = 0
-
-        self.setIndex(currentIndex)
-
-    def __repr__(self):
-        return f"<BCIconSizes({self.__index}, {self.__values[self.__index]})>"
-
-    def next(self):
-        """Go to next value
-
-        return True if current index has been modified, otherwise false
-        """
-        if self.__index < len(self.__values) - 1:
-            self.__index+=1
-            return True
-        return False
-
-    def prev(self):
-        """Go to previous value
-
-        return True if current index has been modified, otherwise false
-        """
-        if self.__index > 0:
-            self.__index-=1
-            return True
-        return False
-
-    def index(self):
-        """Return current index"""
-        return self.__index
-
-    def setIndex(self, index):
-        """Set current index
-
-        return True if current index has been modified, otherwise false
-        """
-        if index == self.__index:
-            return False
-        if not isinstance(index, int):
-            raise EInvalidType('Given `values` must be a <int>')
-
-        if index < 0:
-            self.__index = 0
-        elif index > len(self.__values) - 1:
-            self.__index = len(self.__values) - 1
-        else:
-            self.__index = index
-
-        return True
-
-    def value(self):
-        """Return current value"""
-        return self.__values[self.__index]
-
-    def setValue(self, value):
-        """Set current value
-
-        If value doesn't exist in list of values, return the first value less than current
-
-        return True if current index has been modified, otherwise false
-        """
-        currentIndex = self.__index
-        if value in self.__values:
-            self.__index = self.__values.index(value)
-        else:
-            self.__index=0
-            for v in self.__values:
-                if v < value:
-                    self.__index+=1
-                else:
-                    break
-        if currentIndex == self.__index:
-            return False
-        return True
-
-
 # -----------------------------------------------------------------------------
-# create a model from abstract model
-# use it for QListView and QTreeView
-# -- https://doc.qt.io/qt-5/modelview.html
-
-class BCMainViewFiles(QTreeView):
-    """Tree view files"""
-    focused = Signal()
-    iconStartLoad = Signal(int)
-    iconProcessed = Signal()
-    iconStopLoad = Signal()
-    keyPressed = Signal(int)
-
-    COLNUM_ICON = 0
-    COLNUM_PATH = 1
-    COLNUM_NAME = 2
-    COLNUM_TYPE = 3
-    COLNUM_SIZE = 4
-    COLNUM_DATE = 5
-    COLNUM_WIDTH = 6
-    COLNUM_HEIGHT = 7
-    COLNUM_FULLNFO = 8
-    COLNUM_LAST = 8
-
-    __STATUS_READY = 0
-    __STATUS_UPDATING = 1
-
-    __STATUS_ICON_LOADED = 0
-    __STATUS_ICON_LOADING = 1
-    __STATUS_ICON_STOPLOADING = -1
-
-    USERROLE_FILE = Qt.UserRole + 1
-
-    @staticmethod
-    def getIcon(itemIndex, file, viewThumbnail=False, size=0):
-         if viewThumbnail:
-             return file.thumbnail(size=size, thumbType=BCBaseFile.THUMBTYPE_ICON)
-         else:
-             return file.icon()
-
-
-    def __init__(self, parent=None):
-        super(BCMainViewFiles, self).__init__(parent)
-        self.__model = None
-        self.__proxyModel = None
-        self.__filesFilter = ''
-        self.__viewThumbnail = False
-        self.__viewNfoRowLimit = 7
-        self.__iconSize = BCIconSizes([16, 24, 32, 48, 64, 96, 128, 256, 512])
-        self.__status = BCMainViewFiles.__STATUS_READY
-        self.__changed = False
-        self.__showPath = False
-        self.__updatingIcons = BCMainViewFiles.__STATUS_ICON_LOADED
-
-        self.__initHeaders()
-        self.__iconPool = WorkerPool()
-        self.__iconPool.signals.processed.connect(self.__updateIconsProcessed)
-        self.__iconPool.signals.finished.connect(self.__updateIconsFinished)
-
-        self.setAutoScroll(False)
-
-    def __initHeaders(self):
-        """Initialise treeview header & model"""
-        self.__model = QStandardItemModel(0, self.COLNUM_LAST+1, self)
-        self.__model.setHeaderData(self.COLNUM_ICON, Qt.Horizontal, '')
-        self.__model.setHeaderData(self.COLNUM_PATH, Qt.Horizontal, i18n("Path"))
-        self.__model.setHeaderData(self.COLNUM_NAME, Qt.Horizontal, i18n("Name"))
-        self.__model.setHeaderData(self.COLNUM_TYPE, Qt.Horizontal, i18n("Type"))
-        self.__model.setHeaderData(self.COLNUM_SIZE, Qt.Horizontal, i18n("Size"))
-        self.__model.setHeaderData(self.COLNUM_DATE, Qt.Horizontal, i18n("Date"))
-        self.__model.setHeaderData(self.COLNUM_WIDTH, Qt.Horizontal, i18n("Width"))
-        self.__model.setHeaderData(self.COLNUM_HEIGHT, Qt.Horizontal, i18n("Height"))
-        self.__model.setHeaderData(self.COLNUM_FULLNFO, Qt.Horizontal, i18n("File"))
-
-        self.__proxyModel = QSortFilterProxyModel(self)
-        self.__proxyModel.setSourceModel(self.__model)
-        self.__proxyModel.setFilterKeyColumn(BCMainViewFiles.COLNUM_NAME)
-
-        self.setModel(self.__proxyModel)
-
-        # set colums size rules
-        header = self.header()
-        header.setStretchLastSection(False)
-        header.setSectionResizeMode(self.COLNUM_ICON, QHeaderView.Fixed)
-        header.setSectionResizeMode(self.COLNUM_PATH, QHeaderView.Interactive)
-        header.setSectionResizeMode(self.COLNUM_NAME, QHeaderView.Interactive)
-        header.setSectionResizeMode(self.COLNUM_TYPE, QHeaderView.Fixed)
-        header.setSectionResizeMode(self.COLNUM_SIZE, QHeaderView.Fixed)
-        header.setSectionResizeMode(self.COLNUM_DATE, QHeaderView.Fixed)
-        header.setSectionResizeMode(self.COLNUM_WIDTH, QHeaderView.Fixed)
-        header.setSectionResizeMode(self.COLNUM_HEIGHT, QHeaderView.Fixed)
-        header.setSectionResizeMode(self.COLNUM_FULLNFO, QHeaderView.Interactive)
-
-        header.setSectionHidden(self.COLNUM_PATH, True)
-        header.setSectionHidden(self.COLNUM_FULLNFO, True)
-        header.setSortIndicatorShown(True)
-        header.setSectionsClickable(True)
-
-    def __updateIconsProcessed(self, processedNfo):
-        """update icon in treeview list"""
-        fileIndex, icon, nbProcessed = processedNfo
-
-        if not fileIndex is None and fileIndex < self.__model.rowCount():
-            if not icon is None:
-                self.__model.item(fileIndex, BCMainViewFiles.COLNUM_ICON).setIcon(icon)
-            else:
-                self.__model.item(fileIndex, BCMainViewFiles.COLNUM_ICON).setText('?')
-
-        if self.__model.rowCount() > 100:
-            self.iconProcessed.emit()
-
-    def __updateIconsFinished(self):
-        """updateing icon in treeview list is terminated"""
-        self.__status = BCMainViewFiles.__STATUS_READY
-        self.iconStopLoad.emit()
-        self.__updatingIcons = BCMainViewFiles.__STATUS_ICON_LOADED
-
-    def __updateIcons(self):
-        """Update files icons according to current view mode"""
-        if self.__model.rowCount()==0:
-            # nothing to update
-            return
-
-        if self.__updatingIcons==BCMainViewFiles.__STATUS_ICON_STOPLOADING:
-            # currently stop loading icons, so don't need to update them as
-            # an update is already waiting
-            return
-
-        self.__stopUpdatingIcons()
-
-        self.__updatingIcons=BCMainViewFiles.__STATUS_ICON_LOADING
-        self.iconStartLoad.emit(self.__model.rowCount())
-
-        items = [self.__model.item(fileIndex, BCMainViewFiles.COLNUM_NAME).data(BCMainViewFiles.USERROLE_FILE) for fileIndex in range(self.__model.rowCount())]
-
-        if not self.__viewThumbnail:
-            self.__iconPool.startProcessing(items, BCMainViewFiles.getIcon, False)
-        else:
-            size = BCFileThumbnailSize.fromValue(self.iconSize().height())
-            self.__iconPool.startProcessing(items, BCMainViewFiles.getIcon, True, size)
-
-    def __stopUpdatingIcons(self):
-        """Stop update icons/thumbnail
-
-        All threads are stopped
-        """
-        if self.__updatingIcons==BCMainViewFiles.__STATUS_ICON_LOADING:
-            # process only if currently loading
-            self.__updatingIcons=BCMainViewFiles.__STATUS_ICON_STOPLOADING
-            self.__iconPool.stopProcessing()
-            self.__iconPool.waitProcessed()
-
-    def keyPressEvent(self, event):
-        """Emit signal on keyPressed"""
-        super(BCMainViewFiles, self).keyPressEvent(event)
-        self.keyPressed.emit(event.key())
-
-    def wheelEvent(self, event):
-        """Mange zoom level through mouse wheel"""
-        if event.modifiers() & Qt.ControlModifier:
-            if event.angleDelta().y() > 0:
-                # Zoom in
-                sizeChanged = self.__iconSize.next()
-            else:
-                # zoom out
-                sizeChanged = self.__iconSize.prev()
-
-            if sizeChanged:
-                self.setIconSizeIndex()
-        else:
-            super(BCMainViewFiles, self).wheelEvent(event)
-
-    def focusInEvent(self, event):
-        """Emit signal when treeview get focused"""
-        super(BCMainViewFiles, self).focusInEvent(event)
-        self.focused.emit()
-
-    def resizeColumns(self, fixedOnly=True):
-        """Resize columns to content"""
-        if not fixedOnly and self.__model.rowCount() > 1:
-            # greater than 1 ==> if only '..' item don't change column width
-            self.resizeColumnToContents(self.COLNUM_PATH)
-            self.resizeColumnToContents(self.COLNUM_NAME)
-        self.resizeColumnToContents(self.COLNUM_ICON)
-        self.resizeColumnToContents(self.COLNUM_TYPE)
-        self.resizeColumnToContents(self.COLNUM_SIZE)
-        self.resizeColumnToContents(self.COLNUM_DATE)
-        self.resizeColumnToContents(self.COLNUM_WIDTH)
-        self.resizeColumnToContents(self.COLNUM_HEIGHT)
-        self.resizeColumnToContents(self.COLNUM_FULLNFO)
-
-    def filterModel(self):
-        """Return proxy filter model"""
-        return self.__proxyModel
-
-    def addFile(self, fileNfo):
-        """Add a file to treeview"""
-        if not isinstance(fileNfo, BCBaseFile):
-            raise EInvalidType("Given `fileNfo` must be a <BCBaseFile>")
-
-        if not self.__status == BCMainViewFiles.__STATUS_UPDATING:
-            # this case should not occurs...
-            # ignore it for now, but need to understand in which situation it can
-            # happen and what are the impacts
-            #raise EInvalidStatus("Current treeview is not in update mode")
-            return
-
-        self.__changed = True
-
-        newRow = [
-                QStandardItem(''),
-                QStandardItem(''),
-                QStandardItem(''),
-                QStandardItem(''),
-                QStandardItem(''),
-                QStandardItem(''),
-                QStandardItem(''),
-                QStandardItem(''),
-                QStandardItem('')
-            ]
-
-        textFull=''
-        if self.__showPath:
-            textFull+=f'Path:       {fileNfo.path()}\n'
-
-        textFull+=f'File:       {fileNfo.name()}'
-
-        newRow[self.COLNUM_PATH].setText(fileNfo.path())
-        newRow[self.COLNUM_NAME].setText(fileNfo.name())
-        newRow[self.COLNUM_NAME].setData(fileNfo, BCMainViewFiles.USERROLE_FILE)
-
-        # always add with icon
-        # thumnbail loading (and generate) made asynchronously in a second time
-        newRow[self.COLNUM_ICON].setIcon(fileNfo.icon())
-        newRow[self.COLNUM_ICON].setTextAlignment(Qt.AlignCenter|Qt.AlignVCenter)
-
-        date=tsToStr(fileNfo.lastModificationDateTime())
-        if fileNfo.format() == BCFileManagedFormat.DIRECTORY:
-            if fileNfo.name() != '..':
-                newRow[self.COLNUM_DATE].setText(date)
-                textFull+=f'\nDate:       {date}'
-            newRow[self.COLNUM_TYPE].setText(i18n('<DIR>'))
-        else:
-            date=tsToStr(fileNfo.lastModificationDateTime(), valueNone='-')
-            newRow[self.COLNUM_DATE].setText(date)
-            newRow[self.COLNUM_DATE].setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
-            textFull+=f'\nDate:       {date}'
-
-            if fileNfo.extension() != '':
-                format = BCFileManagedFormat.translate(fileNfo.extension())
-            else:
-                format = BCFileManagedFormat.translate(fileNfo.format())
-
-            if isinstance(fileNfo, BCMissingFile):
-                size = '-'
-            else:
-                size = bytesSizeToStr(fileNfo.size())
-
-            newRow[self.COLNUM_SIZE].setText(' '+size)
-            newRow[self.COLNUM_SIZE].setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
-
-            newRow[self.COLNUM_TYPE].setText(format)
-            textFull+=f'\nSize:       {size}'
-            textFull+=f'\nFormat:     {format}'
-
-            if fileNfo.imageSize().width() > 0 and fileNfo.imageSize().height() > 0:
-                newRow[self.COLNUM_WIDTH].setText(str(fileNfo.imageSize().width()))
-                newRow[self.COLNUM_HEIGHT].setText(str(fileNfo.imageSize().height()))
-                textFull+=f'\nImage size: {fileNfo.imageSize().width()}x{fileNfo.imageSize().height()}'
-            else:
-                newRow[self.COLNUM_WIDTH].setText('-')
-                newRow[self.COLNUM_HEIGHT].setText('-')
-                if fileNfo.format() == BCFileManagedFormat.MISSING:
-                    textFull+=f'\nImage size: -'
-                else:
-                    textFull+=f'\nImage size: Unable to retrieve image size'
-            newRow[self.COLNUM_WIDTH].setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
-            newRow[self.COLNUM_HEIGHT].setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
-
-        newRow[self.COLNUM_FULLNFO].setText(textFull)
-
-        self.__model.appendRow(newRow)
-
-    def clear(self):
-        """Clear content"""
-        if not self.__status == BCMainViewFiles.__STATUS_UPDATING:
-            # this case should not occurs...
-            # ignore it for now, but need to understand in which situation it can
-            # happen and what are the impacts
-            #raise EInvalidStatus("Current treeview is not in update mode")
-            return
-
-        self.__model.removeRows(0, self.__model.rowCount())
-        self.__changed = True
-
-    def invertSelection(self):
-        """Invert current selection"""
-        first = self.__proxyModel.index(0, 0)
-        last = self.__proxyModel.index(self.__proxyModel.rowCount() - 1, 7)
-
-        self.selectionModel().select(QItemSelection(first, last), QItemSelectionModel.Toggle)
-
-    def files(self):
-        """Return a list of files"""
-        returned=[]
-
-        #for fileIndex in range(self.__model.rowCount()):
-        #    fileNfo = self.__model.item(fileIndex, BCMainViewFiles.COLNUM_NAME).data(BCMainViewFiles.USERROLE_FILE)
-        #    if not(fileNfo.name() == '..' and fileNfo.format() == BCFileManagedFormat.DIRECTORY):
-        #        returned.append(fileNfo)
-        for rowIndex in range(self.__proxyModel.rowCount()):
-            fileNfo = self.__proxyModel.index(rowIndex, BCMainViewFiles.COLNUM_NAME).data(BCMainViewFiles.USERROLE_FILE)
-            if not(fileNfo.name() == '..' and fileNfo.format() == BCFileManagedFormat.DIRECTORY):
-                returned.append(fileNfo)
-
-        return returned
-
-    def selectedFiles(self):
-        """Return a list of selected files
-
-        Each returned item is a tuple (row, BCBaseFile)
-        """
-        returned=[]
-        smodel=self.selectionModel().selectedRows(self.COLNUM_NAME)
-
-        for item in smodel:
-            fileNfo = item.data(BCMainViewFiles.USERROLE_FILE)
-            if not(fileNfo.name() == '..' and fileNfo.format() == BCFileManagedFormat.DIRECTORY):
-                returned.append(fileNfo)
-
-        return returned
-
-    def iconSizeIndex(self):
-        """Return current icon size index"""
-        return self.__iconSize.index()
-
-    def setIconSizeIndex(self, index=None):
-        """Set icon size from index value"""
-        if index is None or self.__iconSize.setIndex(index):
-            # new size defined
-            self.setIconSize(QSize(self.__iconSize.value(), self.__iconSize.value()))
-
-            # made asynchronously...
-            if self.__viewThumbnail:
-                self.__updateIcons()
-
-            header = self.header()
-            # ...then cnot possible to determinate column ICON width from content
-            # and fix it to icon size
-            header.resizeSection(self.COLNUM_ICON, self.__iconSize.value())
-            if self.__iconSize.index() >= self.__viewNfoRowLimit:
-                header.setSectionHidden(self.COLNUM_PATH, True)
-                header.setSectionHidden(self.COLNUM_NAME, True)
-                header.setSectionHidden(self.COLNUM_TYPE, True)
-                header.setSectionHidden(self.COLNUM_SIZE, True)
-                header.setSectionHidden(self.COLNUM_DATE, True)
-                header.setSectionHidden(self.COLNUM_WIDTH, True)
-                header.setSectionHidden(self.COLNUM_HEIGHT, True)
-                header.setSectionHidden(self.COLNUM_FULLNFO, False)
-                header.setStretchLastSection(True)
-            else:
-                header.setStretchLastSection(False)
-                header.setSectionHidden(self.COLNUM_PATH, not self.__showPath)
-                header.setSectionHidden(self.COLNUM_NAME, False)
-                header.setSectionHidden(self.COLNUM_TYPE, False)
-                header.setSectionHidden(self.COLNUM_SIZE, False)
-                header.setSectionHidden(self.COLNUM_DATE, False)
-                header.setSectionHidden(self.COLNUM_WIDTH, False)
-                header.setSectionHidden(self.COLNUM_HEIGHT, False)
-                header.setSectionHidden(self.COLNUM_FULLNFO, True)
-                self.resizeColumns(False)
-
-    def beginUpdate(self):
-        """Start to update treeview content
-
-        Execute clear/addFile inside a beginUpdate() / endUpdate()
-        """
-        self.__stopUpdatingIcons()
-
-        self.__status = BCMainViewFiles.__STATUS_UPDATING
-
-    def endUpdate(self):
-        """End update content"""
-        if self.__status != BCMainViewFiles.__STATUS_UPDATING:
-            # we must be in updating status to en update :)
-            return
-
-        self.__status = BCMainViewFiles.__STATUS_READY
-
-        if not self.__changed:
-            # nothing has been changed, do nothing
-            return
-
-        self.__changed = False
-        self.__updateIcons()
-
-    def setFilter(self, filter):
-        """Set current filter"""
-        if filter == self.__filesFilter:
-            # filter unchanged, do nothing
-            return
-
-        if filter is None:
-            filter = self.__filesFilter
-
-        if not isinstance(filter, str):
-            raise EInvalidType('Given `filter` must be a <str>')
-
-        if reFilter:=re.search('^re:(.*)', filter):
-            self.__proxyModel.setFilterCaseSensitivity(Qt.CaseSensitive)
-            self.__proxyModel.setFilterRegExp(reFilter.groups()[0])
-        elif reFilter:=re.search('^re\/i:(.*)', filter):
-            self.__proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-            self.__proxyModel.setFilterRegExp(reFilter.groups()[0])
-        else:
-            #reFilter = re.escape(filter).replace(';', '|')
-            self.__proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-            self.__proxyModel.setFilterWildcard(filter)
-
-        self.__filesFilter = filter
-
-    def viewThumbnail(self):
-        """Return current view mode (list/icon)"""
-        return self.__viewThumbnail
-
-    def setViewThumbnail(self, value):
-        """Set current view mode"""
-        if value is None or not isinstance(value, bool):
-            value = False
-
-        if value == self.__viewThumbnail:
-            return
-
-        self.__viewThumbnail = value
-        self.__updateIcons()
-
-    def updateFileSizeUnit(self):
-        """Update file size unit"""
-        # do not use multithreading for this...
-        # may need some tests with heavy list but is it really needed?
-        for fileIndex in range(self.__model.rowCount()):
-            fileNfo = self.__model.item(fileIndex, BCMainViewFiles.COLNUM_NAME).data(BCMainViewFiles.USERROLE_FILE)
-            if fileNfo.format() != BCFileManagedFormat.DIRECTORY:
-                self.__model.item(fileIndex, BCMainViewFiles.COLNUM_SIZE).setText(' '+bytesSizeToStr(fileNfo.size()))
-
-    def showPath(self):
-        """Is path is visible or not"""
-        return self.__showPath
-
-    def setShowPath(self, value):
-        """Set if path is visible or not"""
-        if isinstance(value, bool):
-            self.__showPath = value
-            self.setIconSizeIndex()
-        else:
-            raise EInvalidType("Given `value` must be a <bool>")
-
 
 class BCMainViewClipboard(QTreeView):
     """Tree view clipboard"""
@@ -899,7 +369,6 @@ class BCWImageLabel(QLabel):
     def image(self):
         return self.__image
 
-
 # -----------------------------------------------------------------------------
 class BCMainViewTab(QFrame):
     """Buli Commander main view tab panel (left or right)"""
@@ -909,6 +378,9 @@ class BCMainViewTab(QFrame):
     filesPathChanged = Signal(str)
     filesFilterChanged = Signal(str)
 
+    VIEWMODE_TV=0
+    VIEWMODE_LV=1
+
     def __init__(self, parent=None):
         super(BCMainViewTab, self).__init__(parent)
 
@@ -916,13 +388,18 @@ class BCMainViewTab(QFrame):
         self.__uiController = None
 
         # -- files tab variables --
+        self.__filesQuery = BCFileList()
+        self.__filesQuery.searchSetIncludeDirectories(True)
+        self.__filesQuery.stepExecuted.connect(self.__fileQueryStepExecuted)
+
+        self.__filesModelTv=BCFileModel(self.__filesQuery)
+        self.__filesModelLv=BCFileModel(self.__filesQuery)
+        self.__filesModelIgnoreSelectionSignals=False
+
         self.__filesTabLayout = BCMainViewTabFilesLayout.TOP
 
         self.__filesAllowRefresh = False
         self.__filesBlockedRefresh = 0
-
-        self.__filesQuery = None
-        self.__filesFilter = None
 
         self.__filesPbMax=0
         self.__filesPbVal=0
@@ -961,6 +438,7 @@ class BCMainViewTab(QFrame):
 
         self.__filesFsWatcher = QFileSystemWatcher()
         self.__filesFsWatcherTmpList = []
+        self.__filesFsWatcherTimerCount=0
 
         self.__filesImageNfoSizeUnit='mm'
 
@@ -983,6 +461,18 @@ class BCMainViewTab(QFrame):
         self.__actionFilesApplyTabLayoutRight = QAction(buildIcon("pktk:dashboard_rl"), i18n('Right/Left'), self)
         self.__actionFilesApplyTabLayoutRight.setCheckable(True)
         self.__actionFilesApplyTabLayoutRight.setProperty('layout', BCMainViewTabFilesLayout.RIGHT)
+
+        self.__actionFilesApplyTabLayoutViewTv = QAction(buildIcon("pktk:list_view_details"), i18n('View as list'), self)
+        self.__actionFilesApplyTabLayoutViewTv.setCheckable(True)
+        self.__actionFilesApplyTabLayoutViewTv.setChecked(True)
+
+        self.__actionFilesApplyTabLayoutViewLv = QAction(buildIcon("pktk:list_view_icon"), i18n('View as grid'), self)
+        self.__actionFilesApplyTabLayoutViewLv.setCheckable(True)
+
+        groupViewMode=QActionGroup(self)
+        groupViewMode.addAction(self.__actionFilesApplyTabLayoutViewTv)
+        groupViewMode.addAction(self.__actionFilesApplyTabLayoutViewLv)
+        groupViewMode.setExclusive(True)
 
         self.__actionFilesApplyIconSize = WMenuSlider(i18n("Icon size"))
         self.__actionFilesApplyIconSize.slider().setMinimum(0)
@@ -1056,7 +546,12 @@ class BCMainViewTab(QFrame):
     def __initialise(self):
         @pyqtSlot('QString')
         def filesTabLayoutModel_Clicked(value):
-            self.setFilesTabLayout(value.property('layout'))
+            if value==self.__actionFilesApplyTabLayoutViewTv:
+                self.setFilesTabViewMode(BCMainViewTab.VIEWMODE_TV)
+            elif value==self.__actionFilesApplyTabLayoutViewLv:
+                self.setFilesTabViewMode(BCMainViewTab.VIEWMODE_LV)
+            else:
+                self.setFilesTabLayout(value.property('layout'))
 
         @pyqtSlot('QString')
         def clipboardTabLayoutModel_Clicked(value):
@@ -1127,36 +622,50 @@ class BCMainViewTab(QFrame):
 
         @pyqtSlot('QString')
         def filesDirectory_changed(value):
-            self.filesRefresh()
+            self.__filesFsWatcherTimerCount+=1
+            if self.__filesFsWatcherTimerCount==1:
+                # wait 100ms before refreshing directory content
+                # when many change occurs in a directory (example: 1000 files copied)
+                # this allows to avoid to update directory on each change signal (avoid 1000 updates)
+                QTimer.singleShot(100, filesDirectory_timerEvent)
+
+        def filesDirectory_timerEvent():
+            self.__filesFsWatcherTimerCount=0
+            self.__filesDirectoryContentChanged(self.filesPath())
 
         @pyqtSlot('QString')
         def filesIconSize_changed(value):
-            self.treeViewFiles.setIconSizeIndex(value)
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.setIconSizeIndex(value)
+                size=self.treeViewFiles.iconSize().width()
+            else:
+                self.listViewFiles.setIconSizeIndex(value)
+                size=self.listViewFiles.iconSize().width()
+
+            self.__actionFilesApplyIconSize.setLabelText(i18n(f"Icon size: {size}px"))
 
         @pyqtSlot('QString')
         def clipboardIconSize_changed(value):
             self.treeViewClipboard.setIconSizeIndex(value)
+            size=self.treeViewClipboard.iconSize().width()
+
+            self.__actionClipboardApplyIconSize.setLabelText(i18n(f"Icon size: {size}px"))
 
         @pyqtSlot('QString')
         def filesIconSize_update():
-            self.__actionFilesApplyIconSize.slider().setValue(self.treeViewFiles.iconSizeIndex())
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.__actionFilesApplyIconSize.slider().setValue(self.treeViewFiles.iconSizeIndex())
+            else:
+                self.__actionFilesApplyIconSize.slider().setValue(self.listViewFiles.iconSizeIndex())
 
         @pyqtSlot('QString')
         def clipboardIconSize_update():
             self.__actionClipboardApplyIconSize.slider().setValue(self.treeViewClipboard.iconSizeIndex())
 
         @pyqtSlot(int)
-        def treeViewFiles_iconStartLoad(nbIcons):
+        def model_iconStartLoad(nbIcons):
             self.__filesProgressStop(False)
             self.__filesProgressStart(nbIcons, i18n('Loading thumbnails %v of %m (%p%)'))
-
-        @pyqtSlot()
-        def treeViewFiles_iconStopLoad():
-            self.__filesProgressStop()
-
-        @pyqtSlot()
-        def treeViewFiles_iconProcessed():
-            self.__filesProgressSetNext()
 
         @pyqtSlot(int)
         def cbImgSizeRes_changed(index):
@@ -1164,7 +673,44 @@ class BCMainViewTab(QFrame):
                 return
             self.setFilesImageNfoSizeUnit(self.cbImgSizeRes.currentData())
 
+        def filesSelection_Changed(selection):
+            # selection has changed on treeViewFiles or listViewFiles
+            # need to synchronize selections according to current view mode
+            if self.__filesModelIgnoreSelectionSignals:
+                # currently doing some synchronization, avoid recursives calls
+                return
+
+            self.__filesModelIgnoreSelectionSignals=True
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                # selection changed on treeview, need to update listview selection
+                selectedUuid=[selectedIndex.data(BCFileModel.ROLE_FILE).uuid() for selectedIndex in self.treeViewFiles.selectionModel().selectedRows()]
+                self.listViewFiles.selectionModel().clearSelection()
+                positions=[self.listViewFiles.model().mapFromSource(index) for index in self.__filesModelLv.indexUuid(selectedUuid)]
+                selection=QItemSelection()
+                for position in positions:
+                    selection.select(position, position)
+                self.listViewFiles.selectionModel().select(selection, QItemSelectionModel.Select|QItemSelectionModel.Rows)
+            else:
+                # selection changed on listview, need to update treeview selection
+                selectedUuid=[selectedIndex.data(BCFileModel.ROLE_FILE).uuid() for selectedIndex in self.listViewFiles.selectionModel().selectedIndexes()]
+                self.treeViewFiles.selectionModel().clearSelection()
+                positions=[self.treeViewFiles.model().mapFromSource(index) for index in self.__filesModelTv.indexUuid(selectedUuid)]
+                selection=QItemSelection()
+                for position in positions:
+                    selection.select(position, position)
+                self.treeViewFiles.selectionModel().select(selection, QItemSelectionModel.Select|QItemSelectionModel.Rows)
+
+            self.__filesModelIgnoreSelectionSignals=False
+            self.__filesSelectionChanged(selection)
+
         # -- files --
+        self.__filesModelTv.iconStartLoad.connect(model_iconStartLoad)
+        self.__filesModelTv.iconStopLoad.connect(self.__filesProgressStop)
+        self.__filesModelTv.iconProcessed.connect(self.__filesProgressSetNext)
+
+        self.__filesModelLv.iconStartLoad.connect(model_iconStartLoad)
+        self.__filesModelLv.iconStopLoad.connect(self.__filesProgressStop)
+        self.__filesModelLv.iconProcessed.connect(self.__filesProgressSetNext)
 
         # hide progress bar
         self.__filesProgressStop()
@@ -1176,21 +722,29 @@ class BCMainViewTab(QFrame):
         self.__actionFilesApplyTabLayoutLeft.triggered.connect(children_Clicked)
         self.__actionFilesApplyTabLayoutBottom.triggered.connect(children_Clicked)
         self.__actionFilesApplyTabLayoutRight.triggered.connect(children_Clicked)
+
+        self.__actionFilesApplyTabLayoutViewTv.triggered.connect(children_Clicked)
+        self.__actionFilesApplyTabLayoutViewLv.triggered.connect(children_Clicked)
+
         self.__actionFilesApplyIconSize.slider().valueChanged.connect(filesIconSize_changed)
 
         # create menu for layout model button
-        menu = QMenu(self.btFilesTabLayoutModel)
-        menu.addAction(self.__actionFilesApplyTabLayoutFull)
-        menu.addAction(self.__actionFilesApplyTabLayoutTop)
-        menu.addAction(self.__actionFilesApplyTabLayoutLeft)
-        menu.addAction(self.__actionFilesApplyTabLayoutBottom)
-        menu.addAction(self.__actionFilesApplyTabLayoutRight)
-        menu.addSeparator()
-        menu.addAction(self.__actionFilesApplyIconSize)
-        menu.triggered.connect(filesTabLayoutModel_Clicked)
-        menu.aboutToShow.connect(filesIconSize_update)
+        self.__menuLayoutModelFiles = QMenu(i18n("Layout"), self.btFilesTabLayoutModel)
+        self.__menuLayoutModelFiles.setIcon(buildIcon("pktk:dashboard"))
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutFull)
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutTop)
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutLeft)
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutBottom)
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutRight)
+        self.__menuLayoutModelFiles.addSeparator()
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutViewTv)
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutViewLv)
+        self.__menuLayoutModelFiles.addSeparator()
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyIconSize)
+        self.__menuLayoutModelFiles.triggered.connect(filesTabLayoutModel_Clicked)
+        self.__menuLayoutModelFiles.aboutToShow.connect(filesIconSize_update)
 
-        self.btFilesTabLayoutModel.setMenu(menu)
+        self.btFilesTabLayoutModel.setMenu(self.__menuLayoutModelFiles)
         self.btFilesTabLayoutModel.clicked.connect(filesTabLayoutReset_Clicked)
 
         self.splitterFiles.setSizes([1000, 1000])
@@ -1210,30 +764,34 @@ class BCMainViewTab(QFrame):
         self.framePathBar.filterChanged.connect(filesFilter_Changed)
         self.framePathBar.filterVisibilityChanged.connect(filesFilterVisibility_Changed)
         self.framePathBar.setPanel(self)
-        self.treeViewFiles.focused.connect(children_Clicked)
-        self.treeViewFiles.header().sectionClicked.connect(children_Clicked)
-        self.treeViewClipboard.focused.connect(children_Clicked)
-        self.treeViewClipboard.header().sectionClicked.connect(children_Clicked)
 
-        self.treeViewFiles.header().setSectionsClickable(True)
-        self.treeViewFiles.header().sectionClicked.connect(self.__filesSort)
+        self.treeViewFiles.setModel(self.__filesModelTv)
+        self.treeViewFiles.focused.connect(children_Clicked)
         self.treeViewFiles.doubleClicked.connect(self.__filesDoubleClick)
         self.treeViewFiles.keyPressed.connect(self.__filesKeyPressed)
         self.treeViewFiles.contextMenuEvent=self.__filesContextMenuEvent
+        self.treeViewFiles.selectionModel().selectionChanged.connect(filesSelection_Changed)
+        self.treeViewFiles.header().setSectionsClickable(True)
+        self.treeViewFiles.header().sectionClicked.connect(children_Clicked)
+        self.treeViewFiles.header().sectionClicked.connect(self.__filesSort)
 
-        self.treeViewFiles.selectionModel().selectionChanged.connect(self.__filesSelectionChanged)
+        self.listViewFiles.setModel(self.__filesModelLv)
+        self.listViewFiles.focused.connect(children_Clicked)
+        self.listViewFiles.doubleClicked.connect(self.__filesDoubleClick)
+        self.listViewFiles.keyPressed.connect(self.__filesKeyPressed)
+        self.listViewFiles.contextMenuEvent=self.__filesContextMenuEvent
+        self.listViewFiles.selectionModel().selectionChanged.connect(filesSelection_Changed)
 
-        self.treeViewFiles.iconStartLoad.connect(treeViewFiles_iconStartLoad)
-        self.treeViewFiles.iconStopLoad.connect(treeViewFiles_iconStopLoad)
-        self.treeViewFiles.iconProcessed.connect(treeViewFiles_iconProcessed)
+        self.treeViewFiles.columnVisibilityChanged.connect(self.listViewFiles.setColumnsVisibility)
+        self.treeViewFiles.columnPositionChanged.connect(self.listViewFiles.setColumnsPosition)
+
+        self.treeViewClipboard.focused.connect(children_Clicked)
+        self.treeViewClipboard.header().sectionClicked.connect(children_Clicked)
 
         self.widgetFilePreview.setContextMenuPolicy(Qt.DefaultContextMenu)
         self.widgetFilePreview.contextMenuEvent = self.__filesContextMenuInformations
 
-        self.treeViewFiles.beginUpdate()
-        self.__filesAddParentDirectory()
         self.treeViewFiles.resizeColumns(False)
-        self.treeViewFiles.endUpdate()
 
         self.__filesDirTreeModel.setRootPath(QDir.currentPath())
         self.__filesDirTreeModel.setFilter(QDir.AllDirs|QDir.Dirs|QDir.Drives|QDir.NoSymLinks|QDir.NoDotAndDotDot)
@@ -1259,17 +817,18 @@ class BCMainViewTab(QFrame):
         self.treeViewClipboard.contextMenuEvent=self.__clipboardContextMenuEvent
 
         # create menu for layout model button
-        menuC = QMenu(self.btClipboardTabLayoutModel)
-        menuC.addAction(self.__actionClipboardApplyTabLayoutTop)
-        menuC.addAction(self.__actionClipboardApplyTabLayoutLeft)
-        menuC.addAction(self.__actionClipboardApplyTabLayoutBottom)
-        menuC.addAction(self.__actionClipboardApplyTabLayoutRight)
-        menuC.addSeparator()
-        menuC.addAction(self.__actionClipboardApplyIconSize)
-        menuC.triggered.connect(clipboardTabLayoutModel_Clicked)
-        menuC.aboutToShow.connect(clipboardIconSize_update)
+        self.__menuLayoutModelClipboard = QMenu(i18n("Layout"), self.btClipboardTabLayoutModel)
+        self.__menuLayoutModelClipboard.setIcon(buildIcon("pktk:dashboard"))
+        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutTop)
+        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutLeft)
+        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutBottom)
+        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutRight)
+        self.__menuLayoutModelClipboard.addSeparator()
+        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyIconSize)
+        self.__menuLayoutModelClipboard.triggered.connect(clipboardTabLayoutModel_Clicked)
+        self.__menuLayoutModelClipboard.aboutToShow.connect(clipboardIconSize_update)
 
-        self.btClipboardTabLayoutModel.setMenu(menuC)
+        self.btClipboardTabLayoutModel.setMenu(self.__menuLayoutModelClipboard)
         self.btClipboardTabLayoutModel.clicked.connect(clipboardTabLayoutReset_Clicked)
         self.btClipboardTabLayoutModel.clicked.connect(children_Clicked)
 
@@ -1284,9 +843,98 @@ class BCMainViewTab(QFrame):
         if self.__isHighlighted:
             self.highlightedStatusChanged.emit(self)
 
+            if not isinstance(QApplication.focusWidget(), QLineEdit):
+                if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                    self.treeViewFiles.setFocus()
+                else:
+                    self.listViewFiles.setFocus()
+
 
 
     # -- PRIVATE FILES ---------------------------------------------------------
+
+    def __filesDirectoryContentChanged(self, path):
+        """Content of directory has changed (from __filesFsWatcher)
+
+        Do comparison with current directory content and add/remove file from model
+        """
+        # build regex to prefilter files if needed
+        if self.__uiController.optionViewFileManagedOnly():
+            extensionList=[fr'\.{extension}' for extension in BCFileManagedFormat.list()]
+
+            if self.__uiController.optionViewFileBackup():
+                bckSufRe=BCFileManagedFormat.backupSuffixRe()
+                extensionList+=[fr'\.{extension}{bckSufRe}' for extension in BCFileManagedFormat.list()]
+
+            managedFilesOnly = re.compile(f"({'|'.join(extensionList)})$", re.I)
+        else:
+            managedFilesOnly=None
+
+        includeHidden=self.__uiController.optionViewFileHidden()
+
+        # same search rule than in BCFileList.searchExecute()
+        # if updated in BCFileList, must be updated here too
+        foundFiles=[]
+        foundDirectories=[]
+        with os.scandir(path) as files:
+            for foundFile in files:
+                fullPathName = os.path.join(path, foundFile.name)
+                if includeHidden or not QFileInfo(fullPathName).isHidden():
+                    if foundFile.is_file():
+                        # check if file name match given pattern (if pattern) and is not already in file list
+                        if (managedFilesOnly is None or managedFilesOnly.search(foundFile.name)):
+                            foundFiles.append(fullPathName)
+                    elif foundFile.is_dir():
+                        foundDirectories.append(fullPathName)
+
+        # now we have a list of files+directories, matching current rules
+        toAdd=[]
+        toRemove=[]
+        toUpdate=[]
+        toCheck=[]
+
+        # check if found files&directories are already in current view
+        # if not, they have to be added, otherwise ignore it
+        for fullPathName in foundFiles:
+            uuid=BCBaseFile.getUuid(fullPathName)
+            if self.__filesQuery.inResults(uuid)==-1:
+                toAdd.append(BCFile(fullPathName))
+            else:
+                toCheck.append(uuid)
+
+        for fullPathName in foundDirectories:
+            uuid=BCBaseFile.getUuid(fullPathName)
+            if self.__filesQuery.inResults(uuid)==-1:
+                toAdd.append(BCDirectory(fullPathName))
+            else:
+                toCheck.append(uuid)
+
+        # check if files&directories from current view are already in current view
+        # if not, they have to be added, otherwise ignore it
+        for file in self.__filesQuery.files():
+            if not file.uuid() in toCheck:
+                toRemove.append(file)
+            elif isinstance(file, BCFile):
+                # need to check if file has been modified...
+                newFile=BCFile(file.fullPathName())
+                if newFile.qHash()!=file.qHash():
+                    toUpdate.append(newFile)
+
+        refresh=False
+        # now we have list of files to add/remove to current view
+        if len(toAdd)>0:
+            self.__filesQuery.addResults(toAdd)
+            refresh=True
+        if len(toRemove)>0:
+            self.__filesQuery.removeResults(toRemove)
+            refresh=True
+        if len(toUpdate)>0:
+            self.__filesQuery.updateResults(toUpdate)
+            refresh=True
+        # sort with current selection kept (do not sort directly on BCFileList)
+        if refresh:
+            self.__filesSort()
+
 
     def __filesSort(self, index=None):
         """Sort files according to column index"""
@@ -1303,32 +951,46 @@ class BCMainViewTab(QFrame):
 
         ascending = (self.treeViewFiles.header().sortIndicatorOrder() == Qt.AscendingOrder)
 
-        if index == BCMainViewFiles.COLNUM_NAME or index == BCMainViewFiles.COLNUM_ICON:
+        if index == BCFileModel.COLNUM_FILE_PATH:
+            self.__filesQuery.addSortRule([
+                    BCFileListSortRule(BCFileProperty.PATH, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_NAME, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_DATE, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_SIZE, ascending)
+                ])
+        elif index in (BCFileModel.COLNUM_FILE_NAME, BCFileModel.COLNUM_ICON, BCFileModel.COLNUM_FILE_BASENAME):
             self.__filesQuery.addSortRule([
                     BCFileListSortRule(BCFileProperty.FILE_NAME, ascending),
                     BCFileListSortRule(BCFileProperty.FILE_DATE, ascending),
                     BCFileListSortRule(BCFileProperty.FILE_SIZE, ascending)
                 ])
-        elif index == BCMainViewFiles.COLNUM_TYPE:
+        elif index == BCFileModel.COLNUM_FILE_EXTENSION:
+            self.__filesQuery.addSortRule([
+                    BCFileListSortRule(BCFileProperty.FILE_EXTENSION, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_NAME, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_DATE, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_SIZE, ascending)
+                ])
+        elif index in (BCFileModel.COLNUM_FILE_FORMAT_SHORT, BCFileModel.COLNUM_FILE_FORMAT_LONG):
             self.__filesQuery.addSortRule([
                     BCFileListSortRule(BCFileProperty.FILE_FORMAT, ascending),
                     BCFileListSortRule(BCFileProperty.FILE_NAME, ascending),
                     BCFileListSortRule(BCFileProperty.FILE_DATE, ascending),
                     BCFileListSortRule(BCFileProperty.FILE_SIZE, ascending)
                 ])
-        elif index == BCMainViewFiles.COLNUM_SIZE:
+        elif index in (BCFileModel.COLNUM_FILE_DATETIME, BCFileModel.COLNUM_FILE_DATE, BCFileModel.COLNUM_FILE_TIME):
+            self.__filesQuery.addSortRule([
+                    BCFileListSortRule(BCFileProperty.FILE_DATE, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_NAME, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_SIZE, ascending)
+                ])
+        elif index == BCFileModel.COLNUM_FILE_SIZE:
             self.__filesQuery.addSortRule([
                     BCFileListSortRule(BCFileProperty.FILE_SIZE, ascending),
                     BCFileListSortRule(BCFileProperty.FILE_NAME, ascending),
                     BCFileListSortRule(BCFileProperty.FILE_DATE, ascending)
                 ])
-        elif index == BCMainViewFiles.COLNUM_DATE:
-            self.__filesQuery.addSortRule([
-                    BCFileListSortRule(BCFileProperty.FILE_DATE, ascending),
-                    BCFileListSortRule(BCFileProperty.FILE_NAME, ascending),
-                    BCFileListSortRule(BCFileProperty.FILE_SIZE, ascending)
-                ])
-        elif index == BCMainViewFiles.COLNUM_WIDTH:
+        elif index in (BCFileModel.COLNUM_IMAGE_WIDTH, BCFileModel.COLNUM_IMAGE_SIZE):
             self.__filesQuery.addSortRule([
                     BCFileListSortRule(BCFileProperty.IMAGE_WIDTH, ascending),
                     BCFileListSortRule(BCFileProperty.IMAGE_HEIGHT, ascending),
@@ -1336,44 +998,65 @@ class BCMainViewTab(QFrame):
                     BCFileListSortRule(BCFileProperty.FILE_DATE, ascending),
                     BCFileListSortRule(BCFileProperty.FILE_SIZE, ascending)
                 ])
-        elif index == BCMainViewFiles.COLNUM_HEIGHT:
+        elif index == BCFileModel.COLNUM_IMAGE_HEIGHT:
             self.__filesQuery.addSortRule([
                     BCFileListSortRule(BCFileProperty.IMAGE_HEIGHT, ascending),
                     BCFileListSortRule(BCFileProperty.IMAGE_WIDTH, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_NAME, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_DATE, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_SIZE, ascending)
+                ])
+        elif index in (BCFileModel.COLNUM_IMAGE_RATIO, BCFileModel.COLNUM_IMAGE_ORIENTATION):
+            self.__filesQuery.addSortRule([
+                    BCFileListSortRule(BCFileProperty.IMAGE_RATIO, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_NAME, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_DATE, ascending),
+                    BCFileListSortRule(BCFileProperty.FILE_SIZE, ascending)
+                ])
+        elif index in (BCFileModel.COLNUM_IMAGE_PIXELS, BCFileModel.COLNUM_IMAGE_PIXELSMP):
+            self.__filesQuery.addSortRule([
+                    BCFileListSortRule(BCFileProperty.IMAGE_PIXELS, ascending),
                     BCFileListSortRule(BCFileProperty.FILE_NAME, ascending),
                     BCFileListSortRule(BCFileProperty.FILE_DATE, ascending),
                     BCFileListSortRule(BCFileProperty.FILE_SIZE, ascending)
                 ])
 
-        self.__filesQuery.sort()
+        # when sort is applied, we want to keep current selected items
+        # disabled selection signals (avoid flickering)
+        self.__filesModelIgnoreSelectionSignals=True
+        # get current selected files uuid
+        selectedUuid=[selectedIndex.data(BCFileModel.ROLE_FILE).uuid() for selectedIndex in self.treeViewFiles.selectionModel().selectedRows()]
+        # disable treeview update t oavoid flickering effect
+        self.treeViewFiles.setUpdatesEnabled(False)
+        self.listViewFiles.setUpdatesEnabled(False)
+        # clear current selection
+        self.treeViewFiles.selectionModel().clearSelection()
+        # do sort (selection will be lost)
+        self.__filesQuery.sortResults()
+        # find current index in model for (previously selected) uuid
+        # need to do conversion with proxymodel
+        positions=[self.treeViewFiles.model().mapFromSource(index) for index in self.__filesModelTv.indexUuid(selectedUuid)]
+        # rebuild selection
+        selection=QItemSelection()
+        for position in positions:
+            selection.select(position, position)
+        self.treeViewFiles.selectionModel().select(selection, QItemSelectionModel.Select|QItemSelectionModel.Rows)
+        self.__filesModelIgnoreSelectionSignals=False
+        self.treeViewFiles.setUpdatesEnabled(True)
+        self.listViewFiles.setUpdatesEnabled(True)
         self.__filesUpdate()
 
 
     def __filesAddParentDirectory(self):
         """Add parent directory to treeview"""
         if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
-            self.treeViewFiles.addFile(BCDirectory(os.path.join(self.filesPath(), '..')))
+            self.__filesQuery.addResults(BCDirectory(os.path.join(self.filesPath(), '..')))
 
 
     def __filesUpdate(self):
         """Update file list from current fileQuery object"""
         if self.__filesQuery is None:
             return
-
-        if self.__filesQuery.nbFiles() > 1500:
-            self.__filesProgressStart(0,i18n('Loading list'))
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-
-        self.treeViewFiles.beginUpdate()
-
-        # clear all content
-        self.treeViewFiles.clear()
-        QApplication.instance().processEvents()
-
-        # add parent directory '..'
-        self.__filesAddParentDirectory()
-
-        self.__filesFilter = None
 
         if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
             self.treeViewFiles.setShowPath(False)
@@ -1410,38 +1093,15 @@ class BCMainViewTab(QFrame):
                 self.__filesCurrentStats['nbFiles']+=1
                 self.__filesCurrentStats['sizeFiles']+=file.size()
 
-            self.treeViewFiles.addFile(file)
-
-
         self.__filesCurrentStats['nbTotal'] = self.__filesCurrentStats['nbDir'] + self.__filesCurrentStats['nbFiles']
         self.__filesUpdateStats()
         self.__filesApplyFilter(None)
 
         self.treeViewFiles.resizeColumns(True)
 
-        self.__filesProgressStop()
 
-        self.treeViewFiles.endUpdate()
-        if self.__filesQuery.nbFiles() > 1500:
-            QApplication.restoreOverrideCursor()
-
-
-    def __filesRefresh(self, fileQuery=None):
+    def __filesRefresh(self):
         """update file list with current path"""
-        def fileQueryStepExecuted(value):
-            if value[0] == BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS:
-                # in this case, value[1] returns number of files to scan
-                if value[1] > 500:
-                    self.__filesProgressStart(value[1], i18n('Analyzing file %v of %m (%p%)'))
-            elif value[0] == BCFileList.STEPEXECUTED_ANALYZE_METADATA:
-                # in this case, scanning is finished
-                if self.__filesPbVisible:
-                    self.__filesProgressStop()
-            elif value[0] == BCFileList.STEPEXECUTED_PROGRESS_ANALYZE:
-                # in this case, value[1] give processed index
-                if self.__filesPbVisible:
-                    self.__filesProgressSetNext()
-
         if not self.isVisible():
             # if panel is not visible, do not update file list
             self.__filesAllowRefresh = False
@@ -1449,33 +1109,29 @@ class BCMainViewTab(QFrame):
             return
 
         if self.framePathBar.mode() == BCWPathBar.MODE_SAVEDVIEW:
-            if self.__filesQuery is None:
-                self.__filesQuery = BCFileList()
-
             refType = self.__uiController.quickRefType(self.filesPath())
 
             if refType == BCWPathBar.QUICKREF_RESERVED_LAST_OPENED:
-                self.__filesQuery.setResult(self.filesLastDocumentsOpened().list())
+                self.__filesQuery.setResults(self.filesLastDocumentsOpened().list())
             elif refType == BCWPathBar.QUICKREF_RESERVED_LAST_SAVED:
-                self.__filesQuery.setResult(self.filesLastDocumentsSaved().list())
+                self.__filesQuery.setResults(self.filesLastDocumentsSaved().list())
             elif refType == BCWPathBar.QUICKREF_RESERVED_LAST_ALL:
-                self.__filesQuery.setResult(list(set(self.filesLastDocumentsOpened().list() + self.filesLastDocumentsSaved().list())))
+                self.__filesQuery.setResults(list(set(self.filesLastDocumentsOpened().list() + self.filesLastDocumentsSaved().list())))
             elif refType == BCWPathBar.QUICKREF_RESERVED_HISTORY:
-                self.__filesQuery.setResult([directory for directory in self.filesHistory().list() if not directory.startswith('@')])
+                self.__filesQuery.setResults([directory for directory in self.filesHistory().list() if not directory.startswith('@')])
             elif refType == BCWPathBar.QUICKREF_SAVEDVIEW_LIST:
-                self.__filesQuery.setResult(self.filesSavedView().get())
+                self.__filesQuery.setResults(self.filesSavedView().get())
             elif refType == BCWPathBar.QUICKREF_RESERVED_BACKUPFILTERDVIEW:
-                self.__filesQuery.setResult(self.filesBackupFilterDView().list())
+                self.__filesQuery.setResults(self.filesBackupFilterDView().list())
             elif refType == BCWPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW:
-                self.__filesQuery.setResult(self.filesLayerFilterDView().list())
-
+                self.__filesQuery.setResults(self.filesLayerFilterDView().list())
         else:
             path=self.filesPath()
             if not os.path.isdir(path):
                 # directory has been deleted?
                 # get parent; at least go up until root ^_^''
                 while True:
-                    path=str(Path(path).parent)
+                    path=f"{Path(path).parent}"
 
                     if os.path.isdir(path):
                         break
@@ -1485,32 +1141,17 @@ class BCMainViewTab(QFrame):
                 return
 
             # MODE_PATH
-            if fileQuery is None:
-                if self.__filesQuery is None:
-                    self.__filesQuery = BCFileList()
-                    self.__filesQuery.addPath(BCFileListPath(path,
-                                                             False,
-                                                             self.__uiController.optionViewFileHidden(),
-                                                             self.__uiController.optionViewFileManagedOnly(),
-                                                             self.__uiController.optionViewFileBackup()))
-                    self.__filesQuery.setIncludeDirectories(True)
-            elif not isinstance(fileQuery, BCFileList):
-                raise EInvalidType('Given `fileQuery` must be a <BCFileList>')
-            else:
-                self.__filesQuery = fileQuery
+            self.__filesQuery.clearSearchPaths()
+            self.__filesQuery.addSearchPaths(BCFileListPath(path,
+                                                     False,
+                                                     self.__uiController.optionViewFileHidden(),
+                                                     self.__uiController.optionViewFileManagedOnly(),
+                                                     self.__uiController.optionViewFileBackup()))
 
-            try:
-                # ensure there's no current connection before create a new one
-                self.__filesQuery.stepExecuted.disconnect(fileQueryStepExecuted)
-            except:
-                pass
-            self.__filesQuery.stepExecuted.connect(fileQueryStepExecuted)
-
-            self.treeViewFiles.beginUpdate()
-            self.treeViewFiles.clear()
-            self.treeViewFiles.endUpdate()
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            self.__filesQuery.execute()
+            self.__filesQuery.clearSortRules()
+            self.__filesQuery.searchExecute(True, True, [BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS, BCFileList.STEPEXECUTED_ANALYZE_METADATA, BCFileList.STEPEXECUTED_PROGRESS_ANALYZE])
+            self.__filesAddParentDirectory()
             QApplication.restoreOverrideCursor()
 
         # sort files according to columns + add to treeview
@@ -1593,7 +1234,7 @@ class BCMainViewTab(QFrame):
             if self.__uiController.commandFileDefaultAction(self.__filesSelected[0]):
                 self.__uiController.commandQuit()
         elif not item is None:
-            data = item.siblingAtColumn(BCMainViewFiles.COLNUM_NAME).data(BCMainViewFiles.USERROLE_FILE)
+            data = item.data(BCFileModel.ROLE_FILE)
 
             if self.__uiController.commandFileDefaultAction(data):
                 self.__uiController.commandQuit()
@@ -1719,11 +1360,16 @@ class BCMainViewTab(QFrame):
             self.__uiController.clipboard().pushBackToClipboard(item)
             Krita.instance().action('paste_new').trigger()
 
+        if self.__filesModelIgnoreSelectionSignals:
+            return
+
         self.__filesCurrentStats['nbSelectedFiles'] = 0
         self.__filesCurrentStats['nbSelectedDir'] = 0
         self.__filesCurrentStats['nbSelectedTotal'] = 0
         self.__filesCurrentStats['sizeSelectedFiles'] = 0
 
+        # consider at this point treeViewFiles & listViewFiles have same selection
+        # and then get selection from treeViewFiles
         self.__filesSelected = self.treeViewFiles.selectedFiles()
         self.__filesSelectedNbDir = 0
         self.__filesSelectedNbFile = 0
@@ -1753,6 +1399,12 @@ class BCMainViewTab(QFrame):
         cleanupNfoFileRows()
         # reset animation values
         self.wFilesPreview.hideAnimatedFrames()
+
+        # Disable page updates while preparing content (avoid flickering effect)
+        self.pageFileNfoGeneric.setUpdatesEnabled(False)
+        self.pageFileNfoImage.setUpdatesEnabled(False)
+        self.pageFileNfoKraAbout.setUpdatesEnabled(False)
+        self.pageFileNfoKraAuthor.setUpdatesEnabled(False)
 
         # ------------------- !!!!! Here start the noodle spaghetti !!!!! -------------------
         if self.__filesSelectedNbTotal == 1:
@@ -1810,34 +1462,29 @@ class BCMainViewTab(QFrame):
                     self.lblOwner.setToolTip(self.lblOwner.text())
 
             # Search for backup files...
-            backupSuffix = Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.')
-            filePattern = file.name().replace('.', r'\.')
-            rePattern = f"re/i:{filePattern}(?:\.\d+)?{backupSuffix}$"
-            searchBackupRule = BCFileListRule()
-            searchBackupRule.setName((rePattern, 'match'))
+            backupSuffix = re.escape(Krita.instance().readSetting('', 'backupfilesuffix', '~'))
+            filePattern = re.escape(file.name())
+            rePattern = f"{filePattern}(?:\.\d+)?{backupSuffix}$"
+            backupList=[]
+            pathName=file.path()
+            with os.scandir(pathName) as files:
+                for foundFile in files:
+                    if re.match(rePattern, foundFile.name):
+                        backupList.append(BCFile(os.path.join(pathName, foundFile.name)))
 
-            backupList = BCFileList()
-            backupList.addPath(file.path())
-            backupList.addRule(searchBackupRule)
-            backupList.addSortRule(BCFileListSortRule(BCFileProperty.FILE_DATE, False))
-
-            backupList.execute()
-
-            if backupList.nbFiles()>0:
-                backupList.sort()
-
+            if len(backupList)>0:
+                backupList.sort(key=lambda file: file.name())
                 filterButton = QPushButton(i18n("Show"))
                 filterButton.setToolTip(i18n("Show in opposite panel"))
                 filterButton.setStatusTip(i18n("Show backup files list in opposite panel"))
                 filterButton.clicked.connect(applyBackupFilter)
-
                 addSeparator(self.scrollAreaWidgetContentsNfoGeneric)
-                if backupList.nbFiles() == 1:
+                if len(backupList) == 1:
                     addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n("1 backup file found"), filterButton)
                 else:
-                    addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n(f"{backupList.nbFiles()} backup files found"), filterButton)
+                    addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n(f"{len(backupList)} backup files found"), filterButton)
 
-                for fileBackup in backupList.files():
+                for fileBackup in backupList:
                     addSeparator(self.scrollAreaWidgetContentsNfoGeneric, shifted=True)
                     addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup file"), fileBackup.name(), shifted=True)
 
@@ -1903,11 +1550,7 @@ class BCMainViewTab(QFrame):
                 self.__filesUpdateImageNfoSizeUnit()
 
                 ratio=file.getProperty(BCFileProperty.IMAGE_RATIO.value)
-                orientation=''
-                if ratio>1:
-                    orientation=i18n("Landscape")
-                elif ratio<1:
-                    orientation=i18n("Portrait")
+                orientation=ratioOrientation(ratio)
 
                 if orientation!='':
                     orientation=f" ({orientation})"
@@ -1915,7 +1558,7 @@ class BCMainViewTab(QFrame):
                 self.lblImgRatio.setText(f"{ratio:.04f}{orientation}")
 
                 nbPixels=file.getProperty(BCFileProperty.IMAGE_PIXELS.value)
-                self.lblImgNbPixels.setText(f"{nbPixels} (~{ceil(10*nbPixels/1000000)/10:.02f}MP)")
+                self.lblImgNbPixels.setText(f"{nbPixels} (~{ceil(nbPixels/100000)/10:.02f}MP)")
 
                 if 'colorType' in imgNfo:
                     if 'paletteSize' in imgNfo:
@@ -1976,7 +1619,7 @@ class BCMainViewTab(QFrame):
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Interlace mode', '-')
                 elif file.format() == BCFileManagedFormat.ORA:
                     if imgNfo['document.layerCount'] > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', str(imgNfo['document.layerCount']))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', f"{imgNfo['document.layerCount']}")
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
                 elif file.format() in [BCFileManagedFormat.GIF,
@@ -2036,7 +1679,7 @@ class BCMainViewTab(QFrame):
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
                     if len(imgNfo['document.usedFonts']) > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', str(len(imgNfo['document.usedFonts'])))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', f"{len(imgNfo['document.usedFonts'])}")
 
                         fontList=QFontDatabase().families()
 
@@ -2051,7 +1694,7 @@ class BCMainViewTab(QFrame):
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
                     if imgNfo['document.layerCount'] > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', str(imgNfo['document.layerCount']))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', f"{imgNfo['document.layerCount']}")
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
 
@@ -2097,7 +1740,7 @@ class BCMainViewTab(QFrame):
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
                     if imgNfo['document.referenceImages.count'] > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', str(imgNfo['document.referenceImages.count']))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', f"{imgNfo['document.referenceImages.count']}")
 
                         refNumber=1
                         for image in imgNfo['document.referenceImages.data']:
@@ -2114,14 +1757,14 @@ class BCMainViewTab(QFrame):
 
                     addSeparator(self.scrollAreaWidgetContentsNfoImage)
                     if len(imgNfo['document.embeddedPalettes']) > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', str(len(imgNfo['document.embeddedPalettes'])))
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', f"{len(imgNfo['document.embeddedPalettes'])}")
 
                         for paletteName in imgNfo['document.embeddedPalettes']:
                             palette = imgNfo['document.embeddedPalettes'][paletteName]
                             addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
                             addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Palette'), paletteName, shifted=True)
                             addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Dimension'), f'{palette["columns"]}x{palette["rows"]}', shifted=True)
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Colors'), str(palette["colors"]), shifted=True)
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Colors'), f"{palette['colors']}", shifted=True)
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', 'None')
 
@@ -2248,6 +1891,12 @@ class BCMainViewTab(QFrame):
             else:
                 self.wFilesPreview.hidePreview("No image selected")
 
+        # Enable page updates again
+        self.pageFileNfoGeneric.setUpdatesEnabled(True)
+        self.pageFileNfoImage.setUpdatesEnabled(True)
+        self.pageFileNfoKraAbout.setUpdatesEnabled(True)
+        self.pageFileNfoKraAuthor.setUpdatesEnabled(True)
+
 
     def __filesUpdateStats(self):
         """Update current status bar with files statistics"""
@@ -2267,7 +1916,7 @@ class BCMainViewTab(QFrame):
 
                 if self.__filesCurrentStats['nbSelectedDir'] > 0:
                     text+=i18n(f"{self.__filesCurrentStats['nbSelectedDir']} out of ")
-                text+=str(self.__filesCurrentStats[f'nb{key}Dir'])
+                text+=f"{self.__filesCurrentStats[f'nb{key}Dir']}"
                 statusFileText.append(text)
 
             if self.__filesCurrentStats[f'nb{key}Files'] > 0:
@@ -2275,7 +1924,7 @@ class BCMainViewTab(QFrame):
 
                 if self.__filesCurrentStats['nbSelectedFiles'] > 0:
                     text+=i18n(f"{self.__filesCurrentStats['nbSelectedFiles']} out of ")
-                text+=str(self.__filesCurrentStats[f'nb{key}Files'])
+                text+=f"{self.__filesCurrentStats[f'nb{key}Files']}"
 
                 if self.__filesCurrentStats[f'size{key}Files'] > 0:
                     text+=' ('
@@ -2320,6 +1969,7 @@ class BCMainViewTab(QFrame):
     def __filesApplyFilter(self, filter):
         """Apply filter to current file list"""
         self.treeViewFiles.setFilter(filter)
+        self.listViewFiles.setFilter(filter)
 
         self.__filesCurrentStats['nbFilteredFiles'] = 0
         self.__filesCurrentStats['nbFilteredDir'] = 0
@@ -2329,7 +1979,7 @@ class BCMainViewTab(QFrame):
         if self.filesFilterVisible() and self.filesFilter() != '':
             filterModel = self.treeViewFiles.filterModel()
             for rowIndex in range(filterModel.rowCount()):
-                file = filterModel.index(rowIndex, BCMainViewFiles.COLNUM_NAME).data(BCMainViewFiles.USERROLE_FILE)
+                file = filterModel.index(rowIndex, BCFileModel.COLNUM_FILE_NAME).data(BCFileModel.ROLE_FILE)
 
                 if file.format() == BCFileManagedFormat.DIRECTORY:
                     if file.name() != '..':
@@ -2359,7 +2009,7 @@ class BCMainViewTab(QFrame):
 
         self.__filesPbMax = maxValue
         self.__filesPbVal = 0
-        self.__filesPbInc = max(1, round(maxValue/400, 0))
+        self.__filesPbInc = max(1, round(maxValue/100, 0))
         self.__filesPbDispCount+=1
         self.__filesPbVisible=True
 
@@ -2395,8 +2045,28 @@ class BCMainViewTab(QFrame):
     def __filesProgressSetNext(self):
         """set progress bar next value"""
         self.__filesPbVal+=1
-        if self.__filesPbVal >=  self.pbProgress.value() + self.__filesPbInc:
+        if self.__filesPbVal >= self.pbProgress.value() + self.__filesPbInc:
             self.pbProgress.setValue(self.__filesPbVal)
+            self.pbProgress.update()
+
+
+    def __fileQueryStepExecuted(self, value):
+        """A step fril BCFileList execute has been executed"""
+        if value[0] == BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS:
+            # in this case, value[1] returns number of files to scan
+            if value[1] > 500:
+                self.__filesProgressStart(value[1], i18n('Analyzing file %v of %m (%p%)'))
+            else:
+                self.__filesProgressStart(0, i18n('Analyzing files'))
+        elif value[0] == BCFileList.STEPEXECUTED_ANALYZE_METADATA:
+            # in this case, scanning is finished
+            if self.__filesPbVisible:
+                self.__filesProgressStop(False)
+                self.__filesProgressStart(0, i18n('Loading list'))
+        elif value[0] == BCFileList.STEPEXECUTED_PROGRESS_ANALYZE:
+            # in this case, value[2] give processed index
+            if self.__filesPbVisible:
+                self.__filesProgressSetValue(value[2])
 
 
     def __filesContextMenuInformations(self, event):
@@ -2848,6 +2518,36 @@ class BCMainViewTab(QFrame):
                 self.cbImgSizeRes.setCurrentIndex(index)
                 return
 
+
+    def __filesSwitchViewFileMode(self, mode):
+        """Switch view file mode
+
+        Given `mode` can be:
+        - BCMainViewTab.VIEWMODE_TV
+        - BCMainViewTab.VIEWMODE_LV
+
+        """
+        if not mode in (BCMainViewTab.VIEWMODE_TV, BCMainViewTab.VIEWMODE_LV):
+            return
+
+        self.stackFiles.setCurrentIndex(mode)
+
+        if mode==BCMainViewTab.VIEWMODE_TV:
+            self.__actionFilesApplyIconSize.slider().setMinimum(0)
+            self.__actionFilesApplyIconSize.slider().setMaximum(8)
+            self.setFilesIconSizeTv(self.filesIconSizeTv())
+            self.__actionFilesApplyTabLayoutViewTv.setChecked(True)
+            if self.listViewFiles.hasFocus():
+                self.treeViewFiles.setFocus()
+        else:
+            self.setFilesIconSizeLv(self.filesIconSizeLv())
+            self.__actionFilesApplyIconSize.slider().setMinimum(0)
+            self.__actionFilesApplyIconSize.slider().setMaximum(5)
+            self.__actionFilesApplyTabLayoutViewLv.setChecked(True)
+            if self.treeViewFiles.hasFocus():
+                self.listViewFiles.setFocus()
+
+
     # -- PRIVATE CLIPBOARD -----------------------------------------------------
 
     def __clipboardUpdateDownloadInformation(self, item):
@@ -3161,11 +2861,8 @@ class BCMainViewTab(QFrame):
 
     def close(self):
         """When window is about to be closed, execute some cleanup/backup/stuff before exiting BuliCommander"""
-        # will stop thumbnail generation
-        self.treeViewFiles.beginUpdate()
         # clear all content
-        self.treeViewFiles.clear()
-        self.treeViewFiles.endUpdate()
+        self.__filesQuery.clear()
         super(BCMainViewTab, self).close()
 
 
@@ -3288,14 +2985,16 @@ class BCMainViewTab(QFrame):
 
     def updateFileSizeUnit(self):
         """Update widget if file size unit has been modified"""
-        self.treeViewFiles.updateFileSizeUnit()
         self.__filesSelectionChanged(None)
 
 
     def selectAll(self):
         """Select all items in current tab"""
         if self.tabActive()==BCMainViewTabTabs.FILES:
-            self.treeViewFiles.selectAll()
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.selectAll()
+            else:
+                self.listViewFiles.selectAll()
         elif self.tabActive()==BCMainViewTabTabs.CLIPBOARD:
             self.treeViewClipboard.selectAll()
 
@@ -3303,7 +3002,10 @@ class BCMainViewTab(QFrame):
     def selectNone(self):
         """Unselect all items in current tab"""
         if self.tabActive()==BCMainViewTabTabs.FILES:
-            self.treeViewFiles.clearSelection()
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.clearSelection()
+            else:
+                self.listViewFiles.clearSelection()
         elif self.tabActive()==BCMainViewTabTabs.CLIPBOARD:
             self.treeViewClipboard.clearSelection()
 
@@ -3311,23 +3013,23 @@ class BCMainViewTab(QFrame):
     def selectInvert(self):
         """Invert selection all items in current tab"""
         if self.tabActive()==BCMainViewTabTabs.FILES:
-            self.treeViewFiles.invertSelection()
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.invertSelection()
+            else:
+                self.listViewFiles.invertSelection()
         elif self.tabActive()==BCMainViewTabTabs.CLIPBOARD:
             self.treeViewClipboard.invertSelection()
 
 
     # -- PUBLIC FILES ----------------------------------------------------------
 
-    def filesRefresh(self, resetQuery=True):
+    def filesRefresh(self):
         """Update current file list"""
         if not self.__filesAllowRefresh:
             self.__filesBlockedRefresh+=1
             return
 
-        if resetQuery:
-            self.__filesQuery = None
-
-        self.__filesRefresh(None)
+        self.__filesRefresh()
 
 
     def filesRefreshFilter(self, filter=None):
@@ -3678,12 +3380,12 @@ class BCMainViewTab(QFrame):
         """Return current column sort status (True=ascending)"""
         index = self.treeViewFiles.header().sortIndicatorSection()
         if index is None:
-            index = BCMainViewFiles.COLNUM_NAME
+            index = BCFileModel.COLNUM_FILE_NAME
         return [index ,(self.treeViewFiles.header().sortIndicatorOrder() == Qt.AscendingOrder)]
 
 
     def setFilesColumnSort(self, value):
-        """Set current column sort status
+        """Set current columns sort status
 
         Given `value` is a list or a tuple(int, bool):
          - column index (int, 0 to 6)
@@ -3698,7 +3400,7 @@ class BCMainViewTab(QFrame):
         if not isinstance(value[1], bool):
             raise EInvalidType('Given `value[column]` must be <bool>')
 
-        if value[0] < 0 or value[0] > 6:
+        if value[0] < 0 or value[0] > self.treeViewFiles.header().count():
             raise EInvalidValue('Given `value[column]` must be a valid column number')
 
         if value[1]:
@@ -3717,7 +3419,7 @@ class BCMainViewTab(QFrame):
 
 
     def setFilesColumnOrder(self, value):
-        """Set current column order
+        """Set current columns order
 
         Given `value` is a list or logical index
         Index in list provide position in header
@@ -3727,7 +3429,7 @@ class BCMainViewTab(QFrame):
 
         for columnTo, logicalIndex in enumerate(value):
             columnFrom = self.treeViewFiles.header().visualIndex(logicalIndex)
-            self.treeViewFiles.header().moveSection(columnFrom, columnTo)
+            self.treeViewFiles.setColumnPosition(columnFrom, columnTo)
 
 
     def filesColumnSize(self):
@@ -3736,7 +3438,7 @@ class BCMainViewTab(QFrame):
 
 
     def setFilesColumnSize(self, value):
-        """Set current column size
+        """Set current columns size
 
         Given `value` is a list or logical index
         Index in list provide position in header
@@ -3755,14 +3457,43 @@ class BCMainViewTab(QFrame):
                 self.treeViewFiles.header().resizeSection(logicalIndex, size)
 
 
-    def filesIconSize(self):
-        """Return current icon size"""
+    def filesColumnVisible(self):
+        """Return current columns visiblity status"""
+        return [self.treeViewFiles.columnIsVisible(index) for index in range(self.treeViewFiles.header().count())]
+
+
+    def setFilesColumnVisible(self, value):
+        """Set current columns visiblity status
+
+        Given `value` is a list of boolean
+        Index in list provide logical column position in header
+        """
+        if not (isinstance(value, list) or isinstance(value, tuple)) or len(value) > self.treeViewFiles.header().count():
+            raise EInvalidType('Given `value` must be a valid <list> or <tuple>')
+
+        for logicalIndex, visible in enumerate(value):
+            self.treeViewFiles.setColumnVisible(logicalIndex, visible)
+
+
+    def filesIconSizeTv(self):
+        """Return current icon size (treeview)"""
         return self.treeViewFiles.iconSizeIndex()
 
 
-    def setFilesIconSize(self, value=None):
-        """Set current icon size"""
+    def setFilesIconSizeTv(self, value=None):
+        """Set current icon size (treeview)"""
         self.treeViewFiles.setIconSizeIndex(value)
+        self.__actionFilesApplyIconSize.slider().setValue(value)
+
+
+    def filesIconSizeLv(self):
+        """Return current icon size (listview)"""
+        return self.listViewFiles.iconSizeIndex()
+
+
+    def setFilesIconSizeLv(self, value=None):
+        """Set current icon size (listview)"""
+        self.listViewFiles.setIconSizeIndex(value)
         self.__actionFilesApplyIconSize.slider().setValue(value)
 
 
@@ -3893,6 +3624,11 @@ class BCMainViewTab(QFrame):
         self.framePathBar.menuLastDocumentsShow(menu)
 
 
+    def filesMenuViewDisplayLayout(self):
+        """Return menu for layout model"""
+        return self.__menuLayoutModelFiles
+
+
     def filesImageNfoSizeUnit(self):
         """Return current image information size unit"""
         return self.__filesImageNfoSizeUnit
@@ -3904,6 +3640,15 @@ class BCMainViewTab(QFrame):
             self.__filesImageNfoSizeUnit=value
             self.__filesUpdateImageNfoSizeUnit()
 
+
+    def filesTabViewMode(self):
+        """Return current view mode list/grid"""
+        return self.stackFiles.currentIndex()
+
+
+    def setFilesTabViewMode(self, value):
+        """Return current view mode list/grid"""
+        self.__filesSwitchViewFileMode(value)
 
     # -- PUBLIC CLIPBOARD ----------------------------------------------------------
 
@@ -4117,3 +3862,8 @@ class BCMainViewTab(QFrame):
                 self.__clipboardSelectedNbUrlNotDownloaded,
                 self.__clipboardSelectedNbUrlDownloading,
                 self.__clipboardSelectedNbPersistent)
+
+
+    def clipboardMenuViewDisplayLayout(self):
+        """Return menu for layout model"""
+        return self.__menuLayoutModelClipboard

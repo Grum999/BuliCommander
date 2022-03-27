@@ -29,6 +29,7 @@
     <file alias="color_ngray">dark/32dp/color_ngray.svg</file>
     <file alias="color_none">dark/32dp/color_none.svg</file>
     <file alias="color_white">dark/32dp/color_white.svg</file>
+    <file alias="column_resize">dark/32dp/column_resize.svg</file>
     <file alias="comment">dark/32dp/comment.svg</file>
     <file alias="comment_add">dark/32dp/comment_add.svg</file>
     <file alias="comment_edit">dark/32dp/comment_edit.svg</file>
@@ -125,6 +126,7 @@
     <file alias="pinned">dark/32dp/pinned.svg</file>
     <file alias="play">dark/32dp/play.svg</file>
     <file alias="process_out">dark/32dp/process_out.svg</file>
+    <file alias="row_resize">dark/32dp/row_resize.svg</file>
     <file alias="saved_view_file">dark/32dp/saved_view_file.svg</file>
     <file alias="saved_view_last">dark/32dp/saved_view_last.svg</file>
     <file alias="saved_view_search">dark/32dp/saved_view_search.svg</file>
@@ -194,6 +196,7 @@
     <file alias="color_ngray">dark/32dp-disabled/color_ngray.svg</file>
     <file alias="color_none">dark/32dp-disabled/color_none.svg</file>
     <file alias="color_white">dark/32dp-disabled/color_white.svg</file>
+    <file alias="column_resize">dark/32dp-disabled/column_resize.svg</file>
     <file alias="comment">dark/32dp-disabled/comment.svg</file>
     <file alias="comment_add">dark/32dp-disabled/comment_add.svg</file>
     <file alias="comment_edit">dark/32dp-disabled/comment_edit.svg</file>
@@ -290,6 +293,7 @@
     <file alias="pinned">dark/32dp-disabled/pinned.svg</file>
     <file alias="play">dark/32dp-disabled/play.svg</file>
     <file alias="process_out">dark/32dp-disabled/process_out.svg</file>
+    <file alias="row_resize">dark/32dp-disabled/row_resize.svg</file>
     <file alias="saved_view_file">dark/32dp-disabled/saved_view_file.svg</file>
     <file alias="saved_view_last">dark/32dp-disabled/saved_view_last.svg</file>
     <file alias="saved_view_search">dark/32dp-disabled/saved_view_search.svg</file>

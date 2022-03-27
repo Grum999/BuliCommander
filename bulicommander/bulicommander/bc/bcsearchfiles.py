@@ -401,10 +401,10 @@ class BCSearchFilesDialogBox(QDialog):
         fileList.clear()
 
         if not filterRules is None:
-            fileList.addRule(filterRules)
+            fileList.addSearchRules(filterRules)
 
         for pathId in pathToLinks:
-            fileList.addPath(BCFileListPath(nodeSearchPaths[pathId]['widget']["path"],
+            fileList.addSearchPaths(BCFileListPath(nodeSearchPaths[pathId]['widget']["path"],
                                             nodeSearchPaths[pathId]['widget']["scanSubDirectories"],
                                             nodeSearchPaths[pathId]['widget']["scanHiddenFiles"],
                                             nodeSearchPaths[pathId]['widget']["scanManagedFilesOnly"],
@@ -1256,7 +1256,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.pbCancel.setEnabled(False)
         self.pbCancel.update()
         QApplication.processEvents()
-        self.__bcFileList.cancelExecution()
+        self.__bcFileList.cancelSearchExecution()
 
     def __executeSortAndExport(self, searchRulesAsDict):
         """Sort results and export
@@ -1380,7 +1380,7 @@ class BCSearchFilesDialogBox(QDialog):
                         sortNfoList.append(f"{txtAscending}{BCWSearchSortRules.MAP_VALUE_LABEL[sortRule['value']]}")
                     else:
                         sortNfoList.append(f"{txtDescending}{BCWSearchSortRules.MAP_VALUE_LABEL[sortRule['value']]}")
-            self.__bcFileList.sort(sortRules['caseInsensitive'])
+            self.__bcFileList.sortResults(sortRules['caseInsensitive'])
             Stopwatch.stop('executeSortAndExport.sort')
             self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("executeSortAndExport.sort"),sortNfoList])
 
@@ -1448,13 +1448,13 @@ class BCSearchFilesDialogBox(QDialog):
             with open(fileName, 'r') as fHandle:
                 jsonAsStr=fHandle.read()
         except Exception as e:
-            Debug.print("Can't open/read file {0}: {1}", fileName, str(e))
+            Debug.print("Can't open/read file {0}: {1}", fileName, f"{e}")
             return NodeEditorScene.IMPORT_FILE_CANT_READ
 
         try:
             jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
         except Exception as e:
-            Debug.print("Can't parse file {0}: {1}", fileName, str(e))
+            Debug.print("Can't parse file {0}: {1}", fileName, f"{e}")
             return NodeEditorScene.IMPORT_FILE_NOT_JSON
 
         if not "formatIdentifier" in jsonAsDict:
@@ -1519,7 +1519,7 @@ class BCSearchFilesDialogBox(QDialog):
             with open(fileName, 'w') as fHandle:
                 fHandle.write(json.dumps(toExport, indent=4, sort_keys=True, cls=JsonQObjectEncoder))
         except Exception as e:
-            Debug.print("Can't save file {0}: {1}", fileName, str(e))
+            Debug.print("Can't save file {0}: {1}", fileName, f"{e}")
             returned=NodeEditorScene.EXPORT_CANT_SAVE
 
         BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_BASIC, fileName)
@@ -1575,7 +1575,7 @@ class BCSearchFilesDialogBox(QDialog):
             self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(f"""**{i18n('Scan directories:')}** """)
 
-            self.__bcFileList.execute(True, True, [
+            self.__bcFileList.searchExecute(True, True, [
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATH,
                 BCFileList.STEPEXECUTED_ANALYZE_METADATA,
@@ -1590,9 +1590,6 @@ class BCSearchFilesDialogBox(QDialog):
             # Call to __executeSortAndExport is used instead to let the function
             # being able to manage more than one sort+linked exports
             self.__executeSortAndExport(dataAsDict)
-
-            print(self.__bcFileList.exportTxtResults())
-            print(self.__bcFileList.stats())
 
             self.wcExecutionConsole.appendLine("")
             self.wcExecutionConsole.appendLine(f"#lk#...{i18n('Execution done')}...#")

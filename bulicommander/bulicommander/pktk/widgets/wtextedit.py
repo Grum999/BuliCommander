@@ -224,7 +224,7 @@ class WTextEdit(QWidget):
             {'type':            'comboBox',
              'id':              'fontSize',
              'tooltip':         i18n('Applied font size'),
-             'list':            [str(value) for value in [6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 36, 48, 64, 72, 96, 144]],
+             'list':            [f"{value}" for value in [6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 36, 48, 64, 72, 96, 144]],
              'validator':       QDoubleValidator(0.25, 512, 2),
              'editable':        True,
              'action':          self.__updateSelectedTextFontSize,
@@ -692,9 +692,9 @@ class WTextEdit(QWidget):
         fValue = float(self.__textEdit.fontPointSize())
         if (fValue%1)==0:
             # no decimal part
-            self.__toolBarItems['fontSize'].setCurrentText(str(int(fValue)))
+            self.__toolBarItems['fontSize'].setCurrentText(f"{int(fValue)}")
         else:
-            self.__toolBarItems['fontSize'].setCurrentText(str(round(fValue, 2)))
+            self.__toolBarItems['fontSize'].setCurrentText(f"{round(fValue, 2)}")
 
         self.__toolBarItems['fontName'].setCurrentFont(self.__textEdit.currentFont())
 

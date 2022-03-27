@@ -283,7 +283,7 @@ class ASTItem:
                 if isinstance(node, Token):
                     returned.append(f'. . <Token({node.type()}, `{node.text()}`)>')
                 else:
-                    returned.append('. . '+str(node).replace('\n', '\n. . '))
+                    returned.append(f'. . {node}'.replace('\n', '\n. . '))
         return "\n".join(returned)
 
     def id(self):

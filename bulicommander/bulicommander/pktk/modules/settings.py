@@ -350,14 +350,14 @@ class Settings(QObject):
                 try:
                     jsonAsStr = file.read()
                 except Exception as e:
-                    Debug.print('[Settings.loadConfig] Unable to load file {0}: {1}', self.__pluginCfgFile, str(e))
+                    Debug.print('[Settings.loadConfig] Unable to load file {0}: {1}', self.__pluginCfgFile, f"{e}")
                     self.configurationLoadedEvent(False)
                     return False
 
                 try:
                     jsonAsDict = json.loads(jsonAsStr)
                 except Exception as e:
-                    Debug.print('[Settings.loadConfig] Unable to parse file {0}: {1}', self.__pluginCfgFile, str(e))
+                    Debug.print('[Settings.loadConfig] Unable to parse file {0}: {1}', self.__pluginCfgFile, f"{e}")
                     self.configurationLoadedEvent(False)
                     return False
         else:
@@ -385,7 +385,7 @@ class Settings(QObject):
             try:
                 file.write(json.dumps(self.__config, indent=4, sort_keys=True))
             except Exception as e:
-                Debug.print('[Settings.saveConfig] Unable to save file {0}: {1}', self.__pluginCfgFile, str(e))
+                Debug.print('[Settings.saveConfig] Unable to save file {0}: {1}', self.__pluginCfgFile, f"{e}")
                 self.configurationSavedEvent(False)
                 return False
 
@@ -436,7 +436,7 @@ class Settings(QObject):
             # value is valid, set it
             self.__setValue(self.__config, id, value)
         except Exception as e:
-            Debug.print('[Settings.setOption] Given value is not valid: {0}', str(e))
+            Debug.print('[Settings.setOption] Given value is not valid: {0}', f"{e}")
             return False
 
     def option(self, id):

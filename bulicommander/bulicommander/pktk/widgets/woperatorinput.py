@@ -262,7 +262,7 @@ class WOperatorBaseInput(QWidget):
         """Return label for operator"""
         if operator in WOperatorBaseInput.__LABELS:
             return WOperatorBaseInput.__LABELS[operator]
-        return str(operator)
+        return f"{operator}"
 
     def __init__(self, parent=None):
         super(WOperatorBaseInput, self).__init__(parent)

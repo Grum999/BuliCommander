@@ -523,9 +523,9 @@ class BCFileOperationUi(object):
                 if full:
                     # build informations about directory content
                     pathFileList=BCFileList()
-                    pathFileList.addPath(BCFileListPath(file.fullPathName(), True, True))
-                    pathFileList.setIncludeDirectories(True)
-                    pathFileList.execute(True, True) # build stats
+                    pathFileList.addSearchPaths(BCFileListPath(file.fullPathName(), True, True))
+                    pathFileList.searchSetIncludeDirectories(True)
+                    pathFileList.searchExecute(True, True) # build stats
 
                     stats = pathFileList.stats()
                     for key in stats:
@@ -553,7 +553,7 @@ class BCFileOperationUi(object):
 
         shortNfo = []
         if statFiles['nbDir'] > 0:
-            shortNfo.append(i18n("Directories: ")+str(statFiles['nbDir']))
+            shortNfo.append(i18n("Directories: ")+f"{statFiles['nbDir']}")
         if statFiles['nbKra'] > 0:
             shortNfo.append(i18n("Image files: ")+f"{statFiles['nbKra']} ({bytesSizeToStr(statFiles['sizeKra'])})")
         if statFiles['nbOther'] > 0:
@@ -792,9 +792,9 @@ class BCFileOperation(object):
             # in this case, search all sub-directories & files and continue to feed list of items to process
             for srcPath in pathsList:
                 fileList=BCFileList()
-                fileList.addPath(BCFileListPath(srcPath, True, True))
-                fileList.setIncludeDirectories(True)
-                fileList.execute()
+                fileList.addSearchPaths(BCFileListPath(srcPath, True, True))
+                fileList.searchSetIncludeDirectories(True)
+                fileList.searchExecute()
                 srcPath = os.path.dirname(srcPath)
                 for file in fileList.files():
                     file.setTag('newPath', os.path.join(targetPath, file.path().replace(srcPath, '').strip(os.sep)))
@@ -919,7 +919,7 @@ class BCFileOperation(object):
                     os.makedirs(targetFile, exist_ok=True)
                 except Exception as e:
                     inError+=1
-                    Debug.print('[BCFileOperation.__copyOrMove] Unable to {3} file from {0} to {1}: {2}', file.fullPathName(), targetFile, str(e), mode)
+                    Debug.print('[BCFileOperation.__copyOrMove] Unable to {3} file from {0} to {1}: {2}', file.fullPathName(), targetFile, f"{e}", mode)
             elif not isDir:
                 try:
                     targetPath = os.path.dirname(targetFile)
@@ -931,7 +931,7 @@ class BCFileOperation(object):
                         shutil.move(file.fullPathName(), targetFile)
                 except Exception as e:
                     inError+=1
-                    Debug.print('[BCFileOperation.__copyOrMove] Unable to {3} file from {0} to {1}: {2}', file.fullPathName(), targetFile, str(e), mode)
+                    Debug.print('[BCFileOperation.__copyOrMove] Unable to {3} file from {0} to {1}: {2}', file.fullPathName(), targetFile, f"{e}", mode)
 
             if BCFileOperation.__isCancelled():
                 break
@@ -1011,7 +1011,7 @@ class BCFileOperation(object):
                     os.remove(file.fullPathName())
             except Exception as e:
                 inError+=1
-                Debug.print('[BCFileOperation.delete] Unable to delete file {0}: {1}', file.fullPathName(), str(e))
+                Debug.print('[BCFileOperation.delete] Unable to delete file {0}: {1}', file.fullPathName(), f"{e}")
 
             if BCFileOperation.__isCancelled():
                 cancelled=BCFileOperation.__value()
@@ -1154,7 +1154,7 @@ class BCFileOperation(object):
                     os.rename(file.fullPathName(), targetFile)
                 except Exception as e:
                     inError+=1
-                    Debug.print('[BCFileOperation.rename] Unable to rename file from {0} to {1}: {2}', file.fullPathName(), newName, str(e))
+                    Debug.print('[BCFileOperation.rename] Unable to rename file from {0} to {1}: {2}', file.fullPathName(), newName, f"{e}")
 
 
             if BCFileOperation.__isCancelled():

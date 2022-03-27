@@ -689,7 +689,7 @@ class NodeEditorScene(QObject):
             try:
                 jsonAsDict = json.loads(jsonData, cls=JsonQObjectDecoder)
             except Exception as e:
-                Debug.print("Can't parse clipboard data: {0}", str(e))
+                Debug.print("Can't parse clipboard data: {0}", f"{e}")
                 return False
 
             # we now have a dictionary
@@ -1380,7 +1380,7 @@ class NodeEditorScene(QObject):
         try:
             jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
         except Exception as e:
-            Debug.print("Can't parse json: {0}", str(e))
+            Debug.print("Can't parse json: {0}", f"{e}")
             return False
 
         if self.__optionFormatIdentifier:
@@ -1427,13 +1427,13 @@ class NodeEditorScene(QObject):
             with open(fileName, 'r') as fHandle:
                 jsonAsStr=fHandle.read()
         except Exception as e:
-            Debug.print("Can't open/read file {0}: {1}", fileName, str(e))
+            Debug.print("Can't open/read file {0}: {1}", fileName, f"{e}")
             return NodeEditorScene.IMPORT_FILE_CANT_READ
 
         try:
             jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
         except Exception as e:
-            Debug.print("Can't parse file {0}: {1}", fileName, str(e))
+            Debug.print("Can't parse file {0}: {1}", fileName, f"{e}")
             return NodeEditorScene.IMPORT_FILE_NOT_JSON
 
         if self.__optionFormatIdentifier:
