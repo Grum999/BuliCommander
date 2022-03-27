@@ -72,6 +72,8 @@ class BCMainWindow(QMainWindow):
         self.__uiController = uiController
         self.__eventCallBack = {}
         self.__highlightedPanel = 0
+        self.menuViewDisplayLayoutFiles=[]
+        self.menuViewDisplayLayoutClipboard=[]
         self.panels = {
                 0: self.mainViewTab0,
                 1: self.mainViewTab1
@@ -157,7 +159,6 @@ class BCMainWindow(QMainWindow):
         self.actionClipboardStopDownload.triggered.connect(self.__menuClipboardStopDownload)
         self.actionClipboardQuit.triggered.connect(self.__uiController.commandQuit)
 
-
         # Menu EDIT
         self.actionSelectAll.triggered.connect(self.__menuSelectAll_clicked)
         self.actionSelectNone.triggered.connect(self.__menuSelectNone_clicked)
@@ -182,6 +183,12 @@ class BCMainWindow(QMainWindow):
         self.actionViewDisplayQuickFilter.triggered.connect(self.__menuViewDisplayQuickFilter_clicked)
         self.actionViewSwapPanels.triggered.connect(self.__uiController.commandViewSwapPanels)
 
+        self.actionViewDisplayLayout.setVisible(False)
+        for panel in self.__uiController.panels():
+            self.menuViewDisplayLayoutFiles.append(self.menuView.insertMenu(self.actionViewDisplayLayout, panel.filesMenuViewDisplayLayout()))
+        for panel in self.__uiController.panels():
+            self.menuViewDisplayLayoutClipboard.append(self.menuView.insertMenu(self.actionViewDisplayLayout, panel.clipboardMenuViewDisplayLayout()))
+
         # Menu TOOLS
         self.actionToolsCopyToClipboard.triggered.connect(self.__menuToolsCopyToClipboard_clicked)
         self.actionToolsSearch.triggered.connect(self.__menuToolsSearchFiles_clicked)
@@ -200,7 +207,6 @@ class BCMainWindow(QMainWindow):
         self.actionFileCopyToOtherPanelNoConfirm.activated.connect(self.__menuFileCopyNoConfirm)
         self.actionFileMoveToOtherPanelNoConfirm.activated.connect(self.__menuFileMoveNoConfirm)
         self.actionFileDeleteNoConfirm.activated.connect(self.__menuFileDeleteNoConfirm)
-
 
     def __menuHistoryShow(self):
         """Build menu history"""

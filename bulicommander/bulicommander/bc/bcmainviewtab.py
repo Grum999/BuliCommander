@@ -722,21 +722,22 @@ class BCMainViewTab(QFrame):
         self.__actionFilesApplyIconSize.slider().valueChanged.connect(filesIconSize_changed)
 
         # create menu for layout model button
-        menu = QMenu(self.btFilesTabLayoutModel)
-        menu.addAction(self.__actionFilesApplyTabLayoutFull)
-        menu.addAction(self.__actionFilesApplyTabLayoutTop)
-        menu.addAction(self.__actionFilesApplyTabLayoutLeft)
-        menu.addAction(self.__actionFilesApplyTabLayoutBottom)
-        menu.addAction(self.__actionFilesApplyTabLayoutRight)
-        menu.addSeparator()
-        menu.addAction(self.__actionFilesApplyTabLayoutViewTv)
-        menu.addAction(self.__actionFilesApplyTabLayoutViewLv)
-        menu.addSeparator()
-        menu.addAction(self.__actionFilesApplyIconSize)
-        menu.triggered.connect(filesTabLayoutModel_Clicked)
-        menu.aboutToShow.connect(filesIconSize_update)
+        self.__menuLayoutModelFiles = QMenu(i18n("Layout"), self.btFilesTabLayoutModel)
+        self.__menuLayoutModelFiles.setIcon(buildIcon("pktk:dashboard"))
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutFull)
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutTop)
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutLeft)
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutBottom)
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutRight)
+        self.__menuLayoutModelFiles.addSeparator()
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutViewTv)
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutViewLv)
+        self.__menuLayoutModelFiles.addSeparator()
+        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyIconSize)
+        self.__menuLayoutModelFiles.triggered.connect(filesTabLayoutModel_Clicked)
+        self.__menuLayoutModelFiles.aboutToShow.connect(filesIconSize_update)
 
-        self.btFilesTabLayoutModel.setMenu(menu)
+        self.btFilesTabLayoutModel.setMenu(self.__menuLayoutModelFiles)
         self.btFilesTabLayoutModel.clicked.connect(filesTabLayoutReset_Clicked)
 
         self.splitterFiles.setSizes([1000, 1000])
@@ -810,17 +811,18 @@ class BCMainViewTab(QFrame):
         self.treeViewClipboard.contextMenuEvent=self.__clipboardContextMenuEvent
 
         # create menu for layout model button
-        menuC = QMenu(self.btClipboardTabLayoutModel)
-        menuC.addAction(self.__actionClipboardApplyTabLayoutTop)
-        menuC.addAction(self.__actionClipboardApplyTabLayoutLeft)
-        menuC.addAction(self.__actionClipboardApplyTabLayoutBottom)
-        menuC.addAction(self.__actionClipboardApplyTabLayoutRight)
-        menuC.addSeparator()
-        menuC.addAction(self.__actionClipboardApplyIconSize)
-        menuC.triggered.connect(clipboardTabLayoutModel_Clicked)
-        menuC.aboutToShow.connect(clipboardIconSize_update)
+        self.__menuLayoutModelClipboard = QMenu(i18n("Layout"), self.btClipboardTabLayoutModel)
+        self.__menuLayoutModelClipboard.setIcon(buildIcon("pktk:dashboard"))
+        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutTop)
+        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutLeft)
+        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutBottom)
+        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutRight)
+        self.__menuLayoutModelClipboard.addSeparator()
+        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyIconSize)
+        self.__menuLayoutModelClipboard.triggered.connect(clipboardTabLayoutModel_Clicked)
+        self.__menuLayoutModelClipboard.aboutToShow.connect(clipboardIconSize_update)
 
-        self.btClipboardTabLayoutModel.setMenu(menuC)
+        self.btClipboardTabLayoutModel.setMenu(self.__menuLayoutModelClipboard)
         self.btClipboardTabLayoutModel.clicked.connect(clipboardTabLayoutReset_Clicked)
         self.btClipboardTabLayoutModel.clicked.connect(children_Clicked)
 
@@ -3616,6 +3618,11 @@ class BCMainViewTab(QFrame):
         self.framePathBar.menuLastDocumentsShow(menu)
 
 
+    def filesMenuViewDisplayLayout(self):
+        """Return menu for layout model"""
+        return self.__menuLayoutModelFiles
+
+
     def filesImageNfoSizeUnit(self):
         """Return current image information size unit"""
         return self.__filesImageNfoSizeUnit
@@ -3849,3 +3856,8 @@ class BCMainViewTab(QFrame):
                 self.__clipboardSelectedNbUrlNotDownloaded,
                 self.__clipboardSelectedNbUrlDownloading,
                 self.__clipboardSelectedNbPersistent)
+
+
+    def clipboardMenuViewDisplayLayout(self):
+        """Return menu for layout model"""
+        return self.__menuLayoutModelClipboard

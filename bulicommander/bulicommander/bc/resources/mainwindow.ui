@@ -143,6 +143,8 @@
     <addaction name="actionViewShowBackupFiles"/>
     <addaction name="actionViewShowHiddenFiles"/>
     <addaction name="separator"/>
+    <addaction name="actionViewDisplayLayout"/>
+    <addaction name="separator"/>
     <addaction name="actionViewDisplayQuickFilter"/>
     <addaction name="actionViewDisplaySecondaryPanel"/>
     <addaction name="separator"/>
@@ -586,7 +588,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show managed image files only</string>
+    <string>&amp;Show managed image files only</string>
    </property>
    <property name="toolTip">
     <string>Only image files recognized by BuliCommander will be shown in list</string>
@@ -1145,6 +1147,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionViewDisplayLayout">
+   <property name="text">
+    <string>&amp;Layout</string>
    </property>
   </action>
  </widget>

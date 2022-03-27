@@ -548,6 +548,10 @@ class BCUIController(QObject):
         else:
             return self.__window.panels[1 - self.__window.highlightedPanel()]
 
+    def panels(self):
+        """Return current panels"""
+        return [self.__window.panels[panelId] for panelId in self.__window.panels]
+
     def oppositePanelId(self, panel):
         """Return opposite panel"""
         if isinstance(panel, BCMainViewTab):
@@ -824,6 +828,14 @@ class BCUIController(QObject):
             self.__window.actionViewDisplaySecondaryPanel.setEnabled(True)
             self.__window.actionViewDisplayQuickFilter.setEnabled(True)
 
+            for panelId in range(len(self.__window.menuViewDisplayLayoutFiles)):
+                self.__window.menuViewDisplayLayoutFiles[panelId].setVisible(panelId==self.panelId())
+                self.__window.menuViewDisplayLayoutFiles[panelId].setEnabled(panelId==self.panelId())
+
+            for panelId in range(len(self.__window.menuViewDisplayLayoutClipboard)):
+                self.__window.menuViewDisplayLayoutClipboard[panelId].setVisible(False)
+                self.__window.menuViewDisplayLayoutClipboard[panelId].setEnabled(False)
+
             self.__window.actionGoBack.setEnabled(self.panel().filesGoBackEnabled())
             self.__window.actionGoUp.setEnabled(self.panel().filesGoUpEnabled())
 
@@ -945,6 +957,14 @@ class BCUIController(QObject):
             self.__window.actionViewDisplaySecondaryPanel.setEnabled(True)
             self.__window.actionViewDisplayQuickFilter.setEnabled(False)
 
+            for panelId in range(len(self.__window.menuViewDisplayLayoutFiles)):
+                self.__window.menuViewDisplayLayoutFiles[panelId].setVisible(False)
+                self.__window.menuViewDisplayLayoutFiles[panelId].setEnabled(False)
+
+            for panelId in range(len(self.__window.menuViewDisplayLayoutClipboard)):
+                self.__window.menuViewDisplayLayoutClipboard[panelId].setVisible(panelId==self.panelId())
+                self.__window.menuViewDisplayLayoutClipboard[panelId].setEnabled(panelId==self.panelId())
+
             self.__window.actionToolsCopyToClipboard.setEnabled(False)
             self.__window.actionToolsExportFiles.setEnabled(False)
             self.__window.actionToolsConvertFiles.setEnabled(False)
@@ -969,6 +989,14 @@ class BCUIController(QObject):
             self.__window.actionViewShowHiddenFiles.setEnabled(False)
             self.__window.actionViewDisplaySecondaryPanel.setEnabled(True)
             self.__window.actionViewDisplayQuickFilter.setEnabled(False)
+
+            for panelId in range(len(self.__window.menuViewDisplayLayoutFiles)):
+                self.__window.menuViewDisplayLayoutFiles[panelId].setVisible(False)
+                self.__window.menuViewDisplayLayoutFiles[panelId].setEnabled(False)
+
+            for panelId in range(len(self.__window.menuViewDisplayLayoutClipboard)):
+                self.__window.menuViewDisplayLayoutClipboard[panelId].setVisible(False)
+                self.__window.menuViewDisplayLayoutClipboard[panelId].setEnabled(False)
 
             self.__window.actionToolsCopyToClipboard.setEnabled(False)
             self.__window.actionToolsExportFiles.setEnabled(False)
