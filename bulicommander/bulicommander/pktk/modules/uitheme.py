@@ -28,6 +28,7 @@
 
 import krita
 import os
+import re
 
 from PyQt5.QtCore import (
         QResource
@@ -121,7 +122,7 @@ class UITheme(object):
         """The given `rccPath` is full path to directory where .rcc files can be found
         If None, default resources from PkTk will be loaded
 
-        The .rcc file names must mathc the following pattern:
+        The .rcc file names must match the following pattern:
         - darktheme_icons.rcc
         - lighttheme_icons.rcc
 
@@ -154,7 +155,10 @@ class UITheme(object):
         else:
             self.__theme = UITheme.LIGHT_THEME
 
-        self.__registeredResource = os.path.join(self.__rccPath, f'{self.__theme}theme_icons.rcc')
+        if re.search(r"\.rcc$", self.__rccPath):
+            self.__registeredResource = self.__rccPath
+        else:
+            self.__registeredResource = os.path.join(self.__rccPath, f'{self.__theme}theme_icons.rcc')
 
         if not QResource.registerResource(self.__registeredResource):
             self.__registeredResource = None
