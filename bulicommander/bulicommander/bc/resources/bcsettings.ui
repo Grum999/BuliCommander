@@ -80,7 +80,7 @@
      <item>
       <widget class="QStackedWidget" name="swCatPages">
        <property name="currentIndex">
-        <number>4</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="pageCatGeneral">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -112,8 +112,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>495</width>
-              <height>473</height>
+              <width>980</width>
+              <height>784</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout">
@@ -129,7 +129,23 @@
              <property name="bottomMargin">
               <number>0</number>
              </property>
-             <item row="9" column="0" colspan="3">
+             <item row="8" column="0">
+              <widget class="QRadioButton" name="rbCGSysTrayNotification">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray only when a notification message is displayed.&lt;/p&gt;&lt;p&gt;In this case, icon is briefly displayed (~5s). &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">padding-left: 30px</string>
+               </property>
+               <property name="text">
+                <string>For no&amp;tification</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupGenSysTray</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="10" column="0" colspan="3">
               <widget class="QLabel" name="label_7">
                <property name="font">
                 <font>
@@ -149,39 +165,7 @@
                </property>
               </widget>
              </item>
-             <item row="6" column="0">
-              <widget class="QRadioButton" name="rbCGSysTrayWhenActive">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray only if &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; is opened.&lt;/p&gt;&lt;p&gt;Icon is removed when &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; window is closed. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">padding-left: 30px</string>
-               </property>
-               <property name="text">
-                <string>When acti&amp;ve</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-               <attribute name="buttonGroup">
-                <string notr="true">buttonGroupGenSysTray</string>
-               </attribute>
-              </widget>
-             </item>
-             <item row="10" column="0">
-              <widget class="QLabel" name="label_8">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <bold>true</bold>
-                </font>
-               </property>
-               <property name="text">
-                <string>Size unit</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0" colspan="2">
+             <item row="5" column="0" colspan="2">
               <widget class="QLabel" name="label_16">
                <property name="font">
                 <font>
@@ -194,71 +178,27 @@
                </property>
               </widget>
              </item>
-             <item row="11" column="0">
-              <widget class="QRadioButton" name="rbCGFileUnitBinary">
-               <property name="toolTip">
-                <string>Display files size with binary unit</string>
-               </property>
-               <property name="statusTip">
-                <string>Display files size with binary unit</string>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">padding-left: 30px</string>
-               </property>
-               <property name="text">
-                <string>Binary (&amp;1.00 KiB = 1024 bytes)</string>
-               </property>
-               <property name="checked">
-                <bool>false</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="2">
-              <spacer name="verticalSpacer">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>40</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item row="8" column="0">
-              <widget class="QRadioButton" name="rbCGSysTrayNever">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Never display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray, never.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <item row="0" column="0" colspan="3">
+              <widget class="QLabel" name="label_14">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
                </property>
                <property name="styleSheet">
-                <string notr="true">padding-left: 30px</string>
+                <string notr="true">background-color: palette(light);padding: 6;</string>
                </property>
                <property name="text">
-                <string>&amp;Never</string>
+                <string>Launch Buli Commander</string>
                </property>
-               <attribute name="buttonGroup">
-                <string notr="true">buttonGroupGenSysTray</string>
-               </attribute>
-              </widget>
-             </item>
-             <item row="1" column="0" colspan="3">
-              <widget class="QCheckBox" name="cbCGLaunchOpenBC">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, open automatically Buli Commander interface when Krita is started&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Note: &lt;/p&gt;&lt;p&gt;- Due to technical reason, this option is only available from Krita 5.0.0&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="statusTip">
-                <string>If checked, open automatically Buli Commander interface when Krita is started</string>
-               </property>
-               <property name="text">
-                <string>Open Buli Commander at Krita startup</string>
+               <property name="margin">
+                <number>4</number>
                </property>
               </widget>
              </item>
-             <item row="4" column="2" rowspan="5">
+             <item row="5" column="2" rowspan="5">
               <widget class="QLabel" name="lblBuliIcon">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
@@ -283,13 +223,13 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="0" colspan="3">
+             <item row="3" column="0" colspan="3">
               <widget class="QCheckBox" name="cbCGLaunchReplaceOpenDb">
                <property name="enabled">
                 <bool>true</bool>
                </property>
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, Krita's Open dialog box is replaced by BuliCommanded&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Note: &lt;/p&gt;&lt;p&gt;- Due to technical reason, this option is only available from Krita 5.0.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, Krita's Open dialog box is replaced by Buli Commander&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="statusTip">
                 <string>If checked, Krita's Open dialog box is replaced by BuliCommanded</string>
@@ -299,23 +239,42 @@
                </property>
               </widget>
              </item>
-             <item row="7" column="0">
-              <widget class="QRadioButton" name="rbCGSysTrayNotification">
+             <item row="1" column="0" colspan="3">
+              <widget class="QCheckBox" name="cbCGLaunchOpenBC">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray only when a notification message is displayed.&lt;/p&gt;&lt;p&gt;In this case, icon is briefly displayed (~5s). &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, open automatically Buli Commander interface when Krita is started&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="statusTip">
+                <string>If checked, open automatically Buli Commander interface when Krita is started</string>
+               </property>
+               <property name="text">
+                <string>Open Buli Commander at Krita startup</string>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="0">
+              <widget class="QRadioButton" name="rbCGSysTrayWhenActive">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray only if &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; is opened.&lt;/p&gt;&lt;p&gt;Icon is removed when &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; window is closed. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">padding-left: 30px</string>
                </property>
                <property name="text">
-                <string>For no&amp;tification</string>
+                <string>When acti&amp;ve</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
                </property>
                <attribute name="buttonGroup">
                 <string notr="true">buttonGroupGenSysTray</string>
                </attribute>
               </widget>
              </item>
-             <item row="3" column="0" colspan="3">
+             <item row="4" column="0" colspan="3">
               <widget class="QLabel" name="label_15">
                <property name="font">
                 <font>
@@ -335,39 +294,7 @@
                </property>
               </widget>
              </item>
-             <item row="12" column="0">
-              <widget class="QRadioButton" name="rbCGFileUnitDecimal">
-               <property name="toolTip">
-                <string>Display files size with decimal unit</string>
-               </property>
-               <property name="statusTip">
-                <string>Display files size with decimal unit</string>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">padding-left: 30px</string>
-               </property>
-               <property name="text">
-                <string>Decimal (1.&amp;00 KB = 1000 bytes)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="0">
-              <widget class="QRadioButton" name="rbCGSysTrayAlways">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Always display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray, even when &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; interface is closed. &lt;/p&gt;&lt;p&gt;&lt;br/&gt;Note: &lt;/p&gt;&lt;p&gt;- With Krita &amp;gt;= 5.0.0, icon is visible at Krita's startup&lt;/p&gt;&lt;p&gt;- With Krita &amp;lt; 5.0.0, icon is visible after a first execution of &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">padding-left: 30px</string>
-               </property>
-               <property name="text">
-                <string>Alwa&amp;ys</string>
-               </property>
-               <attribute name="buttonGroup">
-                <string notr="true">buttonGroupGenSysTray</string>
-               </attribute>
-              </widget>
-             </item>
-             <item row="6" column="1">
+             <item row="7" column="1">
               <spacer name="horizontalSpacer_2">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
@@ -383,23 +310,106 @@
                </property>
               </spacer>
              </item>
-             <item row="0" column="0" colspan="3">
-              <widget class="QLabel" name="label_14">
+             <item row="13" column="0">
+              <widget class="QRadioButton" name="rbCGFileUnitDecimal">
+               <property name="toolTip">
+                <string>Display files size with decimal unit</string>
+               </property>
+               <property name="statusTip">
+                <string>Display files size with decimal unit</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">padding-left: 30px</string>
+               </property>
+               <property name="text">
+                <string>Decimal (1.&amp;00 KB = 1000 bytes)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="0">
+              <widget class="QRadioButton" name="rbCGSysTrayNever">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Never display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray, never.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">padding-left: 30px</string>
+               </property>
+               <property name="text">
+                <string>&amp;Never</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupGenSysTray</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="14" column="2">
+              <spacer name="verticalSpacer">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="6" column="0">
+              <widget class="QRadioButton" name="rbCGSysTrayAlways">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Always display &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; icon in Sytem Tray, even when &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt; interface is closed. &lt;/p&gt;&lt;p&gt;&lt;br/&gt;Note: &lt;/p&gt;&lt;p&gt;- With Krita &amp;gt;= 5.0.0, icon is visible at Krita's startup&lt;/p&gt;&lt;p&gt;- With Krita &amp;lt; 5.0.0, icon is visible after a first execution of &lt;span style=&quot; font-style:italic;&quot;&gt;Buli Commander&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">padding-left: 30px</string>
+               </property>
+               <property name="text">
+                <string>Alwa&amp;ys</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupGenSysTray</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="12" column="0">
+              <widget class="QRadioButton" name="rbCGFileUnitBinary">
+               <property name="toolTip">
+                <string>Display files size with binary unit</string>
+               </property>
+               <property name="statusTip">
+                <string>Display files size with binary unit</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">padding-left: 30px</string>
+               </property>
+               <property name="text">
+                <string>Binary (&amp;1.00 KiB = 1024 bytes)</string>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="0">
+              <widget class="QLabel" name="label_8">
                <property name="font">
                 <font>
-                 <pointsize>12</pointsize>
                  <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
-               <property name="styleSheet">
-                <string notr="true">background-color: palette(light);padding: 6;</string>
+               <property name="text">
+                <string>Size unit</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0" colspan="3">
+              <widget class="QCheckBox" name="cbCGLaunchFromFileMenu">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, a Buli Commander entry is added to Krita's &lt;span style=&quot; font-style:italic;&quot;&gt;File &lt;/span&gt;menu instead &lt;span style=&quot; font-style:italic;&quot;&gt;Tools &amp;gt; Scripts&lt;/span&gt; menu&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
-                <string>Launch Buli Commander</string>
-               </property>
-               <property name="margin">
-                <number>4</number>
+                <string>Add Buli Commander to Krita's File menu</string>
                </property>
               </widget>
              </item>
@@ -439,8 +449,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>980</width>
-              <height>784</height>
+              <width>518</width>
+              <height>716</height>
              </rect>
             </property>
             <layout class="QFormLayout" name="formLayout_4">
@@ -1745,11 +1755,11 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroupGenSysTray"/>
+  <buttongroup name="buttonGroupClpDefaultAction"/>
   <buttongroup name="buttonGroupClpMode"/>
   <buttongroup name="buttonGroupImgDefaultKrita"/>
-  <buttongroup name="buttonGroupClpDefaultAction"/>
-  <buttongroup name="buttonGroupImgDefaultOther"/>
+  <buttongroup name="buttonGroupGenSysTray"/>
   <buttongroup name="buttonGroupNavHomeDir"/>
+  <buttongroup name="buttonGroupImgDefaultOther"/>
  </buttongroups>
 </ui>

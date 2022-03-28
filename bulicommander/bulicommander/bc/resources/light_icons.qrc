@@ -1,5 +1,8 @@
-<RCC>
-  <qresource prefix="buli">
-    <file alias="buli-rounded-border">png/buli-powered-64x64-rounded-border.png</file>
+<!DOCTYPE RCC><RCC version="1.0">
+  <qresource prefix="bc/images/normal">
+    <file alias="bulicommander">svg/light/32dp/bulicommander.svg</file>
+  </qresource>
+  <qresource prefix="bc/images/disabled">
+    <file alias="bulicommander">svg/light/32dp-disabled/bulicommander.svg</file>
   </qresource>
 </RCC>

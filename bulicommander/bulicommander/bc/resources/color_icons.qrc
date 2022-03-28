@@ -1,0 +1,12 @@
+<!DOCTYPE RCC><RCC version="1.0">
+  <qresource prefix="bc/images/normal">
+    <file alias="buli-powered-64x64-rounded-border">png/color/64px/buli-powered-64x64-rounded-border.png</file>
+  </qresource>
+  <qresource prefix="bc/images/normal">
+    <file alias="file_green">svg/color/32dp/file_green.svg</file>
+    <file alias="file_orange">svg/color/32dp/file_orange.svg</file>
+    <file alias="file_orange_broken">svg/color/32dp/file_orange_broken.svg</file>
+    <file alias="file_red">svg/color/32dp/file_red.svg</file>
+    <file alias="file_red_broken">svg/color/32dp/file_red_broken.svg</file>
+  </qresource>
+</RCC>
