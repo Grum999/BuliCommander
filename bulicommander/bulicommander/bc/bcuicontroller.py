@@ -153,6 +153,7 @@ class BCUIController(QObject):
         UITheme.load()
         # BC theme must be loaded before systray is initialized
         UITheme.load(os.path.join(os.path.dirname(__file__), 'resources'))
+        UITheme.load(os.path.join(os.path.dirname(__file__), 'resources', 'color_icons.rcc'), False)
 
         self.__systray=BCSysTray(self)
         self.commandSettingsSysTrayMode(BCSettings.get(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE))
