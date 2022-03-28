@@ -83,6 +83,7 @@ class NodeEditorScene(QObject):
     sizeChanged=Signal(QSize, QSize)                    # scene size changed: newSize, oldSize
 
     sceneModified=Signal(bool)                          # scene content has been modified
+    sceneLoaded=Signal()                                # scene content has been loaded
 
     startLinkingItem=Signal()                           # linking item started: 'from' connector
     endLinkingItem=Signal()                             # linking item stopped: 'to' connector  (or None if no connector)
@@ -155,6 +156,8 @@ class NodeEditorScene(QObject):
         self.__isModified=False
         # flag set to True if scene is being modified
         self.__inModification=None
+        # flag set to True if scene is in a mass modification
+        self.__inMassModification=None
 
         #
         # -- default style options --
@@ -385,6 +388,10 @@ class NodeEditorScene(QObject):
             self.__checkSelection()
             self.sceneModified.emit(self.__isModified)
         self.__inModification=None
+
+    def inMassModification(self):
+        """Return if scene is currently in a mass modification (like an import)"""
+        return self.__inMassModification
 
     def isModified(self):
         """Return is scene content has been modified
@@ -1237,6 +1244,7 @@ class NodeEditorScene(QObject):
         # deserialize scene data only scene if available
         if isinstance(jsonAsDict, dict) and 'scene' in jsonAsDict:
             self.__startModification()
+            self.__inMassModification=True
 
             # 1. reset current scene content
             self.clear()
@@ -1370,6 +1378,8 @@ class NodeEditorScene(QObject):
             # consider after import that scene is not modified
             self.setModified(False)
             self.__stopModification()
+            self.__inMassModification=False
+            self.sceneLoaded.emit()
 
     def toJson(self, indent=4, sortKeys=True):
         """Convert current scene to a json string"""
@@ -2484,10 +2494,10 @@ class NodeEditorNode(QObject):
 
                             if connector is None:
                                 # doesn't exists??
-                                # not a 'normal' case, but create connector...
-
+                                # could be a 'normal' case, create it...
                                 directionValue=None
                                 locationValue=None
+                                connectorClass=None
 
                                 if 'properties' in connectorAsDict:
                                     if 'direction' in connectorAsDict['properties'] and connectorAsDict['properties']['direction'] in [NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.DIRECTION_OUTPUT]:
@@ -2503,9 +2513,17 @@ class NodeEditorNode(QObject):
                                                                                                                                      NodeEditorConnector.LOCATION_BOTTOM_RIGHT]:
                                         locationValue=connectorAsDict['properties']['location']
 
+                                    if 'type' in connectorAsDict['properties'] and isinstance(connectorAsDict['properties']['type'], str):
+                                        connectorClass=NodeEditorConnector.registeredClass(connectorAsDict['properties']['type'])
+
+                                if connectorClass is None:
+                                    # class doesn't exist?
+                                    # should not occurs but create a default connector
+                                    connectorClass=NodeEditorConnector
+
                                 if not directionValue is None:
                                     # at least direction should be provided...
-                                    connector=NodeEditorConnector(connectorAsDict['id'], directionValue, locationValue)
+                                    connector=connectorClass(connectorAsDict['id'], directionValue, locationValue)
                                     self.addConnector(connector)
 
                             if connector:
@@ -2536,6 +2554,24 @@ class NodeEditorConnector(QObject):
     # define connector direction
     DIRECTION_INPUT=0x01
     DIRECTION_OUTPUT=0x02
+
+    __CLASSES={}
+
+    @staticmethod
+    def registeredClass(name):
+        """Return a registered widget connector class from name"""
+        if name in NodeEditorConnector.__CLASSES:
+            return NodeEditorConnector.__CLASSES[name]
+        return None
+
+    def __init_subclass__(cls, **kwargs):
+        """When subclass definition is initialized, register it in a dictionary
+
+        It will be used to be able to instanciate a node widget from class name
+        (especially useful during an import)
+        """
+        super().__init_subclass__(**kwargs)
+        NodeEditorConnector.__CLASSES[cls.__name__]=cls
 
     def __init__(self, id=None, direction=0x01, location=0x01, color=None, borderColor=None, borderSize=None, parent=None):
         super(NodeEditorConnector, self).__init__(parent)
@@ -2912,6 +2948,7 @@ class NodeEditorConnector(QObject):
                 'properties': {
                         'direction': self.__direction,
                         'location': self.__location,
+                        'type': self.__class__.__name__
                     },
                 'style': {
                         'radius': self.__radius,
