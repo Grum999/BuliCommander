@@ -93,6 +93,7 @@ class BCSettingsKey(SettingsKey):
     CONFIG_GLB_FILE_UNIT =                                   'config.global.file.unit'
     CONFIG_GLB_OPEN_ATSTARTUP =                              'config.global.open.atStartup'
     CONFIG_GLB_OPEN_OVERRIDEKRITA =                          'config.global.open.overrideKrita'
+    CONFIG_GLB_OPEN_FROMKRITAMENU =                          'config.global.open.fromKritaFileMenu'
     CONFIG_GLB_SYSTRAY_MODE =                                'config.global.systray.mode'
 
     CONFIG_FILES_DEFAULTACTION_KRA =                         'config.files.defaultAction.kra'
@@ -673,6 +674,7 @@ class BCSettings(Settings):
 
             SettingsRule(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP,                           False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA,                       False,                      SettingsFmt(bool)),
+            SettingsRule(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU,                       False,                      SettingsFmt(bool)),
 
             SettingsRule(BCSettingsKey.CONFIG_SESSION_SAVE,                                 True,                       SettingsFmt(bool)),
 
@@ -757,8 +759,8 @@ class BCSettings(Settings):
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_LAYOUT.id(panelId=panelId),             'top',                      SettingsFmt(str, ['full','top','left','right','bottom'])),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_VIEWMODE.id(panelId=panelId),           0,                          SettingsFmt(int, [0, 1])),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId),        '@home',                    SettingsFmt(str)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId),      True,                       SettingsFmt(bool)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId),        '*',                        SettingsFmt(str)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId),      False,                      SettingsFmt(bool)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId),        '',                         SettingsFmt(str)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId),         [1,True],                   SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]), SettingsFmt(bool)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId),        [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
                                                                                                                                             SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
@@ -800,7 +802,7 @@ class BCSettings(Settings):
                                                                                                                                             SettingsFmt(int),
                                                                                                                                             SettingsFmt(int),
                                                                                                                                             SettingsFmt(int)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE.id(panelId=panelId),      [True,False,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,False],
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE.id(panelId=panelId),      [True,False,True,False,False,True,False,True,False,False,True,True,False,False,False,False,False,True,False],
                                                                                                                                             SettingsFmt(bool),
                                                                                                                                             SettingsFmt(bool),
                                                                                                                                             SettingsFmt(bool),
@@ -820,8 +822,8 @@ class BCSettings(Settings):
                                                                                                                                             SettingsFmt(bool),
                                                                                                                                             SettingsFmt(bool),
                                                                                                                                             SettingsFmt(bool)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_TV.id(panelId=panelId),        0,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8])),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_LV.id(panelId=panelId),        0,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_TV.id(panelId=panelId),        2,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_LV.id(panelId=panelId),        1,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
 
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_IMGSIZEUNIT.id(panelId=panelId),        'mm',                       SettingsFmt(str, ['mm', 'cm', 'in'])),
 
@@ -981,12 +983,12 @@ class BCSettingsDialogBox(QDialog):
         updateBtn()
 
         # --- GEN Category -----------------------------------------------------
-        self.cbCGLaunchOpenBC.setEnabled(checkKritaVersion(5,0,0))
         self.cbCGLaunchOpenBC.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP))
 
-        self.cbCGLaunchReplaceOpenDb.setEnabled(checkKritaVersion(5,0,0))
         self.cbCGLaunchReplaceOpenDb.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA))
         self.cbCGLaunchReplaceOpenDb.toggled.connect(self.__replaceOpenDbAlert)
+
+        self.cbCGLaunchFromFileMenu.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
 
         if BCSettings.get(BCSettingsKey.CONFIG_GLB_FILE_UNIT) == BCSettingsValues.FILE_UNIT_KIB:
             self.rbCGFileUnitBinary.setChecked(True)
@@ -1100,6 +1102,7 @@ class BCSettingsDialogBox(QDialog):
         # --- GEN Category -----------------------------------------------------
         self.__uiController.commandSettingsOpenAtStartup(self.cbCGLaunchOpenBC.isChecked())
         self.__uiController.commandSettingsOpenOverrideKrita(self.cbCGLaunchReplaceOpenDb.isChecked())
+        self.__uiController.commandSettingsOpenFromFileMenu(self.cbCGLaunchFromFileMenu.isChecked())
 
         if self.rbCGFileUnitBinary.isChecked():
             self.__uiController.commandSettingsFileUnit(BCSettingsValues.FILE_UNIT_KIB)

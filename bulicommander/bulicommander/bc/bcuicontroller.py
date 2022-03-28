@@ -176,6 +176,8 @@ class BCUIController(QObject):
 
         # overrides native Krita Open dialog...
         self.commandSettingsOpenOverrideKrita(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA))
+        # add action to file menu
+        self.commandSettingsOpenFromFileMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
 
         if kritaIsStarting and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP):
             self.start()
@@ -247,6 +249,7 @@ class BCUIController(QObject):
         self.commandSettingsSysTrayMode(BCSettings.get(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE))
         self.commandSettingsOpenAtStartup(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP))
         self.commandSettingsOpenOverrideKrita(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA))
+        self.commandSettingsOpenFromFileMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
 
         self.commandViewMainWindowGeometry(BCSettings.get(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY))
         self.commandViewMainWindowMaximized(BCSettings.get(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED))
@@ -2200,6 +2203,45 @@ class BCUIController(QObject):
         """Set option to override krita's open command"""
         BCSettings.set(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA, value)
         self.__overrideOpenKrita()
+
+    def commandSettingsOpenFromFileMenu(self, value=False):
+        """Set option to add a BC entry in Krita's File menu"""
+        BCSettings.set(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU, value)
+
+        # search for menu 'File'
+        menuFile=Krita.instance().activeWindow().qwindow().findChild(QMenu,'file')
+        # search for menu 'Tools>Scripts'
+        menuScripts=Krita.instance().activeWindow().qwindow().findChild(QMenu,'scripts')
+
+        # Buli Commander action
+        actionOpenBC=Krita.instance().action('pykrita_bulicommander')
+        actionOpenBC.setIcon(buildIcon([(':/bc/images/normal/bulicommander', QIcon.Normal), (':/bc/images/disabled/bulicommander', QIcon.Disabled)]))
+
+        if isinstance(menuFile, QMenu) and isinstance(menuScripts, QMenu):
+            if value:
+                # move action to File menu
+                if not actionOpenBC in menuFile.actions():
+                    # currently not in menu file action
+
+                    # search menu entry following "File>Open recent" menu
+                    referenceMenuFile=None
+                    for index, action in enumerate(menuFile.actions()):
+                        if action.objectName()=='file_open_recent':
+                            referenceMenuFile=menuFile.actions()[index+1]
+                            break
+
+                    if not referenceMenuFile is None:
+                        # move menu entry
+                        menuScripts.removeAction(actionOpenBC)
+                        menuFile.insertAction(referenceMenuFile, actionOpenBC)
+            else:
+                # move action to Tools>Scripts menu
+                if not actionOpenBC in menuScripts.actions():
+                    # currently not in menu scripts action
+
+                    # move menu entry
+                    menuFile.removeAction(actionOpenBC)
+                    menuScripts.addAction(actionOpenBC)
 
     def commandSettingsSaveSessionOnExit(self, saveSession=None):
         """Define if current session properties have to be save or not"""
