@@ -149,22 +149,22 @@ class BuliCommander(Extension):
             if self.__uiController and fileName != '':
                 self.__uiController.commandGoLastDocsSavedAdd(fileName)
 
-        try:
-            Krita.instance().notifier().imageCreated.disconnect()
-        except Exception as e:
-            pass
-
-        try:
-            Krita.instance().notifier().imageSaved.disconnect()
-        except Exception as e:
-            pass
-
-        try:
-            Krita.instance().notifier().applicationClosing.disconnect()
-        except Exception as e:
-            pass
-
         if self.__uiController is None:
+            try:
+                Krita.instance().notifier().imageCreated.disconnect(opened)
+            except Exception as e:
+                pass
+
+            try:
+                Krita.instance().notifier().imageSaved.disconnect(saved)
+            except Exception as e:
+                pass
+
+            #try:
+            #    Krita.instance().notifier().applicationClosing.disconnect()
+            #except Exception as e:
+            #    pass
+
             # no controller, create it
             # (otherwise, with Krita 5.0.0, can be triggered more than once time - on each new window)
             Krita.instance().notifier().imageCreated.connect(opened)
@@ -183,9 +183,8 @@ class BuliCommander(Extension):
         if not self.__isKritaVersionOk:
             return
 
-        if checkKritaVersion(5,0,0):
-            # windowCreated signal has been implemented with krita 5.0.0
-            Krita.instance().notifier().windowCreated.connect(windowCreated)
+        # windowCreated signal has been implemented with krita 5.0.0
+        Krita.instance().notifier().windowCreated.connect(windowCreated)
 
 
     def createActions(self, window):
