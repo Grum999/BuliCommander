@@ -125,6 +125,7 @@ User interface has been slightly improved:
 - Review console for conversion files dialog box
 - Sliders for thumbnail size now display current selected size
 - An option allows to move **Buli Commander** menu entry from *Tools > Scripts* to *File*
+- Add possibility from Krita settings (*Settings > Configure Krita... > Keyboard Shortcut >> Scripts*) to define a shortcut to open Buli Commander
 
 
 ## Fix bug - *Read Krita files*
