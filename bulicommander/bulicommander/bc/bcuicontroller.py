@@ -705,9 +705,12 @@ class BCUIController(QObject):
                 BCSettings.set(BCSettingsKey.CONFIG_GLB_FILE_UNIT, BCSettingsValues.FILE_UNIT_KIB)
 
             for panelId in self.__window.panels:
+                currentPath=self.__window.panels[panelId].filesPath()
+                if re.match("@searchresult:", currentPath):
+                    currentPath="@home"
+                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId), currentPath)
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].filesTabLayout().value)
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_VIEWMODE.id(panelId=panelId), self.__window.panels[panelId].filesTabViewMode())
-                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId), self.__window.panels[panelId].filesPath())
 
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_THUMBNAIL.id(panelId=panelId), self.__window.panels[panelId].filesViewThumbnail())
 
@@ -742,7 +745,7 @@ class BCUIController(QObject):
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId), self.__window.panels[panelId].filesTabSplitterPreviewPosition())
 
             if BCSettings.get(BCSettingsKey.CONFIG_FILES_HISTORY_KEEPONEXIT):
-                BCSettings.set(BCSettingsKey.SESSION_FILES_HISTORY_ITEMS, self.__history.list())
+                BCSettings.set(BCSettingsKey.SESSION_FILES_HISTORY_ITEMS, [directory for directory in self.__history.list() if not re.match("@searchresult:", directory)])
             else:
                 BCSettings.set(BCSettingsKey.SESSION_FILES_HISTORY_ITEMS, [])
 

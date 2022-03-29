@@ -344,7 +344,7 @@ class BreadcrumbsAddressBar(QFrame):
                     self._cancel_edit()
                     return False
 
-                return self.set_path(path)
+                return self.set_path(path, force)
 
             self.path_ = path
             self.line_address.setText(path)

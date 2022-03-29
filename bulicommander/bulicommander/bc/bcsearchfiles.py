@@ -2842,14 +2842,21 @@ class BCNodeWSearchEngine(NodeEditorNodeWidget):
 
         self.node().connectorLinked.connect(self.__checkInputPath)
         self.node().connectorUnlinked.connect(self.__checkInputPath)
+        self.node().scene().sceneLoaded.connect(self.__checkInputPath)
 
-    def __checkInputPath(self, node, connector):
+    def __checkInputPath(self, node=None, connector=None):
         """A connector has been connected/disconnected
 
         Check paths connector (always need a have ONE available connector)
         - Add connector if needed
         - Remove connector if not needed
         """
+        if node is None:
+            node=self.node()
+
+        if node.scene().inMassModification():
+            return
+
         lastNumber=1
         nbInputPathAvailable=0
         toRemove=[]
@@ -2872,6 +2879,13 @@ class BCNodeWSearchEngine(NodeEditorNodeWidget):
             inputPathConnector=NodeEditorConnectorPath(f'InputPath{lastNumber}', NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.LOCATION_LEFT_TOP)
             inputPathConnector.addAcceptedConnectionFrom(NodeEditorConnectorPath)
             node.addConnector(inputPathConnector)
+
+    def deserialize(self, data={}):
+        """From given dictionary, rebuild widget"""
+        for connector in self.node().connector():
+            if isinstance(connector, NodeEditorConnectorPath) and len(connector.acceptedConnectionFrom())==0:
+                # ensure that added connector (NodeEditorConnectorPath) can only receive connection from NodeEditorConnectorPath
+                connector.addAcceptedConnectionFrom(NodeEditorConnectorPath)
 
 
 
@@ -3251,6 +3265,7 @@ class BCNodeWSearchFileFilterRuleOperator(NodeEditorNodeWidget):
 
         self.node().connectorLinked.connect(self.__checkInputFilter)
         self.node().connectorUnlinked.connect(self.__checkInputFilter)
+        self.node().scene().sceneLoaded.connect(self.__checkInputFilter)
         self.node().setMinimumSize(QSize(200, 100))
         self.setLayout(self.__layout)
 
@@ -3279,6 +3294,9 @@ class BCNodeWSearchFileFilterRuleOperator(NodeEditorNodeWidget):
         """
         if node is None:
             node=self.node()
+
+        if node.scene().inMassModification():
+            return
 
         if self.__cbValue.currentData()=='not':
             firstInputIsUsed=True
@@ -3349,6 +3367,10 @@ class BCNodeWSearchFileFilterRuleOperator(NodeEditorNodeWidget):
                     self.__cbValue.setCurrentIndex(index)
                     break
 
+        for connector in self.node().connector():
+            if isinstance(connector, NodeEditorConnectorFilter) and len(connector.acceptedConnectionFrom())==0 and connector.isInput():
+                # ensure that added connector (NodeEditorConnectorFilter) can only receive connection from NodeEditorConnectorFilter
+                connector.addAcceptedConnectionFrom(NodeEditorConnectorFilter)
 
 
 class BCNodeWSearchSortRule(NodeEditorNodeWidget):
