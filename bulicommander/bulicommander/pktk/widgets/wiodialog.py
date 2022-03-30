@@ -1015,3 +1015,149 @@ class WDialogFontInput(WDialogMessage):
             return dlgBox.value()
         else:
             return None
+
+
+class WDialogProgress(WDialogMessage):
+    """A simple dialog box to display a formatted message with a progress bar
+    and an optional "Cancel" button
+    """
+
+    def __init__(self, title, message, cancelButton=False, minSize=None, minValue=0, maxValue=0, progressSignal=None, parent=None):
+        super(WDialogProgress, self).__init__(title, message, minSize, parent)
+        # need to manage returned value from yes/no/cancel buttons
+        # then disconnect default signal
+        self._dButtonBox.accepted.disconnect(self.accept)
+        self._dButtonBox.rejected.disconnect(self.reject)
+
+        self.__btnCancel=None
+        if cancelButton:
+            self._dButtonBox.setStandardButtons(QDialogButtonBox.Cancel)
+            self._dButtonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__buttonCancel)
+            self.__btnCancel = self._dButtonBox.button(QDialogButtonBox.Cancel)
+
+        self._progressBar=QProgressBar(self)
+        self._progressBar.setMinimum(minValue)
+        self._progressBar.setMaximum(maxValue)
+        self._progressBar.setFormat("Frame %v of %m (%p%)")
+        self._progressBar.setTextVisible(True)
+        self._layout.insertWidget(self._layout.count()-1, self._progressBar)
+
+        self.__cancelled=False
+
+    def __buttonCancel(self):
+        """Button 'cancel' has been clicked, return None value"""
+        self.__cancelled=True
+        self.close()
+
+    def value(self):
+        """Return value defined by clicked button"""
+        return self.__value
+
+    def setProgress(self, value):
+        """Update progress bar value
+
+        If return false, means the cancel button as been clicked
+        """
+        self._progressBar.setValue(value)
+        self._progressBar.update()
+        QApplication.processEvents()
+        return self.__cancelled
+
+    def isInfinite(self):
+        """Return if current progress bar is in 'infinite mode'"""
+        return self._progressBar.maximum()==0
+
+    def setInfinite(self):
+        """Set progress bar as infinite value"""
+        self._progressBar.setValue(0)
+        self._progressBar.setMaximum(0)
+        self._progressBar.update()
+        QApplication.processEvents()
+
+    def minValue(self):
+        """Return current minimum value for progress bar"""
+        return self.minimum()
+
+    def setMinValue(self, value):
+        """Change minimum value; current value reset to minimum"""
+        self._progressBar.setMinimum(value)
+        self._progressBar.setValue(value)
+        self._progressBar.update()
+        QApplication.processEvents()
+
+    def maxValue(self):
+        """Return current maximum value for progress bar"""
+        return self.maximum()
+
+    def setMaxValue(self, value):
+        """Change maximum value; current value reset to minimum"""
+        self._progressBar.setValue(self._progressBar.minimum())
+        self._progressBar.setMaximum(value)
+        self._progressBar.update()
+        QApplication.processEvents()
+
+    def textFormat(self):
+        """Return current text format"""
+        self._progressBar.format()
+
+    def setTextFormat(self, value):
+        """Change maximum value; current value reset to minimum"""
+        self._progressBar.setFormat(value)
+
+    def cancelButtonIsEnabled(self):
+        """Return if cancel button is enabled
+
+        If there's no cancel button, return None
+        """
+        if self.__btnCancel is None:
+            return None
+        return self.__btnCancel.isEnabled()
+
+    def setCancelButtonEnabled(self, value):
+        """Enabled/Disable cancel button"""
+        if self.__btnCancel is None or not isinstance(value, bool):
+            return
+        self.__btnCancel.setEnabled(value)
+
+    def message(self):
+        """Return current message"""
+        return self._messageText
+
+    def updateMessage(self, message, replace=True):
+        """Replace current message content with new text
+
+        If `replace` is True, current message is replaced by new message
+        Otherwise, new message is added to current message
+
+        """
+        if replace:
+            self._messageText=message
+        else:
+            self._messageText+=message
+        self._message.setHtml(self._messageText)
+        self._message.update()
+        QApplication.processEvents()
+
+
+    @staticmethod
+    def display(title, message, cancelButton=False, minSize=None, minValue=0, maxValue=0):
+        """Open dialog box
+
+        title:          dialog box title
+        message:        message to display
+        cancelButton:   add an optional "Cancel" button
+        minValue:       minimum value for progress bar
+        maxValue:       maximum value for progress bar (if 0=infinite progress bar)
+
+        return WDialogProgress.RESULT_FINISHED value if button "Yes"
+        return False value if button "No"
+        return None value if button "Cancel"
+        """
+
+        if not isinstance(cancelButton, bool):
+            cancelButton=False
+
+        dlgBox=WDialogProgress(title, message, cancelButton, minSize, minValue, maxValue)
+
+        dlgBox.show()
+        return dlgBox
