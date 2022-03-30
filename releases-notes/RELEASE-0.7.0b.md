@@ -151,6 +151,7 @@ User interface has been slightly improved:
 - When theme was changed in Krita, a python script message error about 'autoreload' was displayed
 - When from one panel (located in directory A) a directory B was deleted, if opposite panel was located to deleted directory (or subdirectory of deleted directory), panel refresh was not properly made and mouse cursor was stuck on "wait"
 - When Buli Commander is defined to be automatically opened at startup, if user had time to open a document before start/end of plugin initialization, a script error was raised
+- Add progress bar and possibility to cancel operation during animated files import (like Gif or WebP)
 - Fix miscellaneous minor bugs
 
 

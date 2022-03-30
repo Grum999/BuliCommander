@@ -358,22 +358,26 @@ class BCUIController(QObject):
         if bcfile.format() in BCImportAnimated.SUPPORTED_FORMAT:
             imgNfo = bcfile.getMetaInformation()
             if imgNfo['imageCount'] > 1:
-                userChoice = BCImportDialogBox.open(f'{self.__bcName}::Import {bcfile.format()} file', bcfile, self.panel())
+                dialogTitle=f'{self.__bcName}::Import {bcfile.format()} file'
+                userChoice = BCImportDialogBox.open(dialogTitle, bcfile, self.panel())
 
+                result=BCImportAnimated.IMPORT_KO
                 if userChoice[0]:
                     if userChoice[1] == BCImportDialogBox.IMPORT_AS_FRAMELAYER:
-                        if BCImportAnimated.importAsFrames(bcfile, userChoice[2]):
-                            return BCUIController.__EXTENDED_OPEN_OK
+                        result=BCImportAnimated.importAsFrames(dialogTitle, bcfile, userChoice[2])
                     elif userChoice[1] == BCImportDialogBox.IMPORT_AS_STACKLAYER:
-                        if BCImportAnimated.importAsLayers(bcfile):
-                            return BCUIController.__EXTENDED_OPEN_OK
+                        result=BCImportAnimated.importAsLayers(dialogTitle, bcfile)
                     elif userChoice[1] == BCImportDialogBox.IMPORT_AS_FRAME:
-                        if BCImportAnimated.importInOneLayer(bcfile, userChoice[2]):
-                            return BCUIController.__EXTENDED_OPEN_OK
+                        result=BCImportAnimated.importInOneLayer(bcfile, userChoice[2])
                     #else:
-                    #   krita's import mode
+                    #   krita's import mode=KO
                 else:
                     # cancel
+                    result=BCImportAnimated.IMPORT_CANCELLED
+
+                if result==BCImportAnimated.IMPORT_OK:
+                    return BCUIController.__EXTENDED_OPEN_OK
+                elif result==BCImportAnimated.IMPORT_CANCELLED:
                     return BCUIController.__EXTENDED_OPEN_CANCEL
         return BCUIController.__EXTENDED_OPEN_KO
 
@@ -1095,6 +1099,7 @@ class BCUIController(QObject):
             elif opened == BCUIController.__EXTENDED_OPEN_OK:
                 return True
 
+            # unable to process file, try default Krita import
             try:
                 document = Krita.instance().openDocument(file)
                 view = Krita.instance().activeWindow().addView(document)
