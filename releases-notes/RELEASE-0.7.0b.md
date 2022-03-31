@@ -107,11 +107,13 @@ Also improve preview for images with transparency (checkerboard not impacted any
 
 
 ## Recognized files format
-The following files format are taken in account:
+The following files format are now taken in account:
 - KRZ
 - BMP
 
 
+## Open as reference image
+Improve the functionality and let any image format recognized by Buli Commander (BMP, KRA, PSD, ...) to be opened as reference image
 
 
 ## Improve UI
@@ -126,6 +128,7 @@ User interface has been slightly improved:
 - Sliders for thumbnail size now display current selected size
 - An option allows to move **Buli Commander** menu entry from *Tools > Scripts* to *File*
 - Add possibility from Krita settings (*Settings > Configure Krita... > Keyboard Shortcut >> Scripts*) to define a shortcut to open Buli Commander
+- Add "Open as reference image" in context menu
 
 
 ## Fix bug - *Read Krita files*

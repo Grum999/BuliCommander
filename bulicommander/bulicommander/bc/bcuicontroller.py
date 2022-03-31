@@ -769,16 +769,6 @@ class BCUIController(QObject):
 
     def updateMenuForPanel(self):
         """Update menu (enabled/disabled/checked/unchecked) according to current panel"""
-        def allowPasteFileAsRefimg(list):
-            if len(list)==0:
-                return False
-
-            for item in list:
-                if re.search('(?i)\.(jpeg|jpg|png)$', item):
-                    # at least one item can be pasted as reference image
-                    return True
-            return False
-
         #print("updateMenuForPanel", self.panel().tabActive())
         self.__window.actionViewThumbnail.setChecked(self.panel().filesViewThumbnail())
         self.__window.actionViewDisplayQuickFilter.setChecked(self.panel().filesFilterVisible())
@@ -809,7 +799,7 @@ class BCUIController(QObject):
             self.__window.actionFileDelete.setEnabled(selectionInfo[3]>0)
 
             if Krita.instance().activeDocument():
-                allow=allowPasteFileAsRefimg([item.fullPathName() for item in selectionInfo[0] if isinstance(item, BCFile)])
+                allow=self.panel().filesAllowPasteFilesAsRefimg([item.fullPathName() for item in selectionInfo[0] if isinstance(item, BCFile)])
                 self.__window.actionFileOpenAsImageReference.setEnabled(allow)
                 self.__window.actionFileOpenAsImageReferenceCloseBC.setEnabled(allow)
             else:
@@ -1422,7 +1412,7 @@ class BCUIController(QObject):
                 for item in selectionInfo[0]:
                     self.commandClipboardPasteAsRefImage(item)
         elif isinstance(items, BCClipboardItem):
-            self.__clipboard.pushBackToClipboard(items)
+            self.__clipboard.pushBackToClipboard(items, True)
             Krita.instance().action('paste_as_reference').trigger()
 
     def commandClipboardOpen(self, items=None):

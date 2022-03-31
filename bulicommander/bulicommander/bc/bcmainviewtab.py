@@ -2375,44 +2375,51 @@ class BCMainViewTab(QFrame):
         """Display context menu for files"""
         #
         #
-        #   +---------------------------------------+----------------------------------------------+
-        #   | ACTION                                | SELECTION                                    |
-        #   |                                       |                                              |
-        #   |                                       | None | File  |  File |  Dir. |  Dir. | Both  |
-        #   |                                       |      |  (1)  |  (n)  |  (1)  |  (n)  |       |
-        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
-        #   | Select All                            |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
-        #   | Select None                           |  VD  |  VE   |  VE   |  VE   |  VE   |  VE   |
-        #   | Invert selecion                       |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
-        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
-        #   | New folder                            |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
-        #   | Open folder in opposite panel         |  H   |   H   |   H   | VE.VD |   H   |   H   |
-        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
-        #   | Open>                                 |  H   |  VE   |  VE   |   H   |   H   |  VE   |
-        #   |     Open                              |  H   |  VE   |  VE   |   H   |   H   |  VE   |
-        #   |     Open and close BC                 |  H   |  VE   |  VE   |   H   |   H   |  VE   |
-        #   |     Open as new document              |  H   |  VE   |  VE   |   H   |   H   |  VE   |
-        #   |     Open as new document and close BC |  H   |  VE   |  VE   |   H   |   H   |  VE   |
-        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
-        #   | Copy to other panel                   |  H   | VE.VD | VE.VD | VE.VD | VE.VD | VE.VD |
-        #   | Move to other panel                   |  H   | VE.VD | VE.VD | VE.VD | VE.VD | VE.VD |
-        #   | Delete                                |  H   |  VE   |  VE   |  VE   |  VE   |  VE   |
-        #   | Rename                                |  H   |  VE   |  VE   |  VE   |  VE   |  VE   |
-        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
-        #   | Copy to clipboard                     |  H   |  VE   |  VE   |  VE   |  VE   |  VE   |
-        #   | Export files list...                  |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
-        #   | Convert files...                      |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
-        #   +---------------------------------------+------+-------+-------+-------+-------+-------+
+        #   +------------------------------------------+----------------------------------------------+
+        #   | ACTION                                   | SELECTION                                    |
+        #   |                                          |                                              |
+        #   |                                          | None | File  |  File |  Dir. |  Dir. | Both  |
+        #   |                                          |      |  (1)  |  (n)  |  (1)  |  (n)  |       |
+        #   +------------------------------------------+------+-------+-------+-------+-------+-------+
+        #   | Select All                               |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Select None                              |  VD  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Invert selecion                          |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   +------------------------------------------+------+-------+-------+-------+-------+-------+
+        #   | New folder                               |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Open folder in opposite panel            |  H   |   H   |   H   | VE.VD |   H   |   H   |
+        #   +------------------------------------------+------+-------+-------+-------+-------+-------+
+        #   | Open>                                    |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   |     Open                                 |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   |     Open and close BC                    |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   |     Open as new document                 |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   |     Open as new document and close BC    |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   |     Open as reference image              |  H   | VR.1  | VR.1  |   H   |   H   | VR.1  |
+        #   |     Open as reference image and close BC |  H   | VR.1  | VR.1  |   H   |   H   | VR.1  |
+        #   +------------------------------------------+------+-------+-------+-------+-------+-------+
+        #   | Copy to other panel                      |  H   | VE.VD | VE.VD | VE.VD | VE.VD | VE.VD |
+        #   | Move to other panel                      |  H   | VE.VD | VE.VD | VE.VD | VE.VD | VE.VD |
+        #   | Delete                                   |  H   |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Rename                                   |  H   |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   +------------------------------------------+------+-------+-------+-------+-------+-------+
+        #   | Copy to clipboard                        |  H   |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Export files list...                     |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   | Convert files...                         |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
+        #   +------------------------------------------+------+-------+-------+-------+-------+-------+
         #
         #   H=Hidden
         #   VE=Visible, Enabled
         #   VD=Visible, Disabled
+        #   VR.xx=Visible, Rule XX
         #   XX.XX=If opposite panel visible . if opposite panel hidden
+        #
+        #   VR.1 Only PNG/JPEG files can be loaded as reference image
+        #        And an active document must be available
         #
 
         HH=0
         VD=1
         VE=2
+        VR=3
 
         menuProperties=[
             # 0:parent  1:Id                2:icon list
@@ -2438,6 +2445,11 @@ class BCMainViewTab(QFrame):
                                             i18n('Open as new document'),                               self.__uiController.commandFileOpenAsNew,           [],   [HH, VE, VE, HH, HH, VE] ],
             ['open',    'openNewCloseBC',   "pktk:folder_open_new",
                                             i18n('Open as new document and close Buli Commander'),      self.__uiController.commandFileOpenAsNewCloseBC,    [],   [HH, VE, VE, HH, HH, VE] ],
+            ['open',    'openRefImg',       "pktk:folder_open_pinned",
+                                            i18n('Open as Reference Image'),                            self.__uiController.commandFileOpenAsImageReference,[],   [HH, (VR, 1), (VR, 1), HH, HH, (VR, 1)] ],
+            ['open',    'openRefImgCloseBC',"pktk:folder_open_pinned",
+                                            i18n('Open as Reference Image and close Buli Commander'),   self.__uiController.commandFileOpenAsImageReferenceCloseBC,
+                                                                                                                                                            [],   [HH, (VR, 1), (VR, 1), HH, HH, (VR, 1)] ],
             ['',        'sep3',             None,   None,                                               None,                                               [],   [VE, VE, VE, VE, VE, VE] ],
             ['',        'copyOP',           "pktk:file_copy",
                                             i18n('Copy to other panel'),                                self.__uiController.commandFileCopy,                [],   [HH, (VE,VD), (VE,VD), (VE,VD), (VE,VD), (VE,VD)] ],
@@ -2482,11 +2494,22 @@ class BCMainViewTab(QFrame):
             # deteminate status
             status=properties[6][stateIndex]
             if isinstance(status, tuple):
-                # need to determinate if opposite panel is active(0) or not(1)
-                if self.__uiController.panel(False).targetDirectoryReady():
-                    status=status[0]
-                else:
-                    status=status[1]
+                if status[0]==VE and status[1]==VD:
+                    # need to determinate if opposite panel is active(0) or not(1)
+                    if self.__uiController.panel(False).targetDirectoryReady():
+                        status=status[0]
+                    else:
+                        status=status[1]
+                elif status[0]==VR and status[1]==1:
+                    # VR.1
+                    #   Only PNG/JPEG files can be loaded as reference image
+                    #   And an active document must be available
+                    status=VD
+                    if Krita.instance().activeDocument():
+                        # need to check all selected files
+                        # if at least on files can be loaded as reference image, enable menu
+                        if self.filesAllowPasteFilesAsRefimg([item.fullPathName() for item in selection[5]]):
+                            status=VE
 
             menu=contextMenu
 
@@ -3649,6 +3672,22 @@ class BCMainViewTab(QFrame):
     def setFilesTabViewMode(self, value):
         """Return current view mode list/grid"""
         self.__filesSwitchViewFileMode(value)
+
+
+    def filesAllowPasteFilesAsRefimg(self, documentList):
+        """return true if at least one document in given `documentList` can be
+        loaded as a reference image
+
+        Given `documentList` is a list of file name (<str>)
+        """
+        if len(documentList)==0:
+            return False
+
+        for item in documentList:
+            if re.search(f'(?i)\.({"|".join(BCFileManagedFormat.list())})$', item):
+                # at least one item can be pasted as reference image
+                return True
+        return False
 
     # -- PUBLIC CLIPBOARD ----------------------------------------------------------
 

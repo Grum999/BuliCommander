@@ -42,7 +42,10 @@ from .bcdownloader import BCDownloader
 
 from bulicommander.pktk.modules.strutils import bytesSizeToStr
 from bulicommander.pktk.modules.utils import Debug
-from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.imgutils import (
+        buildIcon,
+        qImageToPngQByteArray
+    )
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
@@ -586,7 +589,7 @@ class BCClipboardItemFile(BCClipboardItem):
                 data=fHandle.read()
 
             if data:
-                returned.append((data, QMimeDatabase().mimeTypeForFile(self.fileName()).name()))
+                returned.append((data, QMimeDatabase().mimeTypeForFile(self.fileName()).name(), self.file()))
 
         return returned
 
@@ -1591,7 +1594,7 @@ class BCClipboard(QObject):
             self.__recalculateCacheSize()
         return (self.__totalCacheItemS, self.__totalCacheSizeS)
 
-    def pushBackToClipboard(self, data):
+    def pushBackToClipboard(self, data, forceImgAsPng=False):
         """Push back data to clipboard
 
         Given `data` can be:
@@ -1600,6 +1603,13 @@ class BCClipboard(QObject):
         - BCClipboardItemImg
         - BCClipboardItemSvg
         - BCClipboardItemKra
+
+        If `forceImgAsPng` is True, if content pushed back into clipboard is an
+        image (jpeg, kra, ...) content is forced to be converted as png mime/type
+        before being pushed back in clipboard
+
+        This is an ugly workaround to allow any type of image format (that can be
+        read by bc) to be pasted as reference image
         """
         def processItem(item):
             contentList=item.contentBackToClipboard()
@@ -1609,6 +1619,17 @@ class BCClipboard(QObject):
                 elif content[1]=='text/plain':
                     textList.append(content[0])
                 else:
+                    print(content[1])
+                    if forceImgAsPng and content[1]!='image/png' and re.match('(image/|application/x-krita)', content[1]):
+                        # content[0] = image raw data
+                        # content[1] = mime/type
+                        # content[2] = BCFile
+                        #
+                        # in this case:
+                        #   . retrieve image from BCFile (a QImage)
+                        #   . convert it on the fly as PNG byte array
+                        #   . push it back in clipboard
+                        content=(qImageToPngQByteArray(content[2].image()), 'image/png')
                     mimeContent.setData(content[1], content[0])
 
         mimeContent=QMimeData()
