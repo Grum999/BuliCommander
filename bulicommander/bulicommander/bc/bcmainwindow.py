@@ -135,11 +135,8 @@ class BCMainWindow(QMainWindow):
         # Menu FILE
         self.actionFolderNew.triggered.connect(self.__menuFileCreateDirectory)
         self.actionFileOpen.triggered.connect(self.__menuFileOpen)
-        self.actionFileOpenCloseBC.triggered.connect(self.__menuFileOpenCloseBC)
         self.actionFileOpenAsNewDocument.triggered.connect(self.__menuFileOpenAsNewDocument)
-        self.actionFileOpenAsNewDocumentCloseBC.triggered.connect(self.__menuFileOpenAsNewDocumentCloseBC)
         self.actionFileOpenAsImageReference.triggered.connect(self.__menuFileOpenAsImageReference)
-        self.actionFileOpenAsImageReferenceCloseBC.triggered.connect(self.__menuFileOpenAsImageReferenceCloseBC)
         self.actionFileCopyToOtherPanel.triggered.connect(self.__menuFileCopyConfirm)
         self.actionFileMoveToOtherPanel.triggered.connect(self.__menuFileMoveConfirm)
         self.actionFileRename.triggered.connect(self.__menuFileRename)
@@ -244,25 +241,13 @@ class BCMainWindow(QMainWindow):
         """Create a new directory"""
         self.__uiController.commandFileCreateDir()
 
-    def __menuFileOpenCloseBC(self, action):
-        """Open selected file(s) and close BC"""
-        self.__uiController.commandFileOpenCloseBC()
-
     def __menuFileOpenAsNewDocument(self, action):
         """Open selected file(s) as new document"""
         self.__uiController.commandFileOpenAsNew()
 
-    def __menuFileOpenAsNewDocumentCloseBC(self, action):
-        """Open selected file(s) as new document and close"""
-        self.__uiController.commandFileOpenAsNewCloseBC()
-
     def __menuFileOpenAsImageReference(self, action):
         """Open selected file(s) as image reference"""
         self.__uiController.commandFileOpenAsImageReference()
-
-    def __menuFileOpenAsImageReferenceCloseBC(self, action):
-        """Open selected file(s) as image reference and close"""
-        self.__uiController.commandFileOpenAsImageReferenceCloseBC()
 
     def __menuFileDeleteConfirm(self, action):
         """Delete file after confirmation"""

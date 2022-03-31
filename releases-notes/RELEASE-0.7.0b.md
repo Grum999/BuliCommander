@@ -129,6 +129,10 @@ User interface has been slightly improved:
 - An option allows to move **Buli Commander** menu entry from *Tools > Scripts* to *File*
 - Add possibility from Krita settings (*Settings > Configure Krita... > Keyboard Shortcut >> Scripts*) to define a shortcut to open Buli Commander
 - Add "Open as reference image" in context menu
+- Reorganise "Open file" menu items
+  -- "Open file" as main menu entry
+  -- All other in "Open As" sub-menu entry
+  -- Remove all variation "...and close Buli Commander"
 
 
 ## Fix bug - *Read Krita files*

@@ -35,14 +35,21 @@
     <property name="title">
      <string>Fi&amp;le</string>
     </property>
+    <widget class="QMenu" name="menuOpen_file_as">
+     <property name="title">
+      <string>Open file as</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+       <normaloff>:/pktk/images/normal/folder_open</normaloff>:/pktk/images/normal/folder_open</iconset>
+     </property>
+     <addaction name="actionFileOpenAsNewDocument"/>
+     <addaction name="actionFileOpenAsImageReference"/>
+    </widget>
     <addaction name="actionFolderNew"/>
     <addaction name="separator"/>
     <addaction name="actionFileOpen"/>
-    <addaction name="actionFileOpenCloseBC"/>
-    <addaction name="actionFileOpenAsNewDocument"/>
-    <addaction name="actionFileOpenAsNewDocumentCloseBC"/>
-    <addaction name="actionFileOpenAsImageReference"/>
-    <addaction name="actionFileOpenAsImageReferenceCloseBC"/>
+    <addaction name="menuOpen_file_as"/>
     <addaction name="separator"/>
     <addaction name="actionFileCopyToOtherPanel"/>
     <addaction name="actionFileMoveToOtherPanel"/>

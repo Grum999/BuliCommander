@@ -791,9 +791,7 @@ class BCUIController(QObject):
             oppositeTargetReady=self.panel(False).targetDirectoryReady()
 
             self.__window.actionFileOpen.setEnabled(selectionInfo[4]>0)
-            self.__window.actionFileOpenCloseBC.setEnabled(selectionInfo[4]>0)
             self.__window.actionFileOpenAsNewDocument.setEnabled(selectionInfo[4]>0)
-            self.__window.actionFileOpenAsNewDocumentCloseBC.setEnabled(selectionInfo[4]>0)
             self.__window.actionFileCopyToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3]>0))
             self.__window.actionFileMoveToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3]>0))
             self.__window.actionFileDelete.setEnabled(selectionInfo[3]>0)
@@ -801,10 +799,8 @@ class BCUIController(QObject):
             if Krita.instance().activeDocument():
                 allow=self.panel().filesAllowPasteFilesAsRefimg([item.fullPathName() for item in selectionInfo[0] if isinstance(item, BCFile)])
                 self.__window.actionFileOpenAsImageReference.setEnabled(allow)
-                self.__window.actionFileOpenAsImageReferenceCloseBC.setEnabled(allow)
             else:
                 self.__window.actionFileOpenAsImageReference.setEnabled(False)
-                self.__window.actionFileOpenAsImageReferenceCloseBC.setEnabled(False)
 
             # ^ ==> xor logical operator
             # Can do rename if:
