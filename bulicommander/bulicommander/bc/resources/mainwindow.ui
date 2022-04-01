@@ -45,6 +45,8 @@
      </property>
      <addaction name="actionFileOpenAsNewDocument"/>
      <addaction name="actionFileOpenAsImageReference"/>
+     <addaction name="actionFileOpenAsLayer"/>
+     <addaction name="actionFileOpenAsFileLayer"/>
     </widget>
     <addaction name="actionFolderNew"/>
     <addaction name="separator"/>
@@ -1127,6 +1129,9 @@
    <property name="text">
     <string>Open file as Reference &amp;Image</string>
    </property>
+   <property name="statusTip">
+    <string>Open file as Reference Image</string>
+   </property>
   </action>
   <action name="actionFileOpenAsImageReferenceCloseBC">
    <property name="icon">
@@ -1159,6 +1164,38 @@
   <action name="actionViewDisplayLayout">
    <property name="text">
     <string>&amp;Layout</string>
+   </property>
+  </action>
+  <action name="actionFileOpenAsLayer">
+   <property name="icon">
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/folder_open_layers</normaloff>
+     <disabledoff>:/pktk/images/disabled/folder_open_layers</disabledoff>:/pktk/images/normal/folder_open_layers</iconset>
+   </property>
+   <property name="text">
+    <string>Open file as Layer</string>
+   </property>
+   <property name="toolTip">
+    <string>Open file as raster Layer for bitmap images/as Vector layer for vector images</string>
+   </property>
+   <property name="statusTip">
+    <string>Open file as raster Layer for bitmap images/as Vector layer for vector images</string>
+   </property>
+  </action>
+  <action name="actionFileOpenAsFileLayer">
+   <property name="icon">
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/folder_open_link</normaloff>
+     <disabledoff>:/pktk/images/disabled/folder_open_link</disabledoff>:/pktk/images/normal/folder_open_link</iconset>
+   </property>
+   <property name="text">
+    <string>Open file as File layer</string>
+   </property>
+   <property name="toolTip">
+    <string>Open file as a File layer</string>
+   </property>
+   <property name="statusTip">
+    <string>Open file as a File layer</string>
    </property>
   </action>
  </widget>

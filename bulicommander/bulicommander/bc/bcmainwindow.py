@@ -137,6 +137,8 @@ class BCMainWindow(QMainWindow):
         self.actionFileOpen.triggered.connect(self.__menuFileOpen)
         self.actionFileOpenAsNewDocument.triggered.connect(self.__menuFileOpenAsNewDocument)
         self.actionFileOpenAsImageReference.triggered.connect(self.__menuFileOpenAsImageReference)
+        self.actionFileOpenAsLayer.triggered.connect(self.__menuFileOpenAsLayer)
+        self.actionFileOpenAsFileLayer.triggered.connect(self.__menuFileOpenAsFileLayer)
         self.actionFileCopyToOtherPanel.triggered.connect(self.__menuFileCopyConfirm)
         self.actionFileMoveToOtherPanel.triggered.connect(self.__menuFileMoveConfirm)
         self.actionFileRename.triggered.connect(self.__menuFileRename)
@@ -248,6 +250,14 @@ class BCMainWindow(QMainWindow):
     def __menuFileOpenAsImageReference(self, action):
         """Open selected file(s) as image reference"""
         self.__uiController.commandFileOpenAsImageReference()
+
+    def __menuFileOpenAsLayer(self, action):
+        """Open selected file(s) as layer"""
+        self.__uiController.commandFileOpenAsLayer()
+
+    def __menuFileOpenAsFileLayer(self, action):
+        """Open selected file(s) as file layer"""
+        self.__uiController.commandFileOpenAsFileLayer()
 
     def __menuFileDeleteConfirm(self, action):
         """Delete file after confirmation"""

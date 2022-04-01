@@ -2388,13 +2388,12 @@ class BCMainViewTab(QFrame):
         #   | New folder                               |  VE  |  VE   |  VE   |  VE   |  VE   |  VE   |
         #   | Open folder in opposite panel            |  H   |   H   |   H   | VE.VD |   H   |   H   |
         #   +------------------------------------------+------+-------+-------+-------+-------+-------+
-        #   | Open>                                    |  H   |  VE   |  VE   |   H   |   H   |  VE   |
-        #   |     Open                                 |  H   |  VE   |  VE   |   H   |   H   |  VE   |
-        #   |     Open and close BC                    |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   | Open                                     |  H   |  VE   |  VE   |   H   |   H   |  VE   |
+        #   | Open as>                                 |  H   |  VE   |  VE   |   H   |   H   |  VE   |
         #   |     Open as new document                 |  H   |  VE   |  VE   |   H   |   H   |  VE   |
-        #   |     Open as new document and close BC    |  H   |  VE   |  VE   |   H   |   H   |  VE   |
         #   |     Open as reference image              |  H   | VR.1  | VR.1  |   H   |   H   | VR.1  |
-        #   |     Open as reference image and close BC |  H   | VR.1  | VR.1  |   H   |   H   | VR.1  |
+        #   |     Open as layer                        |  H   | VR.2  | VR.2  |   H   |   H   | VR.2  |
+        #   |     Open as file layer                   |  H   | VR.2  | VR.2  |   H   |   H   | VR.2  |
         #   +------------------------------------------+------+-------+-------+-------+-------+-------+
         #   | Copy to other panel                      |  H   | VE.VD | VE.VD | VE.VD | VE.VD | VE.VD |
         #   | Move to other panel                      |  H   | VE.VD | VE.VD | VE.VD | VE.VD | VE.VD |
@@ -2414,6 +2413,8 @@ class BCMainViewTab(QFrame):
         #
         #   VR.1 Only PNG/JPEG files can be loaded as reference image
         #        And an active document must be available
+        #
+        #   VR.2 An active document must be available
         #
 
         HH=0
@@ -2443,6 +2444,10 @@ class BCMainViewTab(QFrame):
                                             i18n('Open as new document'),                               self.__uiController.commandFileOpenAsNew,           [],   [HH, VE, VE, HH, HH, VE] ],
             ['openAs',  'openRefImg',       "pktk:folder_open_pinned",
                                             i18n('Open as Reference Image'),                            self.__uiController.commandFileOpenAsImageReference,[],   [HH, (VR, 1), (VR, 1), HH, HH, (VR, 1)] ],
+            ['openAs',  'openLayer',        "pktk:folder_open_layers",
+                                            i18n('Open as Layer'),                                      self.__uiController.commandFileOpenAsLayer,         [],   [HH, (VR, 2), (VR, 2), HH, HH, (VR, 2)] ],
+            ['openAs',  'openFileLayer',    "pktk:folder_open_link",
+                                            i18n('Open as File layer'),                                 self.__uiController.commandFileOpenAsFileLayer,     [],   [HH, (VR, 2), (VR, 2), HH, HH, (VR, 2)] ],
             ['',        'sep3',             None,   None,                                               None,                                               [],   [VE, VE, VE, VE, VE, VE] ],
             ['',        'copyOP',           "pktk:file_copy",
                                             i18n('Copy to other panel'),                                self.__uiController.commandFileCopy,                [],   [HH, (VE,VD), (VE,VD), (VE,VD), (VE,VD), (VE,VD)] ],
@@ -2503,6 +2508,13 @@ class BCMainViewTab(QFrame):
                         # if at least on files can be loaded as reference image, enable menu
                         if self.filesAllowPasteFilesAsRefimg([item.fullPathName() for item in selection[5]]):
                             status=VE
+                elif status[0]==VR and status[1]==2:
+                    # VR.2 An active document must be available
+                    status=VD
+                    if Krita.instance().activeDocument():
+                        # need to check all selected files
+                        # if at least on files can be loaded as reference image, enable menu
+                        status=VE
 
             menu=contextMenu
 
