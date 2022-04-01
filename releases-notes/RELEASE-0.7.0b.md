@@ -107,11 +107,24 @@ Also improve preview for images with transparency (checkerboard not impacted any
 
 
 ## Recognized files format
-The following files format are taken in account:
+The following files format are now taken in account:
 - KRZ
 - BMP
 
 
+## Open as reference image
+Improve the functionality and let any image format recognized by Buli Commander (BMP, KRA, PSD, ...) to be opened as reference image
+
+
+## Open as Layer
+Add menu entry "Open as Layer"
+All selected files are opened as new layers:
+- SVG files are opened in Vector Layer
+- Raster files are opened in Paint Layer
+
+## Open as File Layer
+Add menu entry "Open as File Layer"
+All selected files are opened as new file layers
 
 
 ## Improve UI
@@ -125,6 +138,12 @@ User interface has been slightly improved:
 - Review console for conversion files dialog box
 - Sliders for thumbnail size now display current selected size
 - An option allows to move **Buli Commander** menu entry from *Tools > Scripts* to *File*
+- Add possibility from Krita settings (*Settings > Configure Krita... > Keyboard Shortcut >> Scripts*) to define a shortcut to open Buli Commander
+- Add "Open as reference image" in context menu
+- Reorganise "Open file" menu items
+  -- "Open file" as main menu entry
+  -- All other in "Open As" sub-menu entry
+  -- Remove all variation "...and close Buli Commander"
 
 
 ## Fix bug - *Read Krita files*
@@ -150,6 +169,7 @@ User interface has been slightly improved:
 - When theme was changed in Krita, a python script message error about 'autoreload' was displayed
 - When from one panel (located in directory A) a directory B was deleted, if opposite panel was located to deleted directory (or subdirectory of deleted directory), panel refresh was not properly made and mouse cursor was stuck on "wait"
 - When Buli Commander is defined to be automatically opened at startup, if user had time to open a document before start/end of plugin initialization, a script error was raised
+- Add progress bar and possibility to cancel operation during animated files import (like Gif or WebP)
 - Fix miscellaneous minor bugs
 
 

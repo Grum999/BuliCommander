@@ -102,7 +102,8 @@ from bulicommander.pktk.modules.about import AboutWindow
 from bulicommander.pktk.widgets.wimageview import WImageView
 from bulicommander.pktk.widgets.wiodialog import (
         WDialogMessage,
-        WDialogBooleanInput
+        WDialogBooleanInput,
+        WDialogRadioButtonChoiceInput
     )
 from bulicommander.pktk.pktk import (
         EInvalidType,
@@ -358,22 +359,26 @@ class BCUIController(QObject):
         if bcfile.format() in BCImportAnimated.SUPPORTED_FORMAT:
             imgNfo = bcfile.getMetaInformation()
             if imgNfo['imageCount'] > 1:
-                userChoice = BCImportDialogBox.open(f'{self.__bcName}::Import {bcfile.format()} file', bcfile, self.panel())
+                dialogTitle=f'{self.__bcName}::Import {bcfile.format()} file'
+                userChoice = BCImportDialogBox.open(dialogTitle, bcfile, self.panel())
 
+                result=BCImportAnimated.IMPORT_KO
                 if userChoice[0]:
                     if userChoice[1] == BCImportDialogBox.IMPORT_AS_FRAMELAYER:
-                        if BCImportAnimated.importAsFrames(bcfile, userChoice[2]):
-                            return BCUIController.__EXTENDED_OPEN_OK
+                        result=BCImportAnimated.importAsFrames(dialogTitle, bcfile, userChoice[2])
                     elif userChoice[1] == BCImportDialogBox.IMPORT_AS_STACKLAYER:
-                        if BCImportAnimated.importAsLayers(bcfile):
-                            return BCUIController.__EXTENDED_OPEN_OK
+                        result=BCImportAnimated.importAsLayers(dialogTitle, bcfile)
                     elif userChoice[1] == BCImportDialogBox.IMPORT_AS_FRAME:
-                        if BCImportAnimated.importInOneLayer(bcfile, userChoice[2]):
-                            return BCUIController.__EXTENDED_OPEN_OK
+                        result=BCImportAnimated.importInOneLayer(bcfile, userChoice[2])
                     #else:
-                    #   krita's import mode
+                    #   krita's import mode=KO
                 else:
                     # cancel
+                    result=BCImportAnimated.IMPORT_CANCELLED
+
+                if result==BCImportAnimated.IMPORT_OK:
+                    return BCUIController.__EXTENDED_OPEN_OK
+                elif result==BCImportAnimated.IMPORT_CANCELLED:
                     return BCUIController.__EXTENDED_OPEN_CANCEL
         return BCUIController.__EXTENDED_OPEN_KO
 
@@ -765,16 +770,6 @@ class BCUIController(QObject):
 
     def updateMenuForPanel(self):
         """Update menu (enabled/disabled/checked/unchecked) according to current panel"""
-        def allowPasteFileAsRefimg(list):
-            if len(list)==0:
-                return False
-
-            for item in list:
-                if re.search('(?i)\.(jpeg|jpg|png)$', item):
-                    # at least one item can be pasted as reference image
-                    return True
-            return False
-
         #print("updateMenuForPanel", self.panel().tabActive())
         self.__window.actionViewThumbnail.setChecked(self.panel().filesViewThumbnail())
         self.__window.actionViewDisplayQuickFilter.setChecked(self.panel().filesFilterVisible())
@@ -797,20 +792,20 @@ class BCUIController(QObject):
             oppositeTargetReady=self.panel(False).targetDirectoryReady()
 
             self.__window.actionFileOpen.setEnabled(selectionInfo[4]>0)
-            self.__window.actionFileOpenCloseBC.setEnabled(selectionInfo[4]>0)
             self.__window.actionFileOpenAsNewDocument.setEnabled(selectionInfo[4]>0)
-            self.__window.actionFileOpenAsNewDocumentCloseBC.setEnabled(selectionInfo[4]>0)
             self.__window.actionFileCopyToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3]>0))
             self.__window.actionFileMoveToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3]>0))
             self.__window.actionFileDelete.setEnabled(selectionInfo[3]>0)
 
             if Krita.instance().activeDocument():
-                allow=allowPasteFileAsRefimg([item.fullPathName() for item in selectionInfo[0] if isinstance(item, BCFile)])
+                allow=self.panel().filesAllowPasteFilesAsRefimg([item.fullPathName() for item in selectionInfo[0] if isinstance(item, BCFile)])
                 self.__window.actionFileOpenAsImageReference.setEnabled(allow)
-                self.__window.actionFileOpenAsImageReferenceCloseBC.setEnabled(allow)
+                self.__window.actionFileOpenAsLayer.setEnabled(selectionInfo[4]>0)
+                self.__window.actionFileOpenAsFileLayer.setEnabled(selectionInfo[4]>0)
             else:
                 self.__window.actionFileOpenAsImageReference.setEnabled(False)
-                self.__window.actionFileOpenAsImageReferenceCloseBC.setEnabled(False)
+                self.__window.actionFileOpenAsLayer.setEnabled(False)
+                self.__window.actionFileOpenAsFileLayer.setEnabled(False)
 
             # ^ ==> xor logical operator
             # Can do rename if:
@@ -1095,6 +1090,7 @@ class BCUIController(QObject):
             elif opened == BCUIController.__EXTENDED_OPEN_OK:
                 return True
 
+            # unable to process file, try default Krita import
             try:
                 document = Krita.instance().openDocument(file)
                 view = Krita.instance().activeWindow().addView(document)
@@ -1198,6 +1194,131 @@ class BCUIController(QObject):
     def commandFileOpenAsImageReferenceCloseBC(self, file=None):
         """Open file and close BuliCommander"""
         if self.commandFileOpenAsImageReference(file):
+            self.commandQuit()
+            return True
+        return False
+
+    def commandFileOpenAsLayer(self, file=None):
+        """Open file as layer"""
+        def importFileAsLayer(file):
+            document=Krita.instance().activeDocument()
+
+            if file.format()==BCFileManagedFormat.SVG:
+                try:
+                    with open(file.fullPathName(), 'r') as fHandle:
+                        svgContent=fHandle.read()
+                except Exception as e:
+                    return False
+
+                fileName=file.fullPathName()
+                importedFile=document.createVectorLayer(i18n(f"BC - Layer ({fileName})"))
+                importedFile.addShapesFromSvg(svgContent)
+            else:
+                fileName=file.fullPathName()
+                importedFile=document.createNode(i18n(f"BC - Layer ({fileName})"), "paintlayer")
+                EKritaNode.fromQImage(importedFile, file.image())
+
+            activeNode=document.activeNode()
+            activeNode.parentNode().addChildNode(importedFile, activeNode)
+            return True
+
+        if file is None:
+            selectionInfo = self.panel().filesSelected()
+            if selectionInfo[4] > 0:
+                nbOpened = 0
+                for file in selectionInfo[0]:
+                    if isinstance(file, BCFile) and file.readable():
+                        if importFileAsLayer(file):
+                            nbOpened+=1
+                if nbOpened!=selectionInfo[4]:
+                    return False
+                else:
+                    return True
+        elif isinstance(file, BCFile) and file.readable():
+            return importFileAsLayer(file)
+        elif isinstance(file, str):
+            if os.path.isfile(file):
+                return importFileAsLayer(BCFile(file))
+            else:
+                return False
+        else:
+            raise EInvalidType('Given `file` is not valid')
+
+    def commandFileOpenAsLayerCloseBC(self, file=None):
+        """Open file as layer and close BuliCommander"""
+        if self.commandFileOpenAsLayer(file):
+            self.commandQuit()
+            return True
+        return False
+
+    def commandFileOpenAsFileLayer(self, file=None, scalingMode=None):
+        """Open file as file layer"""
+        def scaleMode(applyForAll=False):
+            if applyForAll:
+                applyForAll=i18n("Apply for all image")
+            else:
+                applyForAll=None
+
+            return WDialogRadioButtonChoiceInput.display(i18n(f"{self.__bcName}::Open as File layer"),
+                                                            "<h1>Scaling mode</h1><p>Please choose a scaling mode for File layer</p>",
+                                                            choicesValue=[
+                                                                i18n("No scaling"),
+                                                                i18n("Scale to Image Size"),
+                                                                i18n("Adapt to Image Resolution (ppi)")],
+                                                            optionalCheckboxMsg=applyForAll
+                                                        )
+
+        if file is None:
+            selectionInfo = self.panel().filesSelected()
+            if selectionInfo[4] > 0:
+                moreThanOneFile=selectionInfo[4]>1
+                applyToAll=False
+                nbOpened = 0
+                for file in selectionInfo[0]:
+                    if isinstance(file, BCFile) and file.readable():
+                        if applyToAll==False or scalingMode is None:
+                            if moreThanOneFile:
+                                scalingMode, applyToAll=scaleMode(moreThanOneFile)
+                            else:
+                                scalingMode=scaleMode(moreThanOneFile)
+
+                        if scalingMode is None and (applyToAll or not moreThanOneFile):
+                            return False
+
+                        if self.commandFileOpenAsFileLayer(file.fullPathName(), scalingMode):
+                            nbOpened+=1
+                if nbOpened!=selectionInfo[4]:
+                    return False
+                else:
+                    return True
+        elif isinstance(file, BCFile) and file.readable():
+            return self.commandFileOpenAsFileLayer(file.fullPathName(), scalingMode)
+        elif isinstance(file, str):
+            if scalingMode is None:
+                scalingMode=scaleMode()
+
+            if scalingMode is None:
+                # user cancelled action
+                return False
+            elif scalingMode==0:
+                scalingMode="None"
+            elif scalingMode==1:
+                scalingMode="ToImageSize"
+            elif scalingMode==2:
+                scalingMode="ToImagePPI"
+
+            fileName=os.path.basename(file)
+            document=Krita.instance().activeDocument()
+            activeNode=document.activeNode()
+            activeNode.parentNode().addChildNode(document.createFileLayer(i18n(f"BC - File layer ({fileName})"), file, scalingMode), activeNode)
+
+            return True
+        else:
+            raise EInvalidType('Given `file` is not valid')
+
+    def commandFileOpenAsFileLayerCloseBC(self, file=None):
+        """Open file as file layer and close BuliCommander"""
+        if self.commandFileOpenAsFileLayer(file):
             self.commandQuit()
             return True
         return False
@@ -1417,7 +1538,7 @@ class BCUIController(QObject):
                 for item in selectionInfo[0]:
                     self.commandClipboardPasteAsRefImage(item)
         elif isinstance(items, BCClipboardItem):
-            self.__clipboard.pushBackToClipboard(items)
+            self.__clipboard.pushBackToClipboard(items, True)
             Krita.instance().action('paste_as_reference').trigger()
 
     def commandClipboardOpen(self, items=None):

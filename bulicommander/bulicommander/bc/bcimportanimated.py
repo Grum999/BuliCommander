@@ -42,6 +42,7 @@ from .bcfile import (
 
 from bulicommander.pktk.modules.utils import Debug
 from bulicommander.pktk.modules.ekrita import EKritaNode
+from bulicommander.pktk.widgets.wiodialog import WDialogProgress
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -121,11 +122,15 @@ class BCImportDialogBox(QDialog):
 class BCImportAnimated(object):
     """Provides function to import animated file files"""
 
+    IMPORT_OK=0
+    IMPORT_KO=1
+    IMPORT_CANCELLED=2
+
     SUPPORTED_FORMAT = [BCFileManagedFormat.GIF,
                         BCFileManagedFormat.WEBP]
 
     @staticmethod
-    def importAsLayers(file):
+    def importAsLayers(dialogTitle, file):
         """Import animated file
 
         Each frame is imported in a new layer
@@ -140,6 +145,8 @@ class BCImportAnimated(object):
             imgNfo = file.getMetaInformation()
             if imgNfo['imageCount'] > 1:
                 try:
+                    dlgBox=WDialogProgress.display(dialogTitle, f"<b>{i18n('Importing file as layers')}</b><br>{i18n('File')}: <span style='font-family:monospace'>{file.fullPathName()}</span><br><br>", True, minValue=0, maxValue=imgNfo['imageCount'])
+
                     imgReaderAnimated = QMovie(file.fullPathName())
 
                     document = Krita.instance().createDocument (
@@ -154,10 +161,18 @@ class BCImportAnimated(object):
                     document.setFileName(f'Imported animation-{file.name()}')
 
                     groupLayer = document.createGroupLayer('Frames')
-                    document.rootNode().addChildNode(groupLayer, None)
 
+                    dlgBox.updateMessage(f"{i18n('Extract frames')}...<br>", False)
+                    isCancelled=False
                     nbZ=len(f"{imgReaderAnimated.frameCount()}")
                     for frameNumber in range(imgReaderAnimated.frameCount()):
+                        isCancelled=dlgBox.setProgress(frameNumber+1)
+                        if isCancelled:
+                            document.waitForDone()
+                            document.close()
+                            dlgBox.close()
+                            Timer.sleep(5000)
+                            return BCImportAnimated.IMPORT_CANCELLED
                         imgReaderAnimated.jumpToFrame(frameNumber)
 
                         frameLayer = document.createNode(f"Frame {frameNumber+1:>0{nbZ}}/{imgReaderAnimated.frameCount()} [{imgReaderAnimated.nextFrameDelay()}ms]", "paintLayer")
@@ -166,18 +181,24 @@ class BCImportAnimated(object):
                         groupLayer.addChildNode(frameLayer, None)
                         #imgReaderAnimated.jumpToNextFrame()
 
+                    document.rootNode().addChildNode(groupLayer, None)
+
+                    dlgBox.updateMessage(f"{i18n('Frames extracted')}: <i>{imgReaderAnimated.frameCount()}</i><br>", False)
+                    dlgBox.setCancelButtonEnabled(False)
+                    dlgBox.setInfinite()
                     document.refreshProjection()
 
                     view = Krita.instance().activeWindow().addView(document)
                     Krita.instance().activeWindow().showView(view)
-                    return True
+                    dlgBox.close()
+                    return BCImportAnimated.IMPORT_OK
                 except Exception as e:
                     Debug.print('[BCImportAnimated.importAsLayers] Unable to read animated file {0}: {1}', file.fullPathName(), e)
 
-        return False
+        return BCImportAnimated.IMPORT_KO
 
     @staticmethod
-    def importAsFrames(file, keyFrameStep=1):
+    def importAsFrames(dialogTitle, file, keyFrameStep=1):
         """Import animated file
 
         Each frame is imported in an animated layer, as a new layer frame
@@ -192,6 +213,8 @@ class BCImportAnimated(object):
             imgNfo = file.getMetaInformation()
             if imgNfo['imageCount'] > 1:
                 try:
+                    dlgBox=WDialogProgress.display(dialogTitle, f"<b>{i18n('Importing file as frames')}</b><br>{i18n('File')}: <span style='font-family:monospace'>{file.fullPathName()}</span><br><br>", True, minValue=0, maxValue=imgNfo['imageCount'])
+
                     imgReaderAnimated = QMovie(file.fullPathName())
                     imgReaderAnimated.setCacheMode(QMovie.CacheAll)
 
@@ -206,10 +229,17 @@ class BCImportAnimated(object):
                         )
                     document.setFileName(f'Imported animation-{file.name()}')
 
+                    dlgBox.updateMessage(f"{i18n('Extract frames')}...<br>", False)
                     fileNames=[]
                     with tempfile.TemporaryDirectory() as tmpDirName:
+                        isCancelled=False
                         nbZ=len(f"{imgReaderAnimated.frameCount()}")
                         for frameNumber in range(imgReaderAnimated.frameCount()):
+                            isCancelled=dlgBox.setProgress(frameNumber+1)
+                            if isCancelled:
+                                document.close()
+                                dlgBox.close()
+                                return BCImportAnimated.IMPORT_CANCELLED
                             fileName = os.path.join(tmpDirName, f'frame-{frameNumber:>0{nbZ}}.png')
 
                             imgReaderAnimated.jumpToFrame(frameNumber)
@@ -218,16 +248,21 @@ class BCImportAnimated(object):
 
                             fileNames.append(fileName)
 
-                        document.importAnimation(fileNames, 0, keyFrameStep)
+                    dlgBox.updateMessage(f"{i18n('Frames extracted')}: <i>{frameNumber}</i><br>", False)
+                    dlgBox.setCancelButtonEnabled(False)
+                    dlgBox.setInfinite()
+                    dlgBox.updateMessage(f"{i18n('Import frames')}...", False)
+                    document.importAnimation(fileNames, 0, keyFrameStep)
                     document.refreshProjection()
 
                     view = Krita.instance().activeWindow().addView(document)
                     Krita.instance().activeWindow().showView(view)
-                    return True
+                    dlgBox.close()
+                    return BCImportAnimated.IMPORT_OK
                 except Exception as e:
                     Debug.print('[BCImportAnimated.importAsFrames] Unable to read animated file {0}: {1}', file.fullPathName(), e)
 
-        return False
+        return BCImportAnimated.IMPORT_KO
 
     @staticmethod
     def importInOneLayer(file, frameNumber=1):
@@ -273,8 +308,8 @@ class BCImportAnimated(object):
 
                     view = Krita.instance().activeWindow().addView(document)
                     Krita.instance().activeWindow().showView(view)
-                    return True
+                    return BCImportAnimated.IMPORT_OK
                 except Exception as e:
                     Debug.print('[BCImportAnimated.importInOneLayer] Unable to read animated file {0}: {1}', file.fullPathName(), e)
 
-        return False
+        return BCImportAnimated.IMPORT_KO
