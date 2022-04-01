@@ -48,7 +48,7 @@ from ..pktk import *
 
 class WDialogMessage(QDialog):
     """A simple dialog box to display a formatted message with a "OK" button"""
-    def __init__(self, title, message, minSize=None, parent=None):
+    def __init__(self, title, message, minSize=None, optionalCheckboxMsg=None, parent=None):
         super(WDialogMessage, self).__init__(parent)
 
         self.setSizeGripEnabled(True)
@@ -75,13 +75,24 @@ class WDialogMessage(QDialog):
 
         self._messageText=message
 
+        self._optionalCheckboxMsg=None
+        if isinstance(optionalCheckboxMsg, str) and optionalCheckboxMsg!='':
+            self._optionalCheckboxMsg=QCheckBox(optionalCheckboxMsg)
+
         if self._messageText=='':
             self._message.hide()
 
+        self._layoutbtn = QHBoxLayout()
+        self._layoutbtn.setContentsMargins(0,0,0,0)
+        if not self._optionalCheckboxMsg is None:
+            self._layoutbtn.addWidget(self._optionalCheckboxMsg)
+        self._layoutbtn.addStretch()
+        self._layoutbtn.addWidget(self._dButtonBox)
+
         self._layout = QVBoxLayout(self)
-        self._layout.addWidget(self._message)
         self._layout.setContentsMargins(4,4,4,4)
-        self._layout.addWidget(self._dButtonBox)
+        self._layout.addWidget(self._message)
+        self._layout.addLayout(self._layoutbtn)
 
     def __applyMessageIdealSize(self, message):
         """Try to calculate and apply ideal size for dialog box"""
@@ -129,6 +140,11 @@ class WDialogMessage(QDialog):
         # and finally, remove constraint for QTextEdit size (let user resize dialog box if needed)
         self._message.setMinimumSize(0, 0)
 
+    def optionalCheckboxMsgIsChecked(self):
+        """Return if 'apply for all check box' is checked"""
+        if self._optionalCheckboxMsg is None:
+            return False
+        return self._optionalCheckboxMsg.isChecked()
 
     @staticmethod
     def display(title, message, minSize=None):
@@ -149,9 +165,8 @@ class WDialogBooleanInput(WDialogMessage):
     """A simple input dialog box to display a formatted message and ask user for
     a choice "Yes" / "No" and optional "Cancel" buttons
     """
-
-    def __init__(self, title, message, cancelButton=False, minSize=None, parent=None):
-        super(WDialogBooleanInput, self).__init__(title, message, minSize, parent)
+    def __init__(self, title, message, cancelButton=False, minSize=None, optionalCheckboxMsg=None, parent=None):
+        super(WDialogBooleanInput, self).__init__(title, message, minSize, optionalCheckboxMsg, parent)
         # need to manage returned value from yes/no/cancel buttons
         # then disconnect default signal
         self._dButtonBox.accepted.disconnect(self.accept)
@@ -184,11 +199,16 @@ class WDialogBooleanInput(WDialogMessage):
         self.close()
 
     def value(self):
-        """Return value defined by clicked button"""
-        return self.__value
+        """Return value defined by clicked button
+
+        If there's an optional checkbox, return a tuple (value, checkbox status) instead of value
+        """
+        if self._optionalCheckboxMsg is None:
+            return self.__value
+        return (self.__value, self.optionalCheckboxMsgIsChecked())
 
     @staticmethod
-    def display(title, message, cancelButton=False, minSize=None):
+    def display(title, message, cancelButton=False, minSize=None, optionalCheckboxMsg=None):
         """Open dialog box
 
         title:          dialog box title
@@ -199,11 +219,10 @@ class WDialogBooleanInput(WDialogMessage):
         return False value if button "No"
         return None value if button "Cancel"
         """
-
         if not isinstance(cancelButton, bool):
             cancelButton=False
 
-        dlgBox=WDialogBooleanInput(title, message, cancelButton, minSize)
+        dlgBox=WDialogBooleanInput(title, message, cancelButton, minSize, optionalCheckboxMsg)
 
         dlgBox.exec()
 
@@ -214,10 +233,15 @@ class WDialogStrInput(WDialogMessage):
     """A simple input dialog box to display a formatted message and ask user for
     a string value input, with "Ok" / "Cancel" buttons
     """
-
-    def __init__(self, title, message, inputLabel='', defaultValue='', regEx='', minSize=None, parent=None):
-        super(WDialogStrInput, self).__init__(title, message, minSize, parent)
+    def __init__(self, title, message, inputLabel='', defaultValue='', regEx='', minSize=None, optionalCheckboxMsg=None, parent=None):
+        super(WDialogStrInput, self).__init__(title, message, minSize, optionalCheckboxMsg, parent)
+        # need to manage returned value from ok/cancel buttons
+        # then disconnect default signal
+        self._dButtonBox.accepted.disconnect(self.accept)
+        self._dButtonBox.rejected.disconnect(self.reject)
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        self._dButtonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__buttonCancel)
+        self._dButtonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__buttonOk)
         self.__btnOk = self._dButtonBox.button(QDialogButtonBox.Ok)
 
         if inputLabel!='':
@@ -238,6 +262,16 @@ class WDialogStrInput(WDialogMessage):
             self._leInput.textChanged.connect(self.__checkValue)
             self.__checkValue(self._leInput.text())
 
+    def __buttonCancel(self):
+        """Button 'cancel' has been clicked, return None value"""
+        self.__value=None
+        self.close()
+
+    def __buttonOk(self):
+        """Button 'Ok' has been clicked, return True value"""
+        self.__value=self._leInput.text()
+        self.close()
+
     def __checkValue(self, value):
         """Check if value is valid according to regular expression and enable/disabled Ok button"""
         if re.search(self.__regEx, value):
@@ -246,11 +280,16 @@ class WDialogStrInput(WDialogMessage):
             self.__btnOk.setEnabled(False)
 
     def value(self):
-        """Return value"""
-        return self._leInput.text()
+        """Return value
+
+        If there's an optional checkbox, return a tuple (value, checkbox status) instead of value
+        """
+        if self._optionalCheckboxMsg is None:
+            return self.__value
+        return (self.__value, self.optionalCheckboxMsgIsChecked())
 
     @staticmethod
-    def display(title, message=None, inputLabel=None, defaultValue=None, regEx=None, minSize=None):
+    def display(title, message=None, inputLabel=None, defaultValue=None, regEx=None, minSize=None, optionalCheckboxMsg=None):
         """Open dialog box
 
         title:          dialog box title
@@ -279,32 +318,32 @@ class WDialogStrInput(WDialogMessage):
         if regEx is None:
             regEx=''
 
-
-        dlgBox=WDialogStrInput(title, message, inputLabel, defaultValue, regEx, None)
+        dlgBox=WDialogStrInput(title, message, inputLabel, defaultValue, regEx, minSize, optionalCheckboxMsg)
 
         returned = dlgBox.exec()
 
-        if returned == QDialog.Accepted:
-            return dlgBox.value()
-        else:
-            return None
+        return dlgBox.value()
 
 
 class WDialogIntInput(WDialogMessage):
     """A simple input dialog box to display a formatted message and ask user for
     an integer value input, with "Ok" / "Cancel" buttons
     """
-
-    def __init__(self, title, message, inputLabel='', defaultValue=0, minValue=None, maxValue=None, prefix=None, suffix=None, minSize=None, parent=None):
-        super(WDialogIntInput, self).__init__(title, message, minSize, parent)
+    def __init__(self, title, message, inputLabel='', defaultValue=0, minValue=None, maxValue=None, prefix=None, suffix=None, minSize=None, optionalCheckboxMsg=None, parent=None):
+        super(WDialogIntInput, self).__init__(title, message, minSize, optionalCheckboxMsg, parent)
+        # need to manage returned value from ok/cancel buttons
+        # then disconnect default signal
+        self._dButtonBox.accepted.disconnect(self.accept)
+        self._dButtonBox.rejected.disconnect(self.reject)
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        self._dButtonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__buttonCancel)
+        self._dButtonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__buttonOk)
 
         if inputLabel!='':
             self._lbInput=QLabel(self)
             self._lbInput.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum))
             self._lbInput.setText(inputLabel)
             self._layout.insertWidget(self._layout.count()-1, self._lbInput)
-
 
         self._sbInput=QSpinBox(self)
         if isinstance(minValue, int):
@@ -323,12 +362,27 @@ class WDialogIntInput(WDialogMessage):
         self._sbInput.setFocus()
         self._layout.insertWidget(self._layout.count()-1, self._sbInput)
 
+    def __buttonCancel(self):
+        """Button 'cancel' has been clicked, return None value"""
+        self.__value=None
+        self.close()
+
+    def __buttonOk(self):
+        """Button 'Ok' has been clicked, return value"""
+        self.__value=self._sbInput.value()
+        self.close()
+
     def value(self):
-        """Return value"""
-        return self._sbInput.value()
+        """Return value
+
+        If there's an optional checkbox, return a tuple (value, checkbox status) instead of value
+        """
+        if self._optionalCheckboxMsg is None:
+            return self.__value
+        return (self.__value, self.optionalCheckboxMsgIsChecked())
 
     @staticmethod
-    def display(title, message=None, inputLabel=None, defaultValue=None, minValue=None, maxValue=None, prefix=None, suffix=None, minSize=None):
+    def display(title, message=None, inputLabel=None, defaultValue=None, minValue=None, maxValue=None, prefix=None, suffix=None, minSize=None, optionalCheckboxMsg=None):
         """Open dialog box
 
         title:          dialog box title
@@ -371,14 +425,11 @@ class WDialogIntInput(WDialogMessage):
         if not isinstance(suffix, str):
             suffix=None
 
-        dlgBox=WDialogIntInput(title, message, inputLabel, defaultValue, minValue, maxValue, prefix, suffix, None)
+        dlgBox=WDialogIntInput(title, message, inputLabel, defaultValue, minValue, maxValue, prefix, suffix, minSize, optionalCheckboxMsg)
 
         returned = dlgBox.exec()
 
-        if returned == QDialog.Accepted:
-            return dlgBox.value()
-        else:
-            return None
+        return dlgBox.value()
 
 
 class WDialogFloatInput(WDialogMessage):
@@ -386,9 +437,15 @@ class WDialogFloatInput(WDialogMessage):
     an integer value input, with "Ok" / "Cancel" buttons
     """
 
-    def __init__(self, title, message, inputLabel='', defaultValue=0, decValue=None, minValue=None, maxValue=None, prefix=None, suffix=None, minSize=None, parent=None):
-        super(WDialogFloatInput, self).__init__(title, message, minSize, parent)
+    def __init__(self, title, message, inputLabel='', defaultValue=0, decValue=None, minValue=None, maxValue=None, prefix=None, suffix=None, minSize=None, optionalCheckboxMsg=None, parent=None):
+        super(WDialogFloatInput, self).__init__(title, message, minSize, optionalCheckboxMsg, parent)
+        # need to manage returned value from ok/cancel buttons
+        # then disconnect default signal
+        self._dButtonBox.accepted.disconnect(self.accept)
+        self._dButtonBox.rejected.disconnect(self.reject)
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        self._dButtonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__buttonCancel)
+        self._dButtonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__buttonOk)
 
         if inputLabel!='':
             self._lbInput=QLabel(self)
@@ -417,12 +474,27 @@ class WDialogFloatInput(WDialogMessage):
         self._sbInput.setFocus()
         self._layout.insertWidget(self._layout.count()-1, self._sbInput)
 
+    def __buttonCancel(self):
+        """Button 'cancel' has been clicked, return None value"""
+        self.__value=None
+        self.close()
+
+    def __buttonOk(self):
+        """Button 'Ok' has been clicked, return value"""
+        self.__value=self._sbInput.value()
+        self.close()
+
     def value(self):
-        """Return value"""
-        return self._sbInput.value()
+        """Return value
+
+        If there's an optional checkbox, return a tuple (value, checkbox status) instead of value
+        """
+        if self._optionalCheckboxMsg is None:
+            return self.__value
+        return (self.__value, self.optionalCheckboxMsgIsChecked())
 
     @staticmethod
-    def display(title, message=None, inputLabel=None, defaultValue=None, decValue=None, minValue=None, maxValue=None, prefix=None, suffix=None, minSize=None):
+    def display(title, message=None, inputLabel=None, defaultValue=None, decValue=None, minValue=None, maxValue=None, prefix=None, suffix=None, minSize=None, optionalCheckboxMsg=None):
         """Open dialog box
 
         title:          dialog box title
@@ -463,14 +535,11 @@ class WDialogFloatInput(WDialogMessage):
         if not isinstance(suffix, str):
             suffix=None
 
-        dlgBox=WDialogFloatInput(title, message, inputLabel, defaultValue, decValue, minValue, maxValue, prefix, suffix, None)
+        dlgBox=WDialogFloatInput(title, message, inputLabel, defaultValue, decValue, minValue, maxValue, prefix, suffix, minSize, optionalCheckboxMsg)
 
         returned = dlgBox.exec()
 
-        if returned == QDialog.Accepted:
-            return dlgBox.value()
-        else:
-            return None
+        return dlgBox.value()
 
 
 class WDialogComboBoxChoiceInput(WDialogMessage):
@@ -478,12 +547,18 @@ class WDialogComboBoxChoiceInput(WDialogMessage):
     a choice in a list, with "Ok" / "Cancel" buttons
     """
 
-    def __init__(self, title, message, inputLabel='', choicesValue=[], defaultIndex=0, minSize=None, parent=None):
-        super(WDialogComboBoxChoiceInput, self).__init__(title, message, minSize, parent)
+    def __init__(self, title, message, inputLabel='', choicesValue=[], defaultIndex=0, minSize=None, optionalCheckboxMsg=None, parent=None):
+        super(WDialogComboBoxChoiceInput, self).__init__(title, message, minSize, optionalCheckboxMsg, parent)
         if len(choicesValue)==0:
             self.reject()
 
+        # need to manage returned value from ok/cancel buttons
+        # then disconnect default signal
+        self._dButtonBox.accepted.disconnect(self.accept)
+        self._dButtonBox.rejected.disconnect(self.reject)
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        self._dButtonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__buttonCancel)
+        self._dButtonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__buttonOk)
 
         if inputLabel!='':
             self._lbInput=QLabel(self)
@@ -497,12 +572,27 @@ class WDialogComboBoxChoiceInput(WDialogMessage):
         self._cbInput.setFocus()
         self._layout.insertWidget(self._layout.count()-1, self._cbInput)
 
+    def __buttonCancel(self):
+        """Button 'cancel' has been clicked, return None value"""
+        self.__value=None
+        self.close()
+
+    def __buttonOk(self):
+        """Button 'Ok' has been clicked, return value"""
+        self.__value=self._cbInput.currentIndex()
+        self.close()
+
     def value(self):
-        """Return value"""
-        return self._cbInput.currentIndex()
+        """Return value
+
+        If there's an optional checkbox, return a tuple (value, checkbox status) instead of value
+        """
+        if self._optionalCheckboxMsg is None:
+            return self.__value
+        return (self.__value, self.optionalCheckboxMsgIsChecked())
 
     @staticmethod
-    def display(title, message=None, inputLabel=None, choicesValue=[], defaultIndex=0, minSize=None):
+    def display(title, message=None, inputLabel=None, choicesValue=[], defaultIndex=0, minSize=None, optionalCheckboxMsg=None):
         """Open dialog box
 
         title:          dialog box title
@@ -528,15 +618,11 @@ class WDialogComboBoxChoiceInput(WDialogMessage):
         if not isinstance(defaultIndex, int):
             defaultIndex=0
 
-
-        dlgBox=WDialogComboBoxChoiceInput(title, message, inputLabel, choicesValue, defaultIndex, minSize, None)
+        dlgBox=WDialogComboBoxChoiceInput(title, message, inputLabel, choicesValue, defaultIndex, minSize, optionalCheckboxMsg)
 
         returned = dlgBox.exec()
 
-        if returned == QDialog.Accepted:
-            return dlgBox.value()
-        else:
-            return None
+        return dlgBox.value()
 
 
 class WDialogRadioButtonChoiceInput(WDialogMessage):
@@ -544,19 +630,24 @@ class WDialogRadioButtonChoiceInput(WDialogMessage):
     a choice from radio box list, with "Ok" / "Cancel" buttons
     """
 
-    def __init__(self, title, message, inputLabel='', choicesValue=[], defaultIndex=0, minSize=None, parent=None):
-        super(WDialogRadioButtonChoiceInput, self).__init__(title, message, minSize, parent)
+    def __init__(self, title, message, inputLabel='', choicesValue=[], defaultIndex=0, minSize=None, optionalCheckboxMsg=None, parent=None):
+        super(WDialogRadioButtonChoiceInput, self).__init__(title, message, minSize, optionalCheckboxMsg, parent)
         if len(choicesValue)==0:
             self.reject()
 
+        # need to manage returned value from ok/cancel buttons
+        # then disconnect default signal
+        self._dButtonBox.accepted.disconnect(self.accept)
+        self._dButtonBox.rejected.disconnect(self.reject)
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        self._dButtonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__buttonCancel)
+        self._dButtonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__buttonOk)
 
         if inputLabel!='':
             self._lbInput=QLabel(self)
             self._lbInput.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum))
             self._lbInput.setText(inputLabel)
             self._layout.insertWidget(self._layout.count()-1, self._lbInput)
-
 
         self._rbInput=[]
         for item in choicesValue:
@@ -567,17 +658,31 @@ class WDialogRadioButtonChoiceInput(WDialogMessage):
 
         self._rbInput[min(len(choicesValue), max(0, defaultIndex))].setChecked(True)
 
+    def __buttonCancel(self):
+        """Button 'cancel' has been clicked, return None value"""
+        self.__value=None
+        self.close()
 
-    def value(self):
-        """Return value"""
+    def __buttonOk(self):
+        """Button 'Ok' has been clicked, return value"""
+        self.__value=None
         for index, item in enumerate(self._rbInput):
             if item.isChecked():
-                return index
+                self.__value=index
+                break
+        self.close()
 
-        return None
+    def value(self):
+        """Return value
+
+        If there's an optional checkbox, return a tuple (value, checkbox status) instead of value
+        """
+        if self._optionalCheckboxMsg is None:
+            return self.__value
+        return (self.__value, self.optionalCheckboxMsgIsChecked())
 
     @staticmethod
-    def display(title, message=None, inputLabel=None, choicesValue=[], defaultIndex=0, minSize=None):
+    def display(title, message=None, inputLabel=None, choicesValue=[], defaultIndex=0, minSize=None, optionalCheckboxMsg=None):
         """Open dialog box
 
         title:          dialog box title
@@ -603,15 +708,11 @@ class WDialogRadioButtonChoiceInput(WDialogMessage):
         if not isinstance(defaultIndex, int):
             defaultIndex=0
 
-
-        dlgBox=WDialogRadioButtonChoiceInput(title, message, inputLabel, choicesValue, defaultIndex, minSize, None)
+        dlgBox=WDialogRadioButtonChoiceInput(title, message, inputLabel, choicesValue, defaultIndex, minSize, optionalCheckboxMsg)
 
         returned = dlgBox.exec()
 
-        if returned == QDialog.Accepted:
-            return dlgBox.value()
-        else:
-            return None
+        return dlgBox.value()
 
 
 class WDialogCheckBoxChoiceInput(WDialogMessage):
@@ -619,12 +720,18 @@ class WDialogCheckBoxChoiceInput(WDialogMessage):
     a choice from check box list, with "Ok" / "Cancel" buttons
     """
 
-    def __init__(self, title, message, inputLabel='', choicesValue=[], defaultChecked=[], minimumChecked=0, minSize=None, parent=None):
-        super(WDialogCheckBoxChoiceInput, self).__init__(title, message, minSize, parent)
+    def __init__(self, title, message, inputLabel='', choicesValue=[], defaultChecked=[], minimumChecked=0, minSize=None, optionalCheckboxMsg=None, parent=None):
+        super(WDialogCheckBoxChoiceInput, self).__init__(title, message, minSize, optionalCheckboxMsg, parent)
         if len(choicesValue)==0:
             self.reject()
 
+        # need to manage returned value from ok/cancel buttons
+        # then disconnect default signal
+        self._dButtonBox.accepted.disconnect(self.accept)
+        self._dButtonBox.rejected.disconnect(self.reject)
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        self._dButtonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__buttonCancel)
+        self._dButtonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__buttonOk)
         self.__btnOk = self._dButtonBox.button(QDialogButtonBox.Ok)
 
         self.__minimumChecked=max(0, min(len(choicesValue), minimumChecked))
@@ -634,7 +741,6 @@ class WDialogCheckBoxChoiceInput(WDialogMessage):
             self._lbInput.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum))
             self._lbInput.setText(inputLabel)
             self._layout.insertWidget(self._layout.count()-1, self._lbInput)
-
 
         self._cbInput=[]
         for index, item in enumerate(choicesValue):
@@ -655,17 +761,30 @@ class WDialogCheckBoxChoiceInput(WDialogMessage):
         """Check if number of checked values is valid according to minimumChecked value and enable/disabled Ok button"""
         self.__btnOk.setEnabled(len(self.value())>=self.__minimumChecked)
 
-    def value(self):
-        """Return value"""
-        returned=[]
+    def __buttonCancel(self):
+        """Button 'cancel' has been clicked, return None value"""
+        self.__value=None
+        self.close()
+
+    def __buttonOk(self):
+        """Button 'Ok' has been clicked, return value"""
+        self.__value=[]
         for index, item in enumerate(self._cbInput):
             if item.isChecked():
-                returned.append(index)
+                self.__value.append(index)
+        self.close()
 
-        return returned
+    def value(self):
+        """Return value
+
+        If there's an optional checkbox, return a tuple (value, checkbox status) instead of value
+        """
+        if self._optionalCheckboxMsg is None:
+            return self.__value
+        return (self.__value, self.optionalCheckboxMsgIsChecked())
 
     @staticmethod
-    def display(title, message=None, inputLabel=None, choicesValue=[], defaultChecked=[], minimumChecked=0, minSize=None):
+    def display(title, message=None, inputLabel=None, choicesValue=[], defaultChecked=[], minimumChecked=0, minSize=None, optionalCheckboxMsg=None):
         """Open dialog box
 
         title:          dialog box title
@@ -695,15 +814,11 @@ class WDialogCheckBoxChoiceInput(WDialogMessage):
         if not isinstance(minimumChecked, int):
             defaultIndex=0
 
-
-        dlgBox=WDialogCheckBoxChoiceInput(title, message, inputLabel, choicesValue, defaultChecked, minimumChecked, minSize, None)
+        dlgBox=WDialogCheckBoxChoiceInput(title, message, inputLabel, choicesValue, defaultChecked, minimumChecked, minSize, optionalCheckboxMsg)
 
         returned = dlgBox.exec()
 
-        if returned == QDialog.Accepted:
-            return dlgBox.value()
-        else:
-            return None
+        return dlgBox.value()
 
 
 class WDialogColorInput(WDialogMessage):
@@ -711,16 +826,21 @@ class WDialogColorInput(WDialogMessage):
     a color value input, with "Ok" / "Cancel" buttons
     """
 
-    def __init__(self, title, message, inputLabel='', defaultValue=None, options=None, minSize=None, parent=None):
-        super(WDialogColorInput, self).__init__(title, message, minSize, parent)
+    def __init__(self, title, message, inputLabel='', defaultValue=None, options=None, minSize=None, optionalCheckboxMsg=None, parent=None):
+        super(WDialogColorInput, self).__init__(title, message, minSize, optionalCheckboxMsg, parent)
+        # need to manage returned value from ok/cancel buttons
+        # then disconnect default signal
+        self._dButtonBox.accepted.disconnect(self.accept)
+        self._dButtonBox.rejected.disconnect(self.reject)
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        self._dButtonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__buttonCancel)
+        self._dButtonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__buttonOk)
 
         if inputLabel!='':
             self._lbInput=QLabel(self)
             self._lbInput.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum))
             self._lbInput.setText(inputLabel)
             self._layout.insertWidget(self._layout.count()-1, self._lbInput)
-
 
         if not isinstance(options, dict):
             options={}
@@ -769,12 +889,27 @@ class WDialogColorInput(WDialogMessage):
 
         self._layout.insertWidget(self._layout.count()-1, self._cpInput)
 
+    def __buttonCancel(self):
+        """Button 'cancel' has been clicked, return None value"""
+        self.__value=None
+        self.close()
+
+    def __buttonOk(self):
+        """Button 'Ok' has been clicked, return value"""
+        self.__value=self._cpInput.color()
+        self.close()
+
     def value(self):
-        """Return value"""
-        return self._cpInput.color()
+        """Return value
+
+        If there's an optional checkbox, return a tuple (value, checkbox status) instead of value
+        """
+        if self._optionalCheckboxMsg is None:
+            return self.__value
+        return (self.__value, self.optionalCheckboxMsgIsChecked())
 
     @staticmethod
-    def display(title, message=None, inputLabel=None, defaultValue=None, options=None, minSize=None):
+    def display(title, message=None, inputLabel=None, defaultValue=None, options=None, minSize=None, optionalCheckboxMsg=None):
         """Open dialog box
 
         title:          dialog box title
@@ -815,14 +950,11 @@ class WDialogColorInput(WDialogMessage):
         elif not isinstance(inputLabel, str):
             inputLabel=f"{inputLabel}"
 
-        dlgBox=WDialogColorInput(title, message, inputLabel, defaultValue, options, minSize, None)
+        dlgBox=WDialogColorInput(title, message, inputLabel, defaultValue, options, minSize, optionalCheckboxMsg)
 
         returned = dlgBox.exec()
 
-        if returned == QDialog.Accepted:
-            return dlgBox.value()
-        else:
-            return None
+        return dlgBox.value()
 
 
 class WDialogFontInput(WDialogMessage):
@@ -830,10 +962,15 @@ class WDialogFontInput(WDialogMessage):
     a choice from a font list, with "Ok" / "Cancel" buttons
     """
 
-    def __init__(self, title, message, inputLabel='', defaultValue='', optionFilter=False, optionWritingSytem=False, parent=None, minSize=None):
-        super(WDialogFontInput, self).__init__(title, message, minSize, parent)
-
+    def __init__(self, title, message, inputLabel='', defaultValue='', optionFilter=False, optionWritingSytem=False, minSize=None, optionalCheckboxMsg=None, parent=None):
+        super(WDialogFontInput, self).__init__(title, message, minSize, optionalCheckboxMsg, parent)
+        # need to manage returned value from ok/cancel buttons
+        # then disconnect default signal
+        self._dButtonBox.accepted.disconnect(self.accept)
+        self._dButtonBox.rejected.disconnect(self.reject)
         self._dButtonBox.setStandardButtons(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        self._dButtonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__buttonCancel)
+        self._dButtonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__buttonOk)
         self.__btnOk = self._dButtonBox.button(QDialogButtonBox.Ok)
         self.__btnOk.setEnabled(False)
 
@@ -871,7 +1008,6 @@ class WDialogFontInput(WDialogMessage):
         self.__originalFilterAcceptsRow=self.__proxyModel.filterAcceptsRow
         self.__proxyModel.filterAcceptsRow=self.__filterAcceptsRow
         self.__tvInput.setModel(self.__proxyModel)
-
 
         if inputLabel!='':
             self._lbInput=QLabel(self)
@@ -978,12 +1114,27 @@ class WDialogFontInput(WDialogMessage):
             return not returned
         return returned
 
+    def __buttonCancel(self):
+        """Button 'cancel' has been clicked, return None value"""
+        self.__value=None
+        self.close()
+
+    def __buttonOk(self):
+        """Button 'Ok' has been clicked, return value"""
+        self.__value=self.__selectedFont
+        self.close()
+
     def value(self):
-        """Return value"""
-        return self.__selectedFont
+        """Return value
+
+        If there's an optional checkbox, return a tuple (value, checkbox status) instead of value
+        """
+        if self._optionalCheckboxMsg is None:
+            return self.__value
+        return (self.__value, self.optionalCheckboxMsgIsChecked())
 
     @staticmethod
-    def display(title, message=None, inputLabel=None, defaultValue='', optionFilter=False, optionWritingSytem=False, parent=None, minSize=None):
+    def display(title, message=None, inputLabel=None, defaultValue='', optionFilter=False, optionWritingSytem=False, minSize=None, optionalCheckboxMsg=None):
         """Open dialog box
 
         title:              dialog box title
@@ -1007,14 +1158,11 @@ class WDialogFontInput(WDialogMessage):
         elif not isinstance(inputLabel, str):
             inputLabel=f"{inputLabel}"
 
-        dlgBox=WDialogFontInput(title, message, inputLabel, defaultValue, optionFilter, optionWritingSytem, minSize, None)
+        dlgBox=WDialogFontInput(title, message, inputLabel, defaultValue, optionFilter, optionWritingSytem, minSize, optionalCheckboxMsg)
 
         returned = dlgBox.exec()
 
-        if returned == QDialog.Accepted:
-            return dlgBox.value()
-        else:
-            return None
+        return dlgBox.value()
 
 
 class WDialogProgress(WDialogMessage):
@@ -1023,7 +1171,7 @@ class WDialogProgress(WDialogMessage):
     """
 
     def __init__(self, title, message, cancelButton=False, minSize=None, minValue=0, maxValue=0, progressSignal=None, parent=None):
-        super(WDialogProgress, self).__init__(title, message, minSize, parent)
+        super(WDialogProgress, self).__init__(title, message, minSize, None, parent)
         # need to manage returned value from yes/no/cancel buttons
         # then disconnect default signal
         self._dButtonBox.accepted.disconnect(self.accept)
@@ -1051,7 +1199,7 @@ class WDialogProgress(WDialogMessage):
 
     def value(self):
         """Return value defined by clicked button"""
-        return self.__value
+        self.__value
 
     def setProgress(self, value):
         """Update progress bar value
@@ -1137,7 +1285,6 @@ class WDialogProgress(WDialogMessage):
         self._message.setHtml(self._messageText)
         self._message.update()
         QApplication.processEvents()
-
 
     @staticmethod
     def display(title, message, cancelButton=False, minSize=None, minValue=0, maxValue=0):
