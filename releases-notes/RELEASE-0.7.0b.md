@@ -116,6 +116,17 @@ The following files format are now taken in account:
 Improve the functionality and let any image format recognized by Buli Commander (BMP, KRA, PSD, ...) to be opened as reference image
 
 
+## Open as Layer
+Add menu entry "Open as Layer"
+All selected files are opened as new layers:
+- SVG files are opened in Vector Layer
+- Raster files are opened in Paint Layer
+
+## Open as File Layer
+Add menu entry "Open as File Layer"
+All selected files are opened as new file layers
+
+
 ## Improve UI
 User interface has been slightly improved:
 - Create directory dialog box
