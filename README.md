@@ -8,79 +8,151 @@ An [orthodox file manager](https://en.wikipedia.org/wiki/File_manager#Orthodox_f
 
 
 Initially, my idea was to implement my own open dialog box to replace the default one from [Krita](https://krita.org),
-because the default one doesn't satisfy me:
-- No file preview
-- No file information
+because the default one didn't satisfy me.
 
-As I'm used to work with orthodox file managers like [Midnight Commander](https://midnight-commander.org/) and
-[Krusader](https://krusader.org/), I finally decided to implement my own open dialog box in this way.
+But as I'm used to work with orthodox file managers like [Midnight Commander](https://midnight-commander.org/) and
+[Krusader](https://krusader.org/), I finally decided to implement my own "open dialog box" as a complete file manager.
 
 
 ## Disclaimer
 > **Please note that current version is a pretty early preview version**
 
-While *Buli Commander* version is not published under version 1.0.0, please take in consideration the following points:
+While *Buli Commander* version is not published under version *v1.0.0*, please take in consideration the following points:
 - There's bugs, some of them are known, some are not (yet?) known
 - Implementation can be rewritten, so a bug can disappear naturally on next version... or not :-)
 - All functionalities are not yet implemented or not yet fully implemented
 - Current user interface and current functionalities are not definitive and can be changed on next version
 
->Please also note that, as plugin is not yet finished and **not yet fully tested**, it's not recommended to use it on a
->[Krita](https://krita.org) installation used for a production workflow: test it/use it on a testing installation
 
-
-## Screenshots
+## Some screenshots
 _Main user interface: dual panel mode_
 
-![Main interface-dual panel mode](https://github.com/Grum999/BuliCommander/raw/master/screenshots/main_interface.png)
+![Main interface-dual panel mode](./screenshots/main_interface.png)
 
 _Main user interface: single panel mode_
 
-![Main interface-single panel mode](https://github.com/Grum999/BuliCommander/raw/master/screenshots/main_interface_singlepanel.png)
+![Main interface-single panel mode](./screenshots/main_interface_singlepanel.png)
 
 _Settings interface: navigation_
 
-![Settings interface-Navigation](https://github.com/Grum999/BuliCommander/raw/master/screenshots/settings_navigation.png)
-
+![Settings interface-Navigation](./screenshots/settings_navigation.png)
 
 _Settings interface: images default action_
 
-![Settings interface-Images](https://github.com/Grum999/BuliCommander/raw/master/screenshots/settings_imagefiles.png)
+![Settings interface-Images](./screenshots/settings_imagefiles.png)
+
+_Copy file: window dialog if target file already exists_
+
+![Copy file exists UI](./screenshots/copyfileexists_interface.jpeg)
+
+_Advanced search engine: a complex, multi-source, multi-criteria and multi-output search definition_
+
+![Advanced search](./screenshots/advancedsearch_interface.jpeg)
+
+_Export file list: export file list as a PDF document_
+
+![Export file list](./screenshots/export_interface.jpeg)
+
+_Mass Rename: use of advanced rename formulas with highlighted syntax, popup completer and help, and rename result preview_
+
+![Mass rename UI](./screenshots/massrename_interface.png)
+
 
 
 
 ## Functionalities
 
-Here a list of some functionalities:
+Here a list of main functionalities:
 - Dual panel interface, with different possible layouts
-- Intuitive navigation bar:
- - Home directory
- - Previous directory
- - Up directory
- - Manual input (ie: just type path by yourself) or Breadcrumbs mode
-- Directories tree
-- Bookmarks management
-- Views management (ie: select files, add them to a view without moving file and create your own list of files)
-- Improved last opened/saved documents access
-- Quick filtering (use of wildcard and/or regular expression)
-- Show/hide backup files
-- Show/hide Krita managed files only
-- Image file information
-  - File properties
-  - Image properties (format, dimension, mode/depth, profile)
-  - Krita image properties (About, Author, embedded palettes, references images, used fonts, external files)
-- File manipulation (copy, move, delete, rename)
-- Export files as list
-- Convert files (KRA/PNG/JPEG)
-- Miscellaneous opening modes
-  - Improved GIF/WEBP import file
-- Clipboard manager
+  - List and grid view mode
+  - Directories tree view
+  - Image information and preview
 
+
+- Intuitive navigation bar
+ - Home, Previous & Up directories
+ - Manual input (ie: just type path by yourself) or Breadcrumbs mode
+ - Bookmarks
+ - Views
+ - History
+ - Last opened/saved documents access
+
+
+- Quick filtering
+  - Wildcards/Regular expression on file name
+  - Show/hide backup files
+  - Show/hide hidden files
+  - Show/hide not managed *(images)* files
+
+
+- Image information
+  - File properties
+  - Detailed image properties (format, dimension, mode/depth, color profile, ...)
+  - Detailed Krita image properties (About, Author, embedded palettes, references images, used fonts, external files, ...)
+
+
+- File manipulation
+  - Copy/Move, with advanced "already exists" dialog window
+  - Delete
+  - Rename
+    - Unitary rename
+    - Mass rename with advanced possibilities
+
+
+- Search file engine
+  - A basic search file interface, for basic and most common searches
+  - An advanced search file interface (node based), for most complex searches
+  - Allows to search from defined path
+    - Including or not sub-directories
+    - Including or not hidden and backup files
+  - Allows to filter on file properties (name, size, date, ...)
+  - Allows to filter on image properties (format, dimension, ratio, ...)    
+  - Allows to easily export results
+
+
+- Export files as list
+  - Exported perimeter definition
+  - Exported information selection (which file/image properties to export)
+  - Different export format
+    - Text
+    - Markdown
+    - CSV
+    - PDF
+    - Krita document
+    - PNG/JPEG sequences
+  - All format export provides miscellaneous options to define final format/rendering
+
+
+- Files conversion to Krita, Png, Jpeg format
+
+
+- Miscellaneous opening modes
+  - Open as new document
+  - Open as Krita document
+  - Open as reference image
+  - Open as layer
+  - Open as file layer
+  - Improved GIF/WEBP import file
+
+
+- Clipboard manager
+  - Automatic/manual clipboard management
+  - Miscellaneous sources
+    - Image
+    - URL (direct asynchronous download)
+    - File
+    - Krita's layers
+  - Persistent clipboard
+    - Everything in clipboard can be kept indefinitely
+
+
+- Settings
+  - Miscellaneous configuration settings to tune your Buli Commander a little bit :-)
 
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.6.0a](https://github.com/Grum999/BuliCommander/releases/download/0.6.0a/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.7.0b](https://github.com/Grum999/BuliCommander/releases/download/0.7.0b/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
@@ -96,17 +168,40 @@ Plugin installation in [Krita](https://krita.org) is not intuitive and needs som
 ### Execute
 When you want to execute *Buli Commander*, simply go to **Tools** -> **Scripts** and select **Buli Commander**.
 
+Settings allows:
+- To define a shortcut for Buli Commander
+- To move menu entry in Krita's *File* menu
+
 
 ### Tested platforms
-Plugin has been tested with Krita 4.4.1 (appimage) on Linux Debian 10
+Plugin has been tested with Krita 5.0.2 (appimage) on Linux Debian 10
 
-Currently don't kwow if plugin works on Windows and MacOs.
+Some tests have been made on Windows 10, can't guarantee that everything is working file on Windows.
+
+Currently don't kwow if plugin works MacOs.
 I think it should be Ok, because of use of python and PyQt high level and multi OS file system functions, but...
 
 
 ## Plugin's life
 
 ### What's new?
+_[2022-xx-xx] Version 0.7.0b_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.7.0b.md)*
+- First *Beta* release!
+- Implement *Search engine*
+- Improve file panel - *New available columns fields* with possibility to *Select/Unselect visible columns*
+- Improve file panel - *Grid view mode*
+- Improve file panel - *Selections management*
+- Improve export files list - *New available fields* with possibility to *Re-order fields*
+- Improve export files list - *Save & Load export definitions*
+- Improve image information - *Krita document version*
+- Improve image information - *Krita animated document details*
+- Improve image information - *Image ratio, pixels, dimension*
+- Improve "Open as" functionalities
+- Improve performances
+- Improve user interface
+- New recognized files format
+- Many bugs fix
+
 _[2020-12-29] Version 0.6.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.6.0a.md)*
 
 - Implement *Clipboard manager*
@@ -131,8 +226,6 @@ _[2020-12-06] Version 0.5.0a_ *[>> Show detailed release content <<](https://git
 - Fix bug - *Invalid font*
 - Fix bug - *Invalid key configuration*
 
-
-### What's new?
 _[2020-11-01] Version 0.4.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.4.0a.md)*
 
 - Implement *Auto close*
@@ -168,22 +261,24 @@ _[2020-09-05] Version 0.1.0a_
 
 
 ### Bugs
-Yes, we have.
+Probably a lot... :-)
 
 
 
 ### What’s next?
-Not able to define precisely in which order functionalities will be implemented, neither when, but here a list of what is currently expected for final 1.0.0 version:
-- File(s) rename
-- Shortcut to launch *Buli Commander*
-- Generate and display thumbnails with ICC profile taken in account
-- Add a gridview mode
-- Implement *Search* tool
-- Implement batch tool conversion
+Not able to define precisely in which order functionalities will be implemented, neither when, but here a list of what is currently expected for final *v1.0.0* version:
+- Implement thumbnails generation with ICC profile taken in account
+- Implement a toolbar
+- Improve styles (especially clear style as currently plugin is optimized for dark theme)
+- Add some file format support (TIF, CBZ)
 - Implement *Documents* tab
-- Implement *Clipoard* tab
-- Add context menu
-- Add opening modes
+- Implement Exif/IPTC/XMP metadata read
+- Implement search by color
+- Implement search on Exif/IPTC/XMP metadata
+- Implement search on invalid krita files (missing font, missing file layers, ...)
+- Implement Krita file analysis tool
+
+
 
 
 ## License
