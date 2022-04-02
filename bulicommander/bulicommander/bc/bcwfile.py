@@ -518,7 +518,6 @@ class BCFileModel(QAbstractTableModel):
             self.__tooltipEnabled=value
 
 
-
 class BCViewFilesTv(QTreeView):
     """Tree view files"""
     focused = Signal()
@@ -1079,8 +1078,6 @@ class BCViewFilesLv(QListView):
             raise EInvalidType("Given `value` must be a <bool>")
 
 
-
-
 class BCViewFilesLvDelegate(QStyledItemDelegate):
     """Extend QStyledItemDelegate class to return properly cell size"""
 
@@ -1126,7 +1123,7 @@ class BCViewFilesLvDelegate(QStyledItemDelegate):
             if not color is None:
                 # selected item
                 color.setAlphaF(0.5)
-                overRect=option.rect.marginsRemoved(QMargins(BCViewFilesLvDelegate.PADDING,BCViewFilesLvDelegate.PADDING,BCViewFilesLvDelegate.PADDING,BCViewFilesLvDelegate.PADDING))
+                overRect=QRect(position, img.size())
                 painter.fillRect(overRect, color)
 
             return
