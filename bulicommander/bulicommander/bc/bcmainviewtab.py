@@ -2109,7 +2109,11 @@ class BCMainViewTab(QFrame):
                         elif isinstance(itemValue.widget(), QFrame):
                             table.addSeparator()
                         elif isinstance(itemValue.widget(), QWidget):
-                            textValue = stripTags(itemValue.widget().property('text'))
+                            if itemValue.widget().objectName()=='wSizeNfo':
+                                # specific case widget
+                                textValue = stripTags(f"{self.lblImgSize.text()} ({self.cbImgSizeRes.currentText().strip()})")
+                            else:
+                                textValue = stripTags(itemValue.widget().property('text'))
                             table.addRow([textLabel, textValue])
                     data.append(table.asText(self.__uiController.tableSettings())+os.linesep)
             elif isinstance(source, QLabel):
