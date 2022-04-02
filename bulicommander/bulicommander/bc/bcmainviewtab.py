@@ -36,6 +36,7 @@ import shutil
 import sys
 import time
 import random
+import traceback
 
 import PyQt5.uic
 
@@ -1646,187 +1647,189 @@ class BCMainViewTab(QFrame):
 
 
                 # ------------------------------ Image: KRA ------------------------------
-                if file.format() in (BCFileManagedFormat.KRA, BCFileManagedFormat.KRZ):
+                try:
+                    if file.format() in (BCFileManagedFormat.KRA, BCFileManagedFormat.KRZ):
 
-                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Krita version'), imgNfo['kritaVersion'], i18n('Version of Krita used to create/edit document'))
-                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Krita version'), imgNfo['kritaVersion'], i18n('Version of Krita used to create/edit document'))
+                        addSeparator(self.scrollAreaWidgetContentsNfoImage)
 
-                    if imgNfo['imageNbKeyFrames'] > 1:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'Yes')
+                        if imgNfo['imageNbKeyFrames'] > 1:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'Yes')
 
-                        if imgNfo['imageDelay'] > 0:
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Frame rate:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageDelay']}fps</i>")
+                            if imgNfo['imageDelay'] > 0:
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Frame rate:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageDelay']}fps</i>")
 
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', '')
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', '')
 
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Rendered frames:&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageTo'] - imgNfo['imageFrom']}</i>")
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Start frame:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageFrom']}</i>")
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>End frame:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageTo']}</i>")
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Rendered frames:&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageTo'] - imgNfo['imageFrom']}</i>")
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Start frame:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageFrom']}</i>")
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>End frame:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageTo']}</i>")
 
-                        if imgNfo['imageDelay'] > 0:
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Range duration:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{frToStrTime(imgNfo['imageTo'] - imgNfo['imageFrom'],imgNfo['imageDelay'])}</i>")
+                            if imgNfo['imageDelay'] > 0:
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Range duration:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{frToStrTime(imgNfo['imageTo'] - imgNfo['imageFrom'],imgNfo['imageDelay'])}</i>")
 
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', '')
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Last frame:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageMaxKeyFrameTime']}</i>")
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', '')
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Last frame:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{imgNfo['imageMaxKeyFrameTime']}</i>")
 
-                        if imgNfo['imageDelay'] > 0:
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Total Duration:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{frToStrTime(max(imgNfo['imageTo'], imgNfo['imageMaxKeyFrameTime']),imgNfo['imageDelay'])}</i>")
+                            if imgNfo['imageDelay'] > 0:
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Total Duration:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{frToStrTime(max(imgNfo['imageTo'], imgNfo['imageMaxKeyFrameTime']),imgNfo['imageDelay'])}</i>")
 
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', '')
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Total key frames:&nbsp;&nbsp;&nbsp;{imgNfo['imageNbKeyFrames']}</i>")
-                    else:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'No')
-
-                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
-                    if len(imgNfo['document.usedFonts']) > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', f"{len(imgNfo['document.usedFonts'])}")
-
-                        fontList=QFontDatabase().families()
-
-                        for fontName in imgNfo['document.usedFonts']:
-                            if fontName in fontList:
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fontName}</i>')
-                            else:
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fontName}</i>', i18n('Font is missing on this sytem!'), 'warning-label')
-                    else:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', 'None')
-
-
-                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
-                    if imgNfo['document.layerCount'] > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', f"{imgNfo['document.layerCount']}")
-                    else:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
-
-                    nbFileLayer = len(imgNfo['document.fileLayers'])
-                    if nbFileLayer > 0:
-                        filterButton = QPushButton(i18n("Show"))
-                        filterButton.setToolTip(i18n("Show in opposite panel"))
-                        filterButton.setStatusTip(i18n("Show layers files list in opposite panel"))
-                        filterButton.clicked.connect(applyLayerFileFilter)
-
-                        fileLayerList=[]
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', '')
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '',     f"<i>Total key frames:&nbsp;&nbsp;&nbsp;{imgNfo['imageNbKeyFrames']}</i>")
+                        else:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Animated', 'No')
 
                         addSeparator(self.scrollAreaWidgetContentsNfoImage)
-                        if nbFileLayer == 1:
-                            addNfoBtnRow(self.scrollAreaWidgetContentsNfoImage, i18n("File layers"), i18n("1 file layer found"), filterButton)
-                        else:
-                            addNfoBtnRow(self.scrollAreaWidgetContentsNfoImage, i18n("File layers"), i18n(f"{nbFileLayer} file layers found"), filterButton)
+                        if len(imgNfo['document.usedFonts']) > 0:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', f"{len(imgNfo['document.usedFonts'])}")
 
+                            fontList=QFontDatabase().families()
 
-                        for fileName in imgNfo['document.fileLayers']:
-                            fullFileName = os.path.join(file.path(), fileName)
-                            fileLayerList.append(fullFileName)
-
-                            addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
-                            if os.path.isfile(fullFileName):
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), fileName, shifted=True)
-
-                                fileLayer = BCFile(fullFileName)
-
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), tsToStr(fileLayer.lastModificationDateTime(), valueNone='-'), shifted=True)
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), f'{bytesSizeToStr(fileLayer.size())} ({fileLayer.size():n})', shifted=True)
-
-                                if fileLayer.imageSize().width() == -1 or fileLayer.imageSize().height() == -1:
-                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-', shifted=True)
+                            for fontName in imgNfo['document.usedFonts']:
+                                if fontName in fontList:
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fontName}</i>')
                                 else:
-                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), f'{fileLayer.imageSize().width()}x{fileLayer.imageSize().height()}', shifted=True)
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', f'<i>{fontName}</i>', i18n('Font is missing on this sytem!'), 'warning-label')
+                        else:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Used fonts', 'None')
+
+
+                        addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                        if imgNfo['document.layerCount'] > 0:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', f"{imgNfo['document.layerCount']}")
+                        else:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
+
+                        nbFileLayer = len(imgNfo['document.fileLayers'])
+                        if nbFileLayer > 0:
+                            filterButton = QPushButton(i18n("Show"))
+                            filterButton.setToolTip(i18n("Show in opposite panel"))
+                            filterButton.setStatusTip(i18n("Show layers files list in opposite panel"))
+                            filterButton.clicked.connect(applyLayerFileFilter)
+
+                            fileLayerList=[]
+
+                            addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                            if nbFileLayer == 1:
+                                addNfoBtnRow(self.scrollAreaWidgetContentsNfoImage, i18n("File layers"), i18n("1 file layer found"), filterButton)
                             else:
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), f'<i>{fileName}</i>', 'File is missing!', 'warning-label', shifted=True)
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), '-', shifted=True)
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), '-', shifted=True)
-                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-', shifted=True)
+                                addNfoBtnRow(self.scrollAreaWidgetContentsNfoImage, i18n("File layers"), i18n(f"{nbFileLayer} file layers found"), filterButton)
 
 
-                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
-                    if imgNfo['document.referenceImages.count'] > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', f"{imgNfo['document.referenceImages.count']}")
+                            for fileName in imgNfo['document.fileLayers']:
+                                fullFileName = os.path.join(file.path(), fileName)
+                                fileLayerList.append(fullFileName)
 
-                        refNumber=1
-                        for image in imgNfo['document.referenceImages.data']:
-                            label=BCWImageLabel(image)
-                            label.clicked.connect(loadReferenceImageAsnewDocument)
-                            label.setToolTip(i18n("Click to open as a new document"))
-                            addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, f'Image #{refNumber}', f'{image.width()}x{image.height()}', shifted=True)
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', label, shifted=True)
-                            refNumber+=1
+                                addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
+                                if os.path.isfile(fullFileName):
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), fileName, shifted=True)
+
+                                    fileLayer = BCFile(fullFileName)
+
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), tsToStr(fileLayer.lastModificationDateTime(), valueNone='-'), shifted=True)
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), f'{bytesSizeToStr(fileLayer.size())} ({fileLayer.size():n})', shifted=True)
+
+                                    if fileLayer.imageSize().width() == -1 or fileLayer.imageSize().height() == -1:
+                                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-', shifted=True)
+                                    else:
+                                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), f'{fileLayer.imageSize().width()}x{fileLayer.imageSize().height()}', shifted=True)
+                                else:
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('File layer'), f'<i>{fileName}</i>', 'File is missing!', 'warning-label', shifted=True)
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Modified"), '-', shifted=True)
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("File size"), '-', shifted=True)
+                                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n("Image size"), '-', shifted=True)
+
+
+                        addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                        if imgNfo['document.referenceImages.count'] > 0:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', f"{imgNfo['document.referenceImages.count']}")
+
+                            refNumber=1
+                            for image in imgNfo['document.referenceImages.data']:
+                                label=BCWImageLabel(image)
+                                label.clicked.connect(loadReferenceImageAsnewDocument)
+                                label.setToolTip(i18n("Click to open as a new document"))
+                                addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, f'Image #{refNumber}', f'{image.width()}x{image.height()}', shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, '', label, shifted=True)
+                                refNumber+=1
+                        else:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', 'None')
+
+
+                        addSeparator(self.scrollAreaWidgetContentsNfoImage)
+                        if len(imgNfo['document.embeddedPalettes']) > 0:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', f"{len(imgNfo['document.embeddedPalettes'])}")
+
+                            for paletteName in imgNfo['document.embeddedPalettes']:
+                                palette = imgNfo['document.embeddedPalettes'][paletteName]
+                                addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Palette'), paletteName, shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Dimension'), f'{palette["columns"]}x{palette["rows"]}', shifted=True)
+                                addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Colors'), f"{palette['colors']}", shifted=True)
+                        else:
+                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', 'None')
+
+
+                        self.twInfo.setTabEnabled(2, True)
+                        self.twInfo.setTabEnabled(3, True)
+                        self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
+
+                        # ------------------------------ Image: KRA <ABOUT> ------------------------------
+                        self.lblKraAboutTitle.setText(strDefault(imgNfo['about.title'], '-'))
+                        self.lblKraAboutSubject.setText(strDefault(imgNfo['about.subject'], '-'))
+                        self.lblKraAboutDesc.setText(strDefault(imgNfo['about.description'], '-'))
+                        self.lblKraAboutKeywords.setText(strDefault(imgNfo['about.keywords'], '-'))
+                        self.lblKraAboutInitCreator.setText(strDefault(imgNfo['about.creator'], '-'))
+                        self.lblKraAboutCreationDate.setText(strDefault(imgNfo['about.creationDate'], '-'))
+                        self.lblKraAboutEditingCycles.setText(strDefault(imgNfo['about.editingCycles'], '-'))
+
+                        nbDay = 0
+                        ttTime = imgNfo['about.editingTime']
+                        if ttTime >= 86400:
+                            nbDay = floor(ttTime/86400)
+                            ttTime-= nbDay * 86400
+                        value = time.strftime('%H:%M:%S', time.gmtime(ttTime))
+                        if nbDay > 0:
+                            value+= f' +{nbDay}d'
+                        self.lblKraAboutEditingTime.setText(value)
+
+                        # ------------------------------ Image: KRA <AUTHOR> ------------------------------
+                        self.lblKraAuthorNickname.setText(strDefault(imgNfo['author.nickName'], '-'))
+                        self.lblKraAuthorFName.setText(strDefault(imgNfo['author.firstName'], '-'))
+                        self.lblKraAuthorLName.setText(strDefault(imgNfo['author.lastName'], '-'))
+                        self.lblKraAuthorInitials.setText(strDefault(imgNfo['author.initials'], '-'))
+                        self.lblKraAuthorTitle.setText(strDefault(imgNfo['author.title'], '-'))
+                        self.lblKraAuthorPosition.setText(strDefault(imgNfo['author.position'], '-'))
+                        self.lblKraAuthorCompagny.setText(strDefault(imgNfo['author.company'], '-'))
+
+                        if len(imgNfo['author.contact']) == 0:
+                            self.lblKraAuthorContact.setText('-')
+                        else:
+                            __KEY_TRANS = {
+                                'telephone': 'Phone:  ',
+                                'address':   'Adress: ',
+                                'homepage':  'Site:   ',
+                                'fax':       'Fax:    ',
+                                'email':     'eMail:  '
+                            }
+                            value = []
+
+                            for contact in imgNfo['author.contact']:
+                                key = list(contact.keys())[0]
+                                tmp = key
+                                if key in __KEY_TRANS:
+                                    tmp = __KEY_TRANS[key].replace(' ', '&nbsp;')
+                                value.append(f'{tmp}<i>{contact[key]}</i>')
+
+                            self.lblKraAuthorContact.setText(strDefault('<br>'.join(value), '-'))
+
                     else:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Reference images', 'None')
-
-
-                    addSeparator(self.scrollAreaWidgetContentsNfoImage)
-                    if len(imgNfo['document.embeddedPalettes']) > 0:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', f"{len(imgNfo['document.embeddedPalettes'])}")
-
-                        for paletteName in imgNfo['document.embeddedPalettes']:
-                            palette = imgNfo['document.embeddedPalettes'][paletteName]
-                            addSeparator(self.scrollAreaWidgetContentsNfoImage, shifted=True)
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Palette'), paletteName, shifted=True)
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Dimension'), f'{palette["columns"]}x{palette["rows"]}', shifted=True)
-                            addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Colors'), f"{palette['colors']}", shifted=True)
-                    else:
-                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Embedded palettes', 'None')
-
-
-                    self.twInfo.setTabEnabled(2, True)
-                    self.twInfo.setTabEnabled(3, True)
-                    self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
-
-                    # ------------------------------ Image: KRA <ABOUT> ------------------------------
-                    self.lblKraAboutTitle.setText(strDefault(imgNfo['about.title'], '-'))
-                    self.lblKraAboutSubject.setText(strDefault(imgNfo['about.subject'], '-'))
-                    self.lblKraAboutDesc.setText(strDefault(imgNfo['about.description'], '-'))
-                    self.lblKraAboutKeywords.setText(strDefault(imgNfo['about.keywords'], '-'))
-                    self.lblKraAboutInitCreator.setText(strDefault(imgNfo['about.creator'], '-'))
-                    self.lblKraAboutCreationDate.setText(strDefault(imgNfo['about.creationDate'], '-'))
-                    self.lblKraAboutEditingCycles.setText(strDefault(imgNfo['about.editingCycles'], '-'))
-
-                    nbDay = 0
-                    ttTime = imgNfo['about.editingTime']
-                    if ttTime >= 86400:
-                        nbDay = floor(ttTime/86400)
-                        ttTime-= nbDay * 86400
-                    value = tsToStr(ttTime-3600, 't')
-                    if nbDay > 0:
-                        value+= f' +{nbDay}d'
-                    self.lblKraAboutEditingTime.setText(value)
-
-                    # ------------------------------ Image: KRA <AUTHOR> ------------------------------
-                    self.lblKraAuthorNickname.setText(strDefault(imgNfo['author.nickName'], '-'))
-                    self.lblKraAuthorFName.setText(strDefault(imgNfo['author.firstName'], '-'))
-                    self.lblKraAuthorLName.setText(strDefault(imgNfo['author.lastName'], '-'))
-                    self.lblKraAuthorInitials.setText(strDefault(imgNfo['author.initials'], '-'))
-                    self.lblKraAuthorTitle.setText(strDefault(imgNfo['author.title'], '-'))
-                    self.lblKraAuthorPosition.setText(strDefault(imgNfo['author.position'], '-'))
-                    self.lblKraAuthorCompagny.setText(strDefault(imgNfo['author.company'], '-'))
-
-                    if len(imgNfo['author.contact']) == 0:
-                        self.lblKraAuthorContact.setText('-')
-                    else:
-                        __KEY_TRANS = {
-                            'telephone': 'Phone:  ',
-                            'address':   'Adress: ',
-                            'homepage':  'Site:   ',
-                            'fax':       'Fax:    ',
-                            'email':     'eMail:  '
-                        }
-                        value = []
-
-                        for contact in imgNfo['author.contact']:
-                            key = list(contact.keys())[0]
-                            tmp = key
-                            if key in __KEY_TRANS:
-                                tmp = __KEY_TRANS[key].replace(' ', '&nbsp;')
-                            value.append(f'{tmp}<i>{contact[key]}</i>')
-
-                        self.lblKraAuthorContact.setText(strDefault('<br>'.join(value), '-'))
-
-                else:
-                    self.twInfo.setTabEnabled(2, False)
-                    self.twInfo.setTabEnabled(3, False)
-                    self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
-
+                        self.twInfo.setTabEnabled(2, False)
+                        self.twInfo.setTabEnabled(3, False)
+                        self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
+                except Exception as e:
+                    print(f"Error: {traceback.format_exc()}")
                 self.wFilesPreview.showPreview(file.image())
                 if not self.wFilesPreview.hasImage():
                     self.wFilesPreview.hidePreview("Unable to read image")
