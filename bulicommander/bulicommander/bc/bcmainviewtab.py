@@ -913,7 +913,7 @@ class BCMainViewTab(QFrame):
         # check if files&directories from current view are already in current view
         # if not, they have to be added, otherwise ignore it
         for file in self.__filesQuery.files():
-            if not file.uuid() in toCheck:
+            if not file.uuid() in toCheck and file.name()!='..':
                 toRemove.append(file)
             elif isinstance(file, BCFile):
                 # need to check if file has been modified...
@@ -1045,6 +1045,7 @@ class BCMainViewTab(QFrame):
         self.__filesModelIgnoreSelectionSignals=False
         self.treeViewFiles.setUpdatesEnabled(True)
         self.listViewFiles.setUpdatesEnabled(True)
+        self.__filesSelectionChanged()
         self.__filesUpdate()
 
 
@@ -1260,7 +1261,7 @@ class BCMainViewTab(QFrame):
             self.filesSelectNone()
 
 
-    def __filesSelectionChanged(self, selection):
+    def __filesSelectionChanged(self, selection=None):
         """Made update according to current selection"""
         def cleanupNfoImageRows():
             """remove rows"""
@@ -1829,7 +1830,7 @@ class BCMainViewTab(QFrame):
                         self.twInfo.setTabEnabled(3, False)
                         self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
                 except Exception as e:
-                    print(f"Error: {traceback.format_exc()}")
+                    Debug.print(f"Error: {traceback.format_exc()}")
                 self.wFilesPreview.showPreview(file.image())
                 if not self.wFilesPreview.hasImage():
                     self.wFilesPreview.hidePreview("Unable to read image")
