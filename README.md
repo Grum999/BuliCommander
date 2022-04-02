@@ -15,7 +15,7 @@ But as I'm used to work with orthodox file managers like [Midnight Commander](ht
 
 
 ## Disclaimer
-> **Please note that current version is a pretty early preview version**
+> **Please note that current version is a beta version**
 
 While *Buli Commander* version is not published under version *v1.0.0*, please take in consideration the following points:
 - There's bugs, some of them are known, some are not (yet?) known
@@ -25,13 +25,19 @@ While *Buli Commander* version is not published under version *v1.0.0*, please t
 
 
 ## Some screenshots
-_Main user interface: dual panel mode_
+_Main user interface: dual file panel mode_
 
-![Main interface-dual panel mode](./screenshots/main_interface.png)
+![Main interface-dual file panel mode](./screenshots/main_interface-dual_file_panel.png)
 
-_Main user interface: single panel mode_
+_Main user interface: single file panel mode_
 
-![Main interface-single panel mode](./screenshots/main_interface_singlepanel.png)
+![Main interface-single file panel mode](./screenshots/main_interface-single_file_panel.png)
+
+_Main user interface: single clipboard panel mode with different image sources_
+
+![Main interface-single clipboard panel mode](./screenshots/main_interface-single_clipboard_panel.jpeg)
+
+
 
 _Settings interface: navigation_
 
@@ -70,12 +76,12 @@ Here a list of main functionalities:
 
 
 - Intuitive navigation bar
- - Home, Previous & Up directories
- - Manual input (ie: just type path by yourself) or Breadcrumbs mode
- - Bookmarks
- - Views
- - History
- - Last opened/saved documents access
+  - Home, Previous & Up directories
+  - Manual input (ie: just type path by yourself) or Breadcrumbs mode
+  - Bookmarks
+  - Views
+  - History
+  - Last opened/saved documents access
 
 
 - Quick filtering
@@ -105,8 +111,16 @@ Here a list of main functionalities:
   - Allows to search from defined path
     - Including or not sub-directories
     - Including or not hidden and backup files
-  - Allows to filter on file properties (name, size, date, ...)
-  - Allows to filter on image properties (format, dimension, ratio, ...)    
+  - Allows to filter on file properties
+    - Name
+    - Size
+    - Date
+    - ...
+  - Allows to filter on image properties
+    - Format
+    - Dimension
+    - Ratio
+    - ...
   - Allows to easily export results
 
 
