@@ -220,7 +220,9 @@ def strToMaxLength(value, maxLength, completeSpace=True, leftAlignment=True):
 
 def stripTags(value):
     """Strip HTML tags and remove amperseed added by Qt"""
-    return re.sub('<[^<]+?>', '', re.sub('<br/?>', os.linesep, value))  \
+    if value is None:
+        return ''
+    return re.sub(r'<[^<]+?>', '', re.sub(r'<br/?>', os.linesep, value))  \
                 .replace('&nbsp;', ' ')     \
                 .replace('&gt;', '>')       \
                 .replace('&lt;', '<')       \
