@@ -1154,7 +1154,7 @@ class BCFileOperation(object):
                     os.rename(file.fullPathName(), targetFile)
                 except Exception as e:
                     inError+=1
-                    Debug.print('[BCFileOperation.rename] Unable to rename file from {0} to {1}: {2}', file.fullPathName(), newName, f"{e}")
+                    Debug.print('[BCFileOperation.rename] Unable to rename file from {0} to {1}: {2}', file.fullPathName(), targetFile, f"{e}")
 
 
             if BCFileOperation.__isCancelled():
