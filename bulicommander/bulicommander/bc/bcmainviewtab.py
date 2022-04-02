@@ -1344,7 +1344,7 @@ class BCMainViewTab(QFrame):
         def applyBackupFilter(action):
             """Display opposite panel, go to given path, activate backup files, and apply filter"""
             oppositePanelId=self.__uiController.oppositePanelId(self)
-            self.__uiController.commandGoBackupFilterDViewSet(backupList.files())
+            self.__uiController.commandGoBackupFilterDViewSet(backupList)
             self.__uiController.commandGoTo(oppositePanelId, '@backup filter')
             self.__uiController.commandViewDisplaySecondaryPanel(True)
 
