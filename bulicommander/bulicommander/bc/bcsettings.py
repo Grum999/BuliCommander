@@ -47,6 +47,7 @@ from .bcfile import (
 
 from .bcwpathbar import BCWPathBar
 from .bcsystray import BCSysTray
+from .bcclipboard import BCClipboard
 from bulicommander.pktk.modules.utils import (
         checkKritaVersion,
         Debug
