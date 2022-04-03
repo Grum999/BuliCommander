@@ -548,7 +548,7 @@ class BCExportFiles(QObject):
         returned = text
 
         if source != '':
-            returned = re.sub("(?i)\{source\}",                     source,                                             returned)
+            returned = re.sub("(?i)\{source\}",                     source.replace("\\", "\\\\"),                       returned)
         else:
             returned = re.sub("(?i)\{source}",                      "Current user selection",                           returned)
 
@@ -594,7 +594,8 @@ class BCExportFiles(QObject):
         returned = re.sub("(?i)\{file:baseName\}",                  baseName,                                           returned)
         returned = re.sub("(?i)\{file:ext\}",                       extName,                                            returned)
 
-        returned = re.sub("(?i)\{table\}",                          tableContent,                                       returned)
+        # for windows need to replace '\' character otherwise raise an exception
+        returned = re.sub("(?i)\{table\}",                          tableContent.replace("\\", "\\\\"),                 returned)
 
         return returned
 
@@ -1128,15 +1129,14 @@ class BCExportFiles(QObject):
                                     config.get('files', defaultConfig['files']),
                                     None)
 
+            content = table.asText(tableSettings)
             if config.get('userDefinedLayout.active', defaultConfig['userDefinedLayout.active']):
                 # layout asked
                 content = self.__parseText(config.get('userDefinedLayout.content', defaultConfig['userDefinedLayout.content']),
-                                           table.asText(tableSettings),
+                                           content,
                                            currentPage=0,
                                            totalPage=0,
                                            source=config.get('source', defaultConfig['source']))
-            else:
-                content = table.asText(tableSettings)
 
             # data are ready
             returned['exported'] = True
@@ -2195,7 +2195,7 @@ class BCExportFilesDialogBox(QDialog):
                 fileName = QFileDialog.getSaveFileName(self, i18n('Save file'), fileName, BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['dialogExtensions'])
 
                 if fileName != '':
-                    self.leTargetResultFile.setText(fileName[0])
+                    self.leTargetResultFile.setText(os.path.normpath(fileName[0]))
                 self.__updateBtn()
 
             def checkButton(dummy):
@@ -3825,6 +3825,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                     fileName = f"{result.groups()[0]}.{{ext}}"
                 else:
                     fileName = f"{self.leTargetResultFile.text()}.{{ext}}"
+            fileName=os.path.normpath(fileName)
 
             fileOpenAllowed={
                     # do not allow option 'open file in krita' from search result
@@ -4296,8 +4297,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR, self.cbxFormatTextCSVSeparator.currentIndex())
 
         def __savePageTarget():
-            fileName = self.leTargetResultFile.text()
-            if fileName != '' and (result:=re.match("(.*)(\..*)$", fileName)):
+            fileName = os.path.normpath(self.leTargetResultFile.text())
+            if fileName != '' and (result:=re.match(r"(.*)(\..*)$", fileName)):
                 fileName = f"{result.groups()[0]}.{{ext}}"
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME, fileName)
 
