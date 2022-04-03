@@ -440,6 +440,10 @@ class BCMainViewTab(QFrame):
         self.__filesFsWatcher = QFileSystemWatcher()
         self.__filesFsWatcherTmpList = []
         self.__filesFsWatcherTimerCount=0
+        self.__filesFsWatcherTimer=QTimer()
+        self.__filesFsWatcherTimer.setSingleShot(True)
+        self.__filesFsWatcherTimer.setInterval(150)
+        self.__filesFsWatcherTimer.timeout.connect(self.__filesFsWatcherTimerRefresh)
 
         self.__filesImageNfoSizeUnit='mm'
 
@@ -624,15 +628,11 @@ class BCMainViewTab(QFrame):
         @pyqtSlot('QString')
         def filesDirectory_changed(value):
             self.__filesFsWatcherTimerCount+=1
-            if self.__filesFsWatcherTimerCount==1:
-                # wait 100ms before refreshing directory content
-                # when many change occurs in a directory (example: 1000 files copied)
-                # this allows to avoid to update directory on each change signal (avoid 1000 updates)
-                QTimer.singleShot(100, filesDirectory_timerEvent)
-
-        def filesDirectory_timerEvent():
-            self.__filesFsWatcherTimerCount=0
-            self.__filesDirectoryContentChanged(self.filesPath())
+            # wait before refreshing directory content
+            # when many change occurs in a directory (example: 1000 files copied)
+            # this allows to avoid to update directory on each change signal (avoid 1000 updates)
+            self.__filesFsWatcherTimer.stop()
+            self.__filesFsWatcherTimer.start()
 
         @pyqtSlot('QString')
         def filesIconSize_changed(value):
@@ -850,6 +850,15 @@ class BCMainViewTab(QFrame):
                 else:
                     self.listViewFiles.setFocus()
 
+
+    def __filesFsWatcherTimerRefresh(self):
+        """Update file content from watcher only after timer has been trigerred"""
+        if self.__filesModelTv.isThumbnailLoading() or self.__filesModelLv.isThumbnailLoading():
+            self.__filesFsWatcherTimer.start()
+            return
+
+        self.__filesFsWatcherTimerCount=0
+        self.__filesDirectoryContentChanged(self.filesPath())
 
 
     # -- PRIVATE FILES ---------------------------------------------------------

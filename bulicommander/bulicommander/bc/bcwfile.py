@@ -517,6 +517,9 @@ class BCFileModel(QAbstractTableModel):
         if isinstance(value, bool):
             self.__tooltipEnabled=value
 
+    def isThumbnailLoading(self):
+        """Return if there's currently an asynchronous thumbnail loading process"""
+        return self.__updatingIcons != BCFileModel.__STATUS_ICON_LOADED
 
 class BCViewFilesTv(QTreeView):
     """Tree view files"""
