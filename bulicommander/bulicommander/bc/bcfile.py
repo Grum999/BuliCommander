@@ -1417,6 +1417,11 @@ class BCBaseFile(object):
         """Initialise BCFile"""
         self._fullPathName = os.path.expanduser(fileName)
         self._name = os.path.basename(self._fullPathName)
+
+        # Need to normalize path
+        if self._name!='..':
+            self._fullPathName=os.path.normpath(self._fullPathName)
+
         self._path = os.path.dirname(self._fullPathName)
         if os.path.isdir(self._fullPathName) or os.path.isfile(self._fullPathName):
             self._mdatetime = os.path.getmtime(self._fullPathName)
