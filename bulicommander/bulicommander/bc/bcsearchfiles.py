@@ -131,6 +131,12 @@ class BCSearchFilesDialogBox(QDialog):
     __TAB_ADVANCED_SEARCH = 1
     __TAB_SEARCH_CONSOLE = 2
 
+    __SEARCH_IN_PROGRESS_CANCEL=-1
+    __SEARCH_IN_PROGRESS_NONE=0
+    __SEARCH_IN_PROGRESS_SEARCH=1
+    __SEARCH_IN_PROGRESS_SORTANDEXPORT=2
+
+
     @staticmethod
     def open(title, uicontroller):
         """Open dialog box"""
@@ -420,7 +426,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.__uiController = uicontroller
         self.__fileNfo = self.__uiController.panel().files()
 
-        self.__searchInProgress=False
+        self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_NONE
         self.__bcFileList=BCFileList()
 
         self.__currentFileBasic=None
@@ -637,7 +643,7 @@ class BCSearchFilesDialogBox(QDialog):
 
     def __currentTabChanged(self, index):
         """Tab changed"""
-        if self.__searchInProgress:
+        if self.__searchInProgress!=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_NONE:
             self.pbSearch.setEnabled(False)
         else:
             self.pbSearch.setEnabled(index!=BCSearchFilesDialogBox.__TAB_SEARCH_CONSOLE)
@@ -1174,6 +1180,7 @@ class BCSearchFilesDialogBox(QDialog):
             # 0 => step identifier
             self.wcExecutionConsole.appendLine('')
             self.wcExecutionConsole.appendLine(f"""**#ly#Search cancelled!#**""", WConsoleType.WARNING)
+            self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL
         elif informations[0]==BCFileList.STEPEXECUTED_OUTPUT_RESULTS:
             # 0 => step identifier
             # 1 => total number of pages (-1 if no pages)
@@ -1256,7 +1263,11 @@ class BCSearchFilesDialogBox(QDialog):
         self.pbCancel.setEnabled(False)
         self.pbCancel.update()
         QApplication.processEvents()
-        self.__bcFileList.cancelSearchExecution()
+        if self.__searchInProgress==BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_SEARCH:
+            self.__bcFileList.cancelSearchExecution()
+        else:
+            self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL
+
 
     def __executeSortAndExport(self, searchRulesAsDict):
         """Sort results and export
@@ -1347,7 +1358,6 @@ class BCSearchFilesDialogBox(QDialog):
                 Stopwatch.stop('executeSortAndExport.export')
                 exportEnd()
 
-
         def executeSort(sortRules):
             # prepare and execute sort for file results
             txtAscending=f"[{i18n('Ascending')}]"
@@ -1383,6 +1393,11 @@ class BCSearchFilesDialogBox(QDialog):
             self.__bcFileList.sortResults(sortRules['caseInsensitive'])
             Stopwatch.stop('executeSortAndExport.sort')
             self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("executeSortAndExport.sort"),sortNfoList])
+
+        if self.__searchInProgress==BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL:
+            return
+
+        self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_SORTANDEXPORT
 
         # need to parse dictionary to get references
         nodeSearchEngine=None
@@ -1426,13 +1441,22 @@ class BCSearchFilesDialogBox(QDialog):
 
         # process direct output engines
         for outputEngine in processOutputEngines:
+            if self.__searchInProgress==BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL:
+                self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_CANCEL])
+                return
             executeOutputEngine(outputEngine['widget']['outputProperties'])
 
         # process sorts, then output engines
         for sortRule in processSortRules:
             # do sort...
+            if self.__searchInProgress==BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL:
+                self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_CANCEL])
+                return
             executeSort(sortRule['widget']['sortProperties'])
             for outputEngine in sortRule['outputEngines']:
+                if self.__searchInProgress==BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL:
+                    self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_CANCEL])
+                    return
                 executeOutputEngine(outputEngine['widget']['outputProperties'])
 
     def __openFileBasic(self, fileName, title):
@@ -1553,7 +1577,7 @@ class BCSearchFilesDialogBox(QDialog):
             self.wneAdvancedView.nodeScene().deserialize(dataAsDict)
             self.wneAdvancedView.zoomToFit()
 
-        self.__searchInProgress=True
+        self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_SEARCH
         self.wcExecutionConsole.clear()
         self.twSearchModes.setCurrentIndex(BCSearchFilesDialogBox.__TAB_SEARCH_CONSOLE)
         if BCSearchFilesDialogBox.buildBCFileList(self.__bcFileList, dataAsDict):
@@ -1599,13 +1623,13 @@ class BCSearchFilesDialogBox(QDialog):
             self.pbClose.setEnabled(True)
 
             self.wProgress.setVisible(False)
-            self.__searchInProgress=False
+            self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_NONE
         else:
             self.wcExecutionConsole.appendLine(f"""{i18n('Build search query:')} #r#{i18n('KO')}#""", WConsoleType.ERROR)
             self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Current search definition is not valid')}#*""", WConsoleType.ERROR)
 
             self.wProgress.setVisible(False)
-            self.__searchInProgress=False
+            self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_NONE
 
     def openFile(self, searchTab, fileName=None):
         """Open file designed by `fileName` to `searchTab`
