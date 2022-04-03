@@ -47,6 +47,7 @@
     <file alias="delete">dark/32dp/delete.svg</file>
     <file alias="draw">dark/32dp/draw.svg</file>
     <file alias="draw_r90">dark/32dp/draw_r90.svg</file>
+    <file alias="edit">dark/32dp/edit.svg</file>
     <file alias="edit_redo">dark/32dp/edit_redo.svg</file>
     <file alias="edit_text_clear">dark/32dp/edit_text_clear.svg</file>
     <file alias="edit_undo">dark/32dp/edit_undo.svg</file>
@@ -217,6 +218,7 @@
     <file alias="delete">dark/32dp-disabled/delete.svg</file>
     <file alias="draw">dark/32dp-disabled/draw.svg</file>
     <file alias="draw_r90">dark/32dp-disabled/draw_r90.svg</file>
+    <file alias="edit">dark/32dp-disabled/edit.svg</file>
     <file alias="edit_redo">dark/32dp-disabled/edit_redo.svg</file>
     <file alias="edit_text_clear">dark/32dp-disabled/edit_text_clear.svg</file>
     <file alias="edit_undo">dark/32dp-disabled/edit_undo.svg</file>
