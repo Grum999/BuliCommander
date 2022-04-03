@@ -269,7 +269,7 @@ class BCConvertFilesDialogBox(QDialog):
     # -- Manage page Target -------------------------------------------------
     def __loadDefaultPageTarget(self):
         """Load default internal configuration for page target"""
-        self.ceTargetFilePattern.setPlainText('{file:baseName}.{file:tagertExt}')
+        self.ceTargetFilePattern.setPlainText('{file:baseName}.{file:targetExt}')
 
     def __loadSettingsPageTarget(self):
         """Load saved settings for page format"""
