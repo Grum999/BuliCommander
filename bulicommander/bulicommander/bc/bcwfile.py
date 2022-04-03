@@ -848,22 +848,64 @@ class BCViewFilesTv(QTreeView):
 class BCViewFilesTvDelegate(QStyledItemDelegate):
     """Extend QStyledItemDelegate class to return properly row height"""
 
+    ICON_RPADDING=5
+
     def __init__(self, parent=None):
         """Constructor, nothingspecial"""
         super(BCViewFilesTvDelegate, self).__init__(parent)
         self.__iconSize=QSize(64, 64)
-        self.__charHeight=0
+        self.__iconSizeColumn=QSize(64+BCViewFilesTvDelegate.ICON_RPADDING, 64)
 
     def setIconSize(self, value):
         self.__iconSize=QSize(value, value)
+        self.__iconSizeColumn=QSize(value+BCViewFilesTvDelegate.ICON_RPADDING, value)
         self.sizeHintChanged.emit(self.parent().model().createIndex(0, BCFileModel.COLNUM_ICON))
 
     def paint(self, painter, option, index):
         """Paint list item"""
-        if index.column() == BCFileModel.COLNUM_FULLNFO:
-            # render full information
-            self.initStyleOption(option, index)
+        self.initStyleOption(option, index)
+        painter.save()
 
+        color=None
+        overlay=False
+
+        if (option.state & QStyle.State_Selected) == QStyle.State_Selected:
+            overlay=True
+            if self.parent().hasFocus():
+                color=option.palette.color(QPalette.Active, QPalette.Highlight)
+            else:
+                color=option.palette.color(QPalette.Inactive, QPalette.Highlight)
+            painter.setBrush(QBrush(color))
+        else:
+            if (option.features & QStyleOptionViewItem.Alternate):
+                color=option.palette.color(QPalette.AlternateBase)
+            else:
+                color=option.palette.color(QPalette.Base)
+
+        # draw background
+        painter.fillRect(option.rect, color)
+
+        if index.column() == BCFileModel.COLNUM_ICON:
+            # render centered icon
+            painter.setRenderHint(QPainter.Antialiasing)
+
+            # icon as QIcon
+            img=index.data(Qt.DecorationRole).pixmap(self.__iconSize)
+
+            # calculate centered position for icon
+            position=QPoint(option.rect.left()+(option.rect.width()-img.width()-BCViewFilesTvDelegate.ICON_RPADDING)//2, option.rect.top()+(option.rect.height()-img.height())//2)
+
+            #painter.setPen(QPen(Qt.NoPen))
+
+            # draw icon
+            painter.drawPixmap(position, img)
+
+            if overlay:
+                # selected item
+                color.setAlphaF(0.25)
+                painter.fillRect(QRect(position, img.size()), color)
+        elif index.column() == BCFileModel.COLNUM_FULLNFO:
+            # render full information
             rectTxt = QRect(option.rect.left(), option.rect.top(), option.rect.width(), option.rect.height())
 
             # tuple (data(label, value), header max characters)
@@ -874,8 +916,6 @@ class BCViewFilesTvDelegate(QStyledItemDelegate):
             fm=QFontMetrics(fntBold)
             hOffset=fm.height()
             wOffset=5+fm.horizontalAdvance('W')*dataNfo[1]
-
-            painter.save()
 
             painter.translate(QPointF(option.rect.topLeft()))
 
@@ -888,16 +928,20 @@ class BCViewFilesTvDelegate(QStyledItemDelegate):
                 painter.drawText(wOffset, top, option.rect.width(), option.rect.height(), Qt.AlignLeft, nfo[1])
 
                 top+=hOffset
+        else:
+            rectTxt = QRect(option.rect.left(), option.rect.top(), option.rect.width(), option.rect.height())
 
-            painter.restore()
-            return
+            dataNfo=index.data(Qt.DisplayRole)
 
-        QStyledItemDelegate.paint(self, painter, option, index)
+            if not dataNfo is None:
+                painter.drawText(option.rect.left(), option.rect.top(), option.rect.width(), option.rect.height(), index.data(Qt.TextAlignmentRole)|Qt.AlignVCenter, dataNfo)
+
+        painter.restore()
 
     def sizeHint(self, option, index):
         """Calculate size for items"""
         if index.column() == BCFileModel.COLNUM_ICON:
-            return self.__iconSize
+            return self.__iconSizeColumn
         elif index.column() == BCFileModel.COLNUM_FULLNFO:
             currentSize=QStyledItemDelegate.sizeHint(self, option, index)
             currentSize.setHeight(option.fontMetrics.height() * len(index.data(BCFileModel.ROLE_FULLNFO)[0]))
@@ -1122,7 +1166,7 @@ class BCViewFilesLvDelegate(QStyledItemDelegate):
             painter.drawPixmap(position, img)
             if not color is None:
                 # selected item
-                color.setAlphaF(0.5)
+                color.setAlphaF(0.25)
                 overRect=QRect(position, img.size())
                 painter.fillRect(overRect, color)
 
