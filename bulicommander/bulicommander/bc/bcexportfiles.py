@@ -32,6 +32,7 @@ from PyQt5.QtWidgets import (
     )
 
 import os
+import os.path
 import re
 import shutil
 import time
@@ -4384,6 +4385,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         BCSettings.set(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE, fileName)
         self.__currentLoadedConfigurationFile=fileName
         self.__setModified(False)
+        self.__updateFileNameLabel()
 
         return returned
 
@@ -4425,6 +4427,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         fileName, dummy = QFileDialog.getOpenFileName(self, title, fileName, extension)
 
         if fileName != '':
+            fileName=os.path.normpath(fileName)
             if not os.path.isfile(fileName):
                 openResult=BCExportFilesDialogBox.IMPORT_FILE_NOT_FOUND
             else:
@@ -4470,6 +4473,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             fileName, dummy = QFileDialog.getSaveFileName(self, title, fileName, extension)
 
         if fileName != '':
+            fileName=os.path.normpath(fileName)
             saveResult=self.__saveFile(fileName)
 
             if saveResult==BCExportFilesDialogBox.EXPORT_OK:
