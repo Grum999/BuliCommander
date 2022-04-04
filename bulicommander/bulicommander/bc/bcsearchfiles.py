@@ -3397,6 +3397,7 @@ class BCNodeWSearchFileFilterRuleOperator(NodeEditorNodeWidget):
                 connector.addAcceptedConnectionFrom(NodeEditorConnectorFilter)
 
 
+
 class BCNodeWSearchSortRule(NodeEditorNodeWidget):
     """A sort source node"""
 
@@ -3408,6 +3409,8 @@ class BCNodeWSearchSortRule(NodeEditorNodeWidget):
 
         self.__lblSortedProperties=QLabel()
         self.__lblSortCaseInsensitive=QLabel()
+
+        self.__fntSize=self.__lblSortedProperties.fontMetrics().height() - 4
 
         self.__layout=QFormLayout()
         self.__layout.setLabelAlignment(Qt.AlignLeft|Qt.AlignTop)
@@ -3446,10 +3449,10 @@ class BCNodeWSearchSortRule(NodeEditorNodeWidget):
                 for item in self.__data['sortProperties']['list']:
                     if item['checked']:
                         if item['ascending']:
-                            sortArrow='⬆'
+                            sortArrow=f"<img width={self.__fntSize} height={self.__fntSize} src=':/pktk/images/normal/arrow_big_filled_up'>"
                             sortText=i18n('Ascending')
                         else:
-                            sortArrow='⬇'
+                            sortArrow=f"<img width={self.__fntSize} height={self.__fntSize} src=':/pktk/images/normal/arrow_big_filled_down'>"
                             sortText=i18n('Descending')
                         text.append(f"{sortArrow}{BCWSearchSortRules.MAP_VALUE_LABEL[item['value']]}")
                         tooltipText.append(f"{BCWSearchSortRules.MAP_VALUE_LABEL[item['value']]} [{sortText}]")
