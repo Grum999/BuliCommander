@@ -28,6 +28,7 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal
     )
 
+from ..modules.imgutils import buildIcon
 from ..pktk import *
 
 class OrderedItem(QListWidgetItem):
@@ -95,6 +96,12 @@ class StyledOrderedItemDelegate(QStyledItemDelegate):
             raise EInvalidType("Given `orderedListWidget` must be <WOrderedList>")
         self.__orderedListWidget=orderedListWidget
 
+        # preload icons for performances (even if don't really need for small lists...)
+        self.__iconUpEmpty=buildIcon("pktk:arrow_big_empty_up")
+        self.__iconUpFilled=buildIcon("pktk:arrow_big_filled_up")
+        self.__iconDownEmpty=buildIcon("pktk:arrow_big_empty_down")
+        self.__iconDownFilled=buildIcon("pktk:arrow_big_filled_down")
+
     def paint(self, painter, option, index):
         """Paint item"""
         if option.state & QStyle.State_HasFocus == QStyle.State_HasFocus:
@@ -120,11 +127,9 @@ class StyledOrderedItemDelegate(QStyledItemDelegate):
 
         # drawing area for arrow
         rect = QRect(option.rect.right() - option.rect.height(), option.rect.top(), option.rect.height(), option.rect.height())
-        margin=6
-        d=rect.width()/2 - margin
-
         painter.save()
 
+        # paint background color
         if option.state & QStyle.State_Active:
             colorGroup=QPalette.Active
         else:
@@ -135,44 +140,20 @@ class StyledOrderedItemDelegate(QStyledItemDelegate):
         else:
             painter.fillRect(rect, option.palette.color(colorGroup, QPalette.Base))
 
-
+        # draw arrow
         if self.__orderedListWidget.checkOptionAvailable() and not index.data(Qt.CheckStateRole):
-            color=option.palette.color(colorGroup, QPalette.Text)
-            color.setAlphaF(0.5)
-            painter.setPen(QPen(color))
-            painter.setBrush(Qt.NoBrush)
+            # empty arrow: use 'disabled' version
+            if index.data(OrderedItem.ROLE_SORTASCENDING):
+                painter.drawPixmap(rect, self.__iconUpEmpty.pixmap(rect.size(), QIcon.Disabled))
+            else:
+                painter.drawPixmap(rect, self.__iconDownEmpty.pixmap(rect.size(), QIcon.Disabled))
         else:
-            painter.setPen(QPen(option.palette.color(colorGroup, QPalette.Text)))
-            painter.setBrush(QBrush(option.palette.color(colorGroup, QPalette.Text)))
+            # filled arrow: use 'disabled' version
+            if index.data(OrderedItem.ROLE_SORTASCENDING):
+                painter.drawPixmap(rect, self.__iconUpFilled.pixmap(rect.size(), QIcon.Normal))
+            else:
+                painter.drawPixmap(rect, self.__iconDownFilled.pixmap(rect.size(), QIcon.Normal))
 
-        if index.data(OrderedItem.ROLE_SORTASCENDING):
-            # arrow bottom->up
-            polygon=QPolygonF([
-                   QPointF(rect.center().x(), rect.top() + margin),
-                   QPointF(rect.center().x() + d, rect.top() + margin + d),
-
-                   QPointF(rect.center().x() + d/2, rect.top() + margin + d),
-                   QPointF(rect.center().x() + d/2, rect.bottom() - margin),
-                   QPointF(rect.center().x() - d/2, rect.bottom() - margin),
-                   QPointF(rect.center().x() - d/2, rect.top() + margin + d),
-
-                   QPointF(rect.center().x() - d, rect.top() + margin + d)
-                ])
-        else:
-            # arrow up->bottom
-            polygon=QPolygonF([
-                   QPointF(rect.center().x(), rect.bottom() - margin),
-                   QPointF(rect.center().x() + d, rect.bottom() - margin - d),
-
-                   QPointF(rect.center().x() + d/2, rect.bottom() - margin - d),
-                   QPointF(rect.center().x() + d/2, rect.top() + margin),
-                   QPointF(rect.center().x() - d/2, rect.top() + margin),
-                   QPointF(rect.center().x() - d/2, rect.bottom() - margin - d),
-
-                   QPointF(rect.center().x() - d, rect.bottom() - margin - d)
-                ])
-
-        painter.drawPolygon(polygon)
         painter.restore()
 
 
