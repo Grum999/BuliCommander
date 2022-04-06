@@ -3293,7 +3293,7 @@ class BCNodeWSearchFileFilterRuleOperator(NodeEditorNodeWidget):
         self.node().connectorUnlinked.connect(self.__checkInputFilter)
         self.node().scene().sceneLoaded.connect(self.__checkInputFilter)
         self.setLayout(self.__layout)
-        self.setMinimumSize(self.calculateSize(f"XXXXXX", 2, self.__layout.spacing()))
+        self.setMinimumSize(self.calculateSize(f"XXXXXX", 1, self.__layout.spacing()))
 
     def __cbValueChanged(self, index):
         """Current operator value has been changed"""
