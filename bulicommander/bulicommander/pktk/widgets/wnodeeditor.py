@@ -3405,7 +3405,8 @@ class NodeEditorNodeWidget(QWidget):
             - width is calculated from text (calculate text width)
             - height is caclculated from given number of rows, taking in account default row height + given spacing
         """
-        return QSize(self.fontMetrics().horizontalAdvance(text), (self._rowHeight+spacing)*numberOfRows)
+        # on windows, not sure why, need to add an additional spacing
+        return QSize(self.fontMetrics().horizontalAdvance(text), (self._rowHeight+spacing)*numberOfRows+spacing)
 
     def setMinimumSize(self, size):
         """Set minimum size for widget
