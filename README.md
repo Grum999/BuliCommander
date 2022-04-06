@@ -197,7 +197,7 @@ I think it should be Ok, but...
 ## Plugin's life
 
 ### What's new?
-_[2022-xx-xx] Version 0.7.0b_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.7.0b.md)*
+_[2022-04-06] Version 0.7.0b_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.7.0b.md)*
 - First *Beta* release!
 - A big work to get plugin fully compatible with Windows OS
 - Implement *Search engine*

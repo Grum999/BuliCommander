@@ -1,4 +1,4 @@
-# Buli Commander :: Release 0.7.0b [2021-xx-xx]
+# Buli Commander :: Release 0.7.0b [2022-04-06]
 
 ## Beta release!
 Plugin is now stable enough to be considered in *beta* version instead of previous *alpha* state.
