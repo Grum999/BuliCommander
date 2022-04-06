@@ -1982,6 +1982,9 @@ class BCExportFilesDialogBox(QDialog):
     def __init__(self, title, uicontroller, options=None, parent=None):
         super(BCExportFilesDialogBox, self).__init__(parent)
 
+        # dirty trick...
+        self.__closed=False
+
         self.__title = title
 
         self.__exporter=BCExportFiles(uicontroller)
@@ -2245,6 +2248,36 @@ class BCExportFilesDialogBox(QDialog):
 
         self.__blockSlot(False)
         self.__setModified(False)
+
+    def __allowClose(self):
+        """Check if search window can be closed or not
+
+        Return True if can be close, otherwise return False
+        """
+        if self.__closed:
+            return True
+
+        if self.__isModified:
+            if WDialogBooleanInput.display(f"{self.__title}::{i18n('Close')}", i18n("<h1>Export file list definition has been modified</h1><p>Close without saving?")):
+                return True
+            return False
+        return True
+
+    def reject(self):
+        """Dialog is closed"""
+        if self.__allowClose():
+            self.__closed=True
+            self.done(0)
+
+    def closeEvent(self, event):
+        """Dialog is closed"""
+        if not self.__allowClose():
+            event.ignore()
+            return
+
+        self.__saveSettings()
+        event.accept()
+        self.__closed=True
 
     def __exportStart(self, totalPage):
         """Called during export"""

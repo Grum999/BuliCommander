@@ -421,6 +421,9 @@ class BCSearchFilesDialogBox(QDialog):
     def __init__(self, title, uicontroller, parent=None):
         super(BCSearchFilesDialogBox, self).__init__(parent)
 
+        # dirty trick...
+        self.__closed=False
+
         self.__inInit=True
         self.__title = title
         self.__uiController = uicontroller
@@ -533,10 +536,46 @@ class BCSearchFilesDialogBox(QDialog):
         self.__viewWindowGeometry(BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_GEOMETRY))
         self.__viewWindowActiveTab(BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_TAB_ACTIVE))
 
+    def __allowClose(self):
+        """Check if search window can be closed or not
+
+        Return True if can be close, otherwise return False
+        """
+        if self.__closed:
+            return True
+
+        modified=False
+        if self.twSearchModes.currentIndex()==BCSearchFilesDialogBox.__TAB_BASIC_SEARCH:
+            if (self.wsffrBasic.isModified()
+                or  self.wsffpBasic.isModified()
+                or  self.wsifrBasic.isModified()
+                or  self.wssrBasic.isModified()):
+                modified=True
+        elif self.twSearchModes.currentIndex()==BCSearchFilesDialogBox.__TAB_ADVANCED_SEARCH:
+            if self.__scene.isModified():
+                modified=True
+
+        if modified:
+            if WDialogBooleanInput.display(f"{self.__title}::{i18n('Close')}", i18n("<h1>A search definition has been modified</h1><p>Close without saving?")):
+                return True
+            return False
+        return True
+
+    def reject(self):
+        """Dialog is closed"""
+        if self.__allowClose():
+            self.__closed=True
+            self.done(0)
+
     def closeEvent(self, event):
         """Dialog is closed"""
+        if not self.__allowClose():
+            event.ignore()
+            return
+
         self.__saveSettings()
         event.accept()
+        self.__closed=True
 
     def __updateFileNameLabel(self):
         """Update file name in status bar according to current tab"""
@@ -1267,7 +1306,6 @@ class BCSearchFilesDialogBox(QDialog):
             self.__bcFileList.cancelSearchExecution()
         else:
             self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL
-
 
     def __executeSortAndExport(self, searchRulesAsDict):
         """Sort results and export
