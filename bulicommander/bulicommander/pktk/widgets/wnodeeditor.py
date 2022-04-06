@@ -1600,7 +1600,9 @@ class NodeEditorNode(QObject):
         self.__nbBottomLeft=0
         self.__nbBottomRight=0
 
-        self.__minSizeUserDefined=QSize(200, 200)
+        # need a big size value for initialisation
+        # let
+        self.__minSizeUserDefined=QSize(9999, 9999)
         self.__minSizeCalculated=QSize(self.__minSizeUserDefined)
 
         # add connectors to node, if some given
@@ -2199,6 +2201,10 @@ class NodeEditorNode(QObject):
     def boundingRect(self):
         """Return node size"""
         return self.__grItem.boundingRect()
+
+    def minimumSizeCalculated(self):
+        """return minimum size calculated for node"""
+        return self.__minSizeCalculated
 
     def minimumSize(self):
         """return minimum size for node"""
@@ -3384,8 +3390,35 @@ class NodeEditorNodeWidget(QWidget):
     def __init__(self, scene, title, connectors=[], parent=None):
         super(NodeEditorNodeWidget, self).__init__(parent)
 
+        self._rowHeight=self.fontMetrics().height()
+
         self.__node=NodeEditorNode(scene, title, connectors=connectors, widget=self)
         self.__node.updateOutputs()
+
+        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.setMinimumSize(self.calculateSize(f"XXX{title}XXX", 4))
+
+    def calculateSize(self, text, numberOfRows, spacing=9):
+        """Return a QSize for which:
+            - width is calculated from text (calculate text width)
+            - height is caclculated from given number of rows, taking in account default row height + given spacing
+        """
+        return QSize(self.fontMetrics().horizontalAdvance(text), (self._rowHeight+spacing)*numberOfRows)
+
+    def setMinimumSize(self, size):
+        """Set minimum size for widget
+
+        This means to calculate parent node size
+        """
+        # default minimum size
+        size=size.expandedTo(self.calculateSize(self.__node.title(), 1))
+
+        # take in account node style (padding + border width)
+        size.setWidth(size.width() +  2*(self.__node.padding() + self.__node.borderSize()) )
+        size.setHeight(size.height() +  2*(self.__node.padding() + self.__node.borderSize()) + self.__node.graphicItem().titleSize().height() )
+
+        # set node minimum size
+        self.__node.setMinimumSize(size)
 
     def node(self):
         """Return parent node for connector"""
