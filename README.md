@@ -37,8 +37,6 @@ _Main user interface: single clipboard panel mode with different image sources_
 
 ![Main interface-single clipboard panel mode](./screenshots/main_interface-single_clipboard_panel.jpeg)
 
-
-
 _Settings interface: navigation_
 
 ![Settings interface-Navigation](./screenshots/settings_navigation.png)
@@ -188,12 +186,12 @@ Settings allows:
 
 
 ### Tested platforms
-Plugin has been tested with Krita 5.0.2 (appimage) on Linux Debian 10
-
-Some tests have been made on Windows 10, can't guarantee that everything is working file on Windows.
+Plugin has been tested with:
+- Krita 5.0.2 (appimage) on Linux Debian 10
+- Krita 5.0.2 on Windows 10
 
 Currently don't kwow if plugin works MacOs.
-I think it should be Ok, because of use of python and PyQt high level and multi OS file system functions, but...
+I think it should be Ok, but...
 
 
 ## Plugin's life
@@ -201,6 +199,7 @@ I think it should be Ok, because of use of python and PyQt high level and multi 
 ### What's new?
 _[2022-xx-xx] Version 0.7.0b_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.7.0b.md)*
 - First *Beta* release!
+- A big work to get plugin fully compatible with Windows OS
 - Implement *Search engine*
 - Improve file panel - *New available columns fields* with possibility to *Select/Unselect visible columns*
 - Improve file panel - *Grid view mode*
@@ -214,7 +213,7 @@ _[2022-xx-xx] Version 0.7.0b_ *[>> Show detailed release content <<](https://git
 - Improve performances
 - Improve user interface
 - New recognized files format
-- Many bugs fix
+- Many (many-many) bugs fix
 
 _[2020-12-29] Version 0.6.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.6.0a.md)*
 
@@ -275,24 +274,38 @@ _[2020-09-05] Version 0.1.0a_
 
 
 ### Bugs
-Probably a lot... :-)
+Probably still a lot... :-)
+
+> ---
+> ## **WARNING**
+>
+> There's a very bad "random" bug that can occurs when opening Search window
+> Currently not able to reproduce it systematically, it sometime randomly occurs
+> When it occurs, there's a really bad Krita crash :-(
+>
+> If you want to use the search function, it's higly recommended to save all your unsaved Krita documents!
+>
+> ---
 
 
 
 ### What’s next?
 Not able to define precisely in which order functionalities will be implemented, neither when, but here a list of what is currently expected for final *v1.0.0* version:
+- Improve styles (especially clear style as currently plugin is optimized for dark theme)
+- Improve breadcrumb for windows users (provide access to drives)
+- Improve grid view (add possibility for file/image information in grid)
+- Improve search engine UI (allows to resize nodes manually, context menu, copy/paste/duplicate, ...)
+- Add some file format support (TIF, CBZ)
 - Implement thumbnails generation with ICC profile taken in account
 - Implement a toolbar
-- Improve styles (especially clear style as currently plugin is optimized for dark theme)
-- Add some file format support (TIF, CBZ)
 - Implement *Documents* tab
 - Implement Exif/IPTC/XMP metadata read
 - Implement search by color
 - Implement search on Exif/IPTC/XMP metadata
 - Implement search on invalid krita files (missing font, missing file layers, ...)
+- Implement "Predefined condition" for search
 - Implement Krita file analysis tool
-
-
+- Implement a better layout editor for *Export file list* (add popup completer for available marker)
 
 
 ## License
