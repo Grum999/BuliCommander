@@ -32,6 +32,7 @@ from PyQt5.QtWidgets import (
     )
 
 import os
+import os.path
 import re
 import shutil
 import time
@@ -547,7 +548,7 @@ class BCExportFiles(QObject):
         returned = text
 
         if source != '':
-            returned = re.sub("(?i)\{source\}",                     source,                                             returned)
+            returned = re.sub("(?i)\{source\}",                     source.replace("\\", "\\\\"),                       returned)
         else:
             returned = re.sub("(?i)\{source}",                      "Current user selection",                           returned)
 
@@ -593,7 +594,8 @@ class BCExportFiles(QObject):
         returned = re.sub("(?i)\{file:baseName\}",                  baseName,                                           returned)
         returned = re.sub("(?i)\{file:ext\}",                       extName,                                            returned)
 
-        returned = re.sub("(?i)\{table\}",                          tableContent,                                       returned)
+        # for windows need to replace '\' character otherwise raise an exception
+        returned = re.sub("(?i)\{table\}",                          tableContent.replace("\\", "\\\\"),                 returned)
 
         return returned
 
@@ -1127,15 +1129,14 @@ class BCExportFiles(QObject):
                                     config.get('files', defaultConfig['files']),
                                     None)
 
+            content = table.asText(tableSettings)
             if config.get('userDefinedLayout.active', defaultConfig['userDefinedLayout.active']):
                 # layout asked
                 content = self.__parseText(config.get('userDefinedLayout.content', defaultConfig['userDefinedLayout.content']),
-                                           table.asText(tableSettings),
+                                           content,
                                            currentPage=0,
                                            totalPage=0,
                                            source=config.get('source', defaultConfig['source']))
-            else:
-                content = table.asText(tableSettings)
 
             # data are ready
             returned['exported'] = True
@@ -1981,6 +1982,9 @@ class BCExportFilesDialogBox(QDialog):
     def __init__(self, title, uicontroller, options=None, parent=None):
         super(BCExportFilesDialogBox, self).__init__(parent)
 
+        # dirty trick...
+        self.__closed=False
+
         self.__title = title
 
         self.__exporter=BCExportFiles(uicontroller)
@@ -2194,7 +2198,7 @@ class BCExportFilesDialogBox(QDialog):
                 fileName = QFileDialog.getSaveFileName(self, i18n('Save file'), fileName, BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['dialogExtensions'])
 
                 if fileName != '':
-                    self.leTargetResultFile.setText(fileName[0])
+                    self.leTargetResultFile.setText(os.path.normpath(fileName[0]))
                 self.__updateBtn()
 
             def checkButton(dummy):
@@ -2244,6 +2248,36 @@ class BCExportFilesDialogBox(QDialog):
 
         self.__blockSlot(False)
         self.__setModified(False)
+
+    def __allowClose(self):
+        """Check if search window can be closed or not
+
+        Return True if can be close, otherwise return False
+        """
+        if self.__closed:
+            return True
+
+        if self.__isModified:
+            if WDialogBooleanInput.display(f"{self.__title}::{i18n('Close')}", i18n("<h1>Export file list definition has been modified</h1><p>Close without saving?")):
+                return True
+            return False
+        return True
+
+    def reject(self):
+        """Dialog is closed"""
+        if self.__allowClose():
+            self.__closed=True
+            self.done(0)
+
+    def closeEvent(self, event):
+        """Dialog is closed"""
+        if not self.__allowClose():
+            event.ignore()
+            return
+
+        self.__saveSettings()
+        event.accept()
+        self.__closed=True
 
     def __exportStart(self, totalPage):
         """Called during export"""
@@ -3824,6 +3858,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                     fileName = f"{result.groups()[0]}.{{ext}}"
                 else:
                     fileName = f"{self.leTargetResultFile.text()}.{{ext}}"
+            fileName=os.path.normpath(fileName)
 
             fileOpenAllowed={
                     # do not allow option 'open file in krita' from search result
@@ -4295,8 +4330,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR, self.cbxFormatTextCSVSeparator.currentIndex())
 
         def __savePageTarget():
-            fileName = self.leTargetResultFile.text()
-            if fileName != '' and (result:=re.match("(.*)(\..*)$", fileName)):
+            fileName = os.path.normpath(self.leTargetResultFile.text())
+            if fileName != '' and (result:=re.match(r"(.*)(\..*)$", fileName)):
                 fileName = f"{result.groups()[0]}.{{ext}}"
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME, fileName)
 
@@ -4384,6 +4419,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         BCSettings.set(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE, fileName)
         self.__currentLoadedConfigurationFile=fileName
         self.__setModified(False)
+        self.__updateFileNameLabel()
 
         return returned
 
@@ -4425,6 +4461,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         fileName, dummy = QFileDialog.getOpenFileName(self, title, fileName, extension)
 
         if fileName != '':
+            fileName=os.path.normpath(fileName)
             if not os.path.isfile(fileName):
                 openResult=BCExportFilesDialogBox.IMPORT_FILE_NOT_FOUND
             else:
@@ -4470,6 +4507,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             fileName, dummy = QFileDialog.getSaveFileName(self, title, fileName, extension)
 
         if fileName != '':
+            fileName=os.path.normpath(fileName)
             saveResult=self.__saveFile(fileName)
 
             if saveResult==BCExportFilesDialogBox.EXPORT_OK:

@@ -879,7 +879,7 @@ class WSmallTextEdit(QFrame):
 
         self.__btnEdit = QToolButton(self)
         self.__btnEdit.setAutoRaise(True)
-        self.__btnEdit.setIcon(QIcon.fromTheme('document-edit'))
+        self.__btnEdit.setIcon(buildIcon('pktk:edit'),)
         self.__btnEdit.setToolTip("Edit text")
         self.__btnEdit.clicked.connect(self.__editText)
 

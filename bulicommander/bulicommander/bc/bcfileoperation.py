@@ -29,6 +29,7 @@ import os.path
 import shutil
 import sys
 import re
+import time
 
 import PyQt5.uic
 from PyQt5.Qt import *
@@ -668,6 +669,8 @@ class BCFileOperation(object):
     __PROGRESS_totalBytesStr = "0B"
     __PROGRESS_cancelled = False
 
+    __PROGRESS_Time=0
+
     @staticmethod
     def __showProgressBar(title, nbFiles, nbBytes):
         """Show progress dialog bar"""
@@ -700,6 +703,9 @@ class BCFileOperation(object):
 
         BCFileOperation.__PROGRESS.bbCancel.clicked.connect(cancel_clicked)
 
+        BCFileOperation.__PROGRESS_Time=time.time_ns()
+        QApplication.instance().processEvents()
+
     @staticmethod
     def __hideProgressBar():
         """Hide progress dialog bar"""
@@ -724,7 +730,12 @@ class BCFileOperation(object):
 
             BCFileOperation.__PROGRESS.pbProcessedFiles.setValue(BCFileOperation.__PROGRESS_currentStep)
             BCFileOperation.__PROGRESS.pbProcessedBytes.setValue(nbBytes)
-            QApplication.instance().processEvents()
+
+            if time.time_ns() - BCFileOperation.__PROGRESS_Time>=150000000:
+                # can't update on each file processed: this slow down copy/move/delete drastically
+                # refresh progress bar every 100ms (100000000ns)
+                QApplication.instance().processEvents()
+                BCFileOperation.__PROGRESS_Time=time.time_ns()
 
     @staticmethod
     def __isCancelled():
@@ -1154,7 +1165,7 @@ class BCFileOperation(object):
                     os.rename(file.fullPathName(), targetFile)
                 except Exception as e:
                     inError+=1
-                    Debug.print('[BCFileOperation.rename] Unable to rename file from {0} to {1}: {2}', file.fullPathName(), newName, f"{e}")
+                    Debug.print('[BCFileOperation.rename] Unable to rename file from {0} to {1}: {2}', file.fullPathName(), targetFile, f"{e}")
 
 
             if BCFileOperation.__isCancelled():

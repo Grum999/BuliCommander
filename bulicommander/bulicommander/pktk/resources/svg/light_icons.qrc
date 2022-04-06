@@ -2,6 +2,14 @@
   <qresource prefix="pktk/images/normal">
     <file alias="animation">light/32dp/animation.svg</file>
     <file alias="application_exit">light/32dp/application_exit.svg</file>
+    <file alias="arrow_big_empty_down">light/32dp/arrow_big_empty_down.svg</file>
+    <file alias="arrow_big_empty_left">light/32dp/arrow_big_empty_left.svg</file>
+    <file alias="arrow_big_empty_right">light/32dp/arrow_big_empty_right.svg</file>
+    <file alias="arrow_big_empty_up">light/32dp/arrow_big_empty_up.svg</file>
+    <file alias="arrow_big_filled_down">light/32dp/arrow_big_filled_down.svg</file>
+    <file alias="arrow_big_filled_left">light/32dp/arrow_big_filled_left.svg</file>
+    <file alias="arrow_big_filled_right">light/32dp/arrow_big_filled_right.svg</file>
+    <file alias="arrow_big_filled_up">light/32dp/arrow_big_filled_up.svg</file>
     <file alias="author">light/32dp/author.svg</file>
     <file alias="bookmark">light/32dp/bookmark.svg</file>
     <file alias="bookmark_add">light/32dp/bookmark_add.svg</file>
@@ -47,6 +55,7 @@
     <file alias="delete">light/32dp/delete.svg</file>
     <file alias="draw">light/32dp/draw.svg</file>
     <file alias="draw_r90">light/32dp/draw_r90.svg</file>
+    <file alias="edit">light/32dp/edit.svg</file>
     <file alias="edit_redo">light/32dp/edit_redo.svg</file>
     <file alias="edit_text_clear">light/32dp/edit_text_clear.svg</file>
     <file alias="edit_undo">light/32dp/edit_undo.svg</file>
@@ -172,6 +181,14 @@
   <qresource prefix="pktk/images/disabled">
     <file alias="animation">light/32dp-disabled/animation.svg</file>
     <file alias="application_exit">light/32dp-disabled/application_exit.svg</file>
+    <file alias="arrow_big_empty_down">light/32dp-disabled/arrow_big_empty_down.svg</file>
+    <file alias="arrow_big_empty_left">light/32dp-disabled/arrow_big_empty_left.svg</file>
+    <file alias="arrow_big_empty_right">light/32dp-disabled/arrow_big_empty_right.svg</file>
+    <file alias="arrow_big_empty_up">light/32dp-disabled/arrow_big_empty_up.svg</file>
+    <file alias="arrow_big_filled_down">light/32dp-disabled/arrow_big_filled_down.svg</file>
+    <file alias="arrow_big_filled_left">light/32dp-disabled/arrow_big_filled_left.svg</file>
+    <file alias="arrow_big_filled_right">light/32dp-disabled/arrow_big_filled_right.svg</file>
+    <file alias="arrow_big_filled_up">light/32dp-disabled/arrow_big_filled_up.svg</file>
     <file alias="author">light/32dp-disabled/author.svg</file>
     <file alias="bookmark">light/32dp-disabled/bookmark.svg</file>
     <file alias="bookmark_add">light/32dp-disabled/bookmark_add.svg</file>
@@ -217,6 +234,7 @@
     <file alias="delete">light/32dp-disabled/delete.svg</file>
     <file alias="draw">light/32dp-disabled/draw.svg</file>
     <file alias="draw_r90">light/32dp-disabled/draw_r90.svg</file>
+    <file alias="edit">light/32dp-disabled/edit.svg</file>
     <file alias="edit_redo">light/32dp-disabled/edit_redo.svg</file>
     <file alias="edit_text_clear">light/32dp-disabled/edit_text_clear.svg</file>
     <file alias="edit_undo">light/32dp-disabled/edit_undo.svg</file>

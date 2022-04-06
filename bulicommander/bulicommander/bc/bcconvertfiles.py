@@ -269,7 +269,7 @@ class BCConvertFilesDialogBox(QDialog):
     # -- Manage page Target -------------------------------------------------
     def __loadDefaultPageTarget(self):
         """Load default internal configuration for page target"""
-        self.ceTargetFilePattern.setPlainText('{file:baseName}.{file:tagertExt}')
+        self.ceTargetFilePattern.setPlainText('{file:baseName}.{file:targetExt}')
 
     def __loadSettingsPageTarget(self):
         """Load saved settings for page format"""
@@ -343,7 +343,7 @@ class BCConvertFilesDialogBox(QDialog):
         self.__model.removeRows(0, self.__model.rowCount())
 
         for file in self.__fileList:
-            if not file.format() == BCFileManagedFormat.MISSING:
+            if not file.format() in (BCFileManagedFormat.MISSING, BCFileManagedFormat.DIRECTORY):
                 self.__addFileToListView(file)
 
         self.tvResultPreview.resizeColumnToContents(0)
@@ -501,9 +501,9 @@ class BCConvertFilesDialogBox(QDialog):
 
 
         if self.rbPerimeterSelectPath.isChecked():
-            files = self.__fileNfo[5]
+            files = [file for file in self.__fileNfo[5] if  not file.format() in (BCFileManagedFormat.MISSING, BCFileManagedFormat.DIRECTORY)]
         else:
-            files = self.__selectedFileNfo[5]
+            files = [file for file in self.__selectedFileNfo[5] if  not file.format() in (BCFileManagedFormat.MISSING, BCFileManagedFormat.DIRECTORY)]
 
         filePattern = self.ceTargetFilePattern.toPlainText()
 

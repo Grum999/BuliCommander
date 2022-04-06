@@ -131,6 +131,12 @@ class BCSearchFilesDialogBox(QDialog):
     __TAB_ADVANCED_SEARCH = 1
     __TAB_SEARCH_CONSOLE = 2
 
+    __SEARCH_IN_PROGRESS_CANCEL=-1
+    __SEARCH_IN_PROGRESS_NONE=0
+    __SEARCH_IN_PROGRESS_SEARCH=1
+    __SEARCH_IN_PROGRESS_SORTANDEXPORT=2
+
+
     @staticmethod
     def open(title, uicontroller):
         """Open dialog box"""
@@ -415,12 +421,15 @@ class BCSearchFilesDialogBox(QDialog):
     def __init__(self, title, uicontroller, parent=None):
         super(BCSearchFilesDialogBox, self).__init__(parent)
 
+        # dirty trick...
+        self.__closed=False
+
         self.__inInit=True
         self.__title = title
         self.__uiController = uicontroller
         self.__fileNfo = self.__uiController.panel().files()
 
-        self.__searchInProgress=False
+        self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_NONE
         self.__bcFileList=BCFileList()
 
         self.__currentFileBasic=None
@@ -527,10 +536,46 @@ class BCSearchFilesDialogBox(QDialog):
         self.__viewWindowGeometry(BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_GEOMETRY))
         self.__viewWindowActiveTab(BCSettings.get(BCSettingsKey.SESSION_SEARCHWINDOW_TAB_ACTIVE))
 
+    def __allowClose(self):
+        """Check if search window can be closed or not
+
+        Return True if can be close, otherwise return False
+        """
+        if self.__closed:
+            return True
+
+        modified=False
+        if self.twSearchModes.currentIndex()==BCSearchFilesDialogBox.__TAB_BASIC_SEARCH:
+            if (self.wsffrBasic.isModified()
+                or  self.wsffpBasic.isModified()
+                or  self.wsifrBasic.isModified()
+                or  self.wssrBasic.isModified()):
+                modified=True
+        elif self.twSearchModes.currentIndex()==BCSearchFilesDialogBox.__TAB_ADVANCED_SEARCH:
+            if self.__scene.isModified():
+                modified=True
+
+        if modified:
+            if WDialogBooleanInput.display(f"{self.__title}::{i18n('Close')}", i18n("<h1>A search definition has been modified</h1><p>Close without saving?")):
+                return True
+            return False
+        return True
+
+    def reject(self):
+        """Dialog is closed"""
+        if self.__allowClose():
+            self.__closed=True
+            self.done(0)
+
     def closeEvent(self, event):
         """Dialog is closed"""
+        if not self.__allowClose():
+            event.ignore()
+            return
+
         self.__saveSettings()
         event.accept()
+        self.__closed=True
 
     def __updateFileNameLabel(self):
         """Update file name in status bar according to current tab"""
@@ -637,7 +682,7 @@ class BCSearchFilesDialogBox(QDialog):
 
     def __currentTabChanged(self, index):
         """Tab changed"""
-        if self.__searchInProgress:
+        if self.__searchInProgress!=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_NONE:
             self.pbSearch.setEnabled(False)
         else:
             self.pbSearch.setEnabled(index!=BCSearchFilesDialogBox.__TAB_SEARCH_CONSOLE)
@@ -1174,6 +1219,7 @@ class BCSearchFilesDialogBox(QDialog):
             # 0 => step identifier
             self.wcExecutionConsole.appendLine('')
             self.wcExecutionConsole.appendLine(f"""**#ly#Search cancelled!#**""", WConsoleType.WARNING)
+            self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL
         elif informations[0]==BCFileList.STEPEXECUTED_OUTPUT_RESULTS:
             # 0 => step identifier
             # 1 => total number of pages (-1 if no pages)
@@ -1256,7 +1302,10 @@ class BCSearchFilesDialogBox(QDialog):
         self.pbCancel.setEnabled(False)
         self.pbCancel.update()
         QApplication.processEvents()
-        self.__bcFileList.cancelSearchExecution()
+        if self.__searchInProgress==BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_SEARCH:
+            self.__bcFileList.cancelSearchExecution()
+        else:
+            self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL
 
     def __executeSortAndExport(self, searchRulesAsDict):
         """Sort results and export
@@ -1347,7 +1396,6 @@ class BCSearchFilesDialogBox(QDialog):
                 Stopwatch.stop('executeSortAndExport.export')
                 exportEnd()
 
-
         def executeSort(sortRules):
             # prepare and execute sort for file results
             txtAscending=f"[{i18n('Ascending')}]"
@@ -1383,6 +1431,11 @@ class BCSearchFilesDialogBox(QDialog):
             self.__bcFileList.sortResults(sortRules['caseInsensitive'])
             Stopwatch.stop('executeSortAndExport.sort')
             self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("executeSortAndExport.sort"),sortNfoList])
+
+        if self.__searchInProgress==BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL:
+            return
+
+        self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_SORTANDEXPORT
 
         # need to parse dictionary to get references
         nodeSearchEngine=None
@@ -1426,13 +1479,22 @@ class BCSearchFilesDialogBox(QDialog):
 
         # process direct output engines
         for outputEngine in processOutputEngines:
+            if self.__searchInProgress==BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL:
+                self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_CANCEL])
+                return
             executeOutputEngine(outputEngine['widget']['outputProperties'])
 
         # process sorts, then output engines
         for sortRule in processSortRules:
             # do sort...
+            if self.__searchInProgress==BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL:
+                self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_CANCEL])
+                return
             executeSort(sortRule['widget']['sortProperties'])
             for outputEngine in sortRule['outputEngines']:
+                if self.__searchInProgress==BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL:
+                    self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_CANCEL])
+                    return
                 executeOutputEngine(outputEngine['widget']['outputProperties'])
 
     def __openFileBasic(self, fileName, title):
@@ -1553,7 +1615,7 @@ class BCSearchFilesDialogBox(QDialog):
             self.wneAdvancedView.nodeScene().deserialize(dataAsDict)
             self.wneAdvancedView.zoomToFit()
 
-        self.__searchInProgress=True
+        self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_SEARCH
         self.wcExecutionConsole.clear()
         self.twSearchModes.setCurrentIndex(BCSearchFilesDialogBox.__TAB_SEARCH_CONSOLE)
         if BCSearchFilesDialogBox.buildBCFileList(self.__bcFileList, dataAsDict):
@@ -1599,13 +1661,13 @@ class BCSearchFilesDialogBox(QDialog):
             self.pbClose.setEnabled(True)
 
             self.wProgress.setVisible(False)
-            self.__searchInProgress=False
+            self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_NONE
         else:
             self.wcExecutionConsole.appendLine(f"""{i18n('Build search query:')} #r#{i18n('KO')}#""", WConsoleType.ERROR)
             self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Current search definition is not valid')}#*""", WConsoleType.ERROR)
 
             self.wProgress.setVisible(False)
-            self.__searchInProgress=False
+            self.__searchInProgress=BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_NONE
 
     def openFile(self, searchTab, fileName=None):
         """Open file designed by `fileName` to `searchTab`
@@ -2477,6 +2539,22 @@ class BCWSearchSortRules(BCWSearchWidget):
             'imagePixels': i18n('Image pixels')
         }
 
+    @staticmethod
+    def getDefaultList():
+        """return a default sort properties list"""
+        return [
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileFullPathName'], 'fileFullPathName', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['filePath'], 'filePath', True, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileName'], 'fileName', True, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileSize'], 'fileSize', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileDate'], 'fileDate', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageFormat'], 'imageFormat', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageWidth'], 'imageWidth', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageHeight'], 'imageHeight', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageRatio'], 'imageRatio', False, True),
+                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imagePixels'], 'imagePixels', False, True)
+            ]
+
     def __init__(self, parent=None):
         super(BCWSearchSortRules, self).__init__('bcwsearchsortrules.ui', parent)
 
@@ -2497,18 +2575,7 @@ class BCWSearchSortRules(BCWSearchWidget):
         """Initialise default values"""
         self.cbPropertiesSortCaseInsensitive.setChecked(True)
         self.lwPropertiesSortList.clear()
-        self.lwPropertiesSortList.addItems([
-                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileFullPathName'], 'fileFullPathName', False, True),
-                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['filePath'], 'filePath', True, True),
-                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileName'], 'fileName', True, True),
-                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileSize'], 'fileSize', False, True),
-                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['fileDate'], 'fileDate', False, True),
-                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageFormat'], 'imageFormat', False, True),
-                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageWidth'], 'imageWidth', False, True),
-                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageHeight'], 'imageHeight', False, True),
-                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imageRatio'], 'imageRatio', False, True),
-                OrderedItem(BCWSearchSortRules.MAP_VALUE_LABEL['imagePixels'], 'imagePixels', False, True)
-            ])
+        self.lwPropertiesSortList.addItems(BCWSearchSortRules.getDefaultList())
 
     def resetToDefault(self):
         """Reset to default values"""
@@ -2844,6 +2911,9 @@ class BCNodeWSearchEngine(NodeEditorNodeWidget):
         self.node().connectorUnlinked.connect(self.__checkInputPath)
         self.node().scene().sceneLoaded.connect(self.__checkInputPath)
 
+        defaultSize=self.calculateSize(f"{self.node().title()}", 0, 0)
+        self.setMinimumSize(QSize(200, round(defaultSize.width()*0.8) ))
+
     def __checkInputPath(self, node=None, connector=None):
         """A connector has been connected/disconnected
 
@@ -2895,6 +2965,14 @@ class BCNodeWSearchFromPath(NodeEditorNodeWidget):
     def __init__(self, scene, title, parent=None):
         outputPathConnector=NodeEditorConnectorPath('OutputPath', NodeEditorConnector.DIRECTION_OUTPUT, NodeEditorConnector.LOCATION_RIGHT_BOTTOM)
 
+        data={
+                'path': os.path.expanduser("~"),
+                'scanSubDirectories': True,
+                'scanManagedFilesOnly': True,
+                'scanManagedFilesBackup': False,
+                'scanHiddenFiles': False
+            }
+
         self.__lblPath=WLabelElide(Qt.ElideLeft)
         self.__lblRecursive=QLabel()
         self.__lblHiddenFiles=QLabel()
@@ -2911,47 +2989,37 @@ class BCNodeWSearchFromPath(NodeEditorNodeWidget):
         self.__layout.addRow(f"<b>{i18n('Search managed files only')}</b>", self.__lblManagedFilesOnly)
         self.__layout.addRow(f"└<b><i>{i18n('Including backup files')}</i></b>", self.__lblManagesFilesBackup)
 
-        self.__data={
-                'path': os.path.expanduser("~"),
-                'scanSubDirectories': True,
-                'scanManagedFilesOnly': True,
-                'scanManagedFilesBackup': False,
-                'scanHiddenFiles': False
-            }
+        super(BCNodeWSearchFromPath, self).__init__(scene, title, connectors=[outputPathConnector], data=data, parent=parent)
 
-        super(BCNodeWSearchFromPath, self).__init__(scene, title, connectors=[outputPathConnector], parent=parent)
-
-        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
-
-        self.node().setMinimumSize(QSize(640, 230))
         self.setLayout(self.__layout)
+        self.setMinimumSize(self.calculateSize(f"{i18n('Search managed files only')+'X'*40}", 5, self.__layout.spacing()))
 
     def serialize(self):
         """Convert current widget node properties to dictionnary"""
-        return copy.deepcopy(self.__data)
+        return copy.deepcopy(self._data)
 
     def deserialize(self, data):
         """Convert current given data dictionnary to update widget node properties"""
         if 'path' in data:
-            self.__data['path']=data['path']
-            self.__lblPath.setText(self.__data['path'])
-            self.__lblPath.setToolTip(self.__data['path'])
+            self._data['path']=data['path']
+            self.__lblPath.setText(self._data['path'])
+            self.__lblPath.setToolTip(self._data['path'])
 
         if 'scanSubDirectories' in data:
-            self.__data['scanSubDirectories']=data['scanSubDirectories']
-            self.__lblRecursive.setText(boolYesNo(self.__data['scanSubDirectories']))
+            self._data['scanSubDirectories']=data['scanSubDirectories']
+            self.__lblRecursive.setText(boolYesNo(self._data['scanSubDirectories']))
 
         if 'scanHiddenFiles' in data:
-            self.__data['scanHiddenFiles']=data['scanHiddenFiles']
-            self.__lblHiddenFiles.setText(boolYesNo(self.__data['scanHiddenFiles']))
+            self._data['scanHiddenFiles']=data['scanHiddenFiles']
+            self.__lblHiddenFiles.setText(boolYesNo(self._data['scanHiddenFiles']))
 
         if 'scanManagedFilesOnly' in data:
-            self.__data['scanManagedFilesOnly']=data['scanManagedFilesOnly']
-            self.__lblManagedFilesOnly.setText(boolYesNo(self.__data['scanManagedFilesOnly']))
+            self._data['scanManagedFilesOnly']=data['scanManagedFilesOnly']
+            self.__lblManagedFilesOnly.setText(boolYesNo(self._data['scanManagedFilesOnly']))
 
         if 'scanManagedFilesBackup' in data:
-            self.__data['scanManagedFilesBackup']=data['scanManagedFilesBackup']
-            self.__lblManagesFilesBackup.setText(boolYesNo(self.__data['scanManagedFilesBackup']))
+            self._data['scanManagedFilesBackup']=data['scanManagedFilesBackup']
+            self.__lblManagesFilesBackup.setText(boolYesNo(self._data['scanManagedFilesBackup']))
 
 
 
@@ -2990,65 +3058,63 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
         dateTimeYm1=QDateTime(dateTimeNow)
         dateTimeYm1.addYears(-1)
 
-        self.__data={
-                    "fileName": {
-                            "active": False,
-                            "operator": WOperatorType.OPERATOR_LIKE,
-                            "value": '',
-                            "ignoreCase": True
-                        },
-                    "filePath": {
-                            "active": False,
-                            "operator": WOperatorType.OPERATOR_LIKE,
-                            "value": '',
-                            "ignoreCase": True
-                        },
-                    "fileSize": {
-                            "active": False,
-                            "operator": WOperatorType.OPERATOR_GE,
-                            "value": 1.00,
-                            "value2": sizeValue2,
-                            "unit": sizeunit
-                        },
-                    "fileDate": {
-                            "active": False,
-                            "dateOnly": True,
-                            "operator": WOperatorType.OPERATOR_BETWEEN,
-                            "value": dateTimeYm1.toMSecsSinceEpoch()/1000,
-                            "value2": dateTimeNow.toMSecsSinceEpoch()/1000
-                        }
-                }
+        data={
+                "fileName": {
+                        "active": False,
+                        "operator": WOperatorType.OPERATOR_LIKE,
+                        "value": '',
+                        "ignoreCase": True
+                    },
+                "filePath": {
+                        "active": False,
+                        "operator": WOperatorType.OPERATOR_LIKE,
+                        "value": '',
+                        "ignoreCase": True
+                    },
+                "fileSize": {
+                        "active": False,
+                        "operator": WOperatorType.OPERATOR_GE,
+                        "value": 1.00,
+                        "value2": sizeValue2,
+                        "unit": sizeunit
+                    },
+                "fileDate": {
+                        "active": False,
+                        "dateOnly": True,
+                        "operator": WOperatorType.OPERATOR_BETWEEN,
+                        "value": dateTimeYm1.toMSecsSinceEpoch()/1000,
+                        "value2": dateTimeNow.toMSecsSinceEpoch()/1000
+                    }
+            }
 
-        super(BCNodeWSearchFileFilterRule, self).__init__(scene, title, connectors=[outputFilterRuleConnector], parent=parent)
+        super(BCNodeWSearchFileFilterRule, self).__init__(scene, title, connectors=[outputFilterRuleConnector], data=data, parent=parent)
 
-        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
-
-        self.node().setMinimumSize(QSize(400, 230))
         self.setLayout(self.__layout)
+        self.setMinimumSize(self.calculateSize(f"{i18n('Path')+'X'*35}", 4, self.__layout.spacing()))
 
     def serialize(self):
         """Convert current widget node properties to dictionnary"""
-        return copy.deepcopy(self.__data)
+        return copy.deepcopy(self._data)
 
     def deserialize(self, data):
         """Convert current given data dictionnary to update widget node properties"""
         if 'fileDate' in data:
-            self.__data['fileDate']=copy.deepcopy(data['fileDate'])
+            self._data['fileDate']=copy.deepcopy(data['fileDate'])
 
-            if self.__data['fileDate']['active']:
+            if self._data['fileDate']['active']:
                 fmt='dt'
-                if self.__data['fileDate']['dateOnly']:
+                if self._data['fileDate']['dateOnly']:
                     fmt='d'
                     self.__lblDateTime.setText(f"- <b>{i18n('Date')}</b>")
                 else:
                     self.__lblDateTime.setText(f"- <b>{i18n('Date/Time')}</b>")
 
-                if self.__data['fileDate']['operator']==WOperatorType.OPERATOR_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{tsToStr(self.__data['fileDate']['value'], fmt)} and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{tsToStr(self.__data['fileDate']['value2'], fmt)}"
-                elif self.__data['fileDate']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{tsToStr(self.__data['fileDate']['value'], fmt)} or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{tsToStr(self.__data['fileDate']['value2'], fmt)}"
+                if self._data['fileDate']['operator']==WOperatorType.OPERATOR_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{tsToStr(self._data['fileDate']['value'], fmt)} and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{tsToStr(self._data['fileDate']['value2'], fmt)}"
+                elif self._data['fileDate']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{tsToStr(self._data['fileDate']['value'], fmt)} or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{tsToStr(self._data['fileDate']['value2'], fmt)}"
                 else:
-                    text=f"{WOperatorBaseInput.operatorLabel(self.__data['fileDate']['operator'])}{tsToStr(self.__data['fileDate']['value'], fmt)}"
+                    text=f"{WOperatorBaseInput.operatorLabel(self._data['fileDate']['operator'])}{tsToStr(self._data['fileDate']['value'], fmt)}"
 
                 self.__lblDate.setText(text)
                 self.__lblDate.setToolTip(text)
@@ -3057,12 +3123,12 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
                 self.__lblDate.setToolTip('')
 
         if 'fileName' in data:
-            self.__data['fileName']=copy.deepcopy(data['fileName'])
-            if self.__data['fileName']['active']:
-                self.__lblName.setText(WOperatorBaseInput.operatorLabel(self.__data['fileName']['operator'])+' "'+self.__data['fileName']['value']+'"')
+            self._data['fileName']=copy.deepcopy(data['fileName'])
+            if self._data['fileName']['active']:
+                self.__lblName.setText(WOperatorBaseInput.operatorLabel(self._data['fileName']['operator'])+' "'+self._data['fileName']['value']+'"')
 
-                text=f"""<i>{WOperatorBaseInput.operatorLabel(self.__data['fileName']['operator'])}</i> "{self.__data['fileName']['value']}"<br/>"""
-                if self.__data['fileName']['ignoreCase']:
+                text=f"""<i>{WOperatorBaseInput.operatorLabel(self._data['fileName']['operator'])}</i> "{self._data['fileName']['value']}"<br/>"""
+                if self._data['fileName']['ignoreCase']:
                     text+=i18n("(case insensitive)")
                 else:
                     text+=i18n("(case sensitive)")
@@ -3072,12 +3138,12 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
                 self.__lblName.setToolTip('')
 
         if 'filePath' in data:
-            self.__data['filePath']=copy.deepcopy(data['filePath'])
-            if self.__data['filePath']['active']:
-                self.__lblPath.setText(WOperatorBaseInput.operatorLabel(self.__data['filePath']['operator'])+' "'+self.__data['filePath']['value']+'"')
+            self._data['filePath']=copy.deepcopy(data['filePath'])
+            if self._data['filePath']['active']:
+                self.__lblPath.setText(WOperatorBaseInput.operatorLabel(self._data['filePath']['operator'])+' "'+self._data['filePath']['value']+'"')
 
-                text=f"""<i>{WOperatorBaseInput.operatorLabel(self.__data['filePath']['operator'])}</i> "{self.__data['filePath']['value']}"<br/>"""
-                if self.__data['filePath']['ignoreCase']:
+                text=f"""<i>{WOperatorBaseInput.operatorLabel(self._data['filePath']['operator'])}</i> "{self._data['filePath']['value']}"<br/>"""
+                if self._data['filePath']['ignoreCase']:
                     text+=i18n("(case insensitive)")
                 else:
                     text+=i18n("(case sensitive)")
@@ -3087,14 +3153,14 @@ class BCNodeWSearchFileFilterRule(NodeEditorNodeWidget):
                 self.__lblPath.setToolTip('')
 
         if 'fileSize' in data:
-            self.__data['fileSize']=copy.deepcopy(data['fileSize'])
-            if self.__data['fileSize']['active']:
-                if self.__data['fileSize']['operator']==WOperatorType.OPERATOR_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self.__data['fileSize']['value']}{self.__data['fileSize']['unit']} and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self.__data['fileSize']['value2']}{self.__data['fileSize']['unit']}"
-                elif self.__data['fileSize']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self.__data['fileSize']['value']}{self.__data['fileSize']['unit']} or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self.__data['fileSize']['value2']}{self.__data['fileSize']['unit']}"
+            self._data['fileSize']=copy.deepcopy(data['fileSize'])
+            if self._data['fileSize']['active']:
+                if self._data['fileSize']['operator']==WOperatorType.OPERATOR_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self._data['fileSize']['value']}{self._data['fileSize']['unit']} and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self._data['fileSize']['value2']}{self._data['fileSize']['unit']}"
+                elif self._data['fileSize']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self._data['fileSize']['value']}{self._data['fileSize']['unit']} or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self._data['fileSize']['value2']}{self._data['fileSize']['unit']}"
                 else:
-                    text=f"{WOperatorBaseInput.operatorLabel(self.__data['fileSize']['operator'])}{self.__data['fileSize']['value']}{self.__data['fileSize']['unit']}"
+                    text=f"{WOperatorBaseInput.operatorLabel(self._data['fileSize']['operator'])}{self._data['fileSize']['value']}{self._data['fileSize']['unit']}"
                 self.__lblSize.setText(text)
                 self.__lblSize.setToolTip(text)
             else:
@@ -3123,60 +3189,58 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
         self.__layout.addRow(f"<b>{i18n('Aspect ratio')}</b>", self.__lblImgRatio)
         self.__layout.addRow(f"<b>{i18n('Pixels')}</b>", self.__lblImgPixels)
 
-        self.__data={
-                    "imageFormat": {
-                            "active": False,
-                            "operator": WOperatorType.OPERATOR_IN,
-                            "value": [BCFileManagedFormat.KRA]
-                        },
-                    "imageWidth": {
-                            "active": False,
-                            "operator": WOperatorType.OPERATOR_GE,
-                            "value": 320,
-                            "value2": 1920
-                        },
-                    "imageHeight": {
-                            "active": False,
-                            "operator": WOperatorType.OPERATOR_GE,
-                            "value": 200,
-                            "value2": 1080
-                        },
-                    "imageRatio": {
-                            "active": False,
-                            "operator": WOperatorType.OPERATOR_GE,
-                            "value": 1,
-                            "value2": 1
-                        },
-                    "imagePixels": {
-                            "active": False,
-                            "operator": WOperatorType.OPERATOR_GE,
-                            "value": 1,
-                            "value2": 8.3
-                        }
-                }
+        data={
+                "imageFormat": {
+                        "active": False,
+                        "operator": WOperatorType.OPERATOR_IN,
+                        "value": [BCFileManagedFormat.KRA]
+                    },
+                "imageWidth": {
+                        "active": False,
+                        "operator": WOperatorType.OPERATOR_GE,
+                        "value": 320,
+                        "value2": 1920
+                    },
+                "imageHeight": {
+                        "active": False,
+                        "operator": WOperatorType.OPERATOR_GE,
+                        "value": 200,
+                        "value2": 1080
+                    },
+                "imageRatio": {
+                        "active": False,
+                        "operator": WOperatorType.OPERATOR_GE,
+                        "value": 1,
+                        "value2": 1
+                    },
+                "imagePixels": {
+                        "active": False,
+                        "operator": WOperatorType.OPERATOR_GE,
+                        "value": 1,
+                        "value2": 8.3
+                    }
+            }
 
-        super(BCNodeWSearchImgFilterRule, self).__init__(scene, title, connectors=[outputFilterRuleConnector], parent=parent)
+        super(BCNodeWSearchImgFilterRule, self).__init__(scene, title, connectors=[outputFilterRuleConnector], data=data, parent=parent)
 
-        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
-
-        self.node().setMinimumSize(QSize(400, 250))
         self.setLayout(self.__layout)
+        self.setMinimumSize(self.calculateSize(f"{i18n('Aspect ratio')+'X'*35}", 5, self.__layout.spacing()))
 
     def serialize(self):
         """Convert current widget node properties to dictionnary"""
-        return copy.deepcopy(self.__data)
+        return copy.deepcopy(self._data)
 
     def deserialize(self, data):
         """Convert current given data dictionnary to update widget node properties"""
         if 'imageHeight' in data:
-            self.__data['imageHeight']=copy.deepcopy(data['imageHeight'])
-            if self.__data['imageHeight']['active']:
-                if self.__data['imageHeight']['operator']==WOperatorType.OPERATOR_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self.__data['imageHeight']['value']}px and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self.__data['imageHeight']['value2']}px"
-                elif self.__data['imageHeight']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self.__data['imageHeight']['value']}px or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self.__data['imageHeight']['value2']}px"
+            self._data['imageHeight']=copy.deepcopy(data['imageHeight'])
+            if self._data['imageHeight']['active']:
+                if self._data['imageHeight']['operator']==WOperatorType.OPERATOR_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self._data['imageHeight']['value']}px and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self._data['imageHeight']['value2']}px"
+                elif self._data['imageHeight']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self._data['imageHeight']['value']}px or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self._data['imageHeight']['value2']}px"
                 else:
-                    text=f"{WOperatorBaseInput.operatorLabel(self.__data['imageHeight']['operator'])}{self.__data['imageHeight']['value']}px"
+                    text=f"{WOperatorBaseInput.operatorLabel(self._data['imageHeight']['operator'])}{self._data['imageHeight']['value']}px"
                 self.__lblImgHeight.setText(text)
                 self.__lblImgHeight.setToolTip(text)
             else:
@@ -3184,14 +3248,14 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
                 self.__lblImgHeight.setToolTip('')
 
         if 'imageWidth' in data:
-            self.__data['imageWidth']=copy.deepcopy(data['imageWidth'])
-            if self.__data['imageWidth']['active']:
-                if self.__data['imageWidth']['operator']==WOperatorType.OPERATOR_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self.__data['imageWidth']['value']}px and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self.__data['imageWidth']['value2']}px"
-                elif self.__data['imageWidth']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self.__data['imageWidth']['value']}px or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self.__data['imageWidth']['value2']}px"
+            self._data['imageWidth']=copy.deepcopy(data['imageWidth'])
+            if self._data['imageWidth']['active']:
+                if self._data['imageWidth']['operator']==WOperatorType.OPERATOR_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self._data['imageWidth']['value']}px and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self._data['imageWidth']['value2']}px"
+                elif self._data['imageWidth']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self._data['imageWidth']['value']}px or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self._data['imageWidth']['value2']}px"
                 else:
-                    text=f"{WOperatorBaseInput.operatorLabel(self.__data['imageWidth']['operator'])}{self.__data['imageWidth']['value']}px"
+                    text=f"{WOperatorBaseInput.operatorLabel(self._data['imageWidth']['operator'])}{self._data['imageWidth']['value']}px"
                 self.__lblImgWidth.setText(text)
                 self.__lblImgWidth.setToolTip(text)
             else:
@@ -3199,14 +3263,14 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
                 self.__lblImgWidth.setToolTip('')
 
         if 'imageRatio' in data:
-            self.__data['imageRatio']=copy.deepcopy(data['imageRatio'])
-            if self.__data['imageRatio']['active']:
-                if self.__data['imageRatio']['operator']==WOperatorType.OPERATOR_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self.__data['imageRatio']['value']:.4f} and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self.__data['imageRatio']['value2']:.4f}"
-                elif self.__data['imageRatio']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self.__data['imageRatio']['value']:.4f} or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self.__data['imageRatio']['value2']:.4f}"
+            self._data['imageRatio']=copy.deepcopy(data['imageRatio'])
+            if self._data['imageRatio']['active']:
+                if self._data['imageRatio']['operator']==WOperatorType.OPERATOR_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self._data['imageRatio']['value']:.4f} and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self._data['imageRatio']['value2']:.4f}"
+                elif self._data['imageRatio']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self._data['imageRatio']['value']:.4f} or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self._data['imageRatio']['value2']:.4f}"
                 else:
-                    text=f"{WOperatorBaseInput.operatorLabel(self.__data['imageRatio']['operator'])}{self.__data['imageRatio']['value']:.4f}"
+                    text=f"{WOperatorBaseInput.operatorLabel(self._data['imageRatio']['operator'])}{self._data['imageRatio']['value']:.4f}"
                 self.__lblImgRatio.setText(text)
                 self.__lblImgRatio.setToolTip(text)
             else:
@@ -3214,14 +3278,14 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
                 self.__lblImgRatio.setToolTip('')
 
         if 'imagePixels' in data:
-            self.__data['imagePixels']=copy.deepcopy(data['imagePixels'])
-            if self.__data['imagePixels']['active']:
-                if self.__data['imagePixels']['operator']==WOperatorType.OPERATOR_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self.__data['imagePixels']['value']:.2f}MP and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self.__data['imagePixels']['value2']:.2f}MP"
-                elif self.__data['imagePixels']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
-                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self.__data['imagePixels']['value']:.2f}MP or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self.__data['imagePixels']['value2']:.2f}MP"
+            self._data['imagePixels']=copy.deepcopy(data['imagePixels'])
+            if self._data['imagePixels']['active']:
+                if self._data['imagePixels']['operator']==WOperatorType.OPERATOR_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GE)}{self._data['imagePixels']['value']:.2f}MP and {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LE)}{self._data['imagePixels']['value2']:.2f}MP"
+                elif self._data['imagePixels']['operator']==WOperatorType.OPERATOR_NOT_BETWEEN:
+                    text=f"{WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_LT)}{self._data['imagePixels']['value']:.2f}MP or {WOperatorBaseInput.operatorLabel(WOperatorType.OPERATOR_GT)}{self._data['imagePixels']['value2']:.2f}MP"
                 else:
-                    text=f"{WOperatorBaseInput.operatorLabel(self.__data['imagePixels']['operator'])}{self.__data['imagePixels']['value']:.2f}MP"
+                    text=f"{WOperatorBaseInput.operatorLabel(self._data['imagePixels']['operator'])}{self._data['imagePixels']['value']:.2f}MP"
                 self.__lblImgPixels.setText(text)
                 self.__lblImgPixels.setToolTip(text)
             else:
@@ -3229,10 +3293,10 @@ class BCNodeWSearchImgFilterRule(NodeEditorNodeWidget):
                 self.__lblImgPixels.setToolTip('')
 
         if 'imageFormat' in data:
-            self.__data['imageFormat']=copy.deepcopy(data['imageFormat'])
-            if self.__data['imageFormat']['active'] and len(self.__data['imageFormat']['value'])>0:
-                text=", ".join([BCFileManagedFormat.translate(value) for value in self.__data['imageFormat']['value']])
-                text=f"{WOperatorBaseInput.operatorLabel(self.__data['imageFormat']['operator'])} ({text})"
+            self._data['imageFormat']=copy.deepcopy(data['imageFormat'])
+            if self._data['imageFormat']['active'] and len(self._data['imageFormat']['value'])>0:
+                text=", ".join([BCFileManagedFormat.translate(value) for value in self._data['imageFormat']['value']])
+                text=f"{WOperatorBaseInput.operatorLabel(self._data['imageFormat']['operator'])} ({text})"
                 self.__lblImgFormat.setText(text)
                 self.__lblImgFormat.setToolTip(text)
             else:
@@ -3266,8 +3330,8 @@ class BCNodeWSearchFileFilterRuleOperator(NodeEditorNodeWidget):
         self.node().connectorLinked.connect(self.__checkInputFilter)
         self.node().connectorUnlinked.connect(self.__checkInputFilter)
         self.node().scene().sceneLoaded.connect(self.__checkInputFilter)
-        self.node().setMinimumSize(QSize(200, 100))
         self.setLayout(self.__layout)
+        self.setMinimumSize(self.calculateSize(f"XXXXXX", 1, self.__layout.spacing()))
 
     def __cbValueChanged(self, index):
         """Current operator value has been changed"""
@@ -3373,6 +3437,7 @@ class BCNodeWSearchFileFilterRuleOperator(NodeEditorNodeWidget):
                 connector.addAcceptedConnectionFrom(NodeEditorConnectorFilter)
 
 
+
 class BCNodeWSearchSortRule(NodeEditorNodeWidget):
     """A sort source node"""
 
@@ -3385,47 +3450,52 @@ class BCNodeWSearchSortRule(NodeEditorNodeWidget):
         self.__lblSortedProperties=QLabel()
         self.__lblSortCaseInsensitive=QLabel()
 
+        self.__fntSize=self.__lblSortedProperties.fontMetrics().height() - 4
+
         self.__layout=QFormLayout()
         self.__layout.setLabelAlignment(Qt.AlignLeft|Qt.AlignTop)
         self.__layout.setContentsMargins(0,0,0,0)
         self.__layout.addRow(f"<b>{i18n('Case insensitive')}</b>", self.__lblSortCaseInsensitive)
         self.__layout.addRow(f"<b>{i18n('Sort by')}</b>", self.__lblSortedProperties)
 
-        self.__data={
-                    "sortProperties": {
-                            "list": [],
-                            "caseInsensitive": True
-                        },
-                }
+        data={
+                "sortProperties": {
+                        "list": [{
+                                    "value": orderedItem.value(),
+                                    "checked": orderedItem.checked(),
+                                    "ascending": orderedItem.isSortAscending()
+                                 } for orderedItem in BCWSearchSortRules.getDefaultList()
+                                ],
+                        "caseInsensitive": True
+                    },
+            }
 
-        super(BCNodeWSearchSortRule, self).__init__(scene, title, connectors=[inputSortRuleConnector, outputSortRuleConnector], parent=parent)
+        super(BCNodeWSearchSortRule, self).__init__(scene, title, connectors=[inputSortRuleConnector, outputSortRuleConnector], data=data, parent=parent)
 
-        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
-
-        self.node().setMinimumSize(QSize(400, 250))
         self.setLayout(self.__layout)
+        self.setMinimumSize(self.calculateSize(f"{i18n('Case insensitive')}{'X'*20}", 5, self.__layout.spacing()))
 
     def serialize(self):
         """Convert current widget node properties to dictionnary"""
-        return copy.deepcopy(self.__data)
+        return copy.deepcopy(self._data)
 
     def deserialize(self, data):
         """Convert current given data dictionnary to update widget node properties"""
         if 'sortProperties' in data:
-            self.__data['sortProperties']=copy.deepcopy(data['sortProperties'])
+            self._data['sortProperties']=copy.deepcopy(data['sortProperties'])
 
-            self.__lblSortCaseInsensitive.setText(boolYesNo(self.__data['sortProperties']['caseInsensitive']))
+            self.__lblSortCaseInsensitive.setText(boolYesNo(self._data['sortProperties']['caseInsensitive']))
 
             text=[]
             tooltipText=[]
-            if isinstance(self.__data['sortProperties']['list'], list) and len(self.__data['sortProperties']['list'])>0:
-                for item in self.__data['sortProperties']['list']:
+            if isinstance(self._data['sortProperties']['list'], list) and len(self._data['sortProperties']['list'])>0:
+                for item in self._data['sortProperties']['list']:
                     if item['checked']:
                         if item['ascending']:
-                            sortArrow='⬆'
+                            sortArrow=f"<img width={self.__fntSize} height={self.__fntSize} src=':/pktk/images/normal/arrow_big_filled_up'>"
                             sortText=i18n('Ascending')
                         else:
-                            sortArrow='⬇'
+                            sortArrow=f"<img width={self.__fntSize} height={self.__fntSize} src=':/pktk/images/normal/arrow_big_filled_down'>"
                             sortText=i18n('Descending')
                         text.append(f"{sortArrow}{BCWSearchSortRules.MAP_VALUE_LABEL[item['value']]}")
                         tooltipText.append(f"{BCWSearchSortRules.MAP_VALUE_LABEL[item['value']]} [{sortText}]")
@@ -3446,18 +3516,16 @@ class BCNodeWSearchOutputEngine(NodeEditorNodeWidget):
         inputResultsConnector=NodeEditorConnectorResults('InputResults', NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.LOCATION_TOP_LEFT)
         inputResultsConnector.addAcceptedConnectionFrom(NodeEditorConnectorResults)
 
-        self.__data={
-                    "outputProperties": {
-                            "target": "aPanel",
-                            "documentExportInfo": {
-                                    'exportFormat': BCExportFormat.EXPORT_FMT_TEXT,
-                                    'exportFileName': '@clipboard',
-                                    'exportConfig': {}
-                                }
-                        },
-                }
-
-        super(BCNodeWSearchOutputEngine, self).__init__(scene, title, connectors=[inputResultsConnector], parent=parent)
+        data={
+                "outputProperties": {
+                        "target": "aPanel",
+                        "documentExportInfo": {
+                                'exportFormat': BCExportFormat.EXPORT_FMT_TEXT,
+                                'exportFileName': '@clipboard',
+                                'exportConfig': {}
+                            }
+                    },
+            }
 
         self.__lblOutputTarget=WLabelElide(Qt.ElideRight)
 
@@ -3478,40 +3546,40 @@ class BCNodeWSearchOutputEngine(NodeEditorNodeWidget):
         self.__layout.addRow(self.__lblLblOutputDocFmt, self.__lblOutputDocFmt)
         self.__layout.addRow(self.__lblLblOutputDocFileName, self.__lblOutputDocFileName)
 
-        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
+        super(BCNodeWSearchOutputEngine, self).__init__(scene, title, connectors=[inputResultsConnector], data=data, parent=parent)
 
-        self.node().setMinimumSize(QSize(400, 250))
         self.setLayout(self.__layout)
+        self.setMinimumSize(self.calculateSize(f"{i18n('Output target')}{'X'*35}", 3, self.__layout.spacing()))
 
     def serialize(self):
         """Convert current widget node properties to dictionnary"""
-        return copy.deepcopy(self.__data)
+        return copy.deepcopy(self._data)
 
     def deserialize(self, data):
         """Convert current given data dictionnary to update widget node properties"""
 
         if 'outputProperties' in data:
-            self.__data['outputProperties']=copy.deepcopy(data['outputProperties'])
+            self._data['outputProperties']=copy.deepcopy(data['outputProperties'])
 
-            self.__lblOutputTarget.setText(BCWSearchOutputEngine.OUTPUT_TARGET[self.__data['outputProperties']['target']])
-            self.__lblOutputTarget.setToolTip(BCWSearchOutputEngine.OUTPUT_TARGET[self.__data['outputProperties']['target']])
+            self.__lblOutputTarget.setText(BCWSearchOutputEngine.OUTPUT_TARGET[self._data['outputProperties']['target']])
+            self.__lblOutputTarget.setToolTip(BCWSearchOutputEngine.OUTPUT_TARGET[self._data['outputProperties']['target']])
 
-            if self.__data['outputProperties']['target']!='doc':
+            if self._data['outputProperties']['target']!='doc':
                 # panel
                 self.__lblLblOutputDocFmt.setVisible(False)
                 self.__lblLblOutputDocFileName.setVisible(False)
                 self.__lblOutputDocFmt.setVisible(False)
                 self.__lblOutputDocFileName.setVisible(False)
             else:
-                self.__lblOutputDocFmt.setText(BCExportFilesDialogBox.FMT_PROPERTIES[self.__data['outputProperties']['documentExportInfo']['exportFormat']]['label'])
-                self.__lblOutputDocFmt.setToolTip(BCExportFilesDialogBox.FMT_PROPERTIES[self.__data['outputProperties']['documentExportInfo']['exportFormat']]['label'])
+                self.__lblOutputDocFmt.setText(BCExportFilesDialogBox.FMT_PROPERTIES[self._data['outputProperties']['documentExportInfo']['exportFormat']]['label'])
+                self.__lblOutputDocFmt.setToolTip(BCExportFilesDialogBox.FMT_PROPERTIES[self._data['outputProperties']['documentExportInfo']['exportFormat']]['label'])
 
-                if self.__data['outputProperties']['documentExportInfo']['exportFileName']=='@clipboard':
+                if self._data['outputProperties']['documentExportInfo']['exportFileName']=='@clipboard':
                     self.__lblOutputDocFileName.setText(f"[{i18n('Clipboard')}]")
                     self.__lblOutputDocFileName.setToolTip(f"[{i18n('Clipboard')}]")
                 else:
-                    self.__lblOutputDocFileName.setText(self.__data['outputProperties']['documentExportInfo']['exportFileName'])
-                    self.__lblOutputDocFileName.setToolTip(self.__data['outputProperties']['documentExportInfo']['exportFileName'])
+                    self.__lblOutputDocFileName.setText(self._data['outputProperties']['documentExportInfo']['exportFileName'])
+                    self.__lblOutputDocFileName.setToolTip(self._data['outputProperties']['documentExportInfo']['exportFileName'])
 
                 self.__lblLblOutputDocFmt.setVisible(True)
                 self.__lblLblOutputDocFileName.setVisible(True)

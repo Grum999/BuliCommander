@@ -150,9 +150,9 @@ class WorkerPool(QObject):
         else:
             self.__maxWorkerCount =  self.__threadpool.maxThreadCount()
 
+        self.__mutex=QMutex()
         self.__nbProcessed = 0
         self.__current = 0
-        self.__locked = 0
         self.__started = 0
         self.__allStarted = False
         self.__size = 0
@@ -165,15 +165,6 @@ class WorkerPool(QObject):
         self.__workerClass=Worker
 
         self.signals = WorkerPoolSignals()
-
-    def __lock(self):
-        """Lock ensure that no worker will try to access to same item"""
-        while self.__locked:
-           Timer.sleep(1)
-        self.__locked=True
-
-    def __unlock(self):
-        self.__locked=False
 
     def __onProcessed(self, processedNfo):
         """an item has been processed"""
@@ -213,10 +204,10 @@ class WorkerPool(QObject):
 
     def getNext(self):
         """Get next item to process"""
-        self.__lock()
+        self.__mutex.lock()
 
         if self.__current is None:
-            self.__unlock()
+            self.__mutex.unlock()
             return (None, None)
         returnedIndex = self.__current
         self.__current+=1
@@ -224,7 +215,7 @@ class WorkerPool(QObject):
         if self.__current >= self.__size:
             self.__current = None
 
-        self.__unlock()
+        self.__mutex.unlock()
         return (returnedIndex, self.__dataList[returnedIndex])
 
     def startProcessing(self, dataList, callback, *callbackArgv):
