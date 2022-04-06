@@ -7018,7 +7018,7 @@ class BCFileList(QObject):
             Stopwatch.start('BCFileList.execute.05-buildStats')
             self.__statFiles=self.__workerPool.aggregate(self.__currentFiles, self.__statFiles, BCFileList.getBcFileStats)
             Stopwatch.stop('BCFileList.execute.05-buildStats')
-            #Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.buildStats"))
+            #Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.05-buildStats"))
 
 
         if BCFileList.STEPEXECUTED_BUILD_RESULTS in signals:
@@ -7374,4 +7374,4 @@ class BCFileIcon(object):
         return BCFileIcon.__IconProvider.icon(fileInfo)
 
 
-Debug.setEnabled(True)
+#Debug.setEnabled(True)
