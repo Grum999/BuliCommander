@@ -33,7 +33,7 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal,
         QObject
     )
-from ..pktk.pktk import EInvalidType
+from bulicommander.pktk.pktk import EInvalidType
 
 
 class BCSavedViewEdit(QDialog):
@@ -554,5 +554,3 @@ class BCSavedView(QObject):
         key=self.__toKey(viewName)
 
         return (key in self.__savedView)
-
-

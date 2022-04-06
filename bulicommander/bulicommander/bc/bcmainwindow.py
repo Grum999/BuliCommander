@@ -23,7 +23,6 @@
 
 
 # -----------------------------------------------------------------------------
-#from .pktk import PkTk
 
 import krita
 import os
@@ -43,11 +42,13 @@ from .bcbookmark import BCBookmark
 from .bchistory import BCHistory
 from .bcwpathbar import BCWPathBar
 from .bcmainviewtab import BCMainViewTab
-from .bctheme import BCTheme
-from .bcutils import loadXmlUi
 
-from ..pktk.pktk import EInvalidType
-from ..pktk.pktk import EInvalidValue
+from bulicommander.pktk.modules.utils import loadXmlUi
+from bulicommander.pktk.widgets.wiodialog import WDialogMessage
+from bulicommander.pktk.pktk import (
+        EInvalidType,
+        EInvalidValue
+    )
 
 
 
@@ -71,6 +72,8 @@ class BCMainWindow(QMainWindow):
         self.__uiController = uiController
         self.__eventCallBack = {}
         self.__highlightedPanel = 0
+        self.menuViewDisplayLayoutFiles=[]
+        self.menuViewDisplayLayoutClipboard=[]
         self.panels = {
                 0: self.mainViewTab0,
                 1: self.mainViewTab1
@@ -78,7 +81,7 @@ class BCMainWindow(QMainWindow):
 
         self.__fontMono = QFont()
         self.__fontMono.setPointSize(9)
-        self.__fontMono.setFamily('DejaVu Sans Mono')
+        self.__fontMono.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
         for panelId in self.panels:
             self.panels[panelId].setAllowRefresh(False)
@@ -132,11 +135,10 @@ class BCMainWindow(QMainWindow):
         # Menu FILE
         self.actionFolderNew.triggered.connect(self.__menuFileCreateDirectory)
         self.actionFileOpen.triggered.connect(self.__menuFileOpen)
-        self.actionFileOpenCloseBC.triggered.connect(self.__menuFileOpenCloseBC)
         self.actionFileOpenAsNewDocument.triggered.connect(self.__menuFileOpenAsNewDocument)
-        self.actionFileOpenAsNewDocumentCloseBC.triggered.connect(self.__menuFileOpenAsNewDocumentCloseBC)
         self.actionFileOpenAsImageReference.triggered.connect(self.__menuFileOpenAsImageReference)
-        self.actionFileOpenAsImageReferenceCloseBC.triggered.connect(self.__menuFileOpenAsImageReferenceCloseBC)
+        self.actionFileOpenAsLayer.triggered.connect(self.__menuFileOpenAsLayer)
+        self.actionFileOpenAsFileLayer.triggered.connect(self.__menuFileOpenAsFileLayer)
         self.actionFileCopyToOtherPanel.triggered.connect(self.__menuFileCopyConfirm)
         self.actionFileMoveToOtherPanel.triggered.connect(self.__menuFileMoveConfirm)
         self.actionFileRename.triggered.connect(self.__menuFileRename)
@@ -156,12 +158,10 @@ class BCMainWindow(QMainWindow):
         self.actionClipboardStopDownload.triggered.connect(self.__menuClipboardStopDownload)
         self.actionClipboardQuit.triggered.connect(self.__uiController.commandQuit)
 
-
         # Menu EDIT
         self.actionSelectAll.triggered.connect(self.__menuSelectAll_clicked)
         self.actionSelectNone.triggered.connect(self.__menuSelectNone_clicked)
         self.actionSelectInvert.triggered.connect(self.__menuSelectInvert_clicked)
-        #self.actionSelectRegEx.triggered.connect(self.__actionNotYetImplemented)
 
         # Menu GO
         self.menuGoHistory.aboutToShow.connect(self.__menuHistoryShow)
@@ -182,15 +182,17 @@ class BCMainWindow(QMainWindow):
         self.actionViewDisplayQuickFilter.triggered.connect(self.__menuViewDisplayQuickFilter_clicked)
         self.actionViewSwapPanels.triggered.connect(self.__uiController.commandViewSwapPanels)
 
+        self.actionViewDisplayLayout.setVisible(False)
+        for panel in self.__uiController.panels():
+            self.menuViewDisplayLayoutFiles.append(self.menuView.insertMenu(self.actionViewDisplayLayout, panel.filesMenuViewDisplayLayout()))
+        for panel in self.__uiController.panels():
+            self.menuViewDisplayLayoutClipboard.append(self.menuView.insertMenu(self.actionViewDisplayLayout, panel.clipboardMenuViewDisplayLayout()))
+
         # Menu TOOLS
         self.actionToolsCopyToClipboard.triggered.connect(self.__menuToolsCopyToClipboard_clicked)
-        self.actionToolsSearch.triggered.connect(self.__actionNotYetImplemented)
+        self.actionToolsSearch.triggered.connect(self.__menuToolsSearchFiles_clicked)
         self.actionToolsExportFiles.triggered.connect(self.__menuToolsExportFiles_clicked)
         self.actionToolsConvertFiles.triggered.connect(self.__menuToolsConvertFiles_clicked)
-        #self.actionToolsStatistics.triggered.connect(self.__actionNotYetImplemented)
-        #self.actionConsole.triggered.connect(self.__actionNotYetImplemented)
-
-        #self.actionBCSManageScripts.triggered.connect(self.__actionNotYetImplemented)
 
         # Menu SETTINGS
         self.actionSettingsPreferences.triggered.connect(self.__uiController.commandSettingsOpen)
@@ -204,7 +206,6 @@ class BCMainWindow(QMainWindow):
         self.actionFileCopyToOtherPanelNoConfirm.activated.connect(self.__menuFileCopyNoConfirm)
         self.actionFileMoveToOtherPanelNoConfirm.activated.connect(self.__menuFileMoveNoConfirm)
         self.actionFileDeleteNoConfirm.activated.connect(self.__menuFileDeleteNoConfirm)
-
 
     def __menuHistoryShow(self):
         """Build menu history"""
@@ -229,8 +230,7 @@ class BCMainWindow(QMainWindow):
 
     def __actionNotYetImplemented(self, v=None):
         """"Method called when an action not yet implemented is triggered"""
-        QMessageBox.warning(
-                QWidget(),
+        WDialogMessage.display(
                 self.__uiController.name(),
                 i18n(f"Sorry! Action has not yet been implemented ({v})")
             )
@@ -243,25 +243,21 @@ class BCMainWindow(QMainWindow):
         """Create a new directory"""
         self.__uiController.commandFileCreateDir()
 
-    def __menuFileOpenCloseBC(self, action):
-        """Open selected file(s) and close BC"""
-        self.__uiController.commandFileOpenCloseBC()
-
     def __menuFileOpenAsNewDocument(self, action):
         """Open selected file(s) as new document"""
         self.__uiController.commandFileOpenAsNew()
-
-    def __menuFileOpenAsNewDocumentCloseBC(self, action):
-        """Open selected file(s) as new document and close"""
-        self.__uiController.commandFileOpenAsNewCloseBC()
 
     def __menuFileOpenAsImageReference(self, action):
         """Open selected file(s) as image reference"""
         self.__uiController.commandFileOpenAsImageReference()
 
-    def __menuFileOpenAsImageReferenceCloseBC(self, action):
-        """Open selected file(s) as image reference and close"""
-        self.__uiController.commandFileOpenAsImageReferenceCloseBC()
+    def __menuFileOpenAsLayer(self, action):
+        """Open selected file(s) as layer"""
+        self.__uiController.commandFileOpenAsLayer()
+
+    def __menuFileOpenAsFileLayer(self, action):
+        """Open selected file(s) as file layer"""
+        self.__uiController.commandFileOpenAsFileLayer()
 
     def __menuFileDeleteConfirm(self, action):
         """Delete file after confirmation"""
@@ -386,6 +382,10 @@ class BCMainWindow(QMainWindow):
     def __menuToolsConvertFiles_clicked(self, action):
         """Open convert file tool"""
         self.__uiController.commandToolsConvertFilesOpen()
+
+    def __menuToolsSearchFiles_clicked(self, action):
+        """Open search file tool"""
+        self.__uiController.commandToolsSearchFilesOpen()
 
     # endregion: define actions method -----------------------------------------
 

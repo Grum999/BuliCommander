@@ -17,15 +17,15 @@ class FilenameModel(QtCore.QStringListModel):
     """
     def __init__(self, filter_=None, fs_engine='qt', icon_provider='internal', breadcrumbs=None):
         super().__init__()
+        self.icon_provider=self.get_icon
+        self.icons = QtWidgets.QFileIconProvider()
+
         self.current_path = ''
         self.fs_engine = fs_engine
         self.filter = filter_
         self.__hiddenPath = 0
         self.__breadcrumbs = breadcrumbs
-        if icon_provider == 'internal':
-            self.icons = QtWidgets.QFileIconProvider()
-            self.icon_provider = self.get_icon
-        else:
+        if icon_provider != 'internal':
             self.icon_provider = icon_provider
 
     def data(self, index, role):
@@ -51,13 +51,13 @@ class FilenameModel(QtCore.QStringListModel):
             lst = self.sort_paths([i for i in path.iterdir()
                                    if self.filter != 'dirs' or i.is_dir()])
         elif self.fs_engine == 'qt':
-            qdir = QtCore.QDir(str(path))
+            qdir = QtCore.QDir(f"{path}")
             qdir.setFilter(qdir.NoDotAndDotDot | self.__hiddenPath |
                 (qdir.Dirs if self.filter == 'dirs' else qdir.AllEntries))
 
             names = qdir.entryList(sort=QtCore.QDir.DirsFirst |
                                    QtCore.QDir.LocaleAware)
-            lst = [str(path / i) for i in names]
+            lst = [f"{path / i}" for i in names]
         return lst
 
     @staticmethod
@@ -66,9 +66,9 @@ class FilenameModel(QtCore.QStringListModel):
         dirs, files = [], []
         for i in paths:
             if i.is_dir():
-                dirs.append(str(i))
+                dirs.append(f"{i}")
             else:
-                files.append(str(i))
+                files.append(f"{i}")
         return sorted(dirs, key=str.lower) + sorted(files, key=str.lower)
 
     def setPathPrefix(self, prefix, bname=''):
@@ -88,13 +88,13 @@ class FilenameModel(QtCore.QStringListModel):
             if not (prefix.endswith(os.path.sep) or bname == '.'):
                 path = path.parent
 
-            if os.path.join(str(path), bname) == self.current_path:
+            if os.path.join(f"{path}", bname) == self.current_path:
                 return  # already listed
 
             if not path.exists():
                 return  # wrong path
             self.setStringList(self.get_file_list(path))
-            self.current_path = os.path.join(str(path), bname)
+            self.current_path = os.path.join(f"{path}", bname)
 
     def setPathPrefixTextEdited(self, prefix):
         if len(prefix)>0 and prefix[0]=='@':

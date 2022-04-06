@@ -59,7 +59,7 @@
        <widget class="QLabel" name="lblError">
         <property name="font">
          <font>
-          <family>DejaVu Sans Mono</family>
+          <family>DejaVu Sans Mono, Consolas, Courier New</family>
           <pointsize>8</pointsize>
          </font>
         </property>
@@ -82,7 +82,7 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="BCWCodeEditor" name="cePattern">
+       <widget class="WCodeEditor" name="cePattern">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
           <horstretch>0</horstretch>
@@ -91,7 +91,7 @@
         </property>
         <property name="font">
          <font>
-          <family>DejaVu Sans Mono</family>
+          <family>DejaVu Sans Mono, Consolas, Courier New</family>
          </font>
         </property>
         <property name="verticalScrollBarPolicy">
@@ -156,7 +156,7 @@
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans Mono</family>
+       <family>DejaVu Sans Mono, Consolas, Courier New</family>
       </font>
      </property>
      <property name="horizontalScrollBarPolicy">
@@ -181,6 +181,9 @@
    </item>
    <item>
     <widget class="QCheckBox" name="cbShowPath">
+     <property name="toolTip">
+      <string>Show full path for source name</string>
+     </property>
      <property name="text">
       <string>Show path</string>
      </property>
@@ -188,6 +191,9 @@
    </item>
    <item>
     <widget class="QCheckBox" name="cbExcludeSelected">
+     <property name="toolTip">
+      <string>When checked, selected item in list won't be renamed</string>
+     </property>
      <property name="text">
       <string>Exclude selected files</string>
      </property>
@@ -207,9 +213,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>BCWCodeEditor</class>
+   <class>WCodeEditor</class>
    <extends>QPlainTextEdit</extends>
-   <header>bulicommander.bc.bcwcodeeditor</header>
+   <header>bulicommander.pktk.widgets.wcodeeditor</header>
   </customwidget>
  </customwidgets>
  <resources/>

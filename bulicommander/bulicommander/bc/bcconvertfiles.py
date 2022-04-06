@@ -28,8 +28,7 @@ from PyQt5.QtCore import (
     )
 from PyQt5.QtWidgets import (
         QDialog,
-        QFileDialog,
-        QMessageBox
+        QFileDialog
     )
 
 import os
@@ -48,32 +47,38 @@ from .bcfile import (
         BCFileProperty,
         BCFileThumbnailSize
     )
-from .bcsettings import BCSettingsKey
+from .bcsettings import (
+        BCSettingsKey,
+        BCSettings
+    )
 from .bcsystray import BCSysTray
-from .bctokenizer import (
-        BCTokenizer,
-        BCTokenizerRule
-    )
 
-from .bcwconsole import BCWConsole
-from .bcwexportoptions import (
-        BCWExportOptionsJpeg,
-        BCWExportOptionsPng
-    )
 from .bcwpathbar import BCWPathBar
-from .bcutils import (
+
+from bulicommander.pktk.modules.tokenizer import (
+        Tokenizer,
+        TokenizerRule
+    )
+from bulicommander.pktk.modules.strutils import (
         bytesSizeToStr,
-        checkerBoardBrush,
-        strDefault,
-        tsToStr,
+        strDefault
+    )
+from bulicommander.pktk.modules.timeutils import tsToStr
+from bulicommander.pktk.modules.imgutils import checkerBoardBrush
+from bulicommander.pktk.modules.utils import (
         cloneRect,
         Debug
     )
-from ..pktk.pktk import (
+from bulicommander.pktk.widgets.wexportoptions import (
+        WExportOptionsJpeg,
+        WExportOptionsPng
+    )
+from bulicommander.pktk.widgets.wconsole import WConsole
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
-from ..pktk.ekrita import EKritaNode
+from bulicommander.pktk.modules.ekrita import EKritaNode
 
 # -----------------------------------------------------------------------------
 
@@ -103,7 +108,7 @@ class BCConvertFilesDialogBox(QDialog):
         self.__fileNfo = self.__uiController.panel().files()
         self.__selectedFileNfo = self.__uiController.panel().filesSelected()
 
-        self.__hasSavedSettings = self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_GLB_SAVED.id())
+        self.__hasSavedSettings = BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_GLB_SAVED)
 
         self.__processing=False
 
@@ -157,19 +162,19 @@ class BCConvertFilesDialogBox(QDialog):
 
             # Update language rule to add keyword "{targetFile:ext}"
             self.__languageDef = BCFileManipulateNameLanguageDef()
-            self.__languageDef.tokenizer().addRule(BCTokenizerRule(
-                                            BCFileManipulateNameLanguageDef.TokenType.KW,
+            self.__languageDef.tokenizer().addRule(TokenizerRule(
+                                            BCFileManipulateNameLanguageDef.ITokenType.KW,
                                             r'\{(?:file:targetExt)\}',
                                             'Keyword',
                                             [('{file:targetExt}',
-                                                BCTokenizerRule.formatDescription(
+                                                TokenizerRule.formatDescription(
                                                     'Keyword',
                                                     # description
                                                     'Return target extension (without dot **`.`**) for file, according to defined conversion format')
                                                 )
                                             ],
                                             'k'),
-                                            BCTokenizer.ADD_RULE_TYPE_AFTER_FIRST)
+                                            Tokenizer.ADD_RULE_TYPE_AFTER_FIRST)
 
             self.ceTargetFilePattern.textChanged.connect(self.__patternChanged)
             self.ceTargetFilePattern.setLanguageDefinition(self.__languageDef)
@@ -232,25 +237,25 @@ class BCConvertFilesDialogBox(QDialog):
             return
 
         self.swPages.setCurrentIndex(BCConvertFilesDialogBox.__PAGE_PERIMETER)
-        self.cbxFormat.setCurrentIndex(['kra','png','jpeg'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_GLB_FORMAT.id())))
+        self.cbxFormat.setCurrentIndex(['kra','png','jpeg'].index(BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_GLB_FORMAT)))
         self.__slotFormatChanged(self.cbxFormat.currentIndex())
         self.bcweoPng.setOptions({
-            'compression': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_COMPRESSION.id()),
-            'indexed': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INDEXED.id()),
-            'interlaced': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INTERLACED.id()),
-            'saveSRGBProfile': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_SAVEICCPROFILE.id()),
-            'forceSRGB': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_FORCESRGB.id()),
-            'alpha': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_ALPHA.id()),
-            'transparencyFillcolor': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_BGCOLOR.id()),
+            'compression': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_COMPRESSION),
+            'indexed': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INDEXED),
+            'interlaced': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INTERLACED),
+            'saveSRGBProfile': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_SAVEICCPROFILE),
+            'forceSRGB': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_FORCESRGB),
+            'alpha': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_ALPHA),
+            'transparencyFillcolor': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_BGCOLOR),
         })
         self.bcweoJpg.setOptions({
-            'quality': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_QUALITY.id()),
-            'smoothing': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SMOOTHING.id()),
-            'subsampling': ['4:2:0','4:2:2','4:4:0','4:4:4'].index(self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SUBSAMPLING.id())),
-            'progressive': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_PROGRESSIVE.id()),
-            'optimize': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_OPTIMIZE.id()),
-            'saveProfile': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SAVEICCPROFILE.id()),
-            'transparencyFillcolor': self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_BGCOLOR.id()),
+            'quality': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_QUALITY),
+            'smoothing': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SMOOTHING),
+            'subsampling': ['4:2:0','4:2:2','4:4:0','4:4:4'].index(BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SUBSAMPLING)),
+            'progressive': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_PROGRESSIVE),
+            'optimize': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_OPTIMIZE),
+            'saveProfile': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SAVEICCPROFILE),
+            'transparencyFillcolor': BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_BGCOLOR),
         })
 
     def __slotFormatChanged(self, index):
@@ -264,7 +269,7 @@ class BCConvertFilesDialogBox(QDialog):
     # -- Manage page Target -------------------------------------------------
     def __loadDefaultPageTarget(self):
         """Load default internal configuration for page target"""
-        self.ceTargetFilePattern.setPlainText('{file:baseName}.{file:tagertExt}')
+        self.ceTargetFilePattern.setPlainText('{file:baseName}.{file:targetExt}')
 
     def __loadSettingsPageTarget(self):
         """Load saved settings for page format"""
@@ -276,9 +281,9 @@ class BCConvertFilesDialogBox(QDialog):
             self.__loadDefaultPageTarget()
             return
 
-        self.ceTargetFilePattern.setPlainText(self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN.id()))
-        self.rbTargetDirectorySame.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE.id())=='sdir')
-        self.rbTargetDirectoryDesigned.setChecked(self.__uiController.settings().option(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE.id())=='ddir')
+        self.ceTargetFilePattern.setPlainText(BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN))
+        self.rbTargetDirectorySame.setChecked(BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE)=='sdir')
+        self.rbTargetDirectoryDesigned.setChecked(BCSettings.get(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE)=='ddir')
 
     # -- Other functions -------------------------------------------------
     def __targetPathChanged(self, dummy=None):
@@ -338,7 +343,7 @@ class BCConvertFilesDialogBox(QDialog):
         self.__model.removeRows(0, self.__model.rowCount())
 
         for file in self.__fileList:
-            if not file.format() == BCFileManagedFormat.MISSING:
+            if not file.format() in (BCFileManagedFormat.MISSING, BCFileManagedFormat.DIRECTORY):
                 self.__addFileToListView(file)
 
         self.tvResultPreview.resizeColumnToContents(0)
@@ -426,39 +431,39 @@ class BCConvertFilesDialogBox(QDialog):
     def __saveSettings(self):
         """Save current export configuration to settings"""
         def __savePagePerimeter():
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_GLB_FORMAT, ['kra','png','jpeg'][self.cbxFormat.currentIndex()])
+            BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_GLB_FORMAT, ['kra','png','jpeg'][self.cbxFormat.currentIndex()])
 
             if self.cbxFormat.currentIndex()==1:
                 pngOptions=self.bcweoPng.options()
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_COMPRESSION, pngOptions['compression'])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INDEXED, pngOptions['indexed'])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INTERLACED, pngOptions['interlaced'])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_SAVEICCPROFILE, pngOptions['saveSRGBProfile'])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_FORCESRGB, pngOptions['forceSRGB'])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_ALPHA, pngOptions['alpha'])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_BGCOLOR, pngOptions['transparencyFillcolor'].name(QColor.HexRgb))
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_COMPRESSION, pngOptions['compression'])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INDEXED, pngOptions['indexed'])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INTERLACED, pngOptions['interlaced'])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_SAVEICCPROFILE, pngOptions['saveSRGBProfile'])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_FORCESRGB, pngOptions['forceSRGB'])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_ALPHA, pngOptions['alpha'])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_BGCOLOR, pngOptions['transparencyFillcolor'].name(QColor.HexRgb))
             elif self.cbxFormat.currentIndex()==2:
                 jpgOptions=self.bcweoJpg.options()
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_QUALITY, jpgOptions['quality'])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SMOOTHING, jpgOptions['smoothing'])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SUBSAMPLING, ['4:2:0','4:2:2','4:4:0','4:4:4'][jpgOptions['subsampling']])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_PROGRESSIVE, jpgOptions['progressive'])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_OPTIMIZE, jpgOptions['optimize'])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SAVEICCPROFILE, jpgOptions['saveProfile'])
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_BGCOLOR, jpgOptions['transparencyFillcolor'].name(QColor.HexRgb))
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_QUALITY, jpgOptions['quality'])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SMOOTHING, jpgOptions['smoothing'])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SUBSAMPLING, ['4:2:0','4:2:2','4:4:0','4:4:4'][jpgOptions['subsampling']])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_PROGRESSIVE, jpgOptions['progressive'])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_OPTIMIZE, jpgOptions['optimize'])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SAVEICCPROFILE, jpgOptions['saveProfile'])
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_BGCOLOR, jpgOptions['transparencyFillcolor'].name(QColor.HexRgb))
 
         def __savePageTarget():
             if self.rbTargetDirectorySame.isChecked():
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE, 'sdir')
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE, 'sdir')
             else:
-                self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE, 'ddir')
+                BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE, 'ddir')
 
-            self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN, self.ceTargetFilePattern.toPlainText())
+            BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN, self.ceTargetFilePattern.toPlainText())
 
         __savePagePerimeter()
         __savePageTarget()
 
-        self.__uiController.settings().setOption(BCSettingsKey.CONFIG_CONVERTFILES_GLB_SAVED, True)
+        BCSettings.set(BCSettingsKey.CONFIG_CONVERTFILES_GLB_SAVED, True)
         self.__uiController.saveSettings()
 
     def __resetSettings(self):
@@ -491,14 +496,14 @@ class BCConvertFilesDialogBox(QDialog):
         self.bcwpbTargetDirectory.setEnabled(False)
         self.ceTargetFilePattern.setEnabled(False)
 
-        self.__uiController.setAllowRefresh(False)
+        self.__uiController.filesSetAllowRefresh(False)
 
 
 
         if self.rbPerimeterSelectPath.isChecked():
-            files = self.__fileNfo[5]
+            files = [file for file in self.__fileNfo[5] if  not file.format() in (BCFileManagedFormat.MISSING, BCFileManagedFormat.DIRECTORY)]
         else:
-            files = self.__selectedFileNfo[5]
+            files = [file for file in self.__selectedFileNfo[5] if  not file.format() in (BCFileManagedFormat.MISSING, BCFileManagedFormat.DIRECTORY)]
 
         filePattern = self.ceTargetFilePattern.toPlainText()
 
@@ -518,18 +523,18 @@ class BCConvertFilesDialogBox(QDialog):
             newFileName=self.__parseFileNameKw(file, filePattern, self.__targetDirectory)
 
             if not newFileName[1] is None:
-                self.pteConsole.appendLine(i18n(f'Convert file <i>{fileNumber}</i> of <i>{fileTotalNumber}</i>'))
-                self.pteConsole.appendLine(i18n(f'. Source file <i>{self.__convertedFileName}</i> ({bytesSizeToStr(file.size())})'))
+                self.pteConsole.appendLine(i18n(f'Convert file *{fileNumber}* of *{fileTotalNumber}*'))
+                self.pteConsole.appendLine(i18n(f'. Source file *{self.__convertedFileName}* ({bytesSizeToStr(file.size())})'))
                 self.pteConsole.appendLine('> ')
-                self.pteConsole.append([(i18n('KO '), 'error'),  (i18n('<i>(Unable to build target file name)</i>'), 'info')])
+                self.pteConsole.append([f"#r#{i18n('KO')}# ",  f"*#y#{i18n('(Unable to build target file name)')}#*"])
             else:
                 targetName = os.path.join(self.__targetDirectory, newFileName[0])
 
                 QApplication.instance().processEvents()
 
-                self.pteConsole.appendLine(i18n(f'Convert file <i>{fileNumber}</i> of <i>{fileTotalNumber}</i>'))
-                self.pteConsole.appendLine(i18n(f'. Source file <i>{self.__convertedFileName}</i> ({bytesSizeToStr(file.size())})'))
-                self.pteConsole.appendLine(i18n(f'. Target file <i>{targetName}</i>'))
+                self.pteConsole.appendLine(i18n(f'Convert file *{fileNumber}* of *{fileTotalNumber}*'))
+                self.pteConsole.appendLine(i18n(f'. Source file *{self.__convertedFileName}* ({bytesSizeToStr(file.size())})'))
+                self.pteConsole.appendLine(i18n(f'. Target file *{targetName}*'))
 
                 if targetName != self.__convertedFileName:
                     if not os.path.exists(targetName):
@@ -537,7 +542,7 @@ class BCConvertFilesDialogBox(QDialog):
                         currentDocument = Krita.instance().openDocument(self.__convertedFileName)
 
                         if not currentDocument is None:
-                            self.pteConsole.append(i18n('OK'), 'ok')
+                            self.pteConsole.append(f"#g#{i18n('OK')}#")
 
                             currentDocument.setBatchmode(True) # no popups while saving
 
@@ -552,33 +557,33 @@ class BCConvertFilesDialogBox(QDialog):
                                 saved = currentDocument.exportImage(targetName, exportOptions)
 
                             if not saved:
-                                self.pteConsole.append(i18n('KO'), 'error')
+                                self.pteConsole.append(f"#r#{i18n('KO')}#")
                                 fileKo+=1
                             else:
-                                self.pteConsole.append(i18n('OK'), 'ok')
+                                self.pteConsole.append(f"#g#{i18n('OK')}#")
 
                             currentDocument.close()
                         else:
-                            self.pteConsole.append([(i18n('KO '), 'error'),  (i18n('<i>(Unable to open file)</i>'), 'info')])
+                            self.pteConsole.append([f"#r#{i18n('KO')}# ", f"*#y#{i18n('(Unable to open file)')}#*"])
                     else:
                         self.pteConsole.appendLine('> ')
-                        self.pteConsole.append([(i18n('SKIPPED '), 'ignore'),  (i18n('<i>(Target file already exists)</i>'), 'info')])
+                        self.pteConsole.append([f"#c#{i18n('SKIPPED')}# ", f"*#y#{i18n('(Target file already exists)')}#*"])
                 else:
                     self.pteConsole.appendLine('> ')
-                    self.pteConsole.append([(i18n('SKIPPED '), 'ignore'),  (i18n('<i>(Target and source are identical)</i>'), 'info')])
+                    self.pteConsole.append([f"#c#{i18n('SKIPPED')}# ", f"*#y#{i18n('(Target and source are identical)')}#*"])
 
                 self.pgbTargetResultExport.setValue(fileNumber)
 
             self.pteConsole.appendLine('')
             fileNumber+=1
 
-        self.__uiController.setAllowRefresh(True)
+        self.__uiController.filesSetAllowRefresh(True)
 
         QApplication.restoreOverrideCursor()
 
         if self.__processing==False:
             self.pteConsole.appendLine('> ')
-            self.pteConsole.append(i18n('Process cancelled by user!'), 'warning')
+            self.pteConsole.append(f"#y#{i18n('Process cancelled by user!')}#")
             BCSysTray.messageCritical(i18n(f"{self.__uiController.bcName()}::Convert files"),
                                       i18n(f"Convert {fileTotalNumber} as <i>{BCConvertFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> format has been cancelled by user"))
         elif fileKo == 0:

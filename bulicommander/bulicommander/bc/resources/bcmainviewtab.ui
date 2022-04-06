@@ -22,15 +22,16 @@
         <enum>QTabWidget::West</enum>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <property name="movable">
         <bool>true</bool>
        </property>
        <widget class="QWidget" name="tabFiles">
         <attribute name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/folder_open</normaloff>:/images/folder_open</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/folder_open</normaloff>
+          <disabledoff>:/pktk/images/disabled/folder_open</disabledoff>:/pktk/images/normal/folder_open</iconset>
         </attribute>
         <attribute name="title">
          <string>Files</string>
@@ -131,7 +132,7 @@
                 <enum>QFrame::NoFrame</enum>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="pageTvFiles">
                 <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -148,10 +149,10 @@
                   <number>4</number>
                  </property>
                  <item>
-                  <widget class="BCMainViewFiles" name="treeViewFiles">
+                  <widget class="BCViewFilesTv" name="treeViewFiles">
                    <property name="font">
                     <font>
-                     <family>DejaVu Sans Mono</family>
+                     <family>DejaVu Sans Mono, Consolas, Courier New</family>
                     </font>
                    </property>
                    <property name="editTriggers">
@@ -211,6 +212,37 @@
                  <property name="bottomMargin">
                   <number>4</number>
                  </property>
+                 <item>
+                  <widget class="BCViewFilesLv" name="listViewFiles">
+                   <property name="editTriggers">
+                    <set>QAbstractItemView::NoEditTriggers</set>
+                   </property>
+                   <property name="showDropIndicator" stdset="0">
+                    <bool>false</bool>
+                   </property>
+                   <property name="defaultDropAction">
+                    <enum>Qt::IgnoreAction</enum>
+                   </property>
+                   <property name="selectionMode">
+                    <enum>QAbstractItemView::ExtendedSelection</enum>
+                   </property>
+                   <property name="movement">
+                    <enum>QListView::Snap</enum>
+                   </property>
+                   <property name="resizeMode">
+                    <enum>QListView::Adjust</enum>
+                   </property>
+                   <property name="spacing">
+                    <number>20</number>
+                   </property>
+                   <property name="viewMode">
+                    <enum>QListView::IconMode</enum>
+                   </property>
+                   <property name="uniformItemSizes">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
                 </layout>
                </widget>
               </widget>
@@ -229,8 +261,9 @@
                </property>
                <widget class="QWidget" name="tabFilesDetailsInformations">
                 <attribute name="icon">
-                 <iconset resource="dark_icons.qrc">
-                  <normaloff>:/images/info</normaloff>:/images/info</iconset>
+                 <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                  <normaloff>:/pktk/images/normal/info</normaloff>
+                  <disabledoff>:/pktk/images/disabled/info</disabledoff>:/pktk/images/normal/info</iconset>
                 </attribute>
                 <attribute name="title">
                  <string>Informations</string>
@@ -343,15 +376,16 @@
                            <item>
                             <widget class="QTabWidget" name="twInfo">
                              <property name="currentIndex">
-                              <number>3</number>
+                              <number>1</number>
                              </property>
                              <property name="tabBarAutoHide">
                               <bool>false</bool>
                              </property>
                              <widget class="QWidget" name="pageFileNfoGeneric">
                               <attribute name="icon">
-                               <iconset resource="dark_icons.qrc">
-                                <normaloff>:/images/file</normaloff>:/images/file</iconset>
+                               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                                <normaloff>:/pktk/images/normal/file</normaloff>
+                                <disabledoff>:/pktk/images/disabled/file</disabledoff>:/pktk/images/normal/file</iconset>
                               </attribute>
                               <attribute name="title">
                                <string>File</string>
@@ -388,8 +422,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1494</width>
-                                    <height>639</height>
+                                    <width>1535</width>
+                                    <height>664</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -410,7 +444,7 @@
                                     <widget class="QLabel" name="lblPath">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                        <italic>false</italic>
                                       </font>
                                      </property>
@@ -436,7 +470,7 @@
                                     <widget class="QLabel" name="lblName">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -461,7 +495,7 @@
                                     <widget class="QLabel" name="lblModified">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -486,7 +520,7 @@
                                     <widget class="QLabel" name="lblSize">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -518,7 +552,7 @@
                                     <widget class="QLabel" name="lblPerm">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -549,7 +583,7 @@
                                      </property>
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -565,8 +599,9 @@
                              </widget>
                              <widget class="QWidget" name="pageFileNfoImage">
                               <attribute name="icon">
-                               <iconset resource="dark_icons.qrc">
-                                <normaloff>:/images/large_view</normaloff>:/images/large_view</iconset>
+                               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                                <normaloff>:/pktk/images/normal/image</normaloff>
+                                <disabledoff>:/pktk/images/disabled/image</disabledoff>:/pktk/images/normal/image</iconset>
                               </attribute>
                               <attribute name="title">
                                <string>Image</string>
@@ -609,8 +644,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1494</width>
-                                    <height>639</height>
+                                    <width>1535</width>
+                                    <height>664</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -634,8 +669,11 @@
                                     <widget class="QLabel" name="lblImgFormat">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
+                                     </property>
+                                     <property name="toolTip">
+                                      <string>Image format</string>
                                      </property>
                                      <property name="text">
                                       <string>TextLabel</string>
@@ -663,15 +701,82 @@
                                     </widget>
                                    </item>
                                    <item row="2" column="1">
-                                    <widget class="QLabel" name="lblImgSize">
-                                     <property name="font">
-                                      <font>
-                                       <family>DejaVu Sans Mono</family>
-                                      </font>
+                                    <widget class="QWidget" name="wSizeNfo" native="true">
+                                     <property name="sizePolicy">
+                                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                                       <horstretch>0</horstretch>
+                                       <verstretch>0</verstretch>
+                                      </sizepolicy>
                                      </property>
-                                     <property name="text">
-                                      <string>TextLabel</string>
+                                     <property name="minimumSize">
+                                      <size>
+                                       <width>0</width>
+                                       <height>0</height>
+                                      </size>
                                      </property>
+                                     <layout class="QHBoxLayout" name="horizontalLayout_9">
+                                      <property name="spacing">
+                                       <number>-1</number>
+                                      </property>
+                                      <property name="leftMargin">
+                                       <number>0</number>
+                                      </property>
+                                      <property name="topMargin">
+                                       <number>0</number>
+                                      </property>
+                                      <property name="rightMargin">
+                                       <number>0</number>
+                                      </property>
+                                      <property name="bottomMargin">
+                                       <number>0</number>
+                                      </property>
+                                      <item>
+                                       <widget class="QLabel" name="lblImgSize">
+                                        <property name="font">
+                                         <font>
+                                          <family>DejaVu Sans Mono, Consolas, Courier New</family>
+                                         </font>
+                                        </property>
+                                        <property name="toolTip">
+                                         <string>Image size in pixels</string>
+                                        </property>
+                                        <property name="text">
+                                         <string>TextLabel</string>
+                                        </property>
+                                       </widget>
+                                      </item>
+                                      <item>
+                                       <widget class="QComboBox" name="cbImgSizeRes">
+                                        <property name="sizePolicy">
+                                         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                                          <horstretch>0</horstretch>
+                                          <verstretch>0</verstretch>
+                                         </sizepolicy>
+                                        </property>
+                                        <property name="font">
+                                         <font>
+                                          <family>DejaVu Sans Mono, Consolas, Courier New</family>
+                                         </font>
+                                        </property>
+                                        <property name="toolTip">
+                                         <string>Image size in unit</string>
+                                        </property>
+                                       </widget>
+                                      </item>
+                                      <item>
+                                       <spacer name="horizontalSpacer">
+                                        <property name="orientation">
+                                         <enum>Qt::Horizontal</enum>
+                                        </property>
+                                        <property name="sizeHint" stdset="0">
+                                         <size>
+                                          <width>40</width>
+                                          <height>20</height>
+                                         </size>
+                                        </property>
+                                       </spacer>
+                                      </item>
+                                     </layout>
                                     </widget>
                                    </item>
                                    <item row="3" column="0">
@@ -691,22 +796,25 @@
                                     <widget class="QLabel" name="lblImgResolution">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
+                                     </property>
+                                     <property name="toolTip">
+                                      <string>Resolution</string>
                                      </property>
                                      <property name="text">
                                       <string>TextLabel</string>
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="4" column="0" colspan="2">
+                                   <item row="6" column="0" colspan="2">
                                     <widget class="Line" name="line_4">
                                      <property name="orientation">
                                       <enum>Qt::Horizontal</enum>
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="5" column="0">
+                                   <item row="7" column="0">
                                     <widget class="QLabel" name="label_8">
                                      <property name="font">
                                       <font>
@@ -719,11 +827,11 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="5" column="1">
+                                   <item row="7" column="1">
                                     <widget class="QLabel" name="lblImgMode">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -731,7 +839,7 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="6" column="0">
+                                   <item row="8" column="0">
                                     <widget class="QLabel" name="label_6">
                                      <property name="font">
                                       <font>
@@ -744,11 +852,11 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="6" column="1">
+                                   <item row="8" column="1">
                                     <widget class="QLabel" name="lblImgDepth">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -756,7 +864,7 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="7" column="0">
+                                   <item row="9" column="0">
                                     <widget class="QLabel" name="label_12">
                                      <property name="font">
                                       <font>
@@ -769,11 +877,11 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="7" column="1">
+                                   <item row="9" column="1">
                                     <widget class="QLabel" name="lblImgProfile">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -781,10 +889,66 @@
                                      </property>
                                     </widget>
                                    </item>
-                                   <item row="8" column="0" colspan="2">
+                                   <item row="10" column="0" colspan="2">
                                     <widget class="Line" name="lineImgExtraNfo">
                                      <property name="orientation">
                                       <enum>Qt::Horizontal</enum>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="4" column="0">
+                                    <widget class="QLabel" name="label_19">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Ratio</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="4" column="1">
+                                    <widget class="QLabel" name="lblImgRatio">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
+                                      </font>
+                                     </property>
+                                     <property name="toolTip">
+                                      <string>Ratio Width/Height</string>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="0">
+                                    <widget class="QLabel" name="label_22">
+                                     <property name="font">
+                                      <font>
+                                       <weight>75</weight>
+                                       <bold>true</bold>
+                                      </font>
+                                     </property>
+                                     <property name="text">
+                                      <string>Pixels</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item row="5" column="1">
+                                    <widget class="QLabel" name="lblImgNbPixels">
+                                     <property name="font">
+                                      <font>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
+                                      </font>
+                                     </property>
+                                     <property name="toolTip">
+                                      <string>Number of pixels</string>
+                                     </property>
+                                     <property name="text">
+                                      <string>TextLabel</string>
                                      </property>
                                     </widget>
                                    </item>
@@ -796,8 +960,9 @@
                              </widget>
                              <widget class="QWidget" name="pageFileNfoKraAbout">
                               <attribute name="icon">
-                               <iconset resource="dark_icons.qrc">
-                                <normaloff>:/images/info</normaloff>:/images/info</iconset>
+                               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                                <normaloff>:/pktk/images/normal/info</normaloff>
+                                <disabledoff>:/pktk/images/disabled/info</disabledoff>:/pktk/images/normal/info</iconset>
                               </attribute>
                               <attribute name="title">
                                <string>About</string>
@@ -837,8 +1002,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1494</width>
-                                    <height>639</height>
+                                    <width>1535</width>
+                                    <height>664</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -859,7 +1024,7 @@
                                     <widget class="QLabel" name="lblKraAboutTitle">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -884,7 +1049,7 @@
                                     <widget class="QLabel" name="lblKraAboutDesc">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -909,7 +1074,7 @@
                                     <widget class="QLabel" name="lblKraAboutKeywords">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -934,7 +1099,7 @@
                                     <widget class="QLabel" name="lblKraAboutInitCreator">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -959,7 +1124,7 @@
                                     <widget class="QLabel" name="lblKraAboutCreationDate">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -984,7 +1149,7 @@
                                     <widget class="QLabel" name="lblKraAboutEditingTime">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1009,7 +1174,7 @@
                                     <widget class="QLabel" name="lblKraAboutSubject">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1034,7 +1199,7 @@
                                     <widget class="QLabel" name="lblKraAboutEditingCycles">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1050,8 +1215,9 @@
                              </widget>
                              <widget class="QWidget" name="pageFileNfoKraAuthor">
                               <attribute name="icon">
-                               <iconset resource="dark_icons.qrc">
-                                <normaloff>:/images/author</normaloff>:/images/author</iconset>
+                               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                                <normaloff>:/pktk/images/normal/author</normaloff>
+                                <disabledoff>:/pktk/images/disabled/author</disabledoff>:/pktk/images/normal/author</iconset>
                               </attribute>
                               <attribute name="title">
                                <string>Author</string>
@@ -1094,8 +1260,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1494</width>
-                                    <height>639</height>
+                                    <width>1535</width>
+                                    <height>664</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1119,7 +1285,7 @@
                                     <widget class="QLabel" name="lblKraAuthorNickname">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1144,7 +1310,7 @@
                                     <widget class="QLabel" name="lblKraAuthorFName">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1169,7 +1335,7 @@
                                     <widget class="QLabel" name="lblKraAuthorLName">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1207,7 +1373,7 @@
                                     <widget class="QLabel" name="lblKraAuthorInitials">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1219,7 +1385,7 @@
                                     <widget class="QLabel" name="lblKraAuthorTitle">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1244,7 +1410,7 @@
                                     <widget class="QLabel" name="lblKraAuthorPosition">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1269,7 +1435,7 @@
                                     <widget class="QLabel" name="lblKraAuthorCompagny">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1294,7 +1460,7 @@
                                     <widget class="QLabel" name="lblKraAuthorContact">
                                      <property name="font">
                                       <font>
-                                       <family>DejaVu Sans Mono</family>
+                                       <family>DejaVu Sans Mono, Consolas, Courier New</family>
                                       </font>
                                      </property>
                                      <property name="text">
@@ -1324,8 +1490,9 @@
                </widget>
                <widget class="QWidget" name="tabFilesDetailsDirTree">
                 <attribute name="icon">
-                 <iconset resource="dark_icons.qrc">
-                  <normaloff>:/images/tree_list</normaloff>:/images/tree_list</iconset>
+                 <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                  <normaloff>:/pktk/images/normal/list_tree</normaloff>
+                  <disabledoff>:/pktk/images/disabled/list_tree</disabledoff>:/pktk/images/normal/list_tree</iconset>
                 </attribute>
                 <attribute name="title">
                  <string>Directory tree</string>
@@ -1335,7 +1502,7 @@
                   <widget class="QTreeView" name="tvDirectoryTree">
                    <property name="font">
                     <font>
-                     <family>DejaVu Sans Mono</family>
+                     <family>DejaVu Sans Mono, Consolas, Courier New</family>
                     </font>
                    </property>
                    <property name="editTriggers">
@@ -1394,7 +1561,7 @@
               </property>
               <property name="font">
                <font>
-                <family>DejaVu Sans Mono</family>
+                <family>DejaVu Sans Mono, Consolas, Courier New</family>
                 <pointsize>9</pointsize>
                 <italic>false</italic>
                </font>
@@ -1459,7 +1626,7 @@
               </property>
               <property name="font">
                <font>
-                <family>DejaVu Sans Mono</family>
+                <family>DejaVu Sans Mono, Consolas, Courier New</family>
                 <pointsize>9</pointsize>
                </font>
               </property>
@@ -1526,8 +1693,9 @@
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="dark_icons.qrc">
-                <normaloff>:/images/dashboard</normaloff>:/images/dashboard</iconset>
+               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                <normaloff>:/pktk/images/normal/dashboard</normaloff>
+                <disabledoff>:/pktk/images/disabled/dashboard</disabledoff>:/pktk/images/normal/dashboard</iconset>
               </property>
               <property name="popupMode">
                <enum>QToolButton::MenuButtonPopup</enum>
@@ -1550,8 +1718,9 @@
        </widget>
        <widget class="QWidget" name="tabDocuments">
         <attribute name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/large_view</normaloff>:/images/large_view</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/image</normaloff>
+          <disabledoff>:/pktk/images/disabled/image</disabledoff>:/pktk/images/normal/image</iconset>
         </attribute>
         <attribute name="title">
          <string>Documents</string>
@@ -1578,8 +1747,9 @@
        </widget>
        <widget class="QWidget" name="tabClipboard">
         <attribute name="icon">
-         <iconset resource="dark_icons.qrc">
-          <normaloff>:/images/clipboard</normaloff>:/images/clipboard</iconset>
+         <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+          <normaloff>:/pktk/images/normal/clipboard</normaloff>
+          <disabledoff>:/pktk/images/disabled/clipboard</disabledoff>:/pktk/images/normal/clipboard</iconset>
         </attribute>
         <attribute name="title">
          <string>Clipboard</string>
@@ -1608,7 +1778,7 @@
               <widget class="BCMainViewClipboard" name="treeViewClipboard">
                <property name="font">
                 <font>
-                 <family>DejaVu Sans Mono</family>
+                 <family>DejaVu Sans Mono, Consolas, Courier New</family>
                 </font>
                </property>
                <property name="editTriggers">
@@ -1679,7 +1849,7 @@
               </property>
               <property name="font">
                <font>
-                <family>DejaVu Sans Mono</family>
+                <family>DejaVu Sans Mono, Consolas, Courier New</family>
                 <pointsize>9</pointsize>
                 <italic>false</italic>
                </font>
@@ -1721,7 +1891,7 @@
               </property>
               <property name="font">
                <font>
-                <family>DejaVu Sans Mono</family>
+                <family>DejaVu Sans Mono, Consolas, Courier New</family>
                 <pointsize>9</pointsize>
                </font>
               </property>
@@ -1773,8 +1943,9 @@
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="dark_icons.qrc">
-                <normaloff>:/images/dashboard</normaloff>:/images/dashboard</iconset>
+               <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                <normaloff>:/pktk/images/normal/dashboard</normaloff>
+                <disabledoff>:/pktk/images/disabled/dashboard</disabledoff>:/pktk/images/normal/dashboard</iconset>
               </property>
               <property name="popupMode">
                <enum>QToolButton::MenuButtonPopup</enum>
@@ -1809,11 +1980,6 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>BCMainViewFiles</class>
-   <extends>QTreeView</extends>
-   <header>bulicommander.bc.bcmainviewtab</header>
-  </customwidget>
-  <customwidget>
    <class>BCMainViewClipboard</class>
    <extends>QTreeView</extends>
    <header>bulicommander.bc.bcmainviewtab</header>
@@ -1824,10 +1990,20 @@
    <header>bulicommander.bc.bcwpreview</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>BCViewFilesTv</class>
+   <extends>QTreeView</extends>
+   <header>bulicommander.bc.bcmainviewtab</header>
+  </customwidget>
+  <customwidget>
+   <class>BCViewFilesLv</class>
+   <extends>QListView</extends>
+   <header>bulicommander.bc.bcmainviewtab</header>
+  </customwidget>
  </customwidgets>
  <resources>
-  <include location="dark_icons.qrc"/>
-  <include location="light_icons.qrc"/>
+  <include location="../../pktk/resources/svg/dark_icons.qrc"/>
+  <include location="../../pktk/resources/svg/light_icons.qrc"/>
  </resources>
  <connections/>
 </ui>

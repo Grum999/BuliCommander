@@ -55,10 +55,15 @@ from PyQt5.QtGui import (
 from .bcbookmark import BCBookmark
 from .bchistory import BCHistory
 from .bcsavedview import BCSavedView
-from .bcutils import (
+
+from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.menuutils import (
         buildQAction,
-        buildQMenu,
+        buildQMenu
+    )
+from bulicommander.pktk.modules.utils import (
         loadXmlUi,
+        replaceLineEditClearButton,
         Debug
     )
 
@@ -84,6 +89,7 @@ class BCWPathBar(QFrame):
     QUICKREF_RESERVED_HISTORY = 7
     QUICKREF_RESERVED_BACKUPFILTERDVIEW = 8
     QUICKREF_RESERVED_FLAYERFILTERDVIEW = 9 # file layer
+    QUICKREF_SEARCHRESULTS_LIST = 10 # search results
 
     OPTION_SHOW_NONE        =       0b0000000000000000
     OPTION_SHOW_ALL         =       0b0000000111111111
@@ -131,70 +137,56 @@ class BCWPathBar(QFrame):
 
         self.__font = QFont()
         self.__font.setPointSize(9)
-        self.__font.setFamily('DejaVu Sans Mono')
+        self.__font.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
-        self.__actionHistoryClear = buildQAction([(":/images/history_clear", QIcon.Normal),
-                                                  (":/images_d/history_clear", QIcon.Disabled)], i18n('Clear history'), self)
+        self.__actionHistoryClear = buildQAction("pktk:history_clear", i18n('Clear history'), self)
         self.__actionHistoryClear.setStatusTip(i18n('Clear all paths from history'))
 
-        self.__actionLastDocumentsAll = buildQAction([(":/images/saved_view_last", QIcon.Normal),
-                                                      (":/images_d/saved_view_last", QIcon.Disabled)], i18n('Last documents'), self)
+        self.__actionLastDocumentsAll = buildQAction("pktk:saved_view_last", i18n('Last documents'), self)
         self.__actionLastDocumentsAll.setStatusTip(i18n('Show list of last opened and/or saved documents'))
         self.__actionLastDocumentsAll.setProperty('path', '@last')
-        self.__actionLastDocumentsOpened = buildQAction([(":/images/saved_view_last", QIcon.Normal),
-                                                         (":/images_d/saved_view_last", QIcon.Disabled)], i18n('Last opened documents'), self)
+        self.__actionLastDocumentsOpened = buildQAction("pktk:saved_view_last", i18n('Last opened documents'), self)
         self.__actionLastDocumentsOpened.setStatusTip(i18n('Show list of last opened documents'))
         self.__actionLastDocumentsOpened.setProperty('path', '@last opened')
-        self.__actionLastDocumentsSaved = buildQAction([(":/images/saved_view_last", QIcon.Normal),
-                                                        (":/images_d/saved_view_last", QIcon.Disabled)], i18n('Last saved documents'), self)
+        self.__actionLastDocumentsSaved = buildQAction("pktk:saved_view_last", i18n('Last saved documents'), self)
         self.__actionLastDocumentsSaved.setStatusTip(i18n('Show list of last saved documents'))
         self.__actionLastDocumentsSaved.setProperty('path', '@last saved')
 
-        self.__actionBookmarkClear = buildQAction([(":/images/bookmark_clear", QIcon.Normal),
-                                                   (":/images_d/bookmark_clear", QIcon.Disabled)], i18n('Clear bookmark'), self)
+        self.__actionBookmarkClear = buildQAction("pktk:bookmark_clear", i18n('Clear bookmark'), self)
         self.__actionBookmarkClear.setStatusTip(i18n('Remove all bookmarked paths'))
-        self.__actionBookmarkAdd = buildQAction([(":/images/bookmark_add", QIcon.Normal),
-                                                 (":/images_d/bookmark_add", QIcon.Disabled)], i18n('Add to bookmark...'), self)
+        self.__actionBookmarkAdd = buildQAction("pktk:bookmark_add", i18n('Add to bookmark...'), self)
         self.__actionBookmarkAdd.triggered.connect(self.__menuBookmarkAppend_clicked)
         self.__actionBookmarkAdd.setStatusTip(i18n('Add current path to bookmarks'))
-        self.__actionBookmarkRemove = buildQAction([(":/images/bookmark_remove", QIcon.Normal),
-                                                    (":/images_d/bookmark_remove", QIcon.Disabled)], i18n('Remove from bookmark...'), self)
+        self.__actionBookmarkRemove = buildQAction("pktk:bookmark_remove", i18n('Remove from bookmark...'), self)
         self.__actionBookmarkRemove.triggered.connect(self.__menuBookmarkRemove_clicked)
         self.__actionBookmarkRemove.setStatusTip(i18n('Remove current path from bookmarks'))
-        self.__actionBookmarkRename = buildQAction([(":/images/bookmark_rename", QIcon.Normal),
-                                                    (":/images_d/bookmark_rename", QIcon.Disabled)], i18n('Rename bookmark...'), self)
+        self.__actionBookmarkRename = buildQAction("pktk:bookmark_rename", i18n('Rename bookmark...'), self)
         self.__actionBookmarkRename.triggered.connect(self.__menuBookmarkRename_clicked)
         self.__actionBookmarkRename.setStatusTip(i18n('Rename current bookmark'))
 
 
-        self.__actionSavedViewsClear = buildQAction([(":/images/saved_view_clear", QIcon.Normal),
-                                                     (":/images_d/saved_view_clear", QIcon.Disabled)], i18n('Clear view content'), self)
+        self.__actionSavedViewsClear = buildQAction("pktk:saved_view_clear", i18n('Clear view content'), self)
         self.__actionSavedViewsClear.setStatusTip(i18n('Clear current view content'))
         self.__actionSavedViewsClear.setProperty('action', 'clear_view_content')
         self.__actionSavedViewsClear.setProperty('path', ':CURRENT')
 
-        self.__actionSavedViewsAdd = buildQMenu([(":/images/saved_view_add", QIcon.Normal),
-                                                 (":/images_d/saved_view_add", QIcon.Disabled)], i18n('Add to view'), self)
+        self.__actionSavedViewsAdd = buildQMenu("pktk:saved_view_add", i18n('Add to view'), self)
         self.__actionSavedViewsAdd.setStatusTip(i18n('Add selected files to view'))
-        self.__actionSavedViewsAddNewView = buildQAction([(":/images/saved_view_new", QIcon.Normal),
-                                                          (":/images_d/saved_view_new", QIcon.Disabled)], i18n('New view'), self)
+        self.__actionSavedViewsAddNewView = buildQAction("pktk:saved_view_new", i18n('New view'), self)
         self.__actionSavedViewsAddNewView.setStatusTip(i18n('Add selected files to a new view'))
         self.__actionSavedViewsAddNewView.setProperty('action', 'create_view')
         self.__actionSavedViewsAddNewView.setProperty('path', ':NEW')
 
-        self.__actionSavedViewsRemove = buildQAction([(":/images/saved_view_remove", QIcon.Normal),
-                                                      (":/images_d/saved_view_remove", QIcon.Disabled)], i18n('Remove from view...'), self)
+        self.__actionSavedViewsRemove = buildQAction("pktk:saved_view_remove", i18n('Remove from view...'), self)
         self.__actionSavedViewsRemove.setStatusTip(i18n('Remove selected files from view'))
         self.__actionSavedViewsRemove.setProperty('action', 'remove_from_view')
         self.__actionSavedViewsRemove.setProperty('path', ':CURRENT')
 
-        self.__actionSavedViewsRename = buildQAction([(":/images/saved_view_rename", QIcon.Normal),
-                                                      (":/images_d/saved_view_rename", QIcon.Disabled)], i18n('Rename view...'), self)
+        self.__actionSavedViewsRename = buildQAction("pktk:saved_view_rename", i18n('Rename view...'), self)
         self.__actionSavedViewsRename.setStatusTip(i18n('Rename current view'))
         self.__actionSavedViewsRename.setProperty('action', 'rename_view')
         self.__actionSavedViewsRename.setProperty('path', ':CURRENT')
-        self.__actionSavedViewsDelete = buildQAction([(":/images/saved_view_delete", QIcon.Normal),
-                                                      (":/images_d/saved_view_delete", QIcon.Disabled)], i18n('Delete view...'), self)
+        self.__actionSavedViewsDelete = buildQAction("pktk:saved_view_delete", i18n('Delete view...'), self)
         self.__actionSavedViewsDelete.setStatusTip(i18n('Delete current view'))
         self.__actionSavedViewsDelete.setProperty('action', 'delete_view')
         self.__actionSavedViewsDelete.setProperty('path', ':CURRENT')
@@ -297,10 +289,14 @@ class BCWPathBar(QFrame):
         if not self.__savedView is None:
             self.frameBreacrumbPath.checkViewId=self.__savedView.inList
 
+        fnt=self.leFilterQuery.font()
+        fnt.setFamily('DejaVu Sans Mono, Consolas, Courier New')
         self.__leFilterQueryFocusInEvent=self.leFilterQuery.focusInEvent
         self.leFilterQuery.focusInEvent=filter_Focused
         self.leFilterQuery.editingFinished.connect(filter_Finished)
         self.leFilterQuery.textChanged.connect(filter_Changed)
+        replaceLineEditClearButton(self.leFilterQuery)
+        self.leFilterQuery.setFont(fnt)
 
         self.btBack.clicked.connect(item_Clicked)
         self.btBack.clicked.connect(back_Clicked)
@@ -422,7 +418,7 @@ class BCWPathBar(QFrame):
                 else:
                     action.setCheckable(False)
                     action.setStatusTip(f'Directory "{bookmark[BCBookmark.VALUE]}" is missing')
-                    action.setIcon(QIcon(':/images/warning'))
+                    action.setIcon(buildIcon('pktk:warning'))
 
                 menu.addAction(action)
 
@@ -487,30 +483,31 @@ class BCWPathBar(QFrame):
 
             for view in self.__savedView.list():
                 # view = (name, files)
-                action = buildQAction([(":/images/saved_view_file", QIcon.Normal),
-                                       (":/images_d/saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
-                action.setFont(self.__font)
-                action.setStatusTip(i18n(f"Add selected files to view '{view[0].replace('&', '&&')}' (Current files in view: {len(view[1])})" ))
-                action.setProperty('action', 'add_to_view')
-                action.setProperty('path', f'@{view[0]}')
+                if not re.match("^searchresult:", view[0]):
+                    action = buildQAction([("pktk:saved_view_file", QIcon.Normal),
+                                           ("pktk:saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
+                    action.setFont(self.__font)
+                    action.setStatusTip(i18n(f"Add selected files to view '{view[0].replace('&', '&&')}' (Current files in view: {len(view[1])})" ))
+                    action.setProperty('action', 'add_to_view')
+                    action.setProperty('path', f'@{view[0]}')
 
-                if isSavedView and self.__savedView.current(True) == view[0] or not allowAddRemove:
-                    action.setEnabled(False)
+                    if isSavedView and self.__savedView.current(True) == view[0] or not allowAddRemove:
+                        action.setEnabled(False)
 
-                menu2.addAction(action)
+                    menu2.addAction(action)
 
-                action = buildQAction([(":/images/saved_view_file", QIcon.Normal),
-                                       (":/images_d/saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
-                action.setFont(self.__font)
-                action.setCheckable(True)
-                action.setStatusTip(i18n(f'Files in view: {len(view[1])}'))
-                action.setProperty('action', 'go_to_view')
-                action.setProperty('path', f'@{view[0]}')
+                    action = buildQAction([("pktk:saved_view_file", QIcon.Normal),
+                                           ("pktk:saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
+                    action.setFont(self.__font)
+                    action.setCheckable(True)
+                    action.setStatusTip(i18n(f'Files in view: {len(view[1])}'))
+                    action.setProperty('action', 'go_to_view')
+                    action.setProperty('path', f'@{view[0]}')
 
-                if isSavedView and self.__savedView.current(True) == view[0]:
-                    action.setChecked(True)
+                    if isSavedView and self.__savedView.current(True) == view[0]:
+                        action.setChecked(True)
 
-                menu.addAction(action)
+                    menu.addAction(action)
 
         if isSavedView:
             self.__actionSavedViewsClear.setEnabled(True)
@@ -643,8 +640,8 @@ class BCWPathBar(QFrame):
 
     def __updateUpBtn(self):
         """Update up button status"""
-        if str(self.frameBreacrumbPath.path()) != '' and str(self.frameBreacrumbPath.path())[0] != '@':
-            self.btUp.setEnabled(str(self.frameBreacrumbPath.path()) != self.frameBreacrumbPath.path().root)
+        if f"{self.frameBreacrumbPath.path()}" != '' and f"{self.frameBreacrumbPath.path()}"[0] != '@':
+            self.btUp.setEnabled(f"{self.frameBreacrumbPath.path()}" != self.frameBreacrumbPath.path().root)
         else:
             self.btUp.setEnabled(False)
 
@@ -715,16 +712,19 @@ class BCWPathBar(QFrame):
     def path(self):
         """Return current path"""
         if self.__mode in [BCWPathBar.MODE_PATH, BCWPathBar.MODE_SAVEDVIEW]:
-            return str(self.frameBreacrumbPath.path())
+            return f"{self.frameBreacrumbPath.path()}"
         elif not self.__savedView is None:
             # BCWPathBar.MODE_SAVEDVIEW
             return f"@{self.__savedView.current()}"
         else:
             return None
 
-    def setPath(self, path=None):
-        """Set current path"""
-        self.frameBreacrumbPath.set_path(path)
+    def setPath(self, path=None, force=False):
+        """Set current path
+
+        If `force` is True, force to set path even if path already set with given value (do a "refresh")
+        """
+        self.frameBreacrumbPath.set_path(path, force)
 
     def goToBackPath(self):
         """Go to previous path
@@ -745,7 +745,7 @@ class BCWPathBar(QFrame):
 
         If no previous path found, return False, otherwise True
         """
-        self.setPath(str(self.frameBreacrumbPath.path().parent))
+        self.setPath(f"{self.frameBreacrumbPath.path().parent}")
         return self.btUp.isEnabled()
 
     def history(self):

@@ -309,7 +309,7 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="BCWExportOptionsPng" name="bcweoPng" native="true">
+            <widget class="WExportOptionsPng" name="bcweoPng" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
                <horstretch>0</horstretch>
@@ -347,7 +347,7 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="BCWExportOptionsJpeg" name="bcweoJpg" native="true">
+            <widget class="WExportOptionsJpeg" name="bcweoJpg" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
                <horstretch>0</horstretch>
@@ -497,7 +497,7 @@
           <string notr="true">padding-left: 30px</string>
          </property>
          <property name="text">
-          <string>Desig&amp;ned directory</string>
+          <string>Designed director&amp;y</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -513,7 +513,7 @@
           <string notr="true">padding-left: 30px</string>
          </property>
          <property name="text">
-          <string>Same &amp;directory</string>
+          <string>Same dire&amp;ctory</string>
          </property>
          <property name="checked">
           <bool>true</bool>
@@ -546,13 +546,13 @@
         </widget>
        </item>
        <item row="5" column="1" colspan="4">
-        <widget class="BCWCodeEditor" name="ceTargetFilePattern"/>
+        <widget class="WCodeEditor" name="ceTargetFilePattern"/>
        </item>
        <item row="6" column="1" colspan="4">
         <widget class="QLabel" name="lblError">
          <property name="font">
           <font>
-           <family>DejaVu Sans Mono</family>
+           <family>DejaVu Sans Mono, Consolas, Courier New</family>
            <pointsize>8</pointsize>
           </font>
          </property>
@@ -584,7 +584,7 @@
          </property>
          <property name="font">
           <font>
-           <family>DejaVu Sans Mono</family>
+           <family>DejaVu Sans Mono, Consolas, Courier New</family>
           </font>
          </property>
          <property name="alternatingRowColors">
@@ -635,7 +635,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="BCWConsole" name="pteConsole">
+           <widget class="WConsole" name="pteConsole">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
               <horstretch>0</horstretch>
@@ -650,7 +650,7 @@
             </property>
             <property name="font">
              <font>
-              <family>DejaVu Sans Mono</family>
+              <family>DejaVu Sans Mono, Consolas, Courier New</family>
               <pointsize>8</pointsize>
              </font>
             </property>
@@ -732,8 +732,9 @@
                 <string>...</string>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/visibility_off</normaloff>:/images/visibility_off</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/visibility_off</normaloff>
+                 <disabledoff>:/pktk/images/disabled/visibility_off</disabledoff>:/pktk/images/normal/visibility_off</iconset>
                </property>
                <property name="autoRaise">
                 <bool>true</bool>
@@ -860,30 +861,30 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>BCWExportOptionsPng</class>
+   <class>WExportOptionsPng</class>
    <extends>QWidget</extends>
-   <header>bulicommander.bc.bcwexportoptions</header>
+   <header>bulicommander.pktk.widgets.wexportoptions</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>BCWExportOptionsJpeg</class>
+   <class>WExportOptionsJpeg</class>
    <extends>QWidget</extends>
-   <header>bulicommander.bc.bcwexportoptions</header>
+   <header>bulicommander.pktk.widgets.wexportoptions</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>BCWConsole</class>
+   <class>WConsole</class>
    <extends>QPlainTextEdit</extends>
-   <header>bulicommander.bc.bcwconsole</header>
+   <header>bulicommander.pktk.widgets.wconsole</header>
   </customwidget>
   <customwidget>
-   <class>BCWCodeEditor</class>
+   <class>WCodeEditor</class>
    <extends>QPlainTextEdit</extends>
-   <header>bulicommander.bc.bcwcodeeditor</header>
+   <header>bulicommander.pktk.widgets.wcodeeditor</header>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="dark_icons.qrc"/>
+  <include location="../../pktk/resources/svg/dark_icons.qrc"/>
  </resources>
  <connections/>
  <buttongroups>

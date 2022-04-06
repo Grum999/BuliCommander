@@ -60,7 +60,6 @@ from PyQt5.QtWidgets import (
         QGroupBox,
         QHBoxLayout,
         QLabel,
-        QLineEdit,
         QMessageBox,
         QProgressBar,
         QProgressDialog,
@@ -80,8 +79,8 @@ if __name__ != '__main__':
             EInvalidValue,
             PkTk
         )
-    from .bc.bcuicontroller import BCUIController
-    from .bc.bcutils import checkKritaVersion
+    from bulicommander.pktk.modules.utils import checkKritaVersion
+    from bulicommander.bc.bcuicontroller import BCUIController
 else:
     # Execution from 'Scripter' plugin?
     __PLUGIN_EXEC_FROM__ = 'SCRIPTER_PLUGIN'
@@ -102,18 +101,19 @@ else:
             EInvalidValue,
             PkTk
         )
+    from bulicommander.pktk.modules.utils import checkKritaVersion
     from bulicommander.bc.bcuicontroller import BCUIController
-    from bulicommander.bc.bcutils import checkKritaVersion
 
     print("======================================")
 
 
 EXTENSION_ID = 'pykrita_bulicommander'
-PLUGIN_VERSION = '0.6.0a'
+PLUGIN_VERSION = '0.7.0b'
 PLUGIN_MENU_ENTRY = 'Buli Commander'
 
-REQUIRED_KRITA_VERSION = (4, 4, 0)
+REQUIRED_KRITA_VERSION = (5, 0, 0)
 
+PkTk.setPackageName('bulicommander')
 
 class BuliCommander(Extension):
 
@@ -137,30 +137,34 @@ class BuliCommander(Extension):
         @pyqtSlot('QString')
         def opened(document):
             # a document has been created: if filename is set, document has been opened
-            if document.fileName() != '':
+            # also, need to check if uiController is initialized
+            # (possible case: document opened before uiController is initialized
+            #                 can occurs when BC is opened at startup and user able to open
+            #                 a document before/during intiialization)
+            if self.__uiController and document.fileName() != '':
                 self.__uiController.commandGoLastDocsOpenedAdd(document.fileName())
         @pyqtSlot('QString')
         def saved(fileName):
             # a document has been saved
-            if fileName != '':
+            if self.__uiController and fileName != '':
                 self.__uiController.commandGoLastDocsSavedAdd(fileName)
 
-        try:
-            Krita.instance().notifier().imageCreated.disconnect()
-        except Exception as e:
-            pass
-
-        try:
-            Krita.instance().notifier().imageSaved.disconnect()
-        except Exception as e:
-            pass
-
-        try:
-            Krita.instance().notifier().applicationClosing.disconnect()
-        except Exception as e:
-            pass
-
         if self.__uiController is None:
+            try:
+                Krita.instance().notifier().imageCreated.disconnect(opened)
+            except Exception as e:
+                pass
+
+            try:
+                Krita.instance().notifier().imageSaved.disconnect(saved)
+            except Exception as e:
+                pass
+
+            #try:
+            #    Krita.instance().notifier().applicationClosing.disconnect()
+            #except Exception as e:
+            #    pass
+
             # no controller, create it
             # (otherwise, with Krita 5.0.0, can be triggered more than once time - on each new window)
             Krita.instance().notifier().imageCreated.connect(opened)
@@ -179,9 +183,8 @@ class BuliCommander(Extension):
         if not self.__isKritaVersionOk:
             return
 
-        if checkKritaVersion(5,0,0):
-            # windowCreated signal has been implemented with krita 5.0.0
-            Krita.instance().notifier().windowCreated.connect(windowCreated)
+        # windowCreated signal has been implemented with krita 5.0.0
+        Krita.instance().notifier().windowCreated.connect(windowCreated)
 
 
     def createActions(self, window):
@@ -196,7 +199,7 @@ class BuliCommander(Extension):
         if not self.__isKritaVersionOk:
             QMessageBox.information(QWidget(),
                                       PLUGIN_MENU_ENTRY,
-                                      "At least, Krita version {0} is required to use plugin...".format('.'.join([str(v) for v in REQUIRED_KRITA_VERSION]))
+                                      "At least, Krita version {0} is required to use plugin...".format('.'.join([f"{v}" for v in REQUIRED_KRITA_VERSION]))
                                     )
             return
 

@@ -14,13 +14,25 @@
    <string>Form</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <widget class="QStackedWidget" name="swPreview">
      <property name="styleSheet">
       <string notr="true"/>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="pgPreviewImg">
       <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -40,9 +52,12 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="BCWImagePreview" name="gvPreview">
-         <property name="statusTip">
-          <string>Double-click: zoom to fit/scale 1:1 | Drag: pan | Ctrl+Drag: select and zoom</string>
+        <widget class="WImageView" name="gvPreview" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
         </widget>
        </item>
@@ -205,8 +220,9 @@ QSlider::handle:horizontal {
                 <string/>
                </property>
                <property name="icon">
-                <iconset resource="dark_icons.qrc">
-                 <normaloff>:/images/play</normaloff>:/images/play</iconset>
+                <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+                 <normaloff>:/pktk/images/normal/play</normaloff>
+                 <disabledoff>:/pktk/images/disabled/play</disabledoff>:/pktk/images/normal/play</iconset>
                </property>
                <property name="autoRaise">
                 <bool>true</bool>
@@ -237,6 +253,12 @@ QSlider::handle:horizontal {
        </property>
        <item>
         <widget class="QLabel" name="lblNoPreview">
+         <property name="minimumSize">
+          <size>
+           <width>1</width>
+           <height>1</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>12</pointsize>
@@ -249,6 +271,9 @@ QSlider::handle:horizontal {
          </property>
          <property name="text">
           <string>No image selected</string>
+         </property>
+         <property name="scaledContents">
+          <bool>false</bool>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -263,13 +288,14 @@ QSlider::handle:horizontal {
  </widget>
  <customwidgets>
   <customwidget>
-   <class>BCWImagePreview</class>
-   <extends>QGraphicsView</extends>
-   <header>bulicommander.bc.bcwimagepreview</header>
+   <class>WImageView</class>
+   <extends>QWidget</extends>
+   <header>bulicommander.pktk.widgets.wimageview</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="dark_icons.qrc"/>
+  <include location="../../pktk/resources/svg/dark_icons.qrc"/>
  </resources>
  <connections/>
 </ui>

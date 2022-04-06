@@ -34,10 +34,8 @@ from PyQt5.QtCore import (
         QEventLoop,
         QTimer
     )
-from .bcutils import (
-        buildIcon,
-        Debug
-    )
+from bulicommander.pktk.modules.utils import Debug
+from bulicommander.pktk.modules.imgutils import buildIcon
 
 class BCSysTray(object):
     """Manage system tray"""
@@ -66,7 +64,7 @@ class BCSysTray(object):
             self.__uiController.commandSettingsClipboardCacheSystrayMode(action)
 
         # Note: theme must be loaded before BCSysTray is instancied (otherwise no icon will be set)
-        self.__buliIcon = buildIcon([(QPixmap(':/buli/buli-rounded-border'), QIcon.Normal)])
+        self.__buliIcon = buildIcon([(QPixmap(':/bc/images/normal/buli-powered-64x64-rounded-border'), QIcon.Normal)])
         self.__tray = QSystemTrayIcon(self.__buliIcon, Krita.instance())
         self.__visibleMode = 1 # when active
         self.__uiController = uiController

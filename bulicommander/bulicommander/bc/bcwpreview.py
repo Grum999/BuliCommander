@@ -41,13 +41,13 @@ from PyQt5.QtWidgets import (
         QWidget
     )
 
-
-from .bcutils import (
+from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.utils import (
         Debug,
         loadXmlUi
     )
 
-from ..pktk.pktk import (
+from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
         EInvalidStatus
@@ -77,9 +77,12 @@ class BCWPreview(QWidget):
         self.__maxAnimatedFrame = 0
         self.__imgReaderAnimated = None
 
+        self.__lblNoPreviewPixmap=None
+        self.__lblNoPreviewResizeEventOrigin=self.lblNoPreview.resizeEvent
+        self.lblNoPreview.resizeEvent=self.__lblNoPreviewResizeEvent
+
         # Allow zooming with right mouse button.
         # Drag for zoom box, doubleclick to view full image.
-        self.gvPreview.setCacheMode(QGraphicsView.CacheBackground)
         self.gvPreview.zoomChanged.connect(self.__zoomChanged)
         self.hsAnimatedFrameNumber.valueChanged.connect(self.__animatedFrameChange)
         self.tbPlayPause.clicked.connect(self.__playPauseAnimation)
@@ -90,14 +93,26 @@ class BCWPreview(QWidget):
     def __zoomChanged(self, value):
         self.lblPreviewZoom.setText(f"View at {value:.2f}%")
 
+    def __lblNoPreviewResizeEvent(self, event):
+        """Resize pixmap when label is resized"""
+        self.__lblNoPreviewResizeEventOrigin(event)
+
+        if self.__lblNoPreviewPixmap:
+            if event.size().width() > self.__lblNoPreviewPixmap.width() and event.size().height() > self.__lblNoPreviewPixmap.height():
+                self.lblNoPreview.setPixmap(self.__lblNoPreviewPixmap)
+            else:
+                self.lblNoPreview.setPixmap(self.__lblNoPreviewPixmap.scaled(event.size().width(), event.size().height(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
     def hidePreview(self, msg=None):
         """Hide preview and display message"""
         if msg is None:
+            self.__lblNoPreviewPixmap=None
             self.lblNoPreview.setText("No image selected")
         elif isinstance(msg, str):
+            self.__lblNoPreviewPixmap=None
             self.lblNoPreview.setText(msg)
         else:
+            self.__lblNoPreviewPixmap=msg
             self.lblNoPreview.setPixmap(msg)
 
         self.swPreview.setCurrentIndex(1)
@@ -118,7 +133,7 @@ class BCWPreview(QWidget):
     def __animatedFrameChange(self, value):
         """Slider for animated frame has been moved"""
         self.__currentAnimatedFrame = value
-        nbZ=len(str(self.__maxAnimatedFrame))
+        nbZ=len(f"{self.__maxAnimatedFrame}")
         self.lblAnimatedFrameNumber.setText(f'Frame {self.__currentAnimatedFrame:>0{nbZ}}/{self.__maxAnimatedFrame} ')
 
         if not self.__imgReaderAnimated is None:
@@ -132,17 +147,17 @@ class BCWPreview(QWidget):
         if not self.__imgReaderAnimated is None:
             if self.__imgReaderAnimated.state() == QMovie.Running:
                 self.__imgReaderAnimated.setPaused(True)
-                self.tbPlayPause.setIcon(QIcon(":/images/play"))
+                self.tbPlayPause.setIcon(buildIcon("pktk:play"))
                 self.__imgReaderAnimated.frameChanged.disconnect(self.setCurrentAnimatedFrame)
             elif self.__imgReaderAnimated.state() == QMovie.Paused:
                 self.__imgReaderAnimated.frameChanged.connect(self.setCurrentAnimatedFrame)
                 self.__imgReaderAnimated.setPaused(False)
-                self.tbPlayPause.setIcon(QIcon(":/images/pause"))
+                self.tbPlayPause.setIcon(buildIcon("pktk:pause"))
             else:
                 # not running
                 self.__imgReaderAnimated.frameChanged.connect(self.setCurrentAnimatedFrame)
                 self.__imgReaderAnimated.start()
-                self.tbPlayPause.setIcon(QIcon(":/images/pause"))
+                self.tbPlayPause.setIcon(buildIcon("pktk:pause"))
 
 
     def hideAnimatedFrames(self):
@@ -161,7 +176,7 @@ class BCWPreview(QWidget):
             self.__imgReaderAnimated = QMovie(fileName)
             self.__imgReaderAnimated.setCacheMode(QMovie.CacheAll)
             self.__maxAnimatedFrame=maxAnimatedFrames
-            self.tbPlayPause.setIcon(QIcon(":/images/play"))
+            self.tbPlayPause.setIcon(buildIcon("pktk:play"))
             self.wAnimated.setVisible(True)
             self.hsAnimatedFrameNumber.setMaximum(self.__maxAnimatedFrame)
             self.hsAnimatedFrameNumber.setValue(1)

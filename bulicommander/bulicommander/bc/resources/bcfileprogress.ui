@@ -49,7 +49,7 @@
      </property>
      <property name="font">
       <font>
-       <family>DejaVu Sans Mono</family>
+       <family>DejaVu Sans Mono, Consolas, Courier New</family>
        <pointsize>9</pointsize>
       </font>
      </property>

@@ -32,10 +32,8 @@
    </item>
    <item>
     <widget class="QTextEdit" name="teInfo">
-     <property name="font">
-      <font>
-       <family>DejaVu Sans Mono</family>
-      </font>
+     <property name="readOnly">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -125,7 +123,8 @@
          <string>OK</string>
         </property>
         <property name="icon">
-         <iconset theme="OK"/>
+         <iconset theme="OK">
+          <normaloff>.</normaloff>.</iconset>
         </property>
        </widget>
       </item>
