@@ -3387,16 +3387,18 @@ class NodeEditorNodeWidget(QWidget):
         super().__init_subclass__(**kwargs)
         NodeEditorNodeWidget.__CLASSES[cls.__name__]=cls
 
-    def __init__(self, scene, title, connectors=[], parent=None):
+    def __init__(self, scene, title, connectors=[], data={}, parent=None):
         super(NodeEditorNodeWidget, self).__init__(parent)
 
         self._rowHeight=self.fontMetrics().height()
+        self._data=data
 
         self.__node=NodeEditorNode(scene, title, connectors=connectors, widget=self)
         self.__node.updateOutputs()
 
         self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.setMinimumSize(self.calculateSize(f"XXX{title}XXX", 4))
+        self.deserialize(self._data)
 
     def calculateSize(self, text, numberOfRows, spacing=9):
         """Return a QSize for which:
