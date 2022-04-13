@@ -164,7 +164,7 @@ Here a list of main functionalities:
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.7.0b](https://github.com/Grum999/BuliCommander/releases/download/0.7.0b/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.7.1b](https://github.com/Grum999/BuliCommander/releases/download/0.7.1b/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
@@ -197,6 +197,10 @@ I think it should be Ok, but...
 ## Plugin's life
 
 ### What's new?
+_[2022-04-13] Version 0.7.1b_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.7.1b.md)*
+- Fix bug about thumbnail loading
+
+
 _[2022-04-06] Version 0.7.0b_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.7.0b.md)*
 - First *Beta* release!
 - A big work to get plugin fully compatible with Windows OS
