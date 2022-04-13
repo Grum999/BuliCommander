@@ -164,7 +164,7 @@ Here a list of main functionalities:
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.7.0b](https://github.com/Grum999/BuliCommander/releases/download/0.7.0b/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.7.1b](https://github.com/Grum999/BuliCommander/releases/download/0.7.1b/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
@@ -197,7 +197,11 @@ I think it should be Ok, but...
 ## Plugin's life
 
 ### What's new?
-_[2022-04-06] Version 0.7.0b_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.7.0b.md)*
+_[2022-04-13] Version 0.7.1b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.7.1b.md)*
+- Fix bug about thumbnail loading
+
+
+_[2022-04-06] Version 0.7.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.7.0b.md)*
 - First *Beta* release!
 - A big work to get plugin fully compatible with Windows OS
 - Implement *Search engine*
@@ -215,7 +219,7 @@ _[2022-04-06] Version 0.7.0b_ *[>> Show detailed release content <<](https://git
 - New recognized files format
 - Many (many-many) bugs fix
 
-_[2020-12-29] Version 0.6.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.6.0a.md)*
+_[2020-12-29] Version 0.6.0a_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.6.0a.md)*
 
 - Implement *Clipboard manager*
 - Implement tool *Copy to clipboard*
@@ -225,7 +229,7 @@ _[2020-12-29] Version 0.6.0a_ *[>> Show detailed release content <<](https://git
 - Fix bug - *Active panel not highlighted*
 
 
-_[2020-12-06] Version 0.5.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.5.0a.md)*
+_[2020-12-06] Version 0.5.0a_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.5.0a.md)*
 
 - Implement *Rename*
 - Implement tool *Convert files*
@@ -239,7 +243,7 @@ _[2020-12-06] Version 0.5.0a_ *[>> Show detailed release content <<](https://git
 - Fix bug - *Invalid font*
 - Fix bug - *Invalid key configuration*
 
-_[2020-11-01] Version 0.4.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.4.0a.md)*
+_[2020-11-01] Version 0.4.0a_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.4.0a.md)*
 
 - Implement *Auto close*
 - Implement *Auto open*
@@ -248,7 +252,7 @@ _[2020-11-01] Version 0.4.0a_ *[>> Show detailed release content <<](https://git
 - Improve notification system
 
 
-_[2020-09-27] Version 0.3.0a_ *[>>Show detailed release content<<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.3.0a.md)*
+_[2020-09-27] Version 0.3.0a_ *[>>Show detailed release content<<](./releases-notes/RELEASE-0.3.0a.md)*
 
 - Implement progress bar on background thumbnail load
 - Implement progress bar on directory file content analysis
@@ -259,7 +263,7 @@ _[2020-09-27] Version 0.3.0a_ *[>>Show detailed release content<<](https://githu
 - Implement and improve copy/move/delete function
 
 
-_[2020-09-11] Version 0.2.0a_ *[>> Show detailed release content <<](https://github.com/Grum999/BuliCommander/blob/master/releases-notes/RELEASE-0.2.0a.md)*
+_[2020-09-11] Version 0.2.0a_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.2.0a.md)*
 
 - ORA file preview use (if exists) merged image preview instead of thumbnail
 - Add BACKUP files list linked to a file

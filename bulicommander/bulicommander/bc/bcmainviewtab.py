@@ -447,6 +447,8 @@ class BCMainViewTab(QFrame):
 
         self.__filesImageNfoSizeUnit='mm'
 
+        self.__filesViewAsThumbnail=False
+
         self.__actionFilesApplyTabLayoutFull = QAction(buildIcon("pktk:dashboard_full"), i18n('Full mode'), self)
         self.__actionFilesApplyTabLayoutFull.setCheckable(True)
         self.__actionFilesApplyTabLayoutFull.setProperty('layout', BCMainViewTabFilesLayout.FULL)
@@ -1052,8 +1054,9 @@ class BCMainViewTab(QFrame):
             selection.select(position, position)
         self.treeViewFiles.selectionModel().select(selection, QItemSelectionModel.Select|QItemSelectionModel.Rows)
         self.__filesModelIgnoreSelectionSignals=False
-        self.treeViewFiles.setUpdatesEnabled(True)
-        self.listViewFiles.setUpdatesEnabled(True)
+
+        self.treeViewFiles.setUpdatesEnabled(self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV)
+        self.listViewFiles.setUpdatesEnabled(self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_LV)
         self.__filesSelectionChanged()
         self.__filesUpdate()
 
@@ -2577,6 +2580,11 @@ class BCMainViewTab(QFrame):
 
         self.stackFiles.setCurrentIndex(mode)
 
+        self.treeViewFiles.setUpdatesEnabled(self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV)
+        self.listViewFiles.setUpdatesEnabled(self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_LV)
+
+        self.__filesUpdateThumbnailView()
+
         if mode==BCMainViewTab.VIEWMODE_TV:
             self.__actionFilesApplyIconSize.slider().setMinimum(0)
             self.__actionFilesApplyIconSize.slider().setMaximum(8)
@@ -2591,6 +2599,26 @@ class BCMainViewTab(QFrame):
             self.__actionFilesApplyTabLayoutViewLv.setChecked(True)
             if self.treeViewFiles.hasFocus():
                 self.listViewFiles.setFocus()
+
+
+    def __filesUpdateThumbnailView(self):
+        """Update thumbnail view for TV/LV according to current user choice and
+        current visible view (list or grid)
+        """
+        if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+            # always display thumbnails for grid view
+            self.__filesModelTv.setIconAsThumbnail(self.filesViewThumbnail())
+            self.treeViewFiles.setViewThumbnail(self.filesViewThumbnail())
+            # deactivate thumbnail if lv is not active
+            self.__filesModelLv.setIconAsThumbnail(False)
+            self.listViewFiles.setViewThumbnail(False)
+        else:
+            # always display thumbnails for grid view
+            self.__filesModelLv.setIconAsThumbnail(True)
+            self.listViewFiles.setViewThumbnail(True)
+            # deactivate thumbnail if tv is not active
+            self.__filesModelTv.setIconAsThumbnail(False)
+            self.treeViewFiles.setViewThumbnail(False)
 
 
     # -- PRIVATE CLIPBOARD -----------------------------------------------------
@@ -3544,12 +3572,14 @@ class BCMainViewTab(QFrame):
 
     def filesViewThumbnail(self):
         """Return if current view display thumbnails"""
-        return self.treeViewFiles.viewThumbnail()
+        return self.__filesViewAsThumbnail
 
 
     def setFilesViewThumbnail(self, value=None):
         """Set current view with thumbnail or not"""
-        self.treeViewFiles.setViewThumbnail(value)
+        if isinstance(value, bool) and value!=self.__filesViewAsThumbnail:
+            self.__filesViewAsThumbnail=value
+            self.__filesUpdateThumbnailView()
 
 
     def filesSelected(self):
@@ -3710,6 +3740,7 @@ class BCMainViewTab(QFrame):
                 # at least one item can be pasted as reference image
                 return True
         return False
+
 
     # -- PUBLIC CLIPBOARD ----------------------------------------------------------
 

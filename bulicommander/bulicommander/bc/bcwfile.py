@@ -521,6 +521,7 @@ class BCFileModel(QAbstractTableModel):
         """Return if there's currently an asynchronous thumbnail loading process"""
         return self.__updatingIcons != BCFileModel.__STATUS_ICON_LOADED
 
+
 class BCViewFilesTv(QTreeView):
     """Tree view files"""
     focused = Signal()
@@ -1093,6 +1094,17 @@ class BCViewFilesLv(QListView):
             self.__proxyModel.setFilterWildcard(filter)
 
         self.__filesFilter = filter
+
+    def viewThumbnail(self):
+        """Return current view mode (list/icon)"""
+        return self.__model.iconAsThumbnail()
+
+    def setViewThumbnail(self, value):
+        """Set current view mode"""
+        if value is None or not isinstance(value, bool):
+            value = False
+
+        self.__model.setIconAsThumbnail(value)
 
     def columnsVisibility(self):
         """Return list of columns visibility"""
