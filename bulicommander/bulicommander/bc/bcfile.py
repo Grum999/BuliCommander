@@ -6283,6 +6283,8 @@ class BCFileList(QObject):
     STEPEXECUTED_FINISHED_OUTPUT =   0b0000000010000010
 
     STEPEXECUTED_CANCEL =            0b0000000100000000      # execution has been cancelled
+    STEPEXECUTED_UPDATERESET =       0b0000001000000000      # emit resultsUpdatedReset() during searchExecute
+    STEPEXECUTED_UPDATESORT =        0b0000010000000000      # emit resultsUpdatedSort() during searchExecute
 
     CANCELLED_SEARCH = -1
 
@@ -7039,7 +7041,7 @@ class BCFileList(QObject):
             self.__progressFilesTracker=0
         else:
             self.__progressFilesPctThreshold=0
-        self.sortResults(None, False)
+        self.sortResults(None, (BCFileList.STEPEXECUTED_UPDATESORT in signals))
         Stopwatch.stop('BCFileList.execute.06-sort')
         if BCFileList.STEPEXECUTED_SORT_RESULTS in signals:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("BCFileList.execute.06-sort")))
@@ -7059,7 +7061,8 @@ class BCFileList(QObject):
 
         self.__invalidated = False
 
-        self.resultsUpdatedReset.emit()
+        if BCFileList.STEPEXECUTED_UPDATERESET in signals:
+            self.resultsUpdatedReset.emit()
 
         return nb
 
