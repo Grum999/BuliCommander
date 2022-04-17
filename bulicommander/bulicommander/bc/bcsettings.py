@@ -44,6 +44,7 @@ from .bcfile import (
         BCFile,
         BCFileCache
     )
+from .bcwfile import BCViewFilesLv
 
 from .bcwpathbar import BCWPathBar
 from .bcsystray import BCSysTray
@@ -64,6 +65,7 @@ from bulicommander.pktk.widgets.wiodialog import (
                         WDialogMessage,
                         WDialogBooleanInput
                     )
+from bulicommander.pktk.widgets.worderedlist import OrderedItem
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -114,6 +116,10 @@ class BCSettingsKey(SettingsKey):
     CONFIG_FILES_NAVBAR_BUTTONS_BACK =                       'config.files.navbar.buttons.back'
     CONFIG_FILES_NAVBAR_BUTTONS_UP =                         'config.files.navbar.buttons.up'
     CONFIG_FILES_NAVBAR_BUTTONS_QUICKFILTER =                'config.files.navbar.buttons.quickFilter'
+
+    CONFIG_PANELVIEW_FILES_GRIDINFO_OVERMINSIZE =            'config.panelView.files.gridInfo.overModeMinIconSize'
+    CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS =                 'config.panelView.files.gridInfo.fields'
+    CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT =                 'config.panelView.files.gridInfo.layout'
 
     CONFIG_CLIPBOARD_CACHE_MODE_GENERAL =                    'config.clipboard.cache.mode.general'
     CONFIG_CLIPBOARD_CACHE_MODE_SYSTRAY =                    'config.clipboard.cache.mode.systray'
@@ -462,6 +468,10 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_BACK,                    True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_UP,                      True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_QUICKFILTER,             True,                       SettingsFmt(bool)),
+
+            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_OVERMINSIZE,         2,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
+            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT,              0,                          SettingsFmt(int, [0,1,2,3])),
+            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS,              [2],                        SettingsFmt(list, [2,5,7,10,11])), # if list is changed, report change in BCViewFilesLv class
 
             SettingsRule(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE,                             2,                          SettingsFmt(int, [0,1,2,3])),
 
@@ -858,8 +868,10 @@ class BCSettingsDialogBox(QDialog):
     CATEGORY_GENERAL = 0
     CATEGORY_NAVIGATION = 1
     CATEGORY_IMAGES = 2
-    CATEGORY_CLIPBOARD = 3
-    CATEGORY_CACHE = 4
+    CATEGORY_FILES = 3
+    CATEGORY_CLIPBOARD = 4
+    CATEGORY_CACHE = 5
+
 
     def __init__(self, title, uicontroller, parent=None):
         super(BCSettingsDialogBox, self).__init__(parent)
@@ -878,6 +890,8 @@ class BCSettingsDialogBox(QDialog):
         self.__itemCatNavigation.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_NAVIGATION)
         self.__itemCatImageFiles = QListWidgetItem(buildIcon("pktk:image"), i18n("Image files"))
         self.__itemCatImageFiles.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_IMAGES)
+        self.__itemCatFiles = QListWidgetItem(buildIcon("pktk:file_copy"), i18n("Files"))
+        self.__itemCatFiles.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_FILES)
         self.__itemCatClipboard = QListWidgetItem(buildIcon("pktk:clipboard"), i18n("Clipboard"))
         self.__itemCatClipboard.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CLIPBOARD)
         self.__itemCatCachedData = QListWidgetItem(buildIcon("pktk:cache_refresh"), i18n("Cached data"))
@@ -946,6 +960,7 @@ class BCSettingsDialogBox(QDialog):
         self.lvCategory.addItem(self.__itemCatGeneral)
         self.lvCategory.addItem(self.__itemCatNavigation)
         self.lvCategory.addItem(self.__itemCatImageFiles)
+        self.lvCategory.addItem(self.__itemCatFiles)
         self.lvCategory.addItem(self.__itemCatClipboard)
         self.lvCategory.addItem(self.__itemCatCachedData)
         self.__setCategory(BCSettingsDialogBox.CATEGORY_GENERAL)
@@ -1075,6 +1090,39 @@ class BCSettingsDialogBox(QDialog):
         self.cbCCAutomaticUrlDownload.setChecked(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_URL_AUTOLOAD))
         self.cbCCUsePersistent.setChecked(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_PERSISTENT))
 
+        # --- Panel files Category -----------------------------------------------------
+        value = BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT)
+        if value == BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE:
+            self.rbCFNfoGridNone.setChecked(True)
+        elif value == BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER:
+            self.rbCFNfoGridOver.setChecked(True)
+        elif value == BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM:
+            self.rbCFNfoGridBottom.setChecked(True)
+        elif value == BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT:
+            self.rbCFNfoGridRight.setChecked(True)
+
+        cpvGridFields={
+                2:  OrderedItem(i18n('File name'), 2, True),
+                5:  OrderedItem(i18n('Image format'), 5, True),
+                7:  OrderedItem(i18n('File date'), 7, True),
+                10: OrderedItem(i18n('File size'), 10, True),
+                11: OrderedItem(i18n('Image dimension'), 11, True)
+            }
+
+        gridFieldsIndex=BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS)
+        gridFields=[cpvGridFields[index] for index in gridFieldsIndex]
+        for index in [2, 7, 10, 5, 11]:
+            item=cpvGridFields[index]
+            if not index in gridFieldsIndex:
+                item.setCheckState(False)
+                gridFields.append(item)
+
+        self.lwCFNfoGridFields.clear()
+        self.lwCFNfoGridFields.setSortOptionAvailable(False)
+        self.lwCFNfoGridFields.setCheckOptionAvailable(True)
+        self.lwCFNfoGridFields.setReorderOptionAvailable(True)
+        self.lwCFNfoGridFields.addItems(gridFields)
+
 
     def __applySettings(self):
         """Apply current settings"""
@@ -1163,6 +1211,18 @@ class BCSettingsDialogBox(QDialog):
         self.__uiController.commandSettingsClipboardCachePersistent(self.cbCCUsePersistent.isChecked())
         self.__uiController.commandSettingsClipboardUrlAutomaticDownload(self.cbCCAutomaticUrlDownload.isChecked())
         self.__uiController.commandSettingsClipboardUrlParseTextHtml(self.cbCCParseTextHtml.isChecked())
+
+        # --- Panel files Category -----------------------------------------------------
+        if self.rbCFNfoGridNone.isChecked():
+            self.__uiController.commandSettingsFilesNfoGridMode(BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE)
+        elif self.rbCFNfoGridOver.isChecked():
+            self.__uiController.commandSettingsFilesNfoGridMode(BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER)
+        elif self.rbCFNfoGridBottom.isChecked():
+            self.__uiController.commandSettingsFilesNfoGridMode(BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM)
+        elif self.rbCFNfoGridRight.isChecked():
+            self.__uiController.commandSettingsFilesNfoGridMode(BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT)
+
+        self.__uiController.commandSettingsFilesNfoGridPropertiesFields([item.value() for item in self.lwCFNfoGridFields.items()])
 
 
     def __replaceOpenDbAlert(self, checked):

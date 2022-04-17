@@ -80,7 +80,7 @@
      <item>
       <widget class="QStackedWidget" name="swCatPages">
        <property name="currentIndex">
-        <number>0</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="pageCatGeneral">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -213,7 +213,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap>:/buli/buli-rounded-border</pixmap>
+                <pixmap resource="color_icons.qrc">:/bc/images/normal/buli-powered-64x64-rounded-border</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
@@ -449,8 +449,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>518</width>
-              <height>716</height>
+              <width>980</width>
+              <height>784</height>
              </rect>
             </property>
             <layout class="QFormLayout" name="formLayout_4">
@@ -890,7 +890,7 @@
                 <string>The @home directory refers to user defined directory</string>
                </property>
                <property name="text">
-                <string>User &amp;defined</string>
+                <string>User defi&amp;ned</string>
                </property>
                <attribute name="buttonGroup">
                 <string notr="true">buttonGroupNavHomeDir</string>
@@ -1000,7 +1000,7 @@
               <string>Open original file in Krita</string>
              </property>
              <property name="text">
-              <string>Open &amp;document</string>
+              <string>Ope&amp;n document</string>
              </property>
              <property name="checked">
               <bool>true</bool>
@@ -1144,6 +1144,179 @@
             </widget>
            </item>
           </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="pageCatFiles">
+        <layout class="QHBoxLayout" name="horizontalLayout_10">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QScrollArea" name="scrollArea_3">
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOff</enum>
+           </property>
+           <property name="widgetResizable">
+            <bool>true</bool>
+           </property>
+           <widget class="QWidget" name="scrollAreaWidgetContents_3">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>980</width>
+              <height>784</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_4">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="2" column="0">
+              <widget class="QRadioButton" name="rbCFNfoGridNone">
+               <property name="toolTip">
+                <string>No informations will be displayed for thumbnails</string>
+               </property>
+               <property name="text">
+                <string>&amp;None</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupPanGridView</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QRadioButton" name="rbCFNfoGridBottom">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Informations will be displayed under thumbnails&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Bo&amp;ttom side</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupPanGridView</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QRadioButton" name="rbCFNfoGridOver">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Informations will be displayed over thumbnails&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;Note: &lt;/span&gt;&lt;/p&gt;&lt;p&gt;As this mode is useless for smaller thumbnails view (64pixels and 96pixels thumbnails size), when choosing this mode nothing is displayed for small thumbnails size&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Over</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupPanGridView</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="8" column="0">
+              <spacer name="verticalSpacer_4">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_27">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: palette(light);padding: 6;</string>
+               </property>
+               <property name="text">
+                <string>Grid view</string>
+               </property>
+               <property name="margin">
+                <number>4</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_28">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define which and how files properties information are displayed in Grid view mode&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Visible file properties location</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QRadioButton" name="rbCFNfoGridRight">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Informations will be displayed to right side of thumbnails&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Right side</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupPanGridView</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="6" column="0">
+              <widget class="QLabel" name="label_29">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>Visible file properties to display</string>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="0">
+              <widget class="WOrderedList" name="lwCFNfoGridFields"/>
+             </item>
+            </layout>
+           </widget>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -1651,9 +1824,15 @@
    <header>bulicommander.bc.bcwpathbar</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>WOrderedList</class>
+   <extends>QListWidget</extends>
+   <header>bulicommander.pktk.widgets.worderedlist</header>
+  </customwidget>
  </customwidgets>
  <resources>
   <include location="../../pktk/resources/svg/dark_icons.qrc"/>
+  <include location="color_icons.qrc"/>
   <include location="../../pktk/resources/svg/light_icons.qrc"/>
  </resources>
  <connections>
@@ -1755,11 +1934,12 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="buttonGroupImgDefaultOther"/>
+  <buttongroup name="buttonGroupGenSysTray"/>
+  <buttongroup name="buttonGroupImgDefaultKrita"/>
+  <buttongroup name="buttonGroupNavHomeDir"/>
   <buttongroup name="buttonGroupClpDefaultAction"/>
   <buttongroup name="buttonGroupClpMode"/>
-  <buttongroup name="buttonGroupImgDefaultKrita"/>
-  <buttongroup name="buttonGroupGenSysTray"/>
-  <buttongroup name="buttonGroupNavHomeDir"/>
-  <buttongroup name="buttonGroupImgDefaultOther"/>
+  <buttongroup name="buttonGroupPanGridView"/>
  </buttongroups>
 </ui>

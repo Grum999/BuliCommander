@@ -285,6 +285,10 @@ class BCUIController(QObject):
         self.commandInfoToClipBoardMaxWidthActive(BCSettings.get(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE))
         self.commandInfoToClipBoardMinWidthActive(BCSettings.get(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH_ACTIVE))
 
+        self.commandSettingsFilesNfoGridMode(BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT))
+        self.commandSettingsFilesNfoGridPropertiesFields(BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS))
+        self.commandSettingsFilesNfoGridOverMinSize(BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_OVERMINSIZE))
+
         self.commandSettingsClipboardDefaultAction(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION))
         self.commandSettingsClipboardCacheMode(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_GENERAL))
         self.commandSettingsClipboardCacheMaxSize(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MAXISZE))
@@ -2464,6 +2468,33 @@ class BCUIController(QObject):
         BCSettings.set(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_QUICKFILTER, visible)
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesShowQuickFilter(visible)
+
+    def commandSettingsFilesNfoGridMode(self, value=None):
+        """Set information grid mode"""
+        if value is None:
+            return BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT)
+        else:
+            BCSettings.set(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT, value)
+            for panelId in self.__window.panels:
+                self.__window.panels[panelId].setFilesGridNfoLayout(value)
+
+    def commandSettingsFilesNfoGridPropertiesFields(self, value=None):
+        """Set information grid properties"""
+        if value is None:
+            return BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS)
+        else:
+            BCSettings.set(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS, value)
+            for panelId in self.__window.panels:
+                self.__window.panels[panelId].setFilesGridNfoFieds(value)
+
+    def commandSettingsFilesNfoGridOverMinSize(self, value=None):
+        """Set information grid properties"""
+        if value is None:
+            return BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_OVERMINSIZE)
+        else:
+            BCSettings.set(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_OVERMINSIZE, value)
+            for panelId in self.__window.panels:
+                self.__window.panels[panelId].setFilesGridNfoOverMinSize(value)
 
     def commandInfoToClipBoardBorder(self, border=TextTableSettingsText.BORDER_DOUBLE):
         """Set border for information panel content to clipboard"""

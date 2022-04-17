@@ -3742,6 +3742,36 @@ class BCMainViewTab(QFrame):
         return False
 
 
+    def filesGridNfoLayout(self, value):
+        """Return  information grid mode"""
+        return self.listViewFiles.gridNfoLayout()
+
+
+    def setFilesGridNfoLayout(self, value):
+        """Set information grid mode"""
+        self.listViewFiles.setGridNfoLayout(value)
+
+
+    def filesGridNfoFields(self, value):
+        """Return  information grid fields"""
+        return self.listViewFiles.gridNfoLayout()
+
+
+    def setFilesGridNfoFieds(self, value):
+        """Set information grid fields"""
+        self.listViewFiles.setGridNfoFields(value)
+
+
+    def filesGridNfoOverMinSize(self, value):
+        """Return information grid over minimum size index"""
+        return self.listViewFiles.gridNfoOverMinSize()
+
+
+    def setFilesGridNfoOverMinSize(self, value):
+        """Set information grid over minimum size index"""
+        self.listViewFiles.setGridNfoOverMinSize(value)
+
+
     # -- PUBLIC CLIPBOARD ----------------------------------------------------------
 
     def clipboardRefresh(self):

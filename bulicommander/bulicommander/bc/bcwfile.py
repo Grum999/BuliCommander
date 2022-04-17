@@ -116,6 +116,7 @@ class BCFileModel(QAbstractTableModel):
     ROLE_ICON = Qt.UserRole + 1
     ROLE_FILE = Qt.UserRole + 2
     ROLE_FULLNFO = Qt.UserRole + 3
+    ROLE_GRIDNFO = Qt.UserRole + 1000
 
     __STATUS_READY = 0
     __STATUS_UPDATING = 1
@@ -427,6 +428,10 @@ class BCFileModel(QAbstractTableModel):
             buildNfoFileCache(file.uuid())
 
             return self.__fileNfoCache[file.uuid()]
+        elif role==(BCFileModel.ROLE_GRIDNFO + BCFileModel.COLNUM_FILE_NAME):
+            return self.__getValueForColumn(file, BCFileModel.COLNUM_FILE_NAME)
+        elif role>=BCFileModel.ROLE_GRIDNFO:
+            return self.__getValueForColumn(file, role - BCFileModel.ROLE_GRIDNFO)
 
         return None
 
@@ -959,6 +964,11 @@ class BCViewFilesLv(QListView):
     focused = Signal()
     keyPressed = Signal(int)
 
+    OPTION_LAYOUT_GRIDINFO_NONE = 0
+    OPTION_LAYOUT_GRIDINFO_OVER = 1
+    OPTION_LAYOUT_GRIDINFO_BOTTOM = 2
+    OPTION_LAYOUT_GRIDINFO_RIGHT = 3
+
     def __init__(self, parent=None):
         super(BCViewFilesLv, self).__init__(parent)
         self.__model = None
@@ -966,6 +976,10 @@ class BCViewFilesLv(QListView):
         self.__filesFilter = ''
         self.__iconSize = BCIconSizes([64, 96, 128, 192, 256, 512])
         self.__showPath = False
+
+        self.__gridNfoFields=[BCFileModel.COLNUM_FILE_NAME]
+        self.__gridNfoLayout=BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE
+        self.__gridNfoOverMinSize=2
 
         self.__visibleColumns=[v for v in BCFileModel.DEFAULT_COLUMN_VISIBILITY]
         self.__positionColumns=[v for v in range(BCFileModel.COLNUM_LAST+1)]
@@ -1136,21 +1150,110 @@ class BCViewFilesLv(QListView):
         else:
             raise EInvalidType("Given `value` must be a <bool>")
 
+    def gridNfoFields(self):
+        """Return current fields displayed as grid information"""
+        return self.__gridNfoFields
+
+    def setGridNfoFields(self, gridNfoFields):
+        """Set current fields displayed as grid information"""
+        if not isinstance(gridNfoFields, (list, tuple)):
+            raise EInvalidType("Given `gridNfoFields` must be a <list> or a <tuple>")
+
+        self.__gridNfoFields=[]
+        for field in gridNfoFields:
+            if isinstance(field, int) and (field in [BCFileModel.COLNUM_FILE_NAME,
+                                                     BCFileModel.COLNUM_FILE_FORMAT_SHORT,
+                                                     BCFileModel.COLNUM_FILE_DATETIME,
+                                                     BCFileModel.COLNUM_FILE_SIZE,
+                                                     BCFileModel.COLNUM_IMAGE_SIZE]):
+                self.__gridNfoFields.append(field)
+
+        if len(self.__gridNfoFields)==0:
+            self.__gridNfoFields=[BCFileModel.COLNUM_FILE_NAME]
+
+        self.__delegate.setNfoFields(self.__gridNfoFields)
+
+    def gridNfoLayout(self):
+        """Return current grid information layout"""
+        return self.__gridNfoLayout
+
+    def setGridNfoLayout(self, gridNfoLayout):
+        """Set current fields displayed as grid information"""
+        if not isinstance(gridNfoLayout, int):
+            raise EInvalidType("Given `gridNfoLayout` must be a <int>")
+        if not gridNfoLayout in (BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE,
+                                 BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER,
+                                 BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM,
+                                 BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT):
+            raise EInvalidValue("Given `gridNfoLayout` must be a valid value")
+
+        if self.__gridNfoLayout!=gridNfoLayout:
+            self.__gridNfoLayout=gridNfoLayout
+            self.__delegate.setNfoLayout(self.__gridNfoLayout)
+
+    def gridNfoOverMinSize(self):
+        """Return current grid over minimum size
+        (Under this size, no information is displayed)
+        """
+        return self.__gridNfoOverMinSize
+
+    def setGridNfoOverMinSize(self, value):
+        """Set current fields displayed as grid information"""
+        if not isinstance(value, int):
+            raise EInvalidType("Given `value` must be a <int>")
+
+        if value!=self.__gridNfoOverMinSize:
+            self.__gridNfoOverMinSize=value
+            self.__delegate.setNfoOverMinSize(self.__gridNfoOverMinSize)
+
 
 class BCViewFilesLvDelegate(QStyledItemDelegate):
     """Extend QStyledItemDelegate class to return properly cell size"""
 
     PADDING=6
 
+    ICON_SIZE_INDEX_FONT_FACTOR=[0.75, 0.75, 0.8, 0.9, 0.95, 1.0]
+
     def __init__(self, parent=None):
         """Constructor, nothingspecial"""
         super(BCViewFilesLvDelegate, self).__init__(parent)
+        self.__font=QFont(self.parent().font())
+        self.__fontMetrics=QFontMetrics(self.__font)
+        self.__iconSizeIndex=self.parent().iconSizeIndex()
+        self.__nfoOverMinSize=2
+        self.__nfoNbFields=1
+        self.__nfoFields=[2]
+        self.__nfoLayout=BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE
         self.__iconSizeThumb=QSize(64, 64)
         self.__iconSizeGrid=QSize(BCViewFilesLvDelegate.PADDING+64, BCViewFilesLvDelegate.PADDING+64)
+        self.__iconNfoRect=None
+
+        self.__fontPixelSize=self.__font.pixelSize()
+        self.__fontPointSizeF=self.__font.pointSizeF()
 
     def setIconSize(self, value):
         self.__iconSizeThumb=QSize(value, value)
-        self.__iconSizeGrid=QSize(BCViewFilesLvDelegate.PADDING+value, BCViewFilesLvDelegate.PADDING+value)
+        self.__iconSizeGrid=QSize(2*BCViewFilesLvDelegate.PADDING+value, 2*BCViewFilesLvDelegate.PADDING+value)
+        self.__iconSizeIndex=self.parent().iconSizeIndex()
+
+        if self.__fontPixelSize>-1:
+            self.__font.setPixelSize(round(self.__fontPixelSize * BCViewFilesLvDelegate.ICON_SIZE_INDEX_FONT_FACTOR[self.__iconSizeIndex]))
+        else:
+            self.__font.setPointSizeF(round(self.__fontPointSizeF * BCViewFilesLvDelegate.ICON_SIZE_INDEX_FONT_FACTOR[self.__iconSizeIndex]))
+
+        self.sizeHintChanged.emit(self.parent().model().createIndex(0, BCFileModel.COLNUM_ICON))
+
+    def setNfoLayout(self, value):
+        self.__nfoLayout=value
+        self.sizeHintChanged.emit(self.parent().model().createIndex(0, BCFileModel.COLNUM_ICON))
+
+    def setNfoOverMinSize(self, value):
+        self.__nfoOverMinSize=value
+        self.sizeHintChanged.emit(self.parent().model().createIndex(0, BCFileModel.COLNUM_ICON))
+
+    def setNfoFields(self, value):
+        self.__nfoNbFields=len(value)
+        self.__nfoFields=value
         self.sizeHintChanged.emit(self.parent().model().createIndex(0, BCFileModel.COLNUM_ICON))
 
     def paint(self, painter, option, index):
@@ -1163,27 +1266,54 @@ class BCViewFilesLvDelegate(QStyledItemDelegate):
             # icon as QIcon
             img=index.data(Qt.DecorationRole).pixmap(self.__iconSizeThumb)
 
-            position=QPoint(option.rect.left()+(option.rect.width()-img.width())//2, option.rect.top()+(option.rect.height()-img.height())//2)
+            position=QPoint(option.rect.left()+(self.__iconSizeGrid.width()-img.width())//2, option.rect.top()+(self.__iconSizeGrid.height()-img.height())//2)
 
+            isSelected=False
             color=None
             painter.setPen(QPen(Qt.NoPen))
             if (option.state & QStyle.State_Selected) == QStyle.State_Selected:
+                isSelected=True
                 if self.parent().hasFocus():
                     color=option.palette.color(QPalette.Active, QPalette.Highlight)
                 else:
                     color=option.palette.color(QPalette.Inactive, QPalette.Highlight)
 
-                painter.setBrush(QBrush(color))
+                textPen=QPen(option.palette.color(QPalette.HighlightedText))
             else:
-                painter.setBrush(QBrush(option.palette.color(QPalette.AlternateBase)))
+                color=option.palette.color(QPalette.AlternateBase)
+                textPen=QPen(option.palette.color(QPalette.Text))
 
+            textPenS=QPen(color)
+            painter.setBrush(QBrush(color))
             painter.drawRoundedRect(option.rect, 6, 6)
             painter.drawPixmap(position, img)
-            if not color is None:
+
+            if not self.__iconNfoRect is None:
+                textRect=QRect(option.rect.topLeft() + self.__iconNfoRect.topLeft(), self.__iconNfoRect.size())
+
+                if self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER:
+                    colorOver=QColor(color)
+                    colorOver.setAlphaF(0.65)
+                    painter.setBrush(QBrush(colorOver))
+                    painter.drawRect(textRect)
+
+            if isSelected:
                 # selected item
                 color.setAlphaF(0.25)
                 overRect=QRect(position, img.size())
                 painter.fillRect(overRect, color)
+
+            if not self.__iconNfoRect is None:
+                painter.setFont(self.__font);
+                painter.setPen(textPen)
+                for fieldIndex in self.__nfoFields:
+                    fieldText=self.__fontMetrics.elidedText(index.data(BCFileModel.ROLE_GRIDNFO + fieldIndex), Qt.ElideRight, textRect.width())
+                    if self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER:
+                        painter.setPen(textPenS)
+                        painter.drawText(QRect(textRect.topLeft()+QPoint(1,1), textRect.size()), Qt.AlignLeft|Qt.AlignTop, fieldText)
+                        painter.setPen(textPen)
+                    painter.drawText(textRect, Qt.AlignLeft|Qt.AlignTop, fieldText)
+                    textRect.setTop(textRect.top()+self.__fontMetrics.height())
 
             return
 
@@ -1192,6 +1322,23 @@ class BCViewFilesLvDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
         """Calculate size for items"""
         if index.column() == BCFileModel.COLNUM_ICON:
+            if self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE or self.parent().iconSizeIndex()<self.__nfoOverMinSize:
+                self.__iconNfoRect=None
+                return self.__iconSizeGrid
+
+            height=self.__nfoNbFields * self.__fontMetrics.height()
+            width=self.__iconSizeThumb.width()
+
+            if self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER:
+                self.__iconNfoRect=QRect(BCViewFilesLvDelegate.PADDING, self.__iconSizeGrid.height() - BCViewFilesLvDelegate.PADDING - height, width, height)
+                return self.__iconSizeGrid
+            elif self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM:
+                self.__iconNfoRect=QRect(BCViewFilesLvDelegate.PADDING, self.__iconSizeThumb.height()+2*BCViewFilesLvDelegate.PADDING, width, height)
+                return QSize(self.__iconSizeGrid.width(), self.__iconSizeGrid.height() + self.__iconNfoRect.height() + BCViewFilesLvDelegate.PADDING)
+            elif self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT:
+                self.__iconNfoRect=QRect(self.__iconSizeThumb.width() + 2 * BCViewFilesLvDelegate.PADDING, BCViewFilesLvDelegate.PADDING, width, height)
+                return QSize(self.__iconSizeThumb.width()*2+3*BCViewFilesLvDelegate.PADDING, self.__iconSizeGrid.height())
+
             return self.__iconSizeGrid
 
         return QStyledItemDelegate.sizeHint(self, option, index)
