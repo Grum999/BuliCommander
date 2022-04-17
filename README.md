@@ -164,7 +164,7 @@ Here a list of main functionalities:
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.7.1b](https://github.com/Grum999/BuliCommander/releases/download/0.7.1b/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.8.0b](https://github.com/Grum999/BuliCommander/releases/download/0.8.0b/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
@@ -197,9 +197,11 @@ I think it should be Ok, but...
 ## Plugin's life
 
 ### What's new?
+_[2022-XX-XX] Version 0.8.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.8.0b.md)*
+- Improve Grid View mode - *File/Image information*
+
 _[2022-04-13] Version 0.7.1b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.7.1b.md)*
 - Fix bug about thumbnail loading
-
 
 _[2022-04-06] Version 0.7.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.7.0b.md)*
 - First *Beta* release!
@@ -297,7 +299,6 @@ Probably still a lot... :-)
 Not able to define precisely in which order functionalities will be implemented, neither when, but here a list of what is currently expected for final *v1.0.0* version:
 - Improve styles (especially clear style as currently plugin is optimized for dark theme)
 - Improve breadcrumb for windows users (provide access to drives)
-- Improve grid view (add possibility for file/image information in grid)
 - Improve search engine UI (allows to resize nodes manually, context menu, copy/paste/duplicate, ...)
 - Add some file format support (TIF, CBZ)
 - Implement thumbnails generation with ICC profile taken in account
