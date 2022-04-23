@@ -44,7 +44,6 @@ from .bcfile import (
         BCFile,
         BCFileCache
     )
-from .bcwfile import BCViewFilesLv
 
 from .bcwpathbar import BCWPathBar
 from .bcsystray import BCSysTray
@@ -120,6 +119,8 @@ class BCSettingsKey(SettingsKey):
     CONFIG_PANELVIEW_FILES_GRIDINFO_OVERMINSIZE =            'config.panelView.files.gridInfo.overModeMinIconSize'
     CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS =                 'config.panelView.files.gridInfo.fields'
     CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT =                 'config.panelView.files.gridInfo.layout'
+
+    CONFIG_PANELVIEW_FILES_MARKERS_MOVETONEXT =              'config.panelView.files.markers.moveToNext'
 
     CONFIG_CLIPBOARD_CACHE_MODE_GENERAL =                    'config.clipboard.cache.mode.general'
     CONFIG_CLIPBOARD_CACHE_MODE_SYSTRAY =                    'config.clipboard.cache.mode.systray'
@@ -472,6 +473,7 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_OVERMINSIZE,         2,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
             SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT,              0,                          SettingsFmt(int, [0,1,2,3])),
             SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS,              [2],                        SettingsFmt(list, [2,5,7,10,11])), # if list is changed, report change in BCViewFilesLv class
+            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_MARKERS_MOVETONEXT,           True,                       SettingsFmt(bool)),
 
             SettingsRule(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE,                             2,                          SettingsFmt(int, [0,1,2,3])),
 
@@ -864,6 +866,7 @@ class BCSettings(Settings):
 
 class BCSettingsDialogBox(QDialog):
     """User interface fo settings"""
+    from .bcwfile import BCViewFilesLv
 
     CATEGORY_GENERAL = 0
     CATEGORY_NAVIGATION = 1
@@ -1092,13 +1095,13 @@ class BCSettingsDialogBox(QDialog):
 
         # --- Panel files Category -----------------------------------------------------
         value = BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT)
-        if value == BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE:
+        if value == BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE:
             self.rbCFNfoGridNone.setChecked(True)
-        elif value == BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER:
+        elif value == BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER:
             self.rbCFNfoGridOver.setChecked(True)
-        elif value == BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM:
+        elif value == BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM:
             self.rbCFNfoGridBottom.setChecked(True)
-        elif value == BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT:
+        elif value == BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT:
             self.rbCFNfoGridRight.setChecked(True)
 
         cpvGridFields={
@@ -1214,13 +1217,13 @@ class BCSettingsDialogBox(QDialog):
 
         # --- Panel files Category -----------------------------------------------------
         if self.rbCFNfoGridNone.isChecked():
-            self.__uiController.commandSettingsFilesNfoGridMode(BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE)
+            self.__uiController.commandSettingsFilesNfoGridMode(BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE)
         elif self.rbCFNfoGridOver.isChecked():
-            self.__uiController.commandSettingsFilesNfoGridMode(BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER)
+            self.__uiController.commandSettingsFilesNfoGridMode(BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER)
         elif self.rbCFNfoGridBottom.isChecked():
-            self.__uiController.commandSettingsFilesNfoGridMode(BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM)
+            self.__uiController.commandSettingsFilesNfoGridMode(BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM)
         elif self.rbCFNfoGridRight.isChecked():
-            self.__uiController.commandSettingsFilesNfoGridMode(BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT)
+            self.__uiController.commandSettingsFilesNfoGridMode(BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT)
 
         self.__uiController.commandSettingsFilesNfoGridPropertiesFields([item.value() for item in self.lwCFNfoGridFields.items()])
 

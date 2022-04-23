@@ -792,6 +792,7 @@ class BCUIController(QObject):
             self.__window.menuGo.menuAction().setVisible(True)
 
             selectionInfo = self.panel().filesSelected()
+            markedInfo = self.panel().filesMarked()
 
             oppositeTargetReady=self.panel(False).targetDirectoryReady()
 
@@ -823,9 +824,20 @@ class BCUIController(QObject):
             self.__window.actionFileMoveToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
             self.__window.actionFileDeleteNoConfirm.setEnabled(selectionInfo[3]>0)
 
-            self.__window.actionSelectAll.setEnabled(True)
-            self.__window.actionSelectNone.setEnabled(True)
-            self.__window.actionSelectInvert.setEnabled(True)
+            self.__window.actionMenuSelectAll.setEnabled(True)
+            self.__window.actionMenuSelectNone.setEnabled(True)
+            self.__window.actionMenuSelectInvert.setEnabled(True)
+            self.__window.actionMenuSelectMarked.setEnabled(markedInfo[0]>0)
+            self.__window.actionMenuSelectMarked.setVisible(True)
+
+            self.__window.actionMenuMarkUnmark.setEnabled(True)
+            self.__window.actionMenuMarkAll.setEnabled(True)
+            self.__window.actionMenuMarkNone.setEnabled(True)
+            self.__window.actionMenuMarkInvert.setEnabled(True)
+            self.__window.actionMenuMarkUnmark.setVisible(True)
+            self.__window.actionMenuMarkAll.setVisible(True)
+            self.__window.actionMenuMarkNone.setVisible(True)
+            self.__window.actionMenuMarkInvert.setVisible(True)
 
             self.__window.actionViewThumbnail.setEnabled(True)
             self.__window.actionViewShowImageFileOnly.setEnabled(True)
@@ -866,13 +878,25 @@ class BCUIController(QObject):
             self.__window.actionClipboardCheckContent.setVisible(not self.__clipboard.enabled())
 
             if self.__clipboard.length()==0:
-                self.__window.actionSelectAll.setEnabled(False)
-                self.__window.actionSelectNone.setEnabled(False)
-                self.__window.actionSelectInvert.setEnabled(False)
+                self.__window.actionMenuSelectAll.setEnabled(False)
+                self.__window.actionMenuSelectNone.setEnabled(False)
+                self.__window.actionMenuSelectInvert.setEnabled(False)
             else:
-                self.__window.actionSelectAll.setEnabled(True)
-                self.__window.actionSelectNone.setEnabled(True)
-                self.__window.actionSelectInvert.setEnabled(True)
+                self.__window.actionMenuSelectAll.setEnabled(True)
+                self.__window.actionMenuSelectNone.setEnabled(True)
+                self.__window.actionMenuSelectInvert.setEnabled(True)
+
+            self.__window.actionMenuSelectMarked.setEnabled(False)
+            self.__window.actionMenuSelectMarked.setVisible(False)
+
+            self.__window.actionMenuMarkUnmark.setVisible(False)
+            self.__window.actionMenuMarkAll.setVisible(False)
+            self.__window.actionMenuMarkNone.setVisible(False)
+            self.__window.actionMenuMarkInvert.setVisible(False)
+            self.__window.actionMenuMarkUnmark.setEnabled(False)
+            self.__window.actionMenuMarkAll.setEnabled(False)
+            self.__window.actionMenuMarkNone.setEnabled(False)
+            self.__window.actionMenuMarkInvert.setEnabled(False)
 
             if selectionInfo[1]==1:
                 # nb item selected(1)
@@ -985,9 +1009,21 @@ class BCUIController(QObject):
             self.__window.menuDocument.menuAction().setVisible(False)
             self.__window.menuGo.menuAction().setVisible(False)
 
-            self.__window.actionSelectAll.setEnabled(False)
-            self.__window.actionSelectNone.setEnabled(False)
-            self.__window.actionSelectInvert.setEnabled(False)
+            self.__window.actionMenuSelectAll.setEnabled(False)
+            self.__window.actionMenuSelectNone.setEnabled(False)
+            self.__window.actionMenuSelectInvert.setEnabled(False)
+            self.__window.actionMenuSelectMarked.setEnabled(False)
+            self.__window.actionMenuSelectMarked.setVisible(False)
+
+            self.__window.actionMenuMarkUnmark.setVisible(False)
+            self.__window.actionMenuMarkAll.setVisible(False)
+            self.__window.actionMenuMarkNone.setVisible(False)
+            self.__window.actionMenuMarkInvert.setVisible(False)
+            self.__window.actionMenuMarkUnmark.setEnabled(False)
+            self.__window.actionMenuMarkAll.setEnabled(False)
+            self.__window.actionMenuMarkNone.setEnabled(False)
+            self.__window.actionMenuMarkInvert.setEnabled(False)
+
 
             self.__window.actionViewThumbnail.setEnabled(False)
             self.__window.actionViewShowImageFileOnly.setEnabled(False)
@@ -1974,13 +2010,58 @@ class BCUIController(QObject):
         return self.__window.panels[panel].selectNone()
 
     def commandPanelSelectInvert(self, panel=None):
-        """Clear selection"""
+        """Invert selection"""
         if panel is None:
             panel=self.__window.highlightedPanel()
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].selectInvert()
+
+    def commandPanelSelectMarked(self, panel=None):
+        """Select marked item"""
+        if panel is None:
+            panel=self.__window.highlightedPanel()
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].selectMarked()
+
+    def commandPanelMarkUnmark(self, panel=None):
+        """mark/unmark current item"""
+        if panel is None:
+            panel=self.__window.highlightedPanel()
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].markUnmark()
+
+    def commandPanelMarkAll(self, panel=None):
+        """mark all items"""
+        if panel is None:
+            panel=self.__window.highlightedPanel()
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].markAll()
+
+    def commandPanelMarkNone(self, panel=None):
+        """unmark all items"""
+        if panel is None:
+            panel=self.__window.highlightedPanel()
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].markNone()
+
+    def commandPanelMarkInvert(self, panel=None):
+        """invert marked items"""
+        if panel is None:
+            panel=self.__window.highlightedPanel()
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].markInvert()
 
     def commandPanelFilterVisible(self, panel, visible=None):
         """Display the filter

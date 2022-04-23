@@ -37,7 +37,7 @@
     </property>
     <widget class="QMenu" name="menuOpen_file_as">
      <property name="title">
-      <string>Open file as</string>
+      <string>Open &amp;file as</string>
      </property>
      <property name="icon">
       <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
@@ -65,9 +65,15 @@
     <property name="title">
      <string>E&amp;dit</string>
     </property>
-    <addaction name="actionSelectAll"/>
-    <addaction name="actionSelectNone"/>
-    <addaction name="actionSelectInvert"/>
+    <addaction name="actionMenuSelectAll"/>
+    <addaction name="actionMenuSelectNone"/>
+    <addaction name="actionMenuSelectInvert"/>
+    <addaction name="actionMenuSelectMarked"/>
+    <addaction name="separator"/>
+    <addaction name="actionMenuMarkUnmark"/>
+    <addaction name="actionMenuMarkAll"/>
+    <addaction name="actionMenuMarkNone"/>
+    <addaction name="actionMenuMarkInvert"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -461,7 +467,7 @@
     <string>Ctrl+Shift+O</string>
    </property>
   </action>
-  <action name="actionSelectAll">
+  <action name="actionMenuSelectAll">
    <property name="icon">
     <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
      <normaloff>:/pktk/images/normal/select_all</normaloff>
@@ -480,7 +486,7 @@
     <string>Ctrl+A</string>
    </property>
   </action>
-  <action name="actionSelectNone">
+  <action name="actionMenuSelectNone">
    <property name="icon">
     <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
      <normaloff>:/pktk/images/normal/select_none</normaloff>
@@ -499,7 +505,7 @@
     <string>Ctrl+Shift+A</string>
    </property>
   </action>
-  <action name="actionSelectInvert">
+  <action name="actionMenuSelectInvert">
    <property name="icon">
     <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
      <normaloff>:/pktk/images/normal/select_invert</normaloff>
@@ -1173,7 +1179,7 @@
      <disabledoff>:/pktk/images/disabled/folder_open_layers</disabledoff>:/pktk/images/normal/folder_open_layers</iconset>
    </property>
    <property name="text">
-    <string>Open file as Layer</string>
+    <string>&amp;Open file as Layer</string>
    </property>
    <property name="toolTip">
     <string>Open file as raster Layer for bitmap images/as Vector layer for vector images</string>
@@ -1189,13 +1195,58 @@
      <disabledoff>:/pktk/images/disabled/folder_open_link</disabledoff>:/pktk/images/normal/folder_open_link</iconset>
    </property>
    <property name="text">
-    <string>Open file as File layer</string>
+    <string>Open &amp;file as File layer</string>
    </property>
    <property name="toolTip">
     <string>Open file as a File layer</string>
    </property>
    <property name="statusTip">
     <string>Open file as a File layer</string>
+   </property>
+  </action>
+  <action name="actionMenuMarkAll">
+   <property name="text">
+    <string>Mark all</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Space</string>
+   </property>
+  </action>
+  <action name="actionMenuMarkNone">
+   <property name="text">
+    <string>Mark none</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+Space</string>
+   </property>
+  </action>
+  <action name="actionMenuMarkInvert">
+   <property name="text">
+    <string>Invert marks</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+Space</string>
+   </property>
+  </action>
+  <action name="actionMenuMarkUnmark">
+   <property name="text">
+    <string>Mark/Unmark</string>
+   </property>
+   <property name="shortcut">
+    <string>Space</string>
+   </property>
+  </action>
+  <action name="actionUnmark">
+   <property name="text">
+    <string>Unmark</string>
+   </property>
+  </action>
+  <action name="actionMenuSelectMarked">
+   <property name="text">
+    <string>Select marked</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
    </property>
   </action>
  </widget>
