@@ -973,7 +973,7 @@
   <action name="actionClipboardSaveAs">
    <property name="icon">
     <iconset theme="document-save-as">
-     <normaloff>.</normaloff>.</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup</normaloff>../../../../../../../../../../../../.designer/backup</iconset>
    </property>
    <property name="text">
     <string>Copy to other panel</string>
@@ -1205,32 +1205,55 @@
    </property>
   </action>
   <action name="actionMenuMarkAll">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/marks_mark-all</normalon>
+     <disabledon>:/pktk/images/disabled/marks_mark-all</disabledon>
+    </iconset>
+   </property>
    <property name="text">
-    <string>Mark all</string>
+    <string>Ma&amp;rk all</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Space</string>
    </property>
   </action>
   <action name="actionMenuMarkNone">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/marks_unmark-all</normalon>
+     <disabledon>:/pktk/images/disabled/marks_unmark-all</disabledon>
+    </iconset>
+   </property>
    <property name="text">
-    <string>Mark none</string>
+    <string>Mar&amp;k none</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+Space</string>
    </property>
   </action>
   <action name="actionMenuMarkInvert">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/marks_mark-invert</normalon>
+     <disabledon>:/pktk/images/disabled/marks_mark-invert</disabledon>
+    </iconset>
+   </property>
    <property name="text">
-    <string>Invert marks</string>
+    <string>In&amp;vert marks</string>
    </property>
    <property name="shortcut">
     <string>Shift+Space</string>
    </property>
   </action>
   <action name="actionMenuMarkUnmark">
+   <property name="icon">
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/marks_mark-unmark</normaloff>
+     <disabledon>:/pktk/images/disabled/marks_mark-invert</disabledon>:/pktk/images/normal/marks_mark-unmark</iconset>
+   </property>
    <property name="text">
-    <string>Mark/Unmark</string>
+    <string>&amp;Mark/Unmark</string>
    </property>
    <property name="shortcut">
     <string>Space</string>
@@ -1242,8 +1265,13 @@
    </property>
   </action>
   <action name="actionMenuSelectMarked">
+   <property name="icon">
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/select_marked</normaloff>
+     <disabledon>:/pktk/images/disabled/select_marked</disabledon>:/pktk/images/normal/select_marked</iconset>
+   </property>
    <property name="text">
-    <string>Select marked</string>
+    <string>S&amp;elect marked</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+M</string>
