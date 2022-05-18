@@ -14,3 +14,46 @@ A grid view mode has been improved: it's now possible to define, through setting
 
 *Grid view mode: properties on "Bottom side" of thumbnails*
 ![File panel-grid mode Over](./../screenshots/r0-8-0b_files-gridview-bottom.jpeg)
+
+### Markers
+Markers are set to files and allows to prepare selections.
+
+#### Why markers?
+It's already possible to select files, so why markers? What's the difference?
+
+Selection in BuliCommander works as usually: it's possible to make multi-selection with <kbd>Shift</kbd> and <kbd>Ctrl</kbd> modifiers.
+
+But if you select a file without pressing a modifier key, selection is replaced by a new one: the selected file.
+It's the standard about how selections works within a list.
+
+Having to frequently made selection on hundred (and sometime thousand) of files, using keyboard <kbd>Up</kbd>/<kbd>Down</kbd> arrow keys, the standard selection system is not comfortable.
+
+So the markers.
+
+#### How to use markers?
+The menu *Edit* provides some new functionalities to work with markers:
+
+| Menu item | Shortcut | Function |
+| --- | --- | --- |
+| `Select marked` | <kbd>Ctrl</kbd>+<kbd>M</kbd> | Select all marked files |
+| `Mark/Unmark` | <kbd>Space</kbd> | Invert marked state of current item and select next item |
+| `Mark all` | <kbd>Ctrl</kbd>+<kbd>Space</kbd> | Mark all files |
+| `Mark none` | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> | Unmark all files |
+| `Invert marks` | <kbd>Shift</kbd>+<kbd>Space</kbd> | Invert marked state for all files |
+
+> Notes:
+> - Changing selection have no impact on marks
+> - Changing directory have no impact on marks (change directory and go back to a directory where some files have been marked, they're still here) during the session (marks are not kept when BuliCommander is closed)
+> - Marked file are for current panel only; if both panel are on the same directory, you can have different marked files
+> - When files are marked, current selected items are unchanged except for `Mark/Unmark` action
+
+Main usage (especially for me) is to walk through files in directory with <kbd>Up</kbd>/<kbd>Down</kbd> arrow keys and mark files I'm interested on.
+Once all files I'm interested on are marked, I made a selection and then can work on selected files.
+
+Marked files are highlighted by a small triangle in bottom/right side
+
+*A marked file in list view*
+![Marked file in listview](./../screenshots/r0-8-0b_files-listview-marked.jpeg)
+
+*A marked file in grid  view*
+![Marked file in gridview](./../screenshots/r0-8-0b_files-gridview-marked.jpeg)
