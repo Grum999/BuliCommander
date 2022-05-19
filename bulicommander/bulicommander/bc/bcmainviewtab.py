@@ -706,14 +706,33 @@ class BCMainViewTab(QFrame):
             self.__filesModelIgnoreSelectionSignals=False
             self.__filesSelectionChanged(selection)
 
+        def filesMarker_Changed():
+            # marker list has changed on treeViewFiles or listViewFiles
+            # need to synchronize markers according to current view mode
+            if self.__filesModelIgnoreSelectionSignals:
+                # currently doing some synchronization, avoid recursives calls
+                return
+
+            self.__filesModelIgnoreSelectionSignals=True
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                # markers changed on treeview, need to update listview selection
+                self.listViewFiles.setMarkers(self.treeViewFiles.markers())
+            else:
+                # markers changed on listview, need to update treeview selection
+                self.treeViewFiles.setMarkers(self.listViewFiles.markers())
+
+            self.__filesModelIgnoreSelectionSignals=False
+
         # -- files --
         self.__filesModelTv.iconStartLoad.connect(model_iconStartLoad)
         self.__filesModelTv.iconStopLoad.connect(self.__filesProgressStop)
         self.__filesModelTv.iconProcessed.connect(self.__filesProgressSetNext)
+        self.__filesModelTv.markersChanged.connect(filesMarker_Changed)
 
         self.__filesModelLv.iconStartLoad.connect(model_iconStartLoad)
         self.__filesModelLv.iconStopLoad.connect(self.__filesProgressStop)
         self.__filesModelLv.iconProcessed.connect(self.__filesProgressSetNext)
+        self.__filesModelLv.markersChanged.connect(filesMarker_Changed)
 
         # hide progress bar
         self.__filesProgressStop()
@@ -1420,10 +1439,17 @@ class BCMainViewTab(QFrame):
         self.pageFileNfoKraAbout.setUpdatesEnabled(False)
         self.pageFileNfoKraAuthor.setUpdatesEnabled(False)
 
-        # ------------------- !!!!! Here start the noodle spaghetti !!!!! -------------------
-        if self.__filesSelectedNbTotal == 1:
+        file=None
+        # todo: is unselect current, need to set file to last selected file
+        if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+            if self.treeViewFiles.currentIndex().isValid() and self.__filesSelectedNbTotal>0:
+                file=self.treeViewFiles.model().data(self.treeViewFiles.currentIndex(), BCFileModel.ROLE_FILE)
+        else:
+            if self.listViewFiles.currentIndex().isValid() and self.__filesSelectedNbTotal>0:
+                file=self.listViewFiles.model().data(self.listViewFiles.currentIndex(), BCFileModel.ROLE_FILE)
+
+        if not file is None:
             # ------------------------------ File ------------------------------
-            file = self.__filesSelected[0]
 
             self.lblPath.setText(file.path())
             self.lblPath.setToolTip(self.lblPath.text())
@@ -1902,10 +1928,7 @@ class BCMainViewTab(QFrame):
             self.twInfo.setTabEnabled(3, False)
             self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
 
-            if self.__filesSelectedNbTotal>1:
-                self.wFilesPreview.hidePreview("No preview for multiple selection")
-            else:
-                self.wFilesPreview.hidePreview("No image selected")
+            self.wFilesPreview.hidePreview("No image selected")
 
         # Enable page updates again
         self.pageFileNfoGeneric.setUpdatesEnabled(True)
@@ -2878,9 +2901,9 @@ class BCMainViewTab(QFrame):
         # Here, retrieve action from mainwindow Menu
 
         menuActions=[
-                self.__uiController.window().actionSelectAll,
-                self.__uiController.window().actionSelectNone,
-                self.__uiController.window().actionSelectInvert,
+                self.__uiController.window().actionMenuSelectAll,
+                self.__uiController.window().actionMenuSelectNone,
+                self.__uiController.window().actionMenuSelectInvert,
                 None,
                 self.__uiController.window().actionClipboardCheckContent,
                 None,
@@ -3092,6 +3115,51 @@ class BCMainViewTab(QFrame):
                 self.listViewFiles.invertSelection()
         elif self.tabActive()==BCMainViewTabTabs.CLIPBOARD:
             self.treeViewClipboard.invertSelection()
+
+
+    def selectMarked(self):
+        """Select all marked items in current tab"""
+        if self.tabActive()==BCMainViewTabTabs.FILES:
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.selectMarked()
+            else:
+                self.listViewFiles.selectMarked()
+
+
+    def markUnmark(self):
+        """mark/Unmark current item in current tab"""
+        if self.tabActive()==BCMainViewTabTabs.FILES:
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.markUnmark()
+            else:
+                self.listViewFiles.markUnmark()
+
+
+    def markAll(self):
+        """Mark all items in current tab"""
+        if self.tabActive()==BCMainViewTabTabs.FILES:
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.markAll()
+            else:
+                self.listViewFiles.markAll()
+
+
+    def markNone(self):
+        """Unmark all items in current tab"""
+        if self.tabActive()==BCMainViewTabTabs.FILES:
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.markNone()
+            else:
+                self.listViewFiles.markNone()
+
+
+    def markInvert(self):
+        """Invert marked items in current tab"""
+        if self.tabActive()==BCMainViewTabTabs.FILES:
+            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+                self.treeViewFiles.markInvert()
+            else:
+                self.listViewFiles.markInvert()
 
 
     # -- PUBLIC FILES ----------------------------------------------------------
@@ -3601,6 +3669,29 @@ class BCMainViewTab(QFrame):
                 self.__filesSelectedNbReadable,
                 self.__filesSelected,
                 self.__filesCurrentStats['sizeSelectedFiles'])
+
+
+    def filesMarked(self, full=False):
+        """Return information about marked files
+
+        Information is provided as a tuple:
+        [0] nb files
+        [1] file list
+
+        if full is True:
+            -> file list is returned as BCFile list, taking in account proxy model (sort, filter)
+
+        if full is False:
+            -> file list is returned as BCFile.uuid() list, without taking in account proxy model
+
+        """
+        # note: __filesModelTv and __filesModelLv are always synchronized for markers
+        #       then always check Tv, no need to check current active view
+        if full:
+            markers=self.treeViewFiles.markers()
+            return (len(markers), markers)
+        else:
+            return (self.__filesModelTv.nbMarkers(), self.__filesModelTv.markers())
 
 
     def files(self):

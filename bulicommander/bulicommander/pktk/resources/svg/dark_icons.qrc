@@ -119,6 +119,10 @@
     <file alias="list_view_icon">dark/32dp/list_view_icon.svg</file>
     <file alias="lock_locked">dark/32dp/lock_locked.svg</file>
     <file alias="lock_unlocked">dark/32dp/lock_unlocked.svg</file>
+    <file alias="marks_mark-all">dark/32dp/marks_mark-all.svg</file>
+    <file alias="marks_mark-invert">dark/32dp/marks_mark-invert.svg</file>
+    <file alias="marks_mark-unmark">dark/32dp/marks_mark-unmark.svg</file>
+    <file alias="marks_unmark-all">dark/32dp/marks_unmark-all.svg</file>
     <file alias="move_down">dark/32dp/move_down.svg</file>
     <file alias="move_down_last">dark/32dp/move_down_last.svg</file>
     <file alias="move_up">dark/32dp/move_up.svg</file>
@@ -152,6 +156,7 @@
     <file alias="search">dark/32dp/search.svg</file>
     <file alias="select_all">dark/32dp/select_all.svg</file>
     <file alias="select_invert">dark/32dp/select_invert.svg</file>
+    <file alias="select_marked">dark/32dp/select_marked.svg</file>
     <file alias="select_none">dark/32dp/select_none.svg</file>
     <file alias="sort_ascending">dark/32dp/sort_ascending.svg</file>
     <file alias="sort_bidirectional">dark/32dp/sort_bidirectional.svg</file>
@@ -298,6 +303,10 @@
     <file alias="list_view_icon">dark/32dp-disabled/list_view_icon.svg</file>
     <file alias="lock_locked">dark/32dp-disabled/lock_locked.svg</file>
     <file alias="lock_unlocked">dark/32dp-disabled/lock_unlocked.svg</file>
+    <file alias="marks_mark-all">dark/32dp-disabled/marks_mark-all.svg</file>
+    <file alias="marks_mark-invert">dark/32dp-disabled/marks_mark-invert.svg</file>
+    <file alias="marks_mark-unmark">dark/32dp-disabled/marks_mark-unmark.svg</file>
+    <file alias="marks_unmark-all">dark/32dp-disabled/marks_unmark-all.svg</file>
     <file alias="move_down">dark/32dp-disabled/move_down.svg</file>
     <file alias="move_down_last">dark/32dp-disabled/move_down_last.svg</file>
     <file alias="move_up">dark/32dp-disabled/move_up.svg</file>
@@ -331,6 +340,7 @@
     <file alias="search">dark/32dp-disabled/search.svg</file>
     <file alias="select_all">dark/32dp-disabled/select_all.svg</file>
     <file alias="select_invert">dark/32dp-disabled/select_invert.svg</file>
+    <file alias="select_marked">dark/32dp-disabled/select_marked.svg</file>
     <file alias="select_none">dark/32dp-disabled/select_none.svg</file>
     <file alias="sort_ascending">dark/32dp-disabled/sort_ascending.svg</file>
     <file alias="sort_bidirectional">dark/32dp-disabled/sort_bidirectional.svg</file>

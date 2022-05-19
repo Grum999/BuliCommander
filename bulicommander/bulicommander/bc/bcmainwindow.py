@@ -159,9 +159,15 @@ class BCMainWindow(QMainWindow):
         self.actionClipboardQuit.triggered.connect(self.__uiController.commandQuit)
 
         # Menu EDIT
-        self.actionSelectAll.triggered.connect(self.__menuSelectAll_clicked)
-        self.actionSelectNone.triggered.connect(self.__menuSelectNone_clicked)
-        self.actionSelectInvert.triggered.connect(self.__menuSelectInvert_clicked)
+        self.actionMenuSelectAll.triggered.connect(self.__menuEditSelectAll_clicked)
+        self.actionMenuSelectNone.triggered.connect(self.__menuEditSelectNone_clicked)
+        self.actionMenuSelectInvert.triggered.connect(self.__menuEditSelectInvert_clicked)
+        self.actionMenuSelectMarked.triggered.connect(self.__menuEditSelectMarked_clicked)
+
+        self.actionMenuMarkUnmark.triggered.connect(self.__menuEditMarkUnmark_clicked)
+        self.actionMenuMarkAll.triggered.connect(self.__menuEditMarkAll_clicked)
+        self.actionMenuMarkNone.triggered.connect(self.__menuEditMarkNone_clicked)
+        self.actionMenuMarkInvert.triggered.connect(self.__menuEditMarkInvert_clicked)
 
         # Menu GO
         self.menuGoHistory.aboutToShow.connect(self.__menuHistoryShow)
@@ -327,17 +333,37 @@ class BCMainWindow(QMainWindow):
         """Stop download for selected items"""
         self.__uiController.commandClipboardStopDownload()
 
-    def __menuSelectAll_clicked(self, action):
+    def __menuEditSelectAll_clicked(self, action):
         """Select all files"""
         self.__uiController.commandPanelSelectAll(self.__highlightedPanel)
 
-    def __menuSelectNone_clicked(self, action):
+    def __menuEditSelectNone_clicked(self, action):
         """Select no files"""
         self.__uiController.commandPanelSelectNone(self.__highlightedPanel)
 
-    def __menuSelectInvert_clicked(self, action):
+    def __menuEditSelectInvert_clicked(self, action):
         """Select inverted"""
         self.__uiController.commandPanelSelectInvert(self.__highlightedPanel)
+
+    def __menuEditSelectMarked_clicked(self, action):
+        """Select inverted"""
+        self.__uiController.commandPanelSelectMarked(self.__highlightedPanel)
+
+    def __menuEditMarkUnmark_clicked(self, action):
+        """Select all files"""
+        self.__uiController.commandPanelMarkUnmark(self.__highlightedPanel)
+
+    def __menuEditMarkAll_clicked(self, action):
+        """Select all files"""
+        self.__uiController.commandPanelMarkAll(self.__highlightedPanel)
+
+    def __menuEditMarkNone_clicked(self, action):
+        """Select no files"""
+        self.__uiController.commandPanelMarkNone(self.__highlightedPanel)
+
+    def __menuEditMarkInvert_clicked(self, action):
+        """Select inverted"""
+        self.__uiController.commandPanelMarkInvert(self.__highlightedPanel)
 
     def __menuGoHome_clicked(self, action):
         """Go to home directory"""
