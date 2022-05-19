@@ -1439,10 +1439,17 @@ class BCMainViewTab(QFrame):
         self.pageFileNfoKraAbout.setUpdatesEnabled(False)
         self.pageFileNfoKraAuthor.setUpdatesEnabled(False)
 
-        # ------------------- !!!!! Here start the noodle spaghetti !!!!! -------------------
-        if self.__filesSelectedNbTotal == 1:
+        file=None
+        # todo: is unselect current, need to set file to last selected file
+        if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
+            if self.treeViewFiles.currentIndex().isValid() and self.__filesSelectedNbTotal>0:
+                file=self.treeViewFiles.model().data(self.treeViewFiles.currentIndex(), BCFileModel.ROLE_FILE)
+        else:
+            if self.listViewFiles.currentIndex().isValid() and self.__filesSelectedNbTotal>0:
+                file=self.listViewFiles.model().data(self.listViewFiles.currentIndex(), BCFileModel.ROLE_FILE)
+
+        if not file is None:
             # ------------------------------ File ------------------------------
-            file = self.__filesSelected[0]
 
             self.lblPath.setText(file.path())
             self.lblPath.setToolTip(self.lblPath.text())
@@ -1921,10 +1928,7 @@ class BCMainViewTab(QFrame):
             self.twInfo.setTabEnabled(3, False)
             self.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")
 
-            if self.__filesSelectedNbTotal>1:
-                self.wFilesPreview.hidePreview("No preview for multiple selection")
-            else:
-                self.wFilesPreview.hidePreview("No image selected")
+            self.wFilesPreview.hidePreview("No image selected")
 
         # Enable page updates again
         self.pageFileNfoGeneric.setUpdatesEnabled(True)
