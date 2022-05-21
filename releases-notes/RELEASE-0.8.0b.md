@@ -62,3 +62,15 @@ Marked files are highlighted by a small triangle in bottom/right side
 
 ### Multiple files selection
 With version 0.8.0b, when multiple files are selected, properties for the last selected/unselected file are provided in informations panel (with previous version, a message _"No preview for multiple selection"_ was displayed)
+
+
+### Quick filter - Icons
+Quick filter now provides icons to affine filter
+
+| Icons | Description |
+| --- | --- |
+| `Regular expression` | When checked, given filter string is a regular expression |
+| `Case sensitive` | When checked, filter string is case sensitive |
+| `Marked files` | When checked, filter is reduced to marked files |
+
+![Quickfilter with regular expression mode active](./../screenshots/r0-8-0b_files-quickfilter-icons.png)
