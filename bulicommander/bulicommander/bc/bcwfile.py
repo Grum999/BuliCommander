@@ -30,6 +30,7 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal
     )
 
+from .bcwpathbar import BCWPathBar
 from .bcfile import (
         BCBaseFile,
         BCDirectory,
@@ -71,6 +72,8 @@ from bulicommander.pktk.pktk import (
         EInvalidValue,
         EInvalidStatus
     )
+
+from bulicommander.pktk.widgets.wsearchinput import SearchOptions
 
 
 # -----------------------------------------------------------------------------
@@ -586,6 +589,40 @@ class BCFileModel(QAbstractTableModel):
         """Return list of uuid of marked files"""
         return self.__markers
 
+
+
+class BCSortFilterProxyModel(QSortFilterProxyModel):
+    """A proxy model that take in account marked files"""
+
+    def __init__(self, parent=None):
+        super(BCSortFilterProxyModel, self).__init__(parent)
+        self.__markedFilesOnly=False
+
+    def setMarkedFilesOnly(self, value):
+        """Define if only marked files are returned or not"""
+        if self.__markedFilesOnly!=value:
+            self.__markedFilesOnly=value
+            self.invalidateFilter()
+
+    def filterAcceptsRow(self, sourceRow, sourceParent):
+        """Override method to take in account option self.__markedFilesOnly"""
+        returned=super(BCSortFilterProxyModel, self).filterAcceptsRow(sourceRow, sourceParent)
+
+        if not (returned or self.__markedFilesOnly):
+            # doesn't match current rules, no need to check for mark filter
+            return returned
+
+
+        index = self.sourceModel().index(sourceRow, 0, sourceParent)
+        isMarked=self.sourceModel().data(index, BCFileModel.ROLE_MARKER)
+
+        if isMarked and self.__markedFilesOnly or not self.__markedFilesOnly:
+            return returned
+        else:
+            return False
+
+
+
 class BCViewFilesTv(QTreeView):
     """Tree view files"""
     focused = Signal()
@@ -597,7 +634,8 @@ class BCViewFilesTv(QTreeView):
         super(BCViewFilesTv, self).__init__(parent)
         self.__model = None
         self.__proxyModel = None
-        self.__filesFilter = ''
+        self.__filesFilterText = ''
+        self.__filesFilterOptions = 0
         self.__viewNfoRowLimit = 7
         self.__iconSize = BCIconSizes([16, 24, 32, 48, 64, 96, 128, 256, 512])
         self.__showPath = False
@@ -684,7 +722,7 @@ class BCViewFilesTv(QTreeView):
     def setModel(self, model):
         """Initialise treeview header & model"""
         self.__model=model
-        self.__proxyModel=QSortFilterProxyModel(self)
+        self.__proxyModel=BCSortFilterProxyModel(self)
         self.__proxyModel.setSourceModel(self.__model)
         self.__proxyModel.setDynamicSortFilter(False)
         self.__proxyModel.setFilterKeyColumn(BCFileModel.COLNUM_FILE_NAME)
@@ -874,30 +912,37 @@ class BCViewFilesTv(QTreeView):
                     header.setSectionHidden(logicalIndex, not logicalIndex in (BCFileModel.COLNUM_FULLNFO, BCFileModel.COLNUM_ICON))
                 self.resizeColumns(False)
 
-    def setFilter(self, filter):
+    def setFilter(self, filterText, filterOptions):
         """Set current filter"""
-        if filter == self.__filesFilter:
+
+        if filterText is None:
+            filterText = self.__filesFilterText
+
+        if filterOptions is None:
+            filterOptions = self.__filesFilterOptions
+
+        if filterText == self.__filesFilterText and filterOptions == self.__filesFilterOptions:
             # filter unchanged, do nothing
             return
 
-        if filter is None:
-            filter = self.__filesFilter
+        if not isinstance(filterText, str):
+            raise EInvalidType('Given `filterText` must be a <str>')
 
-        if not isinstance(filter, str):
-            raise EInvalidType('Given `filter` must be a <str>')
+        self.__proxyModel.setMarkedFilesOnly(filterOptions&BCWPathBar.OPTION_FILTER_MARKED_ACTIVE==BCWPathBar.OPTION_FILTER_MARKED_ACTIVE)
 
-        if reFilter:=re.search('^re:(.*)', filter):
+        if filterOptions&SearchOptions.CASESENSITIVE:
             self.__proxyModel.setFilterCaseSensitivity(Qt.CaseSensitive)
-            self.__proxyModel.setFilterRegExp(reFilter.groups()[0])
-        elif reFilter:=re.search('^re\/i:(.*)', filter):
-            self.__proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-            self.__proxyModel.setFilterRegExp(reFilter.groups()[0])
         else:
-            #reFilter = re.escape(filter).replace(';', '|')
             self.__proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-            self.__proxyModel.setFilterWildcard(filter)
 
-        self.__filesFilter = filter
+
+        if filterOptions&SearchOptions.REGEX:
+            self.__proxyModel.setFilterRegExp(filterText)
+        else:
+            self.__proxyModel.setFilterWildcard(filterText)
+
+        self.__filesFilterText = filterText
+        self.__filesFilterOptions = filterOptions
 
     def viewThumbnail(self):
         """Return current view mode (list/icon)"""
@@ -1113,7 +1158,8 @@ class BCViewFilesLv(QListView):
         super(BCViewFilesLv, self).__init__(parent)
         self.__model = None
         self.__proxyModel = None
-        self.__filesFilter = ''
+        self.__filesFilterText = ''
+        self.__filesFilterOptions = 0
         self.__iconSize = BCIconSizes([64, 96, 128, 192, 256, 512])
         self.__showPath = False
 
@@ -1161,7 +1207,7 @@ class BCViewFilesLv(QListView):
         self.__model=model
         self.__model.setIconAsThumbnail(True)
         self.__model.setTooltipEnabled(True)
-        self.__proxyModel=QSortFilterProxyModel(self)
+        self.__proxyModel=BCSortFilterProxyModel(self)
         self.__proxyModel.setSourceModel(self.__model)
         self.__proxyModel.setDynamicSortFilter(False)
         self.__proxyModel.setFilterKeyColumn(BCFileModel.COLNUM_FILE_NAME)
@@ -1266,30 +1312,37 @@ class BCViewFilesLv(QListView):
             self.__delegate.setIconSize(self.__iconSize.value())
             self.setIconSize(QSize(self.__iconSize.value(), self.__iconSize.value()))
 
-    def setFilter(self, filter):
+    def setFilter(self, filterText, filterOptions):
         """Set current filter"""
-        if filter == self.__filesFilter:
+
+        if filterText is None:
+            filterText = self.__filesFilterText
+
+        if filterOptions is None:
+            filterOptions = self.__filesFilterOptions
+
+        if filterText == self.__filesFilterText and filterOptions == self.__filesFilterOptions:
             # filter unchanged, do nothing
             return
 
-        if filter is None:
-            filter = self.__filesFilter
+        if not isinstance(filterText, str):
+            raise EInvalidType('Given `filterText` must be a <str>')
 
-        if not isinstance(filter, str):
-            raise EInvalidType('Given `filter` must be a <str>')
+        self.__proxyModel.setMarkedFilesOnly(filterOptions&BCWPathBar.OPTION_FILTER_MARKED_ACTIVE==BCWPathBar.OPTION_FILTER_MARKED_ACTIVE)
 
-        if reFilter:=re.search('^re:(.*)', filter):
+        if filterOptions&SearchOptions.CASESENSITIVE:
             self.__proxyModel.setFilterCaseSensitivity(Qt.CaseSensitive)
-            self.__proxyModel.setFilterRegExp(reFilter.groups()[0])
-        elif reFilter:=re.search('^re\/i:(.*)', filter):
-            self.__proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-            self.__proxyModel.setFilterRegExp(reFilter.groups()[0])
         else:
-            #reFilter = re.escape(filter).replace(';', '|')
             self.__proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-            self.__proxyModel.setFilterWildcard(filter)
 
-        self.__filesFilter = filter
+
+        if filterOptions&SearchOptions.REGEX:
+            self.__proxyModel.setFilterRegExp(filterText)
+        else:
+            self.__proxyModel.setFilterWildcard(filterText)
+
+        self.__filesFilterText = filterText
+        self.__filesFilterOptions = filterOptions
 
     def viewThumbnail(self):
         """Return current view mode (list/icon)"""
@@ -1401,7 +1454,6 @@ class BCViewFilesLv(QListView):
         """Set marked files"""
         self.__model.setData([self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0)) for rowIndex in range(self.__proxyModel.rowCount())], False, BCFileModel.ROLE_MARKER, False)
         self.__model.setData(markers, True, BCFileModel.ROLE_MARKER)
-
 
 
 class BCViewFilesLvDelegate(QStyledItemDelegate):

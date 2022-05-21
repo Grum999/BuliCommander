@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>926</width>
-    <height>109</height>
+    <height>73</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -436,21 +436,21 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
       <property name="spacing">
        <number>0</number>
       </property>
       <property name="leftMargin">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="topMargin">
        <number>0</number>
       </property>
       <property name="rightMargin">
-       <number>0</number>
+       <number>2</number>
       </property>
       <property name="bottomMargin">
-       <number>0</number>
+       <number>1</number>
       </property>
       <item>
        <widget class="QFrame" name="frameFilter">
@@ -468,7 +468,7 @@
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <property name="spacing">
-          <number>0</number>
+          <number>3</number>
          </property>
          <property name="leftMargin">
           <number>0</number>
@@ -483,14 +483,31 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QLineEdit" name="leFilterQuery">
-           <property name="statusTip">
-            <string>Quick filter: use wildcard * to filter files | To use regular expression, prefix filter with &quot;re:&quot;</string>
+          <widget class="WSearchInput" name="wsiFilterQuery" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
            </property>
-           <property name="frame">
-            <bool>false</bool>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="tbFilterMarkedFiles">
+           <property name="toolTip">
+            <string>Search marked files only</string>
            </property>
-           <property name="clearButtonEnabled">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+             <normaloff>:/pktk/images/normal/file_marked</normaloff>:/pktk/images/normal/file_marked</iconset>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoRaise">
             <bool>true</bool>
            </property>
           </widget>
@@ -508,6 +525,12 @@
    <class>BreadcrumbsAddressBar</class>
    <extends>QFrame</extends>
    <header>bulicommander.libs.breadcrumbsaddressbar.breadcrumbsaddressbar</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>WSearchInput</class>
+   <extends>QWidget</extends>
+   <header>bulicommander.pktk.widgets.wsearchinput</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -377,7 +377,7 @@ class BCMainViewTab(QFrame):
     tabFilesLayoutChanged = Signal(QTabWidget)
     tabClipboardLayoutChanged = Signal(QTabWidget)
     filesPathChanged = Signal(str)
-    filesFilterChanged = Signal(str)
+    filesFilterChanged = Signal(str, int)
 
     VIEWMODE_TV=0
     VIEWMODE_LV=1
@@ -615,17 +615,16 @@ class BCMainViewTab(QFrame):
         def filesTvSelectedPath_expandedCollapsed(value):
             self.tvDirectoryTree.resizeColumnToContents(0)
 
-        @pyqtSlot('QString')
-        def filesFilter_Changed(value):
-            self.filesRefreshFilter(value)
-            self.filesFilterChanged.emit(value)
+        def filesFilter_Changed(value, options):
+            self.filesRefreshFilter(value, options)
+            self.filesFilterChanged.emit(value, options)
 
         @pyqtSlot('QString')
         def filesFilterVisibility_Changed(value):
             if value:
-                self.__filesApplyFilter(self.filesFilter())
+                self.__filesApplyFilter(*self.filesFilter())
             else:
-                self.__filesApplyFilter('')
+                self.__filesApplyFilter('', None)
 
         @pyqtSlot('QString')
         def filesDirectory_changed(value):
@@ -1128,7 +1127,7 @@ class BCMainViewTab(QFrame):
 
         self.__filesCurrentStats['nbTotal'] = self.__filesCurrentStats['nbDir'] + self.__filesCurrentStats['nbFiles']
         self.__filesUpdateStats()
-        self.__filesApplyFilter(None)
+        self.__filesApplyFilter(None, None)
 
         self.treeViewFiles.resizeColumns(True)
 
@@ -2005,17 +2004,17 @@ class BCMainViewTab(QFrame):
             self.lblDiskNfo.setStatusTip(i18n("You're currently into a view: there's no disk information available as listed files can be from different disks"))
 
 
-    def __filesApplyFilter(self, filter):
+    def __filesApplyFilter(self, filterText, filterOptions):
         """Apply filter to current file list"""
-        self.treeViewFiles.setFilter(filter)
-        self.listViewFiles.setFilter(filter)
+        self.treeViewFiles.setFilter(filterText, filterOptions)
+        self.listViewFiles.setFilter(filterText, filterOptions)
 
         self.__filesCurrentStats['nbFilteredFiles'] = 0
         self.__filesCurrentStats['nbFilteredDir'] = 0
         self.__filesCurrentStats['nbFilteredTotal'] = 0
         self.__filesCurrentStats['sizeFilteredFiles'] = 0
 
-        if self.filesFilterVisible() and self.filesFilter() != '':
+        if self.filesFilterVisible() and filterText != '':
             filterModel = self.treeViewFiles.filterModel()
             for rowIndex in range(filterModel.rowCount()):
                 file = filterModel.index(rowIndex, BCFileModel.COLNUM_FILE_NAME).data(BCFileModel.ROLE_FILE)
@@ -3173,11 +3172,18 @@ class BCMainViewTab(QFrame):
         self.__filesRefresh()
 
 
-    def filesRefreshFilter(self, filter=None):
+    def filesRefreshFilter(self, filter=None, options=None):
         """Refresh current filter"""
-        if filter==None:
-            filter=self.filesFilter()
-        self.__filesApplyFilter(filter)
+
+        tmpFilter, tmpOptions=self.filesFilter()
+
+        if filter is None:
+            filter=tmpFilter
+
+        if options is None:
+            options=tmpOptions
+
+        self.__filesApplyFilter(filter, options)
 
 
     def filesAllowRefresh(self):
@@ -3481,9 +3487,9 @@ class BCMainViewTab(QFrame):
         return self.framePathBar.filter()
 
 
-    def setFilesFilter(self, value=None):
+    def setFilesFilter(self, value=None, options=None):
         """Set current filter value"""
-        self.framePathBar.setFilter(value)
+        self.framePathBar.setFilter(value, options)
 
 
     def filesHiddenPath(self):

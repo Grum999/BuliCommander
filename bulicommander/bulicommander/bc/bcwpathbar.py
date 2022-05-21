@@ -67,6 +67,7 @@ from bulicommander.pktk.modules.utils import (
         Debug
     )
 
+from bulicommander.pktk.widgets.wsearchinput import WSearchInput
 
 # -----------------------------------------------------------------------------
 
@@ -104,10 +105,14 @@ class BCWPathBar(QFrame):
     OPTION_SHOW_MARGINS =           0b0000000100000000
 
 
+    #                                  vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv -- reserved from WSearchInput
+    OPTION_FILTER_MARKED_ACTIVE=    0b100000000000000000000000000000000
+
+
     clicked = Signal(bool)
     pathChanged = Signal(str)
     viewChanged = Signal(str)
-    filterChanged = Signal(str)
+    filterChanged = Signal(str, object)            # search value, active options
     filterVisibilityChanged = Signal(bool)
 
     def __init__(self, parent=None):
@@ -263,18 +268,26 @@ class BCWPathBar(QFrame):
         #    self.setPath(action.property('path'))
 
         @pyqtSlot('QString')
-        def filter_Finished():
-            #self.filterChanged.emit(self.leFilterQuery.text())
-            pass
+        def filter_Changed(searchValue, options):
+            if self.tbFilterMarkedFiles.isChecked():
+                options|=BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
+
+            self.filterChanged.emit(searchValue, options)
 
         @pyqtSlot('QString')
-        def filter_Changed():
-            self.filterChanged.emit(self.leFilterQuery.text())
+        def filter_Changed2():
+            searchValue=self.wsiFilterQuery.searchText()
+            options=self.wsiFilterQuery.options()
+
+            if self.tbFilterMarkedFiles.isChecked():
+                options|=BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
+
+            self.filterChanged.emit(searchValue, options)
 
         @pyqtSlot('QString')
         def filter_Focused(e):
             item_Clicked(None)
-            self.__leFilterQueryFocusInEvent(e)
+            self.__wsiFilterQueryFocusInEvent(e)
 
         self.widgetPath.setPalette(self.__paletteBase)
 
@@ -289,14 +302,13 @@ class BCWPathBar(QFrame):
         if not self.__savedView is None:
             self.frameBreacrumbPath.checkViewId=self.__savedView.inList
 
-        fnt=self.leFilterQuery.font()
-        fnt.setFamily('DejaVu Sans Mono, Consolas, Courier New')
-        self.__leFilterQueryFocusInEvent=self.leFilterQuery.focusInEvent
-        self.leFilterQuery.focusInEvent=filter_Focused
-        self.leFilterQuery.editingFinished.connect(filter_Finished)
-        self.leFilterQuery.textChanged.connect(filter_Changed)
-        replaceLineEditClearButton(self.leFilterQuery)
-        self.leFilterQuery.setFont(fnt)
+        self.wsiFilterQuery.setOptions(WSearchInput.OPTION_SHOW_BUTTON_REGEX|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_STATE_BUTTONSHOW|WSearchInput.OPTION_HIDE_VSEPARATORL|WSearchInput.OPTION_HIDE_VSEPARATORR)
+        self.wsiFilterQuery.searchOptionModified.connect(filter_Changed)
+        self.wsiFilterQuery.searchModified.connect(filter_Changed)
+        self.tbFilterMarkedFiles.toggled.connect(filter_Changed2)
+
+        self.__wsiFilterQueryFocusInEvent=self.wsiFilterQuery.qLineEditSearch().focusInEvent
+        self.wsiFilterQuery.qLineEditSearch().focusInEvent=filter_Focused
 
         self.btBack.clicked.connect(item_Clicked)
         self.btBack.clicked.connect(back_Clicked)
@@ -561,8 +573,8 @@ class BCWPathBar(QFrame):
 
         if self.btFilter.isChecked():
             self.frameFilter.setVisible(True)
-            self.leFilterQuery.setFocus()
-            self.leFilterQuery.selectAll()
+            self.wsiFilterQuery.qLineEditSearch().setFocus()
+            self.wsiFilterQuery.qLineEditSearch().selectAll()
             self.filterVisibilityChanged.emit(True)
             idealMinHeight+=self.widgetFilter.sizeHint().height()
         else:
@@ -857,14 +869,22 @@ class BCWPathBar(QFrame):
         self.__refreshFilter()
 
     def filter(self):
-        """Return current filter value"""
-        return self.leFilterQuery.text()
+        """Return current filter value as tuple (value, options)"""
+        options=self.wsiFilterQuery.options()&WSearchInput.OPTION_ALL_SEARCH
+        if self.tbFilterMarkedFiles.isChecked():
+            options|=BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
 
-    def setFilter(self, value=None):
+        return (self.wsiFilterQuery.searchText(), options)
+
+    def setFilter(self, value=None, options=None):
         """Set current filter value"""
         if value is None:
             value = ''
-        self.leFilterQuery.setText(value)
+        self.wsiFilterQuery.setSearchText(value)
+        if isinstance(options, int):
+            self.tbFilterMarkedFiles.setChecked(options&BCWPathBar.OPTION_FILTER_MARKED_ACTIVE==BCWPathBar.OPTION_FILTER_MARKED_ACTIVE)
+            self.wsiFilterQuery.setOptions(options&WSearchInput.OPTION_ALL_SEARCH)
+
 
     def hiddenPath(self):
         """Return if hidden path are displayed or not"""
