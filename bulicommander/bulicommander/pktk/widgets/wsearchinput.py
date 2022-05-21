@@ -69,17 +69,21 @@ class WSearchInput(QWidget):
         |                             |     |     |     |     |
         |                             |     |     |     |     |     +-----------  OPTION_SHOW_BUTTON_HIGHLIGHTALL
         |                             |     |     |     |     |     |
-        |                             |     |     |     |     |     |     +-----  OPTION_SHOW_BUTTON_SHOWHIDE
-        |                             |     |     |     |     |     |     |
-        |                             |     |     |     |     |     |     |
-        V                             V     V     V     V     V     V     V
-    +-----------------------------+ +---+ +---+ +---+ +---+ +---+ +---+ +---+
-    | xxxx                        | |   | |   | |   | |   | |   | |   | |   |
-    +-----------------------------+ +---+ +---+ +---+ +---+ +---+ +---+ +---+
+        |                             |     |     |     |     |     |       +---  OPTION_SHOW_BUTTON_SHOWHIDE
+        |                             |     |     |     |     |     |       |
+        |                             |     |     |     |     |     |       |
+        V                             V     V     V     V     V     V       V
+    +---------------------------+ | +---+ +---+ +---+ +---+ +---+ +---+ | +---+
+    | xxxx                      | | |   | |   | |   | |   | |   | |   | | |   |
+    +---------------------------+ | +---+ +---+ +---+ +---+ +---+ +---+ | +---+
 
-                                    \_________________________________/
-                                                     |
-                                                     +--------------------------  Buttons visibles according to OPTION_STATE_BUTTONSHOW value
+                                  ^                                     ^
+                                  |                                     |
+                                  +-------------------------------------+------- OPTION_HIDE_VSEPARATORL & OPTION_HIDE_VSEPARATORR (if set, vertical separators are hidden)
+
+                                    \_________________________________________/
+                                                        |
+                                                        +-----------------------  Buttons visibles according to OPTION_STATE_BUTTONSHOW value
 
 
 
@@ -119,7 +123,6 @@ class WSearchInput(QWidget):
         |
         +---------------------------------------------------------------------------  replace text entry
 
-
     """
     searchOptionModified = Signal(str, int)         # when at least one search option has been modified value has been modified
     searchActivated = Signal(str, int, bool)        # when RETURN key has been pressed
@@ -140,18 +143,20 @@ class WSearchInput(QWidget):
 
     OPTION_SHOW_REPLACE =               0b00000000000000010000000000000000  # display REPLACE text entry and button
 
+    OPTION_HIDE_VSEPARATORR =           0b00100000000000000000000000000000  # hide right vertical separator
+    OPTION_HIDE_VSEPARATORL =           0b01000000000000000000000000000000  # hide left vertical separator
     OPTION_STATE_BUTTONSHOW =           0b10000000000000000000000000000000  # without OPTION_SHOW_REPLACE option only
 
     OPTION_ALL_BUTTONS =                0b00000000000000001111111100000000
-    OPTION_ALL_SEARCH =                 0b00000000000000000000000000011111
-    OPTION_ALL =                        0b10000000000000011111111100011111
+    OPTION_ALL_SEARCH =                 0b00000000000000000000000000111111
+    OPTION_ALL =                        0b11100000000000011111111100111111
 
     def __init__(self, options=None, parent=None):
         super(WSearchInput, self).__init__(parent)
 
         font=self.font()
         font.setStyleHint(QFont.Monospace)
-        font.setFamily("Monospace")
+        font.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
         # entries
         self.__leSearch=QLineEdit()
@@ -330,8 +335,8 @@ class WSearchInput(QWidget):
             self.__wOptionButtons.setVisible(groupNotEmpty)
         else:
             # search only UI
-            self.__vlN1.setVisible(True)
-            self.__vlN2.setVisible(True)
+            self.__vlN1.setVisible(self.__options&WSearchInput.OPTION_HIDE_VSEPARATORL!=WSearchInput.OPTION_HIDE_VSEPARATORL)
+            self.__vlN2.setVisible(self.__options&WSearchInput.OPTION_HIDE_VSEPARATORR!=WSearchInput.OPTION_HIDE_VSEPARATORR)
 
             self.__btSearch.setVisible(self.__options&WSearchInput.OPTION_SHOW_BUTTON_SEARCH==WSearchInput.OPTION_SHOW_BUTTON_SEARCH)
             self.__btShowHide.setVisible(self.__options&WSearchInput.OPTION_SHOW_BUTTON_SHOWHIDE==WSearchInput.OPTION_SHOW_BUTTON_SHOWHIDE)
@@ -497,8 +502,20 @@ class WSearchInput(QWidget):
         """Set current replace text"""
         self.__leReplace.setText(text)
 
+
     def setResultsInformation(self, text):
         self.__foundResultsInfo.setText(text)
+
+
+    def qLineEditSearch(self):
+        """Return search line edit"""
+        return self.__leSearch
+
+
+    def qLineEditReplace(self):
+        """Return replace line edit"""
+        return self.__leReplace
+
 
 
 class SearchFromPlainTextEdit:
