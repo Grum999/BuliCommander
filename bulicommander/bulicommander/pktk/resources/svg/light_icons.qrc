@@ -64,6 +64,7 @@
     <file alias="file_close">light/32dp/file_close.svg</file>
     <file alias="file_close_all">light/32dp/file_close_all.svg</file>
     <file alias="file_copy">light/32dp/file_copy.svg</file>
+    <file alias="file_marked">light/32dp/file_marked.svg</file>
     <file alias="file_move">light/32dp/file_move.svg</file>
     <file alias="file_new">light/32dp/file_new.svg</file>
     <file alias="file_rename">light/32dp/file_rename.svg</file>
@@ -248,6 +249,7 @@
     <file alias="file_close">light/32dp-disabled/file_close.svg</file>
     <file alias="file_close_all">light/32dp-disabled/file_close_all.svg</file>
     <file alias="file_copy">light/32dp-disabled/file_copy.svg</file>
+    <file alias="file_marked">light/32dp-disabled/file_marked.svg</file>
     <file alias="file_move">light/32dp-disabled/file_move.svg</file>
     <file alias="file_new">light/32dp-disabled/file_new.svg</file>
     <file alias="file_rename">light/32dp-disabled/file_rename.svg</file>
