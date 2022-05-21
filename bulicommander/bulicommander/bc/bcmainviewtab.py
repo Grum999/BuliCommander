@@ -624,7 +624,7 @@ class BCMainViewTab(QFrame):
             if value:
                 self.__filesApplyFilter(*self.filesFilter())
             else:
-                self.__filesApplyFilter('', None)
+                self.__filesApplyFilter('', 0)
 
         @pyqtSlot('QString')
         def filesDirectory_changed(value):
