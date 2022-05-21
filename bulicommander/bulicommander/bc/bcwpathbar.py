@@ -883,8 +883,7 @@ class BCWPathBar(QFrame):
         self.wsiFilterQuery.setSearchText(value)
         if isinstance(options, int):
             self.tbFilterMarkedFiles.setChecked(options&BCWPathBar.OPTION_FILTER_MARKED_ACTIVE==BCWPathBar.OPTION_FILTER_MARKED_ACTIVE)
-            self.wsiFilterQuery.setOptions(options&WSearchInput.OPTION_ALL_SEARCH)
-
+            self.wsiFilterQuery.setOptions((options&WSearchInput.OPTION_ALL_SEARCH)|WSearchInput.OPTION_SHOW_BUTTON_REGEX|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_STATE_BUTTONSHOW|WSearchInput.OPTION_HIDE_VSEPARATORL|WSearchInput.OPTION_HIDE_VSEPARATORR)
 
     def hiddenPath(self):
         """Return if hidden path are displayed or not"""

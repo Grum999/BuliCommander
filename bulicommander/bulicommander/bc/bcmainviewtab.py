@@ -3489,6 +3489,14 @@ class BCMainViewTab(QFrame):
 
     def setFilesFilter(self, value=None, options=None):
         """Set current filter value"""
+        tmpValue, tmpOptions=self.filesFilter()
+
+        if value is None:
+            value=tmpValue
+
+        if options is None:
+            options=tmpOptions
+
         self.framePathBar.setFilter(value, options)
 
 

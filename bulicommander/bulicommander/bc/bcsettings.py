@@ -395,6 +395,7 @@ class BCSettingsKey(SettingsKey):
     SESSION_PANEL_VIEW_FILES_CURRENTPATH =                   'session.panels.panel-{panelId}.view.files.currentPath'
     SESSION_PANEL_VIEW_FILES_FILTERVISIBLE =                 'session.panels.panel-{panelId}.view.files.filterVisible'
     SESSION_PANEL_VIEW_FILES_FILTERVALUE =                   'session.panels.panel-{panelId}.view.files.filterValue'
+    SESSION_PANEL_VIEW_FILES_FILTEROPTIONS =                 'session.panels.panel-{panelId}.view.files.filterOptions'
     SESSION_PANEL_VIEW_FILES_COLUMNSORT =                    'session.panels.panel-{panelId}.view.files.columnSort'
     SESSION_PANEL_VIEW_FILES_COLUMNORDER =                   'session.panels.panel-{panelId}.view.files.columnOrder'
     SESSION_PANEL_VIEW_FILES_COLUMNSIZE =                    'session.panels.panel-{panelId}.view.files.columnSize'
@@ -774,6 +775,7 @@ class BCSettings(Settings):
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId),        '@home',                    SettingsFmt(str)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId),      False,                      SettingsFmt(bool)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId),        '',                         SettingsFmt(str)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTEROPTIONS.id(panelId=panelId),      0,                          SettingsFmt(int)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId),         [1,True],                   SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]), SettingsFmt(bool)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId),        [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
                                                                                                                                             SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),

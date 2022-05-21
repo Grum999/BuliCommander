@@ -105,6 +105,7 @@ from bulicommander.pktk.widgets.wiodialog import (
         WDialogBooleanInput,
         WDialogRadioButtonChoiceInput
     )
+from bulicommander.pktk.widgets.wsearchinput import WSearchInput
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
@@ -325,6 +326,7 @@ class BCUIController(QObject):
             self.commandPanelPath(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId)), True)
 
             self.commandPanelFilterValue(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId)))
+            self.commandPanelFilterOptions(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTEROPTIONS.id(panelId=panelId)))
             self.commandPanelFilterVisible(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId)))
 
             self.commandViewThumbnail(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_THUMBNAIL.id(panelId=panelId)))
@@ -723,8 +725,10 @@ class BCUIController(QObject):
 
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_THUMBNAIL.id(panelId=panelId), self.__window.panels[panelId].filesViewThumbnail())
 
+                filterText, filterOptions=self.__window.panels[panelId].filesFilter()
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId), self.__window.panels[panelId].filesFilterVisible())
-                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId), self.__window.panels[panelId].filesFilter())
+                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId), filterText)
+                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTEROPTIONS.id(panelId=panelId), filterOptions&WSearchInput.OPTION_ALL) # avoid OPTION_FILTER_MARKED_ACTIVE as merkers are not kept accross sessions
 
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId), self.__window.panels[panelId].filesColumnSort())
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].filesColumnOrder())
@@ -2076,11 +2080,18 @@ class BCUIController(QObject):
         return self.__window.panels[panel].setFilesFilterVisible(visible)
 
     def commandPanelFilterValue(self, panel, value=None):
-        """Set current filter value"""
+        """Set current filter text value"""
         if not panel in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        return self.__window.panels[panel].setFilesFilter(value)
+        return self.__window.panels[panel].setFilesFilter(value, None)
+
+    def commandPanelFilterOptions(self, panel, value=None):
+        """Set current filter options"""
+        if not panel in self.__window.panels:
+            raise EInvalidValue('Given `panel` is not valid')
+
+        return self.__window.panels[panel].setFilesFilter(None, value)
 
     def commandGoTo(self, panel, path=None):
         """Go back to given path/bookmark/saved view"""
