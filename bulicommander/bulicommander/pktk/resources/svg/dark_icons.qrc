@@ -44,6 +44,7 @@
     <file alias="comment_remove">dark/32dp/comment_remove.svg</file>
     <file alias="compact_off">dark/32dp/compact_off.svg</file>
     <file alias="compact_on">dark/32dp/compact_on.svg</file>
+    <file alias="computer_monitor">dark/32dp/computer_monitor.svg</file>
     <file alias="copy">dark/32dp/copy.svg</file>
     <file alias="cut">dark/32dp/cut.svg</file>
     <file alias="dashboard">dark/32dp/dashboard.svg</file>
@@ -83,6 +84,7 @@
     <file alias="folder_open">dark/32dp/folder_open.svg</file>
     <file alias="folder_open_add">dark/32dp/folder_open_add.svg</file>
     <file alias="folder_open_cache">dark/32dp/folder_open_cache.svg</file>
+    <file alias="folder_open_dots">dark/32dp/folder_open_dots.svg</file>
     <file alias="folder_open_layers">dark/32dp/folder_open_layers.svg</file>
     <file alias="folder_open_link">dark/32dp/folder_open_link.svg</file>
     <file alias="folder_open_new">dark/32dp/folder_open_new.svg</file>
@@ -229,6 +231,7 @@
     <file alias="comment_remove">dark/32dp-disabled/comment_remove.svg</file>
     <file alias="compact_off">dark/32dp-disabled/compact_off.svg</file>
     <file alias="compact_on">dark/32dp-disabled/compact_on.svg</file>
+    <file alias="computer_monitor">dark/32dp-disabled/computer_monitor.svg</file>
     <file alias="copy">dark/32dp-disabled/copy.svg</file>
     <file alias="cut">dark/32dp-disabled/cut.svg</file>
     <file alias="dashboard">dark/32dp-disabled/dashboard.svg</file>
@@ -268,6 +271,7 @@
     <file alias="folder_open">dark/32dp-disabled/folder_open.svg</file>
     <file alias="folder_open_add">dark/32dp-disabled/folder_open_add.svg</file>
     <file alias="folder_open_cache">dark/32dp-disabled/folder_open_cache.svg</file>
+    <file alias="folder_open_dots">dark/32dp-disabled/folder_open_dots.svg</file>
     <file alias="folder_open_layers">dark/32dp-disabled/folder_open_layers.svg</file>
     <file alias="folder_open_link">dark/32dp-disabled/folder_open_link.svg</file>
     <file alias="folder_open_new">dark/32dp-disabled/folder_open_new.svg</file>
