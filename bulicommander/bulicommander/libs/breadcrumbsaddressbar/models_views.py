@@ -1,10 +1,76 @@
 import os.path
+import sys
+import re
 from pathlib import Path
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import (
         QDir,
         Qt
     )
+
+
+if sys.platform=='win32':
+    # for windows, implement fcuntion to get drive name
+    import ctypes
+
+    kernel32 = ctypes.windll.kernel32
+
+    def getVolumeName(drive):
+        """given `drive' is like 'c:\\'"""
+        volumeNameBuffer = ctypes.create_unicode_buffer(1024)
+        fileSystemNameBuffer = ctypes.create_unicode_buffer(1024)
+        serial_number = None
+        max_component_length = None
+        file_system_flags = None
+
+        rc = kernel32.GetVolumeInformationW(
+            ctypes.c_wchar_p(drive),
+            volumeNameBuffer,
+            ctypes.sizeof(volumeNameBuffer),
+            serial_number,
+            max_component_length,
+            file_system_flags,
+            fileSystemNameBuffer,
+            ctypes.sizeof(fileSystemNameBuffer)
+        )
+        return volumeNameBuffer.value
+
+    def getVolumeType(drive):
+        rc = kernel32.GetDriveTypeA(
+            ctypes.c_wchar_p(drive),
+        )
+        if rc==0:
+            # DRIVE_UNKNOWN
+            return ''
+        elif rc==1:
+            # DRIVE_NO_ROOT_DIR
+            return ''
+        elif rc==2:
+            # DRIVE_REMOVABLE
+            return i18n('Removable drive')
+        elif rc==3:
+            # DRIVE_FIXED
+            return i18n('Local drive')
+        elif rc==4:
+            # DRIVE_REMOTE
+            return i18n('Network drive')
+        elif rc==5:
+            # DRIVE_CDROM
+            return i18n('CD-ROM drive')
+        elif rc==6:
+            # DRIVE_RAMDISK
+            return i18n('RAM Disk drive')
+        else:
+            return ''
+
+else:
+    # for other os method return an empty value
+    def getVolumeName(drive):
+        return ''
+
+    def getVolumeType(drive):
+        return ''
+
 
 class FilenameModel(QtCore.QStringListModel):
     """
@@ -36,6 +102,8 @@ class FilenameModel(QtCore.QStringListModel):
             # self.setData(index, dat, role)
             return self.icon_provider(super().data(index, Qt.DisplayRole))
         elif role == Qt.DisplayRole:
+            if r:=re.search(r"(?:^([A-Z]:)$|\(([A-Z]:)\)$)", default, re.I):
+                return default
             return Path(default).name
 
         return default
@@ -81,6 +149,28 @@ class FilenameModel(QtCore.QStringListModel):
 
             self.setStringList([key for key in quickRefDict])
 
+            self.current_path = prefix
+        if prefix==f'::{os.path.sep}':
+            # windows drives
+            drvList=[]
+            for drv in QDir().drives():
+                volumeName=getVolumeName(drv.absoluteFilePath()).strip()
+
+                if volumeName!='':
+                    volumeName=f"{volumeName} ({drv.absoluteFilePath().replace('/', '')})"
+                else:
+                    volumeName=drv.absoluteFilePath().replace('/', '')
+
+                #else:
+                #    volumeType=getVolumeType(drv.absoluteFilePath())
+                #    if volumeType!='':
+                #        volumeName=f" [{volumeType}]"
+                #    else:
+                #        volumeName=f" [{i18n('No label')}]"
+
+                drvList.append(volumeName)
+
+            self.setStringList(drvList)
             self.current_path = prefix
         else:
             path = Path(prefix)
@@ -149,6 +239,10 @@ class MenuListView(QtWidgets.QMenu):
         self.setModel = lv.setModel
 
         lv.setIconSize(QtCore.QSize(32, 32))
+
+        fnt=lv.font()
+        fnt.setFamily('DejaVu Sans Mono, Consolas, Courier New')
+        lv.setFont(fnt)
 
         lv.sizeHint = self.size_hint
         lv.minimumSizeHint = self.size_hint

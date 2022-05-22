@@ -74,3 +74,13 @@ Quick filter now provides icons to affine filter
 | `Marked files` | When checked, filter is reduced to marked files |
 
 ![Quickfilter with regular expression mode active](./../screenshots/r0-8-0b_files-quickfilter-icons.png)
+
+
+### Breadcrumbs - Windows drives
+For Windows users, an additional entry has been added in breadcrumbs to be able to easily select drive.
+
+
+![Marked file in listview](./../screenshots/r0-8-0b_files-breadcrumbs-windowsDrives.jpeg)
+
+> Note:
+> - Only mounted drives are available in list, special folders (Libraries, Quick access, Desktop, Images, ...) are not available here
