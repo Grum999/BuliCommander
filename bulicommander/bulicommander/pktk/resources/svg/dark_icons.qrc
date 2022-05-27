@@ -161,6 +161,12 @@
     <file alias="select_invert">dark/32dp/select_invert.svg</file>
     <file alias="select_marked">dark/32dp/select_marked.svg</file>
     <file alias="select_none">dark/32dp/select_none.svg</file>
+    <file alias="separator_horizontal">dark/32dp/separator_horizontal.svg</file>
+    <file alias="separator_vertical">dark/32dp/separator_vertical.svg</file>
+    <file alias="sign_divide">dark/32dp/sign_divide.svg</file>
+    <file alias="sign_minus">dark/32dp/sign_minus.svg</file>
+    <file alias="sign_mult">dark/32dp/sign_mult.svg</file>
+    <file alias="sign_plus">dark/32dp/sign_plus.svg</file>
     <file alias="sort_ascending">dark/32dp/sort_ascending.svg</file>
     <file alias="sort_bidirectional">dark/32dp/sort_bidirectional.svg</file>
     <file alias="sort_descending">dark/32dp/sort_descending.svg</file>
@@ -175,6 +181,7 @@
     <file alias="text_t">dark/32dp/text_t.svg</file>
     <file alias="text_t_r90">dark/32dp/text_t_r90.svg</file>
     <file alias="tune">dark/32dp/tune.svg</file>
+    <file alias="tune_toolbar">dark/32dp/tune_toolbar.svg</file>
     <file alias="unpinned">dark/32dp/unpinned.svg</file>
     <file alias="url">dark/32dp/url.svg</file>
     <file alias="url_downloadstart">dark/32dp/url_downloadstart.svg</file>
@@ -348,6 +355,12 @@
     <file alias="select_invert">dark/32dp-disabled/select_invert.svg</file>
     <file alias="select_marked">dark/32dp-disabled/select_marked.svg</file>
     <file alias="select_none">dark/32dp-disabled/select_none.svg</file>
+    <file alias="separator_horizontal">dark/32dp-disabled/separator_horizontal.svg</file>
+    <file alias="separator_vertical">dark/32dp-disabled/separator_vertical.svg</file>
+    <file alias="sign_divide">dark/32dp-disabled/sign_divide.svg</file>
+    <file alias="sign_minus">dark/32dp-disabled/sign_minus.svg</file>
+    <file alias="sign_mult">dark/32dp-disabled/sign_mult.svg</file>
+    <file alias="sign_plus">dark/32dp-disabled/sign_plus.svg</file>
     <file alias="sort_ascending">dark/32dp-disabled/sort_ascending.svg</file>
     <file alias="sort_bidirectional">dark/32dp-disabled/sort_bidirectional.svg</file>
     <file alias="sort_descending">dark/32dp-disabled/sort_descending.svg</file>
@@ -362,6 +375,7 @@
     <file alias="text_t">dark/32dp-disabled/text_t.svg</file>
     <file alias="text_t_r90">dark/32dp-disabled/text_t_r90.svg</file>
     <file alias="tune">dark/32dp-disabled/tune.svg</file>
+    <file alias="tune_toolbar">dark/32dp-disabled/tune_toolbar.svg</file>
     <file alias="unpinned">dark/32dp-disabled/unpinned.svg</file>
     <file alias="url">dark/32dp-disabled/url.svg</file>
     <file alias="url_downloadstart">dark/32dp-disabled/url_downloadstart.svg</file>

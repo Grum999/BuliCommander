@@ -3,7 +3,7 @@
    viewBox="0 0 16 16"
    version="1.1"
    id="svg6"
-   sodipodi:docname="computer_harddrive.svg"
+   sodipodi:docname="sign_plus.svg"
    inkscape:version="1.1 (c4e8f9e, 2021-05-24)"
    width="32"
    height="32"
@@ -38,9 +38,9 @@
      inkscape:window-height="2056"
      id="namedview8"
      showgrid="true"
-     inkscape:zoom="29.5"
-     inkscape:cx="10.423729"
-     inkscape:cy="19.457627"
+     inkscape:zoom="20.85965"
+     inkscape:cx="20.781748"
+     inkscape:cy="6.0883092"
      inkscape:window-x="3840"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
@@ -48,7 +48,7 @@
      inkscape:pagecheckerboard="0">
     <inkscape:grid
        type="xygrid"
-       id="grid925" />
+       id="grid9" />
   </sodipodi:namedview>
   <defs
      id="defs3051">
@@ -60,4 +60,8 @@
       }
       </style>
   </defs>
+  <path
+     id="path773"
+     style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:3"
+     d="M 7,3 V 7 H 3 v 1 1 h 4 v 4 H 8 9 V 9 h 4 V 8 7 H 9 V 3 H 8 Z" />
 </svg>
