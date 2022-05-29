@@ -303,6 +303,10 @@ class BCMainViewClipboard(QTreeView):
         else:
             super(BCMainViewClipboard, self).wheelEvent(event)
 
+    def iconSizePixels(self):
+        """Return current icon size in pixels"""
+        return self.__iconSize.value()
+
     def iconSizeIndex(self):
         """Return current icon size index"""
         return self.__iconSize.index()
@@ -821,8 +825,8 @@ class BCMainViewTab(QFrame):
         self.tvDirectoryTree.expanded.connect(filesTvSelectedPath_expandedCollapsed)
         self.tvDirectoryTree.collapsed.connect(filesTvSelectedPath_expandedCollapsed)
         self.tvDirectoryTree.contextMenuEvent = self.__filesContextMenuDirectoryTree
-        self.tvDirectoryTree.hideColumn(1) # gide 'size'
-        self.tvDirectoryTree.hideColumn(2) # gide 'type'
+        self.tvDirectoryTree.hideColumn(1) # hide 'size'
+        self.tvDirectoryTree.hideColumn(2) # hide 'type'
 
         self.cbImgSizeRes.currentIndexChanged.connect(cbImgSizeRes_changed)
 
@@ -1500,53 +1504,53 @@ class BCMainViewTab(QFrame):
                     self.lblOwner.setText(f'{og[0]}/{og[1]}')
                     self.lblOwner.setToolTip(self.lblOwner.text())
 
-            # Search for backup files...
-            backupSuffix = re.escape(Krita.instance().readSetting('', 'backupfilesuffix', '~'))
-            filePattern = re.escape(file.name())
-            rePattern = f"{filePattern}(?:\.\d+)?{backupSuffix}$"
-            backupList=[]
-            pathName=file.path()
-            with os.scandir(pathName) as files:
-                for foundFile in files:
-                    if re.match(rePattern, foundFile.name):
-                        backupList.append(BCFile(os.path.join(pathName, foundFile.name)))
+            # Search for backup files only if not a directory or a missing file...
+            if not isinstance(file, (BCDirectory, BCMissingFile)):
+                backupSuffix = re.escape(Krita.instance().readSetting('', 'backupfilesuffix', '~'))
+                filePattern = re.escape(file.name())
+                rePattern = f"{filePattern}(?:\.\d+)?{backupSuffix}$"
+                backupList=[]
+                pathName=file.path()
+                with os.scandir(pathName) as files:
+                    for foundFile in files:
+                        if re.match(rePattern, foundFile.name):
+                            backupList.append(BCFile(os.path.join(pathName, foundFile.name)))
 
-            if len(backupList)>0:
-                backupList.sort(key=lambda file: file.name())
-                filterButton = QPushButton(i18n("Show"))
-                filterButton.setToolTip(i18n("Show in opposite panel"))
-                filterButton.setStatusTip(i18n("Show backup files list in opposite panel"))
-                filterButton.clicked.connect(applyBackupFilter)
-                addSeparator(self.scrollAreaWidgetContentsNfoGeneric)
-                if len(backupList) == 1:
-                    addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n("1 backup file found"), filterButton)
-                else:
-                    addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n(f"{len(backupList)} backup files found"), filterButton)
+                if len(backupList)>0:
+                    backupList.sort(key=lambda file: file.name())
+                    filterButton = QPushButton(i18n("Show"))
+                    filterButton.setToolTip(i18n("Show in opposite panel"))
+                    filterButton.setStatusTip(i18n("Show backup files list in opposite panel"))
+                    filterButton.clicked.connect(applyBackupFilter)
+                    addSeparator(self.scrollAreaWidgetContentsNfoGeneric)
+                    if len(backupList) == 1:
+                        addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n("1 backup file found"), filterButton)
+                    else:
+                        addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n(f"{len(backupList)} backup files found"), filterButton)
 
-                for fileBackup in backupList:
-                    addSeparator(self.scrollAreaWidgetContentsNfoGeneric, shifted=True)
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup file"), fileBackup.name(), shifted=True)
+                    for fileBackup in backupList:
+                        addSeparator(self.scrollAreaWidgetContentsNfoGeneric, shifted=True)
+                        addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup file"), fileBackup.name(), shifted=True)
 
-                    lastModifiedDiffStr=""
-                    lastModifiedDiffTooltip=''
-                    lastModifiedDiff=round(file.lastModificationDateTime() - fileBackup.lastModificationDateTime(),0)
-                    if lastModifiedDiff>0:
-                        lastModifiedDiffStr=i18n(f'<br><i>{secToStrTime(lastModifiedDiff)} ago<sup>(from current file)</sup></i>')
+                        lastModifiedDiffStr=""
                         lastModifiedDiffTooltip=''
+                        lastModifiedDiff=round(file.lastModificationDateTime() - fileBackup.lastModificationDateTime(),0)
+                        if lastModifiedDiff>0:
+                            lastModifiedDiffStr=i18n(f'<br><i>{secToStrTime(lastModifiedDiff)} ago<sup>(from current file)</sup></i>')
+                            lastModifiedDiffTooltip=''
 
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Modified"), tsToStr(fileBackup.lastModificationDateTime(), valueNone='-')+lastModifiedDiffStr, lastModifiedDiffTooltip, shifted=True)
+                        addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Modified"), tsToStr(fileBackup.lastModificationDateTime(), valueNone='-')+lastModifiedDiffStr, lastModifiedDiffTooltip, shifted=True)
 
-                    backupSizeDiffTooltip=''
-                    backupSizeDiffStr=""
-                    backupSizeDiff=fileBackup.size() - file.size()
-                    if backupSizeDiff>0:
-                        backupSizeDiffStr=f'<br><i>+{bytesSizeToStr(backupSizeDiff)} (+{backupSizeDiff:n})</i>'
                         backupSizeDiffTooltip=''
-                    elif backupSizeDiff<0:
-                        backupSizeDiffStr=f'<br><i>-{bytesSizeToStr(abs(backupSizeDiff))} ({backupSizeDiff:n})</i>'
-                        backupSizeDiffTooltip=''
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Size"), f'{bytesSizeToStr(fileBackup.size())} ({fileBackup.size():n}){backupSizeDiffStr}', backupSizeDiffTooltip, shifted=True)
-
+                        backupSizeDiffStr=""
+                        backupSizeDiff=fileBackup.size() - file.size()
+                        if backupSizeDiff>0:
+                            backupSizeDiffStr=f'<br><i>+{bytesSizeToStr(backupSizeDiff)} (+{backupSizeDiff:n})</i>'
+                            backupSizeDiffTooltip=''
+                        elif backupSizeDiff<0:
+                            backupSizeDiffStr=f'<br><i>-{bytesSizeToStr(abs(backupSizeDiff))} ({backupSizeDiff:n})</i>'
+                            backupSizeDiffTooltip=''
+                        addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Size"), f'{bytesSizeToStr(fileBackup.size())} ({fileBackup.size():n}){backupSizeDiffStr}', backupSizeDiffTooltip, shifted=True)
 
             # ------------------------------ Image ------------------------------
             if file.format() != BCFileManagedFormat.UNKNOWN:
@@ -3630,26 +3634,28 @@ class BCMainViewTab(QFrame):
             self.treeViewFiles.setColumnVisible(logicalIndex, visible)
 
 
-    def filesIconSizeTv(self):
+    def filesIconSizeTv(self, asPixelSize=False):
         """Return current icon size (treeview)"""
+        if asPixelSize:
+            return self.treeViewFiles.iconSizePixels()
         return self.treeViewFiles.iconSizeIndex()
 
 
     def setFilesIconSizeTv(self, value=None):
         """Set current icon size (treeview)"""
         self.treeViewFiles.setIconSizeIndex(value)
-        self.__actionFilesApplyIconSize.slider().setValue(value)
 
 
-    def filesIconSizeLv(self):
+    def filesIconSizeLv(self, asPixelSize=False):
         """Return current icon size (listview)"""
+        if asPixelSize:
+            return self.listViewFiles.iconSizePixels()
         return self.listViewFiles.iconSizeIndex()
 
 
     def setFilesIconSizeLv(self, value=None):
         """Set current icon size (listview)"""
         self.listViewFiles.setIconSizeIndex(value)
-        self.__actionFilesApplyIconSize.slider().setValue(value)
 
 
     def filesViewThumbnail(self):
@@ -3737,6 +3743,15 @@ class BCMainViewTab(QFrame):
                     self.__filesCurrentStats['nbTotal'],
                     files,
                     self.__filesCurrentStats['sizeFiles'])
+
+
+    def filesPathMode(self):
+        """Return current path mode
+
+        - PATH
+        - SAVED VIEW
+        """
+        self.framePathBar.mode()
 
 
     def filesShowBookmark(self, visible=True):
@@ -4050,15 +4065,17 @@ class BCMainViewTab(QFrame):
                 self.treeViewClipboard.header().resizeSection(logicalIndex, size)
 
 
-    def clipboardIconSize(self):
+    def clipboardIconSize(self, asPixelSize=False):
         """Return current icon size"""
+        if asPixelSize:
+            return self.treeViewClipboard.iconSizePixels()
         return self.treeViewClipboard.iconSizeIndex()
 
 
     def setClipboardIconSize(self, value=None):
         """Set current icon size"""
         self.treeViewClipboard.setIconSizeIndex(value)
-        #self.__actionFilesApplyIconSize.slider().setValue(value)
+
 
     def clipboardSelected(self):
         """Return information about selected clipboard items

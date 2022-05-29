@@ -873,6 +873,10 @@ class BCViewFilesTv(QTreeView):
 
         return returned
 
+    def iconSizePixels(self):
+        """Return current icon size in pixels"""
+        return self.__iconSize.value()
+
     def iconSizeIndex(self):
         """Return current icon size index"""
         return self.__iconSize.index()
@@ -1295,6 +1299,10 @@ class BCViewFilesLv(QListView):
                 returned.append(fileNfo)
 
         return returned
+
+    def iconSizePixels(self):
+        """Return current icon size in pixels"""
+        return self.__iconSize.value()
 
     def iconSizeIndex(self):
         """Return current icon size index"""
