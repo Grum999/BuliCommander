@@ -182,7 +182,10 @@
     <file alias="text_f_r90">light/32dp/text_f_r90.svg</file>
     <file alias="text_t">light/32dp/text_t.svg</file>
     <file alias="text_t_r90">light/32dp/text_t_r90.svg</file>
+    <file alias="toolbar">light/32dp/toolbar.svg</file>
     <file alias="tune">light/32dp/tune.svg</file>
+    <file alias="tune_img_slider">light/32dp/tune_img_slider.svg</file>
+    <file alias="tune_slider">light/32dp/tune_slider.svg</file>
     <file alias="tune_toolbar">light/32dp/tune_toolbar.svg</file>
     <file alias="unpinned">light/32dp/unpinned.svg</file>
     <file alias="url">light/32dp/url.svg</file>
@@ -378,7 +381,10 @@
     <file alias="text_f_r90">light/32dp-disabled/text_f_r90.svg</file>
     <file alias="text_t">light/32dp-disabled/text_t.svg</file>
     <file alias="text_t_r90">light/32dp-disabled/text_t_r90.svg</file>
+    <file alias="toolbar">light/32dp-disabled/toolbar.svg</file>
     <file alias="tune">light/32dp-disabled/tune.svg</file>
+    <file alias="tune_img_slider">light/32dp-disabled/tune_img_slider.svg</file>
+    <file alias="tune_slider">light/32dp-disabled/tune_slider.svg</file>
     <file alias="tune_toolbar">light/32dp-disabled/tune_toolbar.svg</file>
     <file alias="unpinned">light/32dp-disabled/unpinned.svg</file>
     <file alias="url">light/32dp-disabled/url.svg</file>
