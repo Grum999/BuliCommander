@@ -980,10 +980,8 @@ class WToolbarConfiguration(QWidget):
                     if not action.isSeparator():
                         if action.menu():
                             if len(action.menu().actions())>0:
-                                print('initialiseAvailableActionsFromMenubar-menu', action.objectName(), action.text())
                                 recursiveMenuActions(action.menu(), groupId)
                         elif action.objectName()!='':
-                            print('initialiseAvailableActionsFromMenubar-action', action.objectName(), action.text())
                             self.addAvailableAction(action, groupId)
 
         if not isinstance(menubar, QMenuBar):
