@@ -47,41 +47,140 @@ from .wcolorselector import WColorPicker
 
 class WMenuSlider(QWidgetAction):
     """Encapsulate a slider as a menu item"""
+    maxToolBarSliderWidthChanged=Signal(int)
+
+    class InternalSlider(QWidget):
+        textChanged=Signal(str)
+
+        def __init__(self, label, parent=None):
+            super(WMenuSlider.InternalSlider, self).__init__(parent)
+
+            self.__layout = QBoxLayout(QBoxLayout.TopToBottom)
+            self.__slider = QSlider()
+            self.__slider.setOrientation(Qt.Horizontal)
+            self.__label = QLabel()
+
+            self.__layout.setSpacing(0)
+            self.__layout.addWidget(self.__label)
+            self.__layout.addWidget(self.__slider)
+
+            self.setLabelText(label)
+            self.setLayout(self.__layout)
+
+        def contentsMargins(self):
+            """Return content margins for widget"""
+            return self.__layout.contentsMargins()
+
+        def setContentsMargins(self, *parameters):
+            """Return content margins for widget"""
+            self.__layout.setContentsMargins(*parameters)
+
+        def setLayoutOrientation(self, value):
+            """set layout orientation
+
+            Value can be:
+                Qt.Horizontal
+                Qt.Vertical
+            """
+            if not value in (Qt.Horizontal, Qt.Vertical):
+                return
+            elif value==Qt.Vertical:
+                self.__layout.setDirection(QBoxLayout.TopToBottom)
+                self.__layout.setSpacing(0)
+                self.__label.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Maximum)
+                self.__slider.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Maximum)
+            else:
+                self.__layout.setDirection(QBoxLayout.LeftToRight)
+                self.__layout.setSpacing(-1)
+                self.__label.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.MinimumExpanding)
+                self.__slider.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.MinimumExpanding)
+
+        def label(self):
+            """Return current label"""
+            return self.__label
+
+        def labelText(self):
+            """Return current label text"""
+            return self.__label.text()
+
+        def setLabelText(self, value):
+            """Set current label text"""
+            if value=='' or value is None:
+                self.textChanged.emit('')
+                self.__label.setVisible(False)
+                return
+            elif isinstance(value, QPixmap):
+                self.textChanged.emit('')
+                self.__label.setPixmap(value)
+            else:
+                self.__label.setText(value)
+                self.textChanged.emit(value)
+            self.__label.setVisible(True)
+
+        def slider(self):
+            return self.__slider
+
     def __init__(self, label, parent=None):
         super(WMenuSlider, self).__init__(parent)
-
-        self.__widget = QWidget()
-        self.__layout = QVBoxLayout()
-        self.__slider = QSlider()
-        self.__slider.setOrientation(Qt.Horizontal)
-        self.__label = QLabel()
-
-        self.__layout.setSpacing(0)
-        self.__layout.addWidget(self.__label)
-
-        self.setLabelText(label)
-
-        self.__layout.addWidget(self.__slider)
-        self.__widget.setLayout(self.__layout)
+        self.__widget = WMenuSlider.InternalSlider(label, parent)
+        self.__maxTbSliderWidth=250
+        self.__updating=False
         self.setDefaultWidget(self.__widget)
 
     def labelText(self):
         """Return current label text"""
-        return self.__label.text()
+        return self.__widget.labelText()
 
     def setLabelText(self, value):
         """Set current label text"""
-        if value=='' or value is None:
-            self.__label.setVisible(False)
-            return
-        elif isinstance(value, QPixmap):
-            self.__label.setPixmap(value)
-        else:
-            self.__label.setText(value)
-        self.__label.setVisible(True)
+        self.__widget.setLabelText(value)
 
     def slider(self):
-        return self.__slider
+        return self.__widget.slider()
+
+    def maxToolBarSliderWidth(self):
+        """Return maximum width for slider when in a toolbar"""
+        return self.__maxTbSliderWidth
+
+    def setMaxToolBarSliderWidth(self, value):
+        """Set maximum width for slider when in a toolbar"""
+        if isinstance(value, int) and value>=0:
+            emitSignal=(self.__maxTbSliderWidth!=value)
+            self.__maxTbSliderWidth=value
+            if emitSignal:
+                self.maxToolBarSliderWidthChanged.emit(value)
+
+
+    def createWidget(self, parent=None):
+        """Create dedicated widget for toolbar
+
+        Toolbar widget is linked with QWidgetAction
+        """
+        def updateSlider(value, targetSlider):
+            if self.__updating:
+                return
+            self.__updating=True
+            targetSlider.setValue(value)
+            self.__updating=False
+
+        if isinstance(parent, QToolBar):
+            returned=WMenuSlider.InternalSlider(self.__widget.labelText(), parent)
+            returned.setLayoutOrientation(Qt.Horizontal)
+            returned.slider().setRange(self.__widget.slider().minimum(), self.__widget.slider().maximum())
+            returned.slider().setValue(self.__widget.slider().value())
+            returned.setContentsMargins(0,0,0,0)
+            returned.slider().setMaximumWidth(self.__maxTbSliderWidth)
+
+            # link with widget
+            self.__widget.slider().rangeChanged.connect(lambda valueMin, valueMax: returned.slider().setRange(value, valueMin, valueMax))
+            self.__widget.slider().valueChanged.connect(lambda value: updateSlider(value, returned.slider()))
+            self.__widget.textChanged.connect(lambda value: returned.slider().setToolTip(value))
+            self.maxToolBarSliderWidthChanged.connect(lambda value: returned.slider().setMaximumWidth(value))
+            returned.slider().valueChanged.connect(lambda value: updateSlider(value, self.__widget.slider()))
+            return returned
+
+        return None
+
 
 
 class WMenuTitle(QWidgetAction):
