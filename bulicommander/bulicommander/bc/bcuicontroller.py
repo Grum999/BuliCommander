@@ -94,6 +94,10 @@ from bulicommander.pktk.modules.utils import (
         Debug
     )
 from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.menuutils import (
+        buildQAction,
+        buildQMenu
+    )
 from bulicommander.pktk.modules.strutils import (
         getBytesSizeToStrUnit,
         setBytesSizeToStrUnit
@@ -133,6 +137,10 @@ class BCUIController(QObject):
 
         self.__bcStarted = False
         self.__bcStarting = False
+
+        self.__fontMono = QFont()
+        self.__fontMono.setPointSize(9)
+        self.__fontMono.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
         self.__window = None
         self.__bcName = bcName
@@ -297,6 +305,8 @@ class BCUIController(QObject):
         self.commandSettingsClipboardUrlAutomaticDownload(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_URL_AUTOLOAD))
         self.commandSettingsClipboardUrlParseTextHtml(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_URL_PARSE_TEXTHTML))
         self.commandSettingsClipboardPasteAsNewDocument(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC))
+
+        self.commandSettingsToolbars(BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS), BCSettings.get(BCSettingsKey.SESSION_TOOLBARS))
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setFilesHistory(self.__history)
@@ -688,6 +698,24 @@ class BCUIController(QObject):
 
     def saveSettings(self):
         """Save the current settings"""
+        # get current toolbar configuration from settings as dict for which key is toolbar id
+        toolbarSettings={toolbar['id']: toolbar for toolbar in BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS)}
+        toolbarSession=[]
+        # loop over toolbar to update settings: visibility, area, position
+        for toolbar in self.__window.toolbarList():
+            id=toolbar.objectName()
+            if id in toolbarSettings:
+                geometry=toolbar.frameGeometry()
+                toolbarSession.append({
+                        'id': id,
+                        'visible': toolbar.isVisible(),
+                        'area': self.__window.toolBarArea(toolbar),
+                        'break': self.__window.toolBarBreak(toolbar),
+                        'rect': [geometry.left(), geometry.top(), geometry.width(), geometry.height()]
+                    })
+        # save toolbars session informations
+        BCSettings.set(BCSettingsKey.SESSION_TOOLBARS, toolbarSession)
+
 
         BCSettings.set(BCSettingsKey.CONFIG_SESSION_SAVE, self.__window.actionSettingsSaveSessionOnExit.isChecked())
 
@@ -778,7 +806,246 @@ class BCUIController(QObject):
 
     def updateMenuForPanel(self):
         """Update menu (enabled/disabled/checked/unchecked) according to current panel"""
-        #print("updateMenuForPanel", self.panel().tabActive())
+        def enableSubMenu(enabled, menu):
+            menu.setEnabled(enabled)
+            if len(menu.actions())>0:
+                for action in menu.actions():
+                    if not action.isSeparator():
+                        if action.menu() and len(action.menu().actions())>0:
+                            enableSubMenu(enabled, action.menu())
+                        else:
+                            action.setEnabled(enabled)
+
+        def buildMenuGoHistory():
+            """Build menu history"""
+            # remove history entry, only keep "clear history" and "separator"
+            for action in [action for action in self.__window.menuGoHistory.actions() if (action.objectName()=='' and not action.isSeparator())]:
+                self.__window.menuGoHistory.removeAction(action)
+
+            if not self.__history is None:
+                self.__history.removeMissing(False, refList=self.quickRefDict())
+
+            if not self.__history is None and self.__history.length() > 0:
+                self.__window.actionGoHistoryClearHistory.setEnabled(True)
+                self.__window.actionGoHistoryClearHistory.setText(i18n(f'Clear history ({self.__history.length()})'))
+
+                self.__window.menuGoHistory.addSeparator()
+                for path in reversed(self.__history.list()):
+                    action = QAction(path.replace('&', '&&'), self)
+                    action.setFont(self.__fontMono)
+                    action.setProperty('path', path)
+                    action.triggered.connect(lambda: self.commandGoTo(self.panelId(), self.sender().property('path')))
+
+                    self.__window.menuGoHistory.addAction(action)
+            else:
+                self.__window.actionGoHistoryClearHistory.setEnabled(False)
+                self.__window.actionGoHistoryClearHistory.setText(i18n('Clear history'))
+
+        def buildMenuGoBookmarks():
+            """Build menu bookmarks"""
+            def menuBookmarks_Clicked(panelId, action):
+                # change directory
+                path=action.property('path')
+                if not path is None:
+                    if os.path.isdir(path):
+                        self.commandGoTo(panelId, path)
+                    else:
+                        name = self.bookmark().nameFromValue(path)
+                        self.commandGoBookmarkRemoveUI(name)
+
+            for action in [action for action in self.__window.menuGoBookmark.actions() if (action.objectName()=='' and not action.isSeparator())]:
+                self.__window.menuGoBookmark.removeAction(action)
+
+            if not self.__bookmark is None and self.__bookmark.length() > 0:
+                self.__window.actionGoBookmarksClearBookmarks.setEnabled(True)
+                self.__window.actionGoBookmarksClearBookmarks.setText(i18n('Clear bookmarks')+f' ({self.__bookmark.length()})')
+
+                currentPath = self.panel().filesPath()
+                isInBookmark = False
+
+                for bookmark in self.__bookmark.list():
+                    action = QAction(bookmark[BCBookmark.NAME].replace('&', '&&'), self)
+                    action.setFont(self.__fontMono)
+                    action.setProperty('path', bookmark[BCBookmark.VALUE])
+
+                    if os.path.isdir(bookmark[BCBookmark.VALUE]):
+                        action.setCheckable(True)
+                        action.setStatusTip(bookmark[BCBookmark.VALUE])
+
+                        if currentPath == bookmark[BCBookmark.VALUE]:
+                            action.setChecked(True)
+                            isInBookmark = True
+                        else:
+                            action.setChecked(False)
+                    else:
+                        action.setCheckable(False)
+                        action.setStatusTip(f'Directory "{bookmark[BCBookmark.VALUE]}" is missing')
+                        action.setIcon(buildIcon('pktk:warning'))
+
+                    action.triggered.connect(lambda: menuBookmarks_Clicked(self.panelId(), self.sender()))
+
+                    self.__window.menuGoBookmark.addAction(action)
+
+                if isInBookmark:
+                    self.__window.actionGoBookmarksAddBookmark.setEnabled(False)
+                    self.__window.actionGoBookmarksRemoveFromBookmark.setEnabled(True)
+                    self.__window.actionGoBookmarksRenameBookmark.setEnabled(True)
+                else:
+                    self.__window.actionGoBookmarksAddBookmark.setEnabled(self.panel().filesPathMode() != BCWPathBar.MODE_SAVEDVIEW)
+                    self.__window.actionGoBookmarksRemoveFromBookmark.setEnabled(False)
+                    self.__window.actionGoBookmarksRenameBookmark.setEnabled(False)
+            else:
+                self.__window.actionGoBookmarksClearBookmarks.setEnabled(False)
+                self.__window.actionGoBookmarksClearBookmarks.setText(i18n('Clear bookmark'))
+                self.__window.actionGoBookmarksAddBookmark.setEnabled(self.panel().filesPathMode() != BCWPathBar.MODE_SAVEDVIEW)
+                self.__window.actionGoBookmarksRemoveFromBookmark.setEnabled(False)
+                self.__window.actionGoBookmarksRenameBookmark.setEnabled(False)
+
+        def buildMenuGoSavedViews():
+            """Build menu bookmarks"""
+            for action in [action for action in self.__window.menuGoSavedViews.actions() if (action.objectName()=='' and not (action.isSeparator() or action.menu()))]:
+                self.__window.menuGoSavedViews.removeAction(action)
+
+            for action in [action for action in self.__window.menuGoSavedViewsAddToView.actions() if (action.objectName()=='' and not action.isSeparator())]:
+                self.__window.menuGoSavedViewsAddToView.removeAction(action)
+
+            allowAddRemove = False
+            if self.panel().filesSelected()[3] > 0:
+                # Selected nb directories + files > 0
+                # can be added to a current view
+                allowAddRemove = True
+
+            isSavedView = (self.quickRefType(self.panel().filesPath()) == BCWPathBar.QUICKREF_SAVEDVIEW_LIST)
+
+            if self.__savedView.length() > 0:
+                # there's some view saved
+                # build list of saved views
+
+                for view in self.__savedView.list():
+                    # view = (name, files)
+                    if not re.match("^searchresult:", view[0]):
+                        action = buildQAction("pktk:saved_view_file", view[0].replace('&', '&&'), self)
+                        action.setFont(self.__fontMono)
+                        action.setStatusTip(i18n(f"Add selected files to view '{view[0].replace('&', '&&')}' (Current files in view: {len(view[1])})" ))
+                        action.setProperty('path', f'{view[0]}')
+                        action.triggered.connect(lambda: self.commandGoSavedViewAppend(self.sender().property('path'), [file.fullPathName() for file in self.panel().filesSelected()[0]]))
+
+                        if isSavedView and self.__savedView.current(True) == view[0] or not allowAddRemove:
+                            action.setEnabled(False)
+
+                        self.__window.menuGoSavedViewsAddToView.addAction(action)
+
+                        action = buildQAction("pktk:saved_view_file", view[0].replace('&', '&&'), self)
+                        action.setFont(self.__fontMono)
+                        action.setCheckable(True)
+                        action.setStatusTip(i18n(f'Files in view: {len(view[1])}'))
+                        action.setProperty('path', f'@{view[0]}')
+                        action.triggered.connect(lambda: self.commandGoTo(self.panelId(), self.sender().property('path')))
+
+                        if isSavedView and self.__savedView.current(True) == view[0]:
+                            action.setChecked(True)
+
+                        self.__window.menuGoSavedViews.addAction(action)
+
+            self.__window.actionGoSavedViewsAddToViewNewView.setEnabled(allowAddRemove)
+            if isSavedView:
+                self.__window.actionGoSavedViewsClearViewContent.setEnabled(True)
+                self.__window.actionGoSavedViewsRemoveFromView.setEnabled(allowAddRemove)
+                self.__window.actionGoSavedViewsRenameView.setEnabled(True)
+                self.__window.actionGoSavedViewsDeleteView.setEnabled(True)
+            else:
+                self.__window.actionGoSavedViewsClearViewContent.setEnabled(False)
+                self.__window.actionGoSavedViewsRemoveFromView.setEnabled(False)
+                self.__window.actionGoSavedViewsRenameView.setEnabled(False)
+                self.__window.actionGoSavedViewsDeleteView.setEnabled(False)
+
+        def buildMenuViewLayout():
+            """Build menu layout"""
+            if self.__window.actionViewLayoutIconSize is None:
+                # not yet initialized
+                return
+
+            try:
+                self.__window.actionViewLayoutTopBottom.triggered.disconnect()
+                self.__window.actionViewLayoutLeftRight.triggered.disconnect()
+                self.__window.actionViewLayoutBottomTop.triggered.disconnect()
+                self.__window.actionViewLayoutRightLeft.triggered.disconnect()
+                self.__window.actionViewLayoutFullMode.triggered.disconnect()
+            except:
+                pass
+
+            if self.panel().tabActive()==BCMainViewTabTabs.FILES:
+                self.__window.actionViewLayoutFullMode.setVisible(True)
+                self.__window.actionViewLayoutFullMode.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.FULL ))
+                self.__window.actionViewLayoutTopBottom.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.TOP ))
+                self.__window.actionViewLayoutLeftRight.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.LEFT ))
+                self.__window.actionViewLayoutBottomTop.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.BOTTOM ))
+                self.__window.actionViewLayoutRightLeft.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.RIGHT ))
+
+                layout=self.panel().filesTabLayout()
+
+                if self.panel().filesTabViewMode()==BCMainViewTab.VIEWMODE_TV:
+                    self.__window.actionViewLayoutViewAsList.setChecked(True)
+                    iconSize=self.panel().filesIconSizeTv()
+                    iconPixelSize=self.panel().filesIconSizeTv(True)
+                    maxIconSize=BCMainViewTab.MAX_ICON_SIZE_FILE_TV
+                else:
+                    self.__window.actionViewLayoutViewAsGrid.setChecked(True)
+                    iconSize=self.panel().filesIconSizeLv()
+                    iconPixelSize=self.panel().filesIconSizeLv(True)
+                    maxIconSize=BCMainViewTab.MAX_ICON_SIZE_FILE_LV
+
+                self.__window.actionViewLayoutViewAsList.setVisible(True)
+                self.__window.actionViewLayoutViewAsGrid.setVisible(True)
+                self.__window.actionViewLayoutIconSize.setVisible(True)
+
+                if layout==BCMainViewTabFilesLayout.FULL:
+                    self.__window.actionViewLayoutFullMode.setChecked(True)
+                elif layout==BCMainViewTabFilesLayout.TOP:
+                    self.__window.actionViewLayoutTopBottom.setChecked(True)
+                elif layout==BCMainViewTabFilesLayout.LEFT:
+                    self.__window.actionViewLayoutLeftRight.setChecked(True)
+                elif layout==BCMainViewTabFilesLayout.BOTTOM:
+                    self.__window.actionViewLayoutBottomTop.setChecked(True)
+                elif layout==BCMainViewTabFilesLayout.RIGHT:
+                    self.__window.actionViewLayoutRightLeft.setChecked(True)
+
+            elif self.panel().tabActive()==BCMainViewTabTabs.CLIPBOARD:
+                self.__window.actionViewLayoutFullMode.setVisible(False)
+                self.__window.actionViewLayoutTopBottom.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.TOP ))
+                self.__window.actionViewLayoutLeftRight.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.LEFT ))
+                self.__window.actionViewLayoutBottomTop.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.BOTTOM ))
+                self.__window.actionViewLayoutRightLeft.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.RIGHT ))
+
+                layout=self.panel().clipboardTabLayout()
+                iconSize=self.panel().clipboardIconSize()
+                iconPixelSize=self.panel().clipboardIconSize(True)
+                maxIconSize=BCMainViewTab.MAX_ICON_SIZE_CLIPBOARD
+
+                self.__window.actionViewLayoutViewAsList.setVisible(False)
+                self.__window.actionViewLayoutViewAsGrid.setVisible(False)
+                self.__window.actionViewLayoutIconSize.setVisible(True)
+
+                if layout==BCMainViewTabClipboardLayout.TOP:
+                    self.__window.actionViewLayoutTopBottom.setChecked(True)
+                elif layout==BCMainViewTabClipboardLayout.LEFT:
+                    self.__window.actionViewLayoutLeftRight.setChecked(True)
+                elif layout==BCMainViewTabClipboardLayout.BOTTOM:
+                    self.__window.actionViewLayoutBottomTop.setChecked(True)
+                elif layout==BCMainViewTabClipboardLayout.RIGHT:
+                    self.__window.actionViewLayoutRightLeft.setChecked(True)
+            else:
+                self.__window.actionViewLayoutViewAsList.setVisible(False)
+                self.__window.actionViewLayoutViewAsGrid.setVisible(False)
+                self.__window.actionViewLayoutIconSize.setVisible(False)
+                return
+
+            self.__window.actionViewLayoutIconSize.slider().setMaximum(maxIconSize)
+            self.__window.actionViewLayoutIconSize.slider().setValue(iconSize)
+            self.__window.actionViewLayoutIconSize.setLabelText(i18n(f"Icon size: {iconPixelSize}px"))
+
+        #print("updateMenuForPanel", self.panel().tabActive(), self.panelId())
+
         self.__window.actionViewThumbnail.setChecked(self.panel().filesViewThumbnail())
         self.__window.actionViewDisplayQuickFilter.setChecked(self.panel().filesFilterVisible())
 
@@ -794,6 +1061,11 @@ class BCUIController(QObject):
             self.__window.menuClipboard.menuAction().setVisible(False)
             self.__window.menuDocument.menuAction().setVisible(False)
             self.__window.menuGo.menuAction().setVisible(True)
+
+            enableSubMenu(True, self.__window.menuFile)
+            enableSubMenu(False, self.__window.menuClipboard)
+            enableSubMenu(False, self.__window.menuDocument)
+            enableSubMenu(True, self.__window.menuGo)
 
             selectionInfo = self.panel().filesSelected()
             markedInfo = self.panel().filesMarked()
@@ -828,20 +1100,20 @@ class BCUIController(QObject):
             self.__window.actionFileMoveToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
             self.__window.actionFileDeleteNoConfirm.setEnabled(selectionInfo[3]>0)
 
-            self.__window.actionMenuSelectAll.setEnabled(True)
-            self.__window.actionMenuSelectNone.setEnabled(True)
-            self.__window.actionMenuSelectInvert.setEnabled(True)
-            self.__window.actionMenuSelectMarked.setEnabled(markedInfo[0]>0)
-            self.__window.actionMenuSelectMarked.setVisible(True)
+            self.__window.actionMenuEditSelectAll.setEnabled(True)
+            self.__window.actionMenuEditSelectNone.setEnabled(True)
+            self.__window.actionMenuEditSelectInvert.setEnabled(True)
+            self.__window.actionMenuEditSelectMarked.setEnabled(markedInfo[0]>0)
+            self.__window.actionMenuEditSelectMarked.setVisible(True)
 
-            self.__window.actionMenuMarkUnmark.setEnabled(True)
-            self.__window.actionMenuMarkAll.setEnabled(True)
-            self.__window.actionMenuMarkNone.setEnabled(True)
-            self.__window.actionMenuMarkInvert.setEnabled(True)
-            self.__window.actionMenuMarkUnmark.setVisible(True)
-            self.__window.actionMenuMarkAll.setVisible(True)
-            self.__window.actionMenuMarkNone.setVisible(True)
-            self.__window.actionMenuMarkInvert.setVisible(True)
+            self.__window.actionMenuEditMarkUnmark.setEnabled(True)
+            self.__window.actionMenuEditMarkAll.setEnabled(True)
+            self.__window.actionMenuEditMarkNone.setEnabled(True)
+            self.__window.actionMenuEditMarkInvert.setEnabled(True)
+            self.__window.actionMenuEditMarkUnmark.setVisible(True)
+            self.__window.actionMenuEditMarkAll.setVisible(True)
+            self.__window.actionMenuEditMarkNone.setVisible(True)
+            self.__window.actionMenuEditMarkInvert.setVisible(True)
 
             self.__window.actionViewThumbnail.setEnabled(True)
             self.__window.actionViewShowImageFileOnly.setEnabled(True)
@@ -860,6 +1132,10 @@ class BCUIController(QObject):
 
             self.__window.actionGoBack.setEnabled(self.panel().filesGoBackEnabled())
             self.__window.actionGoUp.setEnabled(self.panel().filesGoUpEnabled())
+            buildMenuGoHistory()
+            buildMenuGoBookmarks()
+            buildMenuGoSavedViews()
+            buildMenuViewLayout()
 
             self.__window.actionToolsCopyToClipboard.setEnabled(selectionInfo[3]>0)
             self.__window.actionToolsExportFiles.setEnabled(True)
@@ -877,30 +1153,35 @@ class BCUIController(QObject):
             self.__window.menuDocument.menuAction().setVisible(False)
             self.__window.menuGo.menuAction().setVisible(False)
 
+            enableSubMenu(False, self.__window.menuFile)
+            enableSubMenu(True, self.__window.menuClipboard)
+            enableSubMenu(False, self.__window.menuDocument)
+            enableSubMenu(False, self.__window.menuGo)
+
             selectionInfo = self.panel().clipboardSelected()
 
             self.__window.actionClipboardCheckContent.setVisible(not self.__clipboard.enabled())
 
             if self.__clipboard.length()==0:
-                self.__window.actionMenuSelectAll.setEnabled(False)
-                self.__window.actionMenuSelectNone.setEnabled(False)
-                self.__window.actionMenuSelectInvert.setEnabled(False)
+                self.__window.actionMenuEditSelectAll.setEnabled(False)
+                self.__window.actionMenuEditSelectNone.setEnabled(False)
+                self.__window.actionMenuEditSelectInvert.setEnabled(False)
             else:
-                self.__window.actionMenuSelectAll.setEnabled(True)
-                self.__window.actionMenuSelectNone.setEnabled(True)
-                self.__window.actionMenuSelectInvert.setEnabled(True)
+                self.__window.actionMenuEditSelectAll.setEnabled(True)
+                self.__window.actionMenuEditSelectNone.setEnabled(True)
+                self.__window.actionMenuEditSelectInvert.setEnabled(True)
 
-            self.__window.actionMenuSelectMarked.setEnabled(False)
-            self.__window.actionMenuSelectMarked.setVisible(False)
+            self.__window.actionMenuEditSelectMarked.setEnabled(False)
+            self.__window.actionMenuEditSelectMarked.setVisible(False)
 
-            self.__window.actionMenuMarkUnmark.setVisible(False)
-            self.__window.actionMenuMarkAll.setVisible(False)
-            self.__window.actionMenuMarkNone.setVisible(False)
-            self.__window.actionMenuMarkInvert.setVisible(False)
-            self.__window.actionMenuMarkUnmark.setEnabled(False)
-            self.__window.actionMenuMarkAll.setEnabled(False)
-            self.__window.actionMenuMarkNone.setEnabled(False)
-            self.__window.actionMenuMarkInvert.setEnabled(False)
+            self.__window.actionMenuEditMarkUnmark.setVisible(False)
+            self.__window.actionMenuEditMarkAll.setVisible(False)
+            self.__window.actionMenuEditMarkNone.setVisible(False)
+            self.__window.actionMenuEditMarkInvert.setVisible(False)
+            self.__window.actionMenuEditMarkUnmark.setEnabled(False)
+            self.__window.actionMenuEditMarkAll.setEnabled(False)
+            self.__window.actionMenuEditMarkNone.setEnabled(False)
+            self.__window.actionMenuEditMarkInvert.setEnabled(False)
 
             if selectionInfo[1]==1:
                 # nb item selected(1)
@@ -999,6 +1280,8 @@ class BCUIController(QObject):
                 self.__window.menuViewDisplayLayoutClipboard[panelId].setVisible(panelId==self.panelId())
                 self.__window.menuViewDisplayLayoutClipboard[panelId].setEnabled(panelId==self.panelId())
 
+            buildMenuViewLayout()
+
             self.__window.actionToolsCopyToClipboard.setEnabled(False)
             self.__window.actionToolsExportFiles.setEnabled(False)
             self.__window.actionToolsConvertFiles.setEnabled(False)
@@ -1013,20 +1296,25 @@ class BCUIController(QObject):
             self.__window.menuDocument.menuAction().setVisible(False)
             self.__window.menuGo.menuAction().setVisible(False)
 
-            self.__window.actionMenuSelectAll.setEnabled(False)
-            self.__window.actionMenuSelectNone.setEnabled(False)
-            self.__window.actionMenuSelectInvert.setEnabled(False)
-            self.__window.actionMenuSelectMarked.setEnabled(False)
-            self.__window.actionMenuSelectMarked.setVisible(False)
+            enableSubMenu(False, self.__window.menuFile)
+            enableSubMenu(False, self.__window.menuClipboard)
+            enableSubMenu(False, self.__window.menuDocument)
+            enableSubMenu(False, self.__window.menuGo)
 
-            self.__window.actionMenuMarkUnmark.setVisible(False)
-            self.__window.actionMenuMarkAll.setVisible(False)
-            self.__window.actionMenuMarkNone.setVisible(False)
-            self.__window.actionMenuMarkInvert.setVisible(False)
-            self.__window.actionMenuMarkUnmark.setEnabled(False)
-            self.__window.actionMenuMarkAll.setEnabled(False)
-            self.__window.actionMenuMarkNone.setEnabled(False)
-            self.__window.actionMenuMarkInvert.setEnabled(False)
+            self.__window.actionMenuEditSelectAll.setEnabled(False)
+            self.__window.actionMenuEditSelectNone.setEnabled(False)
+            self.__window.actionMenuEditSelectInvert.setEnabled(False)
+            self.__window.actionMenuEditSelectMarked.setEnabled(False)
+            self.__window.actionMenuEditSelectMarked.setVisible(False)
+
+            self.__window.actionMenuEditMarkUnmark.setVisible(False)
+            self.__window.actionMenuEditMarkAll.setVisible(False)
+            self.__window.actionMenuEditMarkNone.setVisible(False)
+            self.__window.actionMenuEditMarkInvert.setVisible(False)
+            self.__window.actionMenuEditMarkUnmark.setEnabled(False)
+            self.__window.actionMenuEditMarkAll.setEnabled(False)
+            self.__window.actionMenuEditMarkNone.setEnabled(False)
+            self.__window.actionMenuEditMarkInvert.setEnabled(False)
 
 
             self.__window.actionViewThumbnail.setEnabled(False)
@@ -2587,6 +2875,16 @@ class BCUIController(QObject):
             BCSettings.set(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_OVERMINSIZE, value)
             for panelId in self.__window.panels:
                 self.__window.panels[panelId].setFilesGridNfoOverMinSize(value)
+
+    def commandSettingsToolbars(self, config=None, session=None):
+        """Set toolbars definition"""
+        if config is None:
+            return (BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS), BCSettings.get(BCSettingsKey.SESSION_TOOLBARS))
+        else:
+            BCSettings.set(BCSettingsKey.CONFIG_TOOLBARS, config)
+            if not session is None:
+                BCSettings.set(BCSettingsKey.SESSION_TOOLBARS, session)
+            self.__window.initToolbar(config, session)
 
     def commandInfoToClipBoardBorder(self, border=TextTableSettingsText.BORDER_DOUBLE):
         """Set border for information panel content to clipboard"""

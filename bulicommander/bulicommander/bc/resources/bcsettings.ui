@@ -80,7 +80,7 @@
      <item>
       <widget class="QStackedWidget" name="swCatPages">
        <property name="currentIndex">
-        <number>3</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="pageCatGeneral">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -449,8 +449,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>980</width>
-              <height>784</height>
+              <width>518</width>
+              <height>716</height>
              </rect>
             </property>
             <layout class="QFormLayout" name="formLayout_4">
@@ -1291,7 +1291,7 @@
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Informations will be displayed to right side of thumbnails&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
-                <string>Right side</string>
+                <string>Ri&amp;ght side</string>
                </property>
                <attribute name="buttonGroup">
                 <string notr="true">buttonGroupPanGridView</string>
@@ -1517,6 +1517,25 @@
             <string notr="true">buttonGroupClpDefaultAction</string>
            </attribute>
           </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="pageToolbarConfiguration">
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="WToolbarConfiguration" name="wToolbarConfiguration" native="true"/>
          </item>
         </layout>
        </widget>
@@ -1829,6 +1848,12 @@
    <extends>QListWidget</extends>
    <header>bulicommander.pktk.widgets.worderedlist</header>
   </customwidget>
+  <customwidget>
+   <class>WToolbarConfiguration</class>
+   <extends>QWidget</extends>
+   <header>bulicommander.pktk.widgets.wtoolbarconfiguration</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
  <resources>
   <include location="../../pktk/resources/svg/dark_icons.qrc"/>
@@ -1934,12 +1959,12 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroupImgDefaultOther"/>
   <buttongroup name="buttonGroupGenSysTray"/>
   <buttongroup name="buttonGroupImgDefaultKrita"/>
+  <buttongroup name="buttonGroupPanGridView"/>
   <buttongroup name="buttonGroupNavHomeDir"/>
   <buttongroup name="buttonGroupClpDefaultAction"/>
   <buttongroup name="buttonGroupClpMode"/>
-  <buttongroup name="buttonGroupPanGridView"/>
+  <buttongroup name="buttonGroupImgDefaultOther"/>
  </buttongroups>
 </ui>
