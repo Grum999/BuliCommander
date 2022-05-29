@@ -60,7 +60,7 @@ class ToolbarConfiguration(object):
             raise EInvalidValue('Given `fromDict` must contain "label" key')
         elif not 'actions' in fromDict:
             raise EInvalidValue('Given `fromDict` must contain "actions" key')
-        returned=ToolbarConfiguration(fromDict['id'], fromDict['label'])
+        returned=ToolbarConfiguration(fromDict['id'], fromDict['label'], fromDict['style'])
 
         for actionId in fromDict['actions']:
             action=wToolbarConfiguration.availableActionFromId(actionId)
@@ -69,7 +69,7 @@ class ToolbarConfiguration(object):
 
         return returned
 
-    def __init__(self, id, label):
+    def __init__(self, id, label, style=Qt.ToolButtonFollowStyle):
         """initialise toolbar configuration"""
         if not isinstance(id, str):
             raise EInvalidType("Given `id` must be <str>")
@@ -78,6 +78,7 @@ class ToolbarConfiguration(object):
 
         self.__id=id
         self.__label=label
+        self.__style=style
         self.__actions=[]
 
     def id(self):
@@ -93,6 +94,18 @@ class ToolbarConfiguration(object):
         if not isinstance(label, str):
             raise EInvalidType("Given `label` must be <str>")
         self.__label=label
+
+    def style(self):
+        """Return current label"""
+        return self.__style
+
+    def setStyle(self, style):
+        """Set current label"""
+        if not isinstance(style, int):
+            raise EInvalidType("Given `style` must be <int>")
+        elif style<0 or style>4:
+            raise EInvalidValue("Given `style` value is invalid")
+        self.__style=style
 
     def addAction(self, action):
         """Add an action to toolbar configuration"""
@@ -136,7 +149,8 @@ class ToolbarConfiguration(object):
         return {
                 'id': self.__id,
                 'label': self.__label,
-                'actions': [action.id() for action in self.__actions]
+                'actions': [action.id() for action in self.__actions],
+                'style': self.__style
             }
 
 
@@ -526,6 +540,15 @@ class WToolbarConfiguration(QWidget):
         self.tbToolbarEdit.clicked.connect(self.__editToolbar)
         self.tbToolbarDelete.clicked.connect(self.__deleteToolbar)
 
+
+        self.cbToolbarStyle.addItem(i18n("Icon only"), Qt.ToolButtonIconOnly)
+        self.cbToolbarStyle.addItem(i18n("Text only"), Qt.ToolButtonTextOnly)
+        self.cbToolbarStyle.addItem(i18n("Text beside icon"), Qt.ToolButtonTextBesideIcon)
+        self.cbToolbarStyle.addItem(i18n("Text under icon"), Qt.ToolButtonTextUnderIcon)
+        self.cbToolbarStyle.addItem(i18n("System"), Qt.ToolButtonFollowStyle)
+        self.cbToolbarStyle.setCurrentIndex(Qt.ToolButtonFollowStyle)
+        self.cbToolbarStyle.currentIndexChanged.connect(self.__toolbarStyleChanged)
+
         # -- available actions --
         self.__availableActionsInUpdate=False
 
@@ -608,6 +631,10 @@ class WToolbarConfiguration(QWidget):
             # toolbar Id is a uuid
             self.removeToolbar(currentToolbarId)
 
+    def __toolbarStyleChanged(self):
+        """Change style for toolbar"""
+        self.setToolbarStyle(self.cbToolbarList.currentData(), self.cbToolbarStyle.currentIndex())
+
     def __updateToolbarUi(self):
         """Update add/edit/delete buttons status according to current state"""
         self.cbToolbarList.model().sort(0)
@@ -640,11 +667,14 @@ class WToolbarConfiguration(QWidget):
             self.__modelCurrentActions.clear()
 
         if self.cbToolbarList.currentIndex()==-1:
+            self.cbToolbarStyle.setCurrentIndex(Qt.ToolButtonFollowStyle)
             self.__currentToolbar=None
         else:
             self.__currentToolbar=self.cbToolbarList.currentData()
 
         if not self.__currentToolbar is None:
+            self.cbToolbarStyle.setCurrentIndex(self.__toolbars[self.__currentToolbar].style())
+
             for action in self.__toolbars[self.__currentToolbar].actions():
                 availableActionIndex=self.__modelAvailableActions.getAvailableActionIndex(action)
                 availableAction=self.__modelAvailableActions.data(availableActionIndex, AvailableActionModel.ROLE_NODE)
@@ -781,6 +811,20 @@ class WToolbarConfiguration(QWidget):
                 break
         return True
 
+    def setToolbarStyle(self, toolbarId, style):
+        """Change toolbar style designed by given `toolbarId` with given `style`
+
+        If no toolbar is found, does nothing and return False
+        """
+        if not isinstance(toolbarId, str):
+            raise EInvalidType("Given `toolbarId` must be <str>")
+
+        if not toolbarId in self.__toolbars:
+            return False
+
+        self.__toolbars[toolbarId].setStyle(style)
+        return True
+
     def getToolbar(self, toolbarId):
         """Return a toolbar definition for given `toolbarId`
 
@@ -814,7 +858,13 @@ class WToolbarConfiguration(QWidget):
         elif not (isinstance(groupId, str) or groupId is None):
             raise EInvalidType("Given `groupId` when provided must be <str>")
 
-        availableAction=AvailableActionNode(action.objectName(), re.sub('\&(?!\&)' , '', action.text()), False, action.icon())
+        data=action.data()
+        if not isinstance(data, str):
+            data=''
+        else:
+            data=f"{data} "
+
+        availableAction=AvailableActionNode(action.objectName(), data+re.sub('\&(?!\&)' , '', action.text()), False, action.icon())
 
         if groupId is None:
             if self.__availableActions.addChild(availableAction):
@@ -924,12 +974,16 @@ class WToolbarConfiguration(QWidget):
     def initialiseAvailableActionsFromMenubar(self, menubar):
         """Initialise available action list from given menubar"""
         def recursiveMenuActions(menu, groupId):
+            print('MENU --- ', menu.objectName(), menu.title())
             if len(menu.actions())>0:
                 for action in menu.actions():
                     if not action.isSeparator():
-                        if action.menu() and len(action.menu().actions())>0:
-                            recursiveMenuActions(action.menu(), groupId)
-                        else:
+                        if action.menu():
+                            if len(action.menu().actions())>0:
+                                print('initialiseAvailableActionsFromMenubar-menu', action.objectName(), action.text())
+                                recursiveMenuActions(action.menu(), groupId)
+                        elif action.objectName()!='':
+                            print('initialiseAvailableActionsFromMenubar-action', action.objectName(), action.text())
                             self.addAvailableAction(action, groupId)
 
         if not isinstance(menubar, QMenuBar):

@@ -54,7 +54,7 @@
        <height>0</height>
       </size>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <layout class="QGridLayout" name="gridLayout">
       <property name="leftMargin">
        <number>0</number>
       </property>
@@ -67,7 +67,14 @@
       <property name="bottomMargin">
        <number>0</number>
       </property>
-      <item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Name</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
        <widget class="QComboBox" name="cbToolbarList">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -77,7 +84,7 @@
         </property>
        </widget>
       </item>
-      <item>
+      <item row="0" column="2">
        <widget class="QWidget" name="wToolbarEdit" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
@@ -148,6 +155,16 @@
          </item>
         </layout>
        </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Style</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="cbToolbarStyle"/>
       </item>
      </layout>
     </widget>
@@ -471,6 +488,9 @@
            </property>
            <property name="toolTip">
             <string>Drag'n'drop to reorder items</string>
+           </property>
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
            </property>
            <property name="dragDropMode">
             <enum>QAbstractItemView::InternalMove</enum>
