@@ -62,9 +62,11 @@
     <file alias="edit_undo">dark/32dp/edit_undo.svg</file>
     <file alias="export_list">dark/32dp/export_list.svg</file>
     <file alias="file">dark/32dp/file.svg</file>
+    <file alias="file_backup">dark/32dp/file_backup.svg</file>
     <file alias="file_close">dark/32dp/file_close.svg</file>
     <file alias="file_close_all">dark/32dp/file_close_all.svg</file>
     <file alias="file_copy">dark/32dp/file_copy.svg</file>
+    <file alias="file_image">dark/32dp/file_image.svg</file>
     <file alias="file_marked">dark/32dp/file_marked.svg</file>
     <file alias="file_move">dark/32dp/file_move.svg</file>
     <file alias="file_new">dark/32dp/file_new.svg</file>
@@ -256,9 +258,11 @@
     <file alias="edit_undo">dark/32dp-disabled/edit_undo.svg</file>
     <file alias="export_list">dark/32dp-disabled/export_list.svg</file>
     <file alias="file">dark/32dp-disabled/file.svg</file>
+    <file alias="file_backup">dark/32dp-disabled/file_backup.svg</file>
     <file alias="file_close">dark/32dp-disabled/file_close.svg</file>
     <file alias="file_close_all">dark/32dp-disabled/file_close_all.svg</file>
     <file alias="file_copy">dark/32dp-disabled/file_copy.svg</file>
+    <file alias="file_image">dark/32dp-disabled/file_image.svg</file>
     <file alias="file_marked">dark/32dp-disabled/file_marked.svg</file>
     <file alias="file_move">dark/32dp-disabled/file_move.svg</file>
     <file alias="file_new">dark/32dp-disabled/file_new.svg</file>
