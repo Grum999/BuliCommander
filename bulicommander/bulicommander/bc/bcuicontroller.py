@@ -306,8 +306,6 @@ class BCUIController(QObject):
         self.commandSettingsClipboardUrlParseTextHtml(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_URL_PARSE_TEXTHTML))
         self.commandSettingsClipboardPasteAsNewDocument(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC))
 
-        self.commandSettingsToolbars(BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS), BCSettings.get(BCSettingsKey.SESSION_TOOLBARS))
-
         for panelId in self.__window.panels:
             self.__window.panels[panelId].setFilesHistory(self.__history)
             self.__window.panels[panelId].setFilesBookmark(self.__bookmark)
@@ -358,6 +356,9 @@ class BCUIController(QObject):
             self.commandPanelFilesTabViewMode(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_VIEWMODE.id(panelId=panelId)))
 
         self.__window.initMenu()
+
+        # toolbar settings MUST be initialized after menu :-)
+        self.commandSettingsToolbars(BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS), BCSettings.get(BCSettingsKey.SESSION_TOOLBARS))
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesSetAllowRefresh(True)
@@ -1042,7 +1043,7 @@ class BCUIController(QObject):
 
             self.__window.actionViewLayoutIconSize.slider().setMaximum(maxIconSize)
             self.__window.actionViewLayoutIconSize.slider().setValue(iconSize)
-            self.__window.actionViewLayoutIconSize.setLabelText(i18n(f"Icon size: {iconPixelSize}px"))
+            self.__window.actionViewLayoutIconSize.setLabelText(i18n(f"Thumbnail size: {iconPixelSize}px"))
 
         #print("updateMenuForPanel", self.panel().tabActive(), self.panelId())
 

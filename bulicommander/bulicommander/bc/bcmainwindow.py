@@ -44,6 +44,7 @@ from .bcwpathbar import BCWPathBar
 from .bcmainviewtab import (BCMainViewTab, BCMainViewTabFilesLayout, BCMainViewTabTabs)
 
 from bulicommander.pktk.modules.utils import loadXmlUi
+from bulicommander.pktk.modules.imgutils import buildIcon
 from bulicommander.pktk.widgets.wiodialog import WDialogMessage
 from bulicommander.pktk.widgets.wmenuitem import (
         WMenuSlider,
@@ -144,7 +145,7 @@ class BCMainWindow(QMainWindow):
             else:
                 return
 
-            self.actionViewLayoutIconSize.setLabelText(i18n(f"Icon size: {iconPixelSize}px"))
+            self.actionViewLayoutIconSize.setLabelText(i18n(f"Thumbnail size: {iconPixelSize}px"))
 
         # Menu FILE
         self.actionFolderNew.triggered.connect(self.__menuFileCreateDirectory)
@@ -244,19 +245,16 @@ class BCMainWindow(QMainWindow):
         groupViewMode.setExclusive(True)
 
 
-        self.actionViewLayoutIconSize = WMenuSlider(i18n("Icon size"))
+        self.actionViewLayoutIconSize = WMenuSlider(i18n("Thumbnail size"), self)
+        self.actionViewLayoutIconSize.setText(i18n("Thumbnail size"))
+        self.actionViewLayoutIconSize.setIcon(buildIcon("pktk:tune_img_slider"))
+        self.actionViewLayoutIconSize.setObjectName("actionViewLayoutIconSize")
         self.actionViewLayoutIconSize.slider().setMinimum(0)
         self.actionViewLayoutIconSize.slider().setMaximum(8)
         self.actionViewLayoutIconSize.slider().setPageStep(1)
         self.actionViewLayoutIconSize.slider().setSingleStep(1)
         self.actionViewLayoutIconSize.slider().valueChanged.connect(updatePixelSize)
         self.menuViewLayout.addAction(self.actionViewLayoutIconSize)
-
-        #self.actionViewDisplayLayout.setVisible(False)
-        #for panel in self.__uiController.panels():
-        #    self.menuViewDisplayLayoutFiles.append(self.menuView.insertMenu(self.actionViewDisplayLayout, panel.filesMenuViewDisplayLayout()))
-        #for panel in self.__uiController.panels():
-        #    self.menuViewDisplayLayoutClipboard.append(self.menuView.insertMenu(self.actionViewDisplayLayout, panel.clipboardMenuViewDisplayLayout()))
 
         # Menu TOOLS
         self.actionToolsCopyToClipboard.triggered.connect(self.__menuToolsCopyToClipboard_clicked)
@@ -271,7 +269,6 @@ class BCMainWindow(QMainWindow):
 
         # Menu HELP
         self.actionHelpAboutBC.triggered.connect(self.__uiController.commandAboutBc)
-
 
         self.actionFileCopyToOtherPanelNoConfirm.activated.connect(self.__menuFileCopyNoConfirm)
         self.actionFileMoveToOtherPanelNoConfirm.activated.connect(self.__menuFileMoveNoConfirm)
