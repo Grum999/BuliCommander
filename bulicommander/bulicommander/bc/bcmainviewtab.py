@@ -514,6 +514,13 @@ class BCMainViewTab(QFrame):
                     self.__uiController.updateMenuForPanel()
 
         @pyqtSlot('QString')
+        def children_ClickedAndUpdateMenu(value=None):
+            self.setHighlighted(True)
+            if not self.__uiController is None:
+                self.__uiController.updateMenuForPanel()
+
+
+        @pyqtSlot('QString')
         def filesPath_Changed(value):
             def expand(item):
                 self.tvDirectoryTree.setCurrentIndex(item)
@@ -665,7 +672,7 @@ class BCMainViewTab(QFrame):
         self.tvDirectoryTree.activated.connect(children_Clicked)
         self.twInfo.currentChanged.connect(children_Clicked)
         self.btFilesTabLayoutModel.clicked.connect(children_Clicked)
-        self.framePathBar.clicked.connect(children_Clicked)
+        self.framePathBar.clicked.connect(children_ClickedAndUpdateMenu)
         self.framePathBar.pathChanged.connect(filesPath_Changed)
         self.framePathBar.viewChanged.connect(filesView_Changed)
         self.framePathBar.filterChanged.connect(filesFilter_Changed)
