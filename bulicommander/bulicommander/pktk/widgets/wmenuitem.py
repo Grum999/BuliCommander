@@ -172,7 +172,7 @@ class WMenuSlider(QWidgetAction):
             returned.slider().setMaximumWidth(self.__maxTbSliderWidth)
 
             # link with widget
-            self.__widget.slider().rangeChanged.connect(lambda valueMin, valueMax: returned.slider().setRange(value, valueMin, valueMax))
+            self.__widget.slider().rangeChanged.connect(lambda valueMin, valueMax: returned.slider().setRange(valueMin, valueMax))
             self.__widget.slider().valueChanged.connect(lambda value: updateSlider(value, returned.slider()))
             self.__widget.textChanged.connect(lambda value: returned.slider().setToolTip(value))
             self.maxToolBarSliderWidthChanged.connect(lambda value: returned.slider().setMaximumWidth(value))
