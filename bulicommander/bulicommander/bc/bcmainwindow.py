@@ -77,8 +77,6 @@ class BCMainWindow(QMainWindow):
         self.__uiController = uiController
         self.__eventCallBack = {}
         self.__highlightedPanel = 0
-        self.menuViewDisplayLayoutFiles=[]
-        self.menuViewDisplayLayoutClipboard=[]
         self.actionViewLayoutIconSize=None
         self.panels = {
                 0: self.mainViewTab0,
