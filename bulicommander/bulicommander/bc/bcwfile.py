@@ -629,6 +629,7 @@ class BCViewFilesTv(QTreeView):
     keyPressed = Signal(int)
     columnVisibilityChanged = Signal(list)     # [logicalIndex]=visibility
     columnPositionChanged = Signal(list)       # [logicalIndex]=visualIndex
+    iconSizeChanged = Signal(int)
 
     def __init__(self, parent=None):
         super(BCViewFilesTv, self).__init__(parent)
@@ -916,6 +917,8 @@ class BCViewFilesTv(QTreeView):
                     header.setSectionHidden(logicalIndex, not logicalIndex in (BCFileModel.COLNUM_FULLNFO, BCFileModel.COLNUM_ICON))
                 self.resizeColumns(False)
 
+            self.iconSizeChanged.emit(self.__iconSize.index())
+
     def setFilter(self, filterText, filterOptions):
         """Set current filter"""
 
@@ -1152,6 +1155,7 @@ class BCViewFilesLv(QListView):
     """List view files"""
     focused = Signal()
     keyPressed = Signal(int)
+    iconSizeChanged = Signal(int)
 
     OPTION_LAYOUT_GRIDINFO_NONE = 0
     OPTION_LAYOUT_GRIDINFO_OVER = 1
@@ -1319,6 +1323,7 @@ class BCViewFilesLv(QListView):
 
             self.__delegate.setIconSize(self.__iconSize.value())
             self.setIconSize(QSize(self.__iconSize.value(), self.__iconSize.value()))
+            self.iconSizeChanged.emit(self.__iconSize.index())
 
     def setFilter(self, filterText, filterOptions):
         """Set current filter"""

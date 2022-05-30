@@ -227,6 +227,7 @@ class BCMainViewClipboard(QTreeView):
     """Tree view clipboard"""
     focused = Signal()
     keyPressed = Signal(int)
+    iconSizeChanged = Signal(int)
 
     __COLNUM_FULLNFO_MINSIZE = 7
 
@@ -338,6 +339,8 @@ class BCMainViewClipboard(QTreeView):
                 header.setSectionHidden(BCClipboardModel.COLNUM_FULLNFO, True)
                 self.__resizeColumns()
 
+            self.iconSizeChanged.emit(self.__iconSize.value())
+
     def selectedItems(self):
         """Return a list of selected clipboard items"""
         returned=[]
@@ -385,8 +388,8 @@ class BCMainViewTab(QFrame):
     VIEWMODE_LV=1
 
     MAX_ICON_SIZE_FILE_TV=8
-    MAX_ICON_SIZE_FILE_LV=8
-    MAX_ICON_SIZE_CLIPBOARD=5
+    MAX_ICON_SIZE_FILE_LV=5
+    MAX_ICON_SIZE_CLIPBOARD=8
 
     def __init__(self, parent=None):
         super(BCMainViewTab, self).__init__(parent)
@@ -519,6 +522,11 @@ class BCMainViewTab(QFrame):
             if not self.__uiController is None:
                 self.__uiController.updateMenuForPanel()
 
+        @pyqtSlot('QString')
+        def children_iconSizeChanged(value=None):
+            if self.isHighlighted():
+                if not self.__uiController is None:
+                    self.__uiController.updateMenuForPanel()
 
         @pyqtSlot('QString')
         def filesPath_Changed(value):
@@ -684,6 +692,7 @@ class BCMainViewTab(QFrame):
         self.treeViewFiles.doubleClicked.connect(self.__filesDoubleClick)
         self.treeViewFiles.keyPressed.connect(self.__filesKeyPressed)
         self.treeViewFiles.contextMenuEvent=self.__filesContextMenuEvent
+        self.treeViewFiles.iconSizeChanged.connect(children_iconSizeChanged)
         self.treeViewFiles.selectionModel().selectionChanged.connect(filesSelection_Changed)
         self.treeViewFiles.header().setSectionsClickable(True)
         self.treeViewFiles.header().sectionClicked.connect(children_Clicked)
@@ -694,6 +703,7 @@ class BCMainViewTab(QFrame):
         self.listViewFiles.doubleClicked.connect(self.__filesDoubleClick)
         self.listViewFiles.keyPressed.connect(self.__filesKeyPressed)
         self.listViewFiles.contextMenuEvent=self.__filesContextMenuEvent
+        self.listViewFiles.iconSizeChanged.connect(children_iconSizeChanged)
         self.listViewFiles.selectionModel().selectionChanged.connect(filesSelection_Changed)
 
         self.treeViewFiles.columnVisibilityChanged.connect(self.listViewFiles.setColumnsVisibility)
@@ -723,6 +733,7 @@ class BCMainViewTab(QFrame):
         self.treeViewClipboard.doubleClicked.connect(self.__clipboardDoubleClick)
         self.treeViewClipboard.keyPressed.connect(self.__clipboardKeyPressed)
         self.treeViewClipboard.contextMenuEvent=self.__clipboardContextMenuEvent
+        self.treeViewClipboard.iconSizeChanged.connect(children_iconSizeChanged)
 
         # Menu for btClipboardTabLayoutModel is set when uiController is defined
         # MousePressEvent is overrided here to ensure panel is active before menu is displayed (and then, ensure menu is up to date according to panel)
