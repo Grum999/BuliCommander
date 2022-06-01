@@ -2,6 +2,9 @@
   <qresource prefix="pktk/images/normal">
     <file alias="animation">light/32dp/animation.svg</file>
     <file alias="application_exit">light/32dp/application_exit.svg</file>
+    <file alias="application_session">light/32dp/application_session.svg</file>
+    <file alias="application_session_reset">light/32dp/application_session_reset.svg</file>
+    <file alias="application_session_save">light/32dp/application_session_save.svg</file>
     <file alias="arrow_big_empty_down">light/32dp/arrow_big_empty_down.svg</file>
     <file alias="arrow_big_empty_left">light/32dp/arrow_big_empty_left.svg</file>
     <file alias="arrow_big_empty_right">light/32dp/arrow_big_empty_right.svg</file>
@@ -201,6 +204,9 @@
   <qresource prefix="pktk/images/disabled">
     <file alias="animation">light/32dp-disabled/animation.svg</file>
     <file alias="application_exit">light/32dp-disabled/application_exit.svg</file>
+    <file alias="application_session">light/32dp-disabled/application_session.svg</file>
+    <file alias="application_session_reset">light/32dp-disabled/application_session_reset.svg</file>
+    <file alias="application_session_save">light/32dp-disabled/application_session_save.svg</file>
     <file alias="arrow_big_empty_down">light/32dp-disabled/arrow_big_empty_down.svg</file>
     <file alias="arrow_big_empty_left">light/32dp-disabled/arrow_big_empty_left.svg</file>
     <file alias="arrow_big_empty_right">light/32dp-disabled/arrow_big_empty_right.svg</file>
