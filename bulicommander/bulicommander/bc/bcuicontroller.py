@@ -865,7 +865,7 @@ class BCUIController(QObject):
                 isInBookmark = False
 
                 for bookmark in self.__bookmark.list():
-                    action = QAction(bookmark[BCBookmark.NAME].replace('&', '&&'), self)
+                    action = buildQAction("pktk:bookmark", bookmark[BCBookmark.NAME].replace('&', '&&'), self)
                     action.setFont(self.__fontMono)
                     action.setProperty('path', bookmark[BCBookmark.VALUE])
 

@@ -827,6 +827,12 @@
    </property>
   </action>
   <action name="actionSettingsResetSessionToDefault">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/application_session_reset</normalon>
+     <disabledon>:/pktk/images/disabled/application_session_reset</disabledon>
+    </iconset>
+   </property>
    <property name="text">
     <string>&amp;Reset session to default</string>
    </property>
@@ -843,6 +849,12 @@
    </property>
    <property name="checked">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/application_session_save</normalon>
+     <disabledon>:/pktk/images/disabled/application_session_save</disabledon>
+    </iconset>
    </property>
    <property name="text">
     <string>&amp;Save session on exit</string>

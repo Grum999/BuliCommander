@@ -89,7 +89,17 @@ class BCMainWindow(QMainWindow):
         self.__fontMono.setPointSize(9)
         self.__fontMono.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
-        self.setStyleSheet("""QToolBar { border-width: 0px; }""")
+        self.setStyleSheet("""
+            QToolBar { border-width: 0px; }
+            QToolBar QToolButton:checked {
+                    background-color: palette(Highlight);
+                }
+
+            /* QMenu::icon ==> doesn't work?? */
+            QMenu::item:checked:enabled {
+                    background-color: palette(Highlight);
+                }
+        """)
 
         for panelId in self.panels:
             self.panels[panelId].setAllowRefresh(False)
