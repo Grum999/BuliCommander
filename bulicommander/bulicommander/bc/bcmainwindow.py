@@ -351,8 +351,9 @@ class BCMainWindow(QMainWindow):
                             self.addToolBarBreak(toolbarSession['area'])
                         self.addToolBar(toolbarSession['area'], toolbar)
                         geometry=toolbarSession['rect']
-                        toolbar.setGeometry(geometry[0], geometry[1], geometry[2], geometry[3])
                         toolbar.setVisible(toolbarSession['visible'])
+                        # not working...?
+                        #toolbar.setGeometry(geometry[0], geometry[1], geometry[2], geometry[3])
                         break
 
         self.menuSettingsToolbars.setEnabled(len(self.__toolbars)>0)

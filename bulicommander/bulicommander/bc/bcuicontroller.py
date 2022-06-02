@@ -699,23 +699,29 @@ class BCUIController(QObject):
 
     def saveSettings(self):
         """Save the current settings"""
-        # get current toolbar configuration from settings as dict for which key is toolbar id
-        toolbarSettings={toolbar['id']: toolbar for toolbar in BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS)}
-        toolbarSession=[]
-        # loop over toolbar to update settings: visibility, area, position
-        for toolbar in self.__window.toolbarList():
-            id=toolbar.objectName()
-            if id in toolbarSettings:
-                geometry=toolbar.frameGeometry()
-                toolbarSession.append({
-                        'id': id,
-                        'visible': toolbar.isVisible(),
-                        'area': self.__window.toolBarArea(toolbar),
-                        'break': self.__window.toolBarBreak(toolbar),
-                        'rect': [geometry.left(), geometry.top(), geometry.width(), geometry.height()]
-                    })
-        # save toolbars session informations
-        BCSettings.set(BCSettingsKey.SESSION_TOOLBARS, toolbarSession)
+        if self.__bcStarted:
+            # save toolbars settings only if self.__bcStarted is True (BC is started)
+            # if not True this means main window is closed and then, toolbar are not visible
+            # in this case we don't want to save toolbar status/visiblity are they're not
+            # representative of real state
+
+            # get current toolbar configuration from settings as dict for which key is toolbar id
+            toolbarSettings={toolbar['id']: toolbar for toolbar in BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS)}
+            toolbarSession=[]
+            # loop over toolbar to update settings: visibility, area, position
+            for toolbar in self.__window.toolbarList():
+                id=toolbar.objectName()
+                if id in toolbarSettings:
+                    geometry=toolbar.geometry()
+                    toolbarSession.append({
+                            'id': id,
+                            'visible': toolbar.isVisible(),
+                            'area': self.__window.toolBarArea(toolbar),
+                            'break': self.__window.toolBarBreak(toolbar),
+                            'rect': [geometry.left(), geometry.top(), geometry.width(), geometry.height()]
+                        })
+            # save toolbars session informations
+            BCSettings.set(BCSettingsKey.SESSION_TOOLBARS, toolbarSession)
 
 
         BCSettings.set(BCSettingsKey.CONFIG_SESSION_SAVE, self.__window.actionSettingsSaveSessionOnExit.isChecked())
