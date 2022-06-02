@@ -974,7 +974,6 @@ class WToolbarConfiguration(QWidget):
     def initialiseAvailableActionsFromMenubar(self, menubar):
         """Initialise available action list from given menubar"""
         def recursiveMenuActions(menu, groupId):
-            print('MENU --- ', menu.objectName(), menu.title())
             if len(menu.actions())>0:
                 for action in menu.actions():
                     if not action.isSeparator():

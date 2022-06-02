@@ -1619,7 +1619,7 @@ class BCClipboard(QObject):
                 elif content[1]=='text/plain':
                     textList.append(content[0])
                 else:
-                    print(content[1])
+                    #print(content[1])
                     if forceImgAsPng and content[1]!='image/png' and re.match('(image/|application/x-krita)', content[1]):
                         # content[0] = image raw data
                         # content[1] = mime/type

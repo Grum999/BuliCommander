@@ -311,8 +311,7 @@ class BreadcrumbsAddressBar(QFrame):
 
     def crumb_menuitem_clicked(self, index):
         "SLOT: breadcrumb menu item was clicked"
-
-        print("crumb_clicked",  index.data(Qt.EditRole))
+        #print("crumb_clicked",  index.data(Qt.EditRole))
         if r:=re.search(r"(?:^([A-Z]:)$|\(([A-Z]:)\)$)", index.data(Qt.EditRole), re.I):
             if not r.groups()[0] is None:
                 path=r.groups()[0]
@@ -557,9 +556,9 @@ if __name__ == '__main__':
             # print(self.b.width())
             # self.b.hide()
             # QtCore.QTimer.singleShot(0, lambda: print(self.b.width()))
-            def act():
-                for i in self.address.crumbs_panel.layout().widgets('hidden'):
-                    print(i.text())
+            #def act():
+            #    for i in self.address.crumbs_panel.layout().widgets('hidden'):
+            #        print(i.text())
             # self.b.clicked.connect(act)
 
     QtForm(Form)

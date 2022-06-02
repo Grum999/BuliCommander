@@ -360,21 +360,7 @@ class BCMainWindow(QMainWindow):
         """Return list of toolbar"""
         return self.__toolbars
 
-    def __menuHistoryShow(self):
-        """Build menu history"""
-        self.__uiController.panel().filesShowMenuHistory(self.menuGoHistory)
 
-    def __menuLastDocumentsShow(self):
-        """Build menu last documents"""
-        self.__uiController.panel().filesShowMenuLastDocuments(self.menuGoLastDocuments)
-
-    def __menuBookmarkShow(self):
-        """Build menu history"""
-        self.__uiController.panel().filesShowMenuBookmarks(self.menuGoBookmark)
-
-    def __menuSavedViewsShow(self):
-        """Build menu history"""
-        self.__uiController.panel().filesShowMenuSavedViews(self.menuGoSavedViews)
 
     # endregion: initialisation methods ----------------------------------------
 

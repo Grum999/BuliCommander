@@ -3641,26 +3641,6 @@ class BCMainViewTab(QFrame):
         self.framePathBar.showMargins(visible)
 
 
-    def filesShowMenuHistory(self, menu):
-        """Build menu history"""
-        self.framePathBar.menuHistoryShow(menu)
-
-
-    def filesShowMenuBookmarks(self, menu):
-        """Build menu bookmarks"""
-        self.framePathBar.menuBookmarksShow(menu)
-
-
-    def filesShowMenuSavedViews(self, menu):
-        """Build menu saved views"""
-        self.framePathBar.menuSavedViewsShow(menu)
-
-
-    def filesShowMenuLastDocuments(self, menu):
-        """Build menu last documents views"""
-        self.framePathBar.menuLastDocumentsShow(menu)
-
-
     def filesMenuViewDisplayLayout(self):
         """Return menu for layout model"""
         return self.__menuLayoutModelFiles
