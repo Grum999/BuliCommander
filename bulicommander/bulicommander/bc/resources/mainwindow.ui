@@ -232,7 +232,19 @@
     <property name="title">
      <string>Setti&amp;ngs</string>
     </property>
+    <widget class="QMenu" name="menuSettingsToolbars">
+     <property name="title">
+      <string>Toolbars</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normalon>:/pktk/images/normal/toolbar</normalon>
+       <disabledon>:/pktk/images/disabled/toolbar</disabledon>
+      </iconset>
+     </property>
+    </widget>
     <addaction name="actionSettingsPreferences"/>
+    <addaction name="menuSettingsToolbars"/>
     <addaction name="separator"/>
     <addaction name="actionSettingsSaveSessionOnExit"/>
     <addaction name="actionSettingsResetSessionToDefault"/>
@@ -1756,6 +1768,11 @@
    </property>
    <property name="statusTip">
     <string>Show files on a grid</string>
+   </property>
+  </action>
+  <action name="action">
+   <property name="text">
+    <string>--</string>
    </property>
   </action>
  </widget>

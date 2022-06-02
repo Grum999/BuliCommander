@@ -274,6 +274,7 @@ class BCMainWindow(QMainWindow):
         self.actionSettingsPreferences.triggered.connect(self.__uiController.commandSettingsOpen)
         self.actionSettingsSaveSessionOnExit.triggered.connect(self.__uiController.commandSettingsSaveSessionOnExit)
         self.actionSettingsResetSessionToDefault.triggered.connect(self.__uiController.commandSettingsResetSessionToDefault)
+        self.menuSettingsToolbars.aboutToShow.connect(self.__menuSettingsToolbarsShow)
 
         # Menu HELP
         self.actionHelpAboutBC.triggered.connect(self.__uiController.commandAboutBc)
@@ -354,12 +355,28 @@ class BCMainWindow(QMainWindow):
                         toolbar.setVisible(toolbarSession['visible'])
                         break
 
+        self.menuSettingsToolbars.setEnabled(len(self.__toolbars)>0)
         self.setUpdatesEnabled(True)
 
     def toolbarList(self):
         """Return list of toolbar"""
         return self.__toolbars
 
+    def __menuSettingsToolbarsToggled(self, value):
+        """A toolbar Sub-menu checkedbox has been changed"""
+        action=self.sender()
+        action.data().setVisible(value)
+
+    def __menuSettingsToolbarsShow(self):
+        """Display toolbar menu"""
+        self.menuSettingsToolbars.clear()
+
+        for toolbar in self.__toolbars:
+            action=self.menuSettingsToolbars.addAction(toolbar.windowTitle())
+            action.setCheckable(True)
+            action.setChecked(toolbar.isVisible())
+            action.setData(toolbar)
+            action.toggled.connect(self.__menuSettingsToolbarsToggled)
 
 
     # endregion: initialisation methods ----------------------------------------
