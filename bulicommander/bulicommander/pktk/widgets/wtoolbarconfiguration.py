@@ -633,7 +633,8 @@ class WToolbarConfiguration(QWidget):
 
     def __toolbarStyleChanged(self):
         """Change style for toolbar"""
-        self.setToolbarStyle(self.cbToolbarList.currentData(), self.cbToolbarStyle.currentIndex())
+        if self.cbToolbarList.currentIndex()>-1:
+            self.setToolbarStyle(self.cbToolbarList.currentData(), self.cbToolbarStyle.currentIndex())
 
     def __updateToolbarUi(self):
         """Update add/edit/delete buttons status according to current state"""
