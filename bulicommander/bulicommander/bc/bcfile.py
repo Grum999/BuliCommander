@@ -6309,7 +6309,7 @@ class BCFileList(QObject):
             return None
 
     @staticmethod
-    def getBcDirectory(itemIndex, fileName):
+    def getBcDirectory(itemIndex, fileName, dummy1=None, dummy2=None):
         """Return a BCDirectory from given fileName
 
         > Used for multiprocessing tasks

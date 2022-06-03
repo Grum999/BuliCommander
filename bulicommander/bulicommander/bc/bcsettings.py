@@ -364,6 +364,10 @@ class BCSettingsKey(SettingsKey):
     CONFIG_SEARCHFILES_PREDEFINED_IMGRATIO =                 'config.searchFiles.predefined.imageRatio'
     CONFIG_SEARCHFILES_PREDEFINED_IMGPIXELS =                'config.searchFiles.predefined.imagePixels'
 
+    CONFIG_TOOLBARS =                                        'config.toolbars'
+
+    SESSION_TOOLBARS =                                       'session.toolbars'
+
     SESSION_INFO_TOCLIPBOARD_BORDER =                        'session.information.clipboard.border'
     SESSION_INFO_TOCLIPBOARD_HEADER =                        'session.information.clipboard.header'
     SESSION_INFO_TOCLIPBOARD_MINWIDTH =                      'session.information.clipboard.minWidth'
@@ -735,6 +739,9 @@ class BCSettings(Settings):
                                                                                              f"{i18n('Large')}//>//f:8.3"],
                                                                                                                         SettingsFmt(list, str)),
 
+            SettingsRule(BCSettingsKey.CONFIG_TOOLBARS,                                     [],                         SettingsFmt(list, dict)),
+            SettingsRule(BCSettingsKey.SESSION_TOOLBARS,                                    [],                         SettingsFmt(list, dict)),
+
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER,                     3,                          SettingsFmt(int, [0,1,2,3])),
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER,                     True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH,                   80,                         SettingsFmt(int)),
@@ -875,7 +882,8 @@ class BCSettingsDialogBox(QDialog):
     CATEGORY_IMAGES = 2
     CATEGORY_FILES = 3
     CATEGORY_CLIPBOARD = 4
-    CATEGORY_CACHE = 5
+    CATEGORY_TOOLBAR_CONFIG = 5
+    CATEGORY_CACHE = 6
 
 
     def __init__(self, title, uicontroller, parent=None):
@@ -899,6 +907,8 @@ class BCSettingsDialogBox(QDialog):
         self.__itemCatFiles.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_FILES)
         self.__itemCatClipboard = QListWidgetItem(buildIcon("pktk:clipboard"), i18n("Clipboard"))
         self.__itemCatClipboard.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CLIPBOARD)
+        self.__itemCatToolbarConfiguration = QListWidgetItem(buildIcon("pktk:tune_toolbar"), i18n("Toolbars"))
+        self.__itemCatToolbarConfiguration.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_TOOLBAR_CONFIG)
         self.__itemCatCachedData = QListWidgetItem(buildIcon("pktk:cache_refresh"), i18n("Cached data"))
         self.__itemCatCachedData.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CACHE)
 
@@ -967,6 +977,7 @@ class BCSettingsDialogBox(QDialog):
         self.lvCategory.addItem(self.__itemCatImageFiles)
         self.lvCategory.addItem(self.__itemCatFiles)
         self.lvCategory.addItem(self.__itemCatClipboard)
+        self.lvCategory.addItem(self.__itemCatToolbarConfiguration)
         self.lvCategory.addItem(self.__itemCatCachedData)
         self.__setCategory(BCSettingsDialogBox.CATEGORY_GENERAL)
 
@@ -1128,6 +1139,14 @@ class BCSettingsDialogBox(QDialog):
         self.lwCFNfoGridFields.setReorderOptionAvailable(True)
         self.lwCFNfoGridFields.addItems(gridFields)
 
+        # --- Panel Toolbar Configuration ----------------------------------------------
+        self.wToolbarConfiguration.beginAvailableActionUpdate()
+        self.wToolbarConfiguration.addAvailableActionSeparator()
+        self.wToolbarConfiguration.initialiseAvailableActionsFromMenubar(self.__uiController.window().menuBar())
+        self.wToolbarConfiguration.endAvailableActionUpdate()
+        self.wToolbarConfiguration.availableActionsExpandAll()
+        self.wToolbarConfiguration.toolbarsImport(BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS))
+
 
     def __applySettings(self):
         """Apply current settings"""
@@ -1228,6 +1247,9 @@ class BCSettingsDialogBox(QDialog):
             self.__uiController.commandSettingsFilesNfoGridMode(BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT)
 
         self.__uiController.commandSettingsFilesNfoGridPropertiesFields([item.value() for item in self.lwCFNfoGridFields.items()])
+
+        # --- Toolbars category ----------------------------------------------------------
+        self.__uiController.commandSettingsToolbars(self.wToolbarConfiguration.toolbarsExport(), BCSettings.get(BCSettingsKey.SESSION_TOOLBARS))
 
 
     def __replaceOpenDbAlert(self, checked):

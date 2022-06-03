@@ -529,7 +529,7 @@ class BCSavedView(QObject):
 
         If none is active, return None
         """
-        if asLabel:
+        if asLabel and self.__current:
             return self.__savedView[self.__current]['name']
         return self.__current
 

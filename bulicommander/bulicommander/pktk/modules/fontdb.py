@@ -26,7 +26,7 @@ import re
 import os.path
 
 from .bytesrw import BytesRW
-
+from .utils import Debug
 
 
 class FontDatabase:
@@ -491,7 +491,7 @@ class Font:
                 self.__propFontType=Font.TYPE_OPENTYPE_CFF
             return True
         except:
-            print('Font.__loadOpenType()', e)
+            Debug.print('Font.__loadOpenType()', e)
             return False
 
     def __loadOpenTypeCollection(self):
@@ -551,7 +551,7 @@ class Font:
             self.__propFontType=Font.TYPE_OPENTYPE_TTC
             return True
         except Exception as e:
-            print('Font.__loadOpenTypeCollection()', e)
+            Debug.print('Font.__loadOpenTypeCollection()', e)
             return False
 
     def __loadOpenType_FontTableRecord(self, numTables):
@@ -730,6 +730,6 @@ class Font:
             with open(self.__propFileName, mode='rb') as file:
                 returned = file.read()
         except Exception as e:
-            print('Font.getFileContent()', e)
+            Debug.print('Font.getFileContent()', e)
 
         return returned

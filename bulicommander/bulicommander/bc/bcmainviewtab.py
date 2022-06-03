@@ -227,6 +227,7 @@ class BCMainViewClipboard(QTreeView):
     """Tree view clipboard"""
     focused = Signal()
     keyPressed = Signal(int)
+    iconSizeChanged = Signal(int)
 
     __COLNUM_FULLNFO_MINSIZE = 7
 
@@ -303,6 +304,10 @@ class BCMainViewClipboard(QTreeView):
         else:
             super(BCMainViewClipboard, self).wheelEvent(event)
 
+    def iconSizePixels(self):
+        """Return current icon size in pixels"""
+        return self.__iconSize.value()
+
     def iconSizeIndex(self):
         """Return current icon size index"""
         return self.__iconSize.index()
@@ -333,6 +338,8 @@ class BCMainViewClipboard(QTreeView):
                 header.setSectionHidden(BCClipboardModel.COLNUM_SRC, False)
                 header.setSectionHidden(BCClipboardModel.COLNUM_FULLNFO, True)
                 self.__resizeColumns()
+
+            self.iconSizeChanged.emit(self.__iconSize.value())
 
     def selectedItems(self):
         """Return a list of selected clipboard items"""
@@ -374,13 +381,15 @@ class BCWImageLabel(QLabel):
 class BCMainViewTab(QFrame):
     """Buli Commander main view tab panel (left or right)"""
     highlightedStatusChanged = Signal(QTabWidget)
-    tabFilesLayoutChanged = Signal(QTabWidget)
-    tabClipboardLayoutChanged = Signal(QTabWidget)
     filesPathChanged = Signal(str)
     filesFilterChanged = Signal(str, int)
 
     VIEWMODE_TV=0
     VIEWMODE_LV=1
+
+    MAX_ICON_SIZE_FILE_TV=8
+    MAX_ICON_SIZE_FILE_LV=5
+    MAX_ICON_SIZE_CLIPBOARD=8
 
     def __init__(self, parent=None):
         super(BCMainViewTab, self).__init__(parent)
@@ -449,44 +458,6 @@ class BCMainViewTab(QFrame):
 
         self.__filesViewAsThumbnail=False
 
-        self.__actionFilesApplyTabLayoutFull = QAction(buildIcon("pktk:dashboard_full"), i18n('Full mode'), self)
-        self.__actionFilesApplyTabLayoutFull.setCheckable(True)
-        self.__actionFilesApplyTabLayoutFull.setProperty('layout', BCMainViewTabFilesLayout.FULL)
-
-        self.__actionFilesApplyTabLayoutTop = QAction(buildIcon("pktk:dashboard_tb"), i18n('Top/Bottom'), self)
-        self.__actionFilesApplyTabLayoutTop.setCheckable(True)
-        self.__actionFilesApplyTabLayoutTop.setProperty('layout', BCMainViewTabFilesLayout.TOP)
-
-        self.__actionFilesApplyTabLayoutLeft = QAction(buildIcon("pktk:dashboard_lr"), i18n('Left/Right'), self)
-        self.__actionFilesApplyTabLayoutLeft.setCheckable(True)
-        self.__actionFilesApplyTabLayoutLeft.setProperty('layout', BCMainViewTabFilesLayout.LEFT)
-
-        self.__actionFilesApplyTabLayoutBottom = QAction(buildIcon("pktk:dashboard_bt"), i18n('Bottom/Top'), self)
-        self.__actionFilesApplyTabLayoutBottom.setCheckable(True)
-        self.__actionFilesApplyTabLayoutBottom.setProperty('layout', BCMainViewTabFilesLayout.BOTTOM)
-
-        self.__actionFilesApplyTabLayoutRight = QAction(buildIcon("pktk:dashboard_rl"), i18n('Right/Left'), self)
-        self.__actionFilesApplyTabLayoutRight.setCheckable(True)
-        self.__actionFilesApplyTabLayoutRight.setProperty('layout', BCMainViewTabFilesLayout.RIGHT)
-
-        self.__actionFilesApplyTabLayoutViewTv = QAction(buildIcon("pktk:list_view_details"), i18n('View as list'), self)
-        self.__actionFilesApplyTabLayoutViewTv.setCheckable(True)
-        self.__actionFilesApplyTabLayoutViewTv.setChecked(True)
-
-        self.__actionFilesApplyTabLayoutViewLv = QAction(buildIcon("pktk:list_view_icon"), i18n('View as grid'), self)
-        self.__actionFilesApplyTabLayoutViewLv.setCheckable(True)
-
-        groupViewMode=QActionGroup(self)
-        groupViewMode.addAction(self.__actionFilesApplyTabLayoutViewTv)
-        groupViewMode.addAction(self.__actionFilesApplyTabLayoutViewLv)
-        groupViewMode.setExclusive(True)
-
-        self.__actionFilesApplyIconSize = WMenuSlider(i18n("Icon size"))
-        self.__actionFilesApplyIconSize.slider().setMinimum(0)
-        self.__actionFilesApplyIconSize.slider().setMaximum(8)
-        self.__actionFilesApplyIconSize.slider().setPageStep(1)
-        self.__actionFilesApplyIconSize.slider().setSingleStep(1)
-
         # -- clipboard tab variables --
         self.__currentDownloadingItemTracked=None
         self.__clipboardAllowRefresh = False
@@ -505,30 +476,6 @@ class BCMainViewTab(QFrame):
         self.__clipboardSelectedNbUrlDownloaded=0
         self.__clipboardSelectedNbUrlDownloading=0
         self.__clipboardSelectedNbUrlNotDownloaded=0
-
-
-        self.__actionClipboardApplyTabLayoutTop = QAction(buildIcon("pktk:dashboard_tb"), i18n('Top/Bottom'), self)
-        self.__actionClipboardApplyTabLayoutTop.setCheckable(True)
-        self.__actionClipboardApplyTabLayoutTop.setProperty('layout', BCMainViewTabClipboardLayout.TOP)
-
-        self.__actionClipboardApplyTabLayoutLeft = QAction(buildIcon("pktk:dashboard_lr"), i18n('Left/Right'), self)
-        self.__actionClipboardApplyTabLayoutLeft.setCheckable(True)
-        self.__actionClipboardApplyTabLayoutLeft.setProperty('layout', BCMainViewTabClipboardLayout.LEFT)
-
-        self.__actionClipboardApplyTabLayoutBottom = QAction(buildIcon("pktk:dashboard_bt"), i18n('Bottom/Top'), self)
-        self.__actionClipboardApplyTabLayoutBottom.setCheckable(True)
-        self.__actionClipboardApplyTabLayoutBottom.setProperty('layout', BCMainViewTabClipboardLayout.BOTTOM)
-
-        self.__actionClipboardApplyTabLayoutRight = QAction(buildIcon("pktk:dashboard_rl"), i18n('Right/Left'), self)
-        self.__actionClipboardApplyTabLayoutRight.setCheckable(True)
-        self.__actionClipboardApplyTabLayoutRight.setProperty('layout', BCMainViewTabClipboardLayout.RIGHT)
-
-        self.__actionClipboardApplyIconSize = WMenuSlider(i18n("Icon size"))
-        self.__actionClipboardApplyIconSize.slider().setMinimum(0)
-        self.__actionClipboardApplyIconSize.slider().setMaximum(8)
-        self.__actionClipboardApplyIconSize.slider().setPageStep(1)
-        self.__actionClipboardApplyIconSize.slider().setSingleStep(1)
-
 
         # -----
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcmainviewtab.ui')
@@ -552,19 +499,6 @@ class BCMainViewTab(QFrame):
 
     def __initialise(self):
         @pyqtSlot('QString')
-        def filesTabLayoutModel_Clicked(value):
-            if value==self.__actionFilesApplyTabLayoutViewTv:
-                self.setFilesTabViewMode(BCMainViewTab.VIEWMODE_TV)
-            elif value==self.__actionFilesApplyTabLayoutViewLv:
-                self.setFilesTabViewMode(BCMainViewTab.VIEWMODE_LV)
-            else:
-                self.setFilesTabLayout(value.property('layout'))
-
-        @pyqtSlot('QString')
-        def clipboardTabLayoutModel_Clicked(value):
-            self.setClipboardTabLayout(value.property('layout'))
-
-        @pyqtSlot('QString')
         def filesTabLayoutReset_Clicked(value):
             self.setFilesTabLayout(BCMainViewTabFilesLayout.TOP)
 
@@ -576,8 +510,23 @@ class BCMainViewTab(QFrame):
         def children_Clicked(value=None):
             self.setHighlighted(True)
 
+        @pyqtSlot('QString')
+        def tabmain_Changed(value=None):
+            if not self.setHighlighted(True):
+                if not self.__uiController is None:
+                    self.__uiController.updateMenuForPanel()
+
+        @pyqtSlot('QString')
+        def children_ClickedAndUpdateMenu(value=None):
+            self.setHighlighted(True)
             if not self.__uiController is None:
                 self.__uiController.updateMenuForPanel()
+
+        @pyqtSlot('QString')
+        def children_iconSizeChanged(value=None):
+            if self.isHighlighted():
+                if not self.__uiController is None:
+                    self.__uiController.updateMenuForPanel()
 
         @pyqtSlot('QString')
         def filesPath_Changed(value):
@@ -634,35 +583,6 @@ class BCMainViewTab(QFrame):
             # this allows to avoid to update directory on each change signal (avoid 1000 updates)
             self.__filesFsWatcherTimer.stop()
             self.__filesFsWatcherTimer.start()
-
-        @pyqtSlot('QString')
-        def filesIconSize_changed(value):
-            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
-                self.treeViewFiles.setIconSizeIndex(value)
-                size=self.treeViewFiles.iconSize().width()
-            else:
-                self.listViewFiles.setIconSizeIndex(value)
-                size=self.listViewFiles.iconSize().width()
-
-            self.__actionFilesApplyIconSize.setLabelText(i18n(f"Icon size: {size}px"))
-
-        @pyqtSlot('QString')
-        def clipboardIconSize_changed(value):
-            self.treeViewClipboard.setIconSizeIndex(value)
-            size=self.treeViewClipboard.iconSize().width()
-
-            self.__actionClipboardApplyIconSize.setLabelText(i18n(f"Icon size: {size}px"))
-
-        @pyqtSlot('QString')
-        def filesIconSize_update():
-            if self.stackFiles.currentIndex()==BCMainViewTab.VIEWMODE_TV:
-                self.__actionFilesApplyIconSize.slider().setValue(self.treeViewFiles.iconSizeIndex())
-            else:
-                self.__actionFilesApplyIconSize.slider().setValue(self.listViewFiles.iconSizeIndex())
-
-        @pyqtSlot('QString')
-        def clipboardIconSize_update():
-            self.__actionClipboardApplyIconSize.slider().setValue(self.treeViewClipboard.iconSizeIndex())
 
         @pyqtSlot(int)
         def model_iconStartLoad(nbIcons):
@@ -722,6 +642,11 @@ class BCMainViewTab(QFrame):
 
             self.__filesModelIgnoreSelectionSignals=False
 
+        def mouseEvent(event, originalMouseEvent):
+            # force to highlight panel owning button before popup menu
+            self.setHighlighted(True)
+            originalMouseEvent(event)
+
         # -- files --
         self.__filesModelTv.iconStartLoad.connect(model_iconStartLoad)
         self.__filesModelTv.iconStopLoad.connect(self.__filesProgressStop)
@@ -738,34 +663,10 @@ class BCMainViewTab(QFrame):
 
         self.__filesFsWatcher.directoryChanged.connect(filesDirectory_changed)
 
-        self.__actionFilesApplyTabLayoutFull.triggered.connect(children_Clicked)
-        self.__actionFilesApplyTabLayoutTop.triggered.connect(children_Clicked)
-        self.__actionFilesApplyTabLayoutLeft.triggered.connect(children_Clicked)
-        self.__actionFilesApplyTabLayoutBottom.triggered.connect(children_Clicked)
-        self.__actionFilesApplyTabLayoutRight.triggered.connect(children_Clicked)
-
-        self.__actionFilesApplyTabLayoutViewTv.triggered.connect(children_Clicked)
-        self.__actionFilesApplyTabLayoutViewLv.triggered.connect(children_Clicked)
-
-        self.__actionFilesApplyIconSize.slider().valueChanged.connect(filesIconSize_changed)
-
-        # create menu for layout model button
-        self.__menuLayoutModelFiles = QMenu(i18n("Layout"), self.btFilesTabLayoutModel)
-        self.__menuLayoutModelFiles.setIcon(buildIcon("pktk:dashboard"))
-        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutFull)
-        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutTop)
-        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutLeft)
-        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutBottom)
-        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutRight)
-        self.__menuLayoutModelFiles.addSeparator()
-        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutViewTv)
-        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyTabLayoutViewLv)
-        self.__menuLayoutModelFiles.addSeparator()
-        self.__menuLayoutModelFiles.addAction(self.__actionFilesApplyIconSize)
-        self.__menuLayoutModelFiles.triggered.connect(filesTabLayoutModel_Clicked)
-        self.__menuLayoutModelFiles.aboutToShow.connect(filesIconSize_update)
-
-        self.btFilesTabLayoutModel.setMenu(self.__menuLayoutModelFiles)
+        # Menu for btFilesTabLayoutModel is set when uiController is defined
+        # MousePressEvent is overrided here to ensure panel is active before menu is displayed (and then, ensure menu is up to date according to panel)
+        self.originalBtFilesTabLayoutModelMousePressEvent=self.btFilesTabLayoutModel.mousePressEvent
+        self.btFilesTabLayoutModel.mousePressEvent=lambda event: mouseEvent(event, self.originalBtFilesTabLayoutModelMousePressEvent)
         self.btFilesTabLayoutModel.clicked.connect(filesTabLayoutReset_Clicked)
 
         self.splitterFiles.setSizes([1000, 1000])
@@ -774,12 +675,12 @@ class BCMainViewTab(QFrame):
 
         # need tabBarClicked AND currentChanged
         self.tabMain.tabBarClicked.connect(children_Clicked)
-        self.tabMain.currentChanged.connect(children_Clicked)
+        self.tabMain.currentChanged.connect(tabmain_Changed)
         self.tabFilesDetails.tabBarClicked.connect(children_Clicked)
         self.tvDirectoryTree.activated.connect(children_Clicked)
         self.twInfo.currentChanged.connect(children_Clicked)
         self.btFilesTabLayoutModel.clicked.connect(children_Clicked)
-        self.framePathBar.clicked.connect(children_Clicked)
+        self.framePathBar.clicked.connect(children_ClickedAndUpdateMenu)
         self.framePathBar.pathChanged.connect(filesPath_Changed)
         self.framePathBar.viewChanged.connect(filesView_Changed)
         self.framePathBar.filterChanged.connect(filesFilter_Changed)
@@ -791,6 +692,7 @@ class BCMainViewTab(QFrame):
         self.treeViewFiles.doubleClicked.connect(self.__filesDoubleClick)
         self.treeViewFiles.keyPressed.connect(self.__filesKeyPressed)
         self.treeViewFiles.contextMenuEvent=self.__filesContextMenuEvent
+        self.treeViewFiles.iconSizeChanged.connect(children_iconSizeChanged)
         self.treeViewFiles.selectionModel().selectionChanged.connect(filesSelection_Changed)
         self.treeViewFiles.header().setSectionsClickable(True)
         self.treeViewFiles.header().sectionClicked.connect(children_Clicked)
@@ -801,6 +703,7 @@ class BCMainViewTab(QFrame):
         self.listViewFiles.doubleClicked.connect(self.__filesDoubleClick)
         self.listViewFiles.keyPressed.connect(self.__filesKeyPressed)
         self.listViewFiles.contextMenuEvent=self.__filesContextMenuEvent
+        self.listViewFiles.iconSizeChanged.connect(children_iconSizeChanged)
         self.listViewFiles.selectionModel().selectionChanged.connect(filesSelection_Changed)
 
         self.treeViewFiles.columnVisibilityChanged.connect(self.listViewFiles.setColumnsVisibility)
@@ -821,37 +724,22 @@ class BCMainViewTab(QFrame):
         self.tvDirectoryTree.expanded.connect(filesTvSelectedPath_expandedCollapsed)
         self.tvDirectoryTree.collapsed.connect(filesTvSelectedPath_expandedCollapsed)
         self.tvDirectoryTree.contextMenuEvent = self.__filesContextMenuDirectoryTree
-        self.tvDirectoryTree.hideColumn(1) # gide 'size'
-        self.tvDirectoryTree.hideColumn(2) # gide 'type'
+        self.tvDirectoryTree.hideColumn(1) # hide 'size'
+        self.tvDirectoryTree.hideColumn(2) # hide 'type'
 
         self.cbImgSizeRes.currentIndexChanged.connect(cbImgSizeRes_changed)
 
         # -- clipboard --
-        self.__actionClipboardApplyTabLayoutTop.triggered.connect(children_Clicked)
-        self.__actionClipboardApplyTabLayoutLeft.triggered.connect(children_Clicked)
-        self.__actionClipboardApplyTabLayoutBottom.triggered.connect(children_Clicked)
-        self.__actionClipboardApplyTabLayoutRight.triggered.connect(children_Clicked)
-        self.__actionClipboardApplyIconSize.slider().valueChanged.connect(clipboardIconSize_changed)
-
         self.treeViewClipboard.doubleClicked.connect(self.__clipboardDoubleClick)
         self.treeViewClipboard.keyPressed.connect(self.__clipboardKeyPressed)
         self.treeViewClipboard.contextMenuEvent=self.__clipboardContextMenuEvent
+        self.treeViewClipboard.iconSizeChanged.connect(children_iconSizeChanged)
 
-        # create menu for layout model button
-        self.__menuLayoutModelClipboard = QMenu(i18n("Layout"), self.btClipboardTabLayoutModel)
-        self.__menuLayoutModelClipboard.setIcon(buildIcon("pktk:dashboard"))
-        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutTop)
-        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutLeft)
-        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutBottom)
-        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyTabLayoutRight)
-        self.__menuLayoutModelClipboard.addSeparator()
-        self.__menuLayoutModelClipboard.addAction(self.__actionClipboardApplyIconSize)
-        self.__menuLayoutModelClipboard.triggered.connect(clipboardTabLayoutModel_Clicked)
-        self.__menuLayoutModelClipboard.aboutToShow.connect(clipboardIconSize_update)
-
-        self.btClipboardTabLayoutModel.setMenu(self.__menuLayoutModelClipboard)
+        # Menu for btClipboardTabLayoutModel is set when uiController is defined
+        # MousePressEvent is overrided here to ensure panel is active before menu is displayed (and then, ensure menu is up to date according to panel)
+        self.originalBbtClipboardTabLayoutModelMousePressEvent=self.btClipboardTabLayoutModel.mousePressEvent
+        self.btClipboardTabLayoutModel.mousePressEvent=lambda event: mouseEvent(event, self.originalBbtClipboardTabLayoutModelMousePressEvent)
         self.btClipboardTabLayoutModel.clicked.connect(clipboardTabLayoutReset_Clicked)
-        self.btClipboardTabLayoutModel.clicked.connect(children_Clicked)
 
         # -----
         self.__filesRefreshTabLayout()
@@ -862,6 +750,11 @@ class BCMainViewTab(QFrame):
         """Refresh panel highlighted and emit signal"""
         self.framePathBar.setHighlighted(self.__isHighlighted)
         if self.__isHighlighted:
+            self.__uiController.savedViews().setCurrent(self.framePathBar.path())
+
+            if not self.__uiController is None:
+                self.__uiController.updateMenuForPanel()
+
             self.highlightedStatusChanged.emit(self)
 
             if not isinstance(QApplication.focusWidget(), QLineEdit):
@@ -1195,64 +1088,31 @@ class BCMainViewTab(QFrame):
         """Refresh layout according to current configuration"""
         if self.__filesTabLayout == BCMainViewTabFilesLayout.FULL:
             self.tabFilesDetails.setVisible(False)
-            self.__actionFilesApplyTabLayoutFull.setChecked(True)
-            self.__actionFilesApplyTabLayoutTop.setChecked(False)
-            self.__actionFilesApplyTabLayoutLeft.setChecked(False)
-            self.__actionFilesApplyTabLayoutBottom.setChecked(False)
-            self.__actionFilesApplyTabLayoutRight.setChecked(False)
         else:
-            self.__actionFilesApplyTabLayoutFull.setChecked(False)
-
             self.tabFilesDetails.setVisible(True)
             if self.__filesTabLayout == BCMainViewTabFilesLayout.TOP:
                 self.splitterFiles.setOrientation(Qt.Vertical)
                 self.splitterFiles.insertWidget(0, self.stackFiles)
                 self.splitterPreview.setOrientation(Qt.Horizontal)
                 self.splitterPreview.insertWidget(0, self.frameFileInformation)
-                #self.tabFilesDetailsInformations.layout().setDirection(QBoxLayout.LeftToRight)
-
-                self.__actionFilesApplyTabLayoutTop.setChecked(True)
-                self.__actionFilesApplyTabLayoutLeft.setChecked(False)
-                self.__actionFilesApplyTabLayoutBottom.setChecked(False)
-                self.__actionFilesApplyTabLayoutRight.setChecked(False)
-
             elif self.__filesTabLayout == BCMainViewTabFilesLayout.LEFT:
                 self.splitterFiles.setOrientation(Qt.Horizontal)
                 self.splitterFiles.insertWidget(0, self.stackFiles)
                 self.splitterPreview.setOrientation(Qt.Vertical)
                 self.splitterPreview.insertWidget(0, self.frameFileInformation)
-                #self.tabFilesDetailsInformations.layout().setDirection(QBoxLayout.TopToBottom)
-
-                self.__actionFilesApplyTabLayoutTop.setChecked(False)
-                self.__actionFilesApplyTabLayoutLeft.setChecked(True)
-                self.__actionFilesApplyTabLayoutBottom.setChecked(False)
-                self.__actionFilesApplyTabLayoutRight.setChecked(False)
-
             elif self.__filesTabLayout == BCMainViewTabFilesLayout.BOTTOM:
                 self.splitterFiles.setOrientation(Qt.Vertical)
                 self.splitterFiles.insertWidget(1, self.stackFiles)
                 self.splitterPreview.setOrientation(Qt.Horizontal)
                 self.splitterPreview.insertWidget(0, self.frameFileInformation)
-                #self.tabFilesDetailsInformations.layout().setDirection(QBoxLayout.LeftToRight)
-
-                self.__actionFilesApplyTabLayoutTop.setChecked(False)
-                self.__actionFilesApplyTabLayoutLeft.setChecked(False)
-                self.__actionFilesApplyTabLayoutBottom.setChecked(True)
-                self.__actionFilesApplyTabLayoutRight.setChecked(False)
-
             elif self.__filesTabLayout == BCMainViewTabFilesLayout.RIGHT:
                 self.splitterFiles.setOrientation(Qt.Horizontal)
                 self.splitterFiles.insertWidget(1, self.stackFiles)
                 self.splitterPreview.setOrientation(Qt.Vertical)
                 self.splitterPreview.insertWidget(0, self.frameFileInformation)
-                #self.tabFilesDetailsInformations.layout().setDirection(QBoxLayout.TopToBottom)
 
-                self.__actionFilesApplyTabLayoutTop.setChecked(False)
-                self.__actionFilesApplyTabLayoutLeft.setChecked(False)
-                self.__actionFilesApplyTabLayoutBottom.setChecked(False)
-                self.__actionFilesApplyTabLayoutRight.setChecked(True)
-
-        self.tabFilesLayoutChanged.emit(self)
+        if self.__uiController:
+            self.__uiController.updateMenuForPanel()
 
 
     def __filesDoubleClick(self, item):
@@ -1500,53 +1360,53 @@ class BCMainViewTab(QFrame):
                     self.lblOwner.setText(f'{og[0]}/{og[1]}')
                     self.lblOwner.setToolTip(self.lblOwner.text())
 
-            # Search for backup files...
-            backupSuffix = re.escape(Krita.instance().readSetting('', 'backupfilesuffix', '~'))
-            filePattern = re.escape(file.name())
-            rePattern = f"{filePattern}(?:\.\d+)?{backupSuffix}$"
-            backupList=[]
-            pathName=file.path()
-            with os.scandir(pathName) as files:
-                for foundFile in files:
-                    if re.match(rePattern, foundFile.name):
-                        backupList.append(BCFile(os.path.join(pathName, foundFile.name)))
+            # Search for backup files only if not a directory or a missing file...
+            if not isinstance(file, (BCDirectory, BCMissingFile)):
+                backupSuffix = re.escape(Krita.instance().readSetting('', 'backupfilesuffix', '~'))
+                filePattern = re.escape(file.name())
+                rePattern = f"{filePattern}(?:\.\d+)?{backupSuffix}$"
+                backupList=[]
+                pathName=file.path()
+                with os.scandir(pathName) as files:
+                    for foundFile in files:
+                        if re.match(rePattern, foundFile.name):
+                            backupList.append(BCFile(os.path.join(pathName, foundFile.name)))
 
-            if len(backupList)>0:
-                backupList.sort(key=lambda file: file.name())
-                filterButton = QPushButton(i18n("Show"))
-                filterButton.setToolTip(i18n("Show in opposite panel"))
-                filterButton.setStatusTip(i18n("Show backup files list in opposite panel"))
-                filterButton.clicked.connect(applyBackupFilter)
-                addSeparator(self.scrollAreaWidgetContentsNfoGeneric)
-                if len(backupList) == 1:
-                    addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n("1 backup file found"), filterButton)
-                else:
-                    addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n(f"{len(backupList)} backup files found"), filterButton)
+                if len(backupList)>0:
+                    backupList.sort(key=lambda file: file.name())
+                    filterButton = QPushButton(i18n("Show"))
+                    filterButton.setToolTip(i18n("Show in opposite panel"))
+                    filterButton.setStatusTip(i18n("Show backup files list in opposite panel"))
+                    filterButton.clicked.connect(applyBackupFilter)
+                    addSeparator(self.scrollAreaWidgetContentsNfoGeneric)
+                    if len(backupList) == 1:
+                        addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n("1 backup file found"), filterButton)
+                    else:
+                        addNfoBtnRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup files"), i18n(f"{len(backupList)} backup files found"), filterButton)
 
-                for fileBackup in backupList:
-                    addSeparator(self.scrollAreaWidgetContentsNfoGeneric, shifted=True)
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup file"), fileBackup.name(), shifted=True)
+                    for fileBackup in backupList:
+                        addSeparator(self.scrollAreaWidgetContentsNfoGeneric, shifted=True)
+                        addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Backup file"), fileBackup.name(), shifted=True)
 
-                    lastModifiedDiffStr=""
-                    lastModifiedDiffTooltip=''
-                    lastModifiedDiff=round(file.lastModificationDateTime() - fileBackup.lastModificationDateTime(),0)
-                    if lastModifiedDiff>0:
-                        lastModifiedDiffStr=i18n(f'<br><i>{secToStrTime(lastModifiedDiff)} ago<sup>(from current file)</sup></i>')
+                        lastModifiedDiffStr=""
                         lastModifiedDiffTooltip=''
+                        lastModifiedDiff=round(file.lastModificationDateTime() - fileBackup.lastModificationDateTime(),0)
+                        if lastModifiedDiff>0:
+                            lastModifiedDiffStr=i18n(f'<br><i>{secToStrTime(lastModifiedDiff)} ago<sup>(from current file)</sup></i>')
+                            lastModifiedDiffTooltip=''
 
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Modified"), tsToStr(fileBackup.lastModificationDateTime(), valueNone='-')+lastModifiedDiffStr, lastModifiedDiffTooltip, shifted=True)
+                        addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Modified"), tsToStr(fileBackup.lastModificationDateTime(), valueNone='-')+lastModifiedDiffStr, lastModifiedDiffTooltip, shifted=True)
 
-                    backupSizeDiffTooltip=''
-                    backupSizeDiffStr=""
-                    backupSizeDiff=fileBackup.size() - file.size()
-                    if backupSizeDiff>0:
-                        backupSizeDiffStr=f'<br><i>+{bytesSizeToStr(backupSizeDiff)} (+{backupSizeDiff:n})</i>'
                         backupSizeDiffTooltip=''
-                    elif backupSizeDiff<0:
-                        backupSizeDiffStr=f'<br><i>-{bytesSizeToStr(abs(backupSizeDiff))} ({backupSizeDiff:n})</i>'
-                        backupSizeDiffTooltip=''
-                    addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Size"), f'{bytesSizeToStr(fileBackup.size())} ({fileBackup.size():n}){backupSizeDiffStr}', backupSizeDiffTooltip, shifted=True)
-
+                        backupSizeDiffStr=""
+                        backupSizeDiff=fileBackup.size() - file.size()
+                        if backupSizeDiff>0:
+                            backupSizeDiffStr=f'<br><i>+{bytesSizeToStr(backupSizeDiff)} (+{backupSizeDiff:n})</i>'
+                            backupSizeDiffTooltip=''
+                        elif backupSizeDiff<0:
+                            backupSizeDiffStr=f'<br><i>-{bytesSizeToStr(abs(backupSizeDiff))} ({backupSizeDiff:n})</i>'
+                            backupSizeDiffTooltip=''
+                        addNfoRow(self.scrollAreaWidgetContentsNfoGeneric, i18n("Size"), f'{bytesSizeToStr(fileBackup.size())} ({fileBackup.size():n}){backupSizeDiffStr}', backupSizeDiffTooltip, shifted=True)
 
             # ------------------------------ Image ------------------------------
             if file.format() != BCFileManagedFormat.UNKNOWN:
@@ -2608,19 +2468,16 @@ class BCMainViewTab(QFrame):
         self.__filesUpdateThumbnailView()
 
         if mode==BCMainViewTab.VIEWMODE_TV:
-            self.__actionFilesApplyIconSize.slider().setMinimum(0)
-            self.__actionFilesApplyIconSize.slider().setMaximum(8)
             self.setFilesIconSizeTv(self.filesIconSizeTv())
-            self.__actionFilesApplyTabLayoutViewTv.setChecked(True)
             if self.listViewFiles.hasFocus():
                 self.treeViewFiles.setFocus()
         else:
             self.setFilesIconSizeLv(self.filesIconSizeLv())
-            self.__actionFilesApplyIconSize.slider().setMinimum(0)
-            self.__actionFilesApplyIconSize.slider().setMaximum(5)
-            self.__actionFilesApplyTabLayoutViewLv.setChecked(True)
             if self.treeViewFiles.hasFocus():
                 self.listViewFiles.setFocus()
+
+        if self.__uiController:
+            self.__uiController.updateMenuForPanel()
 
 
     def __filesUpdateThumbnailView(self):
@@ -2837,40 +2694,18 @@ class BCMainViewTab(QFrame):
         if self.__clipboardTabLayout == BCMainViewTabClipboardLayout.TOP:
             self.splitterClipboard.setOrientation(Qt.Vertical)
             self.splitterClipboard.insertWidget(0, self.treeViewClipboard)
-
-            self.__actionClipboardApplyTabLayoutTop.setChecked(True)
-            self.__actionClipboardApplyTabLayoutLeft.setChecked(False)
-            self.__actionClipboardApplyTabLayoutBottom.setChecked(False)
-            self.__actionClipboardApplyTabLayoutRight.setChecked(False)
-
         elif self.__clipboardTabLayout == BCMainViewTabClipboardLayout.LEFT:
             self.splitterClipboard.setOrientation(Qt.Horizontal)
             self.splitterClipboard.insertWidget(0, self.treeViewClipboard)
-
-            self.__actionClipboardApplyTabLayoutTop.setChecked(False)
-            self.__actionClipboardApplyTabLayoutLeft.setChecked(True)
-            self.__actionClipboardApplyTabLayoutBottom.setChecked(False)
-            self.__actionClipboardApplyTabLayoutRight.setChecked(False)
-
         elif self.__clipboardTabLayout == BCMainViewTabClipboardLayout.BOTTOM:
             self.splitterClipboard.setOrientation(Qt.Vertical)
             self.splitterClipboard.insertWidget(1, self.treeViewClipboard)
-
-            self.__actionClipboardApplyTabLayoutTop.setChecked(False)
-            self.__actionClipboardApplyTabLayoutLeft.setChecked(False)
-            self.__actionClipboardApplyTabLayoutBottom.setChecked(True)
-            self.__actionClipboardApplyTabLayoutRight.setChecked(False)
-
         elif self.__clipboardTabLayout == BCMainViewTabClipboardLayout.RIGHT:
             self.splitterClipboard.setOrientation(Qt.Horizontal)
             self.splitterClipboard.insertWidget(1, self.treeViewClipboard)
 
-            self.__actionClipboardApplyTabLayoutTop.setChecked(False)
-            self.__actionClipboardApplyTabLayoutLeft.setChecked(False)
-            self.__actionClipboardApplyTabLayoutBottom.setChecked(False)
-            self.__actionClipboardApplyTabLayoutRight.setChecked(True)
-
-        self.tabClipboardLayoutChanged.emit(self)
+        if self.__uiController:
+            self.__uiController.updateMenuForPanel()
 
 
     def __clipboardDoubleClick(self, item):
@@ -2973,9 +2808,15 @@ class BCMainViewTab(QFrame):
         self.__uiController = uiController
         self.framePathBar.setUiController(uiController)
 
+        # menuViewLayout is automatically updated according to current panel/view/...
+        self.btFilesTabLayoutModel.setMenu(self.__uiController.window().menuViewLayout)
+        self.btClipboardTabLayoutModel.setMenu(self.__uiController.window().menuViewLayout)
+
         self.treeViewClipboard.setClipboard(self.__uiController.clipboard())
         self.treeViewClipboard.selectionModel().selectionChanged.connect(self.__clipboardSelectionChanged)
+
         self.__uiController.clipboard().updated.connect(self.__clipboardSelectionChanged)
+
         self.__clipboardUpdateStats()
 
 
@@ -2988,12 +2829,16 @@ class BCMainViewTab(QFrame):
         """Set current highlighted panel status
 
         If highlighted status is changed, emit Signal
+
+        If panel is already highlighted, return False otherwise return True
         """
         if not isinstance(value, bool):
             raise EInvalidType("Given `value` must be a <bool>")
         elif self.__isHighlighted != value:
             self.__isHighlighted = value
             self.__refreshPanelHighlighted()
+            return True
+        return False
 
 
     def tabIndex(self, id):
@@ -3224,6 +3069,7 @@ class BCMainViewTab(QFrame):
         """Set new layout for file panel"""
         if layout is None:
             return
+
         if isinstance(layout, str):
             layout = BCMainViewTabFilesLayout(layout)
         elif not isinstance(layout, BCMainViewTabFilesLayout):
@@ -3630,26 +3476,28 @@ class BCMainViewTab(QFrame):
             self.treeViewFiles.setColumnVisible(logicalIndex, visible)
 
 
-    def filesIconSizeTv(self):
+    def filesIconSizeTv(self, asPixelSize=False):
         """Return current icon size (treeview)"""
+        if asPixelSize:
+            return self.treeViewFiles.iconSizePixels()
         return self.treeViewFiles.iconSizeIndex()
 
 
     def setFilesIconSizeTv(self, value=None):
         """Set current icon size (treeview)"""
         self.treeViewFiles.setIconSizeIndex(value)
-        self.__actionFilesApplyIconSize.slider().setValue(value)
 
 
-    def filesIconSizeLv(self):
+    def filesIconSizeLv(self, asPixelSize=False):
         """Return current icon size (listview)"""
+        if asPixelSize:
+            return self.listViewFiles.iconSizePixels()
         return self.listViewFiles.iconSizeIndex()
 
 
     def setFilesIconSizeLv(self, value=None):
         """Set current icon size (listview)"""
         self.listViewFiles.setIconSizeIndex(value)
-        self.__actionFilesApplyIconSize.slider().setValue(value)
 
 
     def filesViewThumbnail(self):
@@ -3739,6 +3587,15 @@ class BCMainViewTab(QFrame):
                     self.__filesCurrentStats['sizeFiles'])
 
 
+    def filesPathMode(self):
+        """Return current path mode
+
+        - PATH
+        - SAVED VIEW
+        """
+        self.framePathBar.mode()
+
+
     def filesShowBookmark(self, visible=True):
         """Display/Hide the bookmark button"""
         self.framePathBar.showBookmark(visible)
@@ -3782,26 +3639,6 @@ class BCMainViewTab(QFrame):
     def filesShowMargins(self, visible=False):
         """Display/Hide margins"""
         self.framePathBar.showMargins(visible)
-
-
-    def filesShowMenuHistory(self, menu):
-        """Build menu history"""
-        self.framePathBar.menuHistoryShow(menu)
-
-
-    def filesShowMenuBookmarks(self, menu):
-        """Build menu bookmarks"""
-        self.framePathBar.menuBookmarksShow(menu)
-
-
-    def filesShowMenuSavedViews(self, menu):
-        """Build menu saved views"""
-        self.framePathBar.menuSavedViewsShow(menu)
-
-
-    def filesShowMenuLastDocuments(self, menu):
-        """Build menu last documents views"""
-        self.framePathBar.menuLastDocumentsShow(menu)
 
 
     def filesMenuViewDisplayLayout(self):
@@ -4050,15 +3887,17 @@ class BCMainViewTab(QFrame):
                 self.treeViewClipboard.header().resizeSection(logicalIndex, size)
 
 
-    def clipboardIconSize(self):
+    def clipboardIconSize(self, asPixelSize=False):
         """Return current icon size"""
+        if asPixelSize:
+            return self.treeViewClipboard.iconSizePixels()
         return self.treeViewClipboard.iconSizeIndex()
 
 
     def setClipboardIconSize(self, value=None):
         """Set current icon size"""
         self.treeViewClipboard.setIconSizeIndex(value)
-        #self.__actionFilesApplyIconSize.slider().setValue(value)
+
 
     def clipboardSelected(self):
         """Return information about selected clipboard items
