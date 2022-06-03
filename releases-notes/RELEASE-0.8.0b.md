@@ -15,6 +15,20 @@ A grid view mode has been improved: it's now possible to define, through setting
 *Grid view mode: properties on "Bottom side" of thumbnails*
 ![File panel-grid mode Over](./../screenshots/r0-8-0b_files-gridview-bottom.jpeg)
 
+### Toolbars
+All functions from menu are now available through toolbars.
+
+User can create as many toolbar as needed, and configure each toolbar.
+
+
+*Toolbars example*
+![File panel-toolbars](./../screenshots/r0-8-0b_files-toolbars.jpeg)
+
+
+*Toolbars settings*
+![File panel-toolbars](./../screenshots/r0-8-0b_settings_toolbars.jpeg)
+
+
 ### Markers
 Markers are set to files and allows to manually prepare selections.
 
