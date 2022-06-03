@@ -198,7 +198,12 @@ I think it should be Ok, but...
 
 ### What's new?
 _[2022-XX-XX] Version 0.8.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.8.0b.md)*
-- Improve Grid View mode - *File/Image information*
+- Improve file panel - *Grid View mode - File/Image information*
+- Improve file panel - *Toolbars*
+- Improve file panel - *Markers*
+- Improve file panel - *Multiple files selection*
+- Improve file panel - *Quick filter - Icons*
+- Improve file panel - *Breadcrumbs - Windows drives*
 
 _[2022-04-13] Version 0.7.1b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.7.1b.md)*
 - Fix bug about thumbnail loading
@@ -298,11 +303,9 @@ Probably still a lot... :-)
 ### What’s next?
 Not able to define precisely in which order functionalities will be implemented, neither when, but here a list of what is currently expected for final *v1.0.0* version:
 - Improve styles (especially clear style as currently plugin is optimized for dark theme)
-- Improve breadcrumb for windows users (provide access to drives)
 - Improve search engine UI (allows to resize nodes manually, context menu, copy/paste/duplicate, ...)
 - Add some file format support (TIF, CBZ)
 - Implement thumbnails generation with ICC profile taken in account
-- Implement a toolbar
 - Implement *Documents* tab
 - Implement Exif/IPTC/XMP metadata read
 - Implement search by color
