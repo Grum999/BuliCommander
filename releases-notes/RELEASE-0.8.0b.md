@@ -101,3 +101,16 @@ For Windows users, an additional entry has been added in breadcrumbs to be able 
 
 ### Context menu - Status tip
 A very small improvement: add status tip for context menu
+
+
+## User interface
+
+### Windows users menu icons
+For Windows users, icons in Krita menu are explicitely deactivated (see commit [493ca38](https://invent.kde.org/graphics/krita/-/commit/493ca38910f2a1a4233b64815ce60a6fa3205bc2))
+
+Not sure why it has removed only for Windows users, but bored to not have icons in Buli Commander menus when testing plugin on Windows, an option has been added in settings to let the possibility to display icons.
+
+![Settings for Windows users](./../screenshots/r0-8-0b_settings_windowsiconmenu.jpeg)
+
+> Note:
+> - For other OS, option is deactivated
