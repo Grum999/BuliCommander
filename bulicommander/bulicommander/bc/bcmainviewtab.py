@@ -2324,48 +2324,73 @@ class BCMainViewTab(QFrame):
         VE=2
         VR=3
 
+        # use short variable name, easier to read code
+        wHnd=self.__uiController.window()
+
         menuProperties=[
             # 0:parent  1:Id                2:icon list
             #                               3:label                                                     4:action                                            5:    6:status
+            #                               7:statusTip
             ['',        'selectAll',        "pktk:select_all",
-                                            i18n('Select all'),                                         self.__uiController.commandPanelSelectAll,          [],   [VE, VE, VE, VE, VE, VE] ],
+                                            wHnd.actionFolderNew.text(),                                self.__uiController.commandPanelSelectAll,          [],   [VE, VE, VE, VE, VE, VE],
+                                            wHnd.actionFolderNew.statusTip()],
             ['',        'selectNone',       "pktk:select_none",
-                                            i18n('Select none'),                                        self.__uiController.commandPanelSelectNone,         [],   [VD, VE, VE, VE, VE, VE] ],
+                                            wHnd.actionMenuEditSelectNone.text(),                       self.__uiController.commandPanelSelectNone,         [],   [VD, VE, VE, VE, VE, VE],
+                                            wHnd.actionMenuEditSelectNone.statusTip()],
             ['',        'selectInvert',     "pktk:select_invert",
-                                            i18n('Invert selection'),                                   self.__uiController.commandPanelSelectInvert,       [],   [VE, VE, VE, VE, VE, VE] ],
-            ['',        'sep1',             None,   None,                                               None,                                               [],   [VE, VE, VE, VE, VE, VE] ],
+                                            wHnd.actionMenuEditSelectInvert.text(),                     self.__uiController.commandPanelSelectInvert,       [],   [VE, VE, VE, VE, VE, VE],
+                                            wHnd.actionMenuEditSelectInvert.statusTip()],
+            ['',        'sep1',             None,   None,                                               None,                                               [],   [VE, VE, VE, VE, VE, VE],
+                                            None],
             ['',        'newFolder',        "pktk:folder_open_add",
-                                            i18n('New folder...'),                                      self.__uiController.commandFileCreateDir,           [],   [VE, VE, VE, VE, VE, VE] ],
+                                            wHnd.actionFolderNew.text(),                                self.__uiController.commandFileCreateDir,           [],   [VE, VE, VE, VE, VE, VE],
+                                            wHnd.actionFolderNew.statusTip()],
             #[i18n('Show in opposite panel'),    self.__uiController.commandFileCreateDir,   [],   [VE, VE, VE, VE, VE, VE] ],
-            ['',        'sep2',             None,   None,                                               None,                                               [],   [HH, VE, VE, HH, HH, VE] ],
+            ['',        'sep2',             None,   None,                                               None,                                               [],   [HH, VE, VE, HH, HH, VE],
+                                            None],
             ['',        'openFile',         "pktk:folder_open",
-                                            i18n('Open file'),                                          self.__uiController.commandFileOpen,                [],   [HH, VE, VE, HH, HH, VE] ],
+                                            wHnd.actionFileOpen.text(),                                 self.__uiController.commandFileOpen,                [],   [HH, VE, VE, HH, HH, VE],
+                                            wHnd.actionFileOpen.statusTip()],
             ['',        'openAs',           "pktk:folder_open",
-                                            i18n('Open file as'),                                       None,                                               [],   [HH, VE, VE, HH, HH, VE] ],
+                                            wHnd.menuOpen_file_as.title(),                              None,                                               [],   [HH, VE, VE, HH, HH, VE],
+                                            None],
             ['openAs',  'openNew',          "pktk:folder_open_new",
-                                            i18n('Open as new document'),                               self.__uiController.commandFileOpenAsNew,           [],   [HH, VE, VE, HH, HH, VE] ],
+                                            wHnd.actionFileOpenAsNewDocument.text(),                    self.__uiController.commandFileOpenAsNew,           [],   [HH, VE, VE, HH, HH, VE],
+                                            wHnd.actionFileOpenAsNewDocument.statusTip()],
             ['openAs',  'openRefImg',       "pktk:folder_open_pinned",
-                                            i18n('Open as Reference Image'),                            self.__uiController.commandFileOpenAsImageReference,[],   [HH, (VR, 1), (VR, 1), HH, HH, (VR, 1)] ],
+                                            wHnd.actionFileOpenAsImageReference.text(),                 self.__uiController.commandFileOpenAsImageReference,[],   [HH, (VR, 1), (VR, 1), HH, HH, (VR, 1)],
+                                            wHnd.actionFileOpenAsImageReference.statusTip()],
             ['openAs',  'openLayer',        "pktk:folder_open_layers",
-                                            i18n('Open as Layer'),                                      self.__uiController.commandFileOpenAsLayer,         [],   [HH, (VR, 2), (VR, 2), HH, HH, (VR, 2)] ],
+                                            wHnd.actionFileOpenAsLayer.text(),                          self.__uiController.commandFileOpenAsLayer,         [],   [HH, (VR, 2), (VR, 2), HH, HH, (VR, 2)],
+                                            wHnd.actionFileOpenAsLayer.statusTip()],
             ['openAs',  'openFileLayer',    "pktk:folder_open_link",
-                                            i18n('Open as File layer'),                                 self.__uiController.commandFileOpenAsFileLayer,     [],   [HH, (VR, 2), (VR, 2), HH, HH, (VR, 2)] ],
-            ['',        'sep3',             None,   None,                                               None,                                               [],   [VE, VE, VE, VE, VE, VE] ],
+                                            wHnd.actionFileOpenAsFileLayer.text(),                      self.__uiController.commandFileOpenAsFileLayer,     [],   [HH, (VR, 2), (VR, 2), HH, HH, (VR, 2)],
+                                            wHnd.actionFileOpenAsFileLayer.statusTip()],
+            ['',        'sep3',             None,   None,                                               None,                                               [],   [VE, VE, VE, VE, VE, VE],
+                                            None],
             ['',        'copyOP',           "pktk:file_copy",
-                                            i18n('Copy to other panel'),                                self.__uiController.commandFileCopy,                [],   [HH, (VE,VD), (VE,VD), (VE,VD), (VE,VD), (VE,VD)] ],
+                                            wHnd.actionFileCopyToOtherPanel.text(),                     self.__uiController.commandFileCopy,                [],   [HH, (VE,VD), (VE,VD), (VE,VD), (VE,VD), (VE,VD)],
+                                            wHnd.actionFileCopyToOtherPanel.statusTip()],
             ['',        'moveOP',           "pktk:file_move",
-                                            i18n('Move to other panel'),                                self.__uiController.commandFileMove,                [],   [HH, (VE,VD), (VE,VD), (VE,VD), (VE,VD), (VE,VD)] ],
+                                            wHnd.actionFileMoveToOtherPanel.text(),                     self.__uiController.commandFileMove,                [],   [HH, (VE,VD), (VE,VD), (VE,VD), (VE,VD), (VE,VD)],
+                                            wHnd.actionFileMoveToOtherPanel.statusTip()],
             ['',        'delete',           "pktk:delete",
-                                            i18n('Delete'),                                             self.__uiController.commandFileDelete,              [],   [HH, VE, VE, VE, VE, VE] ],
+                                            wHnd.actionFileDelete.text(),                               self.__uiController.commandFileDelete,              [],   [HH, VE, VE, VE, VE, VE],
+                                            wHnd.actionFileDelete.statusTip()],
             ['',        'rename',           "pktk:file_rename",
-                                            i18n('Rename'),                                             self.__uiController.commandFileRename,              [],   [HH, VE, VE, VE, VE, VE] ],
-            ['',        'sep4',             None,   None,                                               None,                                               [],   [HH, VE, VE, VE, VE, VE] ],
+                                            wHnd.actionFileRename.text(),                               self.__uiController.commandFileRename,              [],   [HH, VE, VE, VE, VE, VE],
+                                            wHnd.actionFileRename.statusTip()],
+            ['',        'sep4',             None,   None,                                               None,                                               [],   [HH, VE, VE, VE, VE, VE],
+                                            None],
             ['',        'clipboard',        "pktk:clipboard",
-                                            i18n('Copy to clipboard'),                                  self.__uiController.commandToolsListToClipboard,    [],   [HH, VE, VE, VE, VE, VE] ],
+                                            wHnd.actionToolsCopyToClipboard.text(),                     self.__uiController.commandToolsListToClipboard,    [],   [HH, VE, VE, VE, VE, VE],
+                                            wHnd.actionToolsCopyToClipboard.statusTip()],
             ['',        'exportlist',       "pktk:export_list",
-                                            i18n('Export files list...'),                               self.__uiController.commandToolsExportFilesOpen,    [],   [VE, VE, VE, VE, VE, VE] ],
+                                            wHnd.actionToolsExportFiles.text(),                         self.__uiController.commandToolsExportFilesOpen,    [],   [VE, VE, VE, VE, VE, VE],
+                                            wHnd.actionToolsExportFiles.statusTip()],
             ['',        'convertFiles',     "pktk:image_convert",
-                                            i18n('Convert files...'),                                   self.__uiController.commandToolsConvertFilesOpen,   [],   [VE, VE, VE, VE, VE, VE] ]
+                                            wHnd.actionToolsConvertFiles.text(),                        self.__uiController.commandToolsConvertFilesOpen,   [],   [VE, VE, VE, VE, VE, VE],
+                                            wHnd.actionToolsConvertFiles.statusTip()]
         ]
 
         # determinate current state index (0 to 5)
@@ -2431,6 +2456,7 @@ class BCMainViewTab(QFrame):
                     parentMenu[properties[1]]=menu
                 else:
                     action = buildQAction(properties[2], properties[3], self, properties[4], properties[5])
+                    action.setStatusTip(properties[7])
                     if status==VD:
                         action.setEnabled(False)
 
@@ -2735,9 +2761,9 @@ class BCMainViewTab(QFrame):
         # Here, retrieve action from mainwindow Menu
 
         menuActions=[
-                self.__uiController.window().actionMenuSelectAll,
-                self.__uiController.window().actionMenuSelectNone,
-                self.__uiController.window().actionMenuSelectInvert,
+                self.__uiController.window().actionMenuEditSelectAll,
+                self.__uiController.window().actionMenuEditSelectNone,
+                self.__uiController.window().actionMenuEditSelectInvert,
                 None,
                 self.__uiController.window().actionClipboardCheckContent,
                 None,
