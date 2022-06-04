@@ -97,6 +97,7 @@ class BCSettingsKey(SettingsKey):
     CONFIG_GLB_OPEN_OVERRIDEKRITA =                          'config.global.open.overrideKrita'
     CONFIG_GLB_OPEN_FROMKRITAMENU =                          'config.global.open.fromKritaFileMenu'
     CONFIG_GLB_SYSTRAY_MODE =                                'config.global.systray.mode'
+    CONFIG_GLB_OS_WINDOWS_ICONMENU =                         'config.global.os.windows.iconMenu'
 
     CONFIG_FILES_DEFAULTACTION_KRA =                         'config.files.defaultAction.kra'
     CONFIG_FILES_DEFAULTACTION_OTHER =                       'config.files.defaultAction.other'
@@ -481,6 +482,7 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_MARKERS_MOVETONEXT,           True,                       SettingsFmt(bool)),
 
             SettingsRule(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE,                             2,                          SettingsFmt(int, [0,1,2,3])),
+            SettingsRule(BCSettingsKey.CONFIG_GLB_OS_WINDOWS_ICONMENU,                      False,                      SettingsFmt(bool)),
 
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED,                    False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES,               [],                         SettingsFmt(list, str)),
@@ -1022,6 +1024,13 @@ class BCSettingsDialogBox(QDialog):
 
         self.cbCGLaunchFromFileMenu.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
 
+        if sys.platform=='win32':
+            self.cbCGMiscWindowsMenuIcons.setEnabled(True)
+            self.cbCGMiscWindowsMenuIcons.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OS_WINDOWS_ICONMENU))
+        else:
+            self.cbCGMiscWindowsMenuIcons.setEnabled(False)
+            self.cbCGMiscWindowsMenuIcons.setChecked(True)
+
         if BCSettings.get(BCSettingsKey.CONFIG_GLB_FILE_UNIT) == BCSettingsValues.FILE_UNIT_KIB:
             self.rbCGFileUnitBinary.setChecked(True)
         else:
@@ -1176,6 +1185,7 @@ class BCSettingsDialogBox(QDialog):
         self.__uiController.commandSettingsOpenAtStartup(self.cbCGLaunchOpenBC.isChecked())
         self.__uiController.commandSettingsOpenOverrideKrita(self.cbCGLaunchReplaceOpenDb.isChecked())
         self.__uiController.commandSettingsOpenFromFileMenu(self.cbCGLaunchFromFileMenu.isChecked())
+        self.__uiController.commandSettingsShowMenuIcons(self.cbCGMiscWindowsMenuIcons.isChecked())
 
         if self.rbCGFileUnitBinary.isChecked():
             self.__uiController.commandSettingsFileUnit(BCSettingsValues.FILE_UNIT_KIB)
