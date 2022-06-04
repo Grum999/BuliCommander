@@ -204,6 +204,7 @@ _[2022-XX-XX] Version 0.8.0b_ *[>> Show detailed release content <<](./releases-
 - Improve file panel - *Multiple files selection*
 - Improve file panel - *Quick filter - Icons*
 - Improve file panel - *Breadcrumbs - Windows drives*
+- Improve file panel - *Context menu - Status tip*
 
 _[2022-04-13] Version 0.7.1b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.7.1b.md)*
 - Fix bug about thumbnail loading

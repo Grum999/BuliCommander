@@ -98,3 +98,6 @@ For Windows users, an additional entry has been added in breadcrumbs to be able 
 
 > Note:
 > - Only mounted drives are available in list, special folders (Libraries, Quick access, Desktop, Images, ...) are not available here
+
+### Context menu - Status tip
+A very small improvement: add status tip for context menu
