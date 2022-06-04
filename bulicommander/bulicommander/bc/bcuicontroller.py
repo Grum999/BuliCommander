@@ -167,6 +167,7 @@ class BCUIController(QObject):
 
         self.__systray=BCSysTray(self)
         self.commandSettingsSysTrayMode(BCSettings.get(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE))
+        self.commandSettingsShowMenuIcons(BCSettings.get(BCSettingsKey.CONFIG_GLB_OS_WINDOWS_ICONMENU))
 
         # store a global reference to activeWindow to be able to work with
         # activeWindow signals
@@ -241,7 +242,6 @@ class BCUIController(QObject):
         except:
             pass
         self.__kraActiveWindow.themeChanged.connect(self.__themeChanged)
-
 
         self.__window.initMainView()
 
@@ -2868,6 +2868,21 @@ class BCUIController(QObject):
             if not session is None:
                 BCSettings.set(BCSettingsKey.SESSION_TOOLBARS, session)
             self.__window.initToolbar(config, session)
+
+    def commandSettingsShowMenuIcons(self, value=None):
+        """Show/hide menu icons
+
+        Note: only for windows OS
+        """
+        if sys.platform=='win32':
+            # functionnality available only for windows platform
+            if value is None:
+                return BCSettings.get(BCSettingsKey.CONFIG_GLB_OS_WINDOWS_ICONMENU)
+            elif isinstance(value, bool):
+                BCSettings.set(BCSettingsKey.CONFIG_GLB_OS_WINDOWS_ICONMENU, value)
+                QApplication.setAttribute(Qt.AA_DontShowIconsInMenus, not(value))
+        else:
+            return True
 
     def commandInfoToClipBoardBorder(self, border=TextTableSettingsText.BORDER_DOUBLE):
         """Set border for information panel content to clipboard"""

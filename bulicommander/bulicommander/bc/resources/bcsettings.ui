@@ -80,7 +80,7 @@
      <item>
       <widget class="QStackedWidget" name="swCatPages">
        <property name="currentIndex">
-        <number>5</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="pageCatGeneral">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -129,6 +129,32 @@
              <property name="bottomMargin">
               <number>0</number>
              </property>
+             <property name="verticalSpacing">
+              <number>-1</number>
+             </property>
+             <item row="11" column="0">
+              <widget class="QLabel" name="label_8">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>Size unit</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0" colspan="3">
+              <widget class="QCheckBox" name="cbCGLaunchFromFileMenu">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, a Buli Commander entry is added to Krita's &lt;span style=&quot; font-style:italic;&quot;&gt;File &lt;/span&gt;menu instead &lt;span style=&quot; font-style:italic;&quot;&gt;Tools &amp;gt; Scripts&lt;/span&gt; menu&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Add Buli Commander to Krita's File menu</string>
+               </property>
+              </widget>
+             </item>
              <item row="8" column="0">
               <widget class="QRadioButton" name="rbCGSysTrayNotification">
                <property name="toolTip">
@@ -342,7 +368,7 @@
                </attribute>
               </widget>
              </item>
-             <item row="14" column="2">
+             <item row="16" column="2">
               <spacer name="verticalSpacer">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
@@ -390,26 +416,33 @@
                </property>
               </widget>
              </item>
-             <item row="11" column="0">
-              <widget class="QLabel" name="label_8">
+             <item row="14" column="0" colspan="3">
+              <widget class="QLabel" name="label_30">
                <property name="font">
                 <font>
+                 <pointsize>12</pointsize>
                  <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: palette(light);padding: 6;</string>
+               </property>
                <property name="text">
-                <string>Size unit</string>
+                <string>Miscellaneous</string>
+               </property>
+               <property name="margin">
+                <number>4</number>
                </property>
               </widget>
              </item>
-             <item row="2" column="0" colspan="3">
-              <widget class="QCheckBox" name="cbCGLaunchFromFileMenu">
+             <item row="15" column="0" colspan="3">
+              <widget class="QCheckBox" name="cbCGMiscWindowsMenuIcons">
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, a Buli Commander entry is added to Krita's &lt;span style=&quot; font-style:italic;&quot;&gt;File &lt;/span&gt;menu instead &lt;span style=&quot; font-style:italic;&quot;&gt;Tools &amp;gt; Scripts&lt;/span&gt; menu&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;For Windows users, icons in menu are not available (explicitely deactivated in Krita - don't know why)&lt;/p&gt;&lt;p&gt;This option allows to display icons in menu.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: when activated, icons are also available on all Krita menu, not only Buli Commander menu&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
-                <string>Add Buli Commander to Krita's File menu</string>
+                <string>Show icons in menu</string>
                </property>
               </widget>
              </item>
@@ -1177,8 +1210,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>980</width>
-              <height>784</height>
+              <width>284</width>
+              <height>345</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_4">
@@ -1959,12 +1992,12 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroupGenSysTray"/>
   <buttongroup name="buttonGroupImgDefaultKrita"/>
   <buttongroup name="buttonGroupPanGridView"/>
   <buttongroup name="buttonGroupNavHomeDir"/>
-  <buttongroup name="buttonGroupClpDefaultAction"/>
   <buttongroup name="buttonGroupClpMode"/>
+  <buttongroup name="buttonGroupClpDefaultAction"/>
+  <buttongroup name="buttonGroupGenSysTray"/>
   <buttongroup name="buttonGroupImgDefaultOther"/>
  </buttongroups>
 </ui>
