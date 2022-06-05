@@ -541,6 +541,8 @@ class BCFileManagedFormat(object):
     BMP = 'bmp'
     WEBP = 'webp'
 
+    # will depend of installed modeules
+    TGA = 'tga'
     UNKNOWN = 'unknown'
     MISSING = 'missing'
     DIRECTORY = 'directory'
@@ -584,6 +586,45 @@ class BCFileManagedFormat(object):
             'MISSING': 'Missing file'
         }
 
+    __LIST_BASIC=[]
+    __LIST_FULL=[]
+
+    @staticmethod
+    def initAvailableFormats():
+        """Initialise available format according to Qt"""
+
+        # Basic list doesn't contains KRA/ORA/PSD/XCF
+        # => use dedicated code from plugin to retrieve basic information
+        BCFileManagedFormat.__LIST_BASIC=[
+                BCFileManagedFormat.PNG,
+                BCFileManagedFormat.JPG,
+                BCFileManagedFormat.JPEG,
+                BCFileManagedFormat.SVG,
+                BCFileManagedFormat.GIF,
+                BCFileManagedFormat.BMP,
+                BCFileManagedFormat.WEBP
+            ]
+
+        BCFileManagedFormat.__LIST_FULL=[
+                BCFileManagedFormat.KRA,
+                BCFileManagedFormat.KRZ,
+                BCFileManagedFormat.PNG,
+                BCFileManagedFormat.JPG,
+                BCFileManagedFormat.JPEG,
+                BCFileManagedFormat.ORA,
+                BCFileManagedFormat.SVG,
+                BCFileManagedFormat.GIF,
+                BCFileManagedFormat.PSD,
+                BCFileManagedFormat.XCF,
+                BCFileManagedFormat.BMP,
+                BCFileManagedFormat.WEBP
+            ]
+
+        # check list of available image format
+        for imgFormat in QImageReader.supportedImageFormats():
+            if imgFormat==b'tga':
+                BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.TGA)
+                BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.TGA)
     @staticmethod
     def format(value):
         if isinstance(value, str):
@@ -628,27 +669,10 @@ class BCFileManagedFormat(object):
     @staticmethod
     def list(full=True):
         if full:
-            return [BCFileManagedFormat.KRA,
-                    BCFileManagedFormat.KRZ,
-                    BCFileManagedFormat.PNG,
-                    BCFileManagedFormat.JPG,
-                    BCFileManagedFormat.JPEG,
-                    BCFileManagedFormat.ORA,
-                    BCFileManagedFormat.SVG,
-                    BCFileManagedFormat.GIF,
-                    BCFileManagedFormat.PSD,
-                    BCFileManagedFormat.XCF,
-                    BCFileManagedFormat.BMP,
-                    BCFileManagedFormat.WEBP]
+            return BCFileManagedFormat.__LIST_FULL
         else:
             # remove KRA/ORA/PSD/XCF (use dedicated code from plugin to retrieve basic information)
-            return [BCFileManagedFormat.PNG,
-                    BCFileManagedFormat.JPG,
-                    BCFileManagedFormat.JPEG,
-                    BCFileManagedFormat.SVG,
-                    BCFileManagedFormat.GIF,
-                    BCFileManagedFormat.BMP,
-                    BCFileManagedFormat.WEBP]
+            return BCFileManagedFormat.__LIST_BASIC
 
     @staticmethod
     def backupSuffixRe():
@@ -1826,6 +1850,7 @@ class BCFile(BCBaseFile):
                 # Use image reader as fallback
                 self.__imgSize = imageReader.size()
 
+            cacheData={}
             if self._format==BCFileManagedFormat.PNG:
                 cacheData=self.__readMetaDataPng(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
@@ -1854,6 +1879,13 @@ class BCFile(BCBaseFile):
                     cacheData['height']=self.__imgSize.height()
             elif self._format==BCFileManagedFormat.BMP:
                 cacheData=self.__readMetaDataBmp(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    self.__imgSize = QSize(cacheData['width'], cacheData['height'])
+                else:
+                    cacheData['width']=self.__imgSize.width()
+                    cacheData['height']=self.__imgSize.height()
+            elif self._format==BCFileManagedFormat.TGA:
+                cacheData=self.__readMetaDataTga(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
@@ -4284,6 +4316,122 @@ class BCFile(BCBaseFile):
         return returned
 
 
+    def __readMetaDataTga(self, fromCache=True, getExtraData=False):
+        """Read metadata from TGA file
+
+        TGA specifications: https://en.wikipedia.org/wiki/Truevision_TGA
+                            https://www.dca.fee.unicamp.br/~martino/disciplinas/ea978/tgaffs.pdf
+        """
+        if fromCache and not self.__metadata is None:
+            return self.__metadata
+        returned = {}
+
+        __COLOR_TYPE = {
+                0: i18n('No image data'),
+                1: i18n('Indexed palette'),
+                2: i18n('RGB'),
+                3: i18n('Grayscale'),
+                9: i18n('Indexed palette'),
+                10: i18n('RGB'),
+                11: i18n('Grayscale'),
+            }
+
+        __COMPRESSION_TYPE = {
+                0: i18n('Uncompressed'),
+                1: i18n('Run Length Encoding')
+            }
+
+        __BIT_DEPTH = {
+                  8: i18n("8-bit integer/channel"),
+                 16: i18n("16-bit integer/channel"),
+                 24: i18n("24-bit integer/channel"),
+                 32: i18n("32-bit integer/channel")
+            }
+
+
+        with open(self._fullPathName, 'rb') as fHandler:
+            # check footer (last 26 bytes of file)
+            fHandler.seek(-18, os.SEEK_END)
+
+            extensionAreaOffset=None
+            signature = fHandler.read(18)
+            if signature==b'TRUEVISION-XFILE.\x00':
+                # it's a V2.0 TGA file format
+                fHandler.seek(-26, os.SEEK_END)
+
+                bytes = fHandler.read(4)
+                extensionAreaOffset=struct.unpack('<I', bytes)[0]
+
+            # go back to start of file
+            # +offset of unused info
+            # 1- idLength
+            # 1- color map type
+            # =2 bytes
+            fHandler.seek(2, os.SEEK_SET)
+
+            bytes = fHandler.read(1)
+            # 0=no image data
+            # 1=uncompressed, color-map
+            # 2=uncompressed, RGB
+            # 3=uncompressed, B&W (grayscale)
+            # 9=RLE, color-map
+            # 10=RLE, RGB
+            # 11=RLE, B&W (grayscale)
+            imageType=struct.unpack('<B', bytes)[0]
+
+            if imageType in __COLOR_TYPE:
+                returned['colorType']=(imageType, __COLOR_TYPE[imageType])
+
+            if imageType in (1, 2, 3):
+                returned['compressionLevel']=(imageType, __COMPRESSION_TYPE[0])
+            else:
+                returned['compressionLevel']=(imageType, __COMPRESSION_TYPE[1])
+
+            fHandler.seek(2, os.SEEK_CUR)
+
+            bytes = fHandler.read(2)
+            if imageType in (1, 9):
+                returned['paletteSize']=struct.unpack('<H', bytes)[0]
+
+            # skip unsued header info
+            # 1- Color map Entry Size
+            # 2- X-origin of Image
+            # 2- Y-origin of Image
+            # => total 5 bytes
+            fHandler.seek(5, os.SEEK_CUR)
+
+            bytes = fHandler.read(2)
+            returned['width']=struct.unpack('<H', bytes)[0]
+
+            bytes = fHandler.read(2)
+            returned['height']=struct.unpack('<H', bytes)[0]
+
+            bytes = fHandler.read(1)
+            value=struct.unpack('<B', bytes)[0]
+            if value in __BIT_DEPTH:
+                returned['bitDepth']=(value, __BIT_DEPTH[value])
+            else:
+                returned['bitDepth']=(value, i18n(f"{value}-bit integer/channel"))
+
+            if not extensionAreaOffset is None:
+                # There's an extended area
+                fHandler.seek(extensionAreaOffset, os.SEEK_SET)
+
+                # get gamma values
+                fHandler.seek(478, os.SEEK_CUR)
+
+                bytes = fHandler.read(2)
+                numerator=struct.unpack('<H', bytes)[0]
+
+                bytes = fHandler.read(2)
+                denominator=struct.unpack('<H', bytes)[0]
+
+                if denominator!=0:
+                    returned['gamma']=round(numerator/denominator, 2)
+
+        return returned
+
+
 
     # endregion: utils ---------------------------------------------------------
 
@@ -4583,6 +4731,8 @@ class BCFile(BCBaseFile):
             return self.__readMetaDataXcf(True, getExtraData)
         elif self._format == BCFileManagedFormat.BMP:
             return self.__readMetaDataBmp(True, getExtraData)
+        elif self._format == BCFileManagedFormat.TGA:
+            return self.__readMetaDataTga(True, getExtraData)
         else:
             return {}
 

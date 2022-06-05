@@ -180,6 +180,7 @@ class BCUIController(QObject):
         self.commandGoLastDocsOpenedSet(BCSettings.get(BCSettingsKey.SESSION_FILES_LASTDOC_O_ITEMS))
         self.commandGoLastDocsSavedSet(BCSettings.get(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS))
 
+        BCFileManagedFormat.initAvailableFormats()
         BCFile.initialiseCache()
         BCClipboard.initialiseCache()
         BCFileCache.initialise()

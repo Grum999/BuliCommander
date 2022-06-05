@@ -1501,17 +1501,21 @@ class BCMainViewTab(QFrame):
                                      BCFileManagedFormat.GIF,
                                      BCFileManagedFormat.WEBP,
                                      BCFileManagedFormat.ORA,
+                                     BCFileManagedFormat.TGA,
                                      BCFileManagedFormat.KRA]:
                     self.lineImgExtraNfo.setVisible(True)
                 else:
                     self.lineImgExtraNfo.setVisible(False)
 
-                if file.format() == BCFileManagedFormat.PNG:
+                if file.format() in [BCFileManagedFormat.PNG,
+                                     BCFileManagedFormat.TGA]:
                     if 'compressionLevel' in imgNfo:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Compression level', imgNfo['compressionLevel'][1])
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Compression level', '-')
 
+
+                if file.format() == BCFileManagedFormat.PNG:
                     if 'interlaceMethod' in imgNfo:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Interlace mode', imgNfo['interlaceMethod'][1])
                     else:
