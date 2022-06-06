@@ -87,7 +87,7 @@ from bulicommander.pktk.modules.workers import (
         Worker
     )
 from bulicommander.pktk.modules.uitheme import UITheme
-from bulicommander.pktk.modules.imgutils import buildIcon
+from bulicommander.pktk.modules.imgutils import (buildIcon, convertSize)
 from bulicommander.pktk.modules.utils import (
         Debug,
         JsonQObjectEncoder,
@@ -542,6 +542,8 @@ class BCFileManagedFormat(object):
     WEBP = 'webp'
 
     # will depend of installed modeules
+    TIF = 'tif'
+    TIFF = 'tiff'
     TGA = 'tga'
     UNKNOWN = 'unknown'
     MISSING = 'missing'
@@ -625,6 +627,14 @@ class BCFileManagedFormat(object):
             if imgFormat==b'tga':
                 BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.TGA)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.TGA)
+            elif imgFormat in (b'tif', b'tiff'):
+                BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.TIF)
+                BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.TIFF)
+                BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.TIF)
+                BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.TIFF)
+        BCFileManagedFormat.__LIST_BASIC=sorted(set(BCFileManagedFormat.__LIST_BASIC))
+        BCFileManagedFormat.__LIST_FULL=sorted(set(BCFileManagedFormat.__LIST_FULL))
+
     @staticmethod
     def format(value):
         if isinstance(value, str):
@@ -633,6 +643,8 @@ class BCFileManagedFormat(object):
                 return lvalue
             elif lvalue == 'jpg':
                 return BCFileManagedFormat.JPEG
+            elif lvalue == 'tif':
+                return BCFileManagedFormat.TIFF
         raise EInvalidType("Invalid given format")
 
     @staticmethod
@@ -1836,6 +1848,9 @@ class BCFile(BCBaseFile):
                 if self._format == BCFileManagedFormat.JPG:
                     # harmonize file type
                     self._format = BCFileManagedFormat.JPEG
+                elif self._format == BCFileManagedFormat.TIF:
+                    # harmonize file type
+                    self._format = BCFileManagedFormat.TIFF
             else:
                 self._format = self.__extension[1:]    # remove '.'
 
@@ -1851,6 +1866,7 @@ class BCFile(BCBaseFile):
                 self.__imgSize = imageReader.size()
 
             cacheData={}
+            #Debug.print("__initFromFileName", self._fullPathName, self._format)
             if self._format==BCFileManagedFormat.PNG:
                 cacheData=self.__readMetaDataPng(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
@@ -1886,6 +1902,13 @@ class BCFile(BCBaseFile):
                     cacheData['height']=self.__imgSize.height()
             elif self._format==BCFileManagedFormat.TGA:
                 cacheData=self.__readMetaDataTga(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    self.__imgSize = QSize(cacheData['width'], cacheData['height'])
+                else:
+                    cacheData['width']=self.__imgSize.width()
+                    cacheData['height']=self.__imgSize.height()
+            elif self._format==BCFileManagedFormat.TIFF:
+                cacheData=self.__readMetaDataTiff(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
@@ -4432,6 +4455,390 @@ class BCFile(BCBaseFile):
         return returned
 
 
+    def __readMetaDataTiff(self, fromCache=True, getExtraData=False):
+        """Read metadata from TIFF file
+
+        TIFF specifications: https://en.wikipedia.org/wiki/TIFF
+                             https://www.awaresystems.be/imaging/tiff.html
+                             https://www.awaresystems.be/imaging/tiff/specification/TIFF6.pdf
+        """
+        def getShort(offset, fHandler, byteOrder):
+            """Return a TIFF SHORT value (readUInt2)"""
+            fHandler.seek(offset, os.SEEK_SET)
+            bytes=fHandler.read(2)
+            return struct.unpack(f'{byteOrder}H', bytes)[0]
+
+        def getRational(offset, fHandler, byteOrder):
+            """Return a tuple (numerator, denominator)"""
+            fHandler.seek(offset, os.SEEK_SET)
+            bytes=fHandler.read(4)
+            numerator=struct.unpack(f'{byteOrder}I', bytes)[0]
+            bytes=fHandler.read(4)
+            denominator=struct.unpack(f'{byteOrder}I', bytes)[0]
+            return (numerator, denominator)
+
+        def getUndefined(offset, size, fHandler):
+            """Return a tuple (numerator, denominator)"""
+            fHandler.seek(offset, os.SEEK_SET)
+            return fHandler.read(size)
+
+        def readIFDEntry(reader, fHandler, byteOrder):
+            """Read current IFD entry"""
+            tagId=reader.readUInt2()
+            # fieldType     Bytes
+            # ------------  ----------------------------------------------------
+            # 1=BYTE        readUShort
+            # 2=ASCII       readPStr('ASCII')
+            # 3=SHORT       readUInt2
+            # 4=LONG        readUInt4
+            # 5=RATIONAL    readUInt4: numerator / readUInt4: denominator
+            # 6=SBYTE       readShort
+            # 7=UNDEFINED   readUShort * nbValues
+            # 8=SSHORT       readInt2
+            # 9=SLONG        readInt4
+            # 10=SRATIONAL   readInt4: numerator / readInt4: denominator
+            # 11=FLOAT      readFloat4
+            # 12=DOUBLE     readFloat8
+            fieldType=reader.readUInt2()
+
+            nbValues=reader.readUInt4()
+
+            # note:
+            #   if field type length is more than 4bytes then value is an offset to content
+            value=None
+            if byteOrder=='>':
+                fieldSize=9
+
+                if fieldType in (1, 6):
+                    fieldSize=1
+                elif fieldType in (3, 8):
+                    fieldSize=2
+
+                if (nbValues * fieldSize)<=4:
+                    # bigendian need to take care about order
+                    if fieldType==1:
+                        value=reader.readShort()
+                        reader.seek(3, os.SEEK_CUR)
+                    elif fieldType==3:
+                        value=reader.readUInt2()
+                        reader.seek(2, os.SEEK_CUR)
+                    elif fieldType==6:
+                        value=reader.readShort()
+                        reader.seek(3, os.SEEK_CUR)
+                    elif fieldType==8:
+                        value=reader.readInt2()
+                        reader.seek(2, os.SEEK_CUR)
+
+            if value is None:
+                value=reader.readUInt4()
+
+            # only tagId that are interesting for BuliCommander are analyzed
+            # otherwise tagId is ignored
+            if tagId==0x00fe:
+                # NewSubfileType
+                # a 32bits flags
+                # 0000 0000  0000 0000  0000 0000  0000 0000
+                #                                        ||+------ 1 if the image is a reduced-resolution version of another image in this TIFF file; else the bit is 0
+                #                                        |+------- 1 if the image is a single page of a multi-page image (see the PageNumber field description); else the bit is 0
+                #                                        +-------- 1 if the image defines a transparency mask for another image in this TIFF file (The PhotometricInterpretation value must be 4, designating a transparency mask)
+                # Other flags should be 0
+                #Debug.print(f'  tagId: {tagId:04x} [NewSubfileType] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                pass
+            elif tagId==0x00ff:
+                # SubfileType (deprecated->use of 0x00fe instead)
+                # 1=full-resolution image data
+                # 2=reduced-resolution image data
+                # 3=single page of a multi page document
+                #Debug.print(f'  tagId: {tagId:04x} [SubfileType] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                pass
+            elif tagId==0x0100:
+                returned['width']=value
+            elif tagId==0x0101:
+                returned['height']=value
+            elif tagId==0x0102:
+                # BitsPerSample
+                #print(f'  tagId: {tagId:04x} [BitsPerSample] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                if nbValues==1:
+                    tmpReturned['bitDepth'] = value
+                elif nbValues==2:
+                    tmpReturned['bitDepth'] = value&0xFFFF
+                elif value>0:
+                    # value is an offset
+                    offset=value
+
+                    # in theory, bitDepth can be different for all channel...
+                    # and then need to get values for all channel
+                    #
+                    #for index in range(nbValues):
+                    #    value=getShort(offset, fHandler, byteOrder)
+                    #    print(f'--tagId: {tagId:04x} [BitsPerSample] / index: {index} / value: {value:08x}')
+                    #    offset+=2
+
+                    # to simplify -as most of file might have the same bitdepth per channel-
+                    # just get the first one
+                    # (note: it seesm libtiff library doesn't support different value for channels)
+                    value=getShort(offset, fHandler, byteOrder)
+                    tmpReturned['bitDepth'] = value
+            elif tagId==0x0103:
+                # Compression
+                #print(f'  tagId: {tagId:04x} [Compression] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                if value in __COMPRESSION_TYPE:
+                    returned['compressionLevel']=(value, __COMPRESSION_TYPE[value])
+                else:
+                    returned['compressionLevel']=(value, i18n(f'Unknow compression ({value:08x})'))
+            elif tagId==0x0106:
+                # PhotometricInterpretation
+                #Debug.print(f'  tagId: {tagId:04x} [PhotometricInterpretation] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                if value in __PHOTOMETRIC_INTERPRETATION:
+                    returned['colorType']=(value, __PHOTOMETRIC_INTERPRETATION[value])
+                else:
+                    returned['colorType']=(value, '??')
+            elif tagId==0x0115:
+                # SamplesPerPixel
+                # Number of component per pixels
+                # 3=RGB
+                # 4=CMYK
+                # ==> value is an offset
+                #print(f'  tagId: {tagId:04x} [SamplesPerPixel] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                tmpReturned['SamplesPerPixel']=value
+            elif tagId==0x011A:
+                # XResolution
+                # number of pixels per resolution resolution unit (RATIONAL)
+                # ==> value is an offset
+                tmpReturned['XResolution']=getRational(value, fHandler, byteOrder)
+            elif tagId==0x011B:
+                # YResolution
+                # number of pixels per resolution resolution unit (RATIONAL)
+                # ==> value is an offset
+                tmpReturned['YResolution']=getRational(value, fHandler, byteOrder)
+            elif tagId==0x0128:
+                # resolution unit
+                # 1=no unit
+                # 2=Inch
+                # 3=Centimer
+                # -- If tagId not defined in IFD, should be considered as 2=Inch
+                tmpReturned['ResolutionUnit']=value
+            elif tagId==0x0140:
+                # ColorMap offset?
+                # number of color in palette: 3 * (2**BitsPerSample)
+                # ==> value is an offset?
+                #print(f'  tagId: {tagId:04x} [ColorMap] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                returned['paletteSize']=nbValues//3
+            elif tagId==0x02BC:
+                # XMP
+                # ==> value is an offset
+                #Debug.print(f'  tagId: {tagId:04x} [XML] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                pass
+            elif tagId==0x83BB:
+                # IPTC
+                #   Type=UNDEFINED or BYTE
+                # ==> value is an offset
+                #Debug.print(f'  tagId: {tagId:04x} [IPTC] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                pass
+            elif tagId==0x8769:
+                # EXIF
+                #   Type=LONG or IFD (https://www.awaresystems.be/imaging/tiff/tifftags/privateifd/exif.html)
+                # ==> value is an offset
+                #Debug.print(f'  tagId: {tagId:04x} [EXIF] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                pass
+            elif tagId==0x8773:
+                # ICC profile
+                #   Type=UNDEFINED
+                # ==> value is an offset
+                returned.update(self.__readICCData(getUndefined(value, nbValues, fHandler)))
+            #else:
+            #    Debug.print(f'  tagId: {tagId:04x} / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+
+        def readIFD(fHandler, byteOrder, ifdNumber):
+            """Read TIFF Image File Directory entries"""
+            # IFD structure
+            # 2-    number of directory entries (N)
+            # N*12- entries
+            # 4-    offset of next IFD (0 if None)
+            bytes=fHandler.read(2)
+            nbEntries=struct.unpack(f'{byteOrder}H', bytes)[0]
+
+            if nbEntries<1:
+                # not a normal case, should contain at least one entry
+                return 0
+
+            reader=BytesRW(fHandler.read(nbEntries * 12 + 4))
+            reader.setByteOrder(byteOrder)
+
+            if ifdNumber==1:
+                # get documentation information only for first IFD
+                for index in range(nbEntries):
+                    # loop over entries
+                    readIFDEntry(reader, fHandler, byteOrder)
+            else:
+                reader.seek(nbEntries * 12)
+
+            # next IFD offset
+            nextIFDOffest=reader.readUInt4()
+            returned['document.pagesCount']+=1
+            return nextIFDOffest
+
+        if fromCache and not self.__metadata is None:
+            return self.__metadata
+
+        returned = {
+                'document.pagesCount': 0
+            }
+        tmpReturned = {
+            'ResolutionUnit': 2 # default resolution unit = inch
+        }
+
+        __COMPRESSION_TYPE = {
+                1: i18n('Uncompressed'),
+                2: i18n('CCITT modified Huffman RLE'),
+                3: i18n('CCITT Group 3 fax encoding'),
+                4: i18n('CCITT Group 4 fax encoding'),
+                5: i18n('LZW'),
+                6: i18n('Old JPEG'),
+                7: i18n('JPEG DCT'),
+                8: i18n('Deflate (Adobe)'),
+                9: i18n('T.85 JBIG'),
+                10: i18n('T.43 colour by layered JBIG'),
+                32766: i18n('NeXT 2-bit RLE'),
+                32771: i18n('CCITT RLE with word alignment'),
+                32773: i18n('Packbit'),
+                32809: i18n('ThunderScan RLE'),
+                32895: i18n('IT8 CT w/padding'),
+                32896: i18n('IT8 Linework RLE'),
+                32897: i18n('IT8 Monochrome'),
+                32898: i18n('IT8 Binary line art'),
+                32908: i18n('Pixar companded 10bit LZW'),
+                32909: i18n('Pixar companded 11bit ZIP'),
+                32946: i18n('Deflate'),
+                32947: i18n('Kodak DCS encoding'),
+                34661: i18n('ISO JBIG'),
+                34676: i18n('SGI Log Luminance RLE'),
+                34677: i18n('SGI Log 24-bit packed'),
+                34712: i18n('Jpeg 2000'),
+                34887: i18n('ESRI Lerc codec'),
+                34925: i18n('LZMA2'),
+                50000: i18n('ZSTD'),
+                50001: i18n('WEBP'),
+                50002: i18n('JPEG XL'),
+            }
+
+        __PHOTOMETRIC_INTERPRETATION={
+                0: i18n('Grayscale (White is zero)'),
+                1: i18n('Grayscale (Black is zero)'),
+                2: i18n('RGB'),
+                3: i18n('Indexed palette'),
+                4: i18n('Transparency mask'),
+                5: i18n('CMYK'),
+                6: i18n('YCbCr'),
+                8: i18n('CIE L*a*b*'),
+                9: i18n('ICC L*a*b*'),
+                10: i18n('ITU L*a*b*'),
+                32844: i18n('CIE Log2(L)'),
+                32845: i18n("CIE Log2(L) (u',v')"),
+                32803: i18n('Color Filter Array'),
+                34892: i18n('Linear raw'),
+                51177: i18n('Depth')
+            }
+
+        with open(self._fullPathName, 'rb') as fHandler:
+            reader = BytesRW(fHandler.read(8))
+
+            # first 2 bytes
+            # 'II' => little-endian byte order
+            # 'MM' => big-endian byte order
+            byteOrder=reader.readStr(2)
+            if byteOrder=='II':
+                byteOrder='<'
+            elif byteOrder=='MM':
+                byteOrder='>'
+            else:
+                # not a TIFF image
+                #Debug.print('KO1', byteOrder)
+                reader.close()
+                return returned
+
+            reader.setByteOrder(byteOrder)
+
+            version=reader.readUInt2()
+            if version!=0x2A:
+                # not a TIFF image
+                #Debug.print(f'KO2: {version:04x}')
+                reader.close()
+                return returned
+
+            # get offset (from beginning of file) of Image File Directory
+            ifdOffset=reader.readUInt4()
+
+            reader.close()
+
+            if ifdOffset==0:
+                # not a TIFF image??
+                #Debug.print('KO3')
+                return returned
+
+            ifdNumber=0
+            while ifdOffset!=0:
+                # go to IFD
+                ifdNumber+=1
+
+                fHandler.seek(ifdOffset, os.SEEK_SET)
+                ifdOffset=readIFD(fHandler, byteOrder, ifdNumber)
+
+        if 'XResolution' in tmpReturned and 'YResolution' in tmpReturned:
+            ppX=0
+            ppY=0
+            if tmpReturned['XResolution'][1]!=0:
+                ppX=tmpReturned['XResolution'][0]/tmpReturned['XResolution'][1]
+            if tmpReturned['YResolution'][1]!=0:
+                ppY=tmpReturned['YResolution'][0]/tmpReturned['YResolution'][1]
+
+            if tmpReturned['ResolutionUnit']==3:
+                # in centimers
+                # convert to inch
+                ppX=convertSize('cm', 'in', ppX)
+                ppY=convertSize('cm', 'in', ppY)
+
+
+            if tmpReturned['ResolutionUnit']==1:
+                # no unit
+                returned['resolutionX'] = (ppX, f'{ppX:.3f}')
+                returned['resolutionY'] = (ppY, f'{ppY:.3f}')
+
+                if ppX == ppY:
+                    returned['resolution'] = f'{ppX:.3f}'
+                else:
+                    returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}'
+            else:
+                returned['resolutionX'] = (ppX, f'{ppX:.3f}ppi')
+                returned['resolutionY'] = (ppY, f'{ppY:.3f}ppi')
+
+                if ppX == ppY:
+                    returned['resolution'] = f'{ppX:.3f}ppi'
+                else:
+                    returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
+
+        withAlpha=False
+        if returned['colorType'][0] in (0, 1, 3):
+            withAlpha=(tmpReturned['SamplesPerPixel']-1)>0
+        elif returned['colorType'][0] in (2, 6, 8, 9, 10):
+            withAlpha=(tmpReturned['SamplesPerPixel']-3)>0
+        elif returned['colorType'][0] == 5:
+            withAlpha=(tmpReturned['SamplesPerPixel']-4)>0
+
+        if withAlpha:
+            returned['colorType']=(returned['colorType'][0], returned['colorType'][1]+' '+i18n("with Alpha"))
+
+        if 'bitDepth' in tmpReturned:
+            if returned['colorType'][0] in (0, 1, 3):
+                returned['bitDepth']=(tmpReturned['bitDepth'], f"{tmpReturned['bitDepth']}-bit/pixel")
+            elif returned['colorType'][0] in (2, 5, 6, 8, 9, 10):
+                returned['bitDepth']=(tmpReturned['bitDepth'], f"{tmpReturned['bitDepth']}-bit/channel")
+            else:
+                returned['bitDepth']=(tmpReturned['bitDepth'], f"{tmpReturned['bitDepth']}-bit")
+
+        return returned
+
+
 
     # endregion: utils ---------------------------------------------------------
 
@@ -4733,6 +5140,8 @@ class BCFile(BCBaseFile):
             return self.__readMetaDataBmp(True, getExtraData)
         elif self._format == BCFileManagedFormat.TGA:
             return self.__readMetaDataTga(True, getExtraData)
+        elif self._format == BCFileManagedFormat.TIFF:
+            return self.__readMetaDataTiff(True, getExtraData)
         else:
             return {}
 

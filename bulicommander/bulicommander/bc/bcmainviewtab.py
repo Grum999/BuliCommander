@@ -1502,12 +1502,14 @@ class BCMainViewTab(QFrame):
                                      BCFileManagedFormat.WEBP,
                                      BCFileManagedFormat.ORA,
                                      BCFileManagedFormat.TGA,
+                                     BCFileManagedFormat.TIFF,
                                      BCFileManagedFormat.KRA]:
                     self.lineImgExtraNfo.setVisible(True)
                 else:
                     self.lineImgExtraNfo.setVisible(False)
 
                 if file.format() in [BCFileManagedFormat.PNG,
+                                     BCFileManagedFormat.TIFF,
                                      BCFileManagedFormat.TGA]:
                     if 'compressionLevel' in imgNfo:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Compression level', imgNfo['compressionLevel'][1])
@@ -1525,6 +1527,9 @@ class BCMainViewTab(QFrame):
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', f"{imgNfo['document.layerCount']}")
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
+                elif file.format() == BCFileManagedFormat.TIFF:
+                    if imgNfo['document.pagesCount'] > 0:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Pages'), f"{imgNfo['document.pagesCount']}")
                 elif file.format() in [BCFileManagedFormat.GIF,
                                        BCFileManagedFormat.WEBP]:
                     if imgNfo['imageCount'] > 1:
