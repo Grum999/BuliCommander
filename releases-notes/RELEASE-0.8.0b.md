@@ -114,3 +114,22 @@ Not sure why it has removed only for Windows users, but bored to not have icons 
 
 > Note:
 > - For other OS, option is deactivated
+
+
+## File formats
+
+### New supported files format
+The following files format have been added in list of managed file format; thumbnails and image properties for these files are now available.
+
+| Extension | Format | Description |
+| --- | --- | --- |
+| `.tga` | Truevision Targa | Thumbnail available only if _Qt Image reader_ support TGA |
+| `.tif`  `.tiff` | Tagged Image File Format | Thumbnail available only if _Qt Image reader_ support TIFF<br>Due to all possible TIFF image format (compression, colorspace, ...) all images can't be read properly in BuliCommander (and probably also in Krita ^_^') |
+| `.svgz` | Scalar Vector Graphics (GZipped) | Thumbnail always available<br>Also, Buli Commander allows to open SVGZ files in Krita like for SVG files (currently Krita v5.0.6 can't open SVGZ files) |
+
+### Improved files format
+The following files format have been improved
+
+| Extension | Format | Desciption |
+| --- | --- | --- |
+| `.svg` | Scalable Vector Graphics | Properly take in account document size, according to unit and resolution<br>Improve _Open_ function<br>![Open SVG file](./../screenshots/r0-8-0b_file-import_svg.jpeg) |
