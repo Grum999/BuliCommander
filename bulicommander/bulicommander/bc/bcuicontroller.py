@@ -22,6 +22,7 @@
 import os.path
 from pathlib import Path
 
+import gzip
 import sys
 import re
 import hashlib
@@ -79,8 +80,12 @@ from .bcsettings import (
     )
 
 from .bcimportanimated import (
-        BCImportDialogBox,
+        BCImportDialogBoxAnimated,
         BCImportAnimated
+    )
+from .bcimportsvg import (
+        BCImportDialogBoxSvg,
+        BCImportSvg
     )
 from .bcsavedview import BCSavedView
 
@@ -378,15 +383,15 @@ class BCUIController(QObject):
             imgNfo = bcfile.getMetaInformation()
             if imgNfo['imageCount'] > 1:
                 dialogTitle=f'{self.__bcName}::Import {bcfile.format()} file'
-                userChoice = BCImportDialogBox.open(dialogTitle, bcfile, self.panel())
+                userChoice = BCImportDialogBoxAnimated.open(dialogTitle, bcfile, self.panel())
 
                 result=BCImportAnimated.IMPORT_KO
                 if userChoice[0]:
-                    if userChoice[1] == BCImportDialogBox.IMPORT_AS_FRAMELAYER:
+                    if userChoice[1] == BCImportDialogBoxAnimated.IMPORT_AS_FRAMELAYER:
                         result=BCImportAnimated.importAsFrames(dialogTitle, bcfile, userChoice[2])
-                    elif userChoice[1] == BCImportDialogBox.IMPORT_AS_STACKLAYER:
+                    elif userChoice[1] == BCImportDialogBoxAnimated.IMPORT_AS_STACKLAYER:
                         result=BCImportAnimated.importAsLayers(dialogTitle, bcfile)
-                    elif userChoice[1] == BCImportDialogBox.IMPORT_AS_FRAME:
+                    elif userChoice[1] == BCImportDialogBoxAnimated.IMPORT_AS_FRAME:
                         result=BCImportAnimated.importInOneLayer(bcfile, userChoice[2])
                     #else:
                     #   krita's import mode=KO
@@ -398,6 +403,24 @@ class BCUIController(QObject):
                     return BCUIController.__EXTENDED_OPEN_OK
                 elif result==BCImportAnimated.IMPORT_CANCELLED:
                     return BCUIController.__EXTENDED_OPEN_CANCEL
+        elif bcfile.format() in BCImportSvg.SUPPORTED_FORMAT:
+            dialogTitle=f'{self.__bcName}::Import {bcfile.format()} file'
+            userChoice = BCImportDialogBoxSvg.open(dialogTitle, bcfile, self.panel())
+            result=BCImportAnimated.IMPORT_KO
+            if userChoice[0]:
+                if userChoice[1] in (BCImportDialogBoxSvg.IMPORT_AS_ORIGINAL_SIZE, BCImportDialogBoxSvg.IMPORT_AS_DEFINED_SIZE, BCImportDialogBoxSvg.IMPORT_AS_DEFINED_RESOLUTION):
+                    result=BCImportSvg.importInOneLayer(bcfile, userChoice[2], userChoice[3], userChoice[4])
+                #else:
+                #   krita's import mode=KO
+            else:
+                # cancel
+                result=BCImportSvg.IMPORT_CANCELLED
+
+            if result==BCImportSvg.IMPORT_OK:
+                return BCUIController.__EXTENDED_OPEN_OK
+            elif result==BCImportSvg.IMPORT_CANCELLED:
+                return BCUIController.__EXTENDED_OPEN_CANCEL
+
         return BCUIController.__EXTENDED_OPEN_KO
 
 
@@ -1088,6 +1111,9 @@ class BCUIController(QObject):
 
             if Krita.instance().activeDocument():
                 allow=self.panel().filesAllowPasteFilesAsRefimg([item.fullPathName() for item in selectionInfo[0] if isinstance(item, BCFile)])
+                # here need to something
+                # - all files can't be opened as reference image (SVGZ)
+                # - all files can't be opened as file layer (SVGZ)
                 self.__window.actionFileOpenAsImageReference.setEnabled(allow)
                 self.__window.actionFileOpenAsLayer.setEnabled(selectionInfo[4]>0)
                 self.__window.actionFileOpenAsFileLayer.setEnabled(selectionInfo[4]>0)
@@ -1519,12 +1545,19 @@ class BCUIController(QObject):
         def importFileAsLayer(file):
             document=Krita.instance().activeDocument()
 
-            if file.format()==BCFileManagedFormat.SVG:
-                try:
-                    with open(file.fullPathName(), 'r') as fHandle:
-                        svgContent=fHandle.read()
-                except Exception as e:
-                    return False
+            if file.format() in (BCFileManagedFormat.SVG, BCFileManagedFormat.SVGZ):
+                if file.format() == BCFileManagedFormat.SVG:
+                    try:
+                        with open(file.fullPathName(), 'r') as fHandle:
+                            svgContent=fHandle.read()
+                    except Exception as e:
+                        return False
+                else:
+                    try:
+                        with gzip.open(file.fullPathName(), 'rb') as fHandle:
+                            svgContent=fHandle.read().decode()
+                    except Exception as e:
+                        return False
 
                 fileName=file.fullPathName()
                 importedFile=document.createVectorLayer(i18n(f"BC - Layer ({fileName})"))
@@ -2742,6 +2775,7 @@ class BCUIController(QObject):
             saveSession = self.__window.actionSettingsSaveSessionOnExit.isChecked()
         else:
             self.__window.actionSettingsSaveSessionOnExit.setChecked(saveSession)
+        BCSettings.set(BCSettingsKey.CONFIG_SESSION_SAVE, self.__window.actionSettingsSaveSessionOnExit.isChecked())
 
         return saveSession
 

@@ -18,7 +18,7 @@
   </property>
   <property name="maximumSize">
    <size>
-    <width>1920</width>
+    <width>16777215</width>
     <height>250</height>
    </size>
   </property>
@@ -43,6 +43,11 @@
      </item>
      <item row="0" column="1">
       <widget class="QLabel" name="lblFileName">
+       <property name="font">
+        <font>
+         <family>DejaVu Sans Mono, Consolas, Courier New</family>
+        </font>
+       </property>
        <property name="text">
         <string>TextLabel</string>
        </property>
@@ -168,8 +173,11 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="statusTip">
+         <property name="toolTip">
           <string>A single frame is opened in a new document</string>
+         </property>
+         <property name="statusTip">
+          <string/>
          </property>
          <property name="text">
           <string>A sin&amp;gle frame</string>
@@ -219,8 +227,11 @@
      </item>
      <item row="4" column="1">
       <widget class="QRadioButton" name="rbImportKritaDefault">
-       <property name="statusTip">
+       <property name="toolTip">
         <string>Use default importer plugin from Krita</string>
+       </property>
+       <property name="statusTip">
+        <string/>
        </property>
        <property name="text">
         <string>Default &amp;Krita's importer</string>

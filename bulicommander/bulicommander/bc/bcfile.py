@@ -43,6 +43,7 @@ from enum import Enum
 from functools import cmp_to_key
 from multiprocessing import Pool
 
+import gzip
 import hashlib
 import io
 import json
@@ -545,6 +546,9 @@ class BCFileManagedFormat(object):
     TIF = 'tif'
     TIFF = 'tiff'
     TGA = 'tga'
+    SVGZ = 'svgz'
+
+
     UNKNOWN = 'unknown'
     MISSING = 'missing'
     DIRECTORY = 'directory'
@@ -557,6 +561,7 @@ class BCFileManagedFormat(object):
             'PNG': ('PNG image', 'Portable Network Graphic'),
             'ORA': ('OpenRaster image', 'Open raster'),
             'SVG': ('SVG image', 'Scalable Vector Graphic'),
+            'SVGZ': ('SVG image', 'Scalable Vector Graphic (Compressed)'),
             'GIF': ('GIF image', 'Graphics Interchange Format'),
 
             'PSD': ('PSD image', 'PhotoShop Document'),
@@ -601,7 +606,6 @@ class BCFileManagedFormat(object):
                 BCFileManagedFormat.PNG,
                 BCFileManagedFormat.JPG,
                 BCFileManagedFormat.JPEG,
-                BCFileManagedFormat.SVG,
                 BCFileManagedFormat.GIF,
                 BCFileManagedFormat.BMP,
                 BCFileManagedFormat.WEBP
@@ -614,7 +618,6 @@ class BCFileManagedFormat(object):
                 BCFileManagedFormat.JPG,
                 BCFileManagedFormat.JPEG,
                 BCFileManagedFormat.ORA,
-                BCFileManagedFormat.SVG,
                 BCFileManagedFormat.GIF,
                 BCFileManagedFormat.PSD,
                 BCFileManagedFormat.XCF,
@@ -632,6 +635,10 @@ class BCFileManagedFormat(object):
                 BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.TIFF)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.TIF)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.TIFF)
+            elif imgFormat==b'svgz':
+                BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.SVGZ)
+                BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.SVGZ)
+
         BCFileManagedFormat.__LIST_BASIC=sorted(set(BCFileManagedFormat.__LIST_BASIC))
         BCFileManagedFormat.__LIST_FULL=sorted(set(BCFileManagedFormat.__LIST_FULL))
 
@@ -1881,11 +1888,16 @@ class BCFile(BCBaseFile):
                 else:
                     cacheData['width']=self.__imgSize.width()
                     cacheData['height']=self.__imgSize.height()
-            elif self._format==BCFileManagedFormat.SVG:
-                cacheData={
-                        'width': self.__imgSize.width(),
-                        'height': self.__imgSize.height()
-                    }
+            elif self._format in (BCFileManagedFormat.SVG, BCFileManagedFormat.SVGZ):
+                cacheData=self.__readMetaDataSvg(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    if isinstance(cacheData['width'], float) or isinstance(cacheData['height'], float):
+                        self.__imgSize = QSizeF(cacheData['width'], cacheData['height'])
+                    else:
+                        self.__imgSize = QSize(cacheData['width'], cacheData['height'])
+                else:
+                    cacheData['width']=self.__imgSize.width()
+                    cacheData['height']=self.__imgSize.height()
             elif self._format==BCFileManagedFormat.GIF:
                 cacheData=self.__readMetaDataGif(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
@@ -1974,7 +1986,11 @@ class BCFile(BCBaseFile):
             cacheData['format']=self._format
 
             # add some extra metadata information
-            cacheData[BCFileProperty.IMAGE_PIXELS.value]=self.__imgSize.width()*self.__imgSize.height()
+            if not self._format in (BCFileManagedFormat.SVG, BCFileManagedFormat.SVGZ):
+                # pixels available only for raster images
+                cacheData[BCFileProperty.IMAGE_PIXELS.value]=self.__imgSize.width()*self.__imgSize.height()
+            else:
+                cacheData[BCFileProperty.IMAGE_PIXELS.value]=None
             if self.__imgSize.height()!=0:
                 cacheData[BCFileProperty.IMAGE_RATIO.value]=self.__imgSize.width()/self.__imgSize.height()
             else:
@@ -2005,7 +2021,10 @@ class BCFile(BCBaseFile):
                     # invalid content?
                     return False
 
-                self.__imgSize = QSize(contentAsDict['width'], contentAsDict['height'])
+                if isinstance(contentAsDict['width'], float) or isinstance(contentAsDict['height'], float):
+                    self.__imgSize = QSizeF(contentAsDict['width'], contentAsDict['height'])
+                else:
+                    self.__imgSize = QSize(contentAsDict['width'], contentAsDict['height'])
                 self._format=contentAsDict["format"]
                 self.__metadata=contentAsDict
 
@@ -4839,6 +4858,77 @@ class BCFile(BCBaseFile):
         return returned
 
 
+    def __readMetaDataSvg(self, fromCache=True, getExtraData=False):
+        """Read metadata from SVG & SVGZ file"""
+        if getExtraData==False and fromCache and not self.__metadata is None:
+            return self.__metadata
+
+        returned = {}
+
+        fileContent=''
+        if self._format == BCFileManagedFormat.SVGZ:
+            # GZipped SVG file
+            try:
+                with gzip.open(self._fullPathName, 'rb') as fHandler:
+                    fileContent=fHandler.read()
+            except Exception as e:
+                # can't be read (not xml?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataSvg] Unable to read file {0}: {1}', self._fullPathName, f"{e}")
+                return returned
+        else:
+            try:
+                with open(self._fullPathName, 'r') as fHandler:
+                    fileContent=fHandler.read()
+            except Exception as e:
+                # can't be read (not xml?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataSvg] Unable to read file {0}: {1}', self._fullPathName, f"{e}")
+                return returned
+
+        try:
+            xmlDoc = xmlElement.fromstring(fileContent)
+        except Exception as e:
+            # can't be read (not xml?)
+            self.__readable = False
+            Debug.print('[BCFile.__readMetaDataSvg] Unable to parse file {0}: {1}', self._fullPathName, f"{e}")
+            return returned
+
+        try:
+            width = xmlDoc.attrib['width']
+            if r:=re.match(r'^(\d*\.\d*)(in|mm|cm|px|pt)?', width):
+                returned['width']=float(r.groups()[0])
+                if not r.groups()[1] is None:
+                    returned['width.unit']=r.groups()[1]
+            elif r:=re.match(r'^(\d+)(in|mm|cm|px|pt)?', width):
+                returned['width']=int(r.groups()[0])
+                if not r.groups()[1] is None:
+                    returned['width.unit']=r.groups()[1]
+        except Exception as e:
+            Debug.print('[BCFile.__readMetaDataSvg] Unable to get `width` in file {0}: {1}', self._fullPathName, f"{e}")
+
+        try:
+            height = xmlDoc.attrib['height']
+            if r:=re.match(r'^(\d*\.\d*)(in|mm|cm|px|pt)?', height):
+                returned['height']=float(r.groups()[0])
+                if not r.groups()[1] is None:
+                    returned['height.unit']=r.groups()[1]
+            elif r:=re.match(r'^(\d+)(in|mm|cm|px|pt)?', height):
+                returned['height']=int(r.groups()[0])
+                if not r.groups()[1] is None:
+                    returned['height.unit']=r.groups()[1]
+        except Exception as e:
+            Debug.print('[BCFile.__readMetaDataSvg] Unable to get `height` in file {0}: {1}', self._fullPathName, f"{e}")
+
+        try:
+            viewBox = xmlDoc.attrib['viewBox']
+            returned['viewBox']=[float(v) for v in viewBox.split()]
+        except Exception as e:
+            pass
+
+        return returned
+
+
 
     # endregion: utils ---------------------------------------------------------
 
@@ -5142,6 +5232,8 @@ class BCFile(BCBaseFile):
             return self.__readMetaDataTga(True, getExtraData)
         elif self._format == BCFileManagedFormat.TIFF:
             return self.__readMetaDataTiff(True, getExtraData)
+        elif self._format in (BCFileManagedFormat.SVG, BCFileManagedFormat.SVGZ):
+            return self.__readMetaDataSvg(True, getExtraData)
         else:
             return {}
 

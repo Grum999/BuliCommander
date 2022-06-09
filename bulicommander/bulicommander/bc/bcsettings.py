@@ -395,6 +395,12 @@ class BCSettingsKey(SettingsKey):
     SESSION_PANELS_VIEW_FILES_BACKUP =                       'session.panels.view.files.backup'
     SESSION_PANELS_VIEW_FILES_HIDDEN =                       'session.panels.view.files.hidden'
 
+    SESSION_IMPORT_SVG_DEFAULTCHOICE =                       'session.import.svg.defaultChoice'
+    SESSION_IMPORT_SVG_SETSIZE_SELECTED =                    'session.import.svg.setSize.selected'
+    SESSION_IMPORT_SVG_SETSIZE_VALUE =                       'session.import.svg.setSize.value'
+    SESSION_IMPORT_SVG_SETRESOLUTION_RESOLUTION =            'session.import.svg.setResolution.resolution'
+    SESSION_IMPORT_SVG_IGNOREVIEWBOX =                       'session.import.svg.ignoreViewBox'
+
     SESSION_PANEL_VIEW_FILES_LAYOUT =                        'session.panels.panel-{panelId}.view.files.layout'
     SESSION_PANEL_VIEW_FILES_VIEWMODE =                      'session.panels.panel-{panelId}.view.files.viewMode'
     SESSION_PANEL_VIEW_FILES_CURRENTPATH =                   'session.panels.panel-{panelId}.view.files.currentPath'
@@ -774,7 +780,13 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.SESSION_FILES_BOOKMARK_ITEMS,                        [],                         SettingsFmt(list)),
             SettingsRule(BCSettingsKey.SESSION_FILES_SAVEDVIEWS_ITEMS,                      [],                         SettingsFmt(list)),
             SettingsRule(BCSettingsKey.SESSION_FILES_LASTDOC_O_ITEMS,                       [],                         SettingsFmt(list)),
-            SettingsRule(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS,                       [],                         SettingsFmt(list))
+            SettingsRule(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS,                       [],                         SettingsFmt(list)),
+
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_DEFAULTCHOICE,                    0,                          SettingsFmt(int, [0,1,2,3])), # default, org. size, set size, set res.
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETSIZE_SELECTED,                 0,                          SettingsFmt(int, [0,1])),     # width, height
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETSIZE_VALUE,                    1000,                       SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETRESOLUTION_RESOLUTION,         300,                        SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_IGNOREVIEWBOX,                    False,                      SettingsFmt(bool))
         ]
 
         for panelId in panelIds:

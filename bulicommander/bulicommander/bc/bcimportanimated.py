@@ -50,7 +50,7 @@ from bulicommander.pktk.pktk import (
 
 
 # ------------------------------------------------------------------------------
-class BCImportDialogBox(QDialog):
+class BCImportDialogBoxAnimated(QDialog):
 
     IMPORT_AS_FRAMELAYER = 0
     IMPORT_AS_STACKLAYER = 1
@@ -58,7 +58,7 @@ class BCImportDialogBox(QDialog):
     IMPORT_AS_KRITA = 3
 
     def __init__(self, bcfile, panel, parent=None):
-        super(BCImportDialogBox, self).__init__(parent)
+        super(BCImportDialogBoxAnimated, self).__init__(parent)
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcimportanimated.ui')
         PyQt5.uic.loadUi(uiFileName, self)
@@ -97,18 +97,18 @@ class BCImportDialogBox(QDialog):
     def setup(self):
         """Return current selected mode"""
         if self.rbImportAsFrameLayer.isChecked():
-            return (BCImportDialogBox.IMPORT_AS_FRAMELAYER, self.sbKeyFrameStep.value())
+            return (BCImportDialogBoxAnimated.IMPORT_AS_FRAMELAYER, self.sbKeyFrameStep.value())
         elif self.rbImportAsLayers.isChecked():
-            return (BCImportDialogBox.IMPORT_AS_STACKLAYER, None)
+            return (BCImportDialogBoxAnimated.IMPORT_AS_STACKLAYER, None)
         elif self.rbImportSingleFrame.isChecked():
-            return (BCImportDialogBox.IMPORT_AS_FRAME, self.sbKeyFrameNumber.value())
+            return (BCImportDialogBoxAnimated.IMPORT_AS_FRAME, self.sbKeyFrameNumber.value())
         elif self.rbImportKritaDefault.isChecked():
-            return (BCImportDialogBox.IMPORT_AS_KRITA, None)
+            return (BCImportDialogBoxAnimated.IMPORT_AS_KRITA, None)
 
     @staticmethod
     def open(title, file, panel):
         """Open dialog box"""
-        db = BCImportDialogBox(file, panel)
+        db = BCImportDialogBoxAnimated(file, panel)
         db.setWindowTitle(title)
         returned = db.exec()
 
