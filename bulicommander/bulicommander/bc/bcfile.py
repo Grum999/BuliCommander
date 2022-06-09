@@ -2511,13 +2511,13 @@ class BCFile(BCBaseFile):
                     else:
                         returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
                 else:
-                    returned['resolutionX'] = (ppX, f'{ppX:.2f}')
-                    returned['resolutionY'] = (ppY, f'{ppY:.2f}')
+                    returned['resolutionX'] = (ppX, f'{ppX:.3f}')
+                    returned['resolutionY'] = (ppY, f'{ppY:.3f}')
 
                     if ppX == ppY:
-                        returned['resolution'] = f'{ppX:.2f}'
+                        returned['resolution'] = f'{ppX:.3f}'
                     else:
-                        returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}'
+                        returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}'
 
             return returned
 
@@ -2573,9 +2573,9 @@ class BCFile(BCBaseFile):
             }
             """
             __COLOR_TYPE = {
-                    1: 'Grayscale',
-                    3: 'RGB',
-                    4: 'CMYK'
+                    1: i18n('Grayscale'),
+                    3: i18n('RGB'),
+                    4: i18n('CMYK')
                 }
 
             returned={}
@@ -2584,7 +2584,7 @@ class BCFile(BCBaseFile):
             if cType in __COLOR_TYPE:
                 returned['colorType']=(cType, __COLOR_TYPE[cType])
             else:
-                returned['colorType']=(cType, 'Unknown')
+                returned['colorType']=(cType, i18n('Unknown'))
 
             return returned
 
@@ -2595,8 +2595,8 @@ class BCFile(BCBaseFile):
         # - a JPEG is always 8bit
         # - is RGB, unless other encoding is defined
         returned = {
-                'bitDepth': (8, '8-bit integer/channel'),
-                'colorType': ('RGB', 'RGB')
+                'bitDepth': (8, i18n('8-bit integer/channel')),
+                'colorType': ('RGB', i18n('RGB'))
             }
 
         with open(self._fullPathName , 'rb') as fHandler:
@@ -2722,21 +2722,21 @@ class BCFile(BCBaseFile):
             interlace method (1 byte)
             """
             __COLOR_TYPE = {
-                    0: 'Grayscale',
-                    2: 'RGB',
-                    3: 'Indexed palette',
-                    4: 'Grayscale with Alpha',
-                    6: 'RGB with Alpha'
+                    0: i18n('Grayscale'),
+                    2: i18n('RGB'),
+                    3: i18n('Indexed palette'),
+                    4: i18n('Grayscale with Alpha'),
+                    6: i18n('RGB with Alpha')
                 }
             __INTERLACE_METHOD = {
-                    0: 'No interlace',
-                    1: 'Adam7 interlace'
+                    0: i18n('No interlace'),
+                    1: i18n('Adam7 interlace')
                 }
 
             returned = {
                 'width': struct.unpack('!I', chunk['data'][0:4])[0],
                 'height': struct.unpack('!I', chunk['data'][4:8])[0],
-                'bitDepth': (int(chunk['data'][8]), f"{int(chunk['data'][8])}-bit integer/channel"),
+                'bitDepth': (int(chunk['data'][8]), i18n(f"{int(chunk['data'][8])}-bit integer/channel")),
                 'colorType': int(chunk['data'][9]),
                 'compressionMethod': int(chunk['data'][10]),
                 'filterMethod': int(chunk['data'][11]),
@@ -2745,12 +2745,12 @@ class BCFile(BCBaseFile):
             if returned['colorType'] in __COLOR_TYPE:
                 returned['colorType'] = (returned['colorType'], __COLOR_TYPE[returned['colorType']])
             else:
-                returned['colorType'] = (returned['colorType'], 'Unknown type')
+                returned['colorType'] = (returned['colorType'], i18n('Unknown type'))
 
             if returned['interlaceMethod'] in __INTERLACE_METHOD:
                 returned['interlaceMethod'] = (returned['interlaceMethod'], __INTERLACE_METHOD[returned['interlaceMethod']])
             else:
-                returned['interlaceMethod'] = (returned['interlaceMethod'], 'Unknown method')
+                returned['interlaceMethod'] = (returned['interlaceMethod'], i18n('Unknown method'))
             return returned
 
         def decodeChunk_PLTE(chunk):
@@ -2810,13 +2810,13 @@ class BCFile(BCBaseFile):
                 else:
                     returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
             else:
-                returned['resolutionX'] = (ppX, f'{ppX:.2f}')
-                returned['resolutionY'] = (ppY, f'{ppY:.2f}')
+                returned['resolutionX'] = (ppX, f'{ppX:.3f}')
+                returned['resolutionY'] = (ppY, f'{ppY:.3f}')
 
                 if ppX == ppY:
-                    returned['resolution'] = f'{ppX:.2f}'
+                    returned['resolution'] = f'{ppX:.3f}'
                 else:
-                    returned['resolution'] = f'{ppX:.2f}x{ppY:.2f}'
+                    returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}'
 
 
             return returned
@@ -2834,10 +2834,10 @@ class BCFile(BCBaseFile):
                          https://tools.ietf.org/html/rfc1950
             """
             __COMPRESSION_LEVEL = {
-                    0: 'Lowest compression (level: 1)',
-                    1: 'Low compression (level:2 to 5)',
-                    2: 'Default compression (level: 6)',
-                    3: 'Highest compression (level: 7 to 9)'
+                    0: i18n('Lowest compression (level: 1)'),
+                    1: i18n('Low compression (level:2 to 5)'),
+                    2: i18n('Default compression (level: 6)'),
+                    3: i18n('Highest compression (level: 7 to 9)')
                 }
 
             returned = {
@@ -2878,10 +2878,10 @@ class BCFile(BCBaseFile):
 
             """
             __RENDERING_INTENT = {
-                   0: 'Perceptual',
-                   1: 'Relative colorimetric',
-                   2: 'Saturation',
-                   3: 'Absolute colorimetric'
+                   0: i18n('Perceptual'),
+                   1: i18n('Relative colorimetric'),
+                   2: i18n('Saturation'),
+                   3: i18n('Absolute colorimetric')
                 }
 
             returned = {
@@ -3160,21 +3160,21 @@ class BCFile(BCBaseFile):
             bytes =fHandle.read(22)
 
             __COLOR_TYPE = {
-                    0: 'Bitmap',
-                    1: 'Grayscale',
-                    2: 'Indexed palette',
-                    3: 'RGB',
-                    4: 'CMYK',
-                    7: 'Multichannel',
-                    8: 'Duotone',
-                    9: 'L*a*b*',
+                    0: i18n('Bitmap'),
+                    1: i18n('Grayscale'),
+                    2: i18n('Indexed palette'),
+                    3: i18n('RGB'),
+                    4: i18n('CMYK'),
+                    7: i18n('Multichannel'),
+                    8: i18n('Duotone'),
+                    9: i18n('L*a*b*')
                 }
 
             returned = {
                 'width': struct.unpack('!I', bytes[14:18])[0],
                 'height': struct.unpack('!I', bytes[10:14])[0],
                 'colorChannels': struct.unpack('!H', bytes[8:10])[0],
-                'bitDepth': (struct.unpack('!H', bytes[18:20])[0], f"{struct.unpack('!H', bytes[18:20])[0]}-bit integer/channel"),
+                'bitDepth': (struct.unpack('!H', bytes[18:20])[0], i18n(f"{struct.unpack('!H', bytes[18:20])[0]}-bit integer/channel")),
                 'colorType': struct.unpack('!H', bytes[20:22])[0]
             }
 
@@ -3435,30 +3435,30 @@ class BCFile(BCBaseFile):
         def read_header(fHandle):
             # read xcf header
             __COLOR_TYPE = {
-                    0: 'RGB',
-                    1: 'Grayscale',
-                    2: 'Indexed palette'
+                    0: i18n('RGB'),
+                    1: i18n('Grayscale'),
+                    2: i18n('Indexed palette')
                 }
 
             __BIT_DEPTH = {
-                      0: "8-bit integer/channel [gamma]",
-                      1: "16-bit integer/channel [gamma]",
-                      2: "32-bit integer/channel [linear]",
-                      3: "16-bit float/channel [linear]",
-                      4: "32-bit float/channel [linear]",
+                      0: i18n("8-bit integer/channel [gamma]"),
+                      1: i18n("16-bit integer/channel [gamma]"),
+                      2: i18n("32-bit integer/channel [linear]"),
+                      3: i18n("16-bit float/channel [linear]"),
+                      4: i18n("32-bit float/channel [linear]"),
 
-                    100: "8-bit integer/channel [linear]",
-                    150: "8-bit integer/channel [gamma]",
-                    200: "16-bit integer/channel [linear]",
-                    250: "16-bit integer/channel [gamma]",
-                    300: "32-bit integer/channel [linear]",
-                    350: "32-bit integer/channel [gamma]",
-                    500: "16-bit float/channel [linear]",
-                    550: "16-bit float/channel [gamma]",
-                    600: "32-bit float/channel [linear]",
-                    650: "32-bit float/channel [gamma]",
-                    700: "64-bit float/channel [linear]",
-                    750: "64-bit float/channel [gamma]"
+                    100: i18n("8-bit integer/channel [linear]"),
+                    150: i18n("8-bit integer/channel [gamma]"),
+                    200: i18n("16-bit integer/channel [linear]"),
+                    250: i18n("16-bit integer/channel [gamma]"),
+                    300: i18n("32-bit integer/channel [linear]"),
+                    350: i18n("32-bit integer/channel [gamma]"),
+                    500: i18n("16-bit float/channel [linear]"),
+                    550: i18n("16-bit float/channel [gamma]"),
+                    600: i18n("32-bit float/channel [linear]"),
+                    650: i18n("32-bit float/channel [gamma]"),
+                    700: i18n("64-bit float/channel [linear]"),
+                    750: i18n("64-bit float/channel [gamma]")
                 }
 
             returned = {
@@ -3494,8 +3494,6 @@ class BCFile(BCBaseFile):
                 returned['bitDepth'] = (bitDepth, __BIT_DEPTH[bitDepth])
             else:
                 returned['bitDepth'] = (bitDepth, 'Unknown')
-
-
 
             return returned
 
@@ -4235,26 +4233,26 @@ class BCFile(BCBaseFile):
                 compressionMethod=struct.unpack('<I', bytes)[0]
 
                 if bitsPerPixel==1:
-                    returned['colorType']=(3, 'Indexed palette')
-                    returned['bitDepth']=(1, f"1-bit/pixel")
+                    returned['colorType']=(3, i18n('Indexed palette'))
+                    returned['bitDepth']=(1, i18n("1-bit/pixel"))
                 elif bitsPerPixel==2:
-                    returned['colorType']=(3, 'Indexed palette')
-                    returned['bitDepth']=(2, f"2-bit/pixel")
+                    returned['colorType']=(3, i18n('Indexed palette'))
+                    returned['bitDepth']=(2, i18n("2-bit/pixel"))
                 elif bitsPerPixel==4:
-                    returned['colorType']=(3, 'Indexed palette')
-                    returned['bitDepth']=(4, f"4-bit/pixel")
+                    returned['colorType']=(3, i18n('Indexed palette'))
+                    returned['bitDepth']=(4, i18n("4-bit/pixel"))
                 elif bitsPerPixel==8:
-                    returned['colorType']=(3, 'Indexed palette')
-                    returned['bitDepth']=(8, f"8-bit")
+                    returned['colorType']=(3, i18n('Indexed palette'))
+                    returned['bitDepth']=(8, i18n("8-bit/pixel"))
                 elif bitsPerPixel==16:
-                    returned['colorType']=(6, 'RGB with Alpha')
-                    returned['bitDepth']=(16, f"4-bit/channel")
+                    returned['colorType']=(6, i18n('RGB with Alpha'))
+                    returned['bitDepth']=(16, i18n("4-bit/channel"))
                 elif bitsPerPixel==24:
-                    returned['colorType']=(2, 'RGB')
-                    returned['bitDepth']=(24, f"8-bit/channel")
+                    returned['colorType']=(2, i18n('RGB'))
+                    returned['bitDepth']=(24, i18n("8-bit/channel"))
                 elif bitsPerPixel==32:
-                    returned['colorType']=(6, 'RGB with Alpha')
-                    returned['bitDepth']=(32, f"8-bit/channel")
+                    returned['colorType']=(6, i18n('RGB with Alpha'))
+                    returned['bitDepth']=(32, i18n("8-bit/channel"))
 
                 # image data size
                 bytes = fHandler.read(4)
@@ -4814,8 +4812,8 @@ class BCFile(BCBaseFile):
             if tmpReturned['ResolutionUnit']==3:
                 # in centimers
                 # convert to inch
-                ppX=convertSize('cm', 'in', ppX)
-                ppY=convertSize('cm', 'in', ppY)
+                ppX=convertSize(ppX, 'cm', 'in')
+                ppY=convertSize(ppY, 'cm', 'in')
 
 
             if tmpReturned['ResolutionUnit']==1:
@@ -8028,4 +8026,4 @@ class BCFileIcon(object):
         return BCFileIcon.__IconProvider.icon(fileInfo)
 
 
-#Debug.setEnabled(True)
+Debug.setEnabled(True)
