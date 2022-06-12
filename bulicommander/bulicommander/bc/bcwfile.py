@@ -859,13 +859,13 @@ class BCViewFilesTv(QTreeView):
     def selectedFiles(self):
         """Return a list of selected files
 
-        Each returned item is BCBaseFile
+        Each returned item is a tuple (row, BCBaseFile)
         """
         returned=[]
         if self.selectionModel() is None:
             return returned
 
-        smodel=self.selectionModel().selectedIndexes()
+        smodel=self.selectionModel().selectedRows(BCFileModel.COLNUM_FILE_NAME)
 
         for item in smodel:
             fileNfo = item.data(BCFileModel.ROLE_FILE)
@@ -1289,13 +1289,13 @@ class BCViewFilesLv(QListView):
     def selectedFiles(self):
         """Return a list of selected files
 
-        Each returned item is a BCBaseFile
+        Each returned item is a tuple (row, BCBaseFile)
         """
         returned=[]
         if self.selectionModel() is None:
             return returned
 
-        smodel=self.selectionModel().selectedIndexes()
+        smodel=self.selectionModel().selectedRows(BCFileModel.COLNUM_FILE_NAME)
 
         for item in smodel:
             fileNfo = item.data(BCFileModel.ROLE_FILE)
