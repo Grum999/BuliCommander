@@ -1546,6 +1546,10 @@ class BCMainViewTab(QFrame):
                                      BCFileManagedFormat.ORA,
                                      BCFileManagedFormat.TGA,
                                      BCFileManagedFormat.TIFF,
+                                     BCFileManagedFormat.CBZ,
+                                     BCFileManagedFormat.CBT,
+                                     BCFileManagedFormat.CBR,
+                                     BCFileManagedFormat.CB7,
                                      BCFileManagedFormat.KRA]:
                     self.lineImgExtraNfo.setVisible(True)
                 else:
@@ -1573,6 +1577,9 @@ class BCMainViewTab(QFrame):
                 elif file.format() == BCFileManagedFormat.TIFF:
                     if imgNfo['document.pagesCount'] > 0:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Pages'), f"{imgNfo['document.pagesCount']}")
+                elif file.format() in (BCFileManagedFormat.CBZ, BCFileManagedFormat.CBT, BCFileManagedFormat.CBR, BCFileManagedFormat.CB7):
+                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Pages'), f"{imgNfo['document.pagesCount']}")
+                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Max. page size'), f"{imgNfo['document.maxWidth']}x{imgNfo['document.maxHeight']}")
                 elif file.format() in [BCFileManagedFormat.GIF,
                                        BCFileManagedFormat.WEBP]:
                     if imgNfo['imageCount'] > 1:

@@ -55,9 +55,11 @@ import textwrap
 import time
 import xml.etree.ElementTree as xmlElement
 import zipfile
+import tarfile
 import zlib
 import math
 import copy
+import tempfile
 
 
 from PyQt5.Qt import *
@@ -76,6 +78,7 @@ from PyQt5.QtWidgets import (
     )
 from PyQt5.QtSql import (QSqlDatabase, QSqlQuery)
 
+from bulicommander.pktk.modules.uncompress import Uncompress
 from bulicommander.pktk.modules.bytesrw import BytesRW
 from bulicommander.pktk.modules.languagedef import LanguageDef
 from bulicommander.pktk.modules.tokenizer import (
@@ -541,8 +544,12 @@ class BCFileManagedFormat(object):
     XCF = 'xcf'
     BMP = 'bmp'
     WEBP = 'webp'
+    CBZ = 'cbz'
+    CBT = 'cbt'
+    CBR = 'cbr'
+    CB7 = 'cb7'
 
-    # will depend of installed modeules
+    # will depend of installed modules
     TIF = 'tif'
     TIFF = 'tiff'
     TGA = 'tga'
@@ -572,6 +579,11 @@ class BCFileManagedFormat(object):
             'WEBP': ('WebP', 'WebP'),
             'BMP': ('BMP image', 'Bitmap Image File'),
 
+            'CBZ': ('Comic Book', 'Comic Book Archive - ZIP'),
+            'CBT': ('Comic Book', 'Comic Book Archive - TAR'),
+            'CBR': ('Comic Book', 'Comic Book Archive - RAR'),
+            'CB7': ('Comic Book', 'Comic Book Archive - 7Z'),
+
             'ZIP': 'ZIP archive',
             '7Z': '7Zip archive',
             'GZ': 'GZ archive',
@@ -600,7 +612,7 @@ class BCFileManagedFormat(object):
     def initAvailableFormats():
         """Initialise available format according to Qt"""
 
-        # Basic list doesn't contains KRA/ORA/PSD/XCF
+        # Basic list doesn't contains KRA/ORA/PSD/XCF/...
         # => use dedicated code from plugin to retrieve basic information
         BCFileManagedFormat.__LIST_BASIC=[
                 BCFileManagedFormat.PNG,
@@ -622,7 +634,9 @@ class BCFileManagedFormat(object):
                 BCFileManagedFormat.PSD,
                 BCFileManagedFormat.XCF,
                 BCFileManagedFormat.BMP,
-                BCFileManagedFormat.WEBP
+                BCFileManagedFormat.WEBP,
+                BCFileManagedFormat.CBZ,
+                BCFileManagedFormat.CBT
             ]
 
         # check list of available image format
@@ -638,6 +652,12 @@ class BCFileManagedFormat(object):
             elif imgFormat==b'svgz':
                 BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.SVGZ)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.SVGZ)
+
+        if Uncompress.FORMAT_RAR in Uncompress.availableFormat():
+            BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.CBR)
+
+        if Uncompress.FORMAT_7Z in Uncompress.availableFormat():
+            BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.CB7)
 
         BCFileManagedFormat.__LIST_BASIC=sorted(set(BCFileManagedFormat.__LIST_BASIC))
         BCFileManagedFormat.__LIST_FULL=sorted(set(BCFileManagedFormat.__LIST_FULL))
@@ -1847,19 +1867,23 @@ class BCFile(BCBaseFile):
                 # data has been read from cache file; exit
                 return
 
-            # can't read from cache, read file...
-            imageReader = QImageReader(self._fullPathName)
-
-            if imageReader.canRead():
-                self._format = bytes(imageReader.format()).decode().lower()
-                if self._format == BCFileManagedFormat.JPG:
-                    # harmonize file type
-                    self._format = BCFileManagedFormat.JPEG
-                elif self._format == BCFileManagedFormat.TIF:
-                    # harmonize file type
-                    self._format = BCFileManagedFormat.TIFF
-            else:
+            if self.__extension in ('.cbz', '.cbt', '.cbr', '.cb7'):
+                # Qt Image reader can't manage file
                 self._format = self.__extension[1:]    # remove '.'
+            else:
+                # can't read from cache, read file...
+                imageReader = QImageReader(self._fullPathName)
+
+                if imageReader.canRead():
+                    self._format = bytes(imageReader.format()).decode().lower()
+                    if self._format == BCFileManagedFormat.JPG:
+                        # harmonize file type
+                        self._format = BCFileManagedFormat.JPEG
+                    elif self._format == BCFileManagedFormat.TIF:
+                        # harmonize file type
+                        self._format = BCFileManagedFormat.TIFF
+                else:
+                    self._format = self.__extension[1:]    # remove '.'
 
             if self._format == BCFileManagedFormat.KRA:
                 # in case of Qt readed is able to determinate Krita file, it can't made
@@ -1896,6 +1920,15 @@ class BCFile(BCBaseFile):
                     else:
                         self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
+                    cacheData['width']=self.__imgSize.width()
+                    cacheData['height']=self.__imgSize.height()
+            elif self._format in (BCFileManagedFormat.CBZ, BCFileManagedFormat.CBT, BCFileManagedFormat.CBR, BCFileManagedFormat.CB7):
+                cacheData=self.__readMetaDataCbx(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    self.__imgSize = QSize(cacheData['width'], cacheData['height'])
+                else:
+                    # not able to read...?
+                    self.__imgSize = QSize(0,0)
                     cacheData['width']=self.__imgSize.width()
                     cacheData['height']=self.__imgSize.height()
             elif self._format==BCFileManagedFormat.GIF:
@@ -1991,6 +2024,7 @@ class BCFile(BCBaseFile):
                 cacheData[BCFileProperty.IMAGE_PIXELS.value]=self.__imgSize.width()*self.__imgSize.height()
             else:
                 cacheData[BCFileProperty.IMAGE_PIXELS.value]=None
+
             if self.__imgSize.height()!=0:
                 cacheData[BCFileProperty.IMAGE_RATIO.value]=self.__imgSize.width()/self.__imgSize.height()
             else:
@@ -2430,6 +2464,83 @@ class BCFile(BCBaseFile):
             return None
 
         return returned
+
+
+    def __readCbxImage(self):
+        """Return CBZ/CBT file image
+
+        The function only unzip the first image of comic book to speedup the process
+
+        return None if not able to read archive file
+        return a QImage() otherwise
+        """
+        def qImage(fileName):
+
+            try:
+                return QImage(fileName)
+            except Exception as e:
+                # can't be read (not exist, not a Kra file?)
+                Debug.print('[BCFile.__readCbxImage] Unable to read extracted file {0}: {1}', fileName, f"{e}")
+                return None
+
+        if not self.__readable:
+            # file must exist
+            return None
+
+        if self._format == BCFileManagedFormat.CBZ:
+            try:
+                with zipfile.ZipFile(self._fullPathName, 'r') as archive:
+                    # get list of file name in archive
+                    # - exclude directories
+                    # - exclude files for which extension is not JPEG, JPG, PNG
+                    # ordered by file name
+                    fileNames=sorted([page.filename for page in archive.infolist() if (not page.is_dir()) and re.search(r"\.(jpeg|jpg|png)$", page.filename, re.I)])
+
+                    with tempfile.TemporaryDirectory() as tmpDirName:
+                        extractedFileName=archive.extract(fileNames[0], tmpDirName)
+                        return qImage(extractedFileName)
+
+            except Exception as e:
+                # can't be read (not exist, not a zip file?)
+                Debug.print('[BCFile.__readCbxImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
+                return None
+        elif self._format == BCFileManagedFormat.CBT:
+            try:
+                with tarfile.TarFile(self._fullPathName, 'r') as archive:
+                    # get list of file name in archive
+                    # - exclude directories
+                    # - exclude files for which extension is not JPEG, JPG, PNG
+                    # ordered by file name
+                    fileNames=sorted([page.name for page in archive.getmembers() if (not page.isdir()) and re.search(r"\.(jpeg|jpg|png)$", page.name, re.I)])
+
+                    with tempfile.TemporaryDirectory() as tmpDirName:
+                        archive.extract(fileNames[0], tmpDirName)
+                        return qImage(os.path.join(tmpDirName, fileNames[0]))
+
+            except Exception as e:
+                # can't be read (not exist, not a zip file?)
+                Debug.print('[BCFile.__readCbxImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
+                return None
+        elif self._format in (BCFileManagedFormat.CBR, BCFileManagedFormat.CB7):
+            try:
+                # get list of file name in archive
+                # - exclude directories
+                # - exclude files for which extension is not JPEG, JPG, PNG
+                # ordered by file name
+                archiveFiles=Uncompress.getList(self._fullPathName)
+                if isinstance(archiveFiles, list) and len(archiveFiles)>0:
+                    fileNames=sorted([page.name() for page in archiveFiles if (not page.isDirectory()) and re.search(r"\.(jpeg|jpg|png)$", page.name(), re.I)])
+                    with tempfile.TemporaryDirectory() as tmpDirName:
+                        # for each page, extract, read image width/height
+                        extractedFileName=Uncompress.extract(self._fullPathName, fileNames[0], tmpDirName)
+                        if not extractedFileName is None:
+                            return qImage(extractedFileName)
+            except Exception as e:
+                # can't be read (not exist, not a zip file?)
+                Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
+                return None
+
+        return None
 
 
     def __readMetaDataJpeg(self, fromCache=True, getExtraData=False):
@@ -4927,6 +5038,127 @@ class BCFile(BCBaseFile):
         return returned
 
 
+    def __readMetaDataCbx(self, fromCache=True, getExtraData=False):
+        """Read metadata from Comic Book file (CBZ, CBT)"""
+        def addPage(fileName, tmpFile):
+            # read extracted file
+            imageReader=QImageReader(tmpFile)
+
+            if imageReader.canRead():
+                # can read file content
+                width=imageReader.size().width()
+                height=imageReader.size().height()
+
+                returned['document.pages'].append({
+                    'fileName': fileName,
+                    'width': width,
+                    'height': height
+                })
+
+                if width>returned['document.maxWidth']:
+                    returned['document.maxWidth']=width
+                if height>returned['document.maxHeight']:
+                    returned['document.maxHeight']=height
+
+        if getExtraData==False and fromCache and not self.__metadata is None:
+            return self.__metadata
+
+        returned = {
+            # -- from first page
+            'width': 0,
+            'height': 0,
+            # -- document pages information
+            # as all pages can have different width/height, the document size
+            # provides the maximum width and height from all pages
+            'document.maxWidth': 0,
+            'document.maxHeight': 0,
+            # number of pages in document
+            'document.pagesCount': 0,
+            # -- document pages
+            # an array of dict
+            # array is sorted page page number from 0 to pagesCount-1
+            # each page is a dictionary:
+            #   fileName:   <str>
+            #   width:      <int>
+            #   height:     <int>
+            #
+            # sort is defined by path/file name
+            'document.pages': []
+        }
+
+        if self._format == BCFileManagedFormat.CBZ:
+            try:
+                with zipfile.ZipFile(self._fullPathName, 'r') as archive:
+                    # get list of file name in archive
+                    # - exclude directories
+                    # - exclude files for which extension is not JPEG, JPG, PNG
+                    # ordered by file name
+                    fileNames=sorted([page.filename for page in archive.infolist() if (not page.is_dir()) and re.search(r"\.(jpeg|jpg|png)$", page.filename, re.I)])
+
+                    for fileName in fileNames:
+                        # for each page, extract, read image width/height
+                        with tempfile.TemporaryDirectory() as tmpDirName:
+                            extractedFileName=archive.extract(fileName, tmpDirName)
+                            addPage(fileName, extractedFileName)
+
+            except Exception as e:
+                # can't be read (not exist, not a zip file?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
+                return None
+        elif self._format == BCFileManagedFormat.CBT:
+            try:
+                with tarfile.TarFile(self._fullPathName, 'r') as archive:
+                    # get list of file name in archive
+                    # - exclude directories
+                    # - exclude files for which extension is not JPEG, JPG, PNG
+                    # ordered by file name
+                    fileNames=sorted([page.name for page in archive.getmembers() if (not page.isdir()) and re.search(r"\.(jpeg|jpg|png)$", page.name, re.I)])
+
+
+                    for fileName in fileNames:
+                        # for each page, extract, read image width/height
+                        with tempfile.TemporaryDirectory() as tmpDirName:
+                            archive.extract(fileName, tmpDirName)
+                            extractedFileName=os.path.join(tmpDirName, fileName)
+                            addPage(fileName, extractedFileName)
+
+            except Exception as e:
+                # can't be read (not exist, not a zip file?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
+                return None
+        elif self._format in (BCFileManagedFormat.CBR, BCFileManagedFormat.CB7):
+            try:
+                # get list of file name in archive
+                # - exclude directories
+                # - exclude files for which extension is not JPEG, JPG, PNG
+                # ordered by file name
+                archiveFiles=Uncompress.getList(self._fullPathName)
+                if isinstance(archiveFiles, list) and len(archiveFiles)>0:
+                    fileNames=sorted([page.name() for page in archiveFiles if (not page.isDirectory()) and re.search(r"\.(jpeg|jpg|png)$", page.name(), re.I)])
+                    with tempfile.TemporaryDirectory() as tmpDirName:
+                        if Uncompress.extractAll(self._fullPathName, tmpDirName):
+                            # uncompress all files
+                            # for 7zip solid archive it's faster than extracting file by file
+                            for fileName in fileNames:
+                                # for each page, extract, read image width/height
+                                extractedFileName=os.path.join(tmpDirName, fileName)
+                                if os.path.isfile(extractedFileName):
+                                    addPage(fileName, extractedFileName)
+            except Exception as e:
+                # can't be read (not exist, not a zip file?)
+                self.__readable = False
+                Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
+                return None
+
+        returned['document.pagesCount']=len(returned['document.pages'])
+        if returned['document.pagesCount']>0:
+            returned['width']=returned['document.pages'][0]['width']
+            returned['height']=returned['document.pages'][0]['height']
+
+        return returned
+
 
     # endregion: utils ---------------------------------------------------------
 
@@ -5047,6 +5279,8 @@ class BCFile(BCBaseFile):
             return self.__readKraImage()
         elif self._format == BCFileManagedFormat.ORA:
             return self.__readOraImage()
+        elif self._format in (BCFileManagedFormat.CBZ, BCFileManagedFormat.CBT, BCFileManagedFormat.CBR, BCFileManagedFormat.CB7):
+            return self.__readCbxImage()
         else:
             try:
                 return QImage(self._fullPathName)
@@ -5232,6 +5466,8 @@ class BCFile(BCBaseFile):
             return self.__readMetaDataTiff(True, getExtraData)
         elif self._format in (BCFileManagedFormat.SVG, BCFileManagedFormat.SVGZ):
             return self.__readMetaDataSvg(True, getExtraData)
+        elif self._format in (BCFileManagedFormat.CBZ, BCFileManagedFormat.CBT, BCFileManagedFormat.CBR, BCFileManagedFormat.CB7):
+            return self.__readMetaDataCbx(True, getExtraData)
         else:
             return {}
 

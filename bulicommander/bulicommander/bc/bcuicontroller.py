@@ -87,6 +87,10 @@ from .bcimportsvg import (
         BCImportDialogBoxSvg,
         BCImportSvg
     )
+from .bcimportcbx import (
+        BCImportDialogBoxCbx,
+        BCImportCbx
+    )
 from .bcsavedview import BCSavedView
 
 from bulicommander.pktk.modules.uitheme import UITheme
@@ -419,6 +423,20 @@ class BCUIController(QObject):
             if result==BCImportSvg.IMPORT_OK:
                 return BCUIController.__EXTENDED_OPEN_OK
             elif result==BCImportSvg.IMPORT_CANCELLED:
+                return BCUIController.__EXTENDED_OPEN_CANCEL
+        elif bcfile.format() in BCImportCbx.SUPPORTED_FORMAT:
+            dialogTitle=f'{self.__bcName}::Import {bcfile.format()} file'
+            userChoice = BCImportDialogBoxCbx.open(dialogTitle, bcfile, self.panel())
+            result=BCImportCbx.IMPORT_KO
+            if userChoice[0]:
+                result=BCImportCbx.importAsLayers(dialogTitle, bcfile, userChoice[1], userChoice[2], userChoice[3], userChoice[4])
+            else:
+                # cancel
+                result=BCImportCbx.IMPORT_CANCELLED
+
+            if result==BCImportCbx.IMPORT_OK:
+                return BCUIController.__EXTENDED_OPEN_OK
+            elif result==BCImportCbx.IMPORT_CANCELLED:
                 return BCUIController.__EXTENDED_OPEN_CANCEL
 
         return BCUIController.__EXTENDED_OPEN_KO
