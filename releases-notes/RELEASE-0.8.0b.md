@@ -124,12 +124,15 @@ The following files format have been added in list of managed file format; thumb
 | Extension | Format | Description |
 | --- | --- | --- |
 | `.tga` | Truevision Targa | Thumbnail available only if _Qt Image reader_ support TGA |
-| `.tif`  `.tiff` | Tagged Image File Format | Thumbnail available only if _Qt Image reader_ support TIFF<br>Due to all possible TIFF image format (compression, colorspace, ...) all images can't be read properly in BuliCommander (and probably also in Krita ^_^') |
-| `.svgz` | Scalar Vector Graphics (GZipped) | Thumbnail always available<br>Also, Buli Commander allows to open SVGZ files in Krita like for SVG files (currently Krita v5.0.6 can't open SVGZ files) |
+| `.tif`  `.tiff` | Tagged Image File Format | Thumbnail available only if _Qt Image reader_ support TIFF<br><br>Due to all possible TIFF image format (compression, colorspace, ...) all images can't be read properly in BuliCommander (and probably also in Krita ^_^') |
+| `.svgz` | Scalar Vector Graphics (GZipped) | Thumbnail always available |
+| `.cbz` `.cbt` `.cbr`<sup>(1)</sup> `.cb7`<sup>(2)</sup> | Comic Book Archive | Thumbnail always available for `.cbz` `.cbt` (ZIP and TAR archives)<br><br><sup>(1)</sup>For `.cbr` files (RAR archives) `Unrar` or `7-Zip` must be installed on system<br><sup>(1)</sup>For `.cb7` files (7z archives) `7-Zip` must be installed on system |
 
-### Improved files format
-The following files format have been improved
+
+### Open files
+The following files format *Open* have been implemented/improved
 
 | Extension | Format | Desciption |
 | --- | --- | --- |
-| `.svg` | Scalable Vector Graphics | Properly take in account document size, according to unit and resolution<br>Improve _Open_ function<br>![Open SVG file](./../screenshots/r0-8-0b_file-import_svg.jpeg) |
+| `.svg` `.svgz` | Scalable Vector Graphics | Properly take in account document size, according to unit and resolution<br><br><br>Also, Buli Commander allows to open SVGZ files in Krita like for SVG files (currently Krita v5.0.6 can't open SVGZ files)<br><br>Improve _Open_ function<br>![Open SVG file](./../screenshots/r0-8-0b_file-import_svg.jpeg) |
+| `.cbz` `.cbt` `.cbr`<sup>(1)</sup> `.cb7`<sup>(2)</sup> | Scalable Vector Graphics | Buli Commander allows to open Comic Book Archive files in Krita with dedicatd user interface dialog<br>![Open SVG file](./../screenshots/r0-8-0b_file-import_cbx.jpeg)<sup>*Comic Book [Pepper & Carrot](https://www.peppercarrot.com/) - David revoy*</sup> <br><br><sup>(1)</sup>For `.cbr` files (RAR archives) `Unrar` or `7-Zip` must be installed on system<br><sup>(1)</sup>For `.cb7` files (7z archives) `7-Zip` must be installed on system |
