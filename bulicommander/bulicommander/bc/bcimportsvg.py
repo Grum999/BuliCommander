@@ -73,6 +73,7 @@ class BCImportDialogBoxSvg(QDialog):
         self.__imgNfo = bcfile.getMetaInformation()
 
         self.lblFileName.setText(bcfile.fullPathName())
+        self.lblFileName.setElide(Qt.ElideLeft)
 
         # need document unit, default is 'px' if none defined
         self.__unit='px'

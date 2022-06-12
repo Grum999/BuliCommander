@@ -486,7 +486,7 @@
     </widget>
    </item>
    <item row="0" column="1">
-    <widget class="QLabel" name="lblFileName">
+    <widget class="WLabelElide" name="lblFileName">
      <property name="font">
       <font>
        <family>DejaVu Sans Mono, Consolas, Courier New</family>
@@ -506,6 +506,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>WLabelElide</class>
+   <extends>QLabel</extends>
+   <header>bulicommander.pktk.widgets.wlabelelide</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

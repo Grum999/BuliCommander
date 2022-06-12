@@ -67,6 +67,7 @@ class BCImportDialogBoxAnimated(QDialog):
         self.__panel = panel
 
         self.lblFileName.setText(bcfile.fullPathName())
+        self.lblFileName.setElide(Qt.ElideLeft)
         self.hsKeyFrameNumber.setMaximum(self.__imgNfo['imageCount'])
         self.sbKeyFrameNumber.setMaximum(self.__imgNfo['imageCount'])
         self.hsKeyFrameNumber.setValue(panel.preview().currentAnimatedFrame())
