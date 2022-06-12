@@ -1182,6 +1182,7 @@ class BCViewFilesLv(QListView):
         self.setItemDelegate(self.__delegate)
         self.setAutoScroll(True)
         self.setViewMode(QListView.IconMode)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSpacing(5)
         self.setUniformItemSizes(True)
 

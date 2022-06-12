@@ -8262,4 +8262,4 @@ class BCFileIcon(object):
         return BCFileIcon.__IconProvider.icon(fileInfo)
 
 
-Debug.setEnabled(True)
+#Debug.setEnabled(True)
