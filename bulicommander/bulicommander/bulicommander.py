@@ -108,7 +108,7 @@ else:
 
 
 EXTENSION_ID = 'pykrita_bulicommander'
-PLUGIN_VERSION = '0.7.1b'
+PLUGIN_VERSION = '0.8.0b'
 PLUGIN_MENU_ENTRY = 'Buli Commander'
 
 REQUIRED_KRITA_VERSION = (5, 0, 0)

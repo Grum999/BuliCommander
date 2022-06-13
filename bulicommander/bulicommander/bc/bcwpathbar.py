@@ -67,6 +67,7 @@ from bulicommander.pktk.modules.utils import (
         Debug
     )
 
+from bulicommander.pktk.widgets.wsearchinput import WSearchInput
 
 # -----------------------------------------------------------------------------
 
@@ -104,10 +105,14 @@ class BCWPathBar(QFrame):
     OPTION_SHOW_MARGINS =           0b0000000100000000
 
 
+    #                                  vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv -- reserved from WSearchInput
+    OPTION_FILTER_MARKED_ACTIVE=    0b100000000000000000000000000000000
+
+
     clicked = Signal(bool)
     pathChanged = Signal(str)
     viewChanged = Signal(str)
-    filterChanged = Signal(str)
+    filterChanged = Signal(str, object)            # search value, active options
     filterVisibilityChanged = Signal(bool)
 
     def __init__(self, parent=None):
@@ -139,59 +144,6 @@ class BCWPathBar(QFrame):
         self.__font.setPointSize(9)
         self.__font.setFamily('DejaVu Sans Mono, Consolas, Courier New')
 
-        self.__actionHistoryClear = buildQAction("pktk:history_clear", i18n('Clear history'), self)
-        self.__actionHistoryClear.setStatusTip(i18n('Clear all paths from history'))
-
-        self.__actionLastDocumentsAll = buildQAction("pktk:saved_view_last", i18n('Last documents'), self)
-        self.__actionLastDocumentsAll.setStatusTip(i18n('Show list of last opened and/or saved documents'))
-        self.__actionLastDocumentsAll.setProperty('path', '@last')
-        self.__actionLastDocumentsOpened = buildQAction("pktk:saved_view_last", i18n('Last opened documents'), self)
-        self.__actionLastDocumentsOpened.setStatusTip(i18n('Show list of last opened documents'))
-        self.__actionLastDocumentsOpened.setProperty('path', '@last opened')
-        self.__actionLastDocumentsSaved = buildQAction("pktk:saved_view_last", i18n('Last saved documents'), self)
-        self.__actionLastDocumentsSaved.setStatusTip(i18n('Show list of last saved documents'))
-        self.__actionLastDocumentsSaved.setProperty('path', '@last saved')
-
-        self.__actionBookmarkClear = buildQAction("pktk:bookmark_clear", i18n('Clear bookmark'), self)
-        self.__actionBookmarkClear.setStatusTip(i18n('Remove all bookmarked paths'))
-        self.__actionBookmarkAdd = buildQAction("pktk:bookmark_add", i18n('Add to bookmark...'), self)
-        self.__actionBookmarkAdd.triggered.connect(self.__menuBookmarkAppend_clicked)
-        self.__actionBookmarkAdd.setStatusTip(i18n('Add current path to bookmarks'))
-        self.__actionBookmarkRemove = buildQAction("pktk:bookmark_remove", i18n('Remove from bookmark...'), self)
-        self.__actionBookmarkRemove.triggered.connect(self.__menuBookmarkRemove_clicked)
-        self.__actionBookmarkRemove.setStatusTip(i18n('Remove current path from bookmarks'))
-        self.__actionBookmarkRename = buildQAction("pktk:bookmark_rename", i18n('Rename bookmark...'), self)
-        self.__actionBookmarkRename.triggered.connect(self.__menuBookmarkRename_clicked)
-        self.__actionBookmarkRename.setStatusTip(i18n('Rename current bookmark'))
-
-
-        self.__actionSavedViewsClear = buildQAction("pktk:saved_view_clear", i18n('Clear view content'), self)
-        self.__actionSavedViewsClear.setStatusTip(i18n('Clear current view content'))
-        self.__actionSavedViewsClear.setProperty('action', 'clear_view_content')
-        self.__actionSavedViewsClear.setProperty('path', ':CURRENT')
-
-        self.__actionSavedViewsAdd = buildQMenu("pktk:saved_view_add", i18n('Add to view'), self)
-        self.__actionSavedViewsAdd.setStatusTip(i18n('Add selected files to view'))
-        self.__actionSavedViewsAddNewView = buildQAction("pktk:saved_view_new", i18n('New view'), self)
-        self.__actionSavedViewsAddNewView.setStatusTip(i18n('Add selected files to a new view'))
-        self.__actionSavedViewsAddNewView.setProperty('action', 'create_view')
-        self.__actionSavedViewsAddNewView.setProperty('path', ':NEW')
-
-        self.__actionSavedViewsRemove = buildQAction("pktk:saved_view_remove", i18n('Remove from view...'), self)
-        self.__actionSavedViewsRemove.setStatusTip(i18n('Remove selected files from view'))
-        self.__actionSavedViewsRemove.setProperty('action', 'remove_from_view')
-        self.__actionSavedViewsRemove.setProperty('path', ':CURRENT')
-
-        self.__actionSavedViewsRename = buildQAction("pktk:saved_view_rename", i18n('Rename view...'), self)
-        self.__actionSavedViewsRename.setStatusTip(i18n('Rename current view'))
-        self.__actionSavedViewsRename.setProperty('action', 'rename_view')
-        self.__actionSavedViewsRename.setProperty('path', ':CURRENT')
-        self.__actionSavedViewsDelete = buildQAction("pktk:saved_view_delete", i18n('Delete view...'), self)
-        self.__actionSavedViewsDelete.setStatusTip(i18n('Delete current view'))
-        self.__actionSavedViewsDelete.setProperty('action', 'delete_view')
-        self.__actionSavedViewsDelete.setProperty('path', ':CURRENT')
-
-
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcwpathbar.ui')
         loadXmlUi(uiFileName, self)
 
@@ -201,7 +153,7 @@ class BCWPathBar(QFrame):
         """Initialise BCWPathBar"""
 
         @pyqtSlot('QString')
-        def item_Clicked(value):
+        def item_Clicked(value=None):
             self.clicked.emit(False)
 
         @pyqtSlot('QString')
@@ -263,24 +215,44 @@ class BCWPathBar(QFrame):
         #    self.setPath(action.property('path'))
 
         @pyqtSlot('QString')
-        def filter_Finished():
-            #self.filterChanged.emit(self.leFilterQuery.text())
-            pass
+        def filter_Changed(searchValue, options):
+            if self.tbFilterMarkedFiles.isChecked():
+                options|=BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
+
+            self.filterChanged.emit(searchValue, options)
 
         @pyqtSlot('QString')
-        def filter_Changed():
-            self.filterChanged.emit(self.leFilterQuery.text())
+        def filter_Changed2():
+            searchValue=self.wsiFilterQuery.searchText()
+            options=self.wsiFilterQuery.options()
+
+            if self.tbFilterMarkedFiles.isChecked():
+                options|=BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
+
+            self.filterChanged.emit(searchValue, options)
 
         @pyqtSlot('QString')
         def filter_Focused(e):
             item_Clicked(None)
-            self.__leFilterQueryFocusInEvent(e)
+            self.__wsiFilterQueryFocusInEvent(e)
+
+        def mouseEvent(event, originalMouseEvent):
+            # force to highlight panel owning BCWPathBar before popup menu
+            self.clicked.emit(False)
+            originalMouseEvent(event)
 
         self.widgetPath.setPalette(self.__paletteBase)
 
-        self.btSavedViews.clicked.connect(item_Clicked)
-        self.btBookmark.clicked.connect(item_Clicked)
-        self.btHistory.clicked.connect(item_Clicked)
+        self.__btSavedViewsMousePressEvent=self.btSavedViews.mousePressEvent
+        self.__btBookmarkmousePressEvent=self.btBookmark.mousePressEvent
+        self.__btHistorymousePressEvent=self.btHistory.mousePressEvent
+        self.__btLastDocumentsmousePressEvent=self.btLastDocuments.mousePressEvent
+
+        self.btSavedViews.mousePressEvent=lambda e: mouseEvent(e, self.__btSavedViewsMousePressEvent)
+        self.btBookmark.mousePressEvent=lambda e: mouseEvent(e, self.__btBookmarkmousePressEvent)
+        self.btHistory.mousePressEvent=lambda e: mouseEvent(e, self.__btHistorymousePressEvent)
+        self.btLastDocuments.mousePressEvent=lambda e: mouseEvent(e, self.__btLastDocumentsmousePressEvent)
+
         self.btFilter.clicked.connect(item_Clicked)
         self.btFilter.clicked.connect(self.__refreshFilter)
         self.frameBreacrumbPath.clicked.connect(item_Clicked)
@@ -289,14 +261,13 @@ class BCWPathBar(QFrame):
         if not self.__savedView is None:
             self.frameBreacrumbPath.checkViewId=self.__savedView.inList
 
-        fnt=self.leFilterQuery.font()
-        fnt.setFamily('DejaVu Sans Mono, Consolas, Courier New')
-        self.__leFilterQueryFocusInEvent=self.leFilterQuery.focusInEvent
-        self.leFilterQuery.focusInEvent=filter_Focused
-        self.leFilterQuery.editingFinished.connect(filter_Finished)
-        self.leFilterQuery.textChanged.connect(filter_Changed)
-        replaceLineEditClearButton(self.leFilterQuery)
-        self.leFilterQuery.setFont(fnt)
+        self.wsiFilterQuery.setOptions(WSearchInput.OPTION_SHOW_BUTTON_REGEX|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_STATE_BUTTONSHOW|WSearchInput.OPTION_HIDE_VSEPARATORL|WSearchInput.OPTION_HIDE_VSEPARATORR)
+        self.wsiFilterQuery.searchOptionModified.connect(filter_Changed)
+        self.wsiFilterQuery.searchModified.connect(filter_Changed)
+        self.tbFilterMarkedFiles.toggled.connect(filter_Changed2)
+
+        self.__wsiFilterQueryFocusInEvent=self.wsiFilterQuery.qLineEditSearch().focusInEvent
+        self.wsiFilterQuery.qLineEditSearch().focusInEvent=filter_Focused
 
         self.btBack.clicked.connect(item_Clicked)
         self.btBack.clicked.connect(back_Clicked)
@@ -304,250 +275,6 @@ class BCWPathBar(QFrame):
         self.btUp.clicked.connect(up_Clicked)
         self.btHome.clicked.connect(item_Clicked)
         self.btHome.clicked.connect(home_Clicked)
-
-        menu = QMenu(self.btHistory)
-        menu.aboutToShow.connect(self.menuHistoryShow)
-        menu.addAction(self.__actionHistoryClear)
-        self.btHistory.setMenu(menu)
-
-        menu = QMenu(self.btLastDocuments)
-        menu.aboutToShow.connect(self.menuLastDocumentsShow)
-        self.btLastDocuments.setMenu(menu)
-
-        menu = QMenu(self.btBookmark)
-        menu.aboutToShow.connect(self.menuBookmarksShow)
-        menu.addAction(self.__actionBookmarkClear)
-        self.btBookmark.setMenu(menu)
-
-        menu = QMenu(self.btSavedViews)
-        menu.aboutToShow.connect(self.menuSavedViewsShow)
-        menu.addAction(self.__actionSavedViewsClear)
-        self.btSavedViews.setMenu(menu)
-
-    def menuHistoryShow(self, menu=None):
-        """Build menu history"""
-        @pyqtSlot('QString')
-        def menuHistory_Clicked(action):
-            # change directory
-            self.setPath(action.property('path'))
-
-        self.clicked.emit(False)
-
-        if menu is None:
-            menu = self.btHistory.menu()
-
-        try:
-            menu.triggered.disconnect()
-        except Exception as e:
-            pass
-        menu.triggered.connect(menuHistory_Clicked)
-
-        menu.clear()
-        menu.addAction(self.__actionHistoryClear)
-        if not self.__history is None:
-            self.__history.removeMissing(False, refList=self.__uiController.quickRefDict())
-        if not self.__history is None and self.__history.length() > 0:
-            self.__actionHistoryClear.setEnabled(True)
-            self.__actionHistoryClear.setText(i18n(f'Clear history ({self.__history.length()})'))
-            menu.addSeparator()
-
-            for path in reversed(self.__history.list()):
-                action = QAction(path.replace('&', '&&'), self)
-                action.setFont(self.__font)
-                action.setProperty('path', path)
-
-                menu.addAction(action)
-        else:
-            self.__actionHistoryClear.setEnabled(False)
-            self.__actionHistoryClear.setText(i18n('Clear history'))
-
-    def menuBookmarksShow(self, menu=None):
-        """Build menu bookmarks"""
-        @pyqtSlot('QString')
-        def menuBookmarks_Clicked(action):
-            # change directory
-            path=action.property('path')
-            if not path is None:
-                if os.path.isdir(path):
-                    self.setPath(path)
-                else:
-                    name = self.__uiController.bookmark().nameFromValue(path)
-                    self.__uiController.commandGoBookmarkRemoveUI(name)
-
-        self.clicked.emit(False)
-
-        if menu is None:
-            menu = self.btBookmark.menu()
-
-        try:
-            menu.triggered.disconnect()
-        except Exception as e:
-            pass
-
-        menu.triggered.connect(menuBookmarks_Clicked)
-
-        menu.clear()
-        menu.addAction(self.__actionBookmarkClear)
-        menu.addAction(self.__actionBookmarkAdd)
-        menu.addAction(self.__actionBookmarkRemove)
-        menu.addAction(self.__actionBookmarkRename)
-
-
-        if not self.__bookmark is None and self.__bookmark.length() > 0:
-            self.__actionBookmarkClear.setEnabled(True)
-            self.__actionBookmarkClear.setText(i18n('Clear bookmark')+f' ({self.__bookmark.length()})')
-            menu.addSeparator()
-
-            currentPath = self.path()
-            isInBookmark = False
-
-            for bookmark in self.__bookmark.list():
-                action = QAction(bookmark[BCBookmark.NAME].replace('&', '&&'), self)
-                action.setFont(self.__font)
-                action.setProperty('path', bookmark[BCBookmark.VALUE])
-
-                if os.path.isdir(bookmark[BCBookmark.VALUE]):
-                    action.setCheckable(True)
-                    action.setStatusTip(bookmark[BCBookmark.VALUE])
-
-                    if currentPath == bookmark[BCBookmark.VALUE]:
-                        action.setChecked(True)
-                        isInBookmark = True
-                    else:
-                        action.setChecked(False)
-                else:
-                    action.setCheckable(False)
-                    action.setStatusTip(f'Directory "{bookmark[BCBookmark.VALUE]}" is missing')
-                    action.setIcon(buildIcon('pktk:warning'))
-
-                menu.addAction(action)
-
-            if isInBookmark:
-                self.__actionBookmarkAdd.setEnabled(False)
-                self.__actionBookmarkRemove.setEnabled(True)
-                self.__actionBookmarkRename.setEnabled(True)
-            else:
-                self.__actionBookmarkAdd.setEnabled(self.mode() != BCWPathBar.MODE_SAVEDVIEW)
-                self.__actionBookmarkRemove.setEnabled(False)
-                self.__actionBookmarkRename.setEnabled(False)
-        else:
-            self.__actionBookmarkClear.setEnabled(False)
-            self.__actionBookmarkClear.setText(i18n('Clear bookmark'))
-            self.__actionBookmarkAdd.setEnabled(self.mode() != BCWPathBar.MODE_SAVEDVIEW)
-            self.__actionBookmarkRemove.setEnabled(False)
-            self.__actionBookmarkRename.setEnabled(False)
-
-    def menuSavedViewsShow(self, menu=None):
-        # TODO: build menu
-        self.clicked.emit(False)
-
-        if menu is None:
-            menu = self.btSavedViews.menu()
-
-        try:
-            menu.triggered.disconnect()
-        except Exception as e:
-            pass
-
-        menu.triggered.connect(self.__menuSavedViews_clicked)
-
-        menu.clear()
-        menu.addAction(self.__actionSavedViewsClear)
-        menu.addMenu(self.__actionSavedViewsAdd)
-        menu.addAction(self.__actionSavedViewsRemove)
-        menu.addSeparator()
-        menu.addAction(self.__actionSavedViewsRename)
-        menu.addAction(self.__actionSavedViewsDelete)
-
-        menu2 = self.__actionSavedViewsAdd
-        menu2.clear()
-        menu2.addAction(self.__actionSavedViewsAddNewView)
-
-        allowAddRemove = False
-        if self.__panel.filesSelected()[3] > 0:
-            # Selected nb directories + files > 0
-            # can be added to a current view
-            allowAddRemove = True
-
-        self.__actionSavedViewsAddNewView.setEnabled(allowAddRemove)
-
-
-        isSavedView = (self.__uiController.quickRefType(self.path()) == BCWPathBar.QUICKREF_SAVEDVIEW_LIST)
-
-
-        if self.__savedView.length() > 0:
-            # there's some view saved
-            # build list of saved views
-            menu.addSeparator()
-            menu2.addSeparator()
-
-            for view in self.__savedView.list():
-                # view = (name, files)
-                if not re.match("^searchresult:", view[0]):
-                    action = buildQAction([("pktk:saved_view_file", QIcon.Normal),
-                                           ("pktk:saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
-                    action.setFont(self.__font)
-                    action.setStatusTip(i18n(f"Add selected files to view '{view[0].replace('&', '&&')}' (Current files in view: {len(view[1])})" ))
-                    action.setProperty('action', 'add_to_view')
-                    action.setProperty('path', f'@{view[0]}')
-
-                    if isSavedView and self.__savedView.current(True) == view[0] or not allowAddRemove:
-                        action.setEnabled(False)
-
-                    menu2.addAction(action)
-
-                    action = buildQAction([("pktk:saved_view_file", QIcon.Normal),
-                                           ("pktk:saved_view_file", QIcon.Disabled)], view[0].replace('&', '&&'), self)
-                    action.setFont(self.__font)
-                    action.setCheckable(True)
-                    action.setStatusTip(i18n(f'Files in view: {len(view[1])}'))
-                    action.setProperty('action', 'go_to_view')
-                    action.setProperty('path', f'@{view[0]}')
-
-                    if isSavedView and self.__savedView.current(True) == view[0]:
-                        action.setChecked(True)
-
-                    menu.addAction(action)
-
-        if isSavedView:
-            self.__actionSavedViewsClear.setEnabled(True)
-            self.__actionSavedViewsRemove.setEnabled(allowAddRemove)
-            self.__actionSavedViewsRename.setEnabled(True)
-            self.__actionSavedViewsDelete.setEnabled(True)
-        else:
-            self.__actionSavedViewsClear.setEnabled(False)
-            self.__actionSavedViewsRemove.setEnabled(False)
-            self.__actionSavedViewsRename.setEnabled(False)
-            self.__actionSavedViewsDelete.setEnabled(False)
-
-    def menuLastDocumentsShow(self, menu=None):
-        """Build menu last documents"""
-        @pyqtSlot('QString')
-        def menuLastDocuments_Clicked(action):
-            # change directory
-            self.setPath(action.property('path'))
-
-        self.clicked.emit(False)
-
-        if menu is None:
-            menu = self.btLastDocuments.menu()
-
-        try:
-            menu.triggered.disconnect()
-        except Exception as e:
-            pass
-        menu.triggered.connect(menuLastDocuments_Clicked)
-
-
-        self.__actionLastDocumentsAll.setEnabled(self.__lastDocumentsSaved.length() + self.__lastDocumentsOpened.length())
-        self.__actionLastDocumentsSaved.setEnabled(self.__lastDocumentsSaved.length())
-        self.__actionLastDocumentsOpened.setEnabled(self.__lastDocumentsOpened.length())
-
-        menu.clear()
-        menu.addAction(self.__actionLastDocumentsAll)
-        menu.addSeparator()
-        menu.addAction(self.__actionLastDocumentsOpened)
-        menu.addAction(self.__actionLastDocumentsSaved)
 
     def __refreshStyle(self):
         """refresh current style for BCWPathBar"""
@@ -561,8 +288,8 @@ class BCWPathBar(QFrame):
 
         if self.btFilter.isChecked():
             self.frameFilter.setVisible(True)
-            self.leFilterQuery.setFocus()
-            self.leFilterQuery.selectAll()
+            self.wsiFilterQuery.qLineEditSearch().setFocus()
+            self.wsiFilterQuery.qLineEditSearch().selectAll()
             self.filterVisibilityChanged.emit(True)
             idealMinHeight+=self.widgetFilter.sizeHint().height()
         else:
@@ -570,45 +297,6 @@ class BCWPathBar(QFrame):
             self.filterVisibilityChanged.emit(False)
 
         self.setMinimumHeight(idealMinHeight)
-
-    def __menuBookmarkAppend_clicked(self, action):
-        """Append current path to bookmark"""
-        self.__uiController.commandGoBookmarkAppendUI(self.path())
-
-    def __menuBookmarkRemove_clicked(self, action):
-        """Remove bookmark"""
-        name = self.__uiController.bookmark().nameFromValue(self.path())
-        self.__uiController.commandGoBookmarkRemoveUI(name)
-
-    def __menuBookmarkRename_clicked(self, action):
-        """Rename bookmark"""
-        name = self.__uiController.bookmark().nameFromValue(self.path())
-        self.__uiController.commandGoBookmarkRenameUI(name)
-
-    def __menuSavedViews_clicked(self, action):
-        """AN action from saved view is triggered"""
-        menuAction = action.property('action')
-        viewId=action.property('path')
-
-        if viewId == ':CURRENT':
-            viewId = self.__savedView.current(True)
-
-        if menuAction == 'create_view':
-            self.__uiController.commandGoSavedViewCreateUI([file.fullPathName() for file in self.__panel.filesSelected()[0]])
-        elif menuAction == 'add_to_view':
-            self.__uiController.commandGoSavedViewAppend(viewId[1:], [file.fullPathName() for file in self.__panel.filesSelected()[0]])
-        elif menuAction == 'go_to_view':
-            self.setPath(viewId)
-        elif menuAction == 'delete_view':
-            self.__uiController.commandGoSavedViewDeleteUI(viewId)
-        elif menuAction == 'rename_view':
-            self.__uiController.commandGoSavedViewRenameUI(viewId)
-        elif menuAction == 'remove_from_view':
-            if self.__panel.filesSelected()[3] > 0:
-                # Remove given files from view
-                self.__uiController.commandGoSavedViewRemoveUI(viewId, [file.fullPathName() for file in self.__panel.filesSelected()[5]])
-        elif menuAction == 'clear_view_content':
-            self.__uiController.commandGoSavedViewClearUI(viewId)
 
     def __historyChanged(self):
         """History content has been modified"""
@@ -669,8 +357,10 @@ class BCWPathBar(QFrame):
         #if not (uiController is None or isinstance(uiController, BCUIController)):
         #    raise EInvalidType('Given `uiController` must be a <BCUIController>')
         self.__uiController = uiController
-        self.__actionHistoryClear.triggered.connect(self.__uiController.commandGoHistoryClearUI)
-        self.__actionBookmarkClear.triggered.connect(self.__uiController.commandGoBookmarkClearUI)
+        self.btHistory.setMenu(self.__uiController.window().menuGoHistory)
+        self.btLastDocuments.setMenu(self.__uiController.window().menuGoLastDocuments)
+        self.btBookmark.setMenu(self.__uiController.window().menuGoBookmark)
+        self.btSavedViews.setMenu(self.__uiController.window().menuGoSavedViews)
 
     def mode(self):
         """Return current mode"""
@@ -857,14 +547,21 @@ class BCWPathBar(QFrame):
         self.__refreshFilter()
 
     def filter(self):
-        """Return current filter value"""
-        return self.leFilterQuery.text()
+        """Return current filter value as tuple (value, options)"""
+        options=self.wsiFilterQuery.options()&WSearchInput.OPTION_ALL_SEARCH
+        if self.tbFilterMarkedFiles.isChecked():
+            options|=BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
 
-    def setFilter(self, value=None):
+        return (self.wsiFilterQuery.searchText(), options)
+
+    def setFilter(self, value=None, options=None):
         """Set current filter value"""
         if value is None:
             value = ''
-        self.leFilterQuery.setText(value)
+        self.wsiFilterQuery.setSearchText(value)
+        if isinstance(options, int):
+            self.tbFilterMarkedFiles.setChecked(options&BCWPathBar.OPTION_FILTER_MARKED_ACTIVE==BCWPathBar.OPTION_FILTER_MARKED_ACTIVE)
+            self.wsiFilterQuery.setOptions((options&WSearchInput.OPTION_ALL_SEARCH)|WSearchInput.OPTION_SHOW_BUTTON_REGEX|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_STATE_BUTTONSHOW|WSearchInput.OPTION_HIDE_VSEPARATORL|WSearchInput.OPTION_HIDE_VSEPARATORR)
 
     def hiddenPath(self):
         """Return if hidden path are displayed or not"""

@@ -41,10 +41,15 @@ from PyQt5.QtWidgets import (
 from .bcbookmark import BCBookmark
 from .bchistory import BCHistory
 from .bcwpathbar import BCWPathBar
-from .bcmainviewtab import BCMainViewTab
+from .bcmainviewtab import (BCMainViewTab, BCMainViewTabFilesLayout, BCMainViewTabTabs)
 
 from bulicommander.pktk.modules.utils import loadXmlUi
+from bulicommander.pktk.modules.imgutils import buildIcon
 from bulicommander.pktk.widgets.wiodialog import WDialogMessage
+from bulicommander.pktk.widgets.wmenuitem import (
+        WMenuSlider,
+        WMenuTitle
+    )
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -72,16 +77,29 @@ class BCMainWindow(QMainWindow):
         self.__uiController = uiController
         self.__eventCallBack = {}
         self.__highlightedPanel = 0
-        self.menuViewDisplayLayoutFiles=[]
-        self.menuViewDisplayLayoutClipboard=[]
+        self.actionViewLayoutIconSize=None
         self.panels = {
                 0: self.mainViewTab0,
                 1: self.mainViewTab1
             }
 
+        self.__toolbars=[]
+
         self.__fontMono = QFont()
         self.__fontMono.setPointSize(9)
         self.__fontMono.setFamily('DejaVu Sans Mono, Consolas, Courier New')
+
+        self.setStyleSheet("""
+            QToolBar { border-width: 0px; }
+            QToolBar QToolButton:checked {
+                    background-color: palette(Highlight);
+                }
+
+            /* QMenu::icon ==> doesn't work?? */
+            QMenu::item:checked:enabled {
+                    background-color: palette(Highlight);
+                }
+        """)
 
         for panelId in self.panels:
             self.panels[panelId].setAllowRefresh(False)
@@ -107,14 +125,6 @@ class BCMainWindow(QMainWindow):
         def panel_pathChanged(newPath):
             self.__uiController.commandGoHistoryAdd(newPath)
 
-        #@pyqtSlot('QString')
-        #def panel_TabFilesLayoutChanged(signalPanel):
-        #    pass
-
-        #@pyqtSlot('QString')
-        #def splitterMainView_Moved(pos, index):
-        #    pass
-
         for panel in self.panels:
             self.splitterMainView.insertWidget(panel, self.panels[panel])
             self.panels[panel].setUiController(self.__uiController)
@@ -123,15 +133,28 @@ class BCMainWindow(QMainWindow):
         self.mainViewTab1.highlightedStatusChanged.connect(panel_HighlightStatusChanged)
         self.mainViewTab0.filesPathChanged.connect(panel_pathChanged)
         self.mainViewTab1.filesPathChanged.connect(panel_pathChanged)
-        #self.mainViewTab0.tabFilesLayoutChanged.connect(panel_TabFilesLayoutChanged)
-        #self.mainViewTab1.tabFilesLayoutChanged.connect(panel_TabFilesLayoutChanged)
-        #self.splitterMainView.splitterMoved.connect(splitterMainView_Moved)
         self.actionFileCopyToOtherPanelNoConfirm = QShortcut(QKeySequence("Shift+F5"), self)
         self.actionFileMoveToOtherPanelNoConfirm = QShortcut(QKeySequence("Shift+F6"), self)
         self.actionFileDeleteNoConfirm = QShortcut(QKeySequence("Shift+F8"), self)
 
     def initMenu(self):
-        """Initialise actions for menu defaukt menu"""
+        """Initialise actions for menu default menu"""
+        def updatePixelSize(value):
+            if self.__uiController.panel().tabActive()==BCMainViewTabTabs.FILES:
+                if self.__uiController.panel().filesTabViewMode()==BCMainViewTab.VIEWMODE_TV:
+                    self.__uiController.panel().setFilesIconSizeTv(value)
+                    iconPixelSize=self.__uiController.panel().filesIconSizeTv(True)
+                else:
+                    self.__uiController.panel().setFilesIconSizeLv(value)
+                    iconPixelSize=self.__uiController.panel().filesIconSizeLv(True)
+            elif self.__uiController.panel().tabActive()==BCMainViewTabTabs.CLIPBOARD:
+                self.__uiController.panel().setClipboardIconSize(value)
+                iconPixelSize=self.__uiController.panel().clipboardIconSize(True)
+            else:
+                return
+
+            self.actionViewLayoutIconSize.setLabelText(i18n(f"Thumbnail size: {iconPixelSize}px"))
+
         # Menu FILE
         self.actionFolderNew.triggered.connect(self.__menuFileCreateDirectory)
         self.actionFileOpen.triggered.connect(self.__menuFileOpen)
@@ -159,19 +182,37 @@ class BCMainWindow(QMainWindow):
         self.actionClipboardQuit.triggered.connect(self.__uiController.commandQuit)
 
         # Menu EDIT
-        self.actionSelectAll.triggered.connect(self.__menuSelectAll_clicked)
-        self.actionSelectNone.triggered.connect(self.__menuSelectNone_clicked)
-        self.actionSelectInvert.triggered.connect(self.__menuSelectInvert_clicked)
+        self.actionMenuEditSelectAll.triggered.connect(self.__menuEditSelectAll_clicked)
+        self.actionMenuEditSelectNone.triggered.connect(self.__menuEditSelectNone_clicked)
+        self.actionMenuEditSelectInvert.triggered.connect(self.__menuEditSelectInvert_clicked)
+        self.actionMenuEditSelectMarked.triggered.connect(self.__menuEditSelectMarked_clicked)
+
+        self.actionMenuEditMarkUnmark.triggered.connect(self.__menuEditMarkUnmark_clicked)
+        self.actionMenuEditMarkAll.triggered.connect(self.__menuEditMarkAll_clicked)
+        self.actionMenuEditMarkNone.triggered.connect(self.__menuEditMarkNone_clicked)
+        self.actionMenuEditMarkInvert.triggered.connect(self.__menuEditMarkInvert_clicked)
 
         # Menu GO
-        self.menuGoHistory.aboutToShow.connect(self.__menuHistoryShow)
-        self.menuGoBookmark.aboutToShow.connect(self.__menuBookmarkShow)
-        self.menuGoSavedViews.aboutToShow.connect(self.__menuSavedViewsShow)
-        self.menuGoLastDocuments.aboutToShow.connect(self.__menuLastDocumentsShow)
-
         self.actionGoHome.triggered.connect(self.__menuGoHome_clicked)
         self.actionGoUp.triggered.connect(self.__menuGoUp_clicked)
         self.actionGoBack.triggered.connect(self.__menuGoBack_clicked)
+
+        self.actionGoHistoryClearHistory.triggered.connect(self.__uiController.commandGoHistoryClearUI)
+
+        self.actionGoBookmarksClearBookmarks.triggered.connect(self.__uiController.commandGoBookmarkClearUI)
+        self.actionGoBookmarksAddBookmark.triggered.connect(lambda: self.__uiController.commandGoBookmarkAppendUI(self.__uiController.panel().filesPath()))
+        self.actionGoBookmarksRemoveFromBookmark.triggered.connect(lambda: self.__uiController.commandGoBookmarkRemoveUI(self.__uiController.bookmark().nameFromValue(self.__uiController.panel().filesPath())))
+        self.actionGoBookmarksRenameBookmark.triggered.connect(lambda: self.__uiController.commandGoBookmarkRenameUI(self.__uiController.bookmark().nameFromValue(self.__uiController.panel().filesPath())))
+
+        self.actionGoSavedViewsAddToViewNewView.triggered.connect(lambda: self.__uiController.commandGoSavedViewCreateUI([file.fullPathName() for file in self.__uiController.panel().filesSelected()[0]]))
+        self.actionGoSavedViewsClearViewContent.triggered.connect(lambda: self.__uiController.commandGoSavedViewClearUI(self.__uiController.savedViews().current(True)))
+        self.actionGoSavedViewsRemoveFromView.triggered.connect(lambda: self.__uiController.commandGoSavedViewRemoveUI(self.__uiController.savedViews().current(True), [file.fullPathName() for file in self.__uiController.panel().filesSelected()[5]]))
+        self.actionGoSavedViewsRenameView.triggered.connect(lambda: self.__uiController.commandGoSavedViewRenameUI(self.__uiController.savedViews().current(True)))
+        self.actionGoSavedViewsDeleteView.triggered.connect(lambda: self.__uiController.commandGoSavedViewDeleteUI(self.__uiController.savedViews().current(True)))
+
+        self.actionGoLastDocumentsLastDocuments.triggered.connect(lambda: self.__uiController.commandGoTo(self.__uiController.panelId(), '@last'))
+        self.actionGoLastDocumentsLastOpenedDocuments.triggered.connect(lambda: self.__uiController.commandGoTo(self.__uiController.panelId(), '@last opened'))
+        self.actionGoLastDocumentsLastSavedDocuments.triggered.connect(lambda: self.__uiController.commandGoTo(self.__uiController.panelId(), '@last saved'))
 
         # Menu VIEW
         self.actionViewThumbnail.triggered.connect(self.__menuViewThumbnail_clicked)
@@ -182,11 +223,46 @@ class BCMainWindow(QMainWindow):
         self.actionViewDisplayQuickFilter.triggered.connect(self.__menuViewDisplayQuickFilter_clicked)
         self.actionViewSwapPanels.triggered.connect(self.__uiController.commandViewSwapPanels)
 
-        self.actionViewDisplayLayout.setVisible(False)
-        for panel in self.__uiController.panels():
-            self.menuViewDisplayLayoutFiles.append(self.menuView.insertMenu(self.actionViewDisplayLayout, panel.filesMenuViewDisplayLayout()))
-        for panel in self.__uiController.panels():
-            self.menuViewDisplayLayoutClipboard.append(self.menuView.insertMenu(self.actionViewDisplayLayout, panel.clipboardMenuViewDisplayLayout()))
+        # implemented into BCUIController.updateMenuForPanel()
+        #self.actionViewLayoutFullMode.triggered.connect()
+        #self.actionViewLayoutTopBottom.triggered.connect()
+        #self.actionViewLayoutLeftRight.triggered.connect()
+        #self.actionViewLayoutBottomTop.triggered.connect()
+        #self.actionViewLayoutRightLeft.triggered.connect()
+
+        self.actionViewLayoutViewAsList.triggered.connect(lambda: self.__uiController.commandPanelFilesTabViewMode(self.__uiController.panelId(), BCMainViewTab.VIEWMODE_TV ))
+        self.actionViewLayoutViewAsGrid.triggered.connect(lambda: self.__uiController.commandPanelFilesTabViewMode(self.__uiController.panelId(), BCMainViewTab.VIEWMODE_LV ))
+
+        groupViewLayout=QActionGroup(self)
+        groupViewLayout.addAction(self.actionViewLayoutFullMode)
+        groupViewLayout.addAction(self.actionViewLayoutTopBottom)
+        groupViewLayout.addAction(self.actionViewLayoutLeftRight)
+        groupViewLayout.addAction(self.actionViewLayoutBottomTop)
+        groupViewLayout.addAction(self.actionViewLayoutRightLeft)
+        groupViewLayout.setExclusive(True)
+
+        self.actionViewLayoutFullMode.setData(i18n("Layout:"))
+        self.actionViewLayoutTopBottom.setData(i18n("Layout:"))
+        self.actionViewLayoutLeftRight.setData(i18n("Layout:"))
+        self.actionViewLayoutBottomTop.setData(i18n("Layout:"))
+        self.actionViewLayoutRightLeft.setData(i18n("Layout:"))
+
+        groupViewMode=QActionGroup(self)
+        groupViewMode.addAction(self.actionViewLayoutViewAsList)
+        groupViewMode.addAction(self.actionViewLayoutViewAsGrid)
+        groupViewMode.setExclusive(True)
+
+
+        self.actionViewLayoutIconSize = WMenuSlider(i18n("Thumbnail size"), self)
+        self.actionViewLayoutIconSize.setText(i18n("Thumbnail size"))
+        self.actionViewLayoutIconSize.setIcon(buildIcon("pktk:tune_img_slider"))
+        self.actionViewLayoutIconSize.setObjectName("actionViewLayoutIconSize")
+        self.actionViewLayoutIconSize.slider().setMinimum(0)
+        self.actionViewLayoutIconSize.slider().setMaximum(8)
+        self.actionViewLayoutIconSize.slider().setPageStep(1)
+        self.actionViewLayoutIconSize.slider().setSingleStep(1)
+        self.actionViewLayoutIconSize.slider().valueChanged.connect(updatePixelSize)
+        self.menuViewLayout.addAction(self.actionViewLayoutIconSize)
 
         # Menu TOOLS
         self.actionToolsCopyToClipboard.triggered.connect(self.__menuToolsCopyToClipboard_clicked)
@@ -198,30 +274,112 @@ class BCMainWindow(QMainWindow):
         self.actionSettingsPreferences.triggered.connect(self.__uiController.commandSettingsOpen)
         self.actionSettingsSaveSessionOnExit.triggered.connect(self.__uiController.commandSettingsSaveSessionOnExit)
         self.actionSettingsResetSessionToDefault.triggered.connect(self.__uiController.commandSettingsResetSessionToDefault)
+        self.menuSettingsToolbars.aboutToShow.connect(self.__menuSettingsToolbarsShow)
 
         # Menu HELP
-        self.actionHelpAboutBC.triggered.connect(self.__uiController.commandAboutBc)
-
+        self.actionHelpAboutBC.triggered.connect(self.__uiController.commandHelpAboutBc)
+        self.actionHelpManagedFilesFormats.triggered.connect(self.__uiController.commandHelpManagedFilesFormat)
 
         self.actionFileCopyToOtherPanelNoConfirm.activated.connect(self.__menuFileCopyNoConfirm)
         self.actionFileMoveToOtherPanelNoConfirm.activated.connect(self.__menuFileMoveNoConfirm)
         self.actionFileDeleteNoConfirm.activated.connect(self.__menuFileDeleteNoConfirm)
 
-    def __menuHistoryShow(self):
-        """Build menu history"""
-        self.__uiController.panel().filesShowMenuHistory(self.menuGoHistory)
+    def initToolbar(self, toolbarsConfig, toolbarsSession=None):
+        """Initialise toolbars
 
-    def __menuLastDocumentsShow(self):
-        """Build menu last documents"""
-        self.__uiController.panel().filesShowMenuLastDocuments(self.menuGoLastDocuments)
+        Given `toolbars` is a list of dictionary
+        Each dictionary contains at least the following keys:
+            id: toolbar id
+            label : toolbar label
+            actions: list of QAction id
 
-    def __menuBookmarkShow(self):
-        """Build menu history"""
-        self.__uiController.panel().filesShowMenuBookmarks(self.menuGoBookmark)
+        Can additionally contains:
+            visible: toolbar is visible or hidden
+            area: area in which toolbar is docked
+            rect: position+size of toolbar
+        """
+        def sortToolbar(toolbarSessionDef):
 
-    def __menuSavedViewsShow(self):
-        """Build menu history"""
-        self.__uiController.panel().filesShowMenuSavedViews(self.menuGoSavedViews)
+            if toolbarSessionDef['area'] in (Qt.LeftToolBarArea, Qt.RightToolBarArea):
+                return f"{toolbarSessionDef['area']:02}{toolbarSessionDef['rect'][0]:05}{toolbarSessionDef['rect'][1]:05}"
+            else:
+                return f"{toolbarSessionDef['area']:02}{toolbarSessionDef['rect'][1]:05}{toolbarSessionDef['rect'][0]:05}"
+
+        # Disable window updates while preparing content (avoid flickering effect)
+        self.setUpdatesEnabled(False)
+
+        for toolbar in self.toolbarList():
+            self.removeToolBar(toolbar)
+        self.__toolbars=[]
+
+        # sort toolbar by area/position
+        sortedId=[]
+        if not toolbarsSession is None:
+            toolbarsSession.sort(key=sortToolbar)
+
+            tmp={toolbarDefinition['id']: toolbarDefinition for toolbarDefinition in toolbarsConfig}
+            toolbarsConfigSorted=[]
+            for toolbarId in [toolbarSession['id'] for toolbarSession in toolbarsSession]:
+                if toolbarId in tmp:
+                    toolbarsConfigSorted.append(tmp.pop(toolbarId))
+
+            for toolbarDefinition in toolbarsConfig:
+                if toolbarDefinition['id'] in tmp:
+                    toolbarsConfigSorted.append(toolbarDefinition)
+
+            toolbarsConfig=toolbarsConfigSorted
+
+        for toolbarDefinition in toolbarsConfig:
+            toolbar = self.addToolBar(toolbarDefinition['label'])
+            toolbar.setObjectName(toolbarDefinition['id'])
+            toolbar.setToolButtonStyle(1)
+            toolbar.setToolButtonStyle(toolbarDefinition['style'])
+            toolbar.setFloatable(False)
+            for action in toolbarDefinition['actions']:
+                if action=='ba32b31ff4730cbf42ba0962f981407bcb4e9c58': # separator Id
+                    toolbar.addSeparator()
+                else:
+                    foundAction=self.findChild(QAction, action, Qt.FindChildrenRecursively)
+                    if foundAction:
+                        toolbar.addAction(foundAction)
+            self.__toolbars.append(toolbar)
+
+        if not toolbarsSession is None:
+            for toolbarSession in toolbarsSession:
+                for toolbar in self.__toolbars:
+                    if toolbar.objectName()==toolbarSession['id']:
+                        if toolbarSession['break']:
+                            self.addToolBarBreak(toolbarSession['area'])
+                        self.addToolBar(toolbarSession['area'], toolbar)
+                        geometry=toolbarSession['rect']
+                        toolbar.setVisible(toolbarSession['visible'])
+                        # not working...?
+                        #toolbar.setGeometry(geometry[0], geometry[1], geometry[2], geometry[3])
+                        break
+
+        self.menuSettingsToolbars.setEnabled(len(self.__toolbars)>0)
+        self.setUpdatesEnabled(True)
+
+    def toolbarList(self):
+        """Return list of toolbar"""
+        return self.__toolbars
+
+    def __menuSettingsToolbarsToggled(self, value):
+        """A toolbar Sub-menu checkedbox has been changed"""
+        action=self.sender()
+        action.data().setVisible(value)
+
+    def __menuSettingsToolbarsShow(self):
+        """Display toolbar menu"""
+        self.menuSettingsToolbars.clear()
+
+        for toolbar in self.__toolbars:
+            action=self.menuSettingsToolbars.addAction(toolbar.windowTitle())
+            action.setCheckable(True)
+            action.setChecked(toolbar.isVisible())
+            action.setData(toolbar)
+            action.toggled.connect(self.__menuSettingsToolbarsToggled)
+
 
     # endregion: initialisation methods ----------------------------------------
 
@@ -327,17 +485,37 @@ class BCMainWindow(QMainWindow):
         """Stop download for selected items"""
         self.__uiController.commandClipboardStopDownload()
 
-    def __menuSelectAll_clicked(self, action):
+    def __menuEditSelectAll_clicked(self, action):
         """Select all files"""
         self.__uiController.commandPanelSelectAll(self.__highlightedPanel)
 
-    def __menuSelectNone_clicked(self, action):
+    def __menuEditSelectNone_clicked(self, action):
         """Select no files"""
         self.__uiController.commandPanelSelectNone(self.__highlightedPanel)
 
-    def __menuSelectInvert_clicked(self, action):
+    def __menuEditSelectInvert_clicked(self, action):
         """Select inverted"""
         self.__uiController.commandPanelSelectInvert(self.__highlightedPanel)
+
+    def __menuEditSelectMarked_clicked(self, action):
+        """Select inverted"""
+        self.__uiController.commandPanelSelectMarked(self.__highlightedPanel)
+
+    def __menuEditMarkUnmark_clicked(self, action):
+        """Select all files"""
+        self.__uiController.commandPanelMarkUnmark(self.__highlightedPanel)
+
+    def __menuEditMarkAll_clicked(self, action):
+        """Select all files"""
+        self.__uiController.commandPanelMarkAll(self.__highlightedPanel)
+
+    def __menuEditMarkNone_clicked(self, action):
+        """Select no files"""
+        self.__uiController.commandPanelMarkNone(self.__highlightedPanel)
+
+    def __menuEditMarkInvert_clicked(self, action):
+        """Select inverted"""
+        self.__uiController.commandPanelMarkInvert(self.__highlightedPanel)
 
     def __menuGoHome_clicked(self, action):
         """Go to home directory"""

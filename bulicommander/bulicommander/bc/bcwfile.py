@@ -30,6 +30,7 @@ from PyQt5.QtCore import (
         pyqtSignal as Signal
     )
 
+from .bcwpathbar import BCWPathBar
 from .bcfile import (
         BCBaseFile,
         BCDirectory,
@@ -40,6 +41,10 @@ from .bcfile import (
         BCFileThumbnailSize
     )
 from .bciconsizes import BCIconSizes
+from .bcsettings import (
+        BCSettings,
+        BCSettingsKey
+    )
 
 from bulicommander.pktk.modules.workers import (
         WorkerPool,
@@ -68,6 +73,8 @@ from bulicommander.pktk.pktk import (
         EInvalidStatus
     )
 
+from bulicommander.pktk.widgets.wsearchinput import SearchOptions
+
 
 # -----------------------------------------------------------------------------
 
@@ -80,6 +87,7 @@ class BCFileModel(QAbstractTableModel):
     iconStartLoad = Signal(int)
     iconProcessed = Signal()
     iconStopLoad = Signal()
+    markersChanged = Signal()
 
     # define columns
     COLNUM_ICON = 0
@@ -116,6 +124,8 @@ class BCFileModel(QAbstractTableModel):
     ROLE_ICON = Qt.UserRole + 1
     ROLE_FILE = Qt.UserRole + 2
     ROLE_FULLNFO = Qt.UserRole + 3
+    ROLE_MARKER = Qt.UserRole + 4
+    ROLE_GRIDNFO = Qt.UserRole + 1000
 
     __STATUS_READY = 0
     __STATUS_UPDATING = 1
@@ -174,6 +184,7 @@ class BCFileModel(QAbstractTableModel):
 
         self.__fileNfoCache={}
         self.__icons={}
+        self.__markers=set()
         self.__items=self.__fileList.files()
         self.__headerRightAlign=(BCFileModel.COLNUM_FILE_SIZE,
                                  BCFileModel.COLNUM_IMAGE_SIZE,
@@ -248,6 +259,7 @@ class BCFileModel(QAbstractTableModel):
         self.beginResetModel()
         self.__fileNfoCache={}
         self.__icons={}
+        self.__markers.clear()
         self.__items=self.__fileList.files()
         self.endResetModel()
         self.__updateIcons()
@@ -344,19 +356,61 @@ class BCFileModel(QAbstractTableModel):
         """Return total number of rows"""
         return len(self.__items)
 
-    def setData(self, index, value, role):
+    def setData(self, index, value, role, emitDataChanged=True):
         """Set icon for given row"""
         if isinstance(index, int):
             file=self.__items[index]
             index=self.index(index, BCFileModel.COLNUM_ICON, QModelIndex())
         elif isinstance(index, QModelIndex):
             file=self.__items[index.row()]
+        elif isinstance(index, list):
+            rS=2147483647
+            rE=0
+            for item in index:
+                if isinstance(item, BCBaseFile):
+                    itemIndex=self.indexUuid(item.uuid())
+                    if len(itemIndex)==0:
+                        continue
+                    item=itemIndex[0]
+
+                if rS>item.row():
+                    rS=item.row()
+                if rE<item.row():
+                    rE=item.row()
+                self.setData(item, value, role, False)
+            if emitDataChanged and rS<rE:
+                indexS=self.index(rS, 0)
+                indexE=self.index(rE, BCFileModel.COLNUM_LAST)
+                self.dataChanged.emit(indexS, indexE, [role])
+                if role==BCFileModel.ROLE_MARKER:
+                    self.markersChanged.emit()
+            return
+        elif isinstance(index, BCBaseFile):
+            file=index
+            itemIndex=self.indexUuid(item.uuid())
+            if len(itemIndex)==0:
+                return
+            index=itemIndex[0]
         else:
             raise EInvalidType("Given `index` must be <QModelIndex> or <int>")
 
         if role==Qt.DecorationRole:
             self.__icons[file.uuid()]=value
-            self.dataChanged.emit(index, index, [Qt.DecorationRole])
+            if emitDataChanged:
+                self.dataChanged.emit(index, index, [Qt.DecorationRole])
+        elif role==BCFileModel.ROLE_MARKER:
+            if value:
+                self.__markers.add(file.uuid())
+            else:
+                try:
+                    self.__markers.remove(file.uuid())
+                except:
+                    pass
+            if emitDataChanged:
+                indexS=self.index(index.row(), 0)
+                indexE=self.index(index.row(), BCFileModel.COLNUM_LAST)
+                self.dataChanged.emit(indexS, indexE, [BCFileModel.ROLE_MARKER])
+                self.markersChanged.emit()
 
     def data(self, index, role=Qt.DisplayRole):
         """Return data for index+role"""
@@ -427,6 +481,12 @@ class BCFileModel(QAbstractTableModel):
             buildNfoFileCache(file.uuid())
 
             return self.__fileNfoCache[file.uuid()]
+        elif role == BCFileModel.ROLE_MARKER:
+            return file.uuid() in self.__markers
+        elif role==(BCFileModel.ROLE_GRIDNFO + BCFileModel.COLNUM_FILE_NAME):
+            return self.__getValueForColumn(file, BCFileModel.COLNUM_FILE_NAME)
+        elif role>=BCFileModel.ROLE_GRIDNFO:
+            return self.__getValueForColumn(file, role - BCFileModel.ROLE_GRIDNFO)
 
         return None
 
@@ -521,6 +581,47 @@ class BCFileModel(QAbstractTableModel):
         """Return if there's currently an asynchronous thumbnail loading process"""
         return self.__updatingIcons != BCFileModel.__STATUS_ICON_LOADED
 
+    def nbMarkers(self):
+        """Return number of marked files"""
+        return len(self.__markers)
+
+    def markers(self):
+        """Return list of uuid of marked files"""
+        return self.__markers
+
+
+
+class BCSortFilterProxyModel(QSortFilterProxyModel):
+    """A proxy model that take in account marked files"""
+
+    def __init__(self, parent=None):
+        super(BCSortFilterProxyModel, self).__init__(parent)
+        self.__markedFilesOnly=False
+
+    def setMarkedFilesOnly(self, value):
+        """Define if only marked files are returned or not"""
+        if self.__markedFilesOnly!=value:
+            self.__markedFilesOnly=value
+            self.invalidateFilter()
+
+    def filterAcceptsRow(self, sourceRow, sourceParent):
+        """Override method to take in account option self.__markedFilesOnly"""
+        returned=super(BCSortFilterProxyModel, self).filterAcceptsRow(sourceRow, sourceParent)
+
+        if not (returned or self.__markedFilesOnly):
+            # doesn't match current rules, no need to check for mark filter
+            return returned
+
+
+        index = self.sourceModel().index(sourceRow, 0, sourceParent)
+        isMarked=self.sourceModel().data(index, BCFileModel.ROLE_MARKER)
+
+        if isMarked and self.__markedFilesOnly or not self.__markedFilesOnly:
+            return returned
+        else:
+            return False
+
+
 
 class BCViewFilesTv(QTreeView):
     """Tree view files"""
@@ -528,12 +629,14 @@ class BCViewFilesTv(QTreeView):
     keyPressed = Signal(int)
     columnVisibilityChanged = Signal(list)     # [logicalIndex]=visibility
     columnPositionChanged = Signal(list)       # [logicalIndex]=visualIndex
+    iconSizeChanged = Signal(int)
 
     def __init__(self, parent=None):
         super(BCViewFilesTv, self).__init__(parent)
         self.__model = None
         self.__proxyModel = None
-        self.__filesFilter = ''
+        self.__filesFilterText = ''
+        self.__filesFilterOptions = 0
         self.__viewNfoRowLimit = 7
         self.__iconSize = BCIconSizes([16, 24, 32, 48, 64, 96, 128, 256, 512])
         self.__showPath = False
@@ -620,7 +723,7 @@ class BCViewFilesTv(QTreeView):
     def setModel(self, model):
         """Initialise treeview header & model"""
         self.__model=model
-        self.__proxyModel=QSortFilterProxyModel(self)
+        self.__proxyModel=BCSortFilterProxyModel(self)
         self.__proxyModel.setSourceModel(self.__model)
         self.__proxyModel.setDynamicSortFilter(False)
         self.__proxyModel.setFilterKeyColumn(BCFileModel.COLNUM_FILE_NAME)
@@ -700,6 +803,48 @@ class BCViewFilesTv(QTreeView):
 
         self.selectionModel().select(QItemSelection(first, last), QItemSelectionModel.Toggle)
 
+    def selectMarked(self):
+        """Select marked items"""
+        selection=QItemSelection()
+        for rowIndex in range(self.__proxyModel.rowCount()):
+            itemIndex=self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0))
+            if self.__model.data(itemIndex, BCFileModel.ROLE_MARKER):
+                selection.select(itemIndex, itemIndex)
+
+        self.selectionModel().select(selection, QItemSelectionModel.ClearAndSelect|QItemSelectionModel.Rows)
+
+    def markUnmark(self):
+        """Invert current marked items"""
+        itemIndex=self.__proxyModel.mapToSource(self.currentIndex())
+        self.__model.setData(itemIndex, not self.__model.data(itemIndex, BCFileModel.ROLE_MARKER), BCFileModel.ROLE_MARKER)
+
+        if BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_MARKERS_MOVETONEXT):
+            nextIndex=self.indexBelow(self.currentIndex())
+            if nextIndex.row()>-1:
+                self.setCurrentIndex(nextIndex)
+
+    def markAll(self):
+        """Mark all items"""
+        self.__model.setData([self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0)) for rowIndex in range(self.__proxyModel.rowCount())], True, BCFileModel.ROLE_MARKER)
+
+    def markNone(self):
+        """Unmark all items"""
+        self.__model.setData([self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0)) for rowIndex in range(self.__proxyModel.rowCount())], False, BCFileModel.ROLE_MARKER)
+
+    def markInvert(self):
+        """Invert current marked items"""
+        indexList=[]
+        indexListInverted=[]
+        for rowIndex in range(self.__proxyModel.rowCount()):
+            itemIndex=self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0))
+            indexList.append(itemIndex)
+
+            if not self.__model.data(itemIndex, BCFileModel.ROLE_MARKER):
+                indexListInverted.append(itemIndex)
+
+        self.__model.setData(indexList, False, BCFileModel.ROLE_MARKER, False)
+        self.__model.setData(indexListInverted, True, BCFileModel.ROLE_MARKER)
+
     def files(self):
         """Return a list of files, taking in account current proxymodel (return filtered files only)"""
         returned=[]
@@ -728,6 +873,10 @@ class BCViewFilesTv(QTreeView):
                 returned.append(fileNfo)
 
         return returned
+
+    def iconSizePixels(self):
+        """Return current icon size in pixels"""
+        return self.__iconSize.value()
 
     def iconSizeIndex(self):
         """Return current icon size index"""
@@ -768,30 +917,39 @@ class BCViewFilesTv(QTreeView):
                     header.setSectionHidden(logicalIndex, not logicalIndex in (BCFileModel.COLNUM_FULLNFO, BCFileModel.COLNUM_ICON))
                 self.resizeColumns(False)
 
-    def setFilter(self, filter):
+            self.iconSizeChanged.emit(self.__iconSize.index())
+
+    def setFilter(self, filterText, filterOptions):
         """Set current filter"""
-        if filter == self.__filesFilter:
+
+        if filterText is None:
+            filterText = self.__filesFilterText
+
+        if filterOptions is None:
+            filterOptions = self.__filesFilterOptions
+
+        if filterText == self.__filesFilterText and filterOptions == self.__filesFilterOptions:
             # filter unchanged, do nothing
             return
 
-        if filter is None:
-            filter = self.__filesFilter
+        if not isinstance(filterText, str):
+            raise EInvalidType('Given `filterText` must be a <str>')
 
-        if not isinstance(filter, str):
-            raise EInvalidType('Given `filter` must be a <str>')
+        self.__proxyModel.setMarkedFilesOnly(filterOptions&BCWPathBar.OPTION_FILTER_MARKED_ACTIVE==BCWPathBar.OPTION_FILTER_MARKED_ACTIVE)
 
-        if reFilter:=re.search('^re:(.*)', filter):
+        if filterOptions&SearchOptions.CASESENSITIVE:
             self.__proxyModel.setFilterCaseSensitivity(Qt.CaseSensitive)
-            self.__proxyModel.setFilterRegExp(reFilter.groups()[0])
-        elif reFilter:=re.search('^re\/i:(.*)', filter):
-            self.__proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-            self.__proxyModel.setFilterRegExp(reFilter.groups()[0])
         else:
-            #reFilter = re.escape(filter).replace(';', '|')
             self.__proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-            self.__proxyModel.setFilterWildcard(filter)
 
-        self.__filesFilter = filter
+
+        if filterOptions&SearchOptions.REGEX:
+            self.__proxyModel.setFilterRegExp(filterText)
+        else:
+            self.__proxyModel.setFilterWildcard(filterText)
+
+        self.__filesFilterText = filterText
+        self.__filesFilterOptions = filterOptions
 
     def viewThumbnail(self):
         """Return current view mode (list/icon)"""
@@ -848,6 +1006,20 @@ class BCViewFilesTv(QTreeView):
         else:
             raise EInvalidType("Given `value` must be a <bool>")
 
+    def markers(self):
+        """Return a <BCFile> list of marked files"""
+        markers=[]
+        for rowIndex in range(self.__proxyModel.rowCount()):
+            index=self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0))
+            if self.__model.data(index, BCFileModel.ROLE_MARKER):
+                markers.append(self.__model.data(index, BCFileModel.ROLE_FILE))
+        return markers
+
+    def setMarkers(self, markers):
+        """Set marked files"""
+        self.__model.setData([self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0)) for rowIndex in range(self.__proxyModel.rowCount())], False, BCFileModel.ROLE_MARKER, False)
+        self.__model.setData(markers, True, BCFileModel.ROLE_MARKER)
+
 
 class BCViewFilesTvDelegate(QStyledItemDelegate):
     """Extend QStyledItemDelegate class to return properly row height"""
@@ -872,15 +1044,20 @@ class BCViewFilesTvDelegate(QStyledItemDelegate):
 
         color=None
         overlay=False
+        isSelected=False
 
         if (option.state & QStyle.State_Selected) == QStyle.State_Selected:
+            colorText=option.palette.color(QPalette.HighlightedText)
             overlay=True
+            isSelected=True
             if self.parent().hasFocus():
                 color=option.palette.color(QPalette.Active, QPalette.Highlight)
             else:
                 color=option.palette.color(QPalette.Inactive, QPalette.Highlight)
+
             painter.setBrush(QBrush(color))
         else:
+            colorText=option.palette.color(QPalette.Text)
             if (option.features & QStyleOptionViewItem.Alternate):
                 color=option.palette.color(QPalette.AlternateBase)
             else:
@@ -888,6 +1065,8 @@ class BCViewFilesTvDelegate(QStyledItemDelegate):
 
         # draw background
         painter.fillRect(option.rect, color)
+
+        marked=index.data(BCFileModel.ROLE_MARKER)
 
         if index.column() == BCFileModel.COLNUM_ICON:
             # render centered icon
@@ -908,6 +1087,14 @@ class BCViewFilesTvDelegate(QStyledItemDelegate):
                 # selected item
                 color.setAlphaF(0.25)
                 painter.fillRect(QRect(position, img.size()), color)
+
+            if marked:
+                painter.setBrush(colorText)
+                painter.drawPolygon(QPoint(option.rect.right(), option.rect.bottom()),
+                                    QPoint(option.rect.right()-(BCViewFilesTvDelegate.ICON_RPADDING<<1), option.rect.bottom()),
+                                    QPoint(option.rect.right(), option.rect.bottom()-(BCViewFilesTvDelegate.ICON_RPADDING<<1)))
+
+
         elif index.column() == BCFileModel.COLNUM_FULLNFO:
             # render full information
             rectTxt = QRect(option.rect.left(), option.rect.top(), option.rect.width(), option.rect.height())
@@ -923,12 +1110,17 @@ class BCViewFilesTvDelegate(QStyledItemDelegate):
 
             painter.translate(QPointF(option.rect.topLeft()))
 
+            fntNormal=QFont(option.font)
+            if marked:
+                fntNormal.setItalic(True)
+                fntBold.setItalic(True)
+
             top=0
             for nfo in dataNfo[0]:
                 painter.setFont(fntBold)
                 painter.drawText(5, top, option.rect.width(), option.rect.height(), Qt.AlignLeft, nfo[0])
 
-                painter.setFont(option.font)
+                painter.setFont(fntNormal)
                 painter.drawText(wOffset, top, option.rect.width(), option.rect.height(), Qt.AlignLeft, nfo[1])
 
                 top+=hOffset
@@ -938,6 +1130,11 @@ class BCViewFilesTvDelegate(QStyledItemDelegate):
             dataNfo=index.data(Qt.DisplayRole)
 
             if not dataNfo is None:
+                if marked:
+                    fntMarker=QFont(option.font)
+                    fntMarker.setItalic(True)
+                    painter.setFont(fntMarker)
+
                 painter.drawText(option.rect.left(), option.rect.top(), option.rect.width(), option.rect.height(), index.data(Qt.TextAlignmentRole)|Qt.AlignVCenter, dataNfo)
 
         painter.restore()
@@ -958,14 +1155,25 @@ class BCViewFilesLv(QListView):
     """List view files"""
     focused = Signal()
     keyPressed = Signal(int)
+    iconSizeChanged = Signal(int)
+
+    OPTION_LAYOUT_GRIDINFO_NONE = 0
+    OPTION_LAYOUT_GRIDINFO_OVER = 1
+    OPTION_LAYOUT_GRIDINFO_BOTTOM = 2
+    OPTION_LAYOUT_GRIDINFO_RIGHT = 3
 
     def __init__(self, parent=None):
         super(BCViewFilesLv, self).__init__(parent)
         self.__model = None
         self.__proxyModel = None
-        self.__filesFilter = ''
+        self.__filesFilterText = ''
+        self.__filesFilterOptions = 0
         self.__iconSize = BCIconSizes([64, 96, 128, 192, 256, 512])
         self.__showPath = False
+
+        self.__gridNfoFields=[BCFileModel.COLNUM_FILE_NAME]
+        self.__gridNfoLayout=BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE
+        self.__gridNfoOverMinSize=2
 
         self.__visibleColumns=[v for v in BCFileModel.DEFAULT_COLUMN_VISIBILITY]
         self.__positionColumns=[v for v in range(BCFileModel.COLNUM_LAST+1)]
@@ -974,6 +1182,7 @@ class BCViewFilesLv(QListView):
         self.setItemDelegate(self.__delegate)
         self.setAutoScroll(True)
         self.setViewMode(QListView.IconMode)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSpacing(5)
         self.setUniformItemSizes(True)
 
@@ -1007,7 +1216,7 @@ class BCViewFilesLv(QListView):
         self.__model=model
         self.__model.setIconAsThumbnail(True)
         self.__model.setTooltipEnabled(True)
-        self.__proxyModel=QSortFilterProxyModel(self)
+        self.__proxyModel=BCSortFilterProxyModel(self)
         self.__proxyModel.setSourceModel(self.__model)
         self.__proxyModel.setDynamicSortFilter(False)
         self.__proxyModel.setFilterKeyColumn(BCFileModel.COLNUM_FILE_NAME)
@@ -1024,6 +1233,48 @@ class BCViewFilesLv(QListView):
         last = self.__proxyModel.index(self.__proxyModel.rowCount() - 1, 7)
 
         self.selectionModel().select(QItemSelection(first, last), QItemSelectionModel.Toggle)
+
+    def selectMarked(self):
+        """Select marked items"""
+        selection=QItemSelection()
+        for rowIndex in range(self.__proxyModel.rowCount()):
+            itemIndex=self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0))
+            if self.__model.data(itemIndex, BCFileModel.ROLE_MARKER):
+                selection.select(itemIndex, itemIndex)
+
+        self.selectionModel().select(selection, QItemSelectionModel.ClearAndSelect|QItemSelectionModel.Rows)
+
+    def markUnmark(self):
+        """Invert current marked items"""
+        itemIndex=self.__proxyModel.mapToSource(self.currentIndex())
+        self.__model.setData(itemIndex, not self.__model.data(itemIndex, BCFileModel.ROLE_MARKER), BCFileModel.ROLE_MARKER)
+
+        if BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_MARKERS_MOVETONEXT):
+            nextIndex=self.__proxyModel.index(self.currentIndex().row()+1, 0)
+            if nextIndex.row()>-1:
+                self.setCurrentIndex(nextIndex)
+
+    def markAll(self):
+        """Mark all items"""
+        self.__model.setData([self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0)) for rowIndex in range(self.__proxyModel.rowCount())], True, BCFileModel.ROLE_MARKER)
+
+    def markNone(self):
+        """Unmark all items"""
+        self.__model.setData([self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0)) for rowIndex in range(self.__proxyModel.rowCount())], False, BCFileModel.ROLE_MARKER)
+
+    def markInvert(self):
+        """Invert current marked items"""
+        indexList=[]
+        indexListInverted=[]
+        for rowIndex in range(self.__proxyModel.rowCount()):
+            itemIndex=self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0))
+            indexList.append(itemIndex)
+
+            if not self.__model.data(itemIndex, BCFileModel.ROLE_MARKER):
+                indexListInverted.append(itemIndex)
+
+        self.__model.setData(indexList, False, BCFileModel.ROLE_MARKER, False)
+        self.__model.setData(indexListInverted, True, BCFileModel.ROLE_MARKER)
 
     def files(self):
         """Return a list of files, taking in account current proxymodel (return filtered files only)"""
@@ -1054,6 +1305,10 @@ class BCViewFilesLv(QListView):
 
         return returned
 
+    def iconSizePixels(self):
+        """Return current icon size in pixels"""
+        return self.__iconSize.value()
+
     def iconSizeIndex(self):
         """Return current icon size index"""
         return self.__iconSize.index()
@@ -1069,31 +1324,39 @@ class BCViewFilesLv(QListView):
 
             self.__delegate.setIconSize(self.__iconSize.value())
             self.setIconSize(QSize(self.__iconSize.value(), self.__iconSize.value()))
+            self.iconSizeChanged.emit(self.__iconSize.index())
 
-    def setFilter(self, filter):
+    def setFilter(self, filterText, filterOptions):
         """Set current filter"""
-        if filter == self.__filesFilter:
+
+        if filterText is None:
+            filterText = self.__filesFilterText
+
+        if filterOptions is None:
+            filterOptions = self.__filesFilterOptions
+
+        if filterText == self.__filesFilterText and filterOptions == self.__filesFilterOptions:
             # filter unchanged, do nothing
             return
 
-        if filter is None:
-            filter = self.__filesFilter
+        if not isinstance(filterText, str):
+            raise EInvalidType('Given `filterText` must be a <str>')
 
-        if not isinstance(filter, str):
-            raise EInvalidType('Given `filter` must be a <str>')
+        self.__proxyModel.setMarkedFilesOnly(filterOptions&BCWPathBar.OPTION_FILTER_MARKED_ACTIVE==BCWPathBar.OPTION_FILTER_MARKED_ACTIVE)
 
-        if reFilter:=re.search('^re:(.*)', filter):
+        if filterOptions&SearchOptions.CASESENSITIVE:
             self.__proxyModel.setFilterCaseSensitivity(Qt.CaseSensitive)
-            self.__proxyModel.setFilterRegExp(reFilter.groups()[0])
-        elif reFilter:=re.search('^re\/i:(.*)', filter):
-            self.__proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-            self.__proxyModel.setFilterRegExp(reFilter.groups()[0])
         else:
-            #reFilter = re.escape(filter).replace(';', '|')
             self.__proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-            self.__proxyModel.setFilterWildcard(filter)
 
-        self.__filesFilter = filter
+
+        if filterOptions&SearchOptions.REGEX:
+            self.__proxyModel.setFilterRegExp(filterText)
+        else:
+            self.__proxyModel.setFilterWildcard(filterText)
+
+        self.__filesFilterText = filterText
+        self.__filesFilterOptions = filterOptions
 
     def viewThumbnail(self):
         """Return current view mode (list/icon)"""
@@ -1136,21 +1399,124 @@ class BCViewFilesLv(QListView):
         else:
             raise EInvalidType("Given `value` must be a <bool>")
 
+    def gridNfoFields(self):
+        """Return current fields displayed as grid information"""
+        return self.__gridNfoFields
+
+    def setGridNfoFields(self, gridNfoFields):
+        """Set current fields displayed as grid information"""
+        if not isinstance(gridNfoFields, (list, tuple)):
+            raise EInvalidType("Given `gridNfoFields` must be a <list> or a <tuple>")
+
+        self.__gridNfoFields=[]
+        for field in gridNfoFields:
+            if isinstance(field, int) and (field in [BCFileModel.COLNUM_FILE_NAME,
+                                                     BCFileModel.COLNUM_FILE_FORMAT_SHORT,
+                                                     BCFileModel.COLNUM_FILE_DATETIME,
+                                                     BCFileModel.COLNUM_FILE_SIZE,
+                                                     BCFileModel.COLNUM_IMAGE_SIZE]):
+                self.__gridNfoFields.append(field)
+
+        if len(self.__gridNfoFields)==0:
+            self.__gridNfoFields=[BCFileModel.COLNUM_FILE_NAME]
+
+        self.__delegate.setNfoFields(self.__gridNfoFields)
+
+    def gridNfoLayout(self):
+        """Return current grid information layout"""
+        return self.__gridNfoLayout
+
+    def setGridNfoLayout(self, gridNfoLayout):
+        """Set current fields displayed as grid information"""
+        if not isinstance(gridNfoLayout, int):
+            raise EInvalidType("Given `gridNfoLayout` must be a <int>")
+        if not gridNfoLayout in (BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE,
+                                 BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER,
+                                 BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM,
+                                 BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT):
+            raise EInvalidValue("Given `gridNfoLayout` must be a valid value")
+
+        if self.__gridNfoLayout!=gridNfoLayout:
+            self.__gridNfoLayout=gridNfoLayout
+            self.__delegate.setNfoLayout(self.__gridNfoLayout)
+
+    def gridNfoOverMinSize(self):
+        """Return current grid over minimum size
+        (Under this size, no information is displayed)
+        """
+        return self.__gridNfoOverMinSize
+
+    def setGridNfoOverMinSize(self, value):
+        """Set current fields displayed as grid information"""
+        if not isinstance(value, int):
+            raise EInvalidType("Given `value` must be a <int>")
+
+        if value!=self.__gridNfoOverMinSize:
+            self.__gridNfoOverMinSize=value
+            self.__delegate.setNfoOverMinSize(self.__gridNfoOverMinSize)
+
+    def markers(self):
+        """Return a <BCFile> list of marked files"""
+        markers=[]
+        for rowIndex in range(self.__proxyModel.rowCount()):
+            index=self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0))
+            if self.__model.data(index, BCFileModel.ROLE_MARKER):
+                markers.append(self.__model.data(index, BCFileModel.ROLE_FILE))
+        return markers
+
+    def setMarkers(self, markers):
+        """Set marked files"""
+        self.__model.setData([self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0)) for rowIndex in range(self.__proxyModel.rowCount())], False, BCFileModel.ROLE_MARKER, False)
+        self.__model.setData(markers, True, BCFileModel.ROLE_MARKER)
+
 
 class BCViewFilesLvDelegate(QStyledItemDelegate):
     """Extend QStyledItemDelegate class to return properly cell size"""
 
     PADDING=6
 
+    ICON_SIZE_INDEX_FONT_FACTOR=[0.75, 0.75, 0.8, 0.9, 0.95, 1.0]
+
     def __init__(self, parent=None):
         """Constructor, nothingspecial"""
         super(BCViewFilesLvDelegate, self).__init__(parent)
+        self.__font=QFont(self.parent().font())
+        self.__fontMetrics=QFontMetrics(self.__font)
+        self.__iconSizeIndex=self.parent().iconSizeIndex()
+        self.__nfoOverMinSize=2
+        self.__nfoNbFields=1
+        self.__nfoFields=[2]
+        self.__nfoLayout=BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE
         self.__iconSizeThumb=QSize(64, 64)
         self.__iconSizeGrid=QSize(BCViewFilesLvDelegate.PADDING+64, BCViewFilesLvDelegate.PADDING+64)
+        self.__iconNfoRect=None
+
+        self.__fontPixelSize=self.__font.pixelSize()
+        self.__fontPointSizeF=self.__font.pointSizeF()
 
     def setIconSize(self, value):
         self.__iconSizeThumb=QSize(value, value)
-        self.__iconSizeGrid=QSize(BCViewFilesLvDelegate.PADDING+value, BCViewFilesLvDelegate.PADDING+value)
+        self.__iconSizeGrid=QSize(2*BCViewFilesLvDelegate.PADDING+value, 2*BCViewFilesLvDelegate.PADDING+value)
+        self.__iconSizeIndex=self.parent().iconSizeIndex()
+
+        if self.__fontPixelSize>-1:
+            self.__font.setPixelSize(round(self.__fontPixelSize * BCViewFilesLvDelegate.ICON_SIZE_INDEX_FONT_FACTOR[self.__iconSizeIndex]))
+        else:
+            self.__font.setPointSizeF(round(self.__fontPointSizeF * BCViewFilesLvDelegate.ICON_SIZE_INDEX_FONT_FACTOR[self.__iconSizeIndex]))
+
+        self.sizeHintChanged.emit(self.parent().model().createIndex(0, BCFileModel.COLNUM_ICON))
+
+    def setNfoLayout(self, value):
+        self.__nfoLayout=value
+        self.sizeHintChanged.emit(self.parent().model().createIndex(0, BCFileModel.COLNUM_ICON))
+
+    def setNfoOverMinSize(self, value):
+        self.__nfoOverMinSize=value
+        self.sizeHintChanged.emit(self.parent().model().createIndex(0, BCFileModel.COLNUM_ICON))
+
+    def setNfoFields(self, value):
+        self.__nfoNbFields=len(value)
+        self.__nfoFields=value
         self.sizeHintChanged.emit(self.parent().model().createIndex(0, BCFileModel.COLNUM_ICON))
 
     def paint(self, painter, option, index):
@@ -1163,27 +1529,65 @@ class BCViewFilesLvDelegate(QStyledItemDelegate):
             # icon as QIcon
             img=index.data(Qt.DecorationRole).pixmap(self.__iconSizeThumb)
 
-            position=QPoint(option.rect.left()+(option.rect.width()-img.width())//2, option.rect.top()+(option.rect.height()-img.height())//2)
+            position=QPoint(option.rect.left()+(self.__iconSizeGrid.width()-img.width())//2, option.rect.top()+(self.__iconSizeGrid.height()-img.height())//2)
 
+            isSelected=False
             color=None
             painter.setPen(QPen(Qt.NoPen))
             if (option.state & QStyle.State_Selected) == QStyle.State_Selected:
+                isSelected=True
                 if self.parent().hasFocus():
                     color=option.palette.color(QPalette.Active, QPalette.Highlight)
                 else:
                     color=option.palette.color(QPalette.Inactive, QPalette.Highlight)
 
-                painter.setBrush(QBrush(color))
+                colorText=option.palette.color(QPalette.HighlightedText)
             else:
-                painter.setBrush(QBrush(option.palette.color(QPalette.AlternateBase)))
+                color=option.palette.color(QPalette.AlternateBase)
+                colorText=option.palette.color(QPalette.Text)
 
+            textPen=QPen(colorText)
+            textPenS=QPen(color)
+            painter.setBrush(QBrush(color))
             painter.drawRoundedRect(option.rect, 6, 6)
             painter.drawPixmap(position, img)
-            if not color is None:
+
+            if not self.__iconNfoRect is None:
+                textRect=QRect(option.rect.topLeft() + self.__iconNfoRect.topLeft(), self.__iconNfoRect.size())
+
+                if self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER:
+                    colorOver=QColor(color)
+                    colorOver.setAlphaF(0.65)
+                    painter.setBrush(QBrush(colorOver))
+                    painter.drawRect(textRect)
+
+            if isSelected:
                 # selected item
                 color.setAlphaF(0.25)
                 overRect=QRect(position, img.size())
                 painter.fillRect(overRect, color)
+
+            marked=index.data(BCFileModel.ROLE_MARKER)
+
+            if not self.__iconNfoRect is None:
+                if marked:
+                    self.__font.setItalic(True)
+                painter.setFont(self.__font)
+                painter.setPen(textPen)
+                for fieldIndex in self.__nfoFields:
+                    fieldText=self.__fontMetrics.elidedText(index.data(BCFileModel.ROLE_GRIDNFO + fieldIndex), Qt.ElideRight, textRect.width())
+                    if self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER:
+                        painter.setPen(textPenS)
+                        painter.drawText(QRect(textRect.topLeft()+QPoint(1,1), textRect.size()), Qt.AlignLeft|Qt.AlignTop, fieldText)
+                        painter.setPen(textPen)
+                    painter.drawText(textRect, Qt.AlignLeft|Qt.AlignTop, fieldText)
+                    textRect.setTop(textRect.top()+self.__fontMetrics.height())
+
+            if marked:
+                painter.setBrush(colorText)
+                painter.drawPolygon(QPoint(option.rect.right(), option.rect.bottom()),
+                                    QPoint(option.rect.right()-(BCViewFilesLvDelegate.PADDING<<1), option.rect.bottom()),
+                                    QPoint(option.rect.right(), option.rect.bottom()-(BCViewFilesLvDelegate.PADDING<<1)))
 
             return
 
@@ -1192,6 +1596,23 @@ class BCViewFilesLvDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
         """Calculate size for items"""
         if index.column() == BCFileModel.COLNUM_ICON:
+            if self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE or self.parent().iconSizeIndex()<self.__nfoOverMinSize:
+                self.__iconNfoRect=None
+                return self.__iconSizeGrid
+
+            height=self.__nfoNbFields * self.__fontMetrics.height()
+            width=self.__iconSizeThumb.width()
+
+            if self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER:
+                self.__iconNfoRect=QRect(BCViewFilesLvDelegate.PADDING, self.__iconSizeGrid.height() - BCViewFilesLvDelegate.PADDING - height, width, height)
+                return self.__iconSizeGrid
+            elif self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM:
+                self.__iconNfoRect=QRect(BCViewFilesLvDelegate.PADDING, self.__iconSizeThumb.height()+2*BCViewFilesLvDelegate.PADDING, width, height)
+                return QSize(self.__iconSizeGrid.width(), self.__iconSizeGrid.height() + self.__iconNfoRect.height() + BCViewFilesLvDelegate.PADDING)
+            elif self.__nfoLayout==BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT:
+                self.__iconNfoRect=QRect(self.__iconSizeThumb.width() + 2 * BCViewFilesLvDelegate.PADDING, BCViewFilesLvDelegate.PADDING, width, height)
+                return QSize(self.__iconSizeThumb.width()*2+3*BCViewFilesLvDelegate.PADDING, self.__iconSizeGrid.height())
+
             return self.__iconSizeGrid
 
         return QStyledItemDelegate.sizeHint(self, option, index)

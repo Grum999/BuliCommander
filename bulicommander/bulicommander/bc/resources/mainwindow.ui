@@ -37,7 +37,7 @@
     </property>
     <widget class="QMenu" name="menuOpen_file_as">
      <property name="title">
-      <string>Open file as</string>
+      <string>Open &amp;file as</string>
      </property>
      <property name="icon">
       <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
@@ -65,9 +65,15 @@
     <property name="title">
      <string>E&amp;dit</string>
     </property>
-    <addaction name="actionSelectAll"/>
-    <addaction name="actionSelectNone"/>
-    <addaction name="actionSelectInvert"/>
+    <addaction name="actionMenuEditSelectAll"/>
+    <addaction name="actionMenuEditSelectNone"/>
+    <addaction name="actionMenuEditSelectInvert"/>
+    <addaction name="actionMenuEditSelectMarked"/>
+    <addaction name="separator"/>
+    <addaction name="actionMenuEditMarkUnmark"/>
+    <addaction name="actionMenuEditMarkAll"/>
+    <addaction name="actionMenuEditMarkNone"/>
+    <addaction name="actionMenuEditMarkInvert"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -88,7 +94,25 @@
        <normaloff>:/pktk/images/normal/saved_views</normaloff>
        <disabledoff>:/pktk/images/disabled/saved_views</disabledoff>:/pktk/images/normal/saved_views</iconset>
      </property>
+     <widget class="QMenu" name="menuGoSavedViewsAddToView">
+      <property name="title">
+       <string>&amp;Add to view</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normalon>:/pktk/images/normal/saved_views_add</normalon>
+        <disabledon>:/pktk/images/disabled/saved_views_add</disabledon>
+       </iconset>
+      </property>
+      <addaction name="actionGoSavedViewsAddToViewNewView"/>
+      <addaction name="separator"/>
+     </widget>
+     <addaction name="actionGoSavedViewsClearViewContent"/>
+     <addaction name="menuGoSavedViewsAddToView"/>
+     <addaction name="actionGoSavedViewsRemoveFromView"/>
      <addaction name="separator"/>
+     <addaction name="actionGoSavedViewsDeleteView"/>
+     <addaction name="actionGoSavedViewsRenameView"/>
     </widget>
     <widget class="QMenu" name="menuGoHistory">
      <property name="title">
@@ -102,6 +126,8 @@
      <property name="toolTipsVisible">
       <bool>true</bool>
      </property>
+     <addaction name="actionGoHistoryClearHistory"/>
+     <addaction name="separator"/>
     </widget>
     <widget class="QMenu" name="menuGoBookmark">
      <property name="toolTip">
@@ -121,6 +147,11 @@
      <property name="toolTipsVisible">
       <bool>true</bool>
      </property>
+     <addaction name="actionGoBookmarksClearBookmarks"/>
+     <addaction name="separator"/>
+     <addaction name="actionGoBookmarksAddBookmark"/>
+     <addaction name="actionGoBookmarksRemoveFromBookmark"/>
+     <addaction name="actionGoBookmarksRenameBookmark"/>
      <addaction name="separator"/>
     </widget>
     <widget class="QMenu" name="menuGoLastDocuments">
@@ -132,6 +163,9 @@
        <normaloff>:/pktk/images/normal/saved_view_last</normaloff>
        <disabledoff>:/pktk/images/disabled/saved_view_last</disabledoff>:/pktk/images/normal/saved_view_last</iconset>
      </property>
+     <addaction name="actionGoLastDocumentsLastDocuments"/>
+     <addaction name="actionGoLastDocumentsLastOpenedDocuments"/>
+     <addaction name="actionGoLastDocumentsLastSavedDocuments"/>
     </widget>
     <addaction name="actionGoHome"/>
     <addaction name="actionGoUp"/>
@@ -146,13 +180,39 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
+    <widget class="QMenu" name="menuViewLayout">
+     <property name="toolTip">
+      <string>Panel layout</string>
+     </property>
+     <property name="statusTip">
+      <string>Panel layout</string>
+     </property>
+     <property name="title">
+      <string>&amp;Layout</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normalon>:/pktk/images/normal/dashboard</normalon>
+       <disabledon>:/pktk/images/disabled/dashboard</disabledon>
+      </iconset>
+     </property>
+     <addaction name="actionViewLayoutFullMode"/>
+     <addaction name="actionViewLayoutTopBottom"/>
+     <addaction name="actionViewLayoutLeftRight"/>
+     <addaction name="actionViewLayoutBottomTop"/>
+     <addaction name="actionViewLayoutRightLeft"/>
+     <addaction name="separator"/>
+     <addaction name="actionViewLayoutViewAsList"/>
+     <addaction name="actionViewLayoutViewAsGrid"/>
+     <addaction name="separator"/>
+    </widget>
     <addaction name="actionViewThumbnail"/>
     <addaction name="separator"/>
     <addaction name="actionViewShowImageFileOnly"/>
     <addaction name="actionViewShowBackupFiles"/>
     <addaction name="actionViewShowHiddenFiles"/>
     <addaction name="separator"/>
-    <addaction name="actionViewDisplayLayout"/>
+    <addaction name="menuViewLayout"/>
     <addaction name="separator"/>
     <addaction name="actionViewDisplayQuickFilter"/>
     <addaction name="actionViewDisplaySecondaryPanel"/>
@@ -172,7 +232,19 @@
     <property name="title">
      <string>Setti&amp;ngs</string>
     </property>
+    <widget class="QMenu" name="menuSettingsToolbars">
+     <property name="title">
+      <string>&amp;Toolbars</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normalon>:/pktk/images/normal/toolbar</normalon>
+       <disabledon>:/pktk/images/disabled/toolbar</disabledon>
+      </iconset>
+     </property>
+    </widget>
     <addaction name="actionSettingsPreferences"/>
+    <addaction name="menuSettingsToolbars"/>
     <addaction name="separator"/>
     <addaction name="actionSettingsSaveSessionOnExit"/>
     <addaction name="actionSettingsResetSessionToDefault"/>
@@ -181,6 +253,8 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="actionHelpManagedFilesFormats"/>
+    <addaction name="separator"/>
     <addaction name="actionHelpAboutBC"/>
    </widget>
    <widget class="QMenu" name="menuClipboard">
@@ -297,6 +371,9 @@
    <property name="text">
     <string>&amp;New folder...</string>
    </property>
+   <property name="iconText">
+    <string>New folder...</string>
+   </property>
    <property name="toolTip">
     <string>Create a new folder in current directory</string>
    </property>
@@ -317,11 +394,14 @@
    <property name="text">
     <string>&amp;Open file</string>
    </property>
+   <property name="iconText">
+    <string>Open</string>
+   </property>
    <property name="toolTip">
-    <string>Open the selected file in Krita and keep Buli Commander opened</string>
+    <string>Open the selected file(s) in Krita and keep Buli Commander opened</string>
    </property>
    <property name="statusTip">
-    <string>Open the selected file in Krita and keep Buli Commander opened</string>
+    <string>Open the selected file(s) in Krita and keep Buli Commander opened</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -337,11 +417,14 @@
    <property name="text">
     <string>&amp;Copy to other panel</string>
    </property>
+   <property name="iconText">
+    <string>Copy</string>
+   </property>
    <property name="toolTip">
-    <string>Copy selected files to other panel location</string>
+    <string>Copy selected file(s) to other panel location</string>
    </property>
    <property name="statusTip">
-    <string>Copy selected files to other panel location</string>
+    <string>Copy selected file(s) to other panel location</string>
    </property>
    <property name="shortcut">
     <string>F5</string>
@@ -357,11 +440,14 @@
    <property name="text">
     <string>&amp;Move to other panel</string>
    </property>
+   <property name="iconText">
+    <string>Move</string>
+   </property>
    <property name="toolTip">
-    <string>Move selected files to other panel location</string>
+    <string>Move selected file(s) to other panel location</string>
    </property>
    <property name="statusTip">
-    <string>Move selected files to other panel location</string>
+    <string>Move selected file(s) to other panel location</string>
    </property>
    <property name="shortcut">
     <string>F6</string>
@@ -377,11 +463,14 @@
    <property name="text">
     <string>&amp;Delete...</string>
    </property>
+   <property name="iconText">
+    <string>Delete...</string>
+   </property>
    <property name="toolTip">
-    <string>Delete selected files</string>
+    <string>Delete selected file(s)</string>
    </property>
    <property name="statusTip">
-    <string>Delete selected files</string>
+    <string>Delete selected file(s)</string>
    </property>
    <property name="shortcut">
     <string>F8</string>
@@ -397,28 +486,17 @@
    <property name="text">
     <string>&amp;Rename...</string>
    </property>
+   <property name="iconText">
+    <string>Rename...</string>
+   </property>
    <property name="toolTip">
-    <string>Rename selected files</string>
+    <string>Rename selected file(s)</string>
    </property>
    <property name="statusTip">
-    <string>Rename selected files</string>
+    <string>Rename selected file(s)</string>
    </property>
    <property name="shortcut">
     <string>F2</string>
-   </property>
-  </action>
-  <action name="actionFileToArchive">
-   <property name="text">
-    <string>&amp;Archive...</string>
-   </property>
-   <property name="toolTip">
-    <string>Pack selected selected files in an archive (tar.gz, zip)</string>
-   </property>
-   <property name="statusTip">
-    <string>Pack selected selected files in an archive (tar.gz, zip)</string>
-   </property>
-   <property name="whatsThis">
-    <string>Archive selected files (tar.gz, zip)</string>
    </property>
   </action>
   <action name="actionFileQuit">
@@ -441,27 +519,7 @@
     <string>Ctrl+Q</string>
    </property>
   </action>
-  <action name="actionFileOpenCloseBC">
-   <property name="icon">
-    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
-     <normaloff>:/pktk/images/normal/folder_open</normaloff>
-     <disabledoff>:/pktk/images/disabled/folder_open</disabledoff>
-     <disabledon>:/pktk/images/disabled/folder_open</disabledon>:/pktk/images/normal/folder_open</iconset>
-   </property>
-   <property name="text">
-    <string>Open &amp;file and close Buli Commander</string>
-   </property>
-   <property name="toolTip">
-    <string>Open selected file in Krita and close Buli Commander</string>
-   </property>
-   <property name="statusTip">
-    <string>Open selected file in Krita and close Buli Commander</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+O</string>
-   </property>
-  </action>
-  <action name="actionSelectAll">
+  <action name="actionMenuEditSelectAll">
    <property name="icon">
     <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
      <normaloff>:/pktk/images/normal/select_all</normaloff>
@@ -480,7 +538,7 @@
     <string>Ctrl+A</string>
    </property>
   </action>
-  <action name="actionSelectNone">
+  <action name="actionMenuEditSelectNone">
    <property name="icon">
     <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
      <normaloff>:/pktk/images/normal/select_none</normaloff>
@@ -499,7 +557,7 @@
     <string>Ctrl+Shift+A</string>
    </property>
   </action>
-  <action name="actionSelectInvert">
+  <action name="actionMenuEditSelectInvert">
    <property name="icon">
     <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
      <normaloff>:/pktk/images/normal/select_invert</normaloff>
@@ -556,17 +614,6 @@
     <string>Alt+Left</string>
    </property>
   </action>
-  <action name="actionGoBookmark_clearBookmark">
-   <property name="text">
-    <string>&amp;Clear bookmarks</string>
-   </property>
-   <property name="toolTip">
-    <string>Remove all bookmarked paths</string>
-   </property>
-   <property name="statusTip">
-    <string>Remove all bookmarked paths</string>
-   </property>
-  </action>
   <action name="actionViewThumbnail">
    <property name="checkable">
     <bool>true</bool>
@@ -595,6 +642,12 @@
    </property>
    <property name="checked">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/file_image</normalon>
+     <disabledon>:/pktk/images/disabled/file_image</disabledon>
+    </iconset>
    </property>
    <property name="text">
     <string>&amp;Show managed image files only</string>
@@ -646,28 +699,17 @@
    <property name="text">
     <string>Display secondary panel (&amp;right side)</string>
    </property>
+   <property name="iconText">
+    <string>Secondary panel</string>
+   </property>
    <property name="toolTip">
-    <string>Display secondary panel (right side)</string>
+    <string>Display/Hide secondary panel (right side)</string>
    </property>
    <property name="statusTip">
-    <string>Display secondary panel (right side)</string>
+    <string>Display/Hide secondary panel (right side)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+R</string>
-   </property>
-  </action>
-  <action name="actionViewDisplayRightSidebar">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Display &amp;right sidebar</string>
-   </property>
-   <property name="toolTip">
-    <string>Display sidebar from right panel</string>
-   </property>
-   <property name="statusTip">
-    <string>Display sidebar from right panel</string>
    </property>
   </action>
   <action name="actionViewSwapPanels">
@@ -693,6 +735,12 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/file_backup</normalon>
+     <disabledon>:/pktk/images/disabled/file_backup</disabledon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Show &amp;backup files</string>
    </property>
@@ -715,6 +763,9 @@
    <property name="text">
     <string>&amp;Search...</string>
    </property>
+   <property name="iconText">
+    <string>Search...</string>
+   </property>
    <property name="toolTip">
     <string>Open advanced search window</string>
    </property>
@@ -734,6 +785,9 @@
    <property name="text">
     <string>&amp;Preferences...</string>
    </property>
+   <property name="iconText">
+    <string>Preferences...</string>
+   </property>
    <property name="toolTip">
     <string>Open Buli Commander settings window</string>
    </property>
@@ -751,7 +805,7 @@
     <string>&amp;About Buli Commander...</string>
    </property>
    <property name="iconText">
-    <string>About Buli Commander...</string>
+    <string>About</string>
    </property>
    <property name="toolTip">
     <string>Open About Buli Commander window</string>
@@ -761,23 +815,6 @@
    </property>
    <property name="shortcut">
     <string>Shift+F1</string>
-   </property>
-  </action>
-  <action name="actionSelectRegEx">
-   <property name="text">
-    <string>&amp;RegEx select...</string>
-   </property>
-   <property name="toolTip">
-    <string>Select files matching given regular expression</string>
-   </property>
-   <property name="statusTip">
-    <string>Select files matching given regular expression</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+R</string>
-   </property>
-   <property name="visible">
-    <bool>true</bool>
    </property>
   </action>
   <action name="actionFileOpenAsNewDocument">
@@ -790,39 +827,31 @@
    <property name="text">
     <string>O&amp;pen file as new document</string>
    </property>
+   <property name="iconText">
+    <string>Open as new document</string>
+   </property>
    <property name="toolTip">
-    <string>Open the selected file in Krita as a new document and keep Buli Commander opened</string>
+    <string>Open the selected file(s) in Krita as a new document and keep Buli Commander opened</string>
    </property>
    <property name="statusTip">
-    <string>Open the selected file in Krita as a new document and keep Buli Commander opened</string>
+    <string>Open the selected file(s) in Krita as a new document and keep Buli Commander opened</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
    </property>
   </action>
-  <action name="actionFileOpenAsNewDocumentCloseBC">
-   <property name="icon">
-    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
-     <normaloff>:/pktk/images/normal/folder_open_new</normaloff>
-     <disabledoff>:/pktk/images/disabled/folder_open_new</disabledoff>
-     <disabledon>:/pktk/images/disabled/folder_open_new</disabledon>:/pktk/images/normal/folder_open_new</iconset>
-   </property>
-   <property name="text">
-    <string>Open file as new document and close &amp;Buli Commander</string>
-   </property>
-   <property name="toolTip">
-    <string>Open selected file in Krita as new document and close Buli Commander</string>
-   </property>
-   <property name="statusTip">
-    <string>Open selected file in Krita as new document and close Buli Commander</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+N</string>
-   </property>
-  </action>
   <action name="actionSettingsResetSessionToDefault">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/application_session_reset</normalon>
+     <disabledon>:/pktk/images/disabled/application_session_reset</disabledon>
+    </iconset>
+   </property>
    <property name="text">
     <string>&amp;Reset session to default</string>
+   </property>
+   <property name="iconText">
+    <string>Reset session</string>
    </property>
    <property name="statusTip">
     <string>Reset session to default</string>
@@ -835,8 +864,17 @@
    <property name="checked">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/application_session_save</normalon>
+     <disabledon>:/pktk/images/disabled/application_session_save</disabledon>
+    </iconset>
+   </property>
    <property name="text">
     <string>&amp;Save session on exit</string>
+   </property>
+   <property name="statusTip">
+    <string>Save session on exit</string>
    </property>
   </action>
   <action name="actionGoHome">
@@ -848,13 +886,14 @@
    <property name="text">
     <string>Ho&amp;me</string>
    </property>
+   <property name="toolTip">
+    <string>Go to home directory</string>
+   </property>
+   <property name="statusTip">
+    <string>Go to home directory</string>
+   </property>
    <property name="shortcut">
     <string>Alt+Home</string>
-   </property>
-  </action>
-  <action name="actiontest">
-   <property name="text">
-    <string>test</string>
    </property>
   </action>
   <action name="actionToolsExportFiles">
@@ -866,11 +905,14 @@
    <property name="text">
     <string>&amp;Export files list...</string>
    </property>
+   <property name="iconText">
+    <string>Export files list...</string>
+   </property>
    <property name="toolTip">
-    <string>Export files list to clipboard or a to a file</string>
+    <string>Export files list to clipboard or as document</string>
    </property>
    <property name="statusTip">
-    <string>Export current file list (or selected files) to clipboard or to a file</string>
+    <string>Export current file list (or selected files) to clipboard or as document</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+E</string>
@@ -884,6 +926,15 @@
    </property>
    <property name="text">
     <string>&amp;Convert files...</string>
+   </property>
+   <property name="iconText">
+    <string>Convert files...</string>
+   </property>
+   <property name="toolTip">
+    <string>Convert selected file(s) to PNG/JPEG</string>
+   </property>
+   <property name="statusTip">
+    <string>Convert selected file(s) to PNG/JPEG</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+C</string>
@@ -900,6 +951,15 @@
    </property>
    <property name="text">
     <string>&amp;Display quick filter</string>
+   </property>
+   <property name="iconText">
+    <string>Quick filter</string>
+   </property>
+   <property name="toolTip">
+    <string>Display/Hide quick filter</string>
+   </property>
+   <property name="statusTip">
+    <string>Display/Hide quick filter</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+F</string>
@@ -964,15 +1024,6 @@
     <string>Open image from file stored in cache </string>
    </property>
   </action>
-  <action name="actionClipboardSaveAs">
-   <property name="icon">
-    <iconset theme="document-save-as">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Copy to other panel</string>
-   </property>
-  </action>
   <action name="actionClipboardSetPersistent">
    <property name="icon">
     <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
@@ -1021,6 +1072,9 @@
    </property>
    <property name="text">
     <string>&amp;Quit</string>
+   </property>
+   <property name="statusTip">
+    <string>Quit</string>
    </property>
   </action>
   <action name="actionClipboardPushBack">
@@ -1096,6 +1150,9 @@
    <property name="text">
     <string>&amp;Check clipboard content</string>
    </property>
+   <property name="statusTip">
+    <string>Check clipboard content</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+L</string>
    </property>
@@ -1114,6 +1171,9 @@
    <property name="text">
     <string>Paste as reference &amp;image</string>
    </property>
+   <property name="statusTip">
+    <string>Paste as reference image</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+Shift+R</string>
    </property>
@@ -1129,20 +1189,14 @@
    <property name="text">
     <string>Open file as Reference &amp;Image</string>
    </property>
+   <property name="iconText">
+    <string>Open as Reference Image</string>
+   </property>
+   <property name="toolTip">
+    <string>Open file(s) as Reference Image</string>
+   </property>
    <property name="statusTip">
-    <string>Open file as Reference Image</string>
-   </property>
-  </action>
-  <action name="actionFileOpenAsImageReferenceCloseBC">
-   <property name="icon">
-    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
-     <normaloff>:/pktk/images/normal/folder_open_pinned</normaloff>
-     <normalon>:/pktk/images/normal/folder_open_pinned</normalon>
-     <disabledoff>:/pktk/images/disabled/folder_open_pinned</disabledoff>
-     <disabledon>:/pktk/images/disabled/folder_open_pinned</disabledon>:/pktk/images/normal/folder_open_pinned</iconset>
-   </property>
-   <property name="text">
-    <string>Op&amp;en file as Reference Image and close Buli Commander</string>
+    <string>Open file(s) as Reference Image</string>
    </property>
   </action>
   <action name="actionToolsCopyToClipboard">
@@ -1161,11 +1215,6 @@
     <string>Ctrl+C</string>
    </property>
   </action>
-  <action name="actionViewDisplayLayout">
-   <property name="text">
-    <string>&amp;Layout</string>
-   </property>
-  </action>
   <action name="actionFileOpenAsLayer">
    <property name="icon">
     <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
@@ -1173,13 +1222,16 @@
      <disabledoff>:/pktk/images/disabled/folder_open_layers</disabledoff>:/pktk/images/normal/folder_open_layers</iconset>
    </property>
    <property name="text">
-    <string>Open file as Layer</string>
+    <string>&amp;Open file as Layer</string>
+   </property>
+   <property name="iconText">
+    <string>Open as Layer</string>
    </property>
    <property name="toolTip">
-    <string>Open file as raster Layer for bitmap images/as Vector layer for vector images</string>
+    <string>Open file(s) as raster Layer for bitmap images/as Vector layer for vector images</string>
    </property>
    <property name="statusTip">
-    <string>Open file as raster Layer for bitmap images/as Vector layer for vector images</string>
+    <string>Open file(s) as raster Layer for bitmap images/as Vector layer for vector images</string>
    </property>
   </action>
   <action name="actionFileOpenAsFileLayer">
@@ -1189,13 +1241,545 @@
      <disabledoff>:/pktk/images/disabled/folder_open_link</disabledoff>:/pktk/images/normal/folder_open_link</iconset>
    </property>
    <property name="text">
-    <string>Open file as File layer</string>
+    <string>Open &amp;file as File layer</string>
+   </property>
+   <property name="iconText">
+    <string>Open as File layer</string>
    </property>
    <property name="toolTip">
-    <string>Open file as a File layer</string>
+    <string>Open file(s) as a File layer</string>
    </property>
    <property name="statusTip">
-    <string>Open file as a File layer</string>
+    <string>Open file(s) as a File layer</string>
+   </property>
+  </action>
+  <action name="actionMenuEditMarkAll">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/marks_mark-all</normalon>
+     <disabledon>:/pktk/images/disabled/marks_mark-all</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Ma&amp;rk all</string>
+   </property>
+   <property name="toolTip">
+    <string>Mark all files</string>
+   </property>
+   <property name="statusTip">
+    <string>Mark all files</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Space</string>
+   </property>
+  </action>
+  <action name="actionMenuEditMarkNone">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/marks_unmark-all</normalon>
+     <disabledon>:/pktk/images/disabled/marks_unmark-all</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Mar&amp;k none</string>
+   </property>
+   <property name="toolTip">
+    <string>Unmark all files</string>
+   </property>
+   <property name="statusTip">
+    <string>Unmark all files</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+Space</string>
+   </property>
+  </action>
+  <action name="actionMenuEditMarkInvert">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/marks_mark-invert</normalon>
+     <disabledon>:/pktk/images/disabled/marks_mark-invert</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>In&amp;vert marks</string>
+   </property>
+   <property name="toolTip">
+    <string>Invert marked file(s)</string>
+   </property>
+   <property name="statusTip">
+    <string>Invert marked file(s)</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+Space</string>
+   </property>
+  </action>
+  <action name="actionMenuEditMarkUnmark">
+   <property name="icon">
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/marks_mark-unmark</normaloff>
+     <disabledon>:/pktk/images/disabled/marks_mark-invert</disabledon>:/pktk/images/normal/marks_mark-unmark</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Mark/Unmark</string>
+   </property>
+   <property name="toolTip">
+    <string>Mark/Unmark current file</string>
+   </property>
+   <property name="statusTip">
+    <string>Mark/Unmark current file</string>
+   </property>
+   <property name="shortcut">
+    <string>Space</string>
+   </property>
+  </action>
+  <action name="actionMenuEditSelectMarked">
+   <property name="icon">
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/select_marked</normaloff>
+     <disabledon>:/pktk/images/disabled/select_marked</disabledon>:/pktk/images/normal/select_marked</iconset>
+   </property>
+   <property name="text">
+    <string>S&amp;elect marked</string>
+   </property>
+   <property name="toolTip">
+    <string>Select marked file(s)</string>
+   </property>
+   <property name="statusTip">
+    <string>Select marked file(s)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
+   </property>
+  </action>
+  <action name="actionGoHistoryClearHistory">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/history_clear</normalon>
+     <disabledon>:/pktk/images/disabled/history_clear</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Clear history</string>
+   </property>
+   <property name="iconText">
+    <string>Clear history</string>
+   </property>
+   <property name="toolTip">
+    <string>Clear all paths from history</string>
+   </property>
+   <property name="statusTip">
+    <string>Clear all paths from history</string>
+   </property>
+  </action>
+  <action name="actionGoBookmarksClearBookmarks">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/bookmarks_clear</normalon>
+     <disabledon>:/pktk/images/disabled/bookmarks_clear</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Clear bookmarks</string>
+   </property>
+   <property name="iconText">
+    <string>Clear bookmarks</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove all bookmarked paths</string>
+   </property>
+   <property name="statusTip">
+    <string>Remove all bookmarked paths</string>
+   </property>
+  </action>
+  <action name="actionGoBookmarksAddBookmark">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/bookmark_add</normalon>
+     <disabledon>:/pktk/images/disabled/bookmark_add</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Add bookmark...</string>
+   </property>
+   <property name="iconText">
+    <string>Add bookmark...</string>
+   </property>
+   <property name="toolTip">
+    <string>Add current path to bookmarks</string>
+   </property>
+   <property name="statusTip">
+    <string>Add current path to bookmarks</string>
+   </property>
+  </action>
+  <action name="actionGoBookmarksRemoveFromBookmark">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/bookmark_remove</normalon>
+     <disabledon>:/pktk/images/disabled/bookmark_remove</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Remove bookmark...</string>
+   </property>
+   <property name="iconText">
+    <string>Remove bookmark...</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove current path from bookmarks</string>
+   </property>
+   <property name="statusTip">
+    <string>Remove current path from bookmarks</string>
+   </property>
+  </action>
+  <action name="actionGoBookmarksRenameBookmark">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/bookmark_rename</normalon>
+     <disabledon>:/pktk/images/disabled/bookmark_rename</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Rename &amp;bookmark...</string>
+   </property>
+   <property name="iconText">
+    <string>Rename bookmark...</string>
+   </property>
+   <property name="toolTip">
+    <string>Rename current bookmark</string>
+   </property>
+   <property name="statusTip">
+    <string>Rename current bookmark</string>
+   </property>
+  </action>
+  <action name="actionGoSavedViewsClearViewContent">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/saved_views_clear</normalon>
+     <disabledon>:/pktk/images/disabled/saved_views_clear</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Clear view content...</string>
+   </property>
+   <property name="iconText">
+    <string>Clear view content...</string>
+   </property>
+   <property name="toolTip">
+    <string>Clear current view content</string>
+   </property>
+   <property name="statusTip">
+    <string>Clear current view content</string>
+   </property>
+  </action>
+  <action name="actionGoSavedViewsAddToViewNewView">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/saved_views_new</normalon>
+     <disabledon>:/pktk/images/disabled/saved_views_new</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;New view...</string>
+   </property>
+   <property name="iconText">
+    <string>New view...</string>
+   </property>
+   <property name="toolTip">
+    <string>Add selected file(s) to a new view</string>
+   </property>
+   <property name="statusTip">
+    <string>Add selected file(s) to a new view</string>
+   </property>
+  </action>
+  <action name="actionGoSavedViewsRemoveFromView">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/saved_views_remove</normalon>
+     <disabledon>:/pktk/images/disabled/saved_views_remove</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Remove from view...</string>
+   </property>
+   <property name="iconText">
+    <string>Remove from view...</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove selected file(s) from view</string>
+   </property>
+   <property name="statusTip">
+    <string>Remove selected file(s) from view</string>
+   </property>
+  </action>
+  <action name="actionGoSavedViewsDeleteView">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/saved_views_delete</normalon>
+     <disabledon>:/pktk/images/disabled/saved_views_delete</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Delete view...</string>
+   </property>
+   <property name="iconText">
+    <string>Delete view...</string>
+   </property>
+   <property name="toolTip">
+    <string>Delete current view</string>
+   </property>
+   <property name="statusTip">
+    <string>Delete current view</string>
+   </property>
+  </action>
+  <action name="actionGoSavedViewsRenameView">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/saved_views_rename</normalon>
+     <disabledon>:/pktk/images/disabled/saved_views_rename</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Rename &amp;view...</string>
+   </property>
+   <property name="iconText">
+    <string>Rename view...</string>
+   </property>
+   <property name="toolTip">
+    <string>Rename current view</string>
+   </property>
+   <property name="statusTip">
+    <string>Rename current view</string>
+   </property>
+  </action>
+  <action name="actionGoLastDocumentsLastDocuments">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/saved_view_last</normalon>
+     <disabledon>:/pktk/images/disabled/saved_view_last</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Last documents</string>
+   </property>
+   <property name="iconText">
+    <string>Last documents</string>
+   </property>
+   <property name="toolTip">
+    <string>Show list of last opened and/or saved documents</string>
+   </property>
+   <property name="statusTip">
+    <string>Show list of last opened and/or saved documents</string>
+   </property>
+  </action>
+  <action name="actionGoLastDocumentsLastOpenedDocuments">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/saved_view_last</normalon>
+     <disabledon>:/pktk/images/disabled/saved_view_last</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Last &amp;opened documents</string>
+   </property>
+   <property name="iconText">
+    <string>Last opened documents</string>
+   </property>
+   <property name="toolTip">
+    <string>Show list of last opened documents</string>
+   </property>
+   <property name="statusTip">
+    <string>Show list of last opened documents</string>
+   </property>
+  </action>
+  <action name="actionGoLastDocumentsLastSavedDocuments">
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/saved_view_last</normalon>
+     <disabledon>:/pktk/images/disabled/saved_view_last</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Last &amp;saved documents</string>
+   </property>
+   <property name="iconText">
+    <string>Last saved documents</string>
+   </property>
+   <property name="toolTip">
+    <string>Show list of last saved documents</string>
+   </property>
+   <property name="statusTip">
+    <string>Show list of last saved documents</string>
+   </property>
+  </action>
+  <action name="actionViewLayoutFullMode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/dashboard_full</normalon>
+     <disabledon>:/pktk/images/disabled/dashboard_full</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Full mode</string>
+   </property>
+   <property name="iconText">
+    <string>Full mode</string>
+   </property>
+   <property name="toolTip">
+    <string>Show file list using full area of panel</string>
+   </property>
+   <property name="statusTip">
+    <string>Show file list using full area of panel</string>
+   </property>
+  </action>
+  <action name="actionViewLayoutTopBottom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/dashboard_tb</normalon>
+     <disabledon>:/pktk/images/disabled/dashboard_tb</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Top/Bottom</string>
+   </property>
+   <property name="iconText">
+    <string>Top/Bottom</string>
+   </property>
+   <property name="toolTip">
+    <string>Show file list in top area of panel</string>
+   </property>
+   <property name="statusTip">
+    <string>Show file list in top area of panel</string>
+   </property>
+  </action>
+  <action name="actionViewLayoutLeftRight">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/dashboard_lr</normalon>
+     <disabledon>:/pktk/images/disabled/dashboard_lr</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Left/Right</string>
+   </property>
+   <property name="iconText">
+    <string>Left/Right</string>
+   </property>
+   <property name="toolTip">
+    <string>Show file list in left area of panel</string>
+   </property>
+   <property name="statusTip">
+    <string>Show file list in left area of panel</string>
+   </property>
+  </action>
+  <action name="actionViewLayoutBottomTop">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/dashboard_bt</normalon>
+     <disabledon>:/pktk/images/disabled/dashboard_bt</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Bottom/Top</string>
+   </property>
+   <property name="iconText">
+    <string>Bottom/Top</string>
+   </property>
+   <property name="toolTip">
+    <string>Show file list in bottom area of panel</string>
+   </property>
+   <property name="statusTip">
+    <string>Show file list in bottom area of panel</string>
+   </property>
+  </action>
+  <action name="actionViewLayoutRightLeft">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/dashboard_rl</normalon>
+     <disabledon>:/pktk/images/disabled/dashboard_rl</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Right/Left</string>
+   </property>
+   <property name="iconText">
+    <string>Right/Left</string>
+   </property>
+   <property name="toolTip">
+    <string>Show file list in right area of panel</string>
+   </property>
+   <property name="statusTip">
+    <string>Show file list in right area of panel</string>
+   </property>
+  </action>
+  <action name="actionViewLayoutViewAsList">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/list_view_details</normalon>
+     <disabledon>:/pktk/images/disabled/list_view_details</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>&amp;View as list</string>
+   </property>
+   <property name="iconText">
+    <string>View as list</string>
+   </property>
+   <property name="toolTip">
+    <string>Show files on a detailled list </string>
+   </property>
+   <property name="statusTip">
+    <string>Show files on a detailled list</string>
+   </property>
+  </action>
+  <action name="actionViewLayoutViewAsGrid">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/pktk/images/normal/list_view_icon</normalon>
+     <disabledon>:/pktk/images/disabled/list_view_icon</disabledon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>View as &amp;grid</string>
+   </property>
+   <property name="iconText">
+    <string>View as grid</string>
+   </property>
+   <property name="toolTip">
+    <string>Show files on a grid</string>
+   </property>
+   <property name="statusTip">
+    <string>Show files on a grid</string>
+   </property>
+  </action>
+  <action name="action">
+   <property name="text">
+    <string>--</string>
+   </property>
+  </action>
+  <action name="actionHelpManagedFilesFormats">
+   <property name="text">
+    <string>&amp;Managed files formats...</string>
    </property>
   </action>
  </widget>

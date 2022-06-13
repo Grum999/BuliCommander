@@ -64,6 +64,7 @@ from bulicommander.pktk.widgets.wiodialog import (
                         WDialogMessage,
                         WDialogBooleanInput
                     )
+from bulicommander.pktk.widgets.worderedlist import OrderedItem
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -96,6 +97,7 @@ class BCSettingsKey(SettingsKey):
     CONFIG_GLB_OPEN_OVERRIDEKRITA =                          'config.global.open.overrideKrita'
     CONFIG_GLB_OPEN_FROMKRITAMENU =                          'config.global.open.fromKritaFileMenu'
     CONFIG_GLB_SYSTRAY_MODE =                                'config.global.systray.mode'
+    CONFIG_GLB_OS_WINDOWS_ICONMENU =                         'config.global.os.windows.iconMenu'
 
     CONFIG_FILES_DEFAULTACTION_KRA =                         'config.files.defaultAction.kra'
     CONFIG_FILES_DEFAULTACTION_OTHER =                       'config.files.defaultAction.other'
@@ -114,6 +116,12 @@ class BCSettingsKey(SettingsKey):
     CONFIG_FILES_NAVBAR_BUTTONS_BACK =                       'config.files.navbar.buttons.back'
     CONFIG_FILES_NAVBAR_BUTTONS_UP =                         'config.files.navbar.buttons.up'
     CONFIG_FILES_NAVBAR_BUTTONS_QUICKFILTER =                'config.files.navbar.buttons.quickFilter'
+
+    CONFIG_PANELVIEW_FILES_GRIDINFO_OVERMINSIZE =            'config.panelView.files.gridInfo.overModeMinIconSize'
+    CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS =                 'config.panelView.files.gridInfo.fields'
+    CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT =                 'config.panelView.files.gridInfo.layout'
+
+    CONFIG_PANELVIEW_FILES_MARKERS_MOVETONEXT =              'config.panelView.files.markers.moveToNext'
 
     CONFIG_CLIPBOARD_CACHE_MODE_GENERAL =                    'config.clipboard.cache.mode.general'
     CONFIG_CLIPBOARD_CACHE_MODE_SYSTRAY =                    'config.clipboard.cache.mode.systray'
@@ -357,6 +365,10 @@ class BCSettingsKey(SettingsKey):
     CONFIG_SEARCHFILES_PREDEFINED_IMGRATIO =                 'config.searchFiles.predefined.imageRatio'
     CONFIG_SEARCHFILES_PREDEFINED_IMGPIXELS =                'config.searchFiles.predefined.imagePixels'
 
+    CONFIG_TOOLBARS =                                        'config.toolbars'
+
+    SESSION_TOOLBARS =                                       'session.toolbars'
+
     SESSION_INFO_TOCLIPBOARD_BORDER =                        'session.information.clipboard.border'
     SESSION_INFO_TOCLIPBOARD_HEADER =                        'session.information.clipboard.header'
     SESSION_INFO_TOCLIPBOARD_MINWIDTH =                      'session.information.clipboard.minWidth'
@@ -383,11 +395,23 @@ class BCSettingsKey(SettingsKey):
     SESSION_PANELS_VIEW_FILES_BACKUP =                       'session.panels.view.files.backup'
     SESSION_PANELS_VIEW_FILES_HIDDEN =                       'session.panels.view.files.hidden'
 
+    SESSION_IMPORT_SVG_DEFAULTCHOICE =                       'session.import.svg.defaultChoice'
+    SESSION_IMPORT_SVG_SETSIZE_SELECTED =                    'session.import.svg.setSize.selected'
+    SESSION_IMPORT_SVG_SETSIZE_VALUE =                       'session.import.svg.setSize.value'
+    SESSION_IMPORT_SVG_SETRESOLUTION_RESOLUTION =            'session.import.svg.setResolution.resolution'
+    SESSION_IMPORT_SVG_IGNOREVIEWBOX =                       'session.import.svg.ignoreViewBox'
+
+    SESSION_IMPORT_CBX_DEFAULTCHOICE =                       'session.import.cbx.defaultChoice'
+    SESSION_IMPORT_CBX_LAYERSORDER =                         'session.import.cbx.layersOrder'
+    SESSION_IMPORT_CBX_ALIGNMENT =                           'session.import.cbx.alignment'
+    SESSION_IMPORT_CBX_PREVIEW_ICONSSIZE =                   'session.import.cbx.pagesIconSize'
+
     SESSION_PANEL_VIEW_FILES_LAYOUT =                        'session.panels.panel-{panelId}.view.files.layout'
     SESSION_PANEL_VIEW_FILES_VIEWMODE =                      'session.panels.panel-{panelId}.view.files.viewMode'
     SESSION_PANEL_VIEW_FILES_CURRENTPATH =                   'session.panels.panel-{panelId}.view.files.currentPath'
     SESSION_PANEL_VIEW_FILES_FILTERVISIBLE =                 'session.panels.panel-{panelId}.view.files.filterVisible'
     SESSION_PANEL_VIEW_FILES_FILTERVALUE =                   'session.panels.panel-{panelId}.view.files.filterValue'
+    SESSION_PANEL_VIEW_FILES_FILTEROPTIONS =                 'session.panels.panel-{panelId}.view.files.filterOptions'
     SESSION_PANEL_VIEW_FILES_COLUMNSORT =                    'session.panels.panel-{panelId}.view.files.columnSort'
     SESSION_PANEL_VIEW_FILES_COLUMNORDER =                   'session.panels.panel-{panelId}.view.files.columnOrder'
     SESSION_PANEL_VIEW_FILES_COLUMNSIZE =                    'session.panels.panel-{panelId}.view.files.columnSize'
@@ -463,7 +487,13 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_UP,                      True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_QUICKFILTER,             True,                       SettingsFmt(bool)),
 
+            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_OVERMINSIZE,         2,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
+            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT,              0,                          SettingsFmt(int, [0,1,2,3])),
+            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS,              [2],                        SettingsFmt(list, [2,5,7,10,11])), # if list is changed, report change in BCViewFilesLv class
+            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_MARKERS_MOVETONEXT,           True,                       SettingsFmt(bool)),
+
             SettingsRule(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE,                             2,                          SettingsFmt(int, [0,1,2,3])),
+            SettingsRule(BCSettingsKey.CONFIG_GLB_OS_WINDOWS_ICONMENU,                      False,                      SettingsFmt(bool)),
 
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED,                    False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES,               [],                         SettingsFmt(list, str)),
@@ -722,6 +752,9 @@ class BCSettings(Settings):
                                                                                              f"{i18n('Large')}//>//f:8.3"],
                                                                                                                         SettingsFmt(list, str)),
 
+            SettingsRule(BCSettingsKey.CONFIG_TOOLBARS,                                     [],                         SettingsFmt(list, dict)),
+            SettingsRule(BCSettingsKey.SESSION_TOOLBARS,                                    [],                         SettingsFmt(list, dict)),
+
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER,                     3,                          SettingsFmt(int, [0,1,2,3])),
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER,                     True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH,                   80,                         SettingsFmt(int)),
@@ -752,7 +785,18 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.SESSION_FILES_BOOKMARK_ITEMS,                        [],                         SettingsFmt(list)),
             SettingsRule(BCSettingsKey.SESSION_FILES_SAVEDVIEWS_ITEMS,                      [],                         SettingsFmt(list)),
             SettingsRule(BCSettingsKey.SESSION_FILES_LASTDOC_O_ITEMS,                       [],                         SettingsFmt(list)),
-            SettingsRule(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS,                       [],                         SettingsFmt(list))
+            SettingsRule(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS,                       [],                         SettingsFmt(list)),
+
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_DEFAULTCHOICE,                    0,                          SettingsFmt(int, [0,1,2,3])), # default, org. size, set size, set res.
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETSIZE_SELECTED,                 0,                          SettingsFmt(int, [0,1])),     # width, height
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETSIZE_VALUE,                    1000,                       SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETRESOLUTION_RESOLUTION,         300,                        SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_IGNOREVIEWBOX,                    False,                      SettingsFmt(bool)),
+
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_DEFAULTCHOICE,                    0,                          SettingsFmt(int, [0,1])),           # All, Selection
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_LAYERSORDER,                      0,                          SettingsFmt(int, [0,1])),           # first at top, first at bottom
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_ALIGNMENT,                        0,                          SettingsFmt(int, [0,1,2,3,4,5,6])), # MC, TL, TR, ML, MR, BL, BR
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_PREVIEW_ICONSSIZE,                3,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
         ]
 
         for panelId in panelIds:
@@ -762,6 +806,7 @@ class BCSettings(Settings):
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId),        '@home',                    SettingsFmt(str)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId),      False,                      SettingsFmt(bool)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId),        '',                         SettingsFmt(str)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTEROPTIONS.id(panelId=panelId),      0,                          SettingsFmt(int)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId),         [1,True],                   SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]), SettingsFmt(bool)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId),        [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
                                                                                                                                             SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
@@ -854,12 +899,16 @@ class BCSettings(Settings):
 
 class BCSettingsDialogBox(QDialog):
     """User interface fo settings"""
+    from .bcwfile import BCViewFilesLv
 
     CATEGORY_GENERAL = 0
     CATEGORY_NAVIGATION = 1
     CATEGORY_IMAGES = 2
-    CATEGORY_CLIPBOARD = 3
-    CATEGORY_CACHE = 4
+    CATEGORY_FILES = 3
+    CATEGORY_CLIPBOARD = 4
+    CATEGORY_TOOLBAR_CONFIG = 5
+    CATEGORY_CACHE = 6
+
 
     def __init__(self, title, uicontroller, parent=None):
         super(BCSettingsDialogBox, self).__init__(parent)
@@ -878,8 +927,12 @@ class BCSettingsDialogBox(QDialog):
         self.__itemCatNavigation.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_NAVIGATION)
         self.__itemCatImageFiles = QListWidgetItem(buildIcon("pktk:image"), i18n("Image files"))
         self.__itemCatImageFiles.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_IMAGES)
+        self.__itemCatFiles = QListWidgetItem(buildIcon("pktk:file_copy"), i18n("Files"))
+        self.__itemCatFiles.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_FILES)
         self.__itemCatClipboard = QListWidgetItem(buildIcon("pktk:clipboard"), i18n("Clipboard"))
         self.__itemCatClipboard.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CLIPBOARD)
+        self.__itemCatToolbarConfiguration = QListWidgetItem(buildIcon("pktk:tune_toolbar"), i18n("Toolbars"))
+        self.__itemCatToolbarConfiguration.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_TOOLBAR_CONFIG)
         self.__itemCatCachedData = QListWidgetItem(buildIcon("pktk:cache_refresh"), i18n("Cached data"))
         self.__itemCatCachedData.setData(Qt.UserRole, BCSettingsDialogBox.CATEGORY_CACHE)
 
@@ -946,7 +999,9 @@ class BCSettingsDialogBox(QDialog):
         self.lvCategory.addItem(self.__itemCatGeneral)
         self.lvCategory.addItem(self.__itemCatNavigation)
         self.lvCategory.addItem(self.__itemCatImageFiles)
+        self.lvCategory.addItem(self.__itemCatFiles)
         self.lvCategory.addItem(self.__itemCatClipboard)
+        self.lvCategory.addItem(self.__itemCatToolbarConfiguration)
         self.lvCategory.addItem(self.__itemCatCachedData)
         self.__setCategory(BCSettingsDialogBox.CATEGORY_GENERAL)
 
@@ -990,6 +1045,13 @@ class BCSettingsDialogBox(QDialog):
         self.cbCGLaunchReplaceOpenDb.toggled.connect(self.__replaceOpenDbAlert)
 
         self.cbCGLaunchFromFileMenu.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
+
+        if sys.platform=='win32':
+            self.cbCGMiscWindowsMenuIcons.setEnabled(True)
+            self.cbCGMiscWindowsMenuIcons.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OS_WINDOWS_ICONMENU))
+        else:
+            self.cbCGMiscWindowsMenuIcons.setEnabled(False)
+            self.cbCGMiscWindowsMenuIcons.setChecked(True)
 
         if BCSettings.get(BCSettingsKey.CONFIG_GLB_FILE_UNIT) == BCSettingsValues.FILE_UNIT_KIB:
             self.rbCGFileUnitBinary.setChecked(True)
@@ -1075,6 +1137,47 @@ class BCSettingsDialogBox(QDialog):
         self.cbCCAutomaticUrlDownload.setChecked(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_URL_AUTOLOAD))
         self.cbCCUsePersistent.setChecked(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_PERSISTENT))
 
+        # --- Panel files Category -----------------------------------------------------
+        value = BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT)
+        if value == BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE:
+            self.rbCFNfoGridNone.setChecked(True)
+        elif value == BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER:
+            self.rbCFNfoGridOver.setChecked(True)
+        elif value == BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM:
+            self.rbCFNfoGridBottom.setChecked(True)
+        elif value == BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT:
+            self.rbCFNfoGridRight.setChecked(True)
+
+        cpvGridFields={
+                2:  OrderedItem(i18n('File name'), 2, True),
+                5:  OrderedItem(i18n('Image format'), 5, True),
+                7:  OrderedItem(i18n('File date'), 7, True),
+                10: OrderedItem(i18n('File size'), 10, True),
+                11: OrderedItem(i18n('Image dimension'), 11, True)
+            }
+
+        gridFieldsIndex=BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS)
+        gridFields=[cpvGridFields[index] for index in gridFieldsIndex]
+        for index in [2, 7, 10, 5, 11]:
+            item=cpvGridFields[index]
+            if not index in gridFieldsIndex:
+                item.setCheckState(False)
+                gridFields.append(item)
+
+        self.lwCFNfoGridFields.clear()
+        self.lwCFNfoGridFields.setSortOptionAvailable(False)
+        self.lwCFNfoGridFields.setCheckOptionAvailable(True)
+        self.lwCFNfoGridFields.setReorderOptionAvailable(True)
+        self.lwCFNfoGridFields.addItems(gridFields)
+
+        # --- Panel Toolbar Configuration ----------------------------------------------
+        self.wToolbarConfiguration.beginAvailableActionUpdate()
+        self.wToolbarConfiguration.addAvailableActionSeparator()
+        self.wToolbarConfiguration.initialiseAvailableActionsFromMenubar(self.__uiController.window().menuBar())
+        self.wToolbarConfiguration.endAvailableActionUpdate()
+        self.wToolbarConfiguration.availableActionsExpandAll()
+        self.wToolbarConfiguration.toolbarsImport(BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS))
+
 
     def __applySettings(self):
         """Apply current settings"""
@@ -1104,6 +1207,7 @@ class BCSettingsDialogBox(QDialog):
         self.__uiController.commandSettingsOpenAtStartup(self.cbCGLaunchOpenBC.isChecked())
         self.__uiController.commandSettingsOpenOverrideKrita(self.cbCGLaunchReplaceOpenDb.isChecked())
         self.__uiController.commandSettingsOpenFromFileMenu(self.cbCGLaunchFromFileMenu.isChecked())
+        self.__uiController.commandSettingsShowMenuIcons(self.cbCGMiscWindowsMenuIcons.isChecked())
 
         if self.rbCGFileUnitBinary.isChecked():
             self.__uiController.commandSettingsFileUnit(BCSettingsValues.FILE_UNIT_KIB)
@@ -1163,6 +1267,21 @@ class BCSettingsDialogBox(QDialog):
         self.__uiController.commandSettingsClipboardCachePersistent(self.cbCCUsePersistent.isChecked())
         self.__uiController.commandSettingsClipboardUrlAutomaticDownload(self.cbCCAutomaticUrlDownload.isChecked())
         self.__uiController.commandSettingsClipboardUrlParseTextHtml(self.cbCCParseTextHtml.isChecked())
+
+        # --- Panel files Category -----------------------------------------------------
+        if self.rbCFNfoGridNone.isChecked():
+            self.__uiController.commandSettingsFilesNfoGridMode(BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_NONE)
+        elif self.rbCFNfoGridOver.isChecked():
+            self.__uiController.commandSettingsFilesNfoGridMode(BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_OVER)
+        elif self.rbCFNfoGridBottom.isChecked():
+            self.__uiController.commandSettingsFilesNfoGridMode(BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_BOTTOM)
+        elif self.rbCFNfoGridRight.isChecked():
+            self.__uiController.commandSettingsFilesNfoGridMode(BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT)
+
+        self.__uiController.commandSettingsFilesNfoGridPropertiesFields([item.value() for item in self.lwCFNfoGridFields.items()])
+
+        # --- Toolbars category ----------------------------------------------------------
+        self.__uiController.commandSettingsToolbars(self.wToolbarConfiguration.toolbarsExport(), BCSettings.get(BCSettingsKey.SESSION_TOOLBARS))
 
 
     def __replaceOpenDbAlert(self, checked):

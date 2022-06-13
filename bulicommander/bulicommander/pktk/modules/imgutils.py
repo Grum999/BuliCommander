@@ -33,6 +33,7 @@ from PyQt5.QtGui import (
 
 from math import ceil
 import re
+import pickle
 
 from ..pktk import *
 
@@ -365,3 +366,18 @@ def ratioOrientation(ratio):
         return i18n("Landscape")
     else:
         return i18n("Square")
+
+class QIconPickable(QIcon):
+    """A QIcon class that is serializable from pickle"""
+    def __reduce__(self):
+        return type(self), (), self.__getstate__()
+
+    def __getstate__(self):
+        ba = QByteArray()
+        stream = QDataStream(ba, QIODevice.WriteOnly)
+        stream << self
+        return ba
+
+    def __setstate__(self, ba):
+        stream = QDataStream(ba, QIODevice.ReadOnly)
+        stream >> self

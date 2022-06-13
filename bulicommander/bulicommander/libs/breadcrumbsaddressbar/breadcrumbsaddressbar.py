@@ -12,11 +12,13 @@ Andrey Makarov, 2019
 
 from pathlib import Path
 import os
+import sys
 import re
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QFrame
 from PyQt5.QtGui import QFont
 
+from bulicommander.pktk.modules.imgutils import buildIcon
 
 from PyQt5.QtCore import (
         pyqtSignal as Signal,
@@ -135,8 +137,8 @@ class BreadcrumbsAddressBar(QFrame):
 
         self.btn_browse = QtWidgets.QToolButton(self)
         self.btn_browse.setAutoRaise(True)
-        self.btn_browse.setText("...")
-        self.btn_browse.setToolTip("Browse for folder")
+        self.btn_browse.setIcon(buildIcon("pktk:folder_open_dots"))
+        self.btn_browse.setToolTip(i18n("Browse for folder"))
         self.btn_browse.clicked.connect(self._browse_for_folder)
         self.btn_browse.clicked.connect(self.__clicked)
         sp = self.btn_browse.sizePolicy()
@@ -178,6 +180,13 @@ class BreadcrumbsAddressBar(QFrame):
             else:
                 dat = refDict[path][1]
         else:
+            if isinstance(path, str):
+                if r:=re.search(r"(?:^([A-Z]:)$|\(([A-Z]:)\)$)", path, re.I):
+                    if not r.groups()[0] is None:
+                        path=r.groups()[0]
+                    else:
+                        path=r.groups()[1]
+
             fileinfo = QtCore.QFileInfo(f"{path}")
             dat = self.file_ico_prov.icon(fileinfo)
             currentSize = dat.actualSize(self.__iconSize, QIcon.Normal, QIcon.Off)
@@ -213,7 +222,7 @@ class BreadcrumbsAddressBar(QFrame):
 
     def _browse_for_folder(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(
-            self, "Choose folder", f"{self.path()}")
+            self, i18n("Choose folder"), f"{self.path()}")
         if path:
             self.set_path(path)
 
@@ -250,27 +259,37 @@ class BreadcrumbsAddressBar(QFrame):
         btn.setAutoRaise(True)
         btn.setStyleSheet("QToolButton {padding: 0;}")
 
-        # last directory?
-        hasSubDir = False
-        for item in os.listdir(path):
-             if os.path.isdir(os.path.join(path, item)):
-                 hasSubDir = True
-                 break
-
-        # FIXME: C:\ has no name. Use rstrip on Windows only?
-        # Grum999: for linux, return '/' for root directory
-        if f"{path}" == '/':
-            crumb_text = '/'
+        if path=='::':
+            # for windows, list drives
+            hasSubDir = True
+            btn.setIcon(buildIcon('pktk:computer_monitor'))
+            btn.setToolTip(i18n('This PC'))
         else:
-            crumb_text = path.name or f"{path}".upper().rstrip(os.path.sep)
+            # last directory?
+            hasSubDir = False
+            for item in os.listdir(path):
+                 if os.path.isdir(os.path.join(path, item)):
+                     hasSubDir = True
+                     break
 
-        btn.setText(crumb_text)
-        btn.setFont(self.font)
+            # FIXME: C:\ has no name. Use rstrip on Windows only?
+            # Grum999: for linux, return '/' for root directory
+            if f"{path}" == '/':
+                crumb_text = '/'
+            else:
+                crumb_text = path.name or f"{path}".upper().rstrip(os.path.sep)
+
+            btn.setText(crumb_text)
+            btn.setFont(self.font)
         btn.path = path
         if hasSubDir:
-            btn.clicked.connect(self.crumb_clicked)
+            if path=='::':
+                btn.setPopupMode(btn.InstantPopup)
+            else:
+                btn.clicked.connect(self.crumb_clicked)
+                btn.setPopupMode(btn.MenuButtonPopup)
+
             btn.clicked.connect(self.__clicked)
-            btn.setPopupMode(btn.MenuButtonPopup)
             menu = MenuListView(btn)
             menu.setModel(self.fs_model)
             menu.setFont(self.font)
@@ -292,7 +311,16 @@ class BreadcrumbsAddressBar(QFrame):
 
     def crumb_menuitem_clicked(self, index):
         "SLOT: breadcrumb menu item was clicked"
-        self.set_path(index.data(Qt.EditRole))
+        #print("crumb_clicked",  index.data(Qt.EditRole))
+        if r:=re.search(r"(?:^([A-Z]:)$|\(([A-Z]:)\)$)", index.data(Qt.EditRole), re.I):
+            if not r.groups()[0] is None:
+                path=r.groups()[0]
+            else:
+                path=r.groups()[1]
+            self.set_path(path)
+        else:
+            self.set_path(index.data(Qt.EditRole))
+
         self.__clicked()
 
     def crumb_clicked(self):
@@ -302,7 +330,7 @@ class BreadcrumbsAddressBar(QFrame):
     def crumb_menu_show(self):
         "SLOT: fill subdirectory list on menu open"
         menu = self.sender()
-        self.fs_model.setPathPrefix(f"{menu.parent().path}" + os.path.sep)
+        self.fs_model.setPathPrefix(f"{menu.parent().path}{os.path.sep}")
 
     def set_path(self, path=None, force=False):
         """
@@ -372,6 +400,11 @@ class BreadcrumbsAddressBar(QFrame):
             while path.parent != path:
                 path = path.parent
                 self._insert_crumb(path)
+
+            if sys.platform=='win32':
+                # windows: add drives list
+                self._insert_crumb('::')
+
             self._show_address_field(False)
             self.path_selected.emit(path)
             return True
@@ -414,10 +447,10 @@ class BreadcrumbsAddressBar(QFrame):
             if isinstance(self.path_, str) and self.path_ != '' and self.path_[0] == '@' and not self.__quickRef is None:
                 if self.__quickRef[0] == 0:
                     # reserved
-                    self.viewName.setText(f"List view <b><i>{self.__quickRef[2]}</i></b>")
+                    self.viewName.setText(i18n(f"List view <b><i>{self.__quickRef[2]}</i></b>"))
                 else:
                     # list view
-                    self.viewName.setText(f"View <b><i>{self.__quickRef[2]}</i></b>")
+                    self.viewName.setText(i18n(f"View <b><i>{self.__quickRef[2]}</i></b>"))
 
                 self.crumbs_container.hide()
                 self.viewName.show()
@@ -523,9 +556,9 @@ if __name__ == '__main__':
             # print(self.b.width())
             # self.b.hide()
             # QtCore.QTimer.singleShot(0, lambda: print(self.b.width()))
-            def act():
-                for i in self.address.crumbs_panel.layout().widgets('hidden'):
-                    print(i.text())
+            #def act():
+            #    for i in self.address.crumbs_panel.layout().widgets('hidden'):
+            #        print(i.text())
             # self.b.clicked.connect(act)
 
     QtForm(Form)

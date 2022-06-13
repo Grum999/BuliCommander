@@ -52,7 +52,7 @@ class BCSysTray(object):
     def __init__(self, uiController):
         """Initialise SysTray manager"""
         def actionAbout(action):
-            self.__uiController.commandAboutBc()
+            self.__uiController.commandHelpAboutBc()
 
         def actionDisplayBc(action):
             self.__displayBuliCommander()
