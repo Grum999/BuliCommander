@@ -277,7 +277,8 @@ class BCMainWindow(QMainWindow):
         self.menuSettingsToolbars.aboutToShow.connect(self.__menuSettingsToolbarsShow)
 
         # Menu HELP
-        self.actionHelpAboutBC.triggered.connect(self.__uiController.commandAboutBc)
+        self.actionHelpAboutBC.triggered.connect(self.__uiController.commandHelpAboutBc)
+        self.actionHelpManagedFilesFormats.triggered.connect(self.__uiController.commandHelpManagedFilesFormat)
 
         self.actionFileCopyToOtherPanelNoConfirm.activated.connect(self.__menuFileCopyNoConfirm)
         self.actionFileMoveToOtherPanelNoConfirm.activated.connect(self.__menuFileMoveNoConfirm)

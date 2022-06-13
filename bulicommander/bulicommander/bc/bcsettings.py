@@ -395,6 +395,17 @@ class BCSettingsKey(SettingsKey):
     SESSION_PANELS_VIEW_FILES_BACKUP =                       'session.panels.view.files.backup'
     SESSION_PANELS_VIEW_FILES_HIDDEN =                       'session.panels.view.files.hidden'
 
+    SESSION_IMPORT_SVG_DEFAULTCHOICE =                       'session.import.svg.defaultChoice'
+    SESSION_IMPORT_SVG_SETSIZE_SELECTED =                    'session.import.svg.setSize.selected'
+    SESSION_IMPORT_SVG_SETSIZE_VALUE =                       'session.import.svg.setSize.value'
+    SESSION_IMPORT_SVG_SETRESOLUTION_RESOLUTION =            'session.import.svg.setResolution.resolution'
+    SESSION_IMPORT_SVG_IGNOREVIEWBOX =                       'session.import.svg.ignoreViewBox'
+
+    SESSION_IMPORT_CBX_DEFAULTCHOICE =                       'session.import.cbx.defaultChoice'
+    SESSION_IMPORT_CBX_LAYERSORDER =                         'session.import.cbx.layersOrder'
+    SESSION_IMPORT_CBX_ALIGNMENT =                           'session.import.cbx.alignment'
+    SESSION_IMPORT_CBX_PREVIEW_ICONSSIZE =                   'session.import.cbx.pagesIconSize'
+
     SESSION_PANEL_VIEW_FILES_LAYOUT =                        'session.panels.panel-{panelId}.view.files.layout'
     SESSION_PANEL_VIEW_FILES_VIEWMODE =                      'session.panels.panel-{panelId}.view.files.viewMode'
     SESSION_PANEL_VIEW_FILES_CURRENTPATH =                   'session.panels.panel-{panelId}.view.files.currentPath'
@@ -774,7 +785,18 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.SESSION_FILES_BOOKMARK_ITEMS,                        [],                         SettingsFmt(list)),
             SettingsRule(BCSettingsKey.SESSION_FILES_SAVEDVIEWS_ITEMS,                      [],                         SettingsFmt(list)),
             SettingsRule(BCSettingsKey.SESSION_FILES_LASTDOC_O_ITEMS,                       [],                         SettingsFmt(list)),
-            SettingsRule(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS,                       [],                         SettingsFmt(list))
+            SettingsRule(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS,                       [],                         SettingsFmt(list)),
+
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_DEFAULTCHOICE,                    0,                          SettingsFmt(int, [0,1,2,3])), # default, org. size, set size, set res.
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETSIZE_SELECTED,                 0,                          SettingsFmt(int, [0,1])),     # width, height
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETSIZE_VALUE,                    1000,                       SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETRESOLUTION_RESOLUTION,         300,                        SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_IGNOREVIEWBOX,                    False,                      SettingsFmt(bool)),
+
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_DEFAULTCHOICE,                    0,                          SettingsFmt(int, [0,1])),           # All, Selection
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_LAYERSORDER,                      0,                          SettingsFmt(int, [0,1])),           # first at top, first at bottom
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_ALIGNMENT,                        0,                          SettingsFmt(int, [0,1,2,3,4,5,6])), # MC, TL, TR, ML, MR, BL, BR
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_PREVIEW_ICONSSIZE,                3,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
         ]
 
         for panelId in panelIds:

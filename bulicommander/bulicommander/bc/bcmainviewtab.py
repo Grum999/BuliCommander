@@ -1420,25 +1420,65 @@ class BCMainViewTab(QFrame):
                 self.cbImgSizeRes.setProperty('inUpdate', True)
                 self.cbImgSizeRes.clear()
 
-                if file.imageSize().width() == -1 or file.imageSize().height() == -1:
+                imgNfo = file.getMetaInformation(True)
+
+                imageW=file.imageSize().width()
+                imageH=file.imageSize().height()
+                fromUnit='px'
+                originalImgSize=''
+                if file.format() in (BCFileManagedFormat.SVG, BCFileManagedFormat.SVGZ):
+                    # For SVG files there's no resolution
+                    # use default preferred vector import resolution from Krita's settings to get a resolution for SVG documents
+                    resolution=int(Krita.instance().readSetting('', 'preferredVectorImportResolution', "300"))
+                    imgNfo['resolution']=f"{resolution:.03f}ppi<sup>({i18n('Preferred Krita SVG import resolution')})</sup>"
+                    imgNfo['resolutionX']=(resolution, f"{resolution:.03f}ppi")
+                    imgNfo['resolutionY']=(resolution, f"{resolution:.03f}ppi")
+
+                    # width and height defined in SVG file can be defined in
+                    # - px (pixels)
+                    # - mm (millimeters)
+                    # - cm (centimeters)
+                    # - in (inches)
+                    # - pt (point)
+                    #
+                    # When provided as pixels (or if no unit is provided, consider as pixels) use given size
+                    # When provided as unit, need to:
+                    # - Convert as pixels
+                    # - inform about original dimension in original units
+                    if 'width.unit' in imgNfo:
+                        # width and height can have different unit;in reality it might not be the case
+                        fromUnit=imgNfo['width.unit']
+                    elif 'height.unit' in imgNfo:
+                        fromUnit=imgNfo['height.unit']
+
+                    if fromUnit!='px':
+                        originalImgSize=f'<br><sup>{i18n("Original image size:")} {imageW:.03f}x{imageH:.03f}{fromUnit}</sup>'
+                        imageW=int(convertSize(imageW, fromUnit, 'px', resolution, 0))
+                        imageH=int(convertSize(imageH, fromUnit, 'px', resolution, 0))
+                        fromUnit='px'
+                    else:
+                        imageW=int(round(imageW, 0))
+                        imageH=int(round(imageH, 0))
+
+
+                if imageW == -1 or imageH == -1:
                     self.lblImgSize.setText('-')
                 else:
-                    self.lblImgSize.setText(f'{file.imageSize().width()}x{file.imageSize().height()}')
+                    self.lblImgSize.setText(f'{imageW}x{imageH}{originalImgSize}')
 
-                imgNfo = file.getMetaInformation(True)
 
                 if 'resolution' in imgNfo:
                     self.lblImgResolution.setText(imgNfo['resolution'])
 
                     if 'resolutionX' in imgNfo and 'resolutionY' in imgNfo:
-                        if file.imageSize().width() > -1 and file.imageSize().height() > -1:
+                        if imageW > -1 and file.imageSize().height() > -1:
                             for unit in ('mm', 'cm', 'in'):
                                 if unit=='in':
-                                    txt = f"{convertSize(file.imageSize().width(), 'px', unit, imgNfo['resolutionX'][0], 4):.04f}x{convertSize(file.imageSize().height(), 'px', unit, imgNfo['resolutionY'][0], 4):.04f}{unit}  "
+                                    txt = f"{convertSize(imageW, fromUnit, unit, imgNfo['resolutionX'][0], 4):.04f}x{convertSize(imageH, fromUnit, unit, imgNfo['resolutionY'][0], 4):.04f}{unit}  "
                                 elif unit=='cm':
-                                    txt = f"{convertSize(file.imageSize().width(), 'px', unit, imgNfo['resolutionX'][0], 2):.02f}x{convertSize(file.imageSize().height(), 'px', unit, imgNfo['resolutionY'][0], 2):.02f}{unit}  "
+                                    txt = f"{convertSize(imageW, fromUnit, unit, imgNfo['resolutionX'][0], 2):.02f}x{convertSize(imageH, fromUnit, unit, imgNfo['resolutionY'][0], 2):.02f}{unit}  "
                                 else:
-                                    txt = f"{convertSize(file.imageSize().width(), 'px', unit, imgNfo['resolutionX'][0], 0):.0f}x{convertSize(file.imageSize().height(), 'px', unit, imgNfo['resolutionY'][0], 0):.0f}{unit}  "
+                                    txt = f"{convertSize(imageW, fromUnit, unit, imgNfo['resolutionX'][0], 0):.0f}x{convertSize(imageH, fromUnit, unit, imgNfo['resolutionY'][0], 0):.0f}{unit}  "
 
                                 self.cbImgSizeRes.addItem(txt, unit)
                 else:
@@ -1457,7 +1497,10 @@ class BCMainViewTab(QFrame):
                 self.lblImgRatio.setText(f"{ratio:.04f}{orientation}")
 
                 nbPixels=file.getProperty(BCFileProperty.IMAGE_PIXELS.value)
-                self.lblImgNbPixels.setText(f"{nbPixels} (~{ceil(nbPixels/100000)/10:.02f}MP)")
+                if not nbPixels is None:
+                    self.lblImgNbPixels.setText(f"{nbPixels} (~{ceil(nbPixels/100000)/10:.02f}MP)")
+                else:
+                    self.lblImgNbPixels.setText("-")
 
                 if 'colorType' in imgNfo:
                     if 'paletteSize' in imgNfo:
@@ -1501,17 +1544,27 @@ class BCMainViewTab(QFrame):
                                      BCFileManagedFormat.GIF,
                                      BCFileManagedFormat.WEBP,
                                      BCFileManagedFormat.ORA,
+                                     BCFileManagedFormat.TGA,
+                                     BCFileManagedFormat.TIFF,
+                                     BCFileManagedFormat.CBZ,
+                                     BCFileManagedFormat.CBT,
+                                     BCFileManagedFormat.CBR,
+                                     BCFileManagedFormat.CB7,
                                      BCFileManagedFormat.KRA]:
                     self.lineImgExtraNfo.setVisible(True)
                 else:
                     self.lineImgExtraNfo.setVisible(False)
 
-                if file.format() == BCFileManagedFormat.PNG:
+                if file.format() in [BCFileManagedFormat.PNG,
+                                     BCFileManagedFormat.TIFF,
+                                     BCFileManagedFormat.TGA]:
                     if 'compressionLevel' in imgNfo:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Compression level', imgNfo['compressionLevel'][1])
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Compression level', '-')
 
+
+                if file.format() == BCFileManagedFormat.PNG:
                     if 'interlaceMethod' in imgNfo:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Interlace mode', imgNfo['interlaceMethod'][1])
                     else:
@@ -1521,6 +1574,12 @@ class BCMainViewTab(QFrame):
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', f"{imgNfo['document.layerCount']}")
                     else:
                         addNfoRow(self.scrollAreaWidgetContentsNfoImage, 'Layers', '-')
+                elif file.format() == BCFileManagedFormat.TIFF:
+                    if imgNfo['document.pagesCount'] > 0:
+                        addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Pages'), f"{imgNfo['document.pagesCount']}")
+                elif file.format() in (BCFileManagedFormat.CBZ, BCFileManagedFormat.CBT, BCFileManagedFormat.CBR, BCFileManagedFormat.CB7):
+                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Pages'), f"{imgNfo['document.pagesCount']}")
+                    addNfoRow(self.scrollAreaWidgetContentsNfoImage, i18n('Max. page size'), f"{imgNfo['document.maxWidth']}x{imgNfo['document.maxHeight']}")
                 elif file.format() in [BCFileManagedFormat.GIF,
                                        BCFileManagedFormat.WEBP]:
                     if imgNfo['imageCount'] > 1:

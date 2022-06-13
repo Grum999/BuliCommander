@@ -145,6 +145,7 @@ Here a list of main functionalities:
   - Open as layer
   - Open as file layer
   - Improved GIF/WEBP import file
+  - Improved SVG import file (+SVGZ import)
 
 
 - Clipboard manager
@@ -197,6 +198,12 @@ I think it should be Ok, but...
 ## Plugin's life
 
 ### What's new?
+
+> **Note**
+> As I'm a little bit lazy and don't have so much time, there's currently no documentation...
+> But detailled releases content provides some kind of documentation for some functionalities, don't hesitate to read them :-)
+
+
 _[2022-XX-XX] Version 0.8.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.8.0b.md)*
 - Improve file panel - *Grid View mode - File/Image information*
 - Improve file panel - *Toolbars*
@@ -206,6 +213,8 @@ _[2022-XX-XX] Version 0.8.0b_ *[>> Show detailed release content <<](./releases-
 - Improve file panel - *Breadcrumbs - Windows drives*
 - Improve file panel - *Context menu - Status tip*
 - User interface - *Windows users menu icons*
+- File formats - *New supported files format*
+- File formats - *Open files*
 
 _[2022-04-13] Version 0.7.1b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.7.1b.md)*
 - Fix bug about thumbnail loading
@@ -306,7 +315,6 @@ Probably still a lot... :-)
 Not able to define precisely in which order functionalities will be implemented, neither when, but here a list of what is currently expected for final *v1.0.0* version:
 - Improve styles (especially clear style as currently plugin is optimized for dark theme)
 - Improve search engine UI (allows to resize nodes manually, context menu, copy/paste/duplicate, ...)
-- Add some file format support (TIF, CBZ)
 - Implement thumbnails generation with ICC profile taken in account
 - Implement *Documents* tab
 - Implement Exif/IPTC/XMP metadata read

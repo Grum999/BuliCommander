@@ -114,3 +114,29 @@ Not sure why it has removed only for Windows users, but bored to not have icons 
 
 > Note:
 > - For other OS, option is deactivated
+
+
+## File formats
+
+### New supported files format
+The following files format have been added in list of managed file format; thumbnails and image properties for these files are now available.
+
+| Extension | Format | Description |
+| --- | --- | --- |
+| `.tga` | Truevision Targa | Thumbnail available only if _Qt Image reader_ support TGA |
+| `.tif`  `.tiff` | Tagged Image File Format | Thumbnail available only if _Qt Image reader_ support TIFF<br><br>Due to all possible TIFF image format (compression, colorspace, ...) all images can't be read properly in BuliCommander (and probably also in Krita ^_^') |
+| `.svgz` | Scalar Vector Graphics (GZipped) | Thumbnail always available |
+| `.cbz` `.cbt` `.cbr`<sup>(1)(3)</sup> `.cb7`<sup>(2)(3)</sup> | Comic Book Archive | Thumbnail always available for `.cbz` `.cbt` (ZIP and TAR archives)<br><br><sup>(1)</sup>For `.cbr` files (RAR archives) `Unrar` or `7-Zip` must be installed on system<br><sup>(2)</sup>For `.cb7` files (7z archives) `7-Zip` must be installed on system<br><sup>(3)</sup>Implementation only available for Windows and Linux |
+
+
+### Open files
+The following files format *Open* have been implemented/improved
+
+| Extension | Format | Desciption |
+| --- | --- | --- |
+| `.svg` `.svgz` | Scalable Vector Graphics | Properly take in account document size, according to unit and resolution<br><br><br>Also, Buli Commander allows to open SVGZ files in Krita like for SVG files (currently Krita v5.0.6 can't open SVGZ files)<br><br>Improve _Open_ function<br>![Open SVG file](./../screenshots/r0-8-0b_file-import_svg.jpeg) |
+| `.cbz` `.cbt` `.cbr`<sup>(1)(3)</sup> `.cb7`<sup>(2)(3)</sup> | Scalable Vector Graphics | Buli Commander allows to open Comic Book Archive files in Krita with dedicatd user interface dialog<br>![Open SVG file](./../screenshots/r0-8-0b_file-import_cbx.jpeg)<sup>*Comic Book [Pepper & Carrot](https://www.peppercarrot.com/) - David revoy*</sup> <br><br><sup>(1)</sup>For `.cbr` files (RAR archives) `Unrar` or `7-Zip` must be installed on system<br><sup>(2)</sup>For `.cb7` files (7z archives) `7-Zip` must be installed on system<br><sup>(3)</sup>Implementation only available for Windows and Linux |
+
+Menu *Help > Managed files formats...* provides a list of files formats managed with Buli Commander, according to your installation
+
+![Managed files format](./../screenshots/r0-8-0b_help_managedfilesformats.jpeg)

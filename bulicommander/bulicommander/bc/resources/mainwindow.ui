@@ -234,7 +234,7 @@
     </property>
     <widget class="QMenu" name="menuSettingsToolbars">
      <property name="title">
-      <string>Toolbars</string>
+      <string>&amp;Toolbars</string>
      </property>
      <property name="icon">
       <iconset>
@@ -253,6 +253,8 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="actionHelpManagedFilesFormats"/>
+    <addaction name="separator"/>
     <addaction name="actionHelpAboutBC"/>
    </widget>
    <widget class="QMenu" name="menuClipboard">
@@ -370,7 +372,7 @@
     <string>&amp;New folder...</string>
    </property>
    <property name="iconText">
-    <string>New folder</string>
+    <string>New folder...</string>
    </property>
    <property name="toolTip">
     <string>Create a new folder in current directory</string>
@@ -462,7 +464,7 @@
     <string>&amp;Delete...</string>
    </property>
    <property name="iconText">
-    <string>Delete</string>
+    <string>Delete...</string>
    </property>
    <property name="toolTip">
     <string>Delete selected file(s)</string>
@@ -485,7 +487,7 @@
     <string>&amp;Rename...</string>
    </property>
    <property name="iconText">
-    <string>Rename</string>
+    <string>Rename...</string>
    </property>
    <property name="toolTip">
     <string>Rename selected file(s)</string>
@@ -1773,6 +1775,11 @@
   <action name="action">
    <property name="text">
     <string>--</string>
+   </property>
+  </action>
+  <action name="actionHelpManagedFilesFormats">
+   <property name="text">
+    <string>&amp;Managed files formats...</string>
    </property>
   </action>
  </widget>
