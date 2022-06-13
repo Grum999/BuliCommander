@@ -3037,8 +3037,37 @@ class BCUIController(QObject):
         """Replace default action <paste as new layer> by <paste as new document> when there no active document"""
         BCSettings.set(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC, value)
 
-    def commandAboutBc(self):
+    def commandHelpAboutBc(self):
         """Display 'About Buli Commander' dialog box"""
         AboutWindow(self.__bcName, self.__bcVersion, os.path.join(os.path.dirname(__file__), 'resources', 'png', 'buli-powered-big.png'), None, ':BuliCommander')
+
+    def commandHelpManagedFilesFormat(self):
+        """Display dialog box with list managed files formats"""
+        lines=[f"<tr><td><pre>.{fileFormat}</pre></td><td>{BCFileManagedFormat.translate(fileFormat, False)}</td></tr>" for fileFormat in sorted(BCFileManagedFormat.list())]
+
+        message=f"""
+            <html>
+            <style>
+                pre {{ font-family:DejaVu Sans Mono, Consolas, Courier New; font-weight:bold; }}
+                th  {{ text-align: left; }}
+                .note {{ font-style: italic; }}
+            </style>
+            <body>
+            <h1>List of managed files format in <i>Buli&nbsp;Commander</i></h1>
+            <p>Preview of following files format is supported by Buli&nbsp;Commander.</p>
+            <p>They can also be opened in Krita, even if format is not supported by Krita.</p>
+            <br>
+            <table width=100%>
+                <tr><th>Extension</th><th>Description</th>
+                {''.join(lines)}
+            </table>
+            <br>
+            <p class="note"><b>Note</b><br>For some files formats, all colorspace and/or specifities are not supported for preview and import.</p>
+            </body>
+            </html>
+            """
+        WDialogMessage.display(i18n(f"{self.__bcName}::Managed files formats"), message, QSize(960, 700))
+
+
 
     # endregion: define commands -----------------------------------------------
