@@ -649,6 +649,9 @@ class BCFileManagedFormat(object):
                 BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.TIFF)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.TIF)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.TIFF)
+            elif imgFormat==b'svg':
+                BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.SVG)
+                BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.SVG)
             elif imgFormat==b'svgz':
                 BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.SVGZ)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.SVGZ)
