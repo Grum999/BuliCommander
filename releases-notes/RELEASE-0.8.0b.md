@@ -68,9 +68,11 @@ Once all interesting files are marked, made a selection and then work on selecte
 Marked files are highlighted by a small triangle in bottom/right side
 
 *A marked file in list view*
+
 ![Marked file in listview](./../screenshots/r0-8-0b_files-listview-marked.jpeg)
 
 *A marked file in grid  view*
+
 ![Marked file in gridview](./../screenshots/r0-8-0b_files-gridview-marked.jpeg)
 
 
@@ -94,7 +96,7 @@ Quick filter now provides icons to affine filter
 For Windows users, an additional entry has been added in breadcrumbs to be able to easily select drive.
 
 
-![Marked file in listview](./../screenshots/r0-8-0b_files-breadcrumbs-windowsDrives.jpeg)
+![Breadcrumbs - Windows drives](./../screenshots/r0-8-0b_files-breadcrumbs-windowsDrives.jpeg)
 
 > Note:
 > - Only mounted drives are available in list, special folders (Libraries, Quick access, Desktop, Images, ...) are not available here
@@ -108,7 +110,7 @@ A very small improvement: add status tip for context menu
 ### Windows users menu icons
 For Windows users, icons in Krita menu are explicitely deactivated (see commit [493ca38](https://invent.kde.org/graphics/krita/-/commit/493ca38910f2a1a4233b64815ce60a6fa3205bc2))
 
-Not sure why it has removed only for Windows users, but bored to not have icons in Buli Commander menus when testing plugin on Windows, an option has been added in settings to let the possibility to display icons.
+Not sure why it has been removed only for Windows users, but bored to not have icons in Buli Commander menus when testing plugin on Windows, an option has been added in settings to let the possibility to display icons.
 
 ![Settings for Windows users](./../screenshots/r0-8-0b_settings_windowsiconmenu.jpeg)
 
@@ -124,9 +126,9 @@ The following files format have been added in list of managed file format; thumb
 | Extension | Format | Description |
 | --- | --- | --- |
 | `.tga` | Truevision Targa | Thumbnail available only if _Qt Image reader_ support TGA |
-| `.tif`  `.tiff` | Tagged Image File Format | Thumbnail available only if _Qt Image reader_ support TIFF<br><br>Due to all possible TIFF image format (compression, colorspace, ...) all images can't be read properly in BuliCommander (and probably also in Krita ^_^') |
+| `.tif`<br>`.tiff` | Tagged Image File Format | Thumbnail available only if _Qt Image reader_ support TIFF<br><br>Due to all possible TIFF image format (compression, colorspace, ...) all images can't be read properly in BuliCommander (and probably also in Krita ^_^') |
 | `.svgz` | Scalar Vector Graphics (GZipped) | Thumbnail always available |
-| `.cbz` `.cbt` `.cbr`<sup>(1)(3)</sup> `.cb7`<sup>(2)(3)</sup> | Comic Book Archive | Thumbnail always available for `.cbz` `.cbt` (ZIP and TAR archives)<br><br><sup>(1)</sup>For `.cbr` files (RAR archives) `Unrar` or `7-Zip` must be installed on system<br><sup>(2)</sup>For `.cb7` files (7z archives) `7-Zip` must be installed on system<br><sup>(3)</sup>Implementation only available for Windows and Linux |
+| `.cbz`<br>`.cbt`<br>`.cbr`<sup>(1)(3)</sup><br>`.cb7`<sup>(2)(3)</sup> | Comic Book Archive | Thumbnail always available for `.cbz` `.cbt` (ZIP and TAR archives)<br><br><sup>(1)</sup>For `.cbr` files (RAR archives) `Unrar` or `7-Zip` must be installed on system<br><sup>(2)</sup>For `.cb7` files (7z archives) `7-Zip` must be installed on system<br><sup>(3)</sup>Implementation only available for Windows and Linux |
 
 
 ### Open files
@@ -134,8 +136,8 @@ The following files format *Open* have been implemented/improved
 
 | Extension | Format | Desciption |
 | --- | --- | --- |
-| `.svg` `.svgz` | Scalable Vector Graphics | Properly take in account document size, according to unit and resolution<br><br><br>Also, Buli Commander allows to open SVGZ files in Krita like for SVG files (currently Krita v5.0.6 can't open SVGZ files)<br><br>Improve _Open_ function<br>![Open SVG file](./../screenshots/r0-8-0b_file-import_svg.jpeg) |
-| `.cbz` `.cbt` `.cbr`<sup>(1)(3)</sup> `.cb7`<sup>(2)(3)</sup> | Scalable Vector Graphics | Buli Commander allows to open Comic Book Archive files in Krita with dedicatd user interface dialog<br>![Open SVG file](./../screenshots/r0-8-0b_file-import_cbx.jpeg)<sup>*Comic Book [Pepper & Carrot](https://www.peppercarrot.com/) - David revoy*</sup> <br><br><sup>(1)</sup>For `.cbr` files (RAR archives) `Unrar` or `7-Zip` must be installed on system<br><sup>(2)</sup>For `.cb7` files (7z archives) `7-Zip` must be installed on system<br><sup>(3)</sup>Implementation only available for Windows and Linux |
+| `.svg`<br>`.svgz` | Scalable Vector Graphics | Properly take in account document size, according to unit and resolution<br><br><br>Also, Buli Commander allows to open SVGZ files in Krita like for SVG files (currently Krita v5.0.6 can't open SVGZ files)<br><br>Improve _Open_ function<br>![Open SVG file](./../screenshots/r0-8-0b_file-import_svg.jpeg) |
+| `.cbz`<br>`.cbt`<br>`.cbr`<sup>(1)(3)</sup><br>`.cb7`<sup>(2)(3)</sup> | Scalable Vector Graphics | Buli Commander allows to open Comic Book Archive files in Krita with dedicatd user interface dialog<br>![Open SVG file](./../screenshots/r0-8-0b_file-import_cbx.jpeg)<sup>*Comic Book [Pepper & Carrot](https://www.peppercarrot.com/) - David revoy*</sup> <br><br><sup>(1)</sup>For `.cbr` files (RAR archives) `Unrar` or `7-Zip` must be installed on system<br><sup>(2)</sup>For `.cb7` files (7z archives) `7-Zip` must be installed on system<br><sup>(3)</sup>Implementation only available for Windows and Linux |
 
 Menu *Help > Managed files formats...* provides a list of files formats managed with Buli Commander, according to your installation
 
