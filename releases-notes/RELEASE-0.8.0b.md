@@ -1,4 +1,4 @@
-# Buli Commander :: Release 0.8.0b [2022-xx-xx]
+# Buli Commander :: Release 0.8.0b [2022-06-13]
 
 ## File panels
 
