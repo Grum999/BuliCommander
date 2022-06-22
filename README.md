@@ -204,7 +204,7 @@ I think it should be Ok, but...
 > But detailled releases content provides some kind of documentation for some functionalities, don't hesitate to read them :-)
 
 _[2022-XX-XX] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.9.0b.md)*
-- _WIP_
+- User Interface - *Override Krita Welcome Screen "Open file" dialog*
 
 _[2022-06-13] Version 0.8.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.8.0b.md)*
 - Improve file panel - *Grid View mode - File/Image information*

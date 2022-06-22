@@ -94,7 +94,8 @@ class BCSettingsValues(object):
 class BCSettingsKey(SettingsKey):
     CONFIG_GLB_FILE_UNIT =                                   'config.global.file.unit'
     CONFIG_GLB_OPEN_ATSTARTUP =                              'config.global.open.atStartup'
-    CONFIG_GLB_OPEN_OVERRIDEKRITA =                          'config.global.open.overrideKrita'
+    CONFIG_GLB_OPEN_OVERRIDEKRITAMENU =                      'config.global.open.overrideKrita'
+    CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR =                      'config.global.open.overrideKritaWScr'
     CONFIG_GLB_OPEN_FROMKRITAMENU =                          'config.global.open.fromKritaFileMenu'
     CONFIG_GLB_SYSTRAY_MODE =                                'config.global.systray.mode'
     CONFIG_GLB_OS_WINDOWS_ICONMENU =                         'config.global.os.windows.iconMenu'
@@ -704,7 +705,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_BGCOLOR,             '#FFFFFF',                  SettingsFmt(str)),
 
             SettingsRule(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP,                           False,                      SettingsFmt(bool)),
-            SettingsRule(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA,                       False,                      SettingsFmt(bool)),
+            SettingsRule(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU,                   False,                      SettingsFmt(bool)),
+            SettingsRule(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR,                   False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU,                       False,                      SettingsFmt(bool)),
 
             SettingsRule(BCSettingsKey.CONFIG_SESSION_SAVE,                                 True,                       SettingsFmt(bool)),
@@ -1041,8 +1043,11 @@ class BCSettingsDialogBox(QDialog):
         # --- GEN Category -----------------------------------------------------
         self.cbCGLaunchOpenBC.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP))
 
-        self.cbCGLaunchReplaceOpenDb.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA))
-        self.cbCGLaunchReplaceOpenDb.toggled.connect(self.__replaceOpenDbAlert)
+        self.cbCGLaunchReplaceOpenDbMenu.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU))
+        self.cbCGLaunchReplaceOpenDbMenu.toggled.connect(self.__replaceOpenDbAlert)
+
+        self.cbCGLaunchReplaceOpenDbWScr.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR))
+        self.cbCGLaunchReplaceOpenDbWScr.toggled.connect(self.__replaceOpenDbAlert)
 
         self.cbCGLaunchFromFileMenu.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
 
@@ -1205,7 +1210,8 @@ class BCSettingsDialogBox(QDialog):
 
         # --- GEN Category -----------------------------------------------------
         self.__uiController.commandSettingsOpenAtStartup(self.cbCGLaunchOpenBC.isChecked())
-        self.__uiController.commandSettingsOpenOverrideKrita(self.cbCGLaunchReplaceOpenDb.isChecked())
+        self.__uiController.commandSettingsOpenOverrideKritaMenu(self.cbCGLaunchReplaceOpenDbMenu.isChecked())
+        self.__uiController.commandSettingsOpenOverrideKritaWScr(self.cbCGLaunchReplaceOpenDbWScr.isChecked())
         self.__uiController.commandSettingsOpenFromFileMenu(self.cbCGLaunchFromFileMenu.isChecked())
         self.__uiController.commandSettingsShowMenuIcons(self.cbCGMiscWindowsMenuIcons.isChecked())
 
@@ -1285,7 +1291,7 @@ class BCSettingsDialogBox(QDialog):
 
 
     def __replaceOpenDbAlert(self, checked):
-        """Tick has been changed for checkbox cbCGLaunchReplaceOpenDb<"Overrides Krita 'Open' function">
+        """Tick has been changed for checkbox cbCGLaunchReplaceOpenDbXX<"Overrides Krita 'Open' function">
 
         Alert user about impact
         """

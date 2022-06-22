@@ -197,7 +197,8 @@ class BCUIController(QObject):
         self.__clipboard = BCClipboard(False)
 
         # overrides native Krita Open dialog...
-        self.commandSettingsOpenOverrideKrita(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA))
+        self.commandSettingsOpenOverrideKritaMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU))
+        self.commandSettingsOpenOverrideKritaWScr(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR))
         # add action to file menu
         self.commandSettingsOpenFromFileMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
 
@@ -269,7 +270,8 @@ class BCUIController(QObject):
         self.commandSettingsSaveSessionOnExit(BCSettings.get(BCSettingsKey.CONFIG_SESSION_SAVE))
         self.commandSettingsSysTrayMode(BCSettings.get(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE))
         self.commandSettingsOpenAtStartup(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP))
-        self.commandSettingsOpenOverrideKrita(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA))
+        self.commandSettingsOpenOverrideKritaMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU))
+        self.commandSettingsOpenOverrideKritaWScr(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR))
         self.commandSettingsOpenFromFileMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
 
         self.commandViewMainWindowGeometry(BCSettings.get(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY))
@@ -536,15 +538,32 @@ class BCUIController(QObject):
 
     def __overrideOpenKrita(self):
         """Overrides the native "Open" Krita dialogcommand with BuliCommander"""
-        if checkKritaVersion(5,0,0) and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA):
+        if checkKritaVersion(5,0,0) and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU):
             # override the native "Open" Krita command with Buli Commander
             # notes:
             #   - once it's applied, to reactivate native Open Dialog file
             #     Krita must be restarted
             #   - deactivated for Krita < 5.0.0 as only krita 5.0.0 is able to initialize BC at startup
             actionOpen=Krita.instance().action("file_open")
-            actionOpen.disconnect()
-            actionOpen.triggered.connect(lambda checked : self.start())
+            if not actionOpen is None:
+                actionOpen.disconnect()
+                actionOpen.triggered.connect(lambda checked : self.start())
+
+        if checkKritaVersion(5,0,0) and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR):
+            # override the native "Open from welcome screen" Krita command with Buli Commander
+            # notes:
+            #   - once it's applied, to reactivate native Open Dialog file
+            #     Krita must be restarted
+            #   - deactivated for Krita < 5.0.0 as only krita 5.0.0 is able to initialize BC at startup
+            qWwindow = Krita.instance().activeWindow().qwindow()
+            buttonOpen = qWwindow.findChild(QPushButton,'openFileLink')
+            if not buttonOpen is None:
+                buttonOpen.disconnect()
+                buttonOpen.clicked.connect(lambda checked : self.start())
+
+            labelOpenShortcut = qWwindow.findChild(QLabel,'openFileShortcut')
+            if not buttonOpen is None:
+                labelOpenShortcut.setText('')
 
 
     def __clipboardActive(self):
@@ -2743,9 +2762,14 @@ class BCUIController(QObject):
         """Set option to start BC at Krita's startup"""
         BCSettings.set(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP, value)
 
-    def commandSettingsOpenOverrideKrita(self, value=False):
+    def commandSettingsOpenOverrideKritaMenu(self, value=False):
         """Set option to override krita's open command"""
-        BCSettings.set(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITA, value)
+        BCSettings.set(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU, value)
+        self.__overrideOpenKrita()
+
+    def commandSettingsOpenOverrideKritaWScr(self, value=False):
+        """Set option to override krita's open command"""
+        BCSettings.set(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR, value)
         self.__overrideOpenKrita()
 
     def commandSettingsOpenFromFileMenu(self, value=False):
