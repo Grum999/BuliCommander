@@ -1021,6 +1021,7 @@ class BCViewFilesTv(QTreeView):
         self.__model.setData(markers, True, BCFileModel.ROLE_MARKER)
 
 
+
 class BCViewFilesTvDelegate(QStyledItemDelegate):
     """Extend QStyledItemDelegate class to return properly row height"""
 
@@ -1151,6 +1152,7 @@ class BCViewFilesTvDelegate(QStyledItemDelegate):
         return QStyledItemDelegate.sizeHint(self, option, index)
 
 
+
 class BCViewFilesLv(QListView):
     """List view files"""
     focused = Signal()
@@ -1169,6 +1171,7 @@ class BCViewFilesLv(QListView):
         self.__filesFilterText = ''
         self.__filesFilterOptions = 0
         self.__iconSize = BCIconSizes([64, 96, 128, 192, 256, 512])
+        self.__iconSizeIsDefault=True
         self.__showPath = False
 
         self.__gridNfoFields=[BCFileModel.COLNUM_FILE_NAME]
@@ -1185,6 +1188,17 @@ class BCViewFilesLv(QListView):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSpacing(5)
         self.setUniformItemSizes(True)
+
+    def __updateScrollBarSensitivity(self):
+        """Update scrollbar sensitivity"""
+        index=self.__iconSize.index()
+        sStep=round((self.__iconSize.value()/(1+index))*((1+index/2)*self.viewport().height()/1024), 0)
+        self.verticalScrollBar().setSingleStep(sStep)
+
+    def resizeEvent(self, event):
+        """Listview is resized, update scrollbar sensitivity"""
+        super(BCViewFilesLv, self).resizeEvent(event)
+        self.__updateScrollBarSensitivity()
 
     def keyPressEvent(self, event):
         """Emit signal on keyPressed"""
@@ -1315,16 +1329,21 @@ class BCViewFilesLv(QListView):
 
     def setIconSizeIndex(self, index=None):
         """Set icon size from index value"""
-        if index is None or self.__iconSize.setIndex(index):
+        if index is None or self.__iconSize.setIndex(index) or self.__iconSizeIsDefault:
+            self.__iconSizeIsDefault=False
+            newSize=self.__iconSize.value()
             # new size defined
 
             # made asynchronously...
-            # update model before treeview
-            self.__model.setIconSize(BCFileThumbnailSize.fromValue(self.__iconSize.value()))
+            # update model before listview
+            self.__model.setIconSize(BCFileThumbnailSize.fromValue(newSize))
 
-            self.__delegate.setIconSize(self.__iconSize.value())
-            self.setIconSize(QSize(self.__iconSize.value(), self.__iconSize.value()))
+            self.__delegate.setIconSize(newSize)
+            self.setIconSize(QSize(newSize, newSize))
             self.iconSizeChanged.emit(self.__iconSize.index())
+
+            # update scrollbar sensitivity according to icon size
+            self.__updateScrollBarSensitivity()
 
     def setFilter(self, filterText, filterOptions):
         """Set current filter"""
@@ -1468,6 +1487,7 @@ class BCViewFilesLv(QListView):
         """Set marked files"""
         self.__model.setData([self.__proxyModel.mapToSource(self.__proxyModel.index(rowIndex, 0)) for rowIndex in range(self.__proxyModel.rowCount())], False, BCFileModel.ROLE_MARKER, False)
         self.__model.setData(markers, True, BCFileModel.ROLE_MARKER)
+
 
 
 class BCViewFilesLvDelegate(QStyledItemDelegate):
