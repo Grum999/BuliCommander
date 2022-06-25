@@ -131,7 +131,7 @@ class BuliCommander(Extension):
     def __initUiController(self, kritaIsStarting=False):
         """Initialise UI controller
 
-        `kritaIsStarting` set to True if UiConbtroller is intialised during Krita's startup,
+        `kritaIsStarting` set to True if UiController is initialised during Krita's startup,
         otherwise set to False (initialised on first manual execution)
         """
         @pyqtSlot('QString')
@@ -190,6 +190,8 @@ class BuliCommander(Extension):
     def createActions(self, window):
         action = window.createAction(EXTENSION_ID, PLUGIN_MENU_ENTRY, "tools/scripts")
         action.triggered.connect(self.start)
+
+        actionSaveAll = window.createAction('pykrita_bulicommander_saveall', i18n('Save All'), "tools/scripts")
 
 
     def start(self):

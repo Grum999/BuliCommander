@@ -116,7 +116,12 @@ from bulicommander.pktk.widgets.wimageview import WImageView
 from bulicommander.pktk.widgets.wiodialog import (
         WDialogMessage,
         WDialogBooleanInput,
-        WDialogRadioButtonChoiceInput
+        WDialogRadioButtonChoiceInput,
+        WDialogProgress
+    )
+from bulicommander.pktk.widgets.wmsgbuttonbar import (
+        WMessageButton,
+        WMessageButtonBar
     )
 from bulicommander.pktk.widgets.wsearchinput import WSearchInput
 from bulicommander.pktk.pktk import (
@@ -137,6 +142,9 @@ class BCUIController(QObject):
     __EXTENDED_OPEN_OK = 1
     __EXTENDED_OPEN_KO = -1
     __EXTENDED_OPEN_CANCEL = 0
+
+    __MSGBAR_DOCMODIFIED_IGNORE = 0
+    __MSGBAR_DOCMODIFIED_SAVE = 1
 
     bcWindowShown = pyqtSignal()
     bcWindowClosed = pyqtSignal()
@@ -201,6 +209,11 @@ class BCUIController(QObject):
         self.commandSettingsOpenOverrideKritaWScr(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR))
         # add action to file menu
         self.commandSettingsOpenFromFileMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
+        self.commandSettingsSaveAllFromKritaMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMKRITAMENU))
+
+        menuFile=Krita.instance().activeWindow().qwindow().findChild(QMenu,'file')
+        if menuFile:
+            menuFile.aboutToShow.connect(self.__kritaMenuFileAboutToShow)
 
         if kritaIsStarting and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP):
             self.start()
@@ -224,6 +237,9 @@ class BCUIController(QObject):
         self.__initialised = False
         self.__window = BCMainWindow(self)
         self.__window.dialogShown.connect(self.__initSettings)
+        self.__window.dialogActivate.connect(self.__manageWindowActivated)
+        self.__window.dialogDeactivate.connect(self.__manageWindowDeactivated)
+        self.__window.messageBarButtonClicked.connect(self.__manageWindowMsgBarBtnClick)
 
         self.__window.setWindowTitle(self.__bcTitle)
         self.__window.show()
@@ -582,6 +598,65 @@ class BCUIController(QObject):
                 self.__clipboard.setEnabled(self.started())
         else:
             self.__clipboard.setEnabled(False)
+
+
+    def __checkOpenedDocuments(self, displayMessage=False):
+        """Check for all opened documents in Krita
+
+        If `displayMessage` is True and at least one opened document is in modified status, display information in message bar
+
+        Return number of modified document that can be saved
+        """
+        modified=0
+        for view in Krita.instance().views():
+            # check documents in visible view only
+            if view.visible() and view.document().modified():
+                modified+=1
+
+        if displayMessage and BCSettings.get(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMBCMSGBAR):
+            if modified>0:
+                if modified==1:
+                    msg=i18n("One file is currently modified")
+                    saveBtn=i18n("Save file")
+                    tooltip=i18n("Save unmodified file")
+                else:
+                    msg=i18n(f"Some files ({modified}) are currently modified")
+                    saveBtn=i18n("Save files")
+                    tooltip=i18n("Save all unmodified files")
+
+                self.__window.displayMessageBar(msg,
+                                                WMessageButton(saveBtn, BCUIController.__MSGBAR_DOCMODIFIED_SAVE, tooltip),
+                                                WMessageButton(i18n('Ignore'), BCUIController.__MSGBAR_DOCMODIFIED_IGNORE, i18n('Ignore and close information message')))
+            else:
+                self.__window.hideMessageBar()
+
+        return modified
+
+
+    def __manageWindowMsgBarBtnClick(self, value):
+        """A message bar button has been clicked"""
+        if value==BCUIController.__MSGBAR_DOCMODIFIED_SAVE:
+            self.commandFileSaveAll()
+            self.__checkOpenedDocuments()
+
+
+    def __manageWindowActivated(self):
+        """Main window has been activated"""
+        if BCSettings.get(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMBCMSGBAR):
+            self.__checkOpenedDocuments(True)
+        self.updateMenuForPanel()
+
+
+    def __manageWindowDeactivated(self):
+        """Main window has been deactivated"""
+        pass
+
+
+    def __kritaMenuFileAboutToShow(self):
+        """Krita Menu File is about to be shown"""
+        actionSaveAll=Krita.instance().action('pykrita_bulicommander_saveall')
+        if actionSaveAll and actionSaveAll.isVisible():
+            actionSaveAll.setEnabled(self.__checkOpenedDocuments()>0)
 
 
     # endregion: initialisation methods ----------------------------------------
@@ -1140,6 +1215,7 @@ class BCUIController(QObject):
 
             oppositeTargetReady=self.panel(False).targetDirectoryReady()
 
+            self.__window.actionFileSaveAll.setEnabled(self.__checkOpenedDocuments()>0)
             self.__window.actionFileOpen.setEnabled(selectionInfo[4]>0)
             self.__window.actionFileOpenAsNewDocument.setEnabled(selectionInfo[4]>0)
             self.__window.actionFileCopyToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3]>0))
@@ -1445,6 +1521,43 @@ class BCUIController(QObject):
         """Close Buli Commander"""
         BCFileCache.finalize()
         self.__window.close()
+
+    def commandFileSaveAll(self):
+        """Save all modified documents"""
+
+        # list of document to save
+        documents=[]
+        for view in Krita.instance().views():
+            # check documents in visible view only
+            if view.visible() and view.document().modified():
+                documents.append(view.document())
+
+        if len(documents)==0:
+            return
+
+        dlgProgress=WDialogProgress.display(i18n(f"{self.__bcName}::Save all files"), i18n("Saving all documents"), True, None, 0, len(documents))
+
+        currentPath=''
+        for docNumber, document in enumerate(documents):
+            # loop over all documents
+            # for new document need to ask for path/filename
+            # for existing document, just save it
+            if document.fileName()!="":
+                document.save()
+            else:
+                docFileName, dummy=QFileDialog.getSaveFileName(None, f"{self.__bcName}::Save file", currentPath, i18n("Krita document (*.kra)") )
+
+                if docFileName!='':
+                    document.setFileName(docFileName)
+                    document.save()
+
+            if dlgProgress.setProgress(docNumber+1):
+                # cancel button clicked
+                break
+
+        dlgProgress.hide()
+
+
 
     def commandFileOpen(self, file=None):
         """Open file"""
@@ -2810,6 +2923,49 @@ class BCUIController(QObject):
                     # move menu entry
                     menuFile.removeAction(actionOpenBC)
                     menuScripts.addAction(actionOpenBC)
+
+    def commandSettingsSaveAllFromKritaMenu(self, value=False):
+        """Set option to add a "Save All" entry in Krita's File menu"""
+        BCSettings.set(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMKRITAMENU, value)
+
+        # search for menu 'File'
+        menuFile=Krita.instance().activeWindow().qwindow().findChild(QMenu,'file')
+        # search for menu 'Tools>Scripts'
+        menuScripts=Krita.instance().activeWindow().qwindow().findChild(QMenu,'scripts')
+
+        # Buli Commander action
+        actionSaveAll=Krita.instance().action('pykrita_bulicommander_saveall')
+
+        if isinstance(menuFile, QMenu) and isinstance(menuScripts, QMenu):
+            if not actionSaveAll in menuFile.actions():
+                # define trigger for action, as not yet initialised
+                actionSaveAll.triggered.connect(self.commandFileSaveAll)
+                # define icon...
+                actionSaveAll.setIcon(buildIcon('pktk:file_save_all'))
+
+                # and move action to File menu
+                # search menu entry following "File>Save as..." menu
+                referenceMenuFile=None
+                for index, action in enumerate(menuFile.actions()):
+                    if action.objectName()=='file_save_as':
+                        referenceMenuFile=menuFile.actions()[index+1]
+                        break
+
+                if not referenceMenuFile is None:
+                    # move menu entry
+                    menuScripts.removeAction(actionSaveAll)
+                    menuFile.insertAction(referenceMenuFile, actionSaveAll)
+
+        actionSaveAll.setEnabled(value)
+        actionSaveAll.setVisible(value)
+
+        return value
+
+    def commandSettingsSaveAllFromMessageBar(self, value=False):
+        """Define if BC UI display a message bar with "Save All" button when there's some modified documents"""
+        BCSettings.set(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMBCMSGBAR, value)
+
+        return value
 
     def commandSettingsSaveSessionOnExit(self, saveSession=None):
         """Define if current session properties have to be save or not"""

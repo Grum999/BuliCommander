@@ -52,6 +52,7 @@
     <addaction name="separator"/>
     <addaction name="actionFileOpen"/>
     <addaction name="menuOpen_file_as"/>
+    <addaction name="actionFileSaveAll"/>
     <addaction name="separator"/>
     <addaction name="actionFileCopyToOtherPanel"/>
     <addaction name="actionFileMoveToOtherPanel"/>
@@ -291,58 +292,6 @@
    <addaction name="menuSettings"/>
    <addaction name="menuHelp"/>
   </widget>
-  <widget class="QWidget" name="widgetMainView" native="true">
-   <property name="geometry">
-    <rect>
-     <x>4</x>
-     <y>41</y>
-     <width>601</width>
-     <height>491</height>
-    </rect>
-   </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <layout class="QGridLayout" name="gridLayout">
-    <property name="leftMargin">
-     <number>0</number>
-    </property>
-    <property name="topMargin">
-     <number>0</number>
-    </property>
-    <property name="rightMargin">
-     <number>0</number>
-    </property>
-    <property name="bottomMargin">
-     <number>0</number>
-    </property>
-    <property name="spacing">
-     <number>-1</number>
-    </property>
-    <item row="1" column="0">
-     <widget class="QSplitter" name="splitterMainView">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="childrenCollapsible">
-       <bool>false</bool>
-      </property>
-      <widget class="BCMainViewTab" name="mainViewTab0">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-      <widget class="BCMainViewTab" name="mainViewTab1"/>
-     </widget>
-    </item>
-   </layout>
-  </widget>
   <widget class="QStatusBar" name="mainStatusBar">
    <property name="geometry">
     <rect>
@@ -361,6 +310,123 @@
    <property name="sizeGripEnabled">
     <bool>true</bool>
    </property>
+  </widget>
+  <widget class="QWidget" name="widgetMainView" native="true">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>140</y>
+     <width>800</width>
+     <height>800</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="spacing">
+     <number>2</number>
+    </property>
+    <property name="leftMargin">
+     <number>3</number>
+    </property>
+    <property name="topMargin">
+     <number>3</number>
+    </property>
+    <property name="rightMargin">
+     <number>3</number>
+    </property>
+    <property name="bottomMargin">
+     <number>3</number>
+    </property>
+    <item>
+     <widget class="WMessageButtonBar" name="widgetMsgBar" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QWidget {
+			    border-radius: 4px;
+                background-color: #ffffdd;
+                color: #444400;
+}
+
+
+           QWidget  QToolButton {
+                border-radius: 4px;
+                border: 0px;
+                background-color: #444400;
+                color: #ffffdd;
+            }
+
+           QWidget  QToolButton:hover {
+                background-color: #888800;
+                color: #ffffdd;
+
+            }
+</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QWidget" name="widgetMainViewTabs" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <item row="1" column="0">
+        <widget class="QSplitter" name="splitterMainView">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="childrenCollapsible">
+          <bool>false</bool>
+         </property>
+         <widget class="BCMainViewTab" name="mainViewTab0">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+         <widget class="BCMainViewTab" name="mainViewTab1"/>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <action name="actionFolderNew">
    <property name="icon">
@@ -1782,6 +1848,22 @@
     <string>&amp;Managed files formats...</string>
    </property>
   </action>
+  <action name="actionFileSaveAll">
+   <property name="icon">
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/file_save_all</normaloff>
+     <disabledon>:/pktk/images/disabled/file_save_all</disabledon>:/pktk/images/normal/file_save_all</iconset>
+   </property>
+   <property name="text">
+    <string>Save all</string>
+   </property>
+   <property name="toolTip">
+    <string>Save all modified documents</string>
+   </property>
+   <property name="statusTip">
+    <string>Save all modified documents</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -1794,6 +1876,12 @@
    <class>BCMainViewTab</class>
    <extends>QFrame</extends>
    <header>bulicommander.bc.bcmainviewtab</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>WMessageButtonBar</class>
+   <extends>QWidget</extends>
+   <header>bulicommander.pktk.widgets.wmsgbuttonbar</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

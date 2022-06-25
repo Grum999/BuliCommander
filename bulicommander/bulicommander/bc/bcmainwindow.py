@@ -65,6 +65,10 @@ class BCMainWindow(QMainWindow):
     LIGHT_THEME = 'light'
 
     dialogShown = pyqtSignal()
+    dialogActivate = pyqtSignal()
+    dialogDeactivate = pyqtSignal()
+
+    messageBarButtonClicked = pyqtSignal(QVariant)
 
     # region: initialisation methods -------------------------------------------
 
@@ -136,6 +140,7 @@ class BCMainWindow(QMainWindow):
         self.actionFileCopyToOtherPanelNoConfirm = QShortcut(QKeySequence("Shift+F5"), self)
         self.actionFileMoveToOtherPanelNoConfirm = QShortcut(QKeySequence("Shift+F6"), self)
         self.actionFileDeleteNoConfirm = QShortcut(QKeySequence("Shift+F8"), self)
+        self.widgetMsgBar.buttonClicked.connect(lambda v: self.messageBarButtonClicked.emit(v))
 
     def initMenu(self):
         """Initialise actions for menu default menu"""
@@ -157,6 +162,7 @@ class BCMainWindow(QMainWindow):
 
         # Menu FILE
         self.actionFolderNew.triggered.connect(self.__menuFileCreateDirectory)
+        self.actionFileSaveAll.triggered.connect(self.__menuFileSaveAll)
         self.actionFileOpen.triggered.connect(self.__menuFileOpen)
         self.actionFileOpenAsNewDocument.triggered.connect(self.__menuFileOpenAsNewDocument)
         self.actionFileOpenAsImageReference.triggered.connect(self.__menuFileOpenAsImageReference)
@@ -392,6 +398,10 @@ class BCMainWindow(QMainWindow):
                 self.__uiController.name(),
                 i18n(f"Sorry! Action has not yet been implemented ({v})")
             )
+
+    def __menuFileSaveAll(self, action):
+        """Save all modified file(s)"""
+        self.__uiController.commandFileSaveAll()
 
     def __menuFileOpen(self, action):
         """Open selected file(s)"""
@@ -634,6 +644,14 @@ class BCMainWindow(QMainWindow):
         self.__eventCallBack[object] = method
         object.installEventFilter(self)
 
+    def event(self, event):
+        if event.type()==QEvent.WindowActivate:
+            self.dialogActivate.emit()
+        elif event.type()==QEvent.WindowDeactivate:
+            self.dialogDeactivate.emit()
+
+        return QMainWindow.event(self, event)
+
     # endregion: events --------------------------------------------------------
 
     # region: methods ----------------------------------------------------------
@@ -660,5 +678,13 @@ class BCMainWindow(QMainWindow):
             return list
 
         return appendWithSubWidget(self)
+
+    def displayMessageBar(self, message, *buttons):
+        """Display message bar"""
+        self.widgetMsgBar.message(message, *buttons)
+
+    def hideMessageBar(self):
+        """Hide message bar"""
+        self.widgetMsgBar.hide()
 
     # endregion: methods -------------------------------------------------------
