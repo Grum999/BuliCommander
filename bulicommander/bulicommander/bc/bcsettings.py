@@ -385,6 +385,8 @@ class BCSettingsKey(SettingsKey):
     SESSION_MAINWINDOW_WINDOW_GEOMETRY =                     'session.mainwindow.window.geometry'
     SESSION_MAINWINDOW_WINDOW_MAXIMIZED =                    'session.mainwindow.window.maximized'
 
+    SESSION_MASSRENAME_LASTFILE =                            'session.massRename.lastFile'
+
     SESSION_EXPORTFILESLIST_LASTFILE =                       'session.export.filesList.lastFile'
 
     SESSION_SEARCHWINDOW_SPLITTER_POSITION =                 'session.searchwindow.splitter.position'
@@ -785,6 +787,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_ADVANCED,              '',                         SettingsFmt(str)),
 
             SettingsRule(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE,                    '',                         SettingsFmt(str)),
+
+            SettingsRule(BCSettingsKey.SESSION_MASSRENAME_LASTFILE,                         '',                         SettingsFmt(str)),
 
             SettingsRule(BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY,               True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.SESSION_PANELS_VIEW_FILES_BACKUP,                    False,                      SettingsFmt(bool)),

@@ -30,6 +30,7 @@ import shutil
 import sys
 import re
 import time
+import json
 
 import PyQt5.uic
 from PyQt5.Qt import *
@@ -50,8 +51,16 @@ from .bcfile import (
     )
 from .bcsystray import BCSysTray
 from .bcwpathbar import BCWPathBar
+from .bcsettings import (
+        BCSettingsKey,
+        BCSettings
+    )
 
-from bulicommander.pktk.modules.utils import Debug
+from bulicommander.pktk.modules.utils import (
+        Debug,
+        JsonQObjectEncoder,
+        JsonQObjectDecoder
+    )
 from bulicommander.pktk.modules.imgutils import buildIcon
 from bulicommander.pktk.modules.strutils import (
         bytesSizeToStr,
@@ -63,6 +72,364 @@ from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
     )
+from bulicommander.pktk.widgets.wiodialog import (
+        WDialogBooleanInput,
+        WDialogMessage
+    )
+
+# ------------------------------------------------------------------------------
+class BCFileOperationMassRenameUi(QDialog):
+    """Dedicated mass rename window dialog
+
+    Use of static function is not possible anymore due t complexity of UI
+    """
+
+    # note: IMPORT/EXPORT results codes identical to NodeEditorScene IMPORT/EXPORT results codes
+    IMPORT_OK=                              0b00000000
+    IMPORT_FILE_NOT_FOUND=                  0b00000001
+    IMPORT_FILE_CANT_READ=                  0b00000010
+    IMPORT_FILE_NOT_JSON=                   0b00000100
+    IMPORT_FILE_INVALID_FORMAT_IDENTIFIER=  0b00001000
+    IMPORT_FILE_MISSING_FORMAT_IDENTIFIER=  0b00010000
+    IMPORT_FILE_MISSING_SCENE_DEFINITION=   0b00100000
+
+    EXPORT_OK=       0b00000000
+    EXPORT_CANT_SAVE=0b00000001
+
+
+    FILEDATA = Qt.UserRole + 1
+
+    def __init__(self, title, fileList, parent=None):
+        super(BCFileOperationMassRenameUi, self).__init__(parent)
+        self.__nbFiles = 0
+        self.__fileList=fileList
+        self.__currentLoadedConfigurationFile=''
+        self.__title=title
+        self.__isModified=False
+
+        self.setWindowTitle(title)
+
+        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcrenamefile_multi.ui')
+        PyQt5.uic.loadUi(uiFileName, self)
+
+        if self.__fileList[0].format()==BCFileManagedFormat.DIRECTORY:
+            label=i18n('directory')
+            self.__labelPlural=i18n('directories')
+            self.__defaultPattern='{file:baseName}'
+        else:
+            label=i18n('file')
+            self.__labelPlural=i18n('files')
+            self.__defaultPattern='{file:baseName}.{file:ext}'
+
+        self.cePattern.setPlainText(self.__defaultPattern)
+        self.cePattern.textChanged.connect(self.__patternChanged)
+        self.cePattern.setLanguageDefinition(BCFileManipulateNameLanguageDef())
+        self.cePattern.setOptionMultiLine(False)
+        self.cePattern.setOptionShowLineNumber(False)
+        self.cePattern.setOptionShowIndentLevel(False)
+        self.cePattern.setOptionShowRightLimit(False)
+        self.cePattern.setOptionShowSpaces(False)
+        self.cePattern.setOptionAllowWheelSetFontSize(False)
+        self.cePattern.setShortCut(Qt.Key_Tab, False, None)     # disable indent
+        self.cePattern.setShortCut(Qt.Key_Backtab, False, None) # disable dedent
+        self.cePattern.setShortCut(Qt.Key_Slash, True, None)    # disable toggle comment
+        self.cePattern.setShortCut(Qt.Key_Return, False, None)  # disable autoindent
+
+        actionSave=QAction(i18n("Save"), self)
+        actionSave.triggered.connect(lambda: self.saveFile())
+        actionSaveAs=QAction(i18n("Save as..."), self)
+        actionSaveAs.triggered.connect(lambda: self.saveFile(True))
+
+        menuSave = QMenu(self.tbSaveFormulaDefinition)
+        menuSave.addAction(actionSave)
+        menuSave.addAction(actionSaveAs)
+        self.tbSaveFormulaDefinition.setMenu(menuSave)
+
+        self.tbNewFormulaDefinition.clicked.connect(self.__newFormulaDefinition)
+        self.tbOpenFormulaDefinition.clicked.connect(lambda: self.openFile())
+        self.tbSaveFormulaDefinition.clicked.connect(lambda: self.saveFile())
+
+        self.cbShowPath.toggled.connect(self.__showPathChanged)
+
+        self.lblError.setVisible(False)
+
+        self.__model = QStandardItemModel(0, 3, self)
+        self.__model.setHeaderData(0, Qt.Horizontal, i18n("Path"))
+        self.__model.setHeaderData(1, Qt.Horizontal, i18n(f"Source {label} name"))
+        self.__model.setHeaderData(2, Qt.Horizontal, i18n(f"Renamed {label} name"))
+
+        self.tvResultPreview.setModel(self.__model)
+
+        self.__header = self.tvResultPreview.header()
+        self.__header.setStretchLastSection(False)
+        self.__header.setSectionResizeMode(0, QHeaderView.Interactive)
+        self.__header.setSectionResizeMode(1, QHeaderView.Interactive)
+
+        for file in self.__fileList:
+            if not file.format() == BCFileManagedFormat.MISSING:
+                self.__addFileToListView(file)
+                self.__nbFiles+=1
+
+        self.__updateNbFilesLabelAndBtnOk()
+
+        self.tvResultPreview.resizeColumnToContents(0)
+        self.tvResultPreview.resizeColumnToContents(1)
+        self.tvResultPreview.resizeColumnToContents(2)
+
+        self.__header.setSectionHidden(0, True)
+
+        self.cbExcludeSelected.setText(i18n(f'Exclude selected {self.__labelPlural}'))
+
+        self.cbExcludeSelected.toggled.connect(self.__updateNbFilesLabelAndBtnOk)
+        self.tvResultPreview.selectionModel().selectionChanged.connect(self.__selectionChanged)
+
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.__isModified=False
+        self.__updateFileNameLabel()
+
+    def __patternChanged(self):
+        """Pattern has been modified, update renamed files in list"""
+        newFileName=BCFileManipulateName.calculateFileName(self.__fileList[0], self.cePattern.toPlainText(), checkOnly=True)
+        if not newFileName[1] is None:
+            # error
+            self.lblError.setText(newFileName[1])
+            self.lblError.setVisible(True)
+        elif self.cePattern.toPlainText()==self.__defaultPattern:
+            # error...
+            self.lblError.setText(i18n(f"Note: can't rename {self.__labelPlural} when source name is identical to target name"))
+            self.lblError.setVisible(True)
+        else:
+            self.lblError.setText('')
+            self.lblError.setVisible(False)
+        self.__updateFilesFromListView()
+        self.__updateNbFilesLabelAndBtnOk()
+        self.__setModified(True)
+
+    def __showPathChanged(self, value):
+        self.__header.setSectionHidden(0, (not value))
+
+    def __getNewFileName(self, file):
+        newFileName=BCFileManipulateName.calculateFileName(file, self.cePattern.toPlainText())
+        if not newFileName[1] is None:
+            # error
+            return i18n('Invalid renaming pattern')
+        else:
+            return newFileName[0]
+
+    def __addFileToListView(self, file):
+        newRow = [
+                QStandardItem(''),
+                QStandardItem(''),
+                QStandardItem('')
+            ]
+
+        newRow[0].setText(file.path())
+        newRow[1].setText(file.name())
+        newRow[1].setData(file, BCFileOperationMassRenameUi.FILEDATA)
+        newRow[2].setText(self.__getNewFileName(file))
+
+        self.__model.appendRow(newRow)
+
+    def __updateFilesFromListView(self):
+        for row in range(self.__model.rowCount()):
+            item=self.__model.item(row, 2)
+            item.setText(self.__getNewFileName(self.__model.item(row, 1).data(BCFileOperationMassRenameUi.FILEDATA)))
+
+        self.tvResultPreview.resizeColumnToContents(2)
+
+    def __updateNbFilesLabelAndBtnOk(self, dummy=None):
+        toProcess=self.__nbFiles
+        textExcluded=''
+        nbExcluded=0
+        if self.cbExcludeSelected.isChecked():
+            nbExcluded=len(self.tvResultPreview.selectionModel().selectedRows())
+            toProcess-=nbExcluded
+            textExcluded=i18n(f', {nbExcluded} excluded')
+
+        text=i18n(f'{toProcess} to rename')+textExcluded
+
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled((toProcess>0) and not self.lblError.isVisible())
+
+        self.lblNbFiles.setText(text)
+
+    def __selectionChanged(self, selected=None, deselected=None):
+        if self.cbExcludeSelected.isChecked():
+            self.__updateNbFilesLabelAndBtnOk()
+
+    def __updateFileNameLabel(self):
+        """Update file name in status bar according to current state"""
+        modified=''
+        if self.__isModified:
+            modified=f" ({i18n('modified')})"
+
+        if self.__currentLoadedConfigurationFile is None or self.__currentLoadedConfigurationFile=='':
+            self.lblFormulaDefinitionFileName.setText(f"")
+        else:
+            self.lblFormulaDefinitionFileName.setText(f"{self.__currentLoadedConfigurationFile}{modified}")
+
+    def __setModified(self, value):
+        """Set if rename formula definition has been modified"""
+        if self.__isModified!=value:
+            self.__isModified=value
+            self.__updateFileNameLabel()
+
+    def __saveFormulaDefinitionFile(self, fileName):
+        """Save formula definition to defined `fileName`"""
+        toExport={
+                'formatIdentifier': "bulicommander-rename-formula-definition",
+                'contentDescription': '',
+                'formula': self.cePattern.toPlainText()
+            }
+
+        returned=BCFileOperationMassRenameUi.EXPORT_OK
+        try:
+            with open(fileName, 'w') as fHandle:
+                fHandle.write(json.dumps(toExport, indent=4, sort_keys=True, cls=JsonQObjectEncoder))
+        except Exception as e:
+            Debug.print("Can't save file {0}: {1}", fileName, f"{e}")
+            returned=BCFileOperationMassRenameUi.EXPORT_CANT_SAVE
+
+        BCSettings.set(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE, fileName)
+        self.__currentLoadedConfigurationFile=fileName
+        self.__setModified(False)
+        self.__updateFileNameLabel()
+
+        return returned
+
+    def __openFormulaDefinitionFile(self, fileName):
+        """Open & load formula definition defined by `fileName`"""
+        if self.__isModified:
+            if not WDialogBooleanInput.display(self.__title, i18n("Current formula definition has been modified and will be lost, continue?")):
+                return False
+
+        try:
+            with open(fileName, 'r') as fHandle:
+                jsonAsStr=fHandle.read()
+        except Exception as e:
+            Debug.print("Can't open/read file {0}: {1}", fileName, f"{e}")
+            return BCFileOperationMassRenameUi.IMPORT_FILE_CANT_READ
+
+        try:
+            jsonAsDict = json.loads(jsonAsStr, cls=JsonQObjectDecoder)
+        except Exception as e:
+            Debug.print("Can't parse file {0}: {1}", fileName, f"{e}")
+            return BCFileOperationMassRenameUi.IMPORT_FILE_NOT_JSON
+
+        if not "formatIdentifier" in jsonAsDict:
+            Debug.print("Missing format identifier file {0}", fileName)
+            return BCFileOperationMassRenameUi.IMPORT_FILE_MISSING_FORMAT_IDENTIFIER
+
+        if jsonAsDict["formatIdentifier"]!="bulicommander-rename-formula-definition":
+            Debug.print("Invalid format identifier file {0}", fileName)
+            return BCFileOperationMassRenameUi.IMPORT_FILE_INVALID_FORMAT_IDENTIFIER
+
+        self.cePattern.setPlainText(jsonAsDict['formula'])
+
+        BCSettings.set(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE, fileName)
+        self.__currentLoadedConfigurationFile=fileName
+        self.__setModified(False)
+
+    def __newFormulaDefinition(self):
+        """Reset formula"""
+        if self.__isModified:
+            if not WDialogBooleanInput.display(self.__title, i18n("Current rename formula definition has been modified and will be lost, continue?")):
+                return False
+
+        self.cePattern.setPlainText(self.__defaultPattern)
+        self.__currentLoadedConfigurationFile=''
+        self.__setModified(False)
+
+    def openFile(self, fileName=None):
+        """Open file designed by `fileName`
+
+        If fileName is None, open dialog box with predefined last opened/saved file
+        """
+        if fileName is None:
+            fileName=BCSettings.get(BCSettingsKey.SESSION_MASSRENAME_LASTFILE)
+
+        if fileName is None:
+            fileName=''
+
+        title=i18n(f"{self.__title}::{i18n('Open rename formula definition')}")
+        extension=i18n("BuliCommander Rename Formula (*.bcrf)")
+
+        fileName, dummy = QFileDialog.getOpenFileName(self, title, fileName, extension)
+
+        if fileName != '':
+            fileName=os.path.normpath(fileName)
+            if not os.path.isfile(fileName):
+                openResult=BCFileOperationMassRenameUi.IMPORT_FILE_NOT_FOUND
+            else:
+                openResult=self.__openFormulaDefinitionFile(fileName)
+
+            if openResult==BCFileOperationMassRenameUi.IMPORT_OK:
+                return True
+            elif openResult==BCFileOperationMassRenameUi.IMPORT_FILE_NOT_FOUND:
+                WDialogMessage.display(title, "<br>".join(
+                    [i18n("<h1>Can't open file!</h1>"),
+                     i18n("File not found!"),
+                    ]))
+            elif openResult==BCFileOperationMassRenameUi.IMPORT_FILE_CANT_READ:
+                WDialogMessage.display(title, "<br>".join(
+                    [i18n("<h1>Can't open file!</h1>"),
+                     i18n("File can't be read!"),
+                    ]))
+            elif openResult==BCFileOperationMassRenameUi.IMPORT_FILE_NOT_JSON:
+                WDialogMessage.display(title, "<br>".join(
+                    [i18n("<h1>Can't open file!</h1>"),
+                     i18n("Invalid file format!"),
+                    ]))
+
+        return False
+
+    def saveFile(self, saveAs=False, fileName=None):
+        """Save current rename formula to designed file name"""
+        if fileName is None and self.__currentLoadedConfigurationFile!='':
+            # a file is currently opened
+            fileName=self.__currentLoadedConfigurationFile
+        else:
+            fileName=BCSettings.get(BCSettingsKey.SESSION_MASSRENAME_LASTFILE)
+            saveAs=True
+
+        if fileName is None:
+            fileName=''
+            saveAs=True
+
+        title=i18n(f"{self.__title}::{i18n('Save rename formula definition')}")
+        extension=i18n("BuliCommander Rename Formula (*.bcrf)")
+
+        if saveAs:
+            fileName, dummy = QFileDialog.getSaveFileName(self, title, fileName, extension)
+
+        if fileName != '':
+            fileName=os.path.normpath(fileName)
+            saveResult=self.__saveFormulaDefinitionFile(fileName)
+
+            if saveResult==BCFileOperationMassRenameUi.EXPORT_OK:
+                return True
+            elif saveResult==BCFileOperationMassRenameUi.EXPORT_CANT_SAVE:
+                WDialogMessage.display(title, i18n("<h1>Can't save file!</h1>"))
+
+        return False
+
+    def returnedValue(self):
+        returned=[]
+
+        if self.cbExcludeSelected.isChecked():
+            for row in range(self.__model.rowCount()):
+                item=self.__model.item(row, 1)
+                if not self.tvResultPreview.selectionModel().isSelected(item.index()):
+                    returned.append(item.data(BCFileOperationMassRenameUi.FILEDATA))
+        else:
+            returned=self.__fileList
+
+        return {
+                'files': returned,
+                'rule': self.cePattern.toPlainText()
+            }
+
 
 # ------------------------------------------------------------------------------
 class BCFileOperationUi(object):
@@ -341,163 +708,6 @@ class BCFileOperationUi(object):
         return dlgMain
 
     @staticmethod
-    def __dialogFileRenameMulti(fileList):
-        """Initialise default file dialog for multiple file rename"""
-        FILEDATA = Qt.UserRole + 1
-
-        def patternChanged():
-            newFileName=BCFileManipulateName.calculateFileName(fileList[0], dlgMain.cePattern.toPlainText(), checkOnly=True)
-            if not newFileName[1] is None:
-                # error
-                dlgMain.lblError.setText(newFileName[1])
-                dlgMain.lblError.setVisible(True)
-            elif dlgMain.cePattern.toPlainText()==defaultPattern:
-                # error...
-                dlgMain.lblError.setText(i18n(f"Note: can't rename {labelPlural} when source name is identical to target name"))
-                dlgMain.lblError.setVisible(True)
-            else:
-                dlgMain.lblError.setText('')
-                dlgMain.lblError.setVisible(False)
-            updateFilesFromListView()
-            updateNbFilesLabelAndBtnOk()
-
-        def showPathChanged(value):
-            header.setSectionHidden(0, (not value))
-
-        def getNewFileName(file):
-            newFileName=BCFileManipulateName.calculateFileName(file, dlgMain.cePattern.toPlainText())
-            if not newFileName[1] is None:
-                # error
-                return i18n('Invalid renaming pattern')
-            else:
-                return newFileName[0]
-
-        def returnedValue():
-            returned=[]
-
-            if dlgMain.cbExcludeSelected.isChecked():
-                for row in range(model.rowCount()):
-                    item=model.item(row, 1)
-                    if not dlgMain.tvResultPreview.selectionModel().isSelected(item.index()):
-                        returned.append(item.data(FILEDATA))
-            else:
-                returned=fileList
-
-            return {
-                    'files': returned,
-                    'rule': dlgMain.cePattern.toPlainText()
-                }
-
-        def addFileToListView(file):
-            newRow = [
-                    QStandardItem(''),
-                    QStandardItem(''),
-                    QStandardItem('')
-                ]
-
-            newRow[0].setText(file.path())
-            newRow[1].setText(file.name())
-            newRow[1].setData(file, FILEDATA)
-            newRow[2].setText(getNewFileName(file))
-
-            model.appendRow(newRow)
-
-        def updateFilesFromListView():
-            for row in range(model.rowCount()):
-                item=model.item(row, 2)
-                item.setText(getNewFileName(model.item(row, 1).data(FILEDATA)))
-
-            dlgMain.tvResultPreview.resizeColumnToContents(2)
-
-        def updateNbFilesLabelAndBtnOk(dummy=None):
-            toProcess=nbFiles
-            textExcluded=''
-            nbExcluded=0
-            if dlgMain.cbExcludeSelected.isChecked():
-                nbExcluded=len(dlgMain.tvResultPreview.selectionModel().selectedRows())
-                toProcess-=nbExcluded
-                textExcluded=i18n(f', {nbExcluded} excluded')
-
-            text=i18n(f'{toProcess} to rename')+textExcluded
-
-            dlgMain.buttonBox.button(QDialogButtonBox.Ok).setEnabled((toProcess>0) and not dlgMain.lblError.isVisible())
-
-            dlgMain.lblNbFiles.setText(text)
-
-        def selectionChanged(selected=None, deselected=None):
-            if dlgMain.cbExcludeSelected.isChecked():
-                updateNbFilesLabelAndBtnOk()
-
-
-        nbFiles = 0
-
-        uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcrenamefile_multi.ui')
-        dlgMain = PyQt5.uic.loadUi(uiFileName)
-
-        if fileList[0].format()==BCFileManagedFormat.DIRECTORY:
-            label=i18n('directory')
-            labelPlural=i18n('directories')
-            defaultPattern='{file:baseName}'
-        else:
-            label=i18n('file')
-            labelPlural=i18n('files')
-            defaultPattern='{file:baseName}.{file:ext}'
-
-        dlgMain.cePattern.setPlainText(defaultPattern)
-        dlgMain.cePattern.textChanged.connect(patternChanged)
-        dlgMain.cePattern.setLanguageDefinition(BCFileManipulateNameLanguageDef())
-        dlgMain.cePattern.setOptionMultiLine(False)
-        dlgMain.cePattern.setOptionShowLineNumber(False)
-        dlgMain.cePattern.setOptionShowIndentLevel(False)
-        dlgMain.cePattern.setOptionShowRightLimit(False)
-        dlgMain.cePattern.setOptionShowSpaces(False)
-        dlgMain.cePattern.setOptionAllowWheelSetFontSize(False)
-        dlgMain.cePattern.setShortCut(Qt.Key_Tab, False, None) # disable indent
-        dlgMain.cePattern.setShortCut(Qt.Key_Backtab, False, None) # disable dedent
-        dlgMain.cePattern.setShortCut(Qt.Key_Slash, True, None) # disable toggle comment
-        dlgMain.cePattern.setShortCut(Qt.Key_Return, False, None) # disable autoindent
-
-        dlgMain.cbShowPath.toggled.connect(showPathChanged)
-
-        dlgMain.lblError.setVisible(False)
-
-        model = QStandardItemModel(0, 3, dlgMain)
-        model.setHeaderData(0, Qt.Horizontal, i18n("Path"))
-        model.setHeaderData(1, Qt.Horizontal, i18n(f"Source {label} name"))
-        model.setHeaderData(2, Qt.Horizontal, i18n(f"Renamed {label} name"))
-
-        dlgMain.tvResultPreview.setModel(model)
-
-        header = dlgMain.tvResultPreview.header()
-        header.setStretchLastSection(False)
-        header.setSectionResizeMode(0, QHeaderView.Interactive)
-        header.setSectionResizeMode(1, QHeaderView.Interactive)
-
-        for file in fileList:
-            if not file.format() == BCFileManagedFormat.MISSING:
-                addFileToListView(file)
-                nbFiles+=1
-
-        updateNbFilesLabelAndBtnOk()
-
-        dlgMain.tvResultPreview.resizeColumnToContents(0)
-        dlgMain.tvResultPreview.resizeColumnToContents(1)
-        dlgMain.tvResultPreview.resizeColumnToContents(2)
-
-        header.setSectionHidden(0, True)
-
-        dlgMain.cbExcludeSelected.setText(i18n(f'Exclude selected {labelPlural}'))
-
-        dlgMain.cbExcludeSelected.toggled.connect(updateNbFilesLabelAndBtnOk)
-        dlgMain.tvResultPreview.selectionModel().selectionChanged.connect(updateNbFilesLabelAndBtnOk)
-
-        dlgMain.buttonBox.accepted.connect(dlgMain.accept)
-        dlgMain.buttonBox.rejected.connect(dlgMain.reject)
-        dlgMain.returnedValue=returnedValue
-
-        return dlgMain
-
-    @staticmethod
     def buildInformation(fileList, full=False):
         """Build text information from given list of BCBaseFile"""
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -641,8 +851,7 @@ class BCFileOperationUi(object):
                 label=i18n('directories')
             else:
                 label=i18n('files')
-            db = BCFileOperationUi.__dialogFileRenameMulti(fileList)
-            db.setWindowTitle(i18n(f"{title}::Rename {label}"))
+            db = BCFileOperationMassRenameUi(i18n(f"{title}::Rename {label}"), fileList)
             if db.exec():
                 return db.returnedValue()
 
