@@ -4467,7 +4467,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             else:
                 openResult=self.__openFile(fileName, title)
 
-            if BCExportFilesDialogBox.IMPORT_OK:
+            if openResult==BCExportFilesDialogBox.IMPORT_OK:
                 return True
             elif openResult==BCExportFilesDialogBox.IMPORT_FILE_NOT_FOUND:
                 WDialogMessage.display(title, "<br>".join(
