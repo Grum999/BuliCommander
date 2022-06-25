@@ -146,6 +146,7 @@ Here a list of main functionalities:
   - Open as file layer
   - Improved GIF/WEBP import file
   - Improved SVG import file (+SVGZ import)
+  - Can read and import CBZ/CBT/CBR/CB7 documents
 
 
 - Clipboard manager
@@ -206,6 +207,7 @@ I think it should be Ok, but...
 _[2022-XX-XX] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.9.0b.md)*
 - File panels - *Grid view mode - Smooth thumbnail scroll*
 - User Interface - *Override Krita Welcome Screen "Open file" dialog*
+- User Interface - *Implement "Save All"*
 
 _[2022-06-13] Version 0.8.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.8.0b.md)*
 - Improve file panel - *Grid View mode - File/Image information*

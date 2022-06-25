@@ -7,7 +7,7 @@
 [Feature request #5](https://github.com/Grum999/BuliCommander/issues/5)
 
 Improve thumbnail scroll, taking in account:
-- Current thumbnail size 
+- Current thumbnail size
 - Current available view height
 
 This ensure for big thumbnail on small view to get a smaller scroll, and for small thumbnail on a large view, to have bigger scroll.
@@ -28,3 +28,30 @@ Buli Commander settings make distinction between:
 - "Open file" action from _Welcome screen_
 
 ![Settings](./../screenshots/r0-9-0b_settings-openfile_wscr.jpeg)
+
+### Implement *Save All*
+
+#### Settings
+New options have been added to Buli Commander Settings to let user being able to save all modified documents in one click.
+
+![Settings](./../screenshots/r0-9-0b_settings-save_all.jpeg)
+
+| Option | Description |
+| --- | --- |
+| Add "Save All" entry to Krita "File" menu | When checked, a new menu entry _Save All_ is added in Krita's _File_ menu |
+| Check for modified documents and display alert with "Save All" button | When checked, a message bar with a `Save files` button inform user that there's some unsaved documents |
+
+#### Krita "Save All" menu entry
+When active, the new _Save All_ menu entry is located in _File_ menu after _Save As..._ entry
+![Krita File menu - Save All](./../screenshots/r0-9-0b_kritafilemenu_saveall.jpeg)
+
+It's possible to define a shortcut (none defined by default) to _Save All_ action in Krita's shortcut settings window
+![Krita Shortcut settings - Settings](./../screenshots/r0-9-0b_kritafilemenu_saveall-shortcut.jpeg)
+
+#### Buli Commander _Save files_ message bar
+When active, a message bar is displayed in Buli Commander to inform that some files are modified.
+Button `Save files` allows to save all files in one click.
+![Settings](./../screenshots/r0-9-0b_window_saveall-msgbar.jpeg)
+
+> **Note**
+> For technical reasons (currently not possible to detect modification made on a document without polling), message bar is updated **only when Buli Commander window get focus**
