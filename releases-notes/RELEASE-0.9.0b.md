@@ -31,9 +31,9 @@ Buli Commander settings make distinction between:
 
 ### Implement *Save All*
 
-#### Settings
-
 [Feature request #7](https://github.com/Grum999/BuliCommander/issues/7)
+
+#### Settings
 
 New options have been added to Buli Commander Settings to let user being able to save all modified documents in one click.
 
