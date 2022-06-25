@@ -99,6 +99,8 @@ class BCSettingsKey(SettingsKey):
     CONFIG_GLB_OPEN_FROMKRITAMENU =                          'config.global.open.fromKritaFileMenu'
     CONFIG_GLB_SYSTRAY_MODE =                                'config.global.systray.mode'
     CONFIG_GLB_OS_WINDOWS_ICONMENU =                         'config.global.os.windows.iconMenu'
+    CONFIG_GLB_SAVEALL_FROMKRITAMENU =                       'config.global.saveAll.fromKritaMenu'
+    CONFIG_GLB_SAVEALL_FROMBCMSGBAR =                        'config.global.saveAll.fromBCMessageBar'
 
     CONFIG_FILES_DEFAULTACTION_KRA =                         'config.files.defaultAction.kra'
     CONFIG_FILES_DEFAULTACTION_OTHER =                       'config.files.defaultAction.other'
@@ -472,6 +474,10 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_GLB_FILE_UNIT,                                BCSettingsValues.FILE_UNIT_KIB,
                                                                                                                         SettingsFmt(str, [BCSettingsValues.FILE_UNIT_KIB,
                                                                                                                                           BCSettingsValues.FILE_UNIT_KB])),
+
+            SettingsRule(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMKRITAMENU,                    True,                       SettingsFmt(bool)),
+            SettingsRule(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMBCMSGBAR,                     True,                       SettingsFmt(bool)),
+
             SettingsRule(BCSettingsKey.CONFIG_FILES_HOME_DIR_MODE,                          BCSettingsValues.HOME_DIR_SYS,
                                                                                                                         SettingsFmt(str, [BCSettingsValues.HOME_DIR_SYS,
                                                                                                                                           BCSettingsValues.HOME_DIR_UD])),
@@ -1063,6 +1069,9 @@ class BCSettingsDialogBox(QDialog):
         else:
             self.rbCGFileUnitDecimal.setChecked(True)
 
+        self.cbCGAddSaveAllToKrita.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMKRITAMENU))
+        self.cbCGCheckAndDisplayAlertForModifiedDocument.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMBCMSGBAR))
+
         value = BCSettings.get(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE)
         if value == BCSysTray.SYSTRAY_MODE_ALWAYS:
             self.rbCGSysTrayAlways.setChecked(True)
@@ -1214,6 +1223,9 @@ class BCSettingsDialogBox(QDialog):
         self.__uiController.commandSettingsOpenOverrideKritaWScr(self.cbCGLaunchReplaceOpenDbWScr.isChecked())
         self.__uiController.commandSettingsOpenFromFileMenu(self.cbCGLaunchFromFileMenu.isChecked())
         self.__uiController.commandSettingsShowMenuIcons(self.cbCGMiscWindowsMenuIcons.isChecked())
+
+        self.__uiController.commandSettingsSaveAllFromKritaMenu(self.cbCGAddSaveAllToKrita.isChecked())
+        self.__uiController.commandSettingsSaveAllFromMessageBar(self.cbCGCheckAndDisplayAlertForModifiedDocument.isChecked())
 
         if self.rbCGFileUnitBinary.isChecked():
             self.__uiController.commandSettingsFileUnit(BCSettingsValues.FILE_UNIT_KIB)

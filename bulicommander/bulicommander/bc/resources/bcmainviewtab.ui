@@ -14,6 +14,21 @@
    <string>Frame</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
@@ -422,8 +437,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1535</width>
-                                    <height>664</height>
+                                    <width>247</width>
+                                    <height>195</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -644,8 +659,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1535</width>
-                                    <height>664</height>
+                                    <width>1547</width>
+                                    <height>672</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1011,8 +1026,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1535</width>
-                                    <height>664</height>
+                                    <width>252</width>
+                                    <height>246</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">
@@ -1269,8 +1284,8 @@
                                    <rect>
                                     <x>0</x>
                                     <y>0</y>
-                                    <width>1535</width>
-                                    <height>664</height>
+                                    <width>224</width>
+                                    <height>246</height>
                                    </rect>
                                   </property>
                                   <layout class="QFormLayout" name="formLayout">

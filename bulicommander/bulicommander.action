@@ -16,4 +16,20 @@
       <statusTip></statusTip>
     </Action>
   </Actions>
+  <Actions category="File">
+    <text>Buli Commander</text>
+
+    <Action name="pykrita_bulicommander_saveall">
+      <icon></icon>
+      <text>Save all modified documents</text>
+      <whatsThis></whatsThis>
+      <toolTip></toolTip>
+      <iconText></iconText>
+      <activationFlags>0</activationFlags>
+      <activationConditions>0</activationConditions>
+      <shortcut></shortcut>
+      <isCheckable>false</isCheckable>
+      <statusTip></statusTip>
+    </Action>
+  </Actions>
 </ActionCollection>
