@@ -75,7 +75,12 @@ class WMessageButtonBar(QWidget):
     def __init__(self, parent=None):
         super(WMessageButtonBar, self).__init__(parent)
 
-        self.__layout = QHBoxLayout(self)
+        w=QWidget()
+        layout=QHBoxLayout(self)
+        layout.setContentsMargins(0,0,0,0)
+        layout.addWidget(w)
+
+        self.__layout = QHBoxLayout(w)
         self.__layout.setContentsMargins(3,3,3,3)
 
         self.__label=QLabel()
@@ -120,13 +125,13 @@ class WMessageButtonBar(QWidget):
                 self.__layout.addWidget(button)
                 nbButtons+=1
             else:
-                raise EInvalidType("Given `buttons` must be <WMessageButton> or <WMessageButtonBarStyle>")
+                raise EInvalidType("Given `buttons` must be <WMessageButton>")
 
 
         if nbButtons==0:
             # no buttons?
             # add a "OK" button (consider that's just an information message)
-            button=WMessageButton(i18n('Ok'), 0, i18n('Hide message')),
+            button=WMessageButton(i18n('Ok'), 0, i18n('Hide message'))
             button.clicked.connect(self.__btnClicked)
             self.__layout.addWidget(button)
 
