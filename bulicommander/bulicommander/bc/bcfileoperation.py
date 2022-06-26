@@ -31,10 +31,13 @@ import sys
 import re
 import time
 import json
+import html
 
 import PyQt5.uic
 from PyQt5.Qt import *
-
+from PyQt5.QtCore import (
+        pyqtSignal as Signal
+    )
 from PyQt5.QtWidgets import (
         QDialog
     )
@@ -64,10 +67,15 @@ from bulicommander.pktk.modules.utils import (
 from bulicommander.pktk.modules.imgutils import buildIcon
 from bulicommander.pktk.modules.strutils import (
         bytesSizeToStr,
-        strDefault
+        strDefault,
+        stripHtml
     )
+
 from bulicommander.pktk.modules.timeutils import tsToStr
 from bulicommander.pktk.widgets.wiodialog import WDialogStrInput
+from bulicommander.pktk.modules.tokenizer import TokenizerRule
+from bulicommander.pktk.modules.menuutils import buildQMenu
+
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue
@@ -78,6 +86,85 @@ from bulicommander.pktk.widgets.wiodialog import (
     )
 
 # ------------------------------------------------------------------------------
+
+class WMenuForCommand(QWidgetAction):
+    """Encapsulate a QLabel as a menu item, used to display completion command properly formatted in menu"""
+    onEnter=Signal()
+
+    def __init__(self, label, help, parent=None):
+        super(WMenuForCommand, self).__init__(parent)
+        self.__label = QLabel(self.__reformattedText(label))
+        self.__label.setStyleSheet("QLabel:hover { background: palette(highlight); color: palette(highlighted-text);}")
+        self.__label.setContentsMargins(4,4,4,4)
+        self.__label.mousePressEvent=self.__pressEvent
+        self.__label.enterEvent=self.__enterEvent
+
+        self.__layout = QVBoxLayout()
+        self.__layout.setSpacing(0)
+        self.__layout.setContentsMargins(0,0,0,0)
+        self.__layout.addWidget(self.__label)
+
+        self.__widget = QWidget()
+        self.__widget.setContentsMargins(0,0,0,0)
+        self.__widget.setMouseTracking(True)
+        self.__widget.setLayout(self.__layout)
+
+        self.__hover=False
+        self.__help=help
+
+        self.setDefaultWidget(self.__widget)
+
+    def __reformattedText(self, text):
+        """Reformat given text, assuming it's a completion text command"""
+        returned=[]
+        texts=text.split('\x01')
+        for index, textItem in enumerate(texts):
+            if index%2==1:
+                # odd text ("optionnal" information) are written smaller, with darker color
+                returned.append(f"<i>{textItem}</i>")
+            else:
+                # normal font
+                returned.append(textItem)
+
+        return ''.join(returned)
+
+    def __pressEvent(self, event):
+        """When label clicked, trigger event for QWidgetAction and close parent menu"""
+        self.trigger()
+        menu=None
+        parentWidget=self.parentWidget()
+        while(isinstance(parentWidget, QMenu)):
+            menu=parentWidget
+            parentWidget=menu.parentWidget()
+
+        if menu:
+            menu.close()
+
+    def __enterEvent(self, event):
+        """When mouse goes over label, trigger signal onEnter"""
+        self.__displayCompleterHint()
+        self.onEnter.emit()
+
+    def __hideCompleterHint(self):
+        """Hide completer hint"""
+        QToolTip.showText(self.mapToGlobal(QPoint()), '')
+        QToolTip.hideText()
+
+    def __displayCompleterHint(self, index=None):
+        """Display completer hint"""
+        if self.__help is None or self.__help == '':
+            self.__hideCompleterHint()
+            return
+        else:
+            geometry=self.__label.geometry()
+            position=QPoint(geometry.left() + geometry.width(), geometry.top())
+            # it's not possible to move a tooltip
+            # need to set a different value to force tooltip being refreshed to new position
+            QToolTip.showText(self.__label.mapToGlobal(position), self.__help+' ')
+            QToolTip.showText(self.__label.mapToGlobal(position), self.__help, self.__label, QRect(), 600000) # 10minutes..
+
+
+
 class BCFileOperationMassRenameUi(QDialog):
     """Dedicated mass rename window dialog
 
@@ -121,19 +208,23 @@ class BCFileOperationMassRenameUi(QDialog):
             self.__labelPlural=i18n('files')
             self.__defaultPattern='{file:baseName}.{file:ext}'
 
+        self.__fileManipulateNameLanguageDef=BCFileManipulateNameLanguageDef()
+
         self.cePattern.setPlainText(self.__defaultPattern)
         self.cePattern.textChanged.connect(self.__patternChanged)
-        self.cePattern.setLanguageDefinition(BCFileManipulateNameLanguageDef())
+        self.cePattern.setLanguageDefinition(self.__fileManipulateNameLanguageDef)
         self.cePattern.setOptionMultiLine(False)
         self.cePattern.setOptionShowLineNumber(False)
         self.cePattern.setOptionShowIndentLevel(False)
         self.cePattern.setOptionShowRightLimit(False)
         self.cePattern.setOptionShowSpaces(False)
         self.cePattern.setOptionAllowWheelSetFontSize(False)
+        self.cePattern.setUndoRedoEnabled(True)
         self.cePattern.setShortCut(Qt.Key_Tab, False, None)     # disable indent
         self.cePattern.setShortCut(Qt.Key_Backtab, False, None) # disable dedent
         self.cePattern.setShortCut(Qt.Key_Slash, True, None)    # disable toggle comment
         self.cePattern.setShortCut(Qt.Key_Return, False, None)  # disable autoindent
+        self.cePattern.contextMenu=self.__cePatternContextMenu
 
         actionSave=QAction(i18n("Save"), self)
         actionSave.triggered.connect(lambda: self.saveFile())
@@ -188,6 +279,48 @@ class BCFileOperationMassRenameUi(QDialog):
 
         self.__isModified=False
         self.__updateFileNameLabel()
+
+    def __cePatternContextMenu(self, standardMenu):
+        """Build context menu of editor"""
+        def __insertLanguageAction(menu, autoCompletion):
+            """Create action for Language menu
+
+            Title=autoCompletion
+            Action=insert autoCompletion
+            """
+            def onExecute(dummy=None):
+                self.cePattern.insertLanguageText(self.sender().property('insert'), False)
+                self.cePattern.setFocus()
+
+            #print(autoCompletion[0])
+            action=WMenuForCommand(html.escape(autoCompletion[0]), autoCompletion[1], menu)
+            action.setProperty('insert', autoCompletion[0])
+            if len(autoCompletion)>1 and isinstance(autoCompletion[1], str):
+                tip=TokenizerRule.descriptionExtractSection(autoCompletion[1], 'title')
+                if tip=='':
+                    tip=autoCompletion[1]
+                action.setStatusTip(stripHtml(tip))
+
+            action.triggered.connect(onExecute)
+            menu.addAction(action)
+
+        menuFunctions=buildQMenu('pktk:text_function', i18n('Functions'), standardMenu)
+        menuKeywords=buildQMenu('pktk:text_keyword', i18n('Keywords'), standardMenu)
+
+        standardMenu.addSeparator()
+        standardMenu.addMenu(menuFunctions)
+        standardMenu.addMenu(menuKeywords)
+
+        for rule in self.__fileManipulateNameLanguageDef.tokenizer().rules():
+            if rule.type() in (BCFileManipulateNameLanguageDef.ITokenType.KW, BCFileManipulateNameLanguageDef.ITokenType.FUNCO_STR, BCFileManipulateNameLanguageDef.ITokenType.FUNCO_NUM):
+
+                if rule.type() == BCFileManipulateNameLanguageDef.ITokenType.KW:
+                    menu=menuKeywords
+                else:
+                    menu=menuFunctions
+
+                for autoCompletion in rule.autoCompletion():
+                    __insertLanguageAction(menu, autoCompletion)
 
     def __patternChanged(self):
         """Pattern has been modified, update renamed files in list"""

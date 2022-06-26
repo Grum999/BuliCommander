@@ -159,7 +159,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
             TokenizerRule(BCFileManipulateNameLanguageDef.ITokenType.STRING, r"'[^'\\]*(?:\\.[^'\\]*)*'"),
             TokenizerRule(BCFileManipulateNameLanguageDef.ITokenType.FUNCO_STR, r'\[(?:upper|lower|capitalize|replace|sub|regex|index|camelize):',
                                                                     'Function [STRING]',
-                                                                    [('[upper:\x01<value>]',
+                                                                    [('[upper:\x01<value>\x01]',
                                                                             TokenizerRule.formatDescription(
                                                                                 'Function [STRING]',
                                                                                 # description
@@ -172,7 +172,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                                                                 '**`[upper:{file:baseName}]`**\n\n'
                                                                                 'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
                                                                                 '**`MY_FILE__NAME01`**')),
-                                                                     ('[lower:\x01<value>]',
+                                                                     ('[lower:\x01<value>\x01]',
                                                                             TokenizerRule.formatDescription(
                                                                                 'Function [STRING]',
                                                                                 # description
@@ -185,7 +185,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                                                                 '**`[lower:{file:baseName}]`**\n\n'
                                                                                 'Will return, if *`{file:baseName}`* equals *`MY-FILE--NAME01`*:\n'
                                                                                 '**`my_file__name01`**')),
-                                                                     ('[capitalize:\x01<value>]',
+                                                                     ('[capitalize:\x01<value>\x01]',
                                                                             TokenizerRule.formatDescription(
                                                                                 'Function [STRING]',
                                                                                 # description
@@ -198,7 +198,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                                                                 '**`[capitalize:{file:baseName}]`**\n\n'
                                                                                 'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
                                                                                 '**`My_file__name01`**')),
-                                                                     ('[camelize:\x01<value>]',
+                                                                     ('[camelize:\x01<value>\x01]',
                                                                             TokenizerRule.formatDescription(
                                                                                 'Function [STRING]',
                                                                                 # description
@@ -212,7 +212,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                                                                 '**`[camelize:{file:baseName}]`**\n\n'
                                                                                 'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
                                                                                 '**`My_File__Name01`**')),
-                                                                     ('[replace:\x01<value>, "<search>", "<replace>"]',
+                                                                     ('[replace:\x01<value>\x01, "<search>", "<replace>"]',
                                                                             TokenizerRule.formatDescription(
                                                                                 'Function [STRING]',
                                                                                 # description
@@ -226,7 +226,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                                                                 '**`[replace:{file:baseName}, "_", "-"]`**\n\n'
                                                                                 'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
                                                                                 '**`my-file--name`**')),
-                                                                     ('[regex:\x01<value>, "<pattern>"]',
+                                                                     ('[regex:\x01<value>\x01, "<pattern>"]',
                                                                             TokenizerRule.formatDescription(
                                                                                 'Function [STRING]',
                                                                                 # description
@@ -240,7 +240,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                                                                 '**`[regex:{file:baseName}, "[a-z]+"]`**\n\n'
                                                                                 'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
                                                                                 '**`myfilename`**')),
-                                                                     ('[regex:\x01<value>, "<pattern>", "<replace>"]',
+                                                                     ('[regex:\x01<value>\x01, "<pattern>", "<replace>"]',
                                                                             TokenizerRule.formatDescription(
                                                                                 'Function [STRING]',
                                                                                 # description
@@ -255,7 +255,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                                                                 '**`[regex:{file:baseName}, "([^\d]+)(\d+)", "$2--$1"]`**\n\n'
                                                                                 'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
                                                                                 '**`01--my_file__name`**')),
-                                                                     ('[index:\x01<value>, "<separator>", <index>]',
+                                                                     ('[index:\x01<value>\x01, "<separator>", <index>]',
                                                                             TokenizerRule.formatDescription(
                                                                                 'Function [STRING]',
                                                                                 # description
@@ -271,7 +271,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                                                                 '**`[index:{file:baseName}, "_", 2]`**\n\n'
                                                                                 'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
                                                                                 '**`file`**')),
-                                                                     ('[sub:\x01<value>, <start>]',
+                                                                     ('[sub:\x01<value>\x01, <start>]',
                                                                             TokenizerRule.formatDescription(
                                                                                 'Function [STRING]',
                                                                                 # description
@@ -287,7 +287,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                                                                 '**`[sub:{file:baseName}, 4]`** and **`[sub:{file:baseName}, -6]`**\n\n'
                                                                                 'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
                                                                                 '**`file__name01`** and **`name01`**')),
-                                                                     ('[sub:\x01<value>, <start>, <length>]',
+                                                                     ('[sub:\x01<value>\x01, <start>, <length>]',
                                                                             TokenizerRule.formatDescription(
                                                                                 'Function [STRING]',
                                                                                 # description
@@ -308,7 +308,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                                                     'f'),
             TokenizerRule(BCFileManipulateNameLanguageDef.ITokenType.FUNCO_NUM, r'\[(?:len):',
                                                                     'Function [NUMBER]',
-                                                                    [('[len:\x01<value>]',
+                                                                    [('[len:\x01<value>\x01]',
                                                                             TokenizerRule.formatDescription(
                                                                                 'Function [NUMBER]',
                                                                                 # description
