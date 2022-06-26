@@ -304,6 +304,10 @@ class WCodeEditor(QPlainTextEdit):
 
     def __insertCompletion(self, completion):
         """Text selected from auto completion list, insert it at cursor's place"""
+        try:
+            value=completion.split('\x01')[1]
+        except:
+            value=''
         texts=completion.split('\x01')[::2]
 
         token=self.cursorToken(False)
@@ -324,7 +328,11 @@ class WCodeEditor(QPlainTextEdit):
 
         if len(texts)>1:
             p=cursor.anchor()
-            cursor.insertText("".join(texts[1:]))
+
+            self.moveCursor(QTextCursor.NextCharacter, QTextCursor.KeepAnchor)
+            if self.textCursor().selectedText().strip()=='':
+                # if next character is space or there's no next character, full auto completion
+                cursor.insertText(value+"".join(texts[1:]))
             cursor.setPosition(p, QTextCursor.MoveAnchor)
         self.setTextCursor(cursor)
 
@@ -335,6 +343,8 @@ class WCodeEditor(QPlainTextEdit):
 
         #standardMenu.addSeparator()
         #standardMenu.addAction(u'Test', self.doAction)
+
+        self.contextMenu(standardMenu)
 
         standardMenu.exec(QCursor.pos())
 
@@ -646,6 +656,10 @@ class WCodeEditor(QPlainTextEdit):
 
 
     # endregion: event overload ------------------------------------------------
+
+    def contextMenu(self, standardMenu):
+        """Virtual: have to be overrided"""
+        pass
 
 
     def lineNumberAreaWidth(self):
@@ -1363,17 +1377,22 @@ class WCodeEditor(QPlainTextEdit):
         return cursor
 
 
-    def insertLanguageText(self, text):
+    def insertLanguageText(self, text, replaceSelection=True):
         """If given text use 'completion' format (ie: use of \x01 character to mark informational values and cursor position), insert it at cursor's place"""
         texts=text.split('\x01')[::2]
 
         cursor = self.textCursor()
+        selectedText=cursor.selectedText()
+
         cursor.insertText(texts[0])
 
-        if len(texts)>1:
-            p=cursor.anchor()
-            cursor.insertText("".join(texts[1:]))
-            cursor.setPosition(p, QTextCursor.MoveAnchor)
+        if not replaceSelection and selectedText!='':
+            cursor.insertText(selectedText)
+
+            if len(texts)>1:
+                p=cursor.anchor()
+                cursor.insertText("".join(texts[1:]))
+                cursor.setPosition(p, QTextCursor.MoveAnchor)
         self.setTextCursor(cursor)
 
 
@@ -1424,7 +1443,6 @@ class WCodeEditor(QPlainTextEdit):
             self.centerCursor()
         else:
             self.ensureCursorVisible()
-
 
 
     def selection(self, fromRow, fromCol=None, toRow=None, toCol=None):
