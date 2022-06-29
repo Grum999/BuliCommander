@@ -289,7 +289,7 @@ class BCFileOperationMassRenameUi(QDialog):
             Action=insert autoCompletion
             """
             def onExecute(dummy=None):
-                self.cePattern.insertLanguageText(self.sender().property('insert'), False)
+                self.cePattern.insertLanguageText(self.sender().property('insert'), self.sender().parentWidget()==menuKeywords)
                 self.cePattern.setFocus()
 
             #print(autoCompletion[0])
