@@ -122,8 +122,8 @@ class Parser:
 
         # start to check grammar rules for tokens
         checkGrammarRule(self.__grammarRules.idFirst())
-        #print(self.__tokens)
-        #print(self.__ast)
+        # print("Tokens\n------\n", self.__tokens)
+        # print("AST\n------\n", self.__ast)
 
 
     def grammarRules(self):
@@ -193,6 +193,7 @@ class Parser:
         return self.__errors
 
 
+
 class ParserError:
     """Define an error"""
 
@@ -222,6 +223,7 @@ class ParserError:
         return self.__errorAst
 
 
+
 class ASTStatus(Enum):
     NOMATCH=    0
     MATCH=      1
@@ -229,11 +231,13 @@ class ASTStatus(Enum):
     END=        3
 
 
+
 class ASTSpecialItemType(Enum):
     ROOT='<Root>'
     BINARY_OPERATOR='<BinaryOperator>'
     UNARY_OPERATOR='<UnaryOperator>'
     INDEX_OPERATOR='<IndexOperator>'
+
 
 
 class ASTItem:
@@ -633,6 +637,7 @@ class ASTItem:
         return self.__position
 
 
+
 class GROperatorPrecedence:
     """Define a grammar rule for operator precedence"""
 
@@ -864,7 +869,6 @@ class GrammarRules:
 
 
 
-
 class GrammarRule:
     """A grammar rule define sequence of tokens and is referenced by given id
 
@@ -903,7 +907,9 @@ class GrammarRule:
         return GrammarRule.__GRAMMAR_RULES_OBJECT
 
     def __init__(self, id, *grObjects):
-        """Given `id` must but be a string
+        """Given `id` must but be a string or None
+        (when None a random Id is generated)
+
         All items, if provided, are:
         - String (refers to a GrammarRule identifier)
         - A GrammarRule
@@ -918,6 +924,9 @@ class GrammarRule:
             GrammarRule.setGrammarRules()
 
         self.__grammarRules=GrammarRule.__GRAMMAR_RULES_OBJECT
+
+        if id is None:
+            id=QUuid.createUuid().toString()
 
         if not isinstance(id, str):
             raise EInvalidType('Given `id` must be a <str>')
@@ -1235,7 +1244,7 @@ class GRToken(GRObject):
         super(GRToken, self).__init__()
 
         if not isinstance(tokenType, TokenType):
-            raise EInvalidType(f'Given `tokenType` must be <TokenType>: {tokenType}')
+            raise EInvalidType(f'Given `tokenType` must be <TokenType>: {tokenType} ({typeof(tokenType)})')
 
         self.__tokenType=tokenType
         self.__possibleValues=[]
