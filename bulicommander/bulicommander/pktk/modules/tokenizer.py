@@ -473,6 +473,7 @@ class TokenizerRule(object):
             When given as a list(str), consider there's multiple possible autocompletion
             When given as a tuple, consider there's only one possible autocompletion; tuple is in form (value, description)
             When given as a list(tuple), consider there's multiple possible autocompletion; tuple is in form (value, description)
+        Given `autoCompletionChar` define one character that will be displayed in completer left gutter
         Given `caseInsensitive` allows to define if token is case sensitive or case insensitive (default)
         Given `ignoreIndent` allows to define if token ignore or not indent (default False)
             For example, no INDENT/DEDENT token is produced before a token with `ignoreIndent` set to True
