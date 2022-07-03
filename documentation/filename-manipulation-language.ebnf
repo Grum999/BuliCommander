@@ -1,0 +1,130 @@
+/*
+    ----------------------------------------------------------------------------
+    Buli Commander
+    Copyright (C) 2019-2022 - Grum999
+    ----------------------------------------------------------------------------
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See the GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.
+    If not, see https://www.gnu.org/licenses/
+    ----------------------------------------------------------------------------
+    A Krita plugin designed to draw programmatically
+    ----------------------------------------------------------------------------
+
+    ----------------------------------------------------------------------------
+    This document define grammar for BuliScript language, using EBNF syntax
+    (Grammar is more designed for user comprehension than for a real implementation)
+
+
+    Railroad diagram can be produced from (for example) following online website
+        - https://dundalek.com/grammkit/
+        - https://www.bottlecaps.de/rr/ui
+            (used to generate document grammar-diagram.xhtml)
+
+    ----------------------------------------------------------------------------
+*/
+
+
+/*
+    ----------------------------------------------------------------------------
+    Global language body definition
+    ----------------------------------------------------------------------------
+*/
+Formula ::= ( FunctionStr | Keyword | Text )*
+
+
+/*
+    ----------------------------------------------------------------------------
+    Define actions
+
+    To simplify grammar/graph reading, actions are regrouped by functional
+    meaning
+    ----------------------------------------------------------------------------
+*/
+
+
+
+/* Functions */
+FunctionStr
+        ::= '['
+                (
+                    (('capitalize' | 'camelize' | 'upper' | 'lower' ) ':' String_Expression) |
+                    ('replace' ':'  String_Expression ',' String_Expression ',' String_Expression) |
+                    ('regex' ':'  String_Expression ',' String_Expression (',' String_Expression)?) |
+                    ('index' ':'  String_Expression ',' String_Expression ',' IntegerU_Expression) |
+                    ('sub' ':'  String_Expression ',' Integer_Expression (',' IntegerU_Expression)?)
+                )
+            ']'
+
+FunctionInt
+        ::= '['
+                (
+                    ('len' ':'  String_Expression (',' Integer_Expression)?)
+                )
+            ']'
+
+
+
+/* Keywords */
+Keyword
+        ::= '{'
+                (
+                    ('counter' (':' '#'+)?) |
+                    ('image' ':'
+                            ('size' (':' ( ('width' | 'height') (':' '#'+)? ) )?)
+                    ) |
+                    ('time' (':' ('hh' | 'mm' | 'ss') )?) |
+                    ('date' (':' ('yyyy' | 'mm' | 'dd') )?) |
+                    (
+                        'file' ':'
+                            (
+                                ('time' (':' ('hh' | 'mm' | 'ss') )?) |
+                                ('date' (':' ('yyyy' | 'mm' | 'dd') )?) |
+                                'path' |
+                                'baseName' |
+                                'ext' |
+                                'format' |
+                                'hash' ':' ('md5' | 'sha1' | 'sha256' | 'sha512')
+                            )
+                    )
+                )
+            '}'
+
+/* Text */
+Text    ::= (
+                String_Value |
+                String_Unquoted
+            )
+        )+
+
+/* String and Integer */
+String_Expression ::= ( FunctionStr | Keyword | String_Value)+
+Integer_Expression ::= ( FunctionInt | Integer_Value )
+
+
+String_Value
+        ::= ('"' [^"]* '"' ) |
+            ("'" [^']* "'" ) |
+            ('`' [^`]* '`' )
+
+Integer_Value
+        ::= '-'? [0-9]+
+
+/*
+Normally, use this notation:
+String_Unquoted
+        ::= (UnicodeCharacter - ('{' | '}' | '[' | ']' | '"' | "'" | "\" | "/") )+
+
+But rendering with https://www.bottlecaps.de/rr/ui is not clean then use a
+*/
+String_Unquoted
+        ::= ( Not ('{' | '}' | '[' | ']' | '"' | "'" | "\" | "/") | UnicodeCharacter)+

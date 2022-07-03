@@ -44,8 +44,6 @@ from .bcfile import (
         BCDirectory,
         BCFile,
         BCFileManagedFormat,
-        BCFileManipulateName,
-        BCFileManipulateNameLanguageDef,
         BCFileProperty,
         BCFileThumbnailSize,
         BCFileList,

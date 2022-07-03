@@ -45,12 +45,14 @@ from .bcfile import (
         BCFile,
         BCFileList,
         BCFileListPath,
-        BCFileManipulateName,
-        BCFileManipulateNameLanguageDef,
         BCBaseFile,
         BCDirectory,
         BCFileManagedFormat,
         BCFileThumbnailSize
+    )
+from .bcfilenamemanipulationlanguage import (
+        BCFileManipulateName,
+        BCFileManipulateNameLanguageDef
     )
 from .bcsystray import BCSysTray
 from .bcwpathbar import BCWPathBar
@@ -117,7 +119,7 @@ class WMenuForCommand(QWidgetAction):
     def __reformattedText(self, text):
         """Reformat given text, assuming it's a completion text command"""
         returned=[]
-        texts=text.split('\x01')
+        texts=text.replace(BCFileManipulateNameLanguageDef.SEP_SECONDARY_VALUE, BCFileManipulateNameLanguageDef.SEP_PRIMARY_VALUE).split(BCFileManipulateNameLanguageDef.SEP_PRIMARY_VALUE)
         for index, textItem in enumerate(texts):
             if index%2==1:
                 # odd text ("optionnal" information) are written smaller, with darker color
@@ -208,7 +210,7 @@ class BCFileOperationMassRenameUi(QDialog):
             self.__labelPlural=i18n('files')
             self.__defaultPattern='{file:baseName}.{file:ext}'
 
-        self.__fileManipulateNameLanguageDef=BCFileManipulateNameLanguageDef()
+        self.__fileManipulateNameLanguageDef=BCFileManipulateName.languageDefinition()
 
         self.cePattern.setPlainText(self.__defaultPattern)
         self.cePattern.textChanged.connect(self.__patternChanged)
@@ -312,7 +314,7 @@ class BCFileOperationMassRenameUi(QDialog):
         standardMenu.addMenu(menuKeywords)
 
         for rule in self.__fileManipulateNameLanguageDef.tokenizer().rules():
-            if rule.type() in (BCFileManipulateNameLanguageDef.ITokenType.KW, BCFileManipulateNameLanguageDef.ITokenType.FUNCO_STR, BCFileManipulateNameLanguageDef.ITokenType.FUNCO_NUM):
+            if rule.type() in (BCFileManipulateNameLanguageDef.ITokenType.KW, BCFileManipulateNameLanguageDef.ITokenType.FUNCO_STR, BCFileManipulateNameLanguageDef.ITokenType.FUNCO_INT):
 
                 if rule.type() == BCFileManipulateNameLanguageDef.ITokenType.KW:
                     menu=menuKeywords
@@ -343,8 +345,8 @@ class BCFileOperationMassRenameUi(QDialog):
     def __showPathChanged(self, value):
         self.__header.setSectionHidden(0, (not value))
 
-    def __getNewFileName(self, file):
-        newFileName=BCFileManipulateName.calculateFileName(file, self.cePattern.toPlainText())
+    def __getNewFileName(self, file, pattern):
+        newFileName=BCFileManipulateName.calculateFileName(file, pattern)
         if not newFileName[1] is None:
             # error
             return i18n('Invalid renaming pattern')
@@ -361,14 +363,15 @@ class BCFileOperationMassRenameUi(QDialog):
         newRow[0].setText(file.path())
         newRow[1].setText(file.name())
         newRow[1].setData(file, BCFileOperationMassRenameUi.FILEDATA)
-        newRow[2].setText(self.__getNewFileName(file))
+        newRow[2].setText(self.__getNewFileName(file, self.cePattern.toPlainText()))
 
         self.__model.appendRow(newRow)
 
     def __updateFilesFromListView(self):
+        pattern=self.cePattern.toPlainText()
         for row in range(self.__model.rowCount()):
             item=self.__model.item(row, 2)
-            item.setText(self.__getNewFileName(self.__model.item(row, 1).data(BCFileOperationMassRenameUi.FILEDATA)))
+            item.setText(self.__getNewFileName(self.__model.item(row, 1).data(BCFileOperationMassRenameUi.FILEDATA), pattern))
 
         self.tvResultPreview.resizeColumnToContents(2)
 

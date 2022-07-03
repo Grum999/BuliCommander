@@ -42,10 +42,12 @@ from .bcfile import (
         BCDirectory,
         BCFile,
         BCFileManagedFormat,
-        BCFileManipulateName,
-        BCFileManipulateNameLanguageDef,
         BCFileProperty,
         BCFileThumbnailSize
+    )
+from .bcfilenamemanipulationlanguage import (
+        BCFileManipulateName,
+        BCFileManipulateNameLanguageDef
     )
 from .bcsettings import (
         BCSettingsKey,
