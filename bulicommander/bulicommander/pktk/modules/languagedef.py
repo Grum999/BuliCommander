@@ -40,6 +40,9 @@ from ..pktk import *
 
 class LanguageDef:
 
+    SEP_PRIMARY_VALUE = '\x01'              # define bounds for <value> and cursor position
+    SEP_SECONDARY_VALUE = '\x02'            # define bounds for other values
+
     def __init__(self, rules=[], styles=[]):
         """Initialise language & styles"""
         self.__tokenizer = Tokenizer(rules)
