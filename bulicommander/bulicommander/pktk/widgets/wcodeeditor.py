@@ -166,7 +166,7 @@ class WCodeEditor(QPlainTextEdit):
 
         # ---- Set default font (monospace, 10pt)
         font = QFont()
-        font.setFamily("Monospace")
+        font.setFamily('DejaVu Sans Mono, Consolas, Courier New')
         font.setFixedPitch(True)
         font.setPointSize(10)
         self.setFont(font)
@@ -305,10 +305,10 @@ class WCodeEditor(QPlainTextEdit):
     def __insertCompletion(self, completion):
         """Text selected from auto completion list, insert it at cursor's place"""
         try:
-            value=completion.split('\x01')[1]
+            value=completion.replace(LanguageDef.SEP_SECONDARY_VALUE, '').split(LanguageDef.SEP_PRIMARY_VALUE)[1]
         except:
             value=''
-        texts=completion.split('\x01')[::2]
+        texts=completion.replace(LanguageDef.SEP_SECONDARY_VALUE, '').split(LanguageDef.SEP_PRIMARY_VALUE)[::2]
 
         token=self.cursorToken(False)
         if token is None:
@@ -1379,7 +1379,7 @@ class WCodeEditor(QPlainTextEdit):
 
     def insertLanguageText(self, text, replaceSelection=True):
         """If given text use 'completion' format (ie: use of \x01 character to mark informational values and cursor position), insert it at cursor's place"""
-        texts=text.split('\x01')[::2]
+        texts=text.replace(LanguageDef.SEP_SECONDARY_VALUE, '').split(LanguageDef.SEP_PRIMARY_VALUE)[::2]
 
         cursor = self.textCursor()
         selectedText=cursor.selectedText()
@@ -1620,7 +1620,7 @@ class WCECompleterView(QStyledItemDelegate):
         else:
             painter.fillRect(rect, QBrush(color.darker(300)))
         font = style.font()
-        font.setFamily("DejaVu Sans [Qt Embedded]")
+        font.setFamily('DejaVu Sans Mono, Consolas, Courier New')
         font.setBold(True)
         font.setPointSizeF(currentFontSize * 0.65)
 
@@ -1634,7 +1634,6 @@ class WCECompleterView(QStyledItemDelegate):
         font.setFamily(currentFontName)
         font.setPointSizeF(currentFontSize)
 
-
         painter.setFont(font)
         painter.setPen(QPen(color))
 
@@ -1644,7 +1643,7 @@ class WCECompleterView(QStyledItemDelegate):
             rect = QRect(option.rect.left() + 2 * option.rect.height(), option.rect.top(), option.rect.width(), option.rect.height())
             painter.fillRect(rect, option.palette.color(QPalette.AlternateBase))
 
-        texts=index.data(WCECompleterModel.VALUE).split('\x01')
+        texts=index.data(WCECompleterModel.VALUE).replace(LanguageDef.SEP_SECONDARY_VALUE, LanguageDef.SEP_PRIMARY_VALUE).split(LanguageDef.SEP_PRIMARY_VALUE)
         for index, text in enumerate(texts):
             if index%2==1:
                 # odd text ("optionnal" information) are written smaller, with darker color
@@ -1664,9 +1663,9 @@ class WCECompleterView(QStyledItemDelegate):
             painter.drawText(rect, Qt.AlignLeft|Qt.AlignVCenter, text)
 
             if text[-1]==' ':
-                lPosition+=fontMetrics.boundingRect(text[0:-1]+'_').width()
+                lPosition+=fontMetrics.horizontalAdvance(text[0:-1]+'_')
             else:
-                lPosition+=fontMetrics.boundingRect(text).width()
+                lPosition+=fontMetrics.horizontalAdvance(text)
 
         painter.restore()
 
