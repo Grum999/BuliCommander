@@ -400,7 +400,9 @@ def colorSpaceNfo(colorSpace):
 
 def replaceLineEditClearButton(lineEdit):
     """Replace default 'clear' button with a better one"""
-    lineEdit.findChild(QToolButton).setIcon(buildIcon("pktk:edit_text_clear"))
+    toolButton=lineEdit.findChild(QToolButton)
+    if toolButton:
+        toolButton.setIcon(buildIcon("pktk:edit_text_clear"))
 
 
 # ------------------------------------------------------------------------------
