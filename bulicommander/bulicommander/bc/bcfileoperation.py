@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Buli Commander
 # Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
@@ -40,6 +40,10 @@ from PyQt5.QtCore import (
     )
 from PyQt5.QtWidgets import (
         QDialog
+    )
+from PyQt5.QtGui import (
+        QTextCursor,
+        QBrush
     )
 from .bcfile import (
         BCFile,
@@ -164,7 +168,6 @@ class WMenuForCommand(QWidgetAction):
             # need to set a different value to force tooltip being refreshed to new position
             QToolTip.showText(self.__label.mapToGlobal(position), self.__help+' ')
             QToolTip.showText(self.__label.mapToGlobal(position), self.__help, self.__label, QRect(), 600000) # 10minutes..
-
 
 
 class BCFileOperationMassRenameUi(QDialog):
@@ -326,18 +329,35 @@ class BCFileOperationMassRenameUi(QDialog):
 
     def __patternChanged(self):
         """Pattern has been modified, update renamed files in list"""
-        newFileName=BCFileManipulateName.calculateFileName(self.__fileList[0], self.cePattern.toPlainText(), checkOnly=True)
-        if not newFileName[1] is None:
-            # error
-            self.lblError.setText(newFileName[1])
+        selectedErrors = []
+        newFileName = BCFileManipulateName.calculateFileName(self.__fileList[0], self.cePattern.toPlainText(), checkOnly=True)
+        if newFileName[1] is not None:
+            # error during formula evaluation (BCFileManipulateNameErrorDefinition)
+            token = newFileName[1].token()
+            # print(token, newFileName[1].message())
+
+            # define cursor from token, to highlight error
+            cursor = self.cePattern.textCursor()
+            cursor.setPosition(token.positionStart(), QTextCursor.MoveAnchor)
+            cursor.setPosition(token.positionEnd(), QTextCursor.KeepAnchor)
+
+            # define extra selection to append to editor
+            extraSelection = QTextEdit.ExtraSelection()
+            extraSelection.cursor = cursor
+            extraSelection.format.setBackground(QBrush(QColor('#ff0000')))
+
+            selectedErrors.append(extraSelection)
+
+            self.lblError.setText(newFileName[1].message())
             self.lblError.setVisible(True)
-        elif self.cePattern.toPlainText()==self.__defaultPattern:
+        elif self.cePattern.toPlainText() == self.__defaultPattern:
             # error...
             self.lblError.setText(i18n(f"Note: can't rename {self.__labelPlural} when source name is identical to target name"))
             self.lblError.setVisible(True)
         else:
             self.lblError.setText('')
             self.lblError.setVisible(False)
+        self.cePattern.setExtraSelections(selectedErrors)
         self.__updateFilesFromListView()
         self.__updateNbFilesLabelAndBtnOk()
         self.__setModified(True)
@@ -1006,7 +1026,6 @@ class BCFileOperationUi(object):
 
 
 class BCFileOperation(object):
-
     __PROGRESS = None
     __PROGRESS_currentStep = 0
     __PROGRESS_currentBytes = 0
