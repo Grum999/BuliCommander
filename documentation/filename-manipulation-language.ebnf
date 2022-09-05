@@ -103,8 +103,7 @@ Keyword
 Text    ::= (
                 String_Value |
                 String_Unquoted
-            )
-        )+
+            )+
 
 /* String and Integer */
 String_Expression ::= ( FunctionStr | Keyword | String_Value)+
