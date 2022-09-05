@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 
 
-# From Qt documentation example "Code Editor"
+# From Qt documentation example "Code Editor"
 #  https://doc.qt.io/qtforpython-5.12/overviews/qtwidgets-widgets-codeeditor-example.html
 
 from math import ceil
@@ -36,7 +36,9 @@ from PyQt5.QtWidgets import (
         QToolTip
     )
 from PyQt5.QtGui import (
-        QSyntaxHighlighter
+        QSyntaxHighlighter,
+        QTextCharFormat,
+        QColor
     )
 from ..modules.languagedef import LanguageDef
 from ..modules.tokenizer import (
@@ -54,7 +56,7 @@ from ..pktk import *
 class WCodeEditor(QPlainTextEdit):
     """Extended editor with syntax highlighting, autocompletion, line number..."""
 
-    cursorCoordinatesChanged = Signal(QPoint, QPoint, QPoint, int) # cursor position, selection start position, selection end position, selection length
+    cursorCoordinatesChanged = Signal(QPoint, QPoint, QPoint, int)  # cursor position, selection start position, selection end position, selection length
     overwriteModeChanged = Signal(bool)     # INS / OVR mode changed
     readOnlyModeChanged = Signal(bool)      # read-only mode changed
     autoCompletionChanged = Signal(str)     # auto completion item has changed
@@ -91,21 +93,19 @@ class WCodeEditor(QPlainTextEdit):
         self.__cursorSelRowEnd = 0
         self.__cursorSelLen = 0
 
-
         self.setContextMenuPolicy(Qt.CustomContextMenu)
 
         # ---- options ----
         # > TODO: need to define setters/getters
 
         # allows text with multiple lines
-        self.__optionMultiLine=True
+        self.__optionMultiLine = True
 
-        self.__optionCommentChar='#'
-
+        self.__optionCommentChar = '#'
 
         # Gutter colors
         # maybe font size/type/style can be modified
-        self.__optionGutterText=QTextCharFormat()
+        self.__optionGutterText = QTextCharFormat()
         self.__optionGutterText.setForeground(QColor('#4c5363'))
         self.__optionGutterText.setBackground(QColor('#282c34'))
 
