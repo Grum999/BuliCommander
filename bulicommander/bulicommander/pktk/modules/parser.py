@@ -228,7 +228,8 @@ class ParserError:
         if isinstance(self.__errorGrammarRule, GRRule):
             returned += [f"  .Id:        '{self.__errorGrammarRule.id()}'",
                          f"  .Rules:     ({len(self.__errorGrammarRule.grammarList())})",
-                         "\n".join([f"              {grammarIndex:-2}{' --> ' if self.__errorGrammarRule.currentCheckedGrammarIndex()==grammarIndex else '     '}[{grammar.matchCount():-2}] {grammar}"
+                         "\n".join([f"              {grammarIndex:-2}"
+                                    f"{' --> ' if self.__errorGrammarRule.currentCheckedGrammarIndex() == grammarIndex else '     '}[{grammar.matchCount():-2}] {grammar}"
                                     for grammarIndex, grammar in
                                     enumerate(self.__errorGrammarRule.grammarList())
                                     ]
@@ -1493,6 +1494,12 @@ class GRRule(GRObject):
 
             if checked.status() == ASTStatus.END:
                 ast.add(checked)
+                if currentCheckedGrammarIndex > 0 and self.__grammarRule.optionPartialMatch() or checked.status() == ASTStatus.PARTIAL_MATCH:
+                    self.__currentCheckedGrammarIndex = currentCheckedGrammarIndex
+                    self.__currentCheckedGrammar = currentCheckedGrammar
+                    if parser:
+                        parser.addError(ParserError(i18n("Incomplete syntax"), tokens.value(), self, ast))
+                    return ast.setStatus(ASTStatus.PARTIAL_MATCH)
                 return ast.setStatus(ASTStatus.END)
             elif checked.status() in (ASTStatus.NOMATCH, ASTStatus.PARTIAL_MATCH):
                 self.__currentCheckedGrammarIndex = currentCheckedGrammarIndex
