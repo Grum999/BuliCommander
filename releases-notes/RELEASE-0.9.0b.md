@@ -33,16 +33,6 @@ Buli Commander settings make distinction between:
 
 [Feature request #7](https://github.com/Grum999/BuliCommander/issues/7)
 
-- Add a Save All menu entry to Krita file menu
-  ![Krita menu - Save all](./../screenshots/r0-9-0b_kritamenu-save_all.png)
-
-- Add a Save All menu entry to Buli Commander file menu
-  ![Buli Commander menu - Save all](./../screenshots/r0-9-0b_bcmenu-save_all.png)
-
-- Add a status bar in Buli Commander to indicate user that some documents are modified and then not yet saved
-  ![Buli Commander status bar - Save all](./../screenshots/r0-9-0b_bcstatusbar-save_all.png)
-
-
 #### Settings
 
 New options have been added to Buli Commander Settings to let user being able to save all modified documents in one click.
