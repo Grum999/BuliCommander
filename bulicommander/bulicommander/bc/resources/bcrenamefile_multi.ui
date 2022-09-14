@@ -70,7 +70,7 @@
          <enum>QAbstractScrollArea::AdjustIgnored</enum>
         </property>
         <property name="undoRedoEnabled">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="lineWrapMode">
          <enum>QPlainTextEdit::NoWrap</enum>
@@ -167,7 +167,7 @@
          <item>
           <widget class="QToolButton" name="tbNewFormulaDefinition">
            <property name="toolTip">
-            <string>New export definition</string>
+            <string>New rename formula</string>
            </property>
            <property name="text">
             <string>...</string>
@@ -190,7 +190,7 @@
          <item>
           <widget class="QToolButton" name="tbOpenFormulaDefinition">
            <property name="toolTip">
-            <string>Open an export definition</string>
+            <string>Open a rename formula</string>
            </property>
            <property name="text">
             <string>...</string>
@@ -219,7 +219,7 @@
             </sizepolicy>
            </property>
            <property name="toolTip">
-            <string>Save export definition</string>
+            <string>Save rename formula</string>
            </property>
            <property name="text">
             <string>...</string>

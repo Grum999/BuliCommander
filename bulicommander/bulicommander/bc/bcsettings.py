@@ -72,23 +72,24 @@ from bulicommander.pktk.pktk import (
 
 # -----------------------------------------------------------------------------
 
+
 class BCSettingsValues(object):
-    FILE_DEFAULTACTION_OPEN =                               'open'
-    FILE_DEFAULTACTION_OPEN_AND_CLOSE =                     'open and close'
-    FILE_DEFAULTACTION_OPEN_AS_NEW =                        'open as new document'
-    FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE =              'open as new document and close'
+    FILE_DEFAULTACTION_OPEN =                                'open'
+    FILE_DEFAULTACTION_OPEN_AND_CLOSE =                      'open and close'
+    FILE_DEFAULTACTION_OPEN_AS_NEW =                         'open as new document'
+    FILE_DEFAULTACTION_OPEN_AS_NEW_AND_CLOSE =               'open as new document and close'
 
-    FILE_UNIT_KB =                                          'auto'
-    FILE_UNIT_KIB =                                         'autobin'
+    FILE_UNIT_KB =                                           'auto'
+    FILE_UNIT_KIB =                                          'autobin'
 
-    HOME_DIR_SYS =                                          'system'
-    HOME_DIR_UD =                                           'user defined'
+    HOME_DIR_SYS =                                           'system'
+    HOME_DIR_UD =                                            'user defined'
 
-    CLIPBOARD_MODE_ALWAYS =                                 'always'
-    CLIPBOARD_MODE_ACTIVE =                                 'active'
-    CLIPBOARD_MODE_MANUAL =                                 'manual'
-    CLIPBOARD_ACTION_NLAYER =                               'layer'
-    CLIPBOARD_ACTION_NDOCUMENT =                            'document'
+    CLIPBOARD_MODE_ALWAYS =                                  'always'
+    CLIPBOARD_MODE_ACTIVE =                                  'active'
+    CLIPBOARD_MODE_MANUAL =                                  'manual'
+    CLIPBOARD_ACTION_NLAYER =                                'layer'
+    CLIPBOARD_ACTION_NDOCUMENT =                             'document'
 
 
 class BCSettingsKey(SettingsKey):
@@ -385,7 +386,12 @@ class BCSettingsKey(SettingsKey):
     SESSION_MAINWINDOW_WINDOW_GEOMETRY =                     'session.mainwindow.window.geometry'
     SESSION_MAINWINDOW_WINDOW_MAXIMIZED =                    'session.mainwindow.window.maximized'
 
-    SESSION_MASSRENAME_LASTFILE =                            'session.massRename.lastFile'
+    SESSION_MASSRENAMEWINDOW_EDITOR_LASTFILE =               'session.massRenameWindow.editor.lastFile'
+    SESSION_MASSRENAMEWINDOW_EDITOR_WINDOW_GEOMETRY =        'session.massRenameWindow.editor.window.geometry'
+    SESSION_MASSRENAMEWINDOW_EDITOR_WINDOW_MAXIMIZED =       'session.massRenameWindow.editor.window.maximized'
+    SESSION_MASSRENAMEWINDOW_VEDITOR_LASTFILE =              'session.massRenameWindow.visualEditor.lastFile'
+    SESSION_MASSRENAMEWINDOW_VEDITOR_WINDOW_GEOMETRY =       'session.massRenameWindow.visualEditor.window.geometry'
+    SESSION_MASSRENAMEWINDOW_VEDITOR_WINDOW_MAXIMIZED =      'session.massRenameWindow.visualEditor.window.maximized'
 
     SESSION_EXPORTFILESLIST_LASTFILE =                       'session.export.filesList.lastFile'
 
@@ -788,7 +794,12 @@ class BCSettings(Settings):
 
             SettingsRule(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE,                    '',                         SettingsFmt(str)),
 
-            SettingsRule(BCSettingsKey.SESSION_MASSRENAME_LASTFILE,                         '',                         SettingsFmt(str)),
+            SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_EDITOR_LASTFILE,            '',                         SettingsFmt(str)),
+            SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_EDITOR_WINDOW_GEOMETRY,     [-1, -1, -1, -1],           SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_EDITOR_WINDOW_MAXIMIZED,    False,                      SettingsFmt(bool)),
+            SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_VEDITOR_LASTFILE,           '',                         SettingsFmt(str)),
+            SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_VEDITOR_WINDOW_GEOMETRY,    [-1, -1, -1, -1],           SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_VEDITOR_WINDOW_MAXIMIZED,   False,                      SettingsFmt(bool)),
 
             SettingsRule(BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY,               True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.SESSION_PANELS_VIEW_FILES_BACKUP,                    False,                      SettingsFmt(bool)),

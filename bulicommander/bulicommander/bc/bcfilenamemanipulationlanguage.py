@@ -193,7 +193,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                         'Given *<replace>* must be a string (use $1, $2, $*n*... to replace captured groups)\n\n',
                                         # example
                                         'Following instruction:\n'
-                                        '**`[regex:{file:baseName}, "([^\d]+)(\d+)", "$2--$1"]`**\n\n'
+                                        r'**`[regex:{file:baseName}, "([^\d]+)(\d+)", "$2--$1"]`**\n\n'
                                         'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
                                         '**`01--my_file__name`**')),
                            ('[index:\x01<value>\x01, "\x02<separator>\x02", \x02<index>\x02]',
@@ -275,7 +275,8 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                           'f',
                           onInitValue=self.__initTokenAsLowerCase),
             TokenizerRule(BCFileManipulateNameLanguageDef.ITokenType.KW,
-                          r'\{(?:counter(?::#+)?|image:size(?::(?:width|height)(?::#+)?)?|time(?::(?:hh|mm|ss))?|date(?::(?:yyyy|mm|dd))?|file:date(?::(?:yyyy|mm|dd))?|file:time(?::(?:hh|mm|ss))?|file:ext|file:baseName|file:path|file:format|file:hash:(?:md5|sha1|sha256|sha512))\}',
+                          r'\{(?:counter(?::#+)?|image:size(?::(?:width|height)(?::#+)?)?|time(?::(?:hh|mm|ss))?|date(?::(?:yyyy|mm|dd))?|file:date(?::(?:yyyy|mm|dd))?|'
+                          r'file:time(?::(?:hh|mm|ss))?|file:ext|file:baseName|file:path|file:format|file:hash:(?:md5|sha1|sha256|sha512))\}',
                           'Keyword',
                           [('{file:baseName}',
                             TokenizerRule.formatDescription(
@@ -855,11 +856,11 @@ class BCFileManipulateName(object):
             fileName = re.sub(r"(?i)\{image:size:width\}",     f"{file.getProperty(BCFileProperty.IMAGE_WIDTH)}", fileName)
             fileName = re.sub(r"(?i)\{image:size:height\}",    f"{file.getProperty(BCFileProperty.IMAGE_HEIGHT)}", fileName)
 
-            if kw := re.search("(?i)\{image:size:width:(#+)\}", fileName):
+            if kw := re.search(r"(?i)\{image:size:width:(#+)\}", fileName):
                 replaceHash = kw.groups()[0]
                 fileName = re.sub(f"(?i){{image:size:width:{replaceHash}}}", f"{file.getProperty(BCFileProperty.IMAGE_WIDTH):0{len(replaceHash)}}", fileName)
 
-            if kw := re.search("(?i)\{image:size:height:(#+)\}", fileName):
+            if kw := re.search(r"(?i)\{image:size:height:(#+)\}", fileName):
                 replaceHash = kw.groups()[0]
                 fileName = re.sub(f"(?i){{image:size:height:{replaceHash}}}", f"{file.getProperty(BCFileProperty.IMAGE_HEIGHT):0{len(replaceHash)}}", fileName)
         else:
@@ -957,7 +958,7 @@ class BCFileManipulateName(object):
 
             for replaceHash in resultCounter.groups():
                 if replaceHash is not None:
-                    regEx = re.sub(f"\{{counter:{replaceHash}\}}", f"(\\\\d{{{len(replaceHash)},}})", regEx)
+                    regEx = re.sub(fr"\{{counter:{replaceHash}\}}", f"(\\\\d{{{len(replaceHash)},}})", regEx)
 
             regEx = regEx.replace(".", r'\.')
 
@@ -984,13 +985,13 @@ class BCFileManipulateName(object):
 
             for replaceHash in resultCounter.groups():
                 if replaceHash is not None:
-                    fileName = re.sub(f"\{{counter:{replaceHash}\}}", f"{nbFiles:0{len(replaceHash)}}", fileName)
+                    fileName = re.sub(fr"\{{counter:{replaceHash}\}}", f"{nbFiles:0{len(replaceHash)}}", fileName)
 
         return fileName
 
     @staticmethod
     def calculateFileName(file, pattern=None, keepInvalidCharacters=False, targetPath=None, checkOnly=False, tokenizer=None, kwCallBack=None):
-        """Process file name manipulation
+        r"""Process file name manipulation
 
         Given `file` is a BCBaseFile from which properties file name will be built
 
@@ -1450,22 +1451,25 @@ class BCFileManipulateName(object):
                         grammarPreviousRule = None
 
                     if isinstance(grammarCurrentRule, GRToken):
-                        grammarCurrentRule = token
+                        grammarCurrentRule = GRToken(grammarCurrentRule.tokenType())
                 elif grammarRule is None or isinstance(grammarRule, GRToken):
-                    # a token??
-                    if token.type() in (BCFileManipulateNameLanguageDef.ITokenType.FUNCC,
-                                        BCFileManipulateNameLanguageDef.ITokenType.SEPARATOR):
+                    if isinstance(grammarRule, GRToken):
+                        grammarCurrentRule = grammarRule
+                    else:
+                        # a token??
+                        grammarCurrentRule = GRToken(token.type())
+
+                    if grammarCurrentRule.tokenType() in (BCFileManipulateNameLanguageDef.ITokenType.FUNCC,
+                                                          BCFileManipulateNameLanguageDef.ITokenType.SEPARATOR):
                         # these token must be quoted
                         # other token are interpreted
                         message.append(i18n(f'Language delimiters must be quoted: <b>"{token.text()}"</b>'))
                         return BCFileManipulateNameErrorDefinition(token, grammarRule, "<br>".join(message))
-                    elif token.type() == BCFileManipulateNameLanguageDef.ITokenType.NUMBER:
+                    elif grammarCurrentRule.tokenType() == BCFileManipulateNameLanguageDef.ITokenType.NUMBER:
                         # these token must be quoted
                         # other token are interpreted
                         message.append(i18n(f'Number values in file name must be quoted: <b>"{token.text()}"</b>'))
                         return BCFileManipulateNameErrorDefinition(token, grammarRule, "<br>".join(message))
-
-                    grammarCurrentRule = token
                 else:
                     # not a normal case..?
                     print("--E1-- NEED TO CHECK, NOT A NORMAL CASE: ", grammarRule)
@@ -1481,23 +1485,23 @@ class BCFileManipulateName(object):
                     # then it's 'xxxx' or 'previous rule' expected
                     previousExpected = ' or ' + getGrOptional(grammarPreviousRule)
 
-                if isinstance(grammarCurrentRule, Token):
-                    if grammarCurrentRule.type() == BCFileManipulateNameLanguageDef.ITokenType.SEPARATOR:
+                if isinstance(grammarCurrentRule, GRToken):
+                    if grammarCurrentRule.tokenType() == BCFileManipulateNameLanguageDef.ITokenType.SEPARATOR:
                         if previousExpected == '':
                             message.append(i18n(f"A function parameter separator '<b>,</b>' is expected"))
                         else:
                             message.append(i18n(f"A function parameter separator '<b>,</b>'{previousExpected}"))
-                    elif grammarCurrentRule.type() == BCFileManipulateNameLanguageDef.ITokenType.FUNCC:
+                    elif grammarCurrentRule.tokenType() == BCFileManipulateNameLanguageDef.ITokenType.FUNCC:
                         if previousExpected == '':
                             message.append(i18n(f"A function closing '<b>]</b>' is expected"))
                         else:
                             message.append(i18n(f"A function closing '<b>]</b>'{previousExpected}"))
                     else:
-                        message.append("token? "+str(grammarCurrentRule.type()))
+                        message.append("token? "+str(grammarCurrentRule.tokenType()))
                 elif isinstance(grammarCurrentRule, GROne):
                     message.append(getGrOptional(grammarCurrentRule))
                 else:
-                    print("--E2-- NEED TO CHECK, NOT A NORMAL CASE: ", grammarRule)
+                    print("--E2-- NEED TO CHECK, NOT A NORMAL CASE: ", grammarRule, grammarCurrentRule)
                     message.append("grammar rule is None?")
 
                 return BCFileManipulateNameErrorDefinition(token, grammarRule, "<br>".join(message))
@@ -1523,7 +1527,7 @@ class BCFileManipulateName(object):
                     else:
                         returnedFileName = re.sub(r'[/]', '', returnedFileName)
 
-                if counters := re.findall("(\{counter(?::(#+))?\})", returnedFileName, re.I):
+                if counters := re.findall(r"(\{counter(?::(#+))?\})", returnedFileName, re.I):
                     # a counter is defined, need to determinate counter value
                     # hasCounter value define number of hash
                     if targetPath is None:
@@ -1533,7 +1537,7 @@ class BCFileManipulateName(object):
 
                     # build regular expression to replace counter values with \d+
                     # !!!do not use re.escape() here!!!
-                    regEx = re.sub('([\{\[\}\]\.])', r'\\\1', returnedFileName)
+                    regEx = re.sub(r'([\{\[\}\]\.])', r'\\\1', returnedFileName)
 
                     testFileName = returnedFileName
                     for replaceHash in counters:
