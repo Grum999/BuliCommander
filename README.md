@@ -208,6 +208,7 @@ _[2022-XX-XX] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-
 - File panels - *Grid view mode - Smooth thumbnail scroll*
 - User Interface - *Override Krita Welcome Screen "Open file" dialog*
 - User Interface - *Implement "Save All"*
+- File management - *Improve mass renaming*
 
 _[2022-06-13] Version 0.8.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.8.0b.md)*
 - Improve file panel - *Grid View mode - File/Image information*
@@ -330,6 +331,7 @@ Not able to define precisely in which order functionalities will be implemented,
 - Implement Krita file analysis tool
 - Implement a better layout editor for *Export file list* (add popup completer for available marker)
 
+[Additional todo list available on Github](https://github.com/Grum999/BuliCommander/issues)
 
 ## License
 

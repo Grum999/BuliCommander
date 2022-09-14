@@ -33,6 +33,16 @@ Buli Commander settings make distinction between:
 
 [Feature request #7](https://github.com/Grum999/BuliCommander/issues/7)
 
+- Add a Save All menu entry to Krita file menu
+  ![Krita menu - Save all](./../screenshots/r0-9-0b_kritamenu-save_all.png)
+
+- Add a Save All menu entry to Buli Commander file menu
+  ![Buli Commander menu - Save all](./../screenshots/r0-9-0b_bcmenu-save_all.png)
+
+- Add a status bar in Buli Commander to indicate user that some documents are modified and then not yet saved
+  ![Buli Commander status bar - Save all](./../screenshots/r0-9-0b_bcstatusbar-save_all.png)
+
+
 #### Settings
 
 New options have been added to Buli Commander Settings to let user being able to save all modified documents in one click.
@@ -58,3 +68,32 @@ Button `Save files` allows to save all files in one click.
 
 > **Note**
 > For technical reasons (currently not possible to detect modification made on a document without polling), message bar is updated **only when Buli Commander window get focus**
+
+## File management
+
+### Improve mass renaming
+
+[Feature request #8](https://github.com/Grum999/BuliCommander/issues/8)
+
+#### Basic editor
+
+Mass renaming have been improved:
+
+- Allows to save/load formula
+- Context menu for quick and easy access to all Function & Keywords (with complete tooltip)
+- Better error messages for invalid syntax
+
+![Settings](./../screenshots/r0-9-0b_rename-multi01.png)
+
+
+#### Visual editor
+A visual editor, using nodes, has been implemented to build formula:
+- Allows to build from scratch, save/load formula
+- Build nodes automatically from formula defined in basic editor
+- Provide access to Functions, Keywords, Free text, free text concatenation
+
+![Settings](./../screenshots/r0-9-0b_rename-multi02ve.png)
+
+
+
+
