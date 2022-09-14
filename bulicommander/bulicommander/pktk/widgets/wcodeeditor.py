@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 
 
-# From Qt documentation example "Code Editor"
+# From Qt documentation example "Code Editor"
 #  https://doc.qt.io/qtforpython-5.12/overviews/qtwidgets-widgets-codeeditor-example.html
 
 from math import ceil
@@ -36,7 +36,9 @@ from PyQt5.QtWidgets import (
         QToolTip
     )
 from PyQt5.QtGui import (
-        QSyntaxHighlighter
+        QSyntaxHighlighter,
+        QTextCharFormat,
+        QColor
     )
 from ..modules.languagedef import LanguageDef
 from ..modules.tokenizer import (
@@ -54,7 +56,7 @@ from ..pktk import *
 class WCodeEditor(QPlainTextEdit):
     """Extended editor with syntax highlighting, autocompletion, line number..."""
 
-    cursorCoordinatesChanged = Signal(QPoint, QPoint, QPoint, int) # cursor position, selection start position, selection end position, selection length
+    cursorCoordinatesChanged = Signal(QPoint, QPoint, QPoint, int)  # cursor position, selection start position, selection end position, selection length
     overwriteModeChanged = Signal(bool)     # INS / OVR mode changed
     readOnlyModeChanged = Signal(bool)      # read-only mode changed
     autoCompletionChanged = Signal(str)     # auto completion item has changed
@@ -91,21 +93,19 @@ class WCodeEditor(QPlainTextEdit):
         self.__cursorSelRowEnd = 0
         self.__cursorSelLen = 0
 
-
         self.setContextMenuPolicy(Qt.CustomContextMenu)
 
         # ---- options ----
         # > TODO: need to define setters/getters
 
         # allows text with multiple lines
-        self.__optionMultiLine=True
+        self.__optionMultiLine = True
 
-        self.__optionCommentChar='#'
-
+        self.__optionCommentChar = '#'
 
         # Gutter colors
         # maybe font size/type/style can be modified
-        self.__optionGutterText=QTextCharFormat()
+        self.__optionGutterText = QTextCharFormat()
         self.__optionGutterText.setForeground(QColor('#4c5363'))
         self.__optionGutterText.setBackground(QColor('#282c34'))
 
@@ -166,7 +166,7 @@ class WCodeEditor(QPlainTextEdit):
 
         # ---- Set default font (monospace, 10pt)
         font = QFont()
-        font.setFamily("Monospace")
+        font.setFamily('DejaVu Sans Mono, Consolas, Courier New')
         font.setFixedPitch(True)
         font.setPointSize(10)
         self.setFont(font)
@@ -304,7 +304,11 @@ class WCodeEditor(QPlainTextEdit):
 
     def __insertCompletion(self, completion):
         """Text selected from auto completion list, insert it at cursor's place"""
-        texts=completion.split('\x01')[::2]
+        try:
+            value=completion.replace(LanguageDef.SEP_SECONDARY_VALUE, '').split(LanguageDef.SEP_PRIMARY_VALUE)[1]
+        except:
+            value=''
+        texts=completion.replace(LanguageDef.SEP_SECONDARY_VALUE, '').split(LanguageDef.SEP_PRIMARY_VALUE)[::2]
 
         token=self.cursorToken(False)
         if token is None:
@@ -324,7 +328,11 @@ class WCodeEditor(QPlainTextEdit):
 
         if len(texts)>1:
             p=cursor.anchor()
-            cursor.insertText("".join(texts[1:]))
+
+            self.moveCursor(QTextCursor.NextCharacter, QTextCursor.KeepAnchor)
+            if self.textCursor().selectedText().strip()=='':
+                # if next character is space or there's no next character, full auto completion
+                cursor.insertText(value+"".join(texts[1:]))
             cursor.setPosition(p, QTextCursor.MoveAnchor)
         self.setTextCursor(cursor)
 
@@ -335,6 +343,8 @@ class WCodeEditor(QPlainTextEdit):
 
         #standardMenu.addSeparator()
         #standardMenu.addAction(u'Test', self.doAction)
+
+        self.contextMenu(standardMenu)
 
         standardMenu.exec(QCursor.pos())
 
@@ -646,6 +656,10 @@ class WCodeEditor(QPlainTextEdit):
 
 
     # endregion: event overload ------------------------------------------------
+
+    def contextMenu(self, standardMenu):
+        """Virtual: have to be overrided"""
+        pass
 
 
     def lineNumberAreaWidth(self):
@@ -1363,17 +1377,22 @@ class WCodeEditor(QPlainTextEdit):
         return cursor
 
 
-    def insertLanguageText(self, text):
+    def insertLanguageText(self, text, replaceSelection=True):
         """If given text use 'completion' format (ie: use of \x01 character to mark informational values and cursor position), insert it at cursor's place"""
-        texts=text.split('\x01')[::2]
+        texts=text.replace(LanguageDef.SEP_SECONDARY_VALUE, '').split(LanguageDef.SEP_PRIMARY_VALUE)[::2]
 
         cursor = self.textCursor()
+        selectedText=cursor.selectedText()
+
         cursor.insertText(texts[0])
 
-        if len(texts)>1:
-            p=cursor.anchor()
-            cursor.insertText("".join(texts[1:]))
-            cursor.setPosition(p, QTextCursor.MoveAnchor)
+        if not replaceSelection and selectedText!='':
+            cursor.insertText(selectedText)
+
+            if len(texts)>1:
+                p=cursor.anchor()
+                cursor.insertText("".join(texts[1:]))
+                cursor.setPosition(p, QTextCursor.MoveAnchor)
         self.setTextCursor(cursor)
 
 
@@ -1424,7 +1443,6 @@ class WCodeEditor(QPlainTextEdit):
             self.centerCursor()
         else:
             self.ensureCursorVisible()
-
 
 
     def selection(self, fromRow, fromCol=None, toRow=None, toCol=None):
@@ -1602,7 +1620,7 @@ class WCECompleterView(QStyledItemDelegate):
         else:
             painter.fillRect(rect, QBrush(color.darker(300)))
         font = style.font()
-        font.setFamily("DejaVu Sans [Qt Embedded]")
+        font.setFamily('DejaVu Sans Mono, Consolas, Courier New')
         font.setBold(True)
         font.setPointSizeF(currentFontSize * 0.65)
 
@@ -1616,7 +1634,6 @@ class WCECompleterView(QStyledItemDelegate):
         font.setFamily(currentFontName)
         font.setPointSizeF(currentFontSize)
 
-
         painter.setFont(font)
         painter.setPen(QPen(color))
 
@@ -1626,7 +1643,7 @@ class WCECompleterView(QStyledItemDelegate):
             rect = QRect(option.rect.left() + 2 * option.rect.height(), option.rect.top(), option.rect.width(), option.rect.height())
             painter.fillRect(rect, option.palette.color(QPalette.AlternateBase))
 
-        texts=index.data(WCECompleterModel.VALUE).split('\x01')
+        texts=index.data(WCECompleterModel.VALUE).replace(LanguageDef.SEP_SECONDARY_VALUE, LanguageDef.SEP_PRIMARY_VALUE).split(LanguageDef.SEP_PRIMARY_VALUE)
         for index, text in enumerate(texts):
             if index%2==1:
                 # odd text ("optionnal" information) are written smaller, with darker color
@@ -1646,9 +1663,9 @@ class WCECompleterView(QStyledItemDelegate):
             painter.drawText(rect, Qt.AlignLeft|Qt.AlignVCenter, text)
 
             if text[-1]==' ':
-                lPosition+=fontMetrics.boundingRect(text[0:-1]+'_').width()
+                lPosition+=fontMetrics.horizontalAdvance(text[0:-1]+'_')
             else:
-                lPosition+=fontMetrics.boundingRect(text).width()
+                lPosition+=fontMetrics.horizontalAdvance(text)
 
         painter.restore()
 

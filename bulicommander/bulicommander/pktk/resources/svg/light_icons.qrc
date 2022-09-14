@@ -183,6 +183,8 @@
     <file alias="text">light/32dp/text.svg</file>
     <file alias="text_f">light/32dp/text_f.svg</file>
     <file alias="text_f_r90">light/32dp/text_f_r90.svg</file>
+    <file alias="text_function">light/32dp/text_function.svg</file>
+    <file alias="text_keyword">light/32dp/text_keyword.svg</file>
     <file alias="text_t">light/32dp/text_t.svg</file>
     <file alias="text_t_r90">light/32dp/text_t_r90.svg</file>
     <file alias="toolbar">light/32dp/toolbar.svg</file>
@@ -385,6 +387,8 @@
     <file alias="text">light/32dp-disabled/text.svg</file>
     <file alias="text_f">light/32dp-disabled/text_f.svg</file>
     <file alias="text_f_r90">light/32dp-disabled/text_f_r90.svg</file>
+    <file alias="text_function">light/32dp-disabled/text_function.svg</file>
+    <file alias="text_keyword">light/32dp-disabled/text_keyword.svg</file>
     <file alias="text_t">light/32dp-disabled/text_t.svg</file>
     <file alias="text_t_r90">light/32dp-disabled/text_t_r90.svg</file>
     <file alias="toolbar">light/32dp-disabled/toolbar.svg</file>

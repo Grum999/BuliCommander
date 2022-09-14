@@ -428,7 +428,7 @@ class NodeEditorScene(QObject):
 
     def addNode(self, node):
         """Add node to current scene"""
-        if not node in self.__nodes:
+        if node not in self.__nodes:
             self.__nodes.append(node)
             self.__grScene.addItem(node.graphicItem())
             self.nodeAdded.emit(node)
@@ -460,6 +460,8 @@ class NodeEditorScene(QObject):
             self.__links.append(link)
             self.__grScene.addItem(link.graphicItem())
             if link!=self.__linkingItem and not link.connectorTo() is None:
+                link.connectorTo().linkConnectionAdded(link)
+                link.connectorFrom().linkConnectionAdded(link)
                 self.linkAdded.emit(link)
                 self.__checkSelection()
                 self.setModified()
@@ -475,6 +477,8 @@ class NodeEditorScene(QObject):
             if link!=self.__linkingItem and not link.connectorTo() is None:
                 #link.setConnectorTo(None)
                 self.__checkSelection()
+                link.connectorTo().linkConnectionRemoved(link)
+                link.connectorFrom().linkConnectionRemoved(link)
                 self.linkRemoved.emit(link)
                 self.setModified()
             # need to force cleanup
@@ -525,9 +529,9 @@ class NodeEditorScene(QObject):
             self.startLinkingItem.emit()
 
     def nodeFromId(self, id):
-        """Return node from given Id, return Non if no node is found"""
+        """Return node from given Id, return None if no node is found"""
         for node in self.__nodes:
-            if node.id()==id:
+            if node.id() == id:
                 return node
         return None
 
@@ -1463,6 +1467,7 @@ class NodeEditorScene(QObject):
         return NodeEditorScene.IMPORT_OK
 
 
+
 class NodeEditorNode(QObject):
     """Define a node, independently from graphic rendered item"""
     titleChanged=Signal(NodeEditorNode)                                         # node title has been changed: current node
@@ -1498,7 +1503,7 @@ class NodeEditorNode(QObject):
             raise EInvalidType("Given `scene` must be <NodeEditorScene>")
 
         # parent scene
-        self.__scene=scene
+        self.__scene = scene
         self.__scene.defaultNodeTitleColorChanged.connect(self.__defaultSceneNodeTitleColorChanged)
         self.__scene.defaultNodeTitleBgColorChanged.connect(self.__defaultSceneNodeTitleBgColorChanged)
         self.__scene.defaultNodeTitleSelectedColorChanged.connect(self.__defaultSceneNodeTitleSelectedColorChanged)
@@ -1518,7 +1523,8 @@ class NodeEditorNode(QObject):
         self.__scene.linkRemoved.connect(self.__checkRemovedLink)
 
         # node's unique Id
-        self.__id=QUuid.createUuid().toString()
+        self.__id = None
+        self.setId()
 
         # node can be removed?
         self.__isRemovable=True
@@ -1942,15 +1948,16 @@ class NodeEditorNode(QObject):
     def input(self, id):
         """Return input connector if exists, otherwise return None"""
         for connectorId in self.__connectors:
-            connector=self.__connectors[connectorId]
-            if connector.isInput() and connector.id()==id:
+            connector = self.__connectors[connectorId]
+            if connector.isInput() and connector.id() == id:
                 return connector
         return None
 
     def output(self, id):
         """Return output connector if exists, otherwise return None"""
-        for connector in self.__connectors:
-            if connector.isOutput() and connector.id()==id:
+        for connectorId in self.__connectors:
+            connector = self.__connectors[connectorId]
+            if connector.isOutput() and connector.id() == id:
                 return connector
         return None
 
@@ -2050,10 +2057,15 @@ class NodeEditorNode(QObject):
         if connector.id() in self.__connectors:
             # remove signal connection
             connector.valueChanged.disconnect(self.__connectorValueChanged)
+
+            # remove links connected to connector
+            for link in list(connector.links()):
+                self.__scene.removeLink(link)
+
             # remove connector only if exists
             self.__connectors.pop(connector.id())
             self.__connectorsId.pop(self.__connectorsId.index(connector.id()))
-            self.__scene.grScene().removeItem(connector.graphicItem())
+            connector.setNode(None)
             # need to recalculate positions
             self.__updateAllConnectorPosition()
             return True
@@ -2347,6 +2359,26 @@ class NodeEditorNode(QObject):
         """Return Unique Id for node"""
         return self.__id
 
+    def setId(self, id=None):
+        """Set id for node
+
+        If id is None, define a randome unique id, otherwise define id from given `id` value
+
+        If `id` is not a <str> or is already defined in scene, return false
+        """
+        if id is None:
+            id = QUuid.createUuid().toString()
+        elif not isinstance(id, str):
+            return False
+
+        if self.__scene.nodeFromId(id) is None:
+            self.__id = id
+            return True
+        else:
+            return False
+
+
+
     def serialize(self):
         """Return node definition as dictionnary"""
         return {
@@ -2612,6 +2644,10 @@ class NodeEditorConnector(QObject):
         # position in pixel (relative to location start)
         self.__position=0
 
+        # When position is locked, self.__position can't be updated
+        # this is mainly used to force connector position to be in phase with user interface fields, if any
+        self.__positionLocked=False
+
         # location defines node's corner on which connector is located
         self.__location=location
 
@@ -2748,6 +2784,17 @@ class NodeEditorConnector(QObject):
 
         Once parent node has been defined, it's not possible anymore to modify it
         """
+        if node is None:
+            # connector has been removed from node??
+            if not self.__node is None:
+                self.__node.defaultConnectorRadiusChanged.disconnect(self.__defaultNodeConnectorRadiusChanged)
+                self.__node.defaultConnectorBorderSizeChanged.disconnect(self.__defaultNodeConnectorBorderSizeChanged)
+                self.__node.defaultConnectorBorderColorChanged.disconnect(self.__defaultNodeConnectorBorderColorChanged)
+
+            self.__node=None
+            self.__scene.grScene().removeItem(self.__grItem)
+            self.__scene=None
+            return
 
         if not isinstance(node, NodeEditorNode):
             raise EInvalidType("Given `node` <NodeEditorNode>")
@@ -2781,12 +2828,24 @@ class NodeEditorConnector(QObject):
         self.borderSizeChanged.emit(self.borderSize())
         self.borderColorChanged.emit(self.borderColor())
 
+    def positionLocked(self):
+        """Return if current position is locked or not"""
+        return self.__positionLocked
+
+    def setPositionLocked(self, value):
+        """Return if current position is locked or not"""
+        if not isinstance(value, bool):
+            raise EInvalidType("Given `position` must be <bool>")
+        self.__positionLocked=value
+
     def position(self):
         """Return current position for location"""
         return self.__position
 
     def setPosition(self, value=None):
         """Set current position for location"""
+        if self.__positionLocked:
+            return
         if not (value is None or isinstance(value, (int, float))):
             raise EInvalidType("Given `position` must be <int> or <float>")
         elif not value is None:
@@ -2993,6 +3052,20 @@ class NodeEditorConnector(QObject):
     def setToolTip(self, value):
         """Set tooltip for connector"""
         self.__grItem.setToolTip(value)
+
+    def linkConnectionAdded(self, link):
+        """Virtual method, must be overrided if needed
+
+        Called when `link` is connected TO or FROM current connector
+        """
+        pass
+
+    def linkConnectionRemoved(self, link):
+        """Virtual method, must be overrided if needed
+
+        Called when `link` is disconnected TO or FROM current connector
+        """
+        pass
 
 
 
@@ -3400,13 +3473,16 @@ class NodeEditorNodeWidget(QWidget):
         self.setMinimumSize(self.calculateSize(f"XXX{title}XXX", 4))
         self.deserialize(self._data)
 
-    def calculateSize(self, text, numberOfRows, spacing=9):
+    def calculateSize(self, text, numberOfRows, spacing=9, fontMetrics=None):
         """Return a QSize for which:
             - width is calculated from text (calculate text width)
             - height is caclculated from given number of rows, taking in account default row height + given spacing
         """
         # on windows, not sure why, need to add an additional spacing
-        return QSize(self.fontMetrics().horizontalAdvance(text), (self._rowHeight+spacing)*numberOfRows+spacing)
+        if fontMetrics is None:
+            fontMetrics=self.fontMetrics()
+            self._rowHeight=fontMetrics.height()
+        return QSize(fontMetrics.horizontalAdvance(text), (self._rowHeight+spacing)*numberOfRows+spacing)
 
     def setMinimumSize(self, size):
         """Set minimum size for widget
@@ -4104,7 +4180,7 @@ class NodeEditorGrNode(QGraphicsItem):
 
         Take in account current title width + minimum size (200x200 pixels) for a node
         """
-        # Have to take in account:
+        # Have to take in account:self.__renameFormula.
         # - Minimum width
         # - Title width
         # - Button width
@@ -4353,12 +4429,13 @@ class NodeEditorGrConnector(QGraphicsItem):
                 # get start connector from current link
                 fromConnector=links[0].connectorFrom()
 
+                scene = self.__connector.scene()
                 self.__connector.scene().removeLink(links[0])
 
                 # new link instance
                 newLink=NodeEditorLink(fromConnector, None)
                 # define current link as 'linkingItem' (a link in creation/update state)
-                self.__connector.scene().setLinkingItem(newLink)
+                scene.setLinkingItem(newLink)
                 # everything is initialised, enable link
                 newLink.graphicItem().setSelected(True)
         else:
@@ -4923,6 +5000,10 @@ class WNodeEditorView(QGraphicsView):
     def zoomToFit(self):
         """Zoom to fit scene content"""
         boundingRect=self.__scene.nodesBoundingRect()
+        if boundingRect.height()==0 or boundingRect.width()==0:
+            # nothing in scene?
+            return
+
         scale=round(min((self.frameSize().width()-50) / boundingRect.width(), (self.frameSize().height()-50) / boundingRect.height()), 2)
 
         self.setZoom(scale)

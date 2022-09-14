@@ -44,8 +44,6 @@ from .bcfile import (
         BCDirectory,
         BCFile,
         BCFileManagedFormat,
-        BCFileManipulateName,
-        BCFileManipulateNameLanguageDef,
         BCFileProperty,
         BCFileThumbnailSize,
         BCFileList,
@@ -1766,6 +1764,10 @@ class BCSearchFilesDialogBox(QDialog):
 
         if saveAs:
             fileName, dummy = QFileDialog.getSaveFileName(self, title, fileName, extension)
+            if searchTab == 'basic' and re.search(r"\.bcbs", fileName) is None:
+                fileName += ".bcbs"
+            elif searchTab == 'advanced' and re.search(r"\.bcas", fileName) is None:
+                fileName += ".bcas"
 
         if fileName != '':
             if searchTab=='basic':

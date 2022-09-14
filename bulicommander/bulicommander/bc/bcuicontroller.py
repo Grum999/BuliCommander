@@ -50,9 +50,9 @@ from .bcfile import (
         BCDirectory,
         BCFile,
         BCFileCache,
-        BCFileManagedFormat,
-        BCFileManipulateName
+        BCFileManagedFormat
     )
+from .bcfilenamemanipulationlanguage import BCFileManipulateName
 from .bcfileoperation import (
         BCFileOperationUi,
         BCFileOperation
