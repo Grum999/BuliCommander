@@ -804,13 +804,31 @@ class NodeEditorConnectorField(NodeEditorConnector):
             raise EInvalidType("Given `options` must be None or a <dict>")
 
         if self.__connectorType == NodeEditorConnectorStr:
-            self.__widget = WLineEdit()
-            self.__widget.textChanged.connect(lambda v: self.widgetValueChanged.emit(v))
             self.__options = {'regex': False,
-                              'quoted': False
+                              'quoted': False,
+                              'maxLength': 0,   # 0 = no length limit
+                              'values': []      # if provided, manage a combobox
                               }
             self.__options = {**self.__options, **options}  # merge options
-            self.__widget.setRegEx(self.__options['regex'])
+
+            if len(self.__options['values']) > 0:
+                # manage a combobox, ignore other options
+                self.__widget = QComboBox()
+
+                for value in self.__options['values']:
+                    self.__widget.addItem(value)
+
+                self.__widget.setCurrentIndex(0)
+
+                self.__widget.currentTextChanged.connect(lambda v: self.widgetValueChanged.emit(v))
+            else:
+                self.__widget = WLineEdit()
+                self.__widget.textChanged.connect(lambda v: self.widgetValueChanged.emit(v))
+
+                self.__widget.setRegEx(self.__options['regex'])
+
+                if self.__options['maxLength'] > 0:
+                    self.__widget.setMaxLength(self.__options['maxLength'])
         else:
             self.__widget = QSpinBox()
             self.__widget.valueChanged.connect(lambda v: self.widgetValueChanged.emit(f"{v}"))
@@ -877,21 +895,53 @@ class NodeEditorConnectorField(NodeEditorConnector):
         """Return value for connector, taking in account field value (if not connected) or input value (if connected)"""
         if self.__widget.isEnabled():
             if self.__connectorType == NodeEditorConnectorStr:
-                # WLineEdit
-                return self.__widget.text()
+                # WLineEdit / QComboBox
+                if isinstance(self.__widget, WLineEdit):
+                    return self.__widget.text()
+                else:
+                    return self.__widget.currentText()
             else:
                 # QSpinBox
                 return self.__widget.value()
         else:
             # from input
-            return super(NodeEditorConnectorField, self).value()
+            returned = super(NodeEditorConnectorField, self).value()
+
+            # -- if options are defined on widget to check value validity, need to apply it
+            if self.__connectorType == NodeEditorConnectorStr:
+                if returned is None:
+                    returned = '""'
+
+                # need to trim "
+                returnedStripped = returned.strip('"')
+
+                # WLineEdit / QComboBox
+                if isinstance(self.__widget, WLineEdit):
+                    if self.__options['maxLength'] > 0 and len(returnedStripped) > self.__options['maxLength']:
+                        returned = f'"{returnedStripped[0:self.__options["maxLength"]]}"'
+                else:
+                    if returnedStripped not in self.__options['values']:
+                        returned = f'"{self.__options["values"][0]}"'
+            else:
+                if returned is None:
+                    returned = 0
+
+                # QSpinBox
+                if returned > self.__widget.maximum():
+                    returned = self.__widget.maximum()
+                elif returned > self.__widget.minimum():
+                    returned = self.__widget.minimum()
+            return returned
 
     def setValue(self, value):
         """Set value for widget"""
         if self.__widget.isEnabled():
             if self.__connectorType == NodeEditorConnectorStr and isinstance(value, str):
-                # WLineEdit
-                self.__widget.setText(value)
+                # WLineEdit / QComboBox
+                if isinstance(self.__widget, WLineEdit):
+                    self.__widget.setText(value)
+                else:
+                    self.__widget.setCurrentText(value)
             elif self.__connectorType == NodeEditorConnectorInt and isinstance(value, int):
                 # QSpinBox
                 self.__widget.setValue(value)
@@ -1000,6 +1050,12 @@ class BCNodeWFunction(NodeEditorNodeWidget):
                                   NodeEditorConnectorField('value', NodeEditorConnectorStr, None, 'value'),
                                   NodeEditorConnectorField('start', NodeEditorConnectorInt, {'minValue': -1024, 'maxValue': 1024}, 'start'),
                                   NodeEditorConnectorField('length', NodeEditorConnectorInt, {'minValue': 1, 'maxValue': 1024}, 'length'))
+        elif self.__cbValue.currentData()[0] == '[padding:\x01<value>\x01, \x02<length>\x02, \x02<alignment>\x02, \x02<character>\x02]':
+            self.__updateUiFields(NodeEditorConnectorStr,
+                                  NodeEditorConnectorField('value', NodeEditorConnectorStr, None, 'value'),
+                                  NodeEditorConnectorField('length', NodeEditorConnectorInt, {'minValue': 1, 'maxValue': 1024}, 'length'),
+                                  NodeEditorConnectorField('alignment', NodeEditorConnectorStr, {'values': ['left', 'right', 'center']}, 'alignment'),
+                                  NodeEditorConnectorField('character', NodeEditorConnectorStr, {'maxLength': 1}, 'character'))
         elif self.__cbValue.currentData()[0] == '[len:\x01<value>\x01]':
             self.__updateUiFields(NodeEditorConnectorInt,
                                   NodeEditorConnectorField('value', NodeEditorConnectorStr, None, 'value'))
@@ -1237,6 +1293,8 @@ class BCNodeWFunction(NodeEditorNodeWidget):
                     value = '[sub:\x01<value>\x01, \x02<start>\x02]'
                 elif len(data["parameters"]) == 3:
                     value = '[sub:\x01<value>\x01, \x02<start>\x02, \x02<length>\x02]'
+            elif data["function"] == 'Function_Padding':
+                value = '[padding:\x01<value>\x01, \x02<length>\x02, \x02<alignment>\x02, \x02<character>\x02]'
             elif data["function"] == 'Function_Len':
                 if len(data["parameters"]) == 1:
                     value = '[len:\x01<value>\x01]'

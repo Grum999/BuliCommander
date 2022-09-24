@@ -64,6 +64,7 @@ Button `Save files` allows to save all files in one click.
 ### Improve mass renaming
 
 [Feature request #8](https://github.com/Grum999/BuliCommander/issues/8)
+[Feature request #19](https://github.com/Grum999/BuliCommander/issues/19)
 
 #### Basic editor
 
@@ -77,6 +78,7 @@ Mass renaming have been improved:
 
 
 #### Visual editor
+
 A visual editor, using nodes, has been implemented to build formula:
 - Allows to build from scratch, save/load formula
 - Build nodes automatically from formula defined in basic editor
@@ -84,6 +86,14 @@ A visual editor, using nodes, has been implemented to build formula:
 
 ![Settings](./../screenshots/r0-9-0b_rename-multi02ve.png)
 
+#### Language improvement
 
+The function `padding` has been added to language, allowfing to define padded fixed length text.
 
+Text can be:
+ - *left* padded (default)
+ - *right* padded
+ - *center* padded
+
+Padding character is a space by default, but any character can be used
 
