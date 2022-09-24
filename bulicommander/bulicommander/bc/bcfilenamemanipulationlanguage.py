@@ -78,9 +78,11 @@ from bulicommander.pktk.pktk import (
         EInvalidStatus
     )
 
+# -----------------------------------------------------------------------------
 
 
 class BCFileManipulateNameLanguageDef(LanguageDef):
+    """Language definition to manipulate file names"""
 
     class ITokenType(TokenType, Enum):
         STRING = ('String', 'A STRING value')
@@ -98,7 +100,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                           r'''\`[^\`\\]*(?:\\.[^`\\]*)*\`|'[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*"''',
                           onInitValue=self.__initTokenString),
             TokenizerRule(BCFileManipulateNameLanguageDef.ITokenType.FUNCO_STR,
-                          r'\[(?:upper|lower|capitalize|replace|sub|regex|index|camelize):',
+                          r'\[(?:upper|lower|capitalize|replace|sub|regex|index|camelize|padding):',
                           'Function [STRING]',
                           [('[upper:\x01<value>\x01]',
                             TokenizerRule.formatDescription(
@@ -244,7 +246,29 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                                         'Following instructions:\n'
                                         '**`[sub:{file:baseName}, 4, 4]`** and **`[sub:{file:baseName}, -6, 4]`**\n\n'
                                         'Will return, if *`{file:baseName}`* equals *`my_file__name01`*:\n'
-                                        '**`file`** and **`name`**'))
+                                        '**`file`** and **`name`**')),
+                           ('[padding:\x01<value>\x01, \x02<length>\x02, \x02<alignment>\x02, \x02<character>\x02]',
+                            TokenizerRule.formatDescription(
+                                        'Function [STRING]',
+                                        # description
+                                        'Return padded *<value>* to given *<length>*, using defined *<alignment>* and *<character>*\n\n'
+                                        'Given *<value>* can be:\n'
+                                        ' - a string\n'
+                                        ' - a keyword\n\n'
+                                        'Given *<length>* must be a valid number\n'
+                                        'Given *<alignment>* is a string for which value can be:\n'
+                                        ' - `left` for left alignment\n'
+                                        ' - `right` for right alignment\n'
+                                        ' - `center` for center alignment\n'
+                                        ' - if value is not valid or not provided, default *left* alignment is applied\n'
+                                        'Given *<character>* is a one character string, used for padding:\n'
+                                        ' - if value is longer than one character, only first character is taken in account\n'
+                                        ' - if value is empty or not provided, default space character is applied\n',
+                                        # example
+                                        'Following instructions:\n'
+                                        '**`[padding:"x", "10", "left", "#"]`** and **`[padding:"x", "10", "right", "0"]`**\n\n'
+                                        'Will return:\n'
+                                        '**`x#########`** and **`000000000x`**'))
                            ],
                           'f',
                           onInitValue=self.__initTokenAsLowerCase),
@@ -506,7 +530,8 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                           'Function_Replace',
                           'Function_RegEx',
                           'Function_Index',
-                          'Function_Sub'
+                          'Function_Sub',
+                          'Function_Padding'
                           )
                     )
 
@@ -589,6 +614,18 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
                     GRToken(BCFileManipulateNameLanguageDef.ITokenType.SEPARATOR, False),
                     GROne('Integer_Expression'),
                     GROptional('Function_OptionalIntParameter'),
+                    GRToken(BCFileManipulateNameLanguageDef.ITokenType.FUNCC, False)
+                    )
+
+        GrammarRule('Function_Padding',
+                    GrammarRule.OPTION_AST | GrammarRule.OPTION_PARTIAL_MATCH,
+                    # --
+                    GRToken(BCFileManipulateNameLanguageDef.ITokenType.FUNCO_STR, False, '[padding:'),
+                    GROne('String_Expression'),
+                    GRToken(BCFileManipulateNameLanguageDef.ITokenType.SEPARATOR, False),
+                    GROne('Integer_Expression'),
+                    GROptional('Function_OptionalStrParameter'),
+                    GROptional('Function_OptionalStrParameter'),
                     GRToken(BCFileManipulateNameLanguageDef.ITokenType.FUNCC, False)
                     )
 
@@ -758,6 +795,7 @@ class BCFileManipulateNameErrorDefinition(object):
 
 
 class BCFileManipulateName(object):
+    """Classe provides methods to manipulate files names with dedicated language definition"""
 
     __PARSER = None
     __LANGUAGEDEF = None
@@ -1248,7 +1286,7 @@ class BCFileManipulateName(object):
             else:
                 try:
                     returned = re.sub(regExPattern, re.sub(r"\$", "\\\\", evaluate(nodes[2]), flags=re.IGNORECASE), returned, flags=re.IGNORECASE)
-                except e as exception:
+                except Exception:
                     pass
 
             return returned
@@ -1309,6 +1347,47 @@ class BCFileManipulateName(object):
                 except e as exception:
                     return ""
 
+        def returnFunctionPadding(nodes):
+            # 2-4 nodes provided
+            # -[0] value
+            # -[1] length (int)
+            # -[2] alignment (str, if provided)
+            # -[3] padding character (str, if provided)
+            returned = evaluate(nodes[0])
+            length = evaluate(nodes[1])
+
+            if length < len(returned):
+                # if padding size if lower than current text value, return current text value (no truncate)
+                return returned
+
+            # default values
+            alignment = '<'
+            character = ' '
+
+            if len(nodes) > 2:
+                alignment = str(evaluate(nodes[2])).lower()
+
+            if len(nodes) > 3:
+                character = str(evaluate(nodes[3]))
+
+            # check alignment validity
+            if alignment == 'left':
+                alignment = '<'
+            elif alignment == 'right':
+                alignment = '>'
+            elif alignment == 'center':
+                alignment = '^'
+            elif alignment not in ('<', '>', '^'):
+                alignment = '<'
+
+            # check character validity
+            if len(character) == 0:
+                character = ' '
+            elif len(character) > 1:
+                character = character[0]
+
+            return f"{returned:{character}{alignment}{length}}"
+
         def returnFunctionLen(nodes):
             # 1-2 nodes provided
             # -[0] value
@@ -1354,6 +1433,8 @@ class BCFileManipulateName(object):
                     return returnFunctionIndex(astNode.nodes())
                 elif astId == 'Function_Sub':
                     return returnFunctionSub(astNode.nodes())
+                elif astId == 'Function_Padding':
+                    return returnFunctionPadding(astNode.nodes())
                 elif astId == 'Function_Len':
                     return returnFunctionLen(astNode.nodes())
                 # ------------------------------------------------------------------

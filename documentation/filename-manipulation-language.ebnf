@@ -61,7 +61,8 @@ FunctionStr
                     ('replace' ':'  String_Expression ',' String_Expression ',' String_Expression) |
                     ('regex' ':'  String_Expression ',' String_Expression (',' String_Expression)?) |
                     ('index' ':'  String_Expression ',' String_Expression ',' IntegerU_Expression) |
-                    ('sub' ':'  String_Expression ',' Integer_Expression (',' IntegerU_Expression)?)
+                    ('sub' ':'  String_Expression ',' Integer_Expression (',' IntegerU_Expression)?) |
+                    ('padding' ':'  String_Expression ',' Integer_Expression (',' String_Expression (',' String_Expression)?)?)
                 )
             ']'
 
