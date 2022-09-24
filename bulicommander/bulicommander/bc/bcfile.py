@@ -36,9 +36,6 @@
 #       Results can be exported into different format
 
 
-
-
-
 from enum import Enum
 from functools import cmp_to_key
 from multiprocessing import Pool
@@ -108,6 +105,11 @@ from bulicommander.pktk.modules.strutils import (
         bytesSizeToStr,
         strDefault
     )
+from bulicommander.pktk.modules.lcms import (
+        Lcms,
+        LcmsProfile
+    )
+
 from bulicommander.pktk.pktk import (
         EInvalidType,
         EInvalidValue,
@@ -526,10 +528,8 @@ class BCBaseFile(object):
             return self._format
         elif property == BCFileProperty.FILE_DATE:
             return self._mdatetime
-        elif isinstance(property, BCFileProperty):
+        elif isinstance(property, (str, BCFileProperty)):
             return None
-        else:
-            raise EInvalidType('Given `property` must be a valid <BCFileProperty>')
 
     def tag(self, key):
         """Return tag value
@@ -590,7 +590,7 @@ class BCBaseFile(object):
         """Return permission as rwx------ string"""
         if sys.platform == 'linux':
             octalPerm = oct(os.stat(self._fullPathName)[0])[-3:]
-            # https://stackoverflow.com/a/59925828
+            # https://stackoverflow.com/a/59925828
             returned = ""
             letters = [(4, "r"), (2, "w"), (1, "x")]
             for permission in [int(n) for n in f"{octalPerm}"]:
@@ -745,6 +745,8 @@ class BCFile(BCBaseFile):
 
     __INITIALISED = False
 
+    __LCMS_SRGB_PROFILE = LcmsProfile(':sRGB')
+
     @staticmethod
     def initialiseCache(bcCachePath=None, thumbnailCacheDefaultSize=None):
         """Initialise thumbnails cache properties
@@ -760,7 +762,6 @@ class BCFile(BCBaseFile):
         BCFile.setThumbnailCacheDefaultSize(thumbnailCacheDefaultSize)
 
         BCFile.__INITIALISED = True
-
 
     def __init__(self, fileName, strict=False, bcFileCache=None):
         """Initialise BCFile
@@ -817,7 +818,7 @@ class BCFile(BCBaseFile):
         If strict is True, check only files for which extension is known
         If strict is False, try to determinate file format even if there's no extension
         """
-        #if os.path.isfile(fileName):
+        # if os.path.isfile(fileName):
         self.__readable = True
 
         self.__baseName, self.__extension = os.path.splitext(fileName)
@@ -835,7 +836,7 @@ class BCFile(BCBaseFile):
             self.__readable = True
             return
         elif BCFileManagedFormat.inExtensions(self.__extension, True, True):
-            # update qHash for file
+            # update qHash for file
             self.__calculateQuickHash()
 
             if self.__readMetaCacheFile():
@@ -952,7 +953,7 @@ class BCFile(BCBaseFile):
             elif self._format == BCFileManagedFormat.KRA or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.KRA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
-                # by qimagereader
+                # by qimagereader
                 cacheData = self.__readMetaDataKra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
@@ -960,7 +961,7 @@ class BCFile(BCBaseFile):
             elif self._format == BCFileManagedFormat.KRZ or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.KRZ, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
-                # by qimagereader
+                # by qimagereader
                 cacheData = self.__readMetaDataKra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
@@ -968,15 +969,15 @@ class BCFile(BCBaseFile):
             elif self._format == BCFileManagedFormat.ORA or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.ORA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
-                # by qimagereader
+                # by qimagereader
                 cacheData = self.__readMetaDataOra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                     self._format = BCFileManagedFormat.ORA
             elif self.__extension == '':
                 # don't know file format by ImageReader or extension...
-                # and there's no extension
-                # try Kra..
+                # and there's no extension
+                # try Kra..
                 cacheData = self.__readMetaDataKra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
@@ -1010,7 +1011,6 @@ class BCFile(BCBaseFile):
 
     # endregion: initialisation ------------------------------------------------
 
-
     # region: utils ------------------------------------------------------------
 
     def __readMetaCacheFile(self):
@@ -1037,10 +1037,14 @@ class BCFile(BCBaseFile):
                 self._format=contentAsDict["format"]
                 self.__metadata=contentAsDict
 
+                # Do not load iccProfile!
+                # An iccProfile need memory, if each BCFile load it:
+                #   - will reduce performances
+                #   - will need huge memory
+                # The iccProfile can be loaded if needed (mostly when loading image/thumbnail) with __getIccColorProfile()
                 return True
 
         return False
-
 
     def __writeMetaCacheFile(self, dataAsDict):
         """Calculate meta cache file name
@@ -1048,22 +1052,30 @@ class BCFile(BCBaseFile):
         If file exists, load it and return True
         Otherwise return False
         """
-        self.__metadata=dataAsDict
-
         if self.__bcFileCache is None:
             return
 
         try:
             if 'iccProfile' in dataAsDict or 'document.referenceImages.data' in dataAsDict:
-                # exclude extradata from cache (can be heavy data)
-                dataAsDictToPass=copy.copy(dataAsDict)
+                # exclude extradata from image cache (can be heavy data) but save it in iccProfile cache
+                if 'iccProfileHash' in dataAsDict and dataAsDict['iccProfileHash'] == '':
+                    # empty hash value, remove it
+                    dataAsDict.pop('iccProfileHash')
+                elif 'iccProfileHash' in dataAsDict:
+                    # store iccProfile in cache
+                    self.__bcFileCache.setIccProfile(dataAsDict['iccProfileHash'], dataAsDict['iccProfile'])
 
-                if 'iccProfile' in dataAsDictToPass:
-                    dataAsDictToPass['iccProfile']=b''
+                if 'iccProfile' in dataAsDict:
+                    dataAsDict.pop('iccProfile')
+
+                dataAsDictToPass = copy.copy(dataAsDict)
+
                 if 'document.referenceImages.data' in dataAsDict:
-                    dataAsDictToPass['document.referenceImages.data']=[]
+                    dataAsDictToPass.pop('document.referenceImages.data')
             else:
-                dataAsDictToPass=dataAsDict
+                dataAsDictToPass = dataAsDict
+
+            self.__metadata = dataAsDict
 
             return self.__bcFileCache.setMetadata(self.__qHash, dataAsDictToPass)
         except Exception as e:
@@ -1187,9 +1199,10 @@ class BCFile(BCBaseFile):
         returned = {
             'iccProfileName': {},
             'iccProfileCopyright': {},
+            'iccProfileHash':  hashlib.blake2b(iccData, digest_size=32).hexdigest()
         }
 
-        nbTags=struct.unpack('!I', iccData[128:132])[0]
+        nbTags = struct.unpack('!I', iccData[128:132])[0]
 
         for i in range(nbTags):
             tData = iccData[132+i * 12:132+(i+1)*12]
@@ -1238,7 +1251,7 @@ class BCFile(BCBaseFile):
         try:
             archive = zipfile.ZipFile(source, 'r')
         except Exception as e:
-            # can't be read (not exist, not a zip file?)
+            # can't be read (not exist, not a zip file?)
             self.__readable = False
             if re.match(fr"\.(kra|krz|ora)({BCFileManagedFormat.backupSuffixRe()})?$", source):
                 Debug.print('[BCFile.__readArchiveDataFile] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
@@ -1247,7 +1260,7 @@ class BCFile(BCBaseFile):
         try:
             imgfile = archive.open(file)
         except Exception as e:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             self.__readable = False
             archive.close()
             Debug.print('[BCFile.__readArchiveDataFile] Unable to find "{2}" in file {0}: {1}', self._fullPathName, f"{e}", file)
@@ -1256,7 +1269,7 @@ class BCFile(BCBaseFile):
         try:
             data = imgfile.read()
         except Exception as e:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             self.__readable = False
             imgfile.close()
             archive.close()
@@ -1284,7 +1297,7 @@ class BCFile(BCBaseFile):
         if self.__readable:
             try:
                 with open(self._fullPathName, "rb") as fileHandle:
-                    # digest = 256bits (32Bytes)
+                    # digest = 256bits (32Bytes)
                     fileHash = hashlib.sha256()
 
                     # file size is the first part of hash (ie: file size changed then ensure that hash is not the same event if 1st/last 8KB of file are the same)
@@ -1322,7 +1335,7 @@ class BCFile(BCBaseFile):
         try:
             archive = zipfile.ZipFile(self._fullPathName, 'r')
         except Exception as e:
-            # can't be read (not exist, not a zip file?)
+            # can't be read (not exist, not a zip file?)
             self.__readable = False
             Debug.print('[BCFile.__readKraImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
             return None
@@ -1336,14 +1349,14 @@ class BCFile(BCBaseFile):
 
         if not pngFound:
             try:
-                # fallback: try to read preview file
+                # fallback: try to read preview file
                 imgfile = archive.open('preview.png')
                 pngFound = True
             except Exception as e:
                 pngFound = False
 
         if not pngFound:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             self.__readable = False
             archive.close()
             Debug.print('[BCFile.__readKraImage] Unable to find "mergedimage.png" in file {0}', self._fullPathName)
@@ -1352,7 +1365,7 @@ class BCFile(BCBaseFile):
         try:
             image = imgfile.read()
         except Exception as e:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             self.__readable = False
             imgfile.close()
             archive.close()
@@ -1366,7 +1379,7 @@ class BCFile(BCBaseFile):
             returned = QImage()
             returned.loadFromData(image)
         except Exception as e:
-            # can't be read (not png?)
+            # can't be read (not png?)
             self.__readable = False
             Debug.print('[BCFile.__readKraImage] Unable to parse "mergedimage.png" in file {0}: {1}', self._fullPathName, f"{e}")
             return None
@@ -1390,7 +1403,7 @@ class BCFile(BCBaseFile):
         try:
             archive = zipfile.ZipFile(self._fullPathName, 'r')
         except Exception as e:
-            # can't be read (not exist, not a zip file?)
+            # can't be read (not exist, not a zip file?)
             self.__readable = False
             Debug.print('[BCFile.__readOraImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
             return None
@@ -1399,7 +1412,7 @@ class BCFile(BCBaseFile):
             # try to read merged image preview
             imgfile = archive.open('mergedimage.png')
         except Exception as e:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             imgfile = None
 
 
@@ -1409,7 +1422,7 @@ class BCFile(BCBaseFile):
             try:
                 imgfile = archive.open('Thumbnails/thumbnail.png')
             except Exception as e:
-                # can't be read (not exist, not a Kra file?)
+                # can't be read (not exist, not a Kra file?)
                 self.__readable = False
                 archive.close()
                 Debug.print('[BCFile.__readOraImage] Unable to find "thumbnail.png" in file {0}: {1}', self._fullPathName, f"{e}")
@@ -1419,7 +1432,7 @@ class BCFile(BCBaseFile):
         try:
             image = imgfile.read()
         except Exception as e:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             self.__readable = False
             imgfile.close()
             archive.close()
@@ -1433,7 +1446,7 @@ class BCFile(BCBaseFile):
             returned = QImage()
             returned.loadFromData(image)
         except Exception as e:
-            # can't be read (not png?)
+            # can't be read (not png?)
             self.__readable = False
             Debug.print('[BCFile.__readOraImage] Unable to parse "thumbnail.png" in file {0}: {1}', self._fullPathName, f"{e}")
             return None
@@ -1454,7 +1467,7 @@ class BCFile(BCBaseFile):
             try:
                 return QImage(fileName)
             except Exception as e:
-                # can't be read (not exist, not a Kra file?)
+                # can't be read (not exist, not a Kra file?)
                 Debug.print('[BCFile.__readCbxImage] Unable to read extracted file {0}: {1}', fileName, f"{e}")
                 return None
 
@@ -1476,7 +1489,7 @@ class BCFile(BCBaseFile):
                         return qImage(extractedFileName)
 
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 Debug.print('[BCFile.__readCbxImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
         elif self._format == BCFileManagedFormat.CBT:
@@ -1493,7 +1506,7 @@ class BCFile(BCBaseFile):
                         return qImage(os.path.join(tmpDirName, fileNames[0]))
 
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 Debug.print('[BCFile.__readCbxImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
         elif self._format in (BCFileManagedFormat.CBR, BCFileManagedFormat.CB7):
@@ -1511,7 +1524,7 @@ class BCFile(BCBaseFile):
                         if not extractedFileName is None:
                             return qImage(extractedFileName)
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
 
@@ -1607,13 +1620,14 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        def decodeChunk_APP2(markerSegment, returned, getExtraData):
+        def decodeChunk_APP2(markerSegment, returned):
             """Decode APP2 marker:
 
             {
                 'iccProfileName': <str>,
-                'iccProfileCopyright': <str>
-                'iccProfile': <byte str>
+                'iccProfileCopyright': <str>,
+                'iccProfileHash': <str>,
+                'iccProfile': <bytes>
             }
             """
             if markerSegment['data'][0:12] == b'ICC_PROFILE\x00':
@@ -1628,11 +1642,7 @@ class BCFile(BCBaseFile):
                 returned['iccProfile']+=markerSegment['data'][14:]
 
                 if chunkNum == chunkTotal:
-                    tmp = self.__readICCData(returned['iccProfile'])
-                    if getExtraData==False:
-                        # don't want icc profile data (for performance, memory, ... don't need it)
-                        returned['iccProfile']=b'Y'
-                    returned.update(tmp)
+                    returned.update(self.__readICCData(returned['iccProfile']))
             return returned
 
         def decodeChunk_APP14(markerSegment):
@@ -1674,7 +1684,7 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        if getExtraData==False and fromCache and not self.__metadata is None:
+        if getExtraData is False and fromCache and self.__metadata is not None:
             return self.__metadata
 
         # by default
@@ -1685,11 +1695,11 @@ class BCFile(BCBaseFile):
                 'colorType': ('RGB', i18n('RGB'))
             }
 
-        with open(self._fullPathName , 'rb') as fHandler:
+        with open(self._fullPathName, 'rb') as fHandler:
             # check signature (2 bytes)
             bytes = fHandler.read(2)
 
-            # SOI
+            # SOI
             if bytes != b'\xFF\xD8':
                 Debug.print('[BCFile.__readMetaDataJpeg] Invalid header: {0}', bytes)
                 return returned
@@ -1699,10 +1709,10 @@ class BCFile(BCBaseFile):
                 if markerSegment['id'] == b'\xFF\xE0':
                     returned.update(decodeChunk_APP0(markerSegment))
                 elif markerSegment['id'] == b'\xFF\xE2':
-                    returned.update(decodeChunk_APP2(markerSegment, returned, getExtraData))
+                    returned.update(decodeChunk_APP2(markerSegment, returned))
                 elif markerSegment['id'] in [b'\xFF\xC0', b'\xFF\xC2']:
                     returned.update(decodeChunk_SOFx(markerSegment))
-                #else:
+                # else:
                 #    Debug.print('[BCFile.__readMetaDataJpeg] markerSegment({0}) size: {1} / data: {2}', markerSegment['id'], markerSegment['size'], markerSegment['data'][0:25])
 
                 markerSegment = readMarkerSegment(fHandler)
@@ -1981,7 +1991,7 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        def decodeChunk_iCCP(chunk, getExtraData):
+        def decodeChunk_iCCP(chunk):
             """Decode iCCP chunk and return a dictionary with:
 
             {
@@ -1994,6 +2004,7 @@ class BCFile(BCBaseFile):
             returned = {
                 'iccProfileName': {},
                 'iccProfileCopyright': {},
+                'iccProfileHash': '',
                 'iccProfile': b''
             }
 
@@ -2007,11 +2018,7 @@ class BCFile(BCBaseFile):
 
             iccData = zlib.decompress(zData)
 
-            if getExtraData==False:
-                returned['iccProfile']=b'Y'
-            else:
-                returned['iccProfile']=iccData
-
+            returned['iccProfile'] = iccData
             returned.update(self.__readICCData(iccData))
 
             return returned
@@ -2043,7 +2050,7 @@ class BCFile(BCBaseFile):
                     # if sRGB, ignore gamma
                     returned.pop('gamma', None)
                 elif chunk['id']=='iCCP':
-                    returned.update(decodeChunk_iCCP(chunk, getExtraData))
+                    returned.update(decodeChunk_iCCP(chunk))
                     # if icc profile, ignore gamma and sRGB
                     returned.pop('gamma', None)
                     returned.pop('sRGBRendering', None)
@@ -2087,11 +2094,11 @@ class BCFile(BCBaseFile):
             data = fHandler.read(9)
             if data[8] & 0b10000000 == 0b10000000:
                 # bit set to 1: there's a local table
-                # calculate local color table size
+                # calculate local color table size
                 lctSize =  pow(2, (data[8] & 0b00000111) + 1 )
                 returned['paletteSize']=lctSize
                 lctSize*=3
-                # skip color table
+                # skip color table
                 fHandler.seek(lctSize, 1)
 
             # skip image data content
@@ -2283,7 +2290,7 @@ class BCFile(BCBaseFile):
             # color mode data section
             length = struct.unpack('!L', fHandle.read(4))[0]
             if length > 0:
-                # skip color table content
+                # skip color table content
                 fHandle.seek(length)
 
         def read_IRB(fHandle):
@@ -2291,7 +2298,7 @@ class BCFile(BCBaseFile):
 
             return nothing
             """
-            # ==> commented, used for debug and psd file format analysis
+            # ==> commented, used for debug and psd file format analysis
             #__IRB_ID = {
             #    0x03E8: "(Obsolete--Photoshop 2.0 only ) Contains five 2-byte values: number of channels, rows, columns, depth, and mode",
             #    0x03E9: "Macintosh print manager print info record",
@@ -2403,7 +2410,7 @@ class BCFile(BCBaseFile):
                     break
 
                 resId = struct.unpack('!H', fHandle.read(2))[0]
-                # ==> commented, used for debug and psd file format analysis
+                # ==> commented, used for debug and psd file format analysis
                 #if resId in __IRB_ID:
                 #    Debug.print('[BCFile.__readMetaDataPsd] IRB({0}): {1}', hex(resId), __IRB_ID[resId])
                 #elif resId >= 0x0FA0 and resId <= 0x1387:
@@ -2429,7 +2436,7 @@ class BCFile(BCBaseFile):
                     if resId == 0x03ED:
                         returned.update(decode_IRB_03ED(data))
                     elif resId == 0x040F:
-                        returned.update(decode_IRB_040F(data, getExtraData))
+                        returned.update(decode_IRB_040F(data))
                 else:
                     # skip data
                     fHandle.seek(length, 1)
@@ -2463,19 +2470,17 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        def decode_IRB_040F(data, getExtraData):
+        def decode_IRB_040F(data):
             # 0x040F = ICC profile
 
             returned = {
                 'iccProfileName': {},
                 'iccProfileCopyright': {},
+                'iccProfileHash': '',
                 'iccProfile': b''
             }
 
-            if getExtraData==False:
-                returned['iccProfile']=b'Y'
-            else:
-                returned['iccProfile']=data
+            returned['iccProfile'] = data
             returned.update(self.__readICCData(data))
 
             return returned
@@ -2487,7 +2492,7 @@ class BCFile(BCBaseFile):
             length = struct.unpack('!L', fHandle.read(4))[0]
             #print('lmi length', length)
             if length > 0:
-                # skip color table content
+                # skip color table content
                 fHandle.seek(length)
 
             return {}
@@ -2583,7 +2588,7 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        def read_imageProperties(fHandle, getExtraData):
+        def read_imageProperties(fHandle):
             # read xcf image properties
             returned = {}
 
@@ -2606,7 +2611,7 @@ class BCFile(BCBaseFile):
                         returned.update(read_imageProperties_13(bytes))
                     elif id == 0x15:
                         # parasite
-                        returned.update(read_imageProperties_15(bytes, getExtraData))
+                        returned.update(read_imageProperties_15(bytes))
                 else:
                     # ignore properties and skip data
                     fHandle.seek(length, 1)
@@ -2638,7 +2643,7 @@ class BCFile(BCBaseFile):
 
             return returned
 
-        def read_imageProperties_15(data, getExtraData):
+        def read_imageProperties_15(data):
             # read a parasite (#21)
             # can contains N parasites...
 
@@ -2659,8 +2664,6 @@ class BCFile(BCBaseFile):
                 if name == b'icc-profile':
                     returned['iccProfile']=data[position:position+parasiteSize]
                     returned.update(self.__readICCData(returned['iccProfile']))
-                    if getExtraData==False:
-                        returned['iccProfile']=b'Y'
                 else:
                     pass
                     #print(name, 'skip')
@@ -2684,7 +2687,7 @@ class BCFile(BCBaseFile):
 
             returned.update(read_header(fHandler))
 
-            returned.update(read_imageProperties(fHandler, getExtraData))
+            returned.update(read_imageProperties(fHandler))
 
         return returned
 
@@ -2697,7 +2700,7 @@ class BCFile(BCBaseFile):
             try:
                 archive = zipfile.ZipFile(self._fullPathName, 'r')
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return []
@@ -2718,7 +2721,7 @@ class BCFile(BCBaseFile):
             try:
                 archive = zipfile.ZipFile(self._fullPathName, 'r')
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return []
@@ -2739,7 +2742,7 @@ class BCFile(BCBaseFile):
             try:
                 archive = zipfile.ZipFile(self._fullPathName, 'r')
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return []
@@ -2810,7 +2813,7 @@ class BCFile(BCBaseFile):
                 xmlDoc = xmlElement.fromstring(maindoc.decode())
                 parsed = True
             except Exception as e:
-                # can't be read (not xml?)
+                # can't be read (not xml?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataKra] Unable to parse "maindoc.xml" in file {0}: {1}', self._fullPathName, f"{e}")
 
@@ -2884,7 +2887,7 @@ class BCFile(BCBaseFile):
                 try:
                     csn = xmlDoc[0].attrib['colorspacename']
 
-                    # RGB
+                    # RGB
                     if csn in ['RGBA', 'RGBAU8']:
                         returned['colorType'] = ('RGBA', 'RGB with Alpha')
                         returned['bitDepth'] = (8, '8-bit integer/channel')
@@ -2898,7 +2901,7 @@ class BCFile(BCBaseFile):
                         returned['colorType'] = ('RGBA', 'RGB with Alpha')
                         returned['bitDepth'] = (32.0, '32-bit float/channel')
 
-                    # CYMK
+                    # CYMK
                     elif csn in ['CMYK', 'CMYKAU8']:
                         returned['colorType'] = ('CMYKA', 'CMYK with Alpha')
                         returned['bitDepth'] = (8, '8-bit integer/channel')
@@ -3017,7 +3020,7 @@ class BCFile(BCBaseFile):
                 xmlDoc = xmlElement.fromstring(infoDoc.decode())
                 parsed = True
             except Exception as e:
-                # can't be read (not xml?)
+                # can't be read (not xml?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataKra] Unable to parse "documentinfo.xml" in file {0}: {1}', self._fullPathName, f"{e}")
 
@@ -3106,7 +3109,7 @@ class BCFile(BCBaseFile):
                     xmlDoc = xmlElement.fromstring(contentDoc.decode())
                     parsed = True
                 except Exception as e:
-                    # can't be read (not xml?)
+                    # can't be read (not xml?)
                     self.__readable = False
                     Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, f"{e}", filename)
 
@@ -3127,7 +3130,7 @@ class BCFile(BCBaseFile):
                     xmlDoc = xmlElement.fromstring(contentDoc.decode())
                     parsed = True
                 except Exception as e:
-                    # can't be read (not xml?)
+                    # can't be read (not xml?)
                     self.__readable = False
                     Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, f"{e}", filename)
 
@@ -3151,7 +3154,7 @@ class BCFile(BCBaseFile):
                     xmlDoc = xmlElement.fromstring(contentDoc.decode())
                     parsed = True
                 except Exception as e:
-                    # can't be read (not xml?)
+                    # can't be read (not xml?)
                     self.__readable = False
                     Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, f"{e}", filename)
 
@@ -3216,7 +3219,7 @@ class BCFile(BCBaseFile):
                 xmlDoc = xmlElement.fromstring(maindoc.decode())
                 parsed = True
             except Exception as e:
-                # can't be read (not xml?)
+                # can't be read (not xml?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataOra] Unable to parse "stack.xml" in file {0}: {1}', self._fullPathName, f"{e}")
 
@@ -3287,7 +3290,7 @@ class BCFile(BCBaseFile):
             # skip useless data from header
             fHandler.seek(12, os.SEEK_CUR)
 
-            # now in DIB header
+            # now in DIB header
             bytes = fHandler.read(4)
             dibHeaderSize=struct.unpack('<I', bytes)[0]
 
@@ -3307,7 +3310,7 @@ class BCFile(BCBaseFile):
                 bytes = fHandler.read(4)
                 returned['height']=struct.unpack('<I', bytes)[0]
 
-                # colorPlane = 1, useless
+                # colorPlane = 1, useless
                 bytes = fHandler.read(2)
 
                 # bits per pixels
@@ -3369,7 +3372,7 @@ class BCFile(BCBaseFile):
                     returned['paletteSize']=paletteSize
 
                 if dibHeaderSize >= 108:
-                    # BITMAPV5HEADER -- get icc profile
+                    # BITMAPV5HEADER -- get icc profile
 
                     # skip useless data from header
                     # 4: important colors
@@ -3431,10 +3434,7 @@ class BCFile(BCBaseFile):
                         if embedded:
                             iccNfo=self.__readICCData(bytes)
                             returned.update(iccNfo)
-                            if getExtraData==False:
-                                returned['iccProfile']=b'Y'
-                            else:
-                                returned['iccProfile']=bytes
+                            returned['iccProfile']=bytes
                         else:
                             returned['iccProfileName']={'en-gb': 'Linked to external file'}
                             returned['iccProfileCopyright']={'en-gb': bytes.decode('utf-8', 'ignore')}
@@ -3956,7 +3956,7 @@ class BCFile(BCBaseFile):
                 with gzip.open(self._fullPathName, 'rb') as fHandler:
                     fileContent=fHandler.read()
             except Exception as e:
-                # can't be read (not xml?)
+                # can't be read (not xml?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataSvg] Unable to read file {0}: {1}', self._fullPathName, f"{e}")
                 return returned
@@ -3965,7 +3965,7 @@ class BCFile(BCBaseFile):
                 with open(self._fullPathName, 'r') as fHandler:
                     fileContent=fHandler.read()
             except Exception as e:
-                # can't be read (not xml?)
+                # can't be read (not xml?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataSvg] Unable to read file {0}: {1}', self._fullPathName, f"{e}")
                 return returned
@@ -3973,7 +3973,7 @@ class BCFile(BCBaseFile):
         try:
             xmlDoc = xmlElement.fromstring(fileContent)
         except Exception as e:
-            # can't be read (not xml?)
+            # can't be read (not xml?)
             self.__readable = False
             Debug.print('[BCFile.__readMetaDataSvg] Unable to parse file {0}: {1}', self._fullPathName, f"{e}")
             return returned
@@ -4077,7 +4077,7 @@ class BCFile(BCBaseFile):
                             addPage(fileName, extractedFileName)
 
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
@@ -4099,7 +4099,7 @@ class BCFile(BCBaseFile):
                             addPage(fileName, extractedFileName)
 
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
@@ -4122,7 +4122,7 @@ class BCFile(BCBaseFile):
                                 if os.path.isfile(extractedFileName):
                                     addPage(fileName, extractedFileName)
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
@@ -4134,6 +4134,17 @@ class BCFile(BCBaseFile):
 
         return returned
 
+
+    def __getIccColorProfile(self):
+        """return ICC color profile data as bytes, if any, otherwise return None"""
+        if self.__bcFileCache is None or self.__bcFileCache.isClosed():
+            bcFileCache = BCFileCache.globalInstance()
+        else:
+            bcFileCache = self.__bcFileCache
+
+        if bcFileCache and 'iccProfileHash' in self.__metadata:
+            return bcFileCache.getIccProfile(self.__metadata['iccProfileHash'])
+        return None
 
     # endregion: utils ---------------------------------------------------------
 
@@ -4250,17 +4261,31 @@ class BCFile(BCBaseFile):
         if not self.__readable:
             return None
 
+        returned = None
+
         if self._format in (BCFileManagedFormat.KRA, BCFileManagedFormat.KRZ):
-            return self.__readKraImage()
+            returned = self.__readKraImage()
         elif self._format == BCFileManagedFormat.ORA:
-            return self.__readOraImage()
+            returned = self.__readOraImage()
         elif self._format in (BCFileManagedFormat.CBZ, BCFileManagedFormat.CBT, BCFileManagedFormat.CBR, BCFileManagedFormat.CB7):
-            return self.__readCbxImage()
+            returned = self.__readCbxImage()
         else:
             try:
-                return QImage(self._fullPathName)
+                returned = QImage(self._fullPathName)
             except:
                 return None
+
+        if returned is None:
+            return returned
+
+        # if image have a color profile, apply it
+        if 'iccProfileHash' in self.__metadata:
+            colorProfile = self.__getIccColorProfile()
+            if colorProfile is not None:
+                lcmsColorProfile = LcmsProfile(colorProfile)
+                returned = Lcms.colorManagedQImage(returned, lcmsColorProfile, BCFile.__LCMS_SRGB_PROFILE)
+
+        return returned
 
     def thumbnail(self, size=None, thumbType=BCBaseFile.THUMBTYPE_IMAGE, cache=True):
         """Return file thumbnail according to current BCFile default cache size
@@ -4301,7 +4326,7 @@ class BCFile(BCBaseFile):
                     imageSrc = QImage(thumbnailFile)
 
                     if sourceSize == size:
-                        # the found thumbnail is already to expected size, return it
+                        # the found thumbnail is already to expected size, return it
                         if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
                             return imageSrc
                         elif thumbType==BCBaseFile.THUMBTYPE_ICON:
@@ -4317,7 +4342,7 @@ class BCFile(BCBaseFile):
         thumbnailImg = None
         if not cache or imageSrc is None:
             # no image cache found
-            # load full image size from file
+            # load full image size from file
             imageSrc = self.image()
             if imageSrc is None or imageSrc.isNull():
                 return None
@@ -4405,6 +4430,8 @@ class BCFile(BCBaseFile):
             return self.__imgSize.height()
         elif isinstance(property, str) and property in self.__metadata:
             return self.__metadata[property]
+        elif isinstance(property, BCFileProperty) and property.value in self.__metadata:
+            return self.__metadata[property.value]
         elif isinstance(property, BCFileProperty) and property.value in self.__metadata:
             return self.__metadata[property.value]
         else:
@@ -4516,7 +4543,7 @@ class BCFileCache(QObject):
     #   - Within transaction:
     #       . the first worker who start a transactoin lock the database
     #       . then, all other worker waits for database is unlocked to be able to work
-    #       . the, only the first worker process data files... (so useless multithreading...)
+    #       . theN, only the first worker process data files... (so useless multithreading...)
     #
     # Solution:
     #   *Not the most elegant solution found*
@@ -4554,7 +4581,7 @@ class BCFileCache(QObject):
     #                      ╭╌╌┤   ╭╌╌┤   ╭╌╌┤   ╭╌╌┤   ╭╌╌┤   ╭╌╌┤
     #                    ┌─┴─┐┊ ┌─┴─┐┊ ┌─┴─┐┊ ┌─┴─┐┊ ┌─┴─┐┊ ┌─┴─┐┊
     #  Memory database   │ 1 │┊ │ 2 │┊ │ 3 │┊ │...│┊ │...│┊ │ n │┊              ATTACH a :memory: database on each connection
-    #                    └───┘┊ └───┘┊ └───┘┊ └───┘┊ └───┘┊ └───┘┊              Allows to write
+    #                    └───┘┊ └───┘┊ └───┘┊ └───┘┊ └───┘┊ └───┘┊              Allows to write within transaction in attached database
     #                         ┊      ┊      ┊      ┊      ┊      ┊
     #                       ╔═╧══════╧══════╧══════╧══════╧══════╧══╗           Workers:
     #                       ║                                       ║           . read from database file
@@ -4573,11 +4600,11 @@ class BCFileCache(QObject):
     #  but execution time is insignificant
     #
 
-    __BC_CACHE_PATH=''
-    __BC_CACHE_FILE=None
-    __DB_EXPECTED_VERSION=100   #1.00
+    __BC_CACHE_PATH = ''
+    __BC_CACHE_FILE = None
+    __DB_EXPECTED_VERSION = 101   #01.01
 
-    __GLOBAL_INSTANCE=None
+    __GLOBAL_INSTANCE = None
 
     @staticmethod
     def __setCacheDirectory(bcCachePath=None):
@@ -4623,7 +4650,7 @@ class BCFileCache(QObject):
 
     @staticmethod
     def cacheFile():
-        """Return SQlite databse cache file"""
+        """Return SQlite database cache file"""
         if BCFileCache.__BC_CACHE_FILE is None:
             BCFileCache.__BC_CACHE_FILE=os.path.join(BCFileCache.__BC_CACHE_PATH, f'metaDataCache.sqlite')
         return BCFileCache.__BC_CACHE_FILE
@@ -4649,11 +4676,15 @@ class BCFileCache(QObject):
         else:
             self.__databaseInstance=QSqlDatabase.addDatabase("QSQLITE", f"dbBCFileCache")
 
+        # print("initDb", self.__id, self.__databaseInstance)
+
         # current database file version
         self.__db_version=0
         # prepared queries
         self.__databaseQuerySetMetadata=None
         self.__databaseQueryGetMetadata=None
+        self.__databaseQuerySetIccprofile=None
+        self.__databaseQueryGetIccprofile=None
         self.__databaseQuerySetDirectory=None
         self.__databaseQueryGetDirectory=None
 
@@ -4675,6 +4706,7 @@ class BCFileCache(QObject):
             dbSchema=''
         else:
             dbSchema='`tmpDb`.'
+
         self.__databaseQuerySetMetadata=QSqlQuery(self.__databaseInstance)
         self.__databaseQuerySetMetadata.prepare(f"""
                 INSERT INTO {dbSchema}`metadata` (hash, metadata, fileFormat)
@@ -4688,6 +4720,22 @@ class BCFileCache(QObject):
         self.__databaseQueryGetMetadata.prepare("""
                 SELECT metadata
                 FROM metadata
+                WHERE hash=:hash
+            """)
+
+        self.__databaseQuerySetIccprofile=QSqlQuery(self.__databaseInstance)
+        self.__databaseQuerySetIccprofile.prepare(f"""
+                INSERT INTO {dbSchema}`iccProfilesData` (hash, iccData)
+                            VALUES(:hash, :iccData)
+                ON CONFLICT(hash)
+                            DO NOTHING
+            """)
+
+        # prepare query that will be used to get metadata in cache
+        self.__databaseQueryGetIccprofile=QSqlQuery(self.__databaseInstance)
+        self.__databaseQueryGetIccprofile.prepare("""
+                SELECT iccData
+                FROM iccProfilesData
                 WHERE hash=:hash
             """)
 
@@ -4715,7 +4763,7 @@ class BCFileCache(QObject):
 
         if self.__db_version==0:
             # need to create database schema
-            updatedVersion=100
+            updatedVersion=100  # 01.00
 
             # Create the main metadata table
             #   This table contains image metadata for each file
@@ -4745,6 +4793,23 @@ class BCFileCache(QObject):
                 )"""):
                     upToDate=False
 
+        if self.__db_version==100:
+            # need to create database schema
+            updatedVersion=101  # 1.01
+
+            # Create the icc profile data table
+            #   This table contains icc profile from files
+            #   ICC are stored by their hash value (different files can refer the same ICC profile)
+            #       hash=       unique primary key ==> ICC profile hash
+            #       data=       metadata stored as blob
+            if upToDate and not sqlQuery.exec("""
+                CREATE TABLE `iccProfilesData` (
+                    `hash` TEXT NOT NULL UNIQUE,
+                    `iccData` BLOB,
+                    PRIMARY KEY(`hash`)
+                )"""):
+                    upToDate=False
+
         if upToDate and not self.__id is None:
             # create temporary metadata table in an "memory" database if
             # an id has been provided
@@ -4753,6 +4818,14 @@ class BCFileCache(QObject):
                     `hash` TEXT NOT NULL UNIQUE,
                     `metadata` TEXT,
                     `fileFormat` TEXT,
+                    PRIMARY KEY(`hash`)
+                )"""):
+                upToDate=False
+
+            if not sqlQuery.exec("""
+                CREATE TABLE `tmpDb`.`iccProfilesData` (
+                    `hash` TEXT NOT NULL UNIQUE,
+                    `iccData` BLOB,
                     PRIMARY KEY(`hash`)
                 )"""):
                 upToDate=False
@@ -4768,7 +4841,7 @@ class BCFileCache(QObject):
 
         if not upToDate:
             # unable to create/update database schema
-            Debug.print(f"[BCFileCache.__updateDatabaseVersion] Unable to create/update cache database schema: 0.00 ==> {updatedVersion/100:.2f}", )
+            Debug.print(f"[BCFileCache.__updateDatabaseVersion] Unable to create/update cache database schema: {self.__db_version/100:.2f} ==> {updatedVersion/100:.2f}", )
 
         sqlQuery.finish()
 
@@ -4783,8 +4856,8 @@ class BCFileCache(QObject):
         # WHERE clause is mandatory to let parser being able to understand the ON CONFLICT statement
         #  https://www.sqlite.org/lang_upsert.html
         #  chapter 2.2 Parsing Ambiguity
-        #sqlQuery.exec("BEGIN IMMEDIATE TRANSACTION")
-        if sqlQuery.exec("""
+        # sqlQuery.exec("BEGIN IMMEDIATE TRANSACTION")
+        if not sqlQuery.exec("""
                 INSERT INTO metadata (hash, metadata, fileFormat)
                     SELECT hash, metadata, fileFormat FROM tmpDb.metadata
                     WHERE true
@@ -4792,13 +4865,25 @@ class BCFileCache(QObject):
                     DO UPDATE SET metadata=excluded.metadata,
                                   fileFormat=excluded.fileFormat
             """):
-            self.__dataToFlush=False
-            #sqlQuery.exec("COMMIT TRANSACTION")
+            sqlQuery.exec("ROLLBACK TRANSACTION")
             sqlQuery.finish()
-            return True
-        #sqlQuery.exec("ROLLBACK TRANSACTION")
+            return False
+
+        if not sqlQuery.exec("""
+                INSERT INTO iccProfilesData (hash, iccData)
+                    SELECT hash, iccData FROM tmpDb.iccProfilesData
+                    WHERE true
+                ON CONFLICT(hash)
+                    DO NOTHING
+            """):
+            # sqlQuery.exec("ROLLBACK TRANSACTION")
+            sqlQuery.finish()
+            return False
+
+        self.__dataToFlush=False
+        # sqlQuery.exec("COMMIT TRANSACTION")
         sqlQuery.finish()
-        return False
+        return True
 
     def __open(self):
         """Open database"""
@@ -4806,7 +4891,7 @@ class BCFileCache(QObject):
             if isinstance(self.__id, str):
                 self.__databaseInstance=QSqlDatabase.addDatabase("QSQLITE", f"dbBCFileCache{self.__id}")
             else:
-                self.__databaseInstance=QSqlDatabase.addDatabase("QSQLITE",  "dbBCFileCache")
+                self.__databaseInstance=QSqlDatabase.addDatabase("QSQLITE", "dbBCFileCache")
 
         self.__databaseInstance.setDatabaseName(self.__fileName)
 
@@ -4819,6 +4904,7 @@ class BCFileCache(QObject):
             if not sqlQuery.exec(f"ATTACH DATABASE ':memory:' AS tmpDb"):
                 # can't attach memory database??
                 # do not continue
+                # print("__open: can't attach memory DB", sqlQuery.lastError().text())
                 self.__databaseInstance.close()
                 self.__databaseInstance=None
                 return False
@@ -4849,6 +4935,10 @@ class BCFileCache(QObject):
     def fileName(self):
         """Return current database file name"""
         return self.__fileName
+
+    def isClosed(self):
+        """return if database is closed or not"""
+        return self.__databaseInstance is None
 
     def close(self):
         """Close cache database if open"""
@@ -4912,6 +5002,49 @@ class BCFileCache(QObject):
                     return json.loads(self.__databaseQueryGetMetadata.value('metadata'), cls=JsonQObjectDecoder)
                 except Exception as e:
                     Debug.print('Unable to load meta cache data ({2}) {0}: {1}', self.__databaseQueryGetMetadata.value('metadata'), f"{e}", hash)
+                    return None
+        return None
+
+    def setIccProfile(self, hash, data):
+        """Set `data` for `hash`
+
+        If exist, do nothing otherwise insert
+        If database is not opened, do nothing
+
+        Return True if metadata are set, otherwise false
+        """
+        if self.__databaseInstance is None:
+            return False
+
+
+        # data=QByteArray(data)
+
+        self.__databaseQuerySetIccprofile.bindValue(":hash", hash)
+        self.__databaseQuerySetIccprofile.bindValue(":iccData", QByteArray(data))
+
+        if self.__databaseQuerySetIccprofile.exec():
+            self.__dataToFlush=(not self.__id is None)
+            return True
+        return False
+
+    def getIccProfile(self, hash):
+        """Return `metadata` for `hash`
+
+        If exist, Metadata are returned as a dictionnary
+        Otherwise return None
+        If database is not opened, return None
+        """
+        if self.__databaseInstance is None:
+            return None
+
+        self.__databaseQueryGetIccprofile.bindValue(":hash", hash)
+        if self.__databaseQueryGetIccprofile.exec():
+            while self.__databaseQueryGetIccprofile.next():
+                try:
+                    returned=self.__databaseQueryGetIccprofile.value('iccData')
+                    return returned.data()  # return data from QByteArray
+                except Exception as e:
+                    # print('Unable to load iccProfile cache data {0}: {1}', f"{e}", hash)
                     return None
         return None
 
@@ -4985,6 +5118,7 @@ class BCFileCache(QObject):
                 'dbSize': 0,
                 'nbHash': 0,
                 'nbDir': 0,
+                'nbIccProfiles': 0
             }
         #print('getStats')
 
@@ -5002,11 +5136,17 @@ class BCFileCache(QObject):
 
         query=QSqlQuery(self.__databaseInstance)
 
-        if query.exec("SELECT count(*) AS nbHash FROM metadata"):
+        if query.exec("SELECT count(hash) AS nbHash FROM metadata"):
             #print('getStats: metadata')
             while query.next():
                 #print('getStats: metadata - '+f"{query.value('nbHash'}"))
                 returned['nbHash']=int(query.value('nbHash'))
+
+        if query.exec("SELECT count(hash) AS nbIccProfiles FROM iccProfilesData"):
+            #print('getStats: iccProfilesData')
+            while query.next():
+                #print('getStats: iccProfilesData - '+f"{query.value('nbIccProfiles'}"))
+                returned['nbIccProfiles']=int(query.value('nbIccProfiles'))
 
         if query.exec("SELECT count(*) AS nbDir FROM directories"):
             while query.next():
@@ -5027,19 +5167,27 @@ class BCFileCache(QObject):
 
         self.beginTransaction()
         query.prepare("DELETE FROM metadata")
-        if query.exec():
-            query.prepare("DELETE FROM directories")
-            self.commitTransaction()
-            if query.exec():
-                return self.vacuum()
-        self.rollbackTransaction()
-        return False
+        if not query.exec():
+            self.rollbackTransaction()
+            return False
+
+        query.prepare("DELETE FROM iccProfilesData")
+        if not query.exec():
+            self.rollbackTransaction()
+            return False
+
+        query.prepare("DELETE FROM directories")
+        if not query.exec():
+            self.rollbackTransaction()
+            return False
+
+        self.commitTransaction()
+        return self.vacuum()
 
     def vacuum(self):
         """Rebuild database content"""
         if self.__databaseInstance is None:
             return
-
 
         # to avoid SQL error: "cannot VACUUM - SQL statements in progress Unable to fetch row"
         # need to be seure that all SQL statement are processed
@@ -5053,7 +5201,7 @@ class BCFileCache(QObject):
         # - reopen standard connection using __open() method
         self.close()
 
-        tmpDbVacuum=QSqlDatabase.addDatabase("QSQLITE",  "tmpDbVacuum")
+        tmpDbVacuum=QSqlDatabase.addDatabase("QSQLITE", "tmpDbVacuum")
         tmpDbVacuum.setDatabaseName(self.__fileName)
         tmpDbVacuum.open()
         tmpDbVacuum.exec("VACUUM")
@@ -5289,7 +5437,7 @@ class BCFileListRuleOperator(object):
         elif self.__operator == 'not between':
             returned = i18n('is not between {0} and {1}')
         else:
-            # shnould not occurs
+            # shnould not occurs
             returned =self.__operator + ' '
 
         value = self.__displayValue
@@ -5348,7 +5496,7 @@ class BCFileListRuleOperator(object):
         elif self.__operator == 'not match':
             return (self.__value.search(value) is None)
         else:
-            # should not occurs
+            # should not occurs
             return False
 
 
@@ -5499,7 +5647,7 @@ class BCFileListRule(object):
                     value = (re.compile(displayValue), value[1])
                 else:
                     # provided as a wildcard character
-                    # convert to regex
+                    # convert to regex
                     displayValue = value[0]
                     value = (re.compile( '(?i)(?:^'+value[0].replace('.', r'\.').replace('*', r'.*').replace('?', '.')+'$)'), value[1])
             elif isinstance(value[0], re.Pattern):
@@ -5533,7 +5681,7 @@ class BCFileListRule(object):
                     value = (re.compile(displayValue), value[1])
                 else:
                     # provided as a wildcard character
-                    # convert to regex
+                    # convert to regex
                     displayValue = value[0]
                     value = (re.compile( '(?i)(?:^'+value[0].replace('.', r'\.').replace('*', r'.*').replace('?', '.')+'$)'), value[1])
             elif isinstance(value[0], re.Pattern):
@@ -5610,7 +5758,7 @@ class BCFileListRule(object):
                     value = (value[0]+0.9999, value[1])
             elif isinstance(value[0], tuple):
                 # interval (between)
-                # in this case, always date/time
+                # in this case, always date/time
                 # => fix end hour to 23:59:59.9999 if not already defined
                 if QDateTime.fromMSecsSinceEpoch(1000*value[0]).time().msecsSinceStartOfDay()==0:
                     # hour = 00:00:00
@@ -6280,7 +6428,7 @@ class BCFileList(QObject):
             # both are directories OR both are not directories
 
             if pA == pB:
-                # same value, need to compare on next sort key
+                # same value, need to compare on next sort key
                 continue
             elif sortKey.ascending():
                 if pA is None:
@@ -6635,7 +6783,7 @@ class BCFileList(QObject):
             ]
 
         if clearResults:
-            # reset current list if asked
+            # reset current list if asked
             self.clearResults(False)
 
         if buildStats:
@@ -6653,7 +6801,7 @@ class BCFileList(QObject):
         Debug.print('BCFileList.execute')
         Debug.print('...........................................')
 
-        # stopwatches are just used to measure execution time performances
+        # stopwatches are just used to measure execution time performances
         managedFilesOnly = None
 
         # nbTotal=counter used to determinate when to process application events
@@ -6662,7 +6810,7 @@ class BCFileList(QObject):
         # same search rule than in BCMainViewTab.__filesDirectoryContentChanged()
         # if updated here, must be updated in BCMainViewTab too
         Stopwatch.start('BCFileList.execute.01-search')
-        # work on a set, faster for searching if a file is already in list
+        # work on a set, faster for searching if a file is already in list
         foundFiles = set()
         foundDirectories = set()
         for processedPath in self.__pathList:
@@ -6737,7 +6885,7 @@ class BCFileList(QObject):
 
 
             elif os.path.isdir(pathName):
-                # return current directory content
+                # return current directory content
                 with os.scandir(pathName) as files:
                     for file in files:
                         nbTotal+=1
@@ -6784,8 +6932,8 @@ class BCFileList(QObject):
 
         # ----
         Stopwatch.start('BCFileList.execute.02-scan')
-        # list file is built, now scan files to retrieve all file/image properties
-        # the returned filesList is an array of BCFile if file is readable, otherwise it contain a None value
+        # list file is built, now scan files to retrieve all file/image properties
+        # the returned filesList is an array of BCFile if file is readable, otherwise it contain a None value
         filesList = set()
         directoriesList = set()
 
@@ -6819,12 +6967,12 @@ class BCFileList(QObject):
 
         # ----
         Stopwatch.start('BCFileList.execute.03-filter')
-        # filter files
-        # will apply a filter on filesList BCFiles
+        # filter files
+        # will apply a filter on filesList BCFiles
         #   all files that don't match rule are replaced by None value
 
         # as callback called by pool can't be a method of an instancied object, we need to call static method
-        # with static data
+        # with static data
         # so pass current object rules to static class...
         if len(self.__ruleList) > 0:
             BCFileList.__MTASKS_RULES = self.__ruleList
@@ -6868,7 +7016,7 @@ class BCFileList(QObject):
         # ----
         Stopwatch.start('BCFileList.execute.04-result')
         # build final result
-        #   all files that match selection rules are added to current selected images
+        #   all files that match selection rules are added to current selected images
         self.__currentFilesUuid=set(self.__workerPool.map(self.__currentFiles, BCFileList.getBcFileUuid))
         nb = len(self.__currentFiles)
 
