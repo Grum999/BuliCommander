@@ -379,29 +379,35 @@ class WOperatorBaseInput(QWidget):
                 data[0](data[1])
 
         if isinstance(input, QLineEdit):
-            menu=input.createStandardContextMenu()
+            menu = input.createStandardContextMenu()
         elif isinstance(input, (QSpinBox, QDoubleSpinBox, QDateEdit)):
-            menu=input.lineEdit().createStandardContextMenu()
+            menu = input.lineEdit().createStandardContextMenu()
         elif isinstance(input, WTagInput):
-            menu=input.lineEdit().createStandardContextMenu()
+            menu = input.lineEdit().createStandardContextMenu()
         else:
-            menu=QMenu()
+            menu = QMenu()
 
-        fAction=menu.actions()[0]
+        if len(menu.actions()) > 0:
+            fAction = menu.actions()[0]
+        else:
+            fAction = None
 
-        if len(self.__predefinedConditions)==0 and display:
+        if len(self.__predefinedConditions) == 0 and display:
             input._contextMenuEvent(event)
             return
-        elif len(self.__predefinedConditions)>0:
-            self.__predefinedConditionsSubMenu=QMenu(self.__predefinedConditionsLabel)
+        elif len(self.__predefinedConditions) > 0:
+            self.__predefinedConditionsSubMenu = QMenu(self.__predefinedConditionsLabel)
             for predefinedCondition in self.__predefinedConditions:
-                action=None
+                action = None
                 if isinstance(predefinedCondition, WOperatorCondition):
-                    action=self.__predefinedConditionsSubMenu.addAction(predefinedCondition.label())
+                    action = self.__predefinedConditionsSubMenu.addAction(predefinedCondition.label())
                     action.setData((applyCondition, predefinedCondition))
 
-            menu.insertMenu(fAction, self.__predefinedConditionsSubMenu)
-            menu.insertSeparator(fAction)
+            if fAction is not None:
+                menu.insertMenu(fAction, self.__predefinedConditionsSubMenu)
+                menu.insertSeparator(fAction)
+            else:
+                menu.addMenu(self.__predefinedConditionsSubMenu)
 
         menu.triggered.connect(executeAction)
         if display:
