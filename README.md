@@ -205,22 +205,23 @@ I think it should be Ok, but...
 > But detailled releases content provides some kind of documentation for some functionalities, don't hesitate to read them :-)
 
 _[2022-XX-XX] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.9.0b.md)*
-- File panels - *Grid view mode - Smooth thumbnail scroll*
-- User Interface - *Override Krita Welcome Screen "Open file" dialog*
-- User Interface - *Implement "Save All"*
-- File management - *Improve mass renaming*
+- Improve Search engine - *Reduce search execution time duration*
+- Improve File panels - *Grid view mode - Smooth thumbnail scroll*
+- Improve User Interface - *Override Krita Welcome Screen "Open file" dialog*
+- Improve User Interface - *Implement "Save All"*
+- Improve File management - *Improve mass renaming*
 
 _[2022-06-13] Version 0.8.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.8.0b.md)*
-- Improve file panel - *Grid View mode - File/Image information*
-- Improve file panel - *Toolbars*
-- Improve file panel - *Markers*
-- Improve file panel - *Multiple files selection*
-- Improve file panel - *Quick filter - Icons*
-- Improve file panel - *Breadcrumbs - Windows drives*
-- Improve file panel - *Context menu - Status tip*
-- User interface - *Windows users menu icons*
-- File formats - *New supported files format*
-- File formats - *Open files*
+- Improve File panels - *Grid View mode - File/Image information*
+- Improve File panels - *Toolbars*
+- Improve File panels - *Markers*
+- Improve File panels - *Multiple files selection*
+- Improve File panels - *Quick filter - Icons*
+- Improve File panels - *Breadcrumbs - Windows drives*
+- Improve File panels - *Context menu - Status tip*
+- Improve User interface - *Windows users menu icons*
+- Improve File formats - *New supported files format*
+- Improve File formats - *Open files*
 
 _[2022-04-13] Version 0.7.1b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.7.1b.md)*
 - Fix bug about thumbnail loading

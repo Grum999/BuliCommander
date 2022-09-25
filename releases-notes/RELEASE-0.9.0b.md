@@ -1,5 +1,14 @@
 # Buli Commander :: Release 0.9.0b [2022-XX-XX]
 
+## Search engine
+
+[Feature request #20](https://github.com/Grum999/BuliCommander/issues/20)
+
+### Reduce search excution time duration
+
+Search engine core has been improved to reduce search execution time duration, especially if search is only based on *file properties* (file name, path, date, size)
+
+
 ## File panels
 
 ### Grid view mode - Smooth thumbnail scroll
@@ -64,6 +73,7 @@ Button `Save files` allows to save all files in one click.
 ### Improve mass renaming
 
 [Feature request #8](https://github.com/Grum999/BuliCommander/issues/8)
+
 [Feature request #19](https://github.com/Grum999/BuliCommander/issues/19)
 
 #### Basic editor
