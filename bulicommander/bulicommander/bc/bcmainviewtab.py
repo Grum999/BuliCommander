@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Buli Commander
 # Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
@@ -19,11 +19,7 @@
 # A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
-
-
-
 # -----------------------------------------------------------------------------
-#from .pktk import PkTk
 
 from enum import Enum
 from math import (floor, ceil)
@@ -87,7 +83,6 @@ from .bcfile import (
         BCDirectory,
         BCFile,
         BCFileList,
-        BCFileListRule,
         BCFileListSortRule,
         BCFileListPath,
         BCFileManagedFormat,

@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Buli Commander
 # Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
@@ -34,10 +34,6 @@
 #       using multiprocessing
 #       Also provide the possibilty to retrieve thumbnails
 #       Results can be exported into different format
-
-
-
-
 
 from enum import Enum
 from functools import cmp_to_key
@@ -3856,7 +3852,7 @@ class BCFile(BCBaseFile):
                 byteOrder='>'
             else:
                 # not a TIFF image
-                #Debug.print('KO1', byteOrder)
+                # Debug.print('KO1', byteOrder)
                 reader.close()
                 return returned
 
@@ -3865,7 +3861,7 @@ class BCFile(BCBaseFile):
             version=reader.readUInt2()
             if version!=0x2A:
                 # not a TIFF image
-                #Debug.print(f'KO2: {version:04x}')
+                # Debug.print(f'KO2: {version:04x}')
                 reader.close()
                 return returned
 
@@ -3876,7 +3872,7 @@ class BCFile(BCBaseFile):
 
             if ifdOffset==0:
                 # not a TIFF image??
-                #Debug.print('KO3')
+                # Debug.print('KO3')
                 return returned
 
             ifdNumber=0
@@ -5352,8 +5348,8 @@ class BCFileListRuleOperator(object):
             return False
 
 
-class BCFileListRule(object):
-    """Define single rules to search files"""
+class BCFileListRuleFile(object):
+    """Define single rules to search files from file properties"""
 
     def __init__(self, source=None):
         """Initialise a rule"""
@@ -5361,22 +5357,14 @@ class BCFileListRule(object):
         self.__path = None
         self.__size = None
         self.__mdatetime = None
-        self.__format = None
-        self.__imageWidth = None
-        self.__imageHeight = None
-        self.__imageRatio = None
-        self.__imagePixels = None
         self.__hash=0
         self.__updateHash()
 
-        if isinstance(source, BCFileListRule):
+        if isinstance(source, BCFileListRuleFile):
             self.setName(source.name())
             self.setPath(source.path())
             self.setSize(source.size())
             self.setModifiedDateTime(source.modifiedDateTime())
-            self.setFormat(source.format())
-            self.setImageWidth(source.imageWidth())
-            self.setImageHeight(source.imageHeight())
 
     def __str__(self):
         """Return rule as string"""
@@ -5395,30 +5383,15 @@ class BCFileListRule(object):
         if not self.__mdatetime is None:
             returned.append(f"{BCFileProperty.FILE_DATE.value} {self.__mdatetime.translate(True)}")
 
-        if not self.__format is None:
-            returned.append(f"{BCFileProperty.FILE_FORMAT.value} {self.__format.translate(True)}")
-
-        if not self.__imageWidth is None:
-            returned.append(f"{BCFileProperty.IMAGE_WIDTH.value} {self.__imageWidth.translate(True)}")
-
-        if not self.__imageHeight is None:
-            returned.append(f"{BCFileProperty.IMAGE_HEIGHT.value} {self.__imageHeight.translate(True)}")
-
-        if not self.__imageRatio is None:
-            returned.append(f"{BCFileProperty.IMAGE_RATIO.value} {self.__imageRatio.translate(True)}")
-
-        if not self.__imagePixels is None:
-            returned.append(f"{BCFileProperty.IMAGE_PIXELS.value} {self.__imagePixels.translate(True)}")
-
         return ' and '.join(returned)
 
     def __repr__(self):
         """Return rule as string"""
-        return f'<BCFileListRule(path {self.__path}; name {self.__name}; fileSize {self.__size}; datetime {self.__mdatetime}; format {self.__format}; width {self.__imageWidth}; height {self.__imageHeight}; hash={self.__hash:016x})>'
+        return f'<BCFileListRuleFile(path {self.__path}; name {self.__name}; fileSize {self.__size}; datetime {self.__mdatetime}; hash={self.__hash:016x})>'
 
     def __eq__(self, other):
-        """Return if other BCFileListRule is the same than current one"""
-        if isinstance(other, BCFileListRule):
+        """Return if other BCFileListRuleFile is the same than current one"""
+        if isinstance(other, BCFileListRuleFile):
             return (self.__hash == other.__hash)
         return False
 
@@ -5431,12 +5404,7 @@ class BCFileListRule(object):
         self.__hash=hash((self.__name,
                           self.__path,
                           self.__size,
-                          self.__mdatetime,
-                          self.__format,
-                          self.__imageWidth,
-                          self.__imageHeight,
-                          self.__imageRatio,
-                          self.__imagePixels))
+                          self.__mdatetime))
 
     def translate(self, short=False):
         """Return rule as a human readable string"""
@@ -5459,21 +5427,6 @@ class BCFileListRule(object):
                 returned.append(f"{BCFileProperty.FILE_DATE.translate()} {self.__mdatetime.translate()}")
             else:
                 returned.append(f"{i18n('file date/time')} {self.__mdatetime.translate()}")
-
-        if not self.__format is None:
-            returned.append(f"{BCFileProperty.FILE_FORMAT.translate()} {self.__format.translate()}")
-
-        if not self.__imageWidth is None:
-            returned.append(f"{BCFileProperty.IMAGE_WIDTH.translate()} {self.__imageWidth.translate()}")
-
-        if not self.__imageHeight is None:
-            returned.append(f"{BCFileProperty.IMAGE_HEIGHT.translate()} {self.__imageHeight.translate()}")
-
-        if not self.__imageRatio is None:
-            returned.append(f"{BCFileProperty.IMAGE_RATIO.translate()} {self.__imageRatio.translate()}")
-
-        if not self.__imagePixels is None:
-            returned.append(f"{BCFileProperty.IMAGE_PIXELS.translate()} {self.__imagePixels.translate()}")
 
         if len(returned) == 0:
             return ''
@@ -5635,6 +5588,158 @@ class BCFileListRule(object):
             raise EInvalidRuleParameter("Given `date` must be a valid value")
         self.__updateHash()
 
+    def fileMatch(self, file, bcFileCache=None, strict=False):
+        """Check if file properties match current rule
+
+        Given `file` can be:
+        - A file name
+        - A BCFile
+
+        If file match rule, return a tuple (True, BCFile(file))
+        If file doesn't match rule, return a tuple (False, file)
+        """
+        if isinstance(file, BCDirectory):
+            # do not filter directories
+            return (True, file)
+        elif isinstance(file, BCFile):
+            # If given `file` is already a BCFile, then use data already available
+            if not self.__name is None:
+                if not self.__name.compare(file.name()):
+                    return (False, file)
+
+            if not self.__path is None:
+                if not self.__path.compare(file.path()):
+                    return (False, file)
+
+            if not self.__size is None:
+                if not self.__size.compare(file.size()):
+                    return (False, file)
+
+            if not self.__mdatetime is None:
+                if not self.__mdatetime.compare(file.lastModificationDateTime(self.__mdatetime.type() == BCFileListRuleOperatorType.DATE)):
+                    return (False, file)
+        elif isinstance(file, str):
+            # assume it's a valid file name (expanded, normalized)
+            if not self.__name is None:
+                if not self.__name.compare(os.path.basename(file)):
+                    return (False, file)
+
+            if not self.__path is None:
+                if not self.__path.compare(os.path.dirname(file)):
+                    return (False, file)
+
+            if not self.__size is None:
+                if not self.__size.compare(os.path.getsize(file)):
+                    return (False, file)
+
+            if not self.__mdatetime is None:
+                dateTime = os.path.getmtime(file)
+                if self.__mdatetime.type() == BCFileListRuleOperatorType.DATE:
+                    # only date, no date/time
+                    dateTime = strToTs(tsToStr(self._mdatetime, 'd'))
+                if not self.__mdatetime.compare(dateTime):
+                    return (False, file)
+
+            # From here, file properties are matching rule
+            # return a BCFile
+            file = BCFile(file, strict, bcFileCache=bcFileCache)
+        else:
+            raise EInvalidRuleParameter("Given `file` type must be <BCFile> or <str>")
+
+        return (True, file)
+
+
+class BCFileListRuleImage(object):
+    """Define single rules to search files from image properties"""
+
+    def __init__(self, source=None):
+        """Initialise a rule"""
+        self.__format = None
+        self.__imageWidth = None
+        self.__imageHeight = None
+        self.__imageRatio = None
+        self.__imagePixels = None
+        self.__hash=0
+        self.__updateHash()
+
+        if isinstance(source, BCFileListRuleImage):
+            self.setFormat(source.format())
+            self.setImageWidth(source.imageWidth())
+            self.setImageHeight(source.imageHeight())
+            self.setImageRatio(source.imageRatio())
+            self.setImagePixels(source.imagePixels())
+
+    def __str__(self):
+        """Return rule as string"""
+
+        returned = []
+
+        if not self.__format is None:
+            returned.append(f"{BCFileProperty.FILE_FORMAT.value} {self.__format.translate(True)}")
+
+        if not self.__imageWidth is None:
+            returned.append(f"{BCFileProperty.IMAGE_WIDTH.value} {self.__imageWidth.translate(True)}")
+
+        if not self.__imageHeight is None:
+            returned.append(f"{BCFileProperty.IMAGE_HEIGHT.value} {self.__imageHeight.translate(True)}")
+
+        if not self.__imageRatio is None:
+            returned.append(f"{BCFileProperty.IMAGE_RATIO.value} {self.__imageRatio.translate(True)}")
+
+        if not self.__imagePixels is None:
+            returned.append(f"{BCFileProperty.IMAGE_PIXELS.value} {self.__imagePixels.translate(True)}")
+
+        return ' and '.join(returned)
+
+    def __repr__(self):
+        """Return rule as string"""
+        return f'<BCFileListRuleImage(format {self.__format}; width {self.__imageWidth}; height {self.__imageHeight}; ratio {self.__imageRatio}; pixels{self.__imagePixels}; hash={self.__hash:016x})>'
+
+    def __eq__(self, other):
+        """Return if other BCFileListRuleImage is the same than current one"""
+        if isinstance(other, BCFileListRuleImage):
+            return (self.__hash == other.__hash)
+        return False
+
+    def __hash__(self):
+        """Return hash for BCFileRule"""
+        return self.__hash
+
+    def __updateHash(self):
+        """Return a hash from rule"""
+        self.__hash=hash((self.__format,
+                          self.__imageWidth,
+                          self.__imageHeight,
+                          self.__imageRatio,
+                          self.__imagePixels))
+
+    def translate(self, short=False):
+        """Return rule as a human readable string"""
+        returned = []
+
+        if short:
+            return self.__str__()
+
+        if self.__format is not None:
+            returned.append(f"{BCFileProperty.FILE_FORMAT.translate()} {self.__format.translate()}")
+
+        if self.__imageWidth is not None:
+            returned.append(f"{BCFileProperty.IMAGE_WIDTH.translate()} {self.__imageWidth.translate()}")
+
+        if self.__imageHeight is not None:
+            returned.append(f"{BCFileProperty.IMAGE_HEIGHT.translate()} {self.__imageHeight.translate()}")
+
+        if self.__imageRatio is not None:
+            returned.append(f"{BCFileProperty.IMAGE_RATIO.translate()} {self.__imageRatio.translate()}")
+
+        if self.__imagePixels is not None:
+            returned.append(f"{BCFileProperty.IMAGE_PIXELS.translate()} {self.__imagePixels.translate()}")
+
+        if len(returned) == 0:
+            return ''
+
+        return "- "+f"\n  {i18n('and')}\n- ".join(returned)
+
     def format(self):
         """Return current format rule"""
         return self.__format
@@ -5758,53 +5863,51 @@ class BCFileListRule(object):
             raise EInvalidRuleParameter("Given `image pixels` must be a valid value")
         self.__updateHash()
 
-    def fileMatch(self, file):
-        """Return True if given `file` match current rule"""
+    def fileMatch(self, file, bcFileCache=None, strict=False):
+        """Check if image properties match current rule
+
+        Given `file` can be:
+        - A file name
+        - A BCFile
+
+        If file match rule, return a tuple (True, BCFile(file))
+        If file doesn't match rule, return a tuple (False, file)
+        """
         if isinstance(file, BCDirectory):
             # do not filter directories
-            return True
-        elif not isinstance(file, BCFile):
-            raise EInvalidRuleParameter("Given `file` type must be <BCFile>")
+            return (True, file)
+        elif isinstance(file, BCFile):
+            # If given `file` is already a BCFile, then use data already available
+            if not self.__format is None:
+                if not self.__format.compare(file.format()):
+                    return (False, file)
 
-        if not self.__name is None:
-            if not self.__name.compare(file.name()):
-                return False
+            if not self.__imageWidth is None:
+                if not self.__imageWidth.compare(file.imageSize().width()):
+                    return (False, file)
 
-        if not self.__path is None:
-            if not self.__path.compare(file.path()):
-                return False
+            if not self.__imageHeight is None:
+                if not self.__imageHeight.compare(file.imageSize().width()):
+                    return (False, file)
 
-        if not self.__size is None:
-            if not self.__size.compare(file.size()):
-                return False
+            if not self.__imageRatio is None:
+                property=file.getProperty(BCFileProperty.IMAGE_RATIO)
+                if property is None or not self.__imageRatio.compare(property):
+                    return (False, file)
 
-        if not self.__mdatetime is None:
-            if not self.__mdatetime.compare(file.lastModificationDateTime(self.__mdatetime.type() == BCFileListRuleOperatorType.DATE)):
-                return False
+            if not self.__imagePixels is None:
+                property=file.getProperty(BCFileProperty.IMAGE_PIXELS)
+                if property is None or not self.__imagePixels.compare(property):
+                    return (False, file)
+        elif isinstance(file, str):
+            # assume it's a valid file name (expanded, normalized)
+            # need to generate BCFile to be able to continue to check properties
+            file = BCFile(file, strict, bcFileCache=bcFileCache)
+            return self.fileMatch(file)
+        else:
+            raise EInvalidRuleParameter("Given `file` type must be <BCFile> or <str>")
 
-        if not self.__format is None:
-            if not self.__format.compare(file.format()):
-                return False
-
-        if not self.__imageWidth is None:
-            if not self.__imageWidth.compare(file.imageSize().width()):
-                return False
-
-        if not self.__imageHeight is None:
-            if not self.__imageHeight.compare(file.imageSize().width()):
-                return False
-
-        if not self.__imageRatio is None:
-            property=file.getProperty(BCFileProperty.IMAGE_RATIO)
-            if property is None or not self.__imageRatio.compare(property):
-                return False
-
-        if not self.__imagePixels is None:
-            property=file.getProperty(BCFileProperty.IMAGE_PIXELS)
-            if property is None or not self.__imagePixels.compare(property):
-                return False
-
-        return True
+        return (True, file)
 
 
 class BCFileListRuleCombination(object):
@@ -5828,10 +5931,10 @@ class BCFileListRuleCombination(object):
         self.__itemsSorted = []
 
         for item in items:
-            if isinstance(item, BCFileListRuleCombination) or isinstance(item, BCFileListRule):
+            if isinstance(item, (BCFileListRuleCombination, BCFileListRuleFile, BCFileListRuleImage)):
                 self.__items.append(item)
             else:
-                raise EInvalidValue("Given `items` must be <BCFileListRuleCombination> or <BCFileListRule>")
+                raise EInvalidValue("Given `items` must be <BCFileListRuleCombination> or <BCFileListRuleFile> or <BCFileListRuleImage>")
         self.__updateHash()
 
     def __str__(self):
@@ -5846,7 +5949,7 @@ class BCFileListRuleCombination(object):
             return f"({') OR ('.join(returned)})"
 
     def __eq__(self, other):
-        """Return if other BCFileListRule is the same than current one"""
+        """Return if other BCFileListRuleCombination is the same than current one"""
         if isinstance(other, BCFileListRuleCombination):
             return (self.__hash == other.__hash)
         return False
@@ -5865,22 +5968,25 @@ class BCFileListRuleCombination(object):
 
         If current operator is NOT, do not sort (ensure the first item is always the same)
         If current operator is AND or OR, sort items in the following order:
-        - BCFileListRule: simplest evaluation first (from file/image)
+        - BCFileListRuleFile: simplest evaluation first (from file)
+        - BCFileListRuleFile: simplest evaluation first (from image)
         - BCFileListRuleCombination: NOT
         - BCFileListRuleCombination: AND
         - BCFileListRuleCombination: OR
         """
         def sortKey(value):
-            if isinstance(value, BCFileListRule):
+            if isinstance(value, BCFileListRuleFile):
                 return 1
+            elif isinstance(value, BCFileListRuleImage):
+                return 2
             elif isinstance(value, BCFileListRuleCombination):
                 if value.operatorType()==BCFileListRuleCombination.OPERATOR_NOT:
-                    return 2
-                elif value.operatorType()==BCFileListRuleCombination.OPERATOR_AND:
                     return 3
-                elif value.operatorType()==BCFileListRuleCombination.OPERATOR_OR:
+                elif value.operatorType()==BCFileListRuleCombination.OPERATOR_AND:
                     return 4
-            return 5
+                elif value.operatorType()==BCFileListRuleCombination.OPERATOR_OR:
+                    return 5
+            return 6
 
         self.__itemsSorted=sorted(self.__items, key=sortKey)
 
@@ -5903,32 +6009,44 @@ class BCFileListRuleCombination(object):
         returned=[item.translate(short) for item in self.__itemsSorted]
         return textwrap.indent(opJoin.join(returned),'  ')
 
-    def fileMatch(self, file):
-        """Return True if given `file` match current rule"""
+    def fileMatch(self, file, bcFileCache=None, strict=False):
+        """Check if file properties match current rule
+
+        Given `file` can be:
+        - A file name
+        - A BCFile
+
+        If file match rule, return a tuple (True, BCFile(file))
+        If file doesn't match rule, return a tuple (False, file)
+        """
         if isinstance(file, BCDirectory):
             # do not filter directories
-            return True
-        elif not isinstance(file, BCFile):
-            raise EInvalidRuleParameter("Given `file` type must be <BCFile>")
-        elif len(self.__itemsSorted)==0:
+            return (True, file)
+        elif not isinstance(file, (BCFile, str)):
+            raise EInvalidRuleParameter("Given `file` type must be <BCFile> or <str>")
+        elif len(self.__itemsSorted) == 0:
             # if empty combination, then always return False
-            return False
+            return (False, file)
 
-        if self.__type==BCFileListRuleCombination.OPERATOR_NOT:
-            # only one item in rule, return negative value
-            return not self.__items[0].fileMatch(file)
-        elif self.__type==BCFileListRuleCombination.OPERATOR_AND:
+        if self.__type == BCFileListRuleCombination.OPERATOR_NOT:
+            # only one item in rule, no loop, use first rule only
+            # return negative value
+            isMatchingRule, file = self.__items[0].fileMatch(file, bcFileCache, strict)
+            return (not isMatchingRule, file)
+        elif self.__type == BCFileListRuleCombination.OPERATOR_AND:
             # AND => parse all rule, exit on first False
             for item in self.__itemsSorted:
-                if not item.fileMatch(file):
-                    return False
-            return True
-        elif self.__type==BCFileListRuleCombination.OPERATOR_OR:
+                isMatchingRule, file = item.fileMatch(file, bcFileCache, strict)
+                if not isMatchingRule:
+                    return (False, file)
+            return (True, file)
+        elif self.__type == BCFileListRuleCombination.OPERATOR_OR:
             # OR => parse all rules, exit on first True
             for item in self.__itemsSorted:
-                if item.fileMatch(file):
-                    return True
-            return False
+                isMatchingRule, file = item.fileMatch(file, bcFileCache, strict)
+                if isMatchingRule:
+                    return (True, file)
+            return (False, file)
 
     def rules(self):
         """Return current defined filter rules to combine"""
@@ -5936,7 +6054,7 @@ class BCFileListRuleCombination(object):
 
     def inRules(self, value):
         """Return True if a rule is already defined in list"""
-        if isinstance(value, (BCFileListRuleCombination, BCFileListRule)):
+        if isinstance(value, (BCFileListRuleCombination, BCFileListRuleFile, BCFileListRuleImage)):
             return value in self.__items
         else:
             raise EInvalidType("Given `value` is not a valid rule")
@@ -5946,11 +6064,11 @@ class BCFileListRuleCombination(object):
         if isinstance(item, BCFileListRuleCombination) and item==self:
             return
 
-        if isinstance(item, BCFileListRuleCombination) or isinstance(item, BCFileListRule):
+        if isinstance(item, (BCFileListRuleCombination, BCFileListRuleFile, BCFileListRuleImage)):
             if not item in self.__items:
                 self.__items.append(item)
         else:
-            raise EInvalidValue("Given `items` must be <BCFileListRuleCombination> or <BCFileListRule>")
+            raise EInvalidValue("Given `items` must be <BCFileListRuleCombination> or <BCFileListRuleFile> or <BCFileListRuleImage>")
         self.__updateHash()
 
     def removeRule(self, item):
@@ -6079,7 +6197,7 @@ class BCFileListSortRule(object):
         return f'<BCFileListSortRule(property={self.__property.value}; ascending={self.__ascending}; hash={self.__hash:016x})>'
 
     def __eq__(self, other):
-        """Return if other BCFileListRule is the same than current one"""
+        """Return if other BCFileListSortRule is the same than current one"""
         if isinstance(other, BCFileListSortRule):
             return (self.__hash == other.__hash)
         return False
@@ -6169,7 +6287,7 @@ class BCFileList(QObject):
             return None
 
     @staticmethod
-    def getBcDirectory(itemIndex, fileName, dummy1=None, dummy2=None):
+    def getBcDirectory(itemIndex, fileName):
         """Return a BCDirectory from given fileName
 
         > Used for multiprocessing tasks
@@ -6184,20 +6302,32 @@ class BCFileList(QObject):
             return None
 
     @staticmethod
-    def checkBcFile(itemIndex, file):
-        """Return file if matching query rules, otherwise return None
+    def checkBcFile(itemIndex, fileName, bcFileCache=None, strict=False):
+        """Return BCFile if matching query rules, otherwise return None
 
         > Used for multiprocessing tasks
         """
-        if not file is None:
+        if not fileName is None:
             if len(BCFileList.__MTASKS_RULES) > 0:
                 for rule in BCFileList.__MTASKS_RULES:
-                    if rule.fileMatch(file):
-                        #updateStats(file, statFile)
+                    # Check if file match rule
+                    # Here, rule can be:
+                    #   - BCFileListRuleCombination
+                    #   - BCFileListRuleFile
+                    #   - BCFileListRuleImage
+                    #
+                    # A tuple (isMatchingRule, file) is returned
+                    #   - isMatchingRule is a boolean: True if file is matching rule, otherwise False
+                    #   - file value will depend of isMatchingRule result; if isMatchingRule is True, it's a BCFile
+                    isMatchingRule, file = rule.fileMatch(fileName, bcFileCache, strict)
+                    if isMatchingRule:
+                        # match rule, no need to continue to check rules
+                        if not isinstance(file, BCFile):
+                            file = BCFile(fileName, strict, bcFileCache=bcFileCache)
                         return file
             else:
-                #updateStats(file, statFile)
-                return file
+                # no rules, then return a BCFile
+                return BCFileList.getBcFile(itemIndex, fileName, bcFileCache, strict)
         return None
 
     @staticmethod
@@ -6454,7 +6584,7 @@ class BCFileList(QObject):
 
     def inSearchRules(self, value):
         """Return True if a rule is already defined in list"""
-        if isinstance(value, (BCFileListRuleCombination, BCFileListRule)):
+        if isinstance(value, (BCFileListRuleCombination, BCFileListRuleFile, BCFileListRuleImage)):
             return value in self.__ruleList
         else:
             raise EInvalidType("Given `value` is not a valid rule")
@@ -6469,7 +6599,7 @@ class BCFileList(QObject):
         if isinstance(value, list):
             for rule in value:
                 self.addSearchRules(rule)
-        elif isinstance(value, (BCFileListRule, BCFileListRuleCombination)):
+        elif isinstance(value, (BCFileListRuleFile, BCFileListRuleImage, BCFileListRuleCombination)):
             if not self.inSearchRules(value):
                 self.__ruleList.append(value)
                 self.__invalidate()
@@ -6619,35 +6749,33 @@ class BCFileList(QObject):
 
         Return number of files matching criteria
         """
-        self.__cancelProcess=False
+        self.__cancelProcess = False
 
         Stopwatch.reset('^BCFileList.execute')
         Stopwatch.start('BCFileList.execute.99-global')
 
         if signals is None:
-            signals=[
-                BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
-                BCFileList.STEPEXECUTED_ANALYZE_METADATA,
-                BCFileList.STEPEXECUTED_FILTER_FILES,
-                BCFileList.STEPEXECUTED_BUILD_RESULTS,
-                BCFileList.STEPEXECUTED_SORT_RESULTS,
-                BCFileList.STEPEXECUTED_CANCEL
-            ]
+            signals = [BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
+                       BCFileList.STEPEXECUTED_ANALYZE_METADATA,
+                       BCFileList.STEPEXECUTED_FILTER_FILES,
+                       BCFileList.STEPEXECUTED_BUILD_RESULTS,
+                       BCFileList.STEPEXECUTED_SORT_RESULTS,
+                       BCFileList.STEPEXECUTED_CANCEL
+                       ]
 
         if clearResults:
             # reset current list if asked
             self.clearResults(False)
 
         if buildStats:
-            self.__statFiles={
-                    'nbKra': 0,
-                    'nbOther': 0,
-                    'sizeKra': 0,
-                    'sizeOther': 0,
-                    'nbDir': 0
-                }
+            self.__statFiles = {'nbKra': 0,
+                                'nbOther': 0,
+                                'sizeKra': 0,
+                                'sizeOther': 0,
+                                'nbDir': 0
+                                }
         else:
-            self.__statFiles=None
+            self.__statFiles = None
 
         Debug.print('===========================================')
         Debug.print('BCFileList.execute')
@@ -6666,23 +6794,23 @@ class BCFileList(QObject):
         foundFiles = set()
         foundDirectories = set()
         for processedPath in self.__pathList:
-            # counter for files (exclufing directories) founds in current path
-            nbFilesInPath=0
+            # counter for files (excluding directories) founds in current path
+            nbFilesInPath = 0
 
             pathName = processedPath.path()
-            includeHidden=processedPath.hiddenFiles()
+            includeHidden = processedPath.hiddenFiles()
 
             # build regex to prefilter files if needed
             if processedPath.managedFilesOnly():
-                extensionList=[fr'\.{extension}' for extension in BCFileManagedFormat.list()]
+                extensionList = [fr'\.{extension}' for extension in BCFileManagedFormat.list()]
 
                 if processedPath.managedFilesBackup():
-                    bckSufRe=BCFileManagedFormat.backupSuffixRe()
-                    extensionList+=[fr'\.{extension}{bckSufRe}' for extension in BCFileManagedFormat.list()]
+                    bckSufRe = BCFileManagedFormat.backupSuffixRe()
+                    extensionList += [fr'\.{extension}{bckSufRe}' for extension in BCFileManagedFormat.list()]
 
                 managedFilesOnly = re.compile(f"({'|'.join(extensionList)})$", re.I)
             else:
-                managedFilesOnly=None
+                managedFilesOnly = None
 
             BCFileCache.globalInstance().setDirectory(pathName)
 
@@ -6696,19 +6824,19 @@ class BCFileList(QObject):
                         # >                    By replacing the elements of dirs with those that satisfy a criteria (e.g., directories whose names don't begin with .),
                         # >                    os.walk() will not visit directories that fail to meet the criteria.
                         # >                    This only works if you keep the topdown keyword argument to True
-                        subdirs[:]=[dirName for dirName in subdirs if not QFileInfo(os.path.join(path, dirName)).isHidden()]
+                        subdirs[:] = [dirName for dirName in subdirs if not QFileInfo(os.path.join(path, dirName)).isHidden()]
 
                     if self.__includeDirectories:
                         for dir in subdirs:
-                            nbTotal+=1
+                            nbTotal += 1
                             fullPathName = os.path.join(path, dir)
 
-                            uuid=BCBaseFile.getUuid(fullPathName)
-                            if not uuid in self.__currentFilesUuid and not fullPathName in foundDirectories:
+                            uuid = BCBaseFile.getUuid(fullPathName)
+                            if uuid not in self.__currentFilesUuid and fullPathName not in foundDirectories:
                                 foundDirectories.add(fullPathName)
                                 self.__currentFilesUuid.add(uuid)
 
-                            if nbTotal%1000==0:
+                            if nbTotal%1000 == 0:
                                 if self.__cancelProcess:
                                     self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
                                     self.__invalidated = False
@@ -6716,50 +6844,48 @@ class BCFileList(QObject):
                                 QApplication.processEvents()
 
                     for name in files:
-                        nbTotal+=1
+                        nbTotal += 1
                         fullPathName=os.path.join(path, name)
 
                         if includeHidden or not QFileInfo(name).isHidden():
                             # check if file name match given pattern (if pattern) and is not already in file list
-                            if (managedFilesOnly is None or managedFilesOnly.search(name)) and not fullPathName in foundFiles:
-                                uuid=BCBaseFile.getUuid(fullPathName)
-                                if not uuid in self.__currentFilesUuid:
+                            if (managedFilesOnly is None or managedFilesOnly.search(name)) and fullPathName not in foundFiles:
+                                uuid = BCBaseFile.getUuid(fullPathName)
+                                if uuid not in self.__currentFilesUuid:
                                     foundFiles.add(fullPathName)
                                     self.__currentFilesUuid.add(uuid)
-                                    nbFilesInPath+=1
+                                    nbFilesInPath += 1
 
-                        if nbTotal%1000==0:
+                        if nbTotal%1000 == 0:
                             if self.__cancelProcess:
                                 self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
                                 self.__invalidated = False
                                 return BCFileList.CANCELLED_SEARCH
                             QApplication.processEvents()
-
-
             elif os.path.isdir(pathName):
                 # return current directory content
                 with os.scandir(pathName) as files:
                     for file in files:
-                        nbTotal+=1
+                        nbTotal += 1
 
                         fullPathName = os.path.join(pathName, file.name)
                         if includeHidden or not QFileInfo(fullPathName).isHidden():
                             if file.is_file():
                                 # check if file name match given pattern (if pattern) and is not already in file list
-                                if (managedFilesOnly is None or managedFilesOnly.search(file.name)) and not fullPathName in foundFiles:
-                                    uuid=BCBaseFile.getUuid(fullPathName)
-                                    if not uuid in self.__currentFilesUuid:
+                                if (managedFilesOnly is None or managedFilesOnly.search(file.name)) and fullPathName not in foundFiles:
+                                    uuid = BCBaseFile.getUuid(fullPathName)
+                                    if uuid not in self.__currentFilesUuid:
                                         foundFiles.add(fullPathName)
                                         self.__currentFilesUuid.add(uuid)
-                                        nbFilesInPath+=1
+                                        nbFilesInPath += 1
                             elif self.__includeDirectories and file.is_dir():
                                 # if directories are asked and file is a directory, add it
-                                uuid=BCBaseFile.getUuid(fullPathName)
-                                if not uuid in self.__currentFilesUuid and not fullPathName in foundDirectories:
+                                uuid = BCBaseFile.getUuid(fullPathName)
+                                if uuid not in self.__currentFilesUuid and fullPathName not in foundDirectories:
                                     foundDirectories.add(fullPathName)
                                     self.__currentFilesUuid.add(uuid)
 
-                        if nbTotal%1000==0:
+                        if nbTotal%1000 == 0:
                             if self.__cancelProcess:
                                 self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
                                 self.__invalidated = False
@@ -6773,71 +6899,45 @@ class BCFileList(QObject):
 
         Stopwatch.stop("BCFileList.execute.01-search")
         if BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS, len(foundFiles), len(foundDirectories), totalMatch, Stopwatch.duration("BCFileList.execute.01-search")))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
+                                    len(foundFiles),
+                                    len(foundDirectories),
+                                    totalMatch,
+                                    Stopwatch.duration("BCFileList.execute.01-search")))
 
-        #Debug.print("Search in paths: {0}", self.__pathList)
-        #Debug.print('Found {0} of {1} files in {2}s', totalMatch, nbTotal, Stopwatch.duration("BCFileList.execute.01-search"))
+        Debug.print("Search in paths: {0}", self.__pathList)
+        Debug.print('Found {0} of {1} files in {2}s', totalMatch, nbTotal, Stopwatch.duration("BCFileList.execute.01-search"))
+        Debug.print('- Files: {0}', len(foundFiles))
+        Debug.print('- Directories: {0}', len(foundDirectories))
 
         if totalMatch == 0:
             self.__invalidated = False
             return totalMatch
 
         # ----
-        Stopwatch.start('BCFileList.execute.02-scan')
-        # list file is built, now scan files to retrieve all file/image properties
-        # the returned filesList is an array of BCFile if file is readable, otherwise it contain a None value
-        filesList = set()
-        directoriesList = set()
-
-        self.__progressFilesPctThreshold=math.ceil(len(foundFiles)/100)
-        self.__progressFilesPctTracker=0
-        self.__progressFilesPctCurrent=0
-        self.__progressFilesTracker=0
-
-        self.__workerPool.setWorkerClass(BCWorkerCache)
-        if BCFileList.STEPEXECUTED_PROGRESS_ANALYZE in signals:
-            self.__workerPool.signals.processed.connect(self.__progressScanning)
-        filesList = self.__workerPool.mapNoNone(foundFiles, BCFileList.getBcFile)
-        if BCFileList.STEPEXECUTED_PROGRESS_ANALYZE in signals:
-            if self.__progressFilesPctCurrent<100:
-                self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,100,len(foundFiles)))
-            self.__workerPool.signals.processed.disconnect(self.__progressScanning)
-        self.__workerPool.setWorkerClass()
-        directoriesList = self.__workerPool.mapNoNone(foundDirectories, BCFileList.getBcDirectory)
-
-        Stopwatch.stop('BCFileList.execute.02-scan')
-
-        if self.__cancelProcess:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
-            self.__invalidated = False
-            return BCFileList.CANCELLED_SEARCH
-
-        if BCFileList.STEPEXECUTED_ANALYZE_METADATA in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_ANALYZE_METADATA, Stopwatch.duration("BCFileList.execute.02-scan")))
-
-        #Debug.print('Scan {0} files in {1}s', totalMatch, Stopwatch.duration("BCFileList.execute.02-scan"))
-
-        # ----
-        Stopwatch.start('BCFileList.execute.03-filter')
+        Stopwatch.start('BCFileList.execute.02-filter')
         # filter files
-        # will apply a filter on filesList BCFiles
-        #   all files that don't match rule are replaced by None value
+        # will apply a filter on foundFiles
+        # - all files that don't match rule are removed from result
+        # - all files that match rule are returned as BCFile in result
 
-        # as callback called by pool can't be a method of an instancied object, we need to call static method
-        # with static data
-        # so pass current object rules to static class...
+        # Need use a dedicated worker class to manage sqlite database cache
+        self.__workerPool.setWorkerClass(BCWorkerCache)
+
         if len(self.__ruleList) > 0:
+            # As callback called by pool can't be a method of an instancied object, we need to call static method with static data
+            # so pass current object rules to static class...
             BCFileList.__MTASKS_RULES = self.__ruleList
 
             if BCFileList.STEPEXECUTED_PROGRESS_FILTER in signals:
-                self.__progressFilesPctThreshold=math.ceil(len(filesList)/100)
-                self.__progressFilesPctTracker=0
-                self.__progressFilesPctCurrent=0
-                self.__progressFilesTracker=0
+                self.__progressFilesPctThreshold = math.ceil(len(foundFiles)/100)
+                self.__progressFilesPctTracker = 0
+                self.__progressFilesPctCurrent = 0
+                self.__progressFilesTracker = 0
                 self.__workerPool.signals.processed.connect(self.__progressFiltering)
 
             # use all processors to parallelize files analysis
-            self.__currentFiles = self.__workerPool.mapNoNone(filesList, BCFileList.checkBcFile)
+            self.__currentFiles = self.__workerPool.mapNoNone(foundFiles, BCFileList.checkBcFile)
 
             if BCFileList.STEPEXECUTED_PROGRESS_FILTER in signals:
                 self.__workerPool.signals.processed.disconnect(self.__progressFiltering)
@@ -6846,15 +6946,19 @@ class BCFileList(QObject):
                 self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
                 self.__invalidated = False
                 return BCFileList.CANCELLED_SEARCH
-
-            self.__currentFiles += self.__workerPool.mapNoNone(directoriesList, BCFileList.checkBcFile)
         else:
-            # no rules=return currents lists
-            self.__currentFiles = filesList
-            self.__currentFiles += directoriesList
-            BCFileList.__MTASKS_RULES = []
+            # no filter rules: return list of BCFile
+            self.__currentFiles = self.__workerPool.mapNoNone(foundFiles, BCFileList.getBcFile)
 
-        Stopwatch.stop('BCFileList.execute.03-filter')
+        # restore default worker pool, no need to access anymore to database
+        self.__workerPool.setWorkerClass()
+
+        # directories are not filtered, add list of all directories
+        self.__currentFiles += self.__workerPool.mapNoNone(foundDirectories, BCFileList.getBcDirectory)
+        BCFileList.__MTASKS_RULES = []
+
+
+        Stopwatch.stop('BCFileList.execute.02-filter')
 
         if self.__cancelProcess:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
@@ -6862,30 +6966,28 @@ class BCFileList(QObject):
             return BCFileList.CANCELLED_SEARCH
 
         if BCFileList.STEPEXECUTED_FILTER_FILES in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER_FILES, len(self.__currentFiles), Stopwatch.duration("BCFileList.execute.03-filter")))
-        #Debug.print('Filter {0} files in {1}s', len(filesList), Stopwatch.duration("BCFileList.execute.03-filter"))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER_FILES, len(self.__currentFiles), Stopwatch.duration("BCFileList.execute.02-filter")))
+        Debug.print('Filter {0} files to {2} files in {1}s', len(foundFiles), Stopwatch.duration("BCFileList.execute.03-filter"), len(self.__currentFiles))
 
         # ----
-        Stopwatch.start('BCFileList.execute.04-result')
+        Stopwatch.start('BCFileList.execute.03-result')
         # build final result
         #   all files that match selection rules are added to current selected images
-        self.__currentFilesUuid=set(self.__workerPool.map(self.__currentFiles, BCFileList.getBcFileUuid))
+        self.__currentFilesUuid = set(self.__workerPool.map(self.__currentFiles, BCFileList.getBcFileUuid))
         nb = len(self.__currentFiles)
 
-        #Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.04-result"))
+        # Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.03-result"))
 
-        Stopwatch.stop('BCFileList.execute.04-result')
+        Stopwatch.stop('BCFileList.execute.03-result')
 
         if buildStats:
-            Stopwatch.start('BCFileList.execute.05-buildStats')
-            self.__statFiles=self.__workerPool.aggregate(self.__currentFiles, self.__statFiles, BCFileList.getBcFileStats)
-            Stopwatch.stop('BCFileList.execute.05-buildStats')
-            #Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.05-buildStats"))
-
+            Stopwatch.start('BCFileList.execute.04-buildStats')
+            self.__statFiles = self.__workerPool.aggregate(self.__currentFiles, self.__statFiles, BCFileList.getBcFileStats)
+            Stopwatch.stop('BCFileList.execute.04-buildStats')
+            #Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.04-buildStats"))
 
         if BCFileList.STEPEXECUTED_BUILD_RESULTS in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_BUILD_RESULTS,Stopwatch.duration("BCFileList.execute.04-result")))
-
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_BUILD_RESULTS, Stopwatch.duration("BCFileList.execute.03-result")))
 
         if self.__cancelProcess:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
@@ -6893,30 +6995,30 @@ class BCFileList(QObject):
             return BCFileList.CANCELLED_SEARCH
 
         # ----
-        Stopwatch.start('BCFileList.execute.06-sort')
+        Stopwatch.start('BCFileList.execute.05-sort')
         if BCFileList.STEPEXECUTED_PROGRESS_SORT in signals:
-            self.__progressFilesPctThreshold=math.ceil(nb/100)
-            self.__progressFilesPctTracker=0
-            self.__progressFilesPctCurrent=0
-            self.__progressFilesTracker=0
+            self.__progressFilesPctThreshold = math.ceil(nb/100)
+            self.__progressFilesPctTracker = 0
+            self.__progressFilesPctCurrent = 0
+            self.__progressFilesTracker = 0
         else:
-            self.__progressFilesPctThreshold=0
+            self.__progressFilesPctThreshold = 0
         self.sortResults(None, (BCFileList.STEPEXECUTED_UPDATESORT in signals))
-        Stopwatch.stop('BCFileList.execute.06-sort')
+        Stopwatch.stop('BCFileList.execute.05-sort')
         if BCFileList.STEPEXECUTED_SORT_RESULTS in signals:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT_RESULTS,Stopwatch.duration("BCFileList.execute.06-sort")))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT_RESULTS, Stopwatch.duration("BCFileList.execute.05-sort")))
 
         if self.__cancelProcess:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
             self.__invalidated = False
             return BCFileList.CANCELLED_SEARCH
 
-        #Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.06-sort"))
-        #Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.99-global"))
+        # Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.05-sort"))
+        # Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.99-global"))
 
         Stopwatch.stop('BCFileList.execute.99-global')
 
-        dummy=list(map(Debug.print, [f"{d[0]}: {d[1]:.4f}" for d in Stopwatch.list()]))
+        dummy = list(map(Debug.print, [f"{d[0]}: {d[1]:.4f}" for d in Stopwatch.list()]))
         Debug.print('===========================================')
 
         self.__invalidated = False
@@ -6984,6 +7086,7 @@ class BCFileList(QObject):
         pool.setWorkerClass(BCWorkerCache)
         if len(foundFiles)>0:
             filesList = filesList.union( pool.mapNoNone(foundFiles, BCFileList.getBcFile) )
+        pool.setWorkerClass()
         if len(foundDirectories)>0:
             directoriesList = directoriesList.union( pool.mapNoNone(foundDirectories, BCFileList.getBcDirectory) )
 
@@ -7237,4 +7340,4 @@ class BCFileIcon(object):
         return BCFileIcon.__IconProvider.icon(fileInfo)
 
 
-#Debug.setEnabled(True)
+# Debug.setEnabled(True)

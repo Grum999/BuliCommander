@@ -50,7 +50,8 @@ from .bcfile import (
         BCFileListSortRule,
         BCFileListPath,
         BCFileListRuleCombination,
-        BCFileListRule,
+        BCFileListRuleFile,
+        BCFileListRuleImage,
         BCFileListRuleOperator,
         BCFileListRuleOperatorType
     )
@@ -115,6 +116,7 @@ from bulicommander.pktk.pktk import (
 
 # -----------------------------------------------------------------------------
 
+
 class BCSearchFilesDialogBox(QDialog):
     """User interface to search files"""
 
@@ -129,11 +131,10 @@ class BCSearchFilesDialogBox(QDialog):
     __TAB_ADVANCED_SEARCH = 1
     __TAB_SEARCH_CONSOLE = 2
 
-    __SEARCH_IN_PROGRESS_CANCEL=-1
-    __SEARCH_IN_PROGRESS_NONE=0
-    __SEARCH_IN_PROGRESS_SEARCH=1
-    __SEARCH_IN_PROGRESS_SORTANDEXPORT=2
-
+    __SEARCH_IN_PROGRESS_CANCEL = -1
+    __SEARCH_IN_PROGRESS_NONE = 0
+    __SEARCH_IN_PROGRESS_SEARCH = 1
+    __SEARCH_IN_PROGRESS_SORTANDEXPORT = 2
 
     @staticmethod
     def open(title, uicontroller):
@@ -165,159 +166,170 @@ class BCSearchFilesDialogBox(QDialog):
             !between | <   2022-01-01 and >  2022-01-01 | <   2022-01-01 00:00:00.0000 and >  2022-01-01 23:59:59.9999
 
         """
-        def buildBCFileListRule(filterRulesAsDict):
+        def buildBCFileListRuleFile(filterRulesAsDict):
             # build BCFileListRule from a BCNodeWSearchFileFilterRule dictionary
-            returned=BCFileListRule()
+            returned = BCFileListRuleFile()
 
             if 'fileName' in filterRulesAsDict and filterRulesAsDict['fileName']['active']:
                 if filterRulesAsDict['fileName']['ignoreCase']:
-                    ignoreCase=re.I
+                    ignoreCase = re.I
                 else:
-                    ignoreCase=0
+                    ignoreCase = 0
 
                 # convert operator as regular expression
                 if filterRulesAsDict['fileName']['operator'] in ('match', 'not match'):
-                    ruleOperator=BCFileListRuleOperator(re.compile(filterRulesAsDict['fileName']['value'], ignoreCase),
-                                                        filterRulesAsDict['fileName']['operator'],
-                                                        BCFileListRuleOperatorType.REGEX)
+                    ruleOperator = BCFileListRuleOperator(re.compile(filterRulesAsDict['fileName']['value'], ignoreCase),
+                                                          filterRulesAsDict['fileName']['operator'],
+                                                          BCFileListRuleOperatorType.REGEX)
                 elif filterRulesAsDict['fileName']['operator'] in ('like', 'not like'):
-                    ruleOperator=BCFileListRuleOperator(re.compile(re.escape(filterRulesAsDict['fileName']['value']).replace(r'\?', '.').replace(r'\*', '.*'), ignoreCase),
-                                                        filterRulesAsDict['fileName']['operator'].replace('like', 'match'),
-                                                        BCFileListRuleOperatorType.REGEX)
+                    ruleOperator = BCFileListRuleOperator(re.compile(re.escape(filterRulesAsDict['fileName']['value']).replace(r'\?', '.').replace(r'\*', '.*'), ignoreCase),
+                                                          filterRulesAsDict['fileName']['operator'].replace('like', 'match'),
+                                                          BCFileListRuleOperatorType.REGEX)
                 else:
-                    ruleOperator=BCFileListRuleOperator(re.compile(f"^{re.escape(filterRulesAsDict['fileName']['value'])}$", ignoreCase),
-                                                        'match' if filterRulesAsDict['fileName']['operator']=='=' else 'not match',
-                                                        BCFileListRuleOperatorType.REGEX)
+                    ruleOperator = BCFileListRuleOperator(re.compile(f"^{re.escape(filterRulesAsDict['fileName']['value'])}$", ignoreCase),
+                                                          'match' if filterRulesAsDict['fileName']['operator'] == '=' else 'not match',
+                                                          BCFileListRuleOperatorType.REGEX)
                 returned.setName(ruleOperator)
 
             if 'filePath' in filterRulesAsDict and filterRulesAsDict['filePath']['active']:
                 if filterRulesAsDict['filePath']['ignoreCase']:
-                    ignoreCase=re.I
+                    ignoreCase = re.I
                 else:
-                    ignoreCase=0
+                    ignoreCase = 0
 
                 # convert operator as regular expression
                 if filterRulesAsDict['filePath']['operator'] in ('match', 'not match'):
-                    ruleOperator=BCFileListRuleOperator(re.compile(filterRulesAsDict['filePath']['value'], ignoreCase),
-                                                        filterRulesAsDict['filePath']['operator'],
-                                                        BCFileListRuleOperatorType.REGEX)
+                    ruleOperator = BCFileListRuleOperator(re.compile(filterRulesAsDict['filePath']['value'], ignoreCase),
+                                                          filterRulesAsDict['filePath']['operator'],
+                                                          BCFileListRuleOperatorType.REGEX)
                 elif filterRulesAsDict['filePath']['operator'] in ('like', 'not like'):
-                    ruleOperator=BCFileListRuleOperator(re.compile(re.escape(filterRulesAsDict['filePath']['value']).replace(r'\?', '.').replace(r'\*', '.*'), ignoreCase),
-                                                        filterRulesAsDict['filePath']['operator'].replace('like', 'match'),
-                                                        BCFileListRuleOperatorType.REGEX)
+                    ruleOperator = BCFileListRuleOperator(re.compile(re.escape(filterRulesAsDict['filePath']['value']).replace(r'\?', '.').replace(r'\*', '.*'), ignoreCase),
+                                                          filterRulesAsDict['filePath']['operator'].replace('like', 'match'),
+                                                          BCFileListRuleOperatorType.REGEX)
                 else:
-                    ruleOperator=BCFileListRuleOperator(re.compile(f"^{re.escape(filterRulesAsDict['filePath']['value'])}$", ignoreCase),
-                                                        'match' if filterRulesAsDict['filePath']['operator']=='=' else 'not match',
-                                                        BCFileListRuleOperatorType.REGEX)
+                    ruleOperator = BCFileListRuleOperator(re.compile(f"^{re.escape(filterRulesAsDict['filePath']['value'])}$", ignoreCase),
+                                                          'match' if filterRulesAsDict['filePath']['operator' ] == '=' else 'not match',
+                                                          BCFileListRuleOperatorType.REGEX)
                 returned.setPath(ruleOperator)
 
             if 'fileSize' in filterRulesAsDict and filterRulesAsDict['fileSize']['active']:
-                value=strToBytesSize(f"{filterRulesAsDict['fileSize']['value']}{filterRulesAsDict['fileSize']['unit']}")
-                value2=strToBytesSize(f"{filterRulesAsDict['fileSize']['value2']}{filterRulesAsDict['fileSize']['unit']}")
+                value = strToBytesSize(f"{filterRulesAsDict['fileSize']['value']}{filterRulesAsDict['fileSize']['unit']}")
+                value2 = strToBytesSize(f"{filterRulesAsDict['fileSize']['value2']}{filterRulesAsDict['fileSize']['unit']}")
 
                 if filterRulesAsDict['fileSize']['operator'] in ('between', 'not between'):
-                    ruleOperator=BCFileListRuleOperator((value, value2),
-                                                        filterRulesAsDict['fileSize']['operator'],
-                                                        BCFileListRuleOperatorType.INT,
-                                                        (f"{filterRulesAsDict['fileSize']['value']}{filterRulesAsDict['fileSize']['unit']}",f"{filterRulesAsDict['fileSize']['value2']}{filterRulesAsDict['fileSize']['unit']}"))
+                    ruleOperator = BCFileListRuleOperator((value, value2),
+                                                          filterRulesAsDict['fileSize']['operator'],
+                                                          BCFileListRuleOperatorType.INT,
+                                                          (f"{filterRulesAsDict['fileSize']['value']}{filterRulesAsDict['fileSize']['unit']}",
+                                                           f"{filterRulesAsDict['fileSize']['value2']}{filterRulesAsDict['fileSize']['unit']}"))
                 else:
-                    ruleOperator=BCFileListRuleOperator(value,
-                                                        filterRulesAsDict['fileSize']['operator'],
-                                                        BCFileListRuleOperatorType.INT,
-                                                        f"{filterRulesAsDict['fileSize']['value']}{filterRulesAsDict['fileSize']['unit']}")
+                    ruleOperator = BCFileListRuleOperator(value,
+                                                          filterRulesAsDict['fileSize']['operator'],
+                                                          BCFileListRuleOperatorType.INT,
+                                                          f"{filterRulesAsDict['fileSize']['value']}{filterRulesAsDict['fileSize']['unit']}")
 
                 returned.setSize(ruleOperator)
 
             if 'fileDate' in filterRulesAsDict and filterRulesAsDict['fileDate']['active']:
                 ruleType = BCFileListRuleOperatorType.DATETIME
-                fmt='dt'
+                fmt = 'dt'
                 if filterRulesAsDict['fileDate']['dateOnly']:
                     ruleType = BCFileListRuleOperatorType.DATE
-                    fmt='d'
+                    fmt = 'd'
 
                 if filterRulesAsDict['fileDate']['operator'] in ('between', 'not between'):
-                    value=filterRulesAsDict['fileDate']['value']
-                    value2=filterRulesAsDict['fileDate']['value2']+0.9999
+                    value = filterRulesAsDict['fileDate']['value']
+                    value2 = filterRulesAsDict['fileDate']['value2']+0.9999
 
-                    ruleOperator=BCFileListRuleOperator((value, value2),
-                                                        filterRulesAsDict['fileDate']['operator'],
-                                                        ruleType,
-                                                        (tsToStr(value, fmt),tsToStr(value2, fmt)))
+                    ruleOperator = BCFileListRuleOperator((value, value2),
+                                                          filterRulesAsDict['fileDate']['operator'],
+                                                          ruleType,
+                                                          (tsToStr(value, fmt), tsToStr(value2, fmt)))
                 else:
-                    value=filterRulesAsDict['fileDate']['value']
-                    if filterRulesAsDict['fileDate']['operator']=='<=':
-                        value+=0.9999
+                    value = filterRulesAsDict['fileDate']['value']
+                    if filterRulesAsDict['fileDate']['operator'] == '<=':
+                        value += 0.9999
 
-                    ruleOperator=BCFileListRuleOperator(value,
-                                                        filterRulesAsDict['fileDate']['operator'],
-                                                        ruleType,
-                                                        tsToStr(value, fmt))
+                    ruleOperator = BCFileListRuleOperator(value,
+                                                          filterRulesAsDict['fileDate']['operator'],
+                                                          ruleType,
+                                                          tsToStr(value, fmt))
 
                 returned.setModifiedDateTime(ruleOperator)
 
+            return returned
+
+        def buildBCFileListRuleImage(filterRulesAsDict):
+            # build BCFileListRule from a BCNodeWSearchFileFilterRule dictionary
+            returned = BCFileListRuleImage()
+
             if 'imageWidth' in filterRulesAsDict and filterRulesAsDict['imageWidth']['active']:
                 if filterRulesAsDict['imageWidth']['operator'] in ('between', 'not between'):
-                    ruleOperator=BCFileListRuleOperator((filterRulesAsDict['imageWidth']['value'], filterRulesAsDict['imageWidth']['value2']),
-                                                        filterRulesAsDict['imageWidth']['operator'],
-                                                        BCFileListRuleOperatorType.INT,
-                                                        (f"{filterRulesAsDict['imageWidth']['value']}px",f"{filterRulesAsDict['imageWidth']['value2']}px"))
+                    ruleOperator = BCFileListRuleOperator((filterRulesAsDict['imageWidth']['value'], filterRulesAsDict['imageWidth']['value2']),
+                                                          filterRulesAsDict['imageWidth']['operator'],
+                                                          BCFileListRuleOperatorType.INT,
+                                                          (f"{filterRulesAsDict['imageWidth']['value']}px",
+                                                           f"{filterRulesAsDict['imageWidth']['value2']}px"))
                 else:
-                    ruleOperator=BCFileListRuleOperator(filterRulesAsDict['imageWidth']['value'],
-                                                        filterRulesAsDict['imageWidth']['operator'],
-                                                        BCFileListRuleOperatorType.INT,
-                                                        f"{filterRulesAsDict['imageWidth']['value']}px")
+                    ruleOperator = BCFileListRuleOperator(filterRulesAsDict['imageWidth']['value'],
+                                                          filterRulesAsDict['imageWidth']['operator'],
+                                                          BCFileListRuleOperatorType.INT,
+                                                          f"{filterRulesAsDict['imageWidth']['value']}px")
 
                 returned.setImageWidth(ruleOperator)
 
             if 'imageHeight' in filterRulesAsDict and filterRulesAsDict['imageHeight']['active']:
                 if filterRulesAsDict['imageHeight']['operator'] in ('between', 'not between'):
-                    ruleOperator=BCFileListRuleOperator((filterRulesAsDict['imageHeight']['value'], filterRulesAsDict['imageHeight']['value2']),
-                                                        filterRulesAsDict['imageHeight']['operator'],
-                                                        BCFileListRuleOperatorType.INT,
-                                                        (f"{filterRulesAsDict['imageHeight']['value']}px",f"{filterRulesAsDict['imageHeight']['value2']}px"))
+                    ruleOperator = BCFileListRuleOperator((filterRulesAsDict['imageHeight']['value'], filterRulesAsDict['imageHeight']['value2']),
+                                                          filterRulesAsDict['imageHeight']['operator'],
+                                                          BCFileListRuleOperatorType.INT,
+                                                          (f"{filterRulesAsDict['imageHeight']['value']}px",
+                                                           f"{filterRulesAsDict['imageHeight']['value2']}px"))
                 else:
-                    ruleOperator=BCFileListRuleOperator(filterRulesAsDict['imageHeight']['value'],
-                                                        filterRulesAsDict['imageHeight']['operator'],
-                                                        BCFileListRuleOperatorType.INT,
-                                                        f"{filterRulesAsDict['imageHeight']['value']}px")
+                    ruleOperator = BCFileListRuleOperator(filterRulesAsDict['imageHeight']['value'],
+                                                          filterRulesAsDict['imageHeight']['operator'],
+                                                          BCFileListRuleOperatorType.INT,
+                                                          f"{filterRulesAsDict['imageHeight']['value']}px")
 
                 returned.setImageHeight(ruleOperator)
 
             if 'imageFormat' in filterRulesAsDict and filterRulesAsDict['imageFormat']['active']:
-                if len(filterRulesAsDict['imageFormat']['value'])>0:
+                if len(filterRulesAsDict['imageFormat']['value']) > 0:
                     # if empty, consider it as not active
-                    ruleOperator=BCFileListRuleOperator(filterRulesAsDict['imageFormat']['value'],
-                                                        filterRulesAsDict['imageFormat']['operator'],
-                                                        BCFileListRuleOperatorType.STRING,
-                                                        [BCFileManagedFormat.translate(value) for value in filterRulesAsDict['imageFormat']['value']])
+                    ruleOperator = BCFileListRuleOperator(filterRulesAsDict['imageFormat']['value'],
+                                                          filterRulesAsDict['imageFormat']['operator'],
+                                                          BCFileListRuleOperatorType.STRING,
+                                                          [BCFileManagedFormat.translate(value) for value in filterRulesAsDict['imageFormat']['value']])
 
                     returned.setFormat(ruleOperator)
 
             if 'imageRatio' in filterRulesAsDict and filterRulesAsDict['imageRatio']['active']:
                 if filterRulesAsDict['imageRatio']['operator'] in ('between', 'not between'):
-                    ruleOperator=BCFileListRuleOperator((filterRulesAsDict['imageRatio']['value'], filterRulesAsDict['imageRatio']['value2']),
-                                                        filterRulesAsDict['imageRatio']['operator'],
-                                                        BCFileListRuleOperatorType.FLOAT,
-                                                        (f"{filterRulesAsDict['imageRatio']['value']:.4f}",f"{filterRulesAsDict['imageRatio']['value2']:.4f}"))
+                    ruleOperator = BCFileListRuleOperator((filterRulesAsDict['imageRatio']['value'], filterRulesAsDict['imageRatio']['value2']),
+                                                          filterRulesAsDict['imageRatio']['operator'],
+                                                          BCFileListRuleOperatorType.FLOAT,
+                                                          (f"{filterRulesAsDict['imageRatio']['value']:.4f}",
+                                                           f"{filterRulesAsDict['imageRatio']['value2']:.4f}"))
                 else:
-                    ruleOperator=BCFileListRuleOperator(filterRulesAsDict['imageRatio']['value'],
-                                                        filterRulesAsDict['imageRatio']['operator'],
-                                                        BCFileListRuleOperatorType.FLOAT,
-                                                        f"{filterRulesAsDict['imageRatio']['value']:.4f}")
+                    ruleOperator = BCFileListRuleOperator(filterRulesAsDict['imageRatio']['value'],
+                                                          filterRulesAsDict['imageRatio']['operator'],
+                                                          BCFileListRuleOperatorType.FLOAT,
+                                                          f"{filterRulesAsDict['imageRatio']['value']:.4f}")
 
                 returned.setImageRatio(ruleOperator)
 
             if 'imagePixels' in filterRulesAsDict and filterRulesAsDict['imagePixels']['active']:
                 if filterRulesAsDict['imagePixels']['operator'] in ('between', 'not between'):
-                    ruleOperator=BCFileListRuleOperator((round(filterRulesAsDict['imagePixels']['value']*1000000), round(filterRulesAsDict['imagePixels']['value2']*1000000)),
-                                                        filterRulesAsDict['imagePixels']['operator'],
-                                                        BCFileListRuleOperatorType.INT,
-                                                        (f"{filterRulesAsDict['imagePixels']['value']:.2f}MP",f"{filterRulesAsDict['imagePixels']['value2']:.2f}MP"))
+                    ruleOperator = BCFileListRuleOperator((round(filterRulesAsDict['imagePixels']['value']*1000000), round(filterRulesAsDict['imagePixels']['value2']*1000000)),
+                                                          filterRulesAsDict['imagePixels']['operator'],
+                                                          BCFileListRuleOperatorType.INT,
+                                                          (f"{filterRulesAsDict['imagePixels']['value']:.2f}MP",
+                                                           f"{filterRulesAsDict['imagePixels']['value2']:.2f}MP"))
                 else:
-                    ruleOperator=BCFileListRuleOperator(round(filterRulesAsDict['imagePixels']['value']*1000000),
-                                                        filterRulesAsDict['imagePixels']['operator'],
-                                                        BCFileListRuleOperatorType.INT,
-                                                        f"{filterRulesAsDict['imagePixels']['value']:.2f}MP")
+                    ruleOperator = BCFileListRuleOperator(round(filterRulesAsDict['imagePixels']['value']*1000000),
+                                                          filterRulesAsDict['imagePixels']['operator'],
+                                                          BCFileListRuleOperatorType.INT,
+                                                          f"{filterRulesAsDict['imagePixels']['value']:.2f}MP")
 
                 returned.setImagePixels(ruleOperator)
 
@@ -325,21 +337,24 @@ class BCSearchFilesDialogBox(QDialog):
 
         def buildBCFileListRules(currentId, linksTo, nodeSearchFilters):
             # return a BCFileListRule tree
-            if nodeSearchFilters[currentId]['widget']['type'] in ('BCNodeWSearchFileFilterRule', 'BCNodeWSearchImgFilterRule'):
+            if nodeSearchFilters[currentId]['widget']['type'] == 'BCNodeWSearchFileFilterRule':
                 # no need to search anymore, return filter rule
-                return buildBCFileListRule(nodeSearchFilters[currentId]['widget'])
+                return buildBCFileListRuleFile(nodeSearchFilters[currentId]['widget'])
+            elif nodeSearchFilters[currentId]['widget']['type'] == 'BCNodeWSearchImgFilterRule':
+                # no need to search anymore, return filter rule
+                return buildBCFileListRuleImage(nodeSearchFilters[currentId]['widget'])
             else:
                 # a <BCNodeWSearchFileFilterRuleOperator>
                 # need to build connection with input filters
-                operatorNode=nodeSearchFilters[currentId]
+                operatorNode = nodeSearchFilters[currentId]
 
-                operatorsTable={
+                operatorsTable = {
                         'and': BCFileListRuleCombination.OPERATOR_AND,
                         'or': BCFileListRuleCombination.OPERATOR_OR,
                         'not': BCFileListRuleCombination.OPERATOR_NOT
                     }
 
-                ruleCombination=BCFileListRuleCombination(operatorsTable[operatorNode['widget']['value']])
+                ruleCombination = BCFileListRuleCombination(operatorsTable[operatorNode['widget']['value']])
 
                 if currentId in linksTo:
                     for link in linksTo[currentId]:
@@ -347,72 +362,71 @@ class BCSearchFilesDialogBox(QDialog):
 
                 return ruleCombination
 
-
         if not isinstance(fileList, BCFileList):
             raise EInvalidType("Given `fileList` must be a <BCFileList>")
         elif not isinstance(searchRulesAsDict, dict):
             raise EInvalidType("Given `searchRulesAsDict` must be a <dict>")
-        elif not 'nodes' in searchRulesAsDict:
+        elif 'nodes' not in searchRulesAsDict:
             raise EInvalidValue("Given `searchRulesAsDict` must contains a 'nodes' key")
-        elif not 'links' in searchRulesAsDict:
+        elif 'links' not in searchRulesAsDict:
             raise EInvalidValue("Given `searchRulesAsDict` must contains a 'links' key")
 
         # need to parse dictionary to get references
-        nodeSearchEngine=None
-        nodeSearchPaths={}
-        nodeSearchFilters={}
+        nodeSearchEngine = None
+        nodeSearchPaths = {}
+        nodeSearchFilters = {}
 
         for node in searchRulesAsDict['nodes']:
-            if node['widget']['type']=='BCNodeWSearchEngine':
-                nodeSearchEngine=node
+            if node['widget']['type'] == 'BCNodeWSearchEngine':
+                nodeSearchEngine = node
             elif node['widget']['type'] in ('BCNodeWSearchFileFilterRule', 'BCNodeWSearchImgFilterRule', 'BCNodeWSearchFileFilterRuleOperator'):
-                nodeSearchFilters[node['properties']['id']]=node
-            elif node['widget']['type']=='BCNodeWSearchFromPath':
-                nodeSearchPaths[node['properties']['id']]=node
+                nodeSearchFilters[node['properties']['id']] = node
+            elif node['widget']['type'] == 'BCNodeWSearchFromPath':
+                nodeSearchPaths[node['properties']['id']] = node
 
-        if nodeSearchEngine is None or (len(nodeSearchPaths)==0 and not forTextOnly):
+        if nodeSearchEngine is None or (len(nodeSearchPaths) == 0 and not forTextOnly):
             # can't continue...
             return False
 
         # need to search for filters relationships
         # rebuild links from Id, easier to rebuild relationship tree
-        filterToLinks={}
-        pathToLinks=[]
+        filterToLinks = {}
+        pathToLinks = []
         for link in searchRulesAsDict['links']:
-            toNId, toCId=link['connect']['to'].split(':')
-            fromNId, fromCId=link['connect']['from'].split(':')
+            toNId, toCId = link['connect']['to'].split(':')
+            fromNId, fromCId = link['connect']['from'].split(':')
 
             if re.match("InputFilterRule", toCId) and re.match("OutputFilterRule", fromCId):
-                if not toNId in filterToLinks:
-                    filterToLinks[toNId]=[]
-                if not fromNId in filterToLinks[toNId]:
+                if toNId not in filterToLinks:
+                    filterToLinks[toNId] = []
+                if fromNId not in filterToLinks[toNId]:
                     filterToLinks[toNId].append(fromNId)
             elif re.match("InputPath", toCId) and re.match("OutputPath", fromCId):
                 pathToLinks.append(fromNId)
 
-        #print('toLinks', json.dumps(toLinks, indent=4, sort_keys=True))
-        #print('nodeSearchEngine', nodeSearchEngine)
-        #print('nodeSearchFilters', nodeSearchFilters)
-        #print('nodeSearchFilters', nodeSearchPaths)
+        # print('toLinks', json.dumps(toLinks, indent=4, sort_keys=True))
+        # print('nodeSearchEngine', nodeSearchEngine)
+        # print('nodeSearchFilters', nodeSearchFilters)
+        # print('nodeSearchFilters', nodeSearchPaths)
 
-        filterRules=None
+        filterRules = None
         # start from BCNodeWSearchEngine 'InputFilterRule'
         if nodeSearchEngine['properties']['id'] in filterToLinks:
             # a filter conditions is connected to search engine
-            startFromId=filterToLinks[nodeSearchEngine['properties']['id']][0]
-            filterRules=buildBCFileListRules(startFromId, filterToLinks, nodeSearchFilters)
+            startFromId = filterToLinks[nodeSearchEngine['properties']['id']][0]
+            filterRules = buildBCFileListRules(startFromId, filterToLinks, nodeSearchFilters)
 
         fileList.clear()
 
-        if not filterRules is None:
+        if filterRules is not None:
             fileList.addSearchRules(filterRules)
 
         for pathId in pathToLinks:
             fileList.addSearchPaths(BCFileListPath(nodeSearchPaths[pathId]['widget']["path"],
-                                            nodeSearchPaths[pathId]['widget']["scanSubDirectories"],
-                                            nodeSearchPaths[pathId]['widget']["scanHiddenFiles"],
-                                            nodeSearchPaths[pathId]['widget']["scanManagedFilesOnly"],
-                                            nodeSearchPaths[pathId]['widget']["scanManagedFilesBackup"]))
+                                                   nodeSearchPaths[pathId]['widget']["scanSubDirectories"],
+                                                   nodeSearchPaths[pathId]['widget']["scanHiddenFiles"],
+                                                   nodeSearchPaths[pathId]['widget']["scanManagedFilesOnly"],
+                                                   nodeSearchPaths[pathId]['widget']["scanManagedFilesBackup"]))
 
         return True
 
