@@ -107,3 +107,15 @@ Text can be:
 
 Padding character is a space by default, but any character can be used
 
+## Fix bugs
+Some bugs have been fixed
+
+### Search for condition generate python exception
+
+[Feature request #13](https://github.com/Grum999/BuliCommander/issues/13)
+
+A right click in time field in search *file filter* condition was generating a python script exception
+
+This problem is now fixed
+
+

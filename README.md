@@ -210,6 +210,7 @@ _[2022-XX-XX] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-
 - Improve User Interface - *Override Krita Welcome Screen "Open file" dialog*
 - Improve User Interface - *Implement "Save All"*
 - Improve File management - *Improve mass renaming*
+- Fix bug - *Search for condition generate python exception*
 
 _[2022-06-13] Version 0.8.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.8.0b.md)*
 - Improve File panels - *Grid View mode - File/Image information*
