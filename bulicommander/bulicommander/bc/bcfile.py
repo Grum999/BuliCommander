@@ -336,7 +336,7 @@ class BCFileManagedFormat(object):
 
     @staticmethod
     def isExtension(value, extReference, withBackup=False):
-        if value.lower() == f'.{extReference}' or (withBackup and re.match(fr"\.{extReference}{BCFileManagedFormat.backupSuffixRe()}$", value)):
+        if value.lower() == fr'.{extReference}' or (withBackup and re.match(fr"\.{extReference}{BCFileManagedFormat.backupSuffixRe()}$", value)):
             return True
         return False
 
@@ -7015,7 +7015,7 @@ class BCFileList(QObject):
         if len(self.__sortList) > 0:
             self.__currentFiles = sorted(self.__currentFiles, key=cmp_to_key(self.__sort))
 
-            if emitSignal is False:
+            if emitSignal is True:
                 self.resultsUpdatedSort.emit()
 
     def nbFiles(self):
@@ -7318,4 +7318,4 @@ class BCFileIcon(object):
         return BCFileIcon.__IconProvider.icon(fileInfo)
 
 
-Debug.setEnabled(True)
+# Debug.setEnabled(True)
