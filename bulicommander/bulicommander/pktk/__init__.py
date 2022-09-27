@@ -3,8 +3,8 @@ import os.path
 
 from .pktk import (PkTk, EInvalidType, EInvalidValue, EInvalidStatus)
 
-pluginsPath=os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-if not pluginsPath in sys.path:
+pluginsPath = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+if pluginsPath not in sys.path:
     # now, pktk modules for plugin <plugin> can be imported as:
     # import <plugin>.pktk.modules.xxxxx
     # import <plugin>.pktk.widgets.xxxxx

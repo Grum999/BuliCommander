@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -22,12 +22,13 @@
 
 from PyQt5.Qt import *
 
+
 class WVLine(QFrame):
     """A vertical line widget that can be used as a separator"""
 
     def __init__(self, parent=None):
         super(WVLine, self).__init__(parent)
-        self.setFrameShape(self.VLine|self.Sunken)
+        self.setFrameShape(self.VLine | self.Sunken)
 
 
 class WHLine(QFrame):
@@ -35,4 +36,4 @@ class WHLine(QFrame):
 
     def __init__(self, parent=None):
         super(WHLine, self).__init__(parent)
-        self.setFrameShape(self.HLine|self.Sunken)
+        self.setFrameShape(self.HLine | self.Sunken)

@@ -4,6 +4,7 @@ from PyQt5.QtCore import (
         Qt
     )
 
+
 class LeftHBoxLayout(QtWidgets.QHBoxLayout):
     '''
     Left aligned horizontal layout.
@@ -33,7 +34,7 @@ class LeftHBoxLayout(QtWidgets.QHBoxLayout):
         "Widget used to fill free space"
         return self[self.count()]
 
-    def setGeometry(self, rc:QtCore.QRect):
+    def setGeometry(self, rc: QtCore.QRect):
         "`rc` - layout's rectangle w/o margins"
         super().setGeometry(rc)  # perform the layout
         min_sp = self.minimal_space()
@@ -84,8 +85,8 @@ class LeftHBoxLayout(QtWidgets.QHBoxLayout):
 
     def widgets(self, state='all'):
         "Iterate over child widgets"
-        for i in range(self.first_visible if state=='visible' else 0,
-                       self.first_visible if state=='hidden' else self.count()
+        for i in range(self.first_visible if state == 'visible' else 0,
+                       self.first_visible if state == 'hidden' else self.count()
                        ):
             yield self[i].widget()
 

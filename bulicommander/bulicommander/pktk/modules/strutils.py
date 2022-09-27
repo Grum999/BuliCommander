@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -31,14 +31,18 @@ from PyQt5.QtGui import QTextDocumentFragment
 # ------------------------------------------------------------------------------
 # don't really like to use global variable... create a class with static methods instead?
 __bytesSizeToStrUnit = 'autobin'
+
+
 def setBytesSizeToStrUnit(unit):
     global __bytesSizeToStrUnit
     if unit.lower() in ['auto', 'autobin']:
         __bytesSizeToStrUnit = unit
 
+
 def getBytesSizeToStrUnit():
     global __bytesSizeToStrUnit
     return __bytesSizeToStrUnit
+
 
 def strToBytesSize(value):
     """Convert a value to bytes
@@ -66,9 +70,9 @@ def strToBytesSize(value):
     elif isinstance(value, float):
         return int(value)
     elif isinstance(value, str):
-        fmt = re.match("^(\d*\.\d*|\d+)\s*(gb|gib|mb|mib|kb|kib|b)?$", value.lower())
+        fmt = re.match(r"^(\d*\.\d*|\d+)\s*(gb|gib|mb|mib|kb|kib|b)?$", value.lower())
 
-        if not fmt is None:
+        if fmt is not None:
             returned = float(fmt.group(1))
 
             if fmt.group(2) == 'kb':
@@ -91,6 +95,7 @@ def strToBytesSize(value):
     else:
         raise Exception(f"Given value '{value}' can't be parsed!")
 
+
 def strDefault(value, default=''):
     """Return value as str
 
@@ -99,6 +104,7 @@ def strDefault(value, default=''):
     if value is None or value == '' or value == 0:
         return default
     return f"{value}"
+
 
 def bytesSizeToStr(value, unit=None, decimals=2):
     """Convert a size (given in Bytes) to given unit
@@ -117,7 +123,7 @@ def bytesSizeToStr(value, unit=None, decimals=2):
         raise Exception('Given `unit` must be a valid <str> value')
 
     unit = unit.lower()
-    if not unit in ['auto', 'autobin', 'gib', 'mib', 'kib', 'gb', 'mb', 'kb', 'b']:
+    if unit not in ['auto', 'autobin', 'gib', 'mib', 'kib', 'gb', 'mb', 'kb', 'b']:
         raise Exception('Given `unit` must be a valid <str> value')
 
     if not isinstance(decimals, int) or decimals < 0 or decimals > 8:
@@ -162,6 +168,7 @@ def bytesSizeToStr(value, unit=None, decimals=2):
     else:
         return f'{value}B'
 
+
 def strToMaxLength(value, maxLength, completeSpace=True, leftAlignment=True):
     """Format given string `value` to fit in given `maxLength`
 
@@ -185,55 +192,58 @@ def strToMaxLength(value, maxLength, completeSpace=True, leftAlignment=True):
             if completeSpace:
                 # need to complete with spaces
                 if leftAlignment:
-                    returned.append( value + (' ' * (maxLength - textLen)))
+                    returned.append(value + (' ' * (maxLength - textLen)))
                 else:
-                    returned.append( (' ' * (maxLength - textLen)) + value )
+                    returned.append((' ' * (maxLength - textLen)) + value)
             else:
                 returned.append(value)
         elif textLen > maxLength:
             # keep spaces separators
-            tmpWords=re.split('(\s)', value)
-            words=[]
+            tmpWords = re.split(r'(\s)', value)
+            words = []
 
-            # build words list
+            # build words list
             for word in tmpWords:
                 while len(word) > maxLength:
                     words.append(word[0:maxLength])
-                    word=word[maxLength:]
+                    word = word[maxLength:]
                 if word != '':
                     words.append(word)
 
-            builtRow=''
+            builtRow = ''
             for word in words:
-                if (len(builtRow) + len(word))<maxLength:
-                    builtRow+=word
+                if (len(builtRow) + len(word)) < maxLength:
+                    builtRow += word
                 else:
                     returned.append(strToMaxLength(builtRow, maxLength, completeSpace))
-                    builtRow=word
+                    builtRow = word
 
-            if builtRow!='':
+            if builtRow != '':
                 returned.append(strToMaxLength(builtRow, maxLength, completeSpace))
         else:
             returned.append(value)
 
     return os.linesep.join(returned)
 
+
 def stripTags(value):
     """Strip HTML tags and remove amperseed added by Qt"""
     if value is None:
         return ''
-    return re.sub(r'<[^<]+?>', '', re.sub(r'<br/?>', os.linesep, value))  \
-                .replace('&nbsp;', ' ')     \
-                .replace('&gt;', '>')       \
-                .replace('&lt;', '<')       \
-                .replace('&amp;', '&&')     \
-                .replace('&&', chr(1))      \
-                .replace('&', '')           \
-                .replace(chr(1), '&')
+    return re.sub(r'<[^<]+?>', '', re.sub(r'<br/?>', os.linesep, value))\
+             .replace('&nbsp;', ' ')     \
+             .replace('&gt;', '>')       \
+             .replace('&lt;', '<')       \
+             .replace('&amp;', '&&')     \
+             .replace('&&', chr(1))      \
+             .replace('&', '')           \
+             .replace(chr(1), '&')
+
 
 def stripHtml(value):
     """Return HTML plain text"""
-    return QTextDocumentFragment.fromHtml(value).toPlainText();
+    return QTextDocumentFragment.fromHtml(value).toPlainText()
+
 
 def indent(text, firstIndent='', nextIndent='', strip=False):
     """Indent text
@@ -262,24 +272,25 @@ def indent(text, firstIndent='', nextIndent='', strip=False):
            '    - item 2'
     """
     if isinstance(text, str):
-        text=text.split(os.linesep)
+        text = text.split(os.linesep)
 
     if not isinstance(text, list):
         return f"{text}"
 
-    result=[]
+    result = []
     for index, line in enumerate(text):
         if strip:
-            line=line.strip()
+            line = line.strip()
 
-        if index==0 and firstIndent!='':
-            line=firstIndent+line
-        elif nextIndent!='':
-            line=nextIndent+line
+        if index == 0 and firstIndent != '':
+            line = firstIndent+line
+        elif nextIndent != '':
+            line = nextIndent+line
 
         result.append(line)
 
     return os.linesep.join(result)
+
 
 def boolYesNo(value):
     """Return yes or no according to value is True or False"""

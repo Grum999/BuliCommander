@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -20,7 +20,6 @@
 # -----------------------------------------------------------------------------
 
 
-
 # -----------------------------------------------------------------------------
 
 import PyQt5.uic
@@ -34,6 +33,7 @@ from PyQt5.QtWidgets import (
 from ..pktk import *
 
 # -----------------------------------------------------------------------------
+
 
 class EDialog(QDialog):
     """Extended QDialog provides some signals and event to manage ui"""
@@ -56,8 +56,6 @@ class EDialog(QDialog):
 
            At this time, all widgets are initialised and size/visiblity is known
 
-
-
            Example
            =======
                 # define callback function
@@ -68,7 +66,7 @@ class EDialog(QDialog):
                 # initialise a dialog from an xml .ui file
                 dlgMain = EDialog.loadUi(uiFileName)
 
-                # execute my_callback_function() when dialog became visible
+                # execute my_callback_function() when dialog became visible
                 dlgMain.dialogShown.connect(my_callback_function)
         """
         super(EDialog, self).showEvent(event)
@@ -84,7 +82,6 @@ class EDialog(QDialog):
     def setEventCallback(self, object, method):
         """Add an event callback method for given object
 
-
            Example
            =======
                 # define callback function
@@ -98,7 +95,7 @@ class EDialog(QDialog):
                 # initialise a dialog from an xml .ui file
                 dlgMain = EDialog.loadUi(uiFileName)
 
-                # define callback for widget from ui
+                # define callback for widget from ui
                 dlgMain.setEventCallback(dlgMain.my_widget, my_callback_function)
         """
         if object is None:

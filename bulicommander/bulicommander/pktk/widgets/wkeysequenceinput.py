@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -30,19 +30,20 @@ from PyQt5.QtWidgets import QKeySequenceEdit
 
 from ..modules.utils import replaceLineEditClearButton
 
+
 class WKeySequenceInput(QKeySequenceEdit):
     """An improved version of QKeySequenceEdit"""
-    keySequenceCleared=Signal()
+    keySequenceCleared = Signal()
 
     def __init__(self, parent=None):
         super(WKeySequenceInput, self).__init__(parent)
 
-        self.__lineEdit=self.findChild(QLineEdit)
+        self.__lineEdit = self.findChild(QLineEdit)
         self.__lineEdit.textChanged.connect(self.__textChanged)
 
     def __textChanged(self, value):
         """Text has been changed"""
-        if value=='':
+        if value == '':
             self.clear()
             self.keySequenceCleared.emit()
 
@@ -56,18 +57,18 @@ class WKeySequenceInput(QKeySequenceEdit):
         if value:
             replaceLineEditClearButton(self.__lineEdit)
 
-    #def event(self, event):
+    # def event(self, event):
     #    print("event", event, event.type())
     #    return super(WKeySequenceInput, self).event(event)
 
-    #def keyPressEvent(self, event):
+    # def keyPressEvent(self, event):
     #    print("keyPressEvent", event, event.text(), event.key(), event.modifiers())
     #    super(WKeySequenceInput, self).keyPressEvent(event)
 
-    #def keyReleaseEvent(self, event):
+    # def keyReleaseEvent(self, event):
     #    print("keyReleaseEvent", event, event.text(), event.key(), event.modifiers())
     #    super(WKeySequenceInput, self).keyReleaseEvent(event)
 
-    #def timerEvent(self, event):
+    # def timerEvent(self, event):
     #    print("timerEvent", event)
     #    super(WKeySequenceInput, self).timerEvent(event)

@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Buli Commander
 # Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
@@ -20,10 +20,8 @@
 # -----------------------------------------------------------------------------
 
 
-
-
 # -----------------------------------------------------------------------------
-#from .pktk import PkTk
+# from .pktk import PkTk
 
 from pathlib import Path
 
@@ -72,8 +70,8 @@ from bulicommander.pktk.widgets.wsearchinput import WSearchInput
 # -----------------------------------------------------------------------------
 
 
-
 # -----------------------------------------------------------------------------
+
 class BCWPathBar(QFrame):
     """Buli Commander path bar"""
 
@@ -89,11 +87,11 @@ class BCWPathBar(QFrame):
     QUICKREF_RESERVED_LAST_SAVED = 6
     QUICKREF_RESERVED_HISTORY = 7
     QUICKREF_RESERVED_BACKUPFILTERDVIEW = 8
-    QUICKREF_RESERVED_FLAYERFILTERDVIEW = 9 # file layer
-    QUICKREF_SEARCHRESULTS_LIST = 10 # search results
+    QUICKREF_RESERVED_FLAYERFILTERDVIEW = 9     # file layer
+    QUICKREF_SEARCHRESULTS_LIST = 10            # search results
 
-    OPTION_SHOW_NONE        =       0b0000000000000000
-    OPTION_SHOW_ALL         =       0b0000000111111111
+    OPTION_SHOW_NONE =              0b0000000000000000
+    OPTION_SHOW_ALL =               0b0000000111111111
     OPTION_SHOW_QUICKFILTER =       0b0000000000000001
     OPTION_SHOW_UP =                0b0000000000000010
     OPTION_SHOW_PREVIOUS =          0b0000000000000100
@@ -104,10 +102,8 @@ class BCWPathBar(QFrame):
     OPTION_SHOW_LASTDOCUMENTS =     0b0000000010000000
     OPTION_SHOW_MARGINS =           0b0000000100000000
 
-
-    #                                  vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv -- reserved from WSearchInput
-    OPTION_FILTER_MARKED_ACTIVE=    0b100000000000000000000000000000000
-
+    #                               ---vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv -- reserved from WSearchInput
+    OPTION_FILTER_MARKED_ACTIVE =   0b100000000000000000000000000000000
 
     clicked = Signal(bool)
     pathChanged = Signal(str)
@@ -158,19 +154,19 @@ class BCWPathBar(QFrame):
 
         @pyqtSlot('QString')
         def home_Clicked(value):
-            if not self.__uiController is None:
+            if self.__uiController is not None:
                 self.__uiController.commandGoHome(self.__panel)
 
         @pyqtSlot('QString')
         def up_Clicked(value):
-            if not self.__uiController is None:
+            if self.__uiController is not None:
                 self.__uiController.commandGoUp(self.__panel)
             else:
                 self.goToUpPath()
 
         @pyqtSlot('QString')
         def back_Clicked(value):
-            if not self.__uiController is None:
+            if self.__uiController is not None:
                 self.__uiController.commandGoBack(self.__panel)
             else:
                 self.goToBackPath()
@@ -189,7 +185,7 @@ class BCWPathBar(QFrame):
 
             self.setMode(BCWPathBar.MODE_PATH)
 
-            if not self.__uiController is None:
+            if self.__uiController is not None:
                 self.__uiController.updateMenuForPanel()
 
             self.pathChanged.emit(self.path())
@@ -204,30 +200,30 @@ class BCWPathBar(QFrame):
 
             self.setMode(BCWPathBar.MODE_SAVEDVIEW)
 
-            if not self.__uiController is None:
+            if self.__uiController is not None:
                 self.__uiController.updateMenuForPanel()
 
             self.viewChanged.emit(self.path())
 
-        #@pyqtSlot('QString')
-        #def menuSavedViews_Clicked(action):
+        # @pyqtSlot('QString')
+        # def menuSavedViews_Clicked(action):
         #    # change view
         #    self.setPath(action.property('path'))
 
         @pyqtSlot('QString')
         def filter_Changed(searchValue, options):
             if self.tbFilterMarkedFiles.isChecked():
-                options|=BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
+                options |= BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
 
             self.filterChanged.emit(searchValue, options)
 
         @pyqtSlot('QString')
         def filter_Changed2():
-            searchValue=self.wsiFilterQuery.searchText()
-            options=self.wsiFilterQuery.options()
+            searchValue = self.wsiFilterQuery.searchText()
+            options = self.wsiFilterQuery.options()
 
             if self.tbFilterMarkedFiles.isChecked():
-                options|=BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
+                options |= BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
 
             self.filterChanged.emit(searchValue, options)
 
@@ -243,31 +239,36 @@ class BCWPathBar(QFrame):
 
         self.widgetPath.setPalette(self.__paletteBase)
 
-        self.__btSavedViewsMousePressEvent=self.btSavedViews.mousePressEvent
-        self.__btBookmarkmousePressEvent=self.btBookmark.mousePressEvent
-        self.__btHistorymousePressEvent=self.btHistory.mousePressEvent
-        self.__btLastDocumentsmousePressEvent=self.btLastDocuments.mousePressEvent
+        self.__btSavedViewsMousePressEvent = self.btSavedViews.mousePressEvent
+        self.__btBookmarkmousePressEvent = self.btBookmark.mousePressEvent
+        self.__btHistorymousePressEvent = self.btHistory.mousePressEvent
+        self.__btLastDocumentsmousePressEvent = self.btLastDocuments.mousePressEvent
 
-        self.btSavedViews.mousePressEvent=lambda e: mouseEvent(e, self.__btSavedViewsMousePressEvent)
-        self.btBookmark.mousePressEvent=lambda e: mouseEvent(e, self.__btBookmarkmousePressEvent)
-        self.btHistory.mousePressEvent=lambda e: mouseEvent(e, self.__btHistorymousePressEvent)
-        self.btLastDocuments.mousePressEvent=lambda e: mouseEvent(e, self.__btLastDocumentsmousePressEvent)
+        self.btSavedViews.mousePressEvent = lambda e: mouseEvent(e, self.__btSavedViewsMousePressEvent)
+        self.btBookmark.mousePressEvent = lambda e: mouseEvent(e, self.__btBookmarkmousePressEvent)
+        self.btHistory.mousePressEvent = lambda e: mouseEvent(e, self.__btHistorymousePressEvent)
+        self.btLastDocuments.mousePressEvent = lambda e: mouseEvent(e, self.__btLastDocumentsmousePressEvent)
 
         self.btFilter.clicked.connect(item_Clicked)
         self.btFilter.clicked.connect(self.__refreshFilter)
         self.frameBreacrumbPath.clicked.connect(item_Clicked)
         self.frameBreacrumbPath.path_selected.connect(path_Selected)
         self.frameBreacrumbPath.view_selected.connect(view_Selected)
-        if not self.__savedView is None:
-            self.frameBreacrumbPath.checkViewId=self.__savedView.inList
+        if self.__savedView is not None:
+            self.frameBreacrumbPath.checkViewId = self.__savedView.inList
 
-        self.wsiFilterQuery.setOptions(WSearchInput.OPTION_SHOW_BUTTON_REGEX|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_STATE_BUTTONSHOW|WSearchInput.OPTION_HIDE_VSEPARATORL|WSearchInput.OPTION_HIDE_VSEPARATORR)
+        self.wsiFilterQuery.setOptions(WSearchInput.OPTION_SHOW_BUTTON_REGEX |
+                                       WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE |
+                                       WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE |
+                                       WSearchInput.OPTION_STATE_BUTTONSHOW |
+                                       WSearchInput.OPTION_HIDE_VSEPARATORL |
+                                       WSearchInput.OPTION_HIDE_VSEPARATORR)
         self.wsiFilterQuery.searchOptionModified.connect(filter_Changed)
         self.wsiFilterQuery.searchModified.connect(filter_Changed)
         self.tbFilterMarkedFiles.toggled.connect(filter_Changed2)
 
-        self.__wsiFilterQueryFocusInEvent=self.wsiFilterQuery.qLineEditSearch().focusInEvent
-        self.wsiFilterQuery.qLineEditSearch().focusInEvent=filter_Focused
+        self.__wsiFilterQueryFocusInEvent = self.wsiFilterQuery.qLineEditSearch().focusInEvent
+        self.wsiFilterQuery.qLineEditSearch().focusInEvent = filter_Focused
 
         self.btBack.clicked.connect(item_Clicked)
         self.btBack.clicked.connect(back_Clicked)
@@ -284,14 +285,14 @@ class BCWPathBar(QFrame):
     def __refreshFilter(self):
         """Refresh filter layout"""
         self.setMinimumHeight(0)
-        idealMinHeight=self.widgetPath.sizeHint().height()
+        idealMinHeight = self.widgetPath.sizeHint().height()
 
         if self.btFilter.isChecked():
             self.frameFilter.setVisible(True)
             self.wsiFilterQuery.qLineEditSearch().setFocus()
             self.wsiFilterQuery.qLineEditSearch().selectAll()
             self.filterVisibilityChanged.emit(True)
-            idealMinHeight+=self.widgetFilter.sizeHint().height()
+            idealMinHeight += self.widgetFilter.sizeHint().height()
         else:
             self.frameFilter.setVisible(False)
             self.filterVisibilityChanged.emit(False)
@@ -335,12 +336,12 @@ class BCWPathBar(QFrame):
 
     def __updateBackBtn(self):
         """update back button status"""
-        self.btBack.setEnabled(self.__backList.length()>1)
+        self.btBack.setEnabled(self.__backList.length() > 1)
 
     def paintEvent(self, event):
         super(BCWPathBar, self).paintEvent(event)
 
-        rect=QRect(0, 0, self.width(), self.height())
+        rect = QRect(0, 0, self.width(), self.height())
 
         painter = QPainter(self)
         if self.__isHighlighted:
@@ -354,7 +355,7 @@ class BCWPathBar(QFrame):
 
     def setUiController(self, uiController):
         """Set uiController"""
-        #if not (uiController is None or isinstance(uiController, BCUIController)):
+        # if not (uiController is None or isinstance(uiController, BCUIController)):
         #    raise EInvalidType('Given `uiController` must be a <BCUIController>')
         self.__uiController = uiController
         self.btHistory.setMenu(self.__uiController.window().menuGoHistory)
@@ -368,7 +369,7 @@ class BCWPathBar(QFrame):
 
     def setMode(self, mode):
         """Set current mode"""
-        if not mode in [BCWPathBar.MODE_PATH, BCWPathBar.MODE_SAVEDVIEW]:
+        if mode not in [BCWPathBar.MODE_PATH, BCWPathBar.MODE_SAVEDVIEW]:
             raise EInvalidValue("Given `mode` is not valid")
 
         if mode != self.__mode:
@@ -403,7 +404,7 @@ class BCWPathBar(QFrame):
         """Return current path"""
         if self.__mode in [BCWPathBar.MODE_PATH, BCWPathBar.MODE_SAVEDVIEW]:
             return f"{self.frameBreacrumbPath.path()}"
-        elif not self.__savedView is None:
+        elif self.__savedView is not None:
             # BCWPathBar.MODE_SAVEDVIEW
             return f"@{self.__savedView.current()}"
         else:
@@ -424,7 +425,7 @@ class BCWPathBar(QFrame):
         if self.__backList.length() > 0:
             self.__backList.pop()
             last = self.__backList.last()
-            if not last is None:
+            if last is not None:
                 self.setPath(last)
                 return True
 
@@ -444,10 +445,10 @@ class BCWPathBar(QFrame):
 
     def setHistory(self, value):
         """Set history list"""
-        #if not isinstance(value, BCHistory):
+        # if not isinstance(value, BCHistory):
         #    raise EInvalidType("Given `value` must be a <BCHistory>")
-        if not value is None:
-            self.__history=value
+        if value is not None:
+            self.__history = value
             self.__history.changed.connect(self.__historyChanged)
 
     def bookmark(self):
@@ -456,9 +457,9 @@ class BCWPathBar(QFrame):
 
     def setBookmark(self, value):
         """Set bookmark list"""
-        #if not isinstance(value, BCBookmark):
+        # if not isinstance(value, BCBookmark):
         #    raise EInvalidType("Given `value` must be a <BCBookmark>")
-        if not value is None:
+        if value is not None:
             self.__bookmark = value
             self.__bookmark.changed.connect(self.__bookmarkChanged)
 
@@ -468,11 +469,11 @@ class BCWPathBar(QFrame):
 
     def setSavedView(self, value):
         """Set saved views"""
-        if not value is None:
+        if value is not None:
             self.__savedView = value
             self.__savedView.updated.connect(self.__savedViewChanged)
-            self.frameBreacrumbPath.quickRefDict=self.__uiController.quickRefDict
-            self.frameBreacrumbPath.getQuickRefPath=self.__uiController.quickRefPath
+            self.frameBreacrumbPath.quickRefDict = self.__uiController.quickRefDict
+            self.frameBreacrumbPath.getQuickRefPath = self.__uiController.quickRefPath
 
     def lastDocumentsOpened(self):
         """Return last opened document views"""
@@ -480,11 +481,11 @@ class BCWPathBar(QFrame):
 
     def setLastDocumentsOpened(self, value):
         """Set last opened document views"""
-        if not value is None:
+        if value is not None:
             self.__lastDocumentsOpened = value
             self.__lastDocumentsOpened.changed.connect(self.__lastDocumentsOpenedChanged)
-            self.frameBreacrumbPath.quickRefDict=self.__uiController.quickRefDict
-            self.frameBreacrumbPath.getQuickRefPath=self.__uiController.quickRefPath
+            self.frameBreacrumbPath.quickRefDict = self.__uiController.quickRefDict
+            self.frameBreacrumbPath.getQuickRefPath = self.__uiController.quickRefPath
 
     def lastDocumentsSaved(self):
         """Return last saved document views"""
@@ -492,11 +493,11 @@ class BCWPathBar(QFrame):
 
     def setLastDocumentsSaved(self, value):
         """Set last saved document views"""
-        if not value is None:
+        if value is not None:
             self.__lastDocumentsSaved = value
             self.__lastDocumentsSaved.changed.connect(self.__lastDocumentsSavedChanged)
-            self.frameBreacrumbPath.quickRefDict=self.__uiController.quickRefDict
-            self.frameBreacrumbPath.getQuickRefPath=self.__uiController.quickRefPath
+            self.frameBreacrumbPath.quickRefDict = self.__uiController.quickRefDict
+            self.frameBreacrumbPath.getQuickRefPath = self.__uiController.quickRefPath
 
     def backupFilterDView(self):
         """Return backup dynamic view object"""
@@ -504,11 +505,11 @@ class BCWPathBar(QFrame):
 
     def setBackupFilterDView(self, value):
         """Set backup dynamic view object"""
-        if not value is None:
+        if value is not None:
             self.__backupFilterDView = value
             self.__backupFilterDView.changed.connect(self.__backupFilterDViewChanged)
-            self.frameBreacrumbPath.quickRefDict=self.__uiController.quickRefDict
-            self.frameBreacrumbPath.getQuickRefPath=self.__uiController.quickRefPath
+            self.frameBreacrumbPath.quickRefDict = self.__uiController.quickRefDict
+            self.frameBreacrumbPath.getQuickRefPath = self.__uiController.quickRefPath
 
     def fileLayerFilterDView(self):
         """Return file layer dynamic view object"""
@@ -516,11 +517,11 @@ class BCWPathBar(QFrame):
 
     def setFileLayerFilterDView(self, value):
         """Set file layer dynamic view object"""
-        if not value is None:
+        if value is not None:
             self.__fileLayerFilterDView = value
             self.__fileLayerFilterDView.changed.connect(self.__fileLayerFilterDViewChanged)
-            self.frameBreacrumbPath.quickRefDict=self.__uiController.quickRefDict
-            self.frameBreacrumbPath.getQuickRefPath=self.__uiController.quickRefPath
+            self.frameBreacrumbPath.quickRefDict = self.__uiController.quickRefDict
+            self.frameBreacrumbPath.getQuickRefPath = self.__uiController.quickRefPath
 
     def filterVisible(self):
         """Return if filter is visible or not"""
@@ -548,9 +549,9 @@ class BCWPathBar(QFrame):
 
     def filter(self):
         """Return current filter value as tuple (value, options)"""
-        options=self.wsiFilterQuery.options()&WSearchInput.OPTION_ALL_SEARCH
+        options = self.wsiFilterQuery.options() & WSearchInput.OPTION_ALL_SEARCH
         if self.tbFilterMarkedFiles.isChecked():
-            options|=BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
+            options |= BCWPathBar.OPTION_FILTER_MARKED_ACTIVE
 
         return (self.wsiFilterQuery.searchText(), options)
 
@@ -560,8 +561,14 @@ class BCWPathBar(QFrame):
             value = ''
         self.wsiFilterQuery.setSearchText(value)
         if isinstance(options, int):
-            self.tbFilterMarkedFiles.setChecked(options&BCWPathBar.OPTION_FILTER_MARKED_ACTIVE==BCWPathBar.OPTION_FILTER_MARKED_ACTIVE)
-            self.wsiFilterQuery.setOptions((options&WSearchInput.OPTION_ALL_SEARCH)|WSearchInput.OPTION_SHOW_BUTTON_REGEX|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE|WSearchInput.OPTION_STATE_BUTTONSHOW|WSearchInput.OPTION_HIDE_VSEPARATORL|WSearchInput.OPTION_HIDE_VSEPARATORR)
+            self.tbFilterMarkedFiles.setChecked(options & BCWPathBar.OPTION_FILTER_MARKED_ACTIVE == BCWPathBar.OPTION_FILTER_MARKED_ACTIVE)
+            self.wsiFilterQuery.setOptions((options & WSearchInput.OPTION_ALL_SEARCH) |
+                                           WSearchInput.OPTION_SHOW_BUTTON_REGEX |
+                                           WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE |
+                                           WSearchInput.OPTION_SHOW_BUTTON_CASESENSITIVE |
+                                           WSearchInput.OPTION_STATE_BUTTONSHOW |
+                                           WSearchInput.OPTION_HIDE_VSEPARATORL |
+                                           WSearchInput.OPTION_HIDE_VSEPARATORR)
 
     def hiddenPath(self):
         """Return if hidden path are displayed or not"""
@@ -609,10 +616,10 @@ class BCWPathBar(QFrame):
         """Display/Hide margins"""
         if visible:
             self.widgetPath.setMinimumHeight(40)
-            self.widgetPath.setContentsMargins(2,2,2,2)
+            self.widgetPath.setContentsMargins(2, 2, 2, 2)
         else:
             self.widgetPath.setMinimumHeight(0)
-            self.widgetPath.setContentsMargins(0,0,0,0)
+            self.widgetPath.setContentsMargins(0, 0, 0, 0)
 
     def goUpEnabled(self):
         """Return True if go up button is enabled"""

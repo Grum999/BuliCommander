@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -39,38 +39,38 @@ from PyQt5.QtWidgets import (
 
 class WLogSlider(QSlider):
     """A slider with logarithmic scale"""
-    naturalValueChanged=Signal(float)
+    naturalValueChanged = Signal(float)
 
     def __init__(self, parent=None):
         super(WLogSlider, self).__init__(parent)
 
-        self.__naturalMinimumValue=0.01
-        self.__naturalMaximumValue=100.00
+        self.__naturalMinimumValue = 0.01
+        self.__naturalMaximumValue = 100.00
 
-        self.__scale=1000
-        self.__naturalValue=1
+        self.__scale = 1000
+        self.__naturalValue = 1
         self.valueChanged.connect(self.__onValueChanged)
 
     def __onValueChanged(self, value):
         """Value has been modified"""
-        self.__naturalValue=pow(10, (value / self.__scale))
+        self.__naturalValue = pow(10, (value / self.__scale))
         self.naturalValueChanged.emit(self.__naturalValue)
 
     def setNaturalMin(self, value):
         """Set minimum value"""
-        if value>0:
-            self.__naturalMinimumValue=value
+        if value > 0:
+            self.__naturalMinimumValue = value
             self.setMinimum(int(log10(value) * self.__scale))
 
     def setNaturalMax(self, value):
         """Set maximum value"""
         if value > 0:
-            self.__naturalMaximumValue=value
+            self.__naturalMaximumValue = value
             self.setMaximum(int(log10(value) * self.__scale))
 
     def setNaturalValue(self, value):
         """Set value"""
-        self.__naturalValue=value
+        self.__naturalValue = value
         self.setValue(int(log10(value) * self.__scale))
 
     def naturalValue(self, value):
@@ -83,8 +83,8 @@ class WLogSlider(QSlider):
 
     def setScale(self, value):
         """Define scale for slider"""
-        if isinstance(value, (int, float)) and value>0 and value!=self.__scale:
-            self.__scale=value
+        if isinstance(value, (int, float)) and value > 0 and value != self.__scale:
+            self.__scale = value
             # need to recalculate min/max according to new scale
             self.setNaturalMin(self.__naturalMinimumValue)
             self.setNaturalMax(self.__naturalMaximumValue)

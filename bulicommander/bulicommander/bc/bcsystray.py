@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Buli Commander
 # Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
@@ -37,6 +37,7 @@ from PyQt5.QtCore import (
 from bulicommander.pktk.modules.utils import Debug
 from bulicommander.pktk.modules.imgutils import buildIcon
 
+
 class BCSysTray(object):
     """Manage system tray"""
 
@@ -45,9 +46,8 @@ class BCSysTray(object):
     SYSTRAY_MODE_WHENACTIVE = 2
     SYSTRAY_MODE_ALWAYS = 3
 
-    # whhhooo that's ugly ^_^'
+    # whhhooo that's ugly ^_^'
     __selfInstance = None
-
 
     def __init__(self, uiController):
         """Initialise SysTray manager"""
@@ -66,7 +66,7 @@ class BCSysTray(object):
         # Note: theme must be loaded before BCSysTray is instancied (otherwise no icon will be set)
         self.__buliIcon = buildIcon([(QPixmap(':/bc/images/normal/buli-powered-64x64-rounded-border'), QIcon.Normal)])
         self.__tray = QSystemTrayIcon(self.__buliIcon, Krita.instance())
-        self.__visibleMode = 1 # when active
+        self.__visibleMode = 1  # when active
         self.__uiController = uiController
 
         self.__uiController.bcWindowShown.connect(self.__displaySysTrayIcon)
@@ -75,17 +75,17 @@ class BCSysTray(object):
 
         BCSysTray.__selfInstance = self
 
-        self.__actionAbout=QAction(i18n('About Buli Commander...'))
+        self.__actionAbout = QAction(i18n('About Buli Commander...'))
         self.__actionAbout.triggered.connect(actionAbout)
-        self.__actionOpenBc=QAction(i18n('Open Buli Commander...'))
+        self.__actionOpenBc = QAction(i18n('Open Buli Commander...'))
         self.__actionOpenBc.triggered.connect(actionDisplayBc)
-        self.__actionCloseBc=QAction(i18n('Quit Buli Commander'))
+        self.__actionCloseBc = QAction(i18n('Quit Buli Commander'))
         self.__actionCloseBc.triggered.connect(actionQuitBc)
 
-        self.__actionClipboardActive=QAction(i18n('Clipboard manager active'))
+        self.__actionClipboardActive = QAction(i18n('Clipboard manager active'))
         self.__actionClipboardActive.triggered.connect(actionClipboardManagerActive)
         self.__actionClipboardActive.setCheckable(True)
-        if not self.__uiController is None:
+        if self.__uiController is not None:
             self.__actionClipboardActive.setChecked(self.__uiController.commandSettingsClipboardCacheSystrayMode())
 
         self.__menu = QMenu()
@@ -101,12 +101,11 @@ class BCSysTray(object):
 
         self.__tray.setContextMenu(self.__menu)
 
-
     def __displayContextMenu(self):
         """Display context menu on systray icon"""
-        # menu
+        # menu
 
-        # [ ] Clipboard manager active
+        # [] Clipboard manager active
         # ----------------------------
         #     About BC
         # ----------------------------
@@ -114,14 +113,12 @@ class BCSysTray(object):
         #     Quit BC
         self.__actionClipboardActive.setEnabled((self.__uiController.commandSettingsClipboardCacheMode() != 'manual'))
 
-
     def __displayBuliCommander(self):
         """Display buli commander"""
         if self.__uiController.started():
             self.__uiController.commandViewBringToFront()
         else:
             self.__uiController.start()
-
 
     def __activated(self, activationReason):
         """System tray icon has been activated"""
@@ -134,16 +131,15 @@ class BCSysTray(object):
         else:
             Debug.print('[BCSysTray] Unknown')
 
-
     def __displaySysTrayIcon(self):
         """Display systray if allowed by mode"""
         self.__actionOpenBc.setVisible(not self.__uiController.started())
         self.__actionCloseBc.setVisible(self.__uiController.started())
 
-        if self.__visibleMode==BCSysTray.SYSTRAY_MODE_ALWAYS:
+        if self.__visibleMode == BCSysTray.SYSTRAY_MODE_ALWAYS:
             self.__tray.show()
-        elif self.__visibleMode==BCSysTray.SYSTRAY_MODE_WHENACTIVE:
-            if not self.__uiController is None:
+        elif self.__visibleMode == BCSysTray.SYSTRAY_MODE_WHENACTIVE:
+            if self.__uiController is not None:
                 if self.__uiController.started():
                     self.__tray.show()
                 elif self.__uiController.started():
@@ -153,37 +149,32 @@ class BCSysTray(object):
             # SYSTRAY_MODE_FORNOTIFICATION
             self.__tray.hide()
 
-
     def __hideSysTrayIcon(self):
         """Hide systray if allowed by mode"""
         self.__actionOpenBc.setVisible(not self.__uiController.started())
         self.__actionCloseBc.setVisible(self.__uiController.started())
 
-        if self.__visibleMode!=BCSysTray.SYSTRAY_MODE_ALWAYS:
+        if self.__visibleMode != BCSysTray.SYSTRAY_MODE_ALWAYS:
             self.__tray.hide()
-
 
     def visible(self):
         """Return if icon is currently visible in system tray"""
         return self.__tray.isVisible()
 
-
     def visibleMode(self):
         """Return current Systray visible mode"""
         return self.__visibleMode
 
-
     def setVisibleMode(self, mode):
         """Set current Systray visible mode"""
-        if not mode in [BCSysTray.SYSTRAY_MODE_NEVER,
+        if mode not in [BCSysTray.SYSTRAY_MODE_NEVER,
                         BCSysTray.SYSTRAY_MODE_FORNOTIFICATION,
                         BCSysTray.SYSTRAY_MODE_WHENACTIVE,
                         BCSysTray.SYSTRAY_MODE_ALWAYS]:
             raise EInvalidValue("Given `mode` is not valid")
 
-        self.__visibleMode=mode
+        self.__visibleMode = mode
         self.__displaySysTrayIcon()
-
 
     def __popMessage(self, title, message, icon):
         """Display an information message"""
@@ -206,7 +197,6 @@ class BCSysTray(object):
             tmpTray.show()
             tmpTray.showMessage(title, message, icon)
             tmpTray.hide()
-
 
     @staticmethod
     def messageInformation(title, message):

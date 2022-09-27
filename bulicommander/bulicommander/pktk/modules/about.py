@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -20,7 +20,6 @@
 # -----------------------------------------------------------------------------
 
 
-
 # -----------------------------------------------------------------------------
 import os
 import re
@@ -36,6 +35,8 @@ from ..pktk import *
 from .edialog import EDialog
 
 # -----------------------------------------------------------------------------
+
+
 class AboutWindow(EDialog):
     """A generic 'about' window
 
@@ -53,33 +54,34 @@ class AboutWindow(EDialog):
         super(AboutWindow, self).__init__(os.path.join(os.path.dirname(__file__), '..', 'resources', 'about.ui'), parent)
 
         self.setWindowTitle(i18n(f'{name}::About'))
-        self.setWindowFlags(Qt.Dialog|Qt.WindowTitleHint)
-        self.setWindowFlags(self.windowFlags()&~Qt.WindowMinMaxButtonsHint)
+        self.setWindowFlags(Qt.Dialog | Qt.WindowTitleHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMinMaxButtonsHint)
         self.lblName.setText(name)
         self.lblVersion.setText(f'v{version}')
 
-        if not image is None:
+        if image is not None:
             if isinstance(image, QImage):
                 self.lblImg.setPixmap(QPixmap.fromImage(image))
             elif isinstance(image, str):
                 # path/filename to image
                 self.lblImg.setPixmap(QPixmap.fromImage(QImage(image)))
 
-        if not madeWith is None:
+        if madeWith is not None:
             self.lblMadeWith.setText(madeWith)
 
-        licenseAndSource=''
+        licenseAndSource = ''
 
-        if not license is None:
-            licenseAndSource=license
+        if license is not None:
+            licenseAndSource = license
         else:
-            licenseAndSource=f'<p>{name} is released under the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License (version 3 or any later version)</a></p>'
+            licenseAndSource = f'<p>{name} is released under the <a href="https://www.gnu.org/licenses/gpl-3.0.html">'\
+                               f'GNU General Public License (version 3 or any later version)</a></p>'
 
-        if not sourceCode is None:
+        if sourceCode is not None:
             if re.match(':', sourceCode):
-                licenseAndSource+=f'<p>Get source code on <a href="https://github.com/Grum999/{sourceCode[1:]}">github/{sourceCode[1:]}</a></p>'
+                licenseAndSource += f'<p>Get source code on <a href="https://github.com/Grum999/{sourceCode[1:]}">github/{sourceCode[1:]}</a></p>'
             else:
-                licenseAndSource+=sourceCode
+                licenseAndSource += sourceCode
 
         self.lblLicenseAndSource.setText(licenseAndSource)
 

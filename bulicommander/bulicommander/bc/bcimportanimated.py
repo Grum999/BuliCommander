@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Buli Commander
 # Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
@@ -123,9 +123,9 @@ class BCImportDialogBoxAnimated(QDialog):
 class BCImportAnimated(object):
     """Provides function to import animated file files"""
 
-    IMPORT_OK=0
-    IMPORT_KO=1
-    IMPORT_CANCELLED=2
+    IMPORT_OK = 0
+    IMPORT_KO = 1
+    IMPORT_CANCELLED = 2
 
     SUPPORTED_FORMAT = [BCFileManagedFormat.GIF,
                         BCFileManagedFormat.WEBP]
@@ -146,28 +146,32 @@ class BCImportAnimated(object):
             imgNfo = file.getMetaInformation()
             if imgNfo['imageCount'] > 1:
                 try:
-                    dlgBox=WDialogProgress.display(dialogTitle, f"<b>{i18n('Importing file as layers')}</b><br>{i18n('File')}: <span style='font-family:monospace'>{file.fullPathName()}</span><br><br>", True, minValue=0, maxValue=imgNfo['imageCount'])
+                    dlgBox = WDialogProgress.display(dialogTitle,
+                                                     f"<b>{i18n('Importing file as layers')}</b>"
+                                                     f"<br>{i18n('File')}: <span style='font-family:monospace'>{file.fullPathName()}</span><br><br>",
+                                                     True,
+                                                     minValue=0,
+                                                     maxValue=imgNfo['imageCount'])
 
                     imgReaderAnimated = QMovie(file.fullPathName())
 
-                    document = Krita.instance().createDocument (
-                            file.imageSize().width(),
-                            file.imageSize().height(),
-                            f'Imported animation-{file.name()}',
-                            'RGBA',
-                            'U8',
-                            '',
-                            72.00
-                        )
+                    document = Krita.instance().createDocument(file.imageSize().width(),
+                                                               file.imageSize().height(),
+                                                               f'Imported animation-{file.name()}',
+                                                               'RGBA',
+                                                               'U8',
+                                                               '',
+                                                               72.00
+                                                               )
                     document.setFileName(f'Imported animation-{file.name()}')
 
                     groupLayer = document.createGroupLayer('Frames')
 
                     dlgBox.updateMessage(f"{i18n('Extract frames')}...<br>", False)
-                    isCancelled=False
-                    nbZ=len(f"{imgReaderAnimated.frameCount()}")
+                    isCancelled = False
+                    nbZ = len(f"{imgReaderAnimated.frameCount()}")
                     for frameNumber in range(imgReaderAnimated.frameCount()):
-                        isCancelled=dlgBox.setProgress(frameNumber+1)
+                        isCancelled = dlgBox.setProgress(frameNumber+1)
                         if isCancelled:
                             document.waitForDone()
                             document.close()
@@ -180,7 +184,7 @@ class BCImportAnimated(object):
                         EKritaNode.fromQImage(frameLayer, imgReaderAnimated.currentImage())
 
                         groupLayer.addChildNode(frameLayer, None)
-                        #imgReaderAnimated.jumpToNextFrame()
+                        # imgReaderAnimated.jumpToNextFrame()
 
                     document.rootNode().addChildNode(groupLayer, None)
 
@@ -214,29 +218,33 @@ class BCImportAnimated(object):
             imgNfo = file.getMetaInformation()
             if imgNfo['imageCount'] > 1:
                 try:
-                    dlgBox=WDialogProgress.display(dialogTitle, f"<b>{i18n('Importing file as frames')}</b><br>{i18n('File')}: <span style='font-family:monospace'>{file.fullPathName()}</span><br><br>", True, minValue=0, maxValue=imgNfo['imageCount'])
+                    dlgBox = WDialogProgress.display(dialogTitle,
+                                                     f"<b>{i18n('Importing file as frames')}</b>"
+                                                     f"<br>{i18n('File')}: <span style='font-family:monospace'>{file.fullPathName()}</span><br><br>",
+                                                     True,
+                                                     minValue=0,
+                                                     maxValue=imgNfo['imageCount'])
 
                     imgReaderAnimated = QMovie(file.fullPathName())
                     imgReaderAnimated.setCacheMode(QMovie.CacheAll)
 
-                    document = Krita.instance().createDocument (
-                            file.imageSize().width(),
-                            file.imageSize().height(),
-                            f'Imported animation-{file.name()}',
-                            'RGBA',
-                            'U8',
-                            '',
-                            72.00
-                        )
+                    document = Krita.instance().createDocument(file.imageSize().width(),
+                                                               file.imageSize().height(),
+                                                               f'Imported animation-{file.name()}',
+                                                               'RGBA',
+                                                               'U8',
+                                                               '',
+                                                               72.00
+                                                               )
                     document.setFileName(f'Imported animation-{file.name()}')
 
                     dlgBox.updateMessage(f"{i18n('Extract frames')}...<br>", False)
-                    fileNames=[]
+                    fileNames = []
                     with tempfile.TemporaryDirectory() as tmpDirName:
-                        isCancelled=False
-                        nbZ=len(f"{imgReaderAnimated.frameCount()}")
+                        isCancelled = False
+                        nbZ = len(f"{imgReaderAnimated.frameCount()}")
                         for frameNumber in range(imgReaderAnimated.frameCount()):
-                            isCancelled=dlgBox.setProgress(frameNumber+1)
+                            isCancelled = dlgBox.setProgress(frameNumber+1)
                             if isCancelled:
                                 document.close()
                                 dlgBox.close()
@@ -284,15 +292,14 @@ class BCImportAnimated(object):
                     imgReaderAnimated = QMovie(file.fullPathName())
                     imgReaderAnimated.setCacheMode(QMovie.CacheAll)
 
-                    document = Krita.instance().createDocument (
-                            file.imageSize().width(),
-                            file.imageSize().height(),
-                            f'Imported animation-{file.name()}',
-                            'RGBA',
-                            'U8',
-                            '',
-                            72.00
-                        )
+                    document = Krita.instance().createDocument(file.imageSize().width(),
+                                                               file.imageSize().height(),
+                                                               f'Imported animation-{file.name()}',
+                                                               'RGBA',
+                                                               'U8',
+                                                               '',
+                                                               72.00
+                                                               )
                     document.setFileName(f'Imported animation-{file.name()}')
 
                     imgReaderAnimated.jumpToFrame(0)
@@ -300,7 +307,7 @@ class BCImportAnimated(object):
 
                     imgReaderAnimated.jumpToFrame(frameNumber-1)
 
-                    nbZ=len(f"{imgReaderAnimated.frameCount()}")
+                    nbZ = len(f"{imgReaderAnimated.frameCount()}")
                     frameLayer = document.createNode(f"Frame {frameNumber:>0{nbZ}}/{imgReaderAnimated.frameCount()}", "paintLayer")
                     EKritaNode.fromQImage(frameLayer, imgReaderAnimated.currentImage())
 

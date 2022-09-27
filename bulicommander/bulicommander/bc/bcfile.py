@@ -159,7 +159,6 @@ class BCFileManagedFormat(object):
     TGA = 'tga'
     SVGZ = 'svgz'
 
-
     UNKNOWN = 'unknown'
     MISSING = 'missing'
     DIRECTORY = 'directory'
@@ -209,8 +208,8 @@ class BCFileManagedFormat(object):
             'MISSING': 'Missing file'
         }
 
-    __LIST_BASIC=[]
-    __LIST_FULL=[]
+    __LIST_BASIC = []
+    __LIST_FULL = []
 
     @staticmethod
     def initAvailableFormats():
@@ -218,7 +217,7 @@ class BCFileManagedFormat(object):
 
         # Basic list doesn't contains KRA/ORA/PSD/XCF/...
         # => use dedicated code from plugin to retrieve basic information
-        BCFileManagedFormat.__LIST_BASIC=[
+        BCFileManagedFormat.__LIST_BASIC = [
                 BCFileManagedFormat.PNG,
                 BCFileManagedFormat.JPG,
                 BCFileManagedFormat.JPEG,
@@ -227,7 +226,7 @@ class BCFileManagedFormat(object):
                 BCFileManagedFormat.WEBP
             ]
 
-        BCFileManagedFormat.__LIST_FULL=[
+        BCFileManagedFormat.__LIST_FULL = [
                 BCFileManagedFormat.KRA,
                 BCFileManagedFormat.KRZ,
                 BCFileManagedFormat.PNG,
@@ -245,7 +244,7 @@ class BCFileManagedFormat(object):
 
         # check list of available image format
         for imgFormat in QImageReader.supportedImageFormats():
-            if imgFormat==b'tga':
+            if imgFormat == b'tga':
                 BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.TGA)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.TGA)
             elif imgFormat in (b'tif', b'tiff'):
@@ -253,10 +252,10 @@ class BCFileManagedFormat(object):
                 BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.TIFF)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.TIF)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.TIFF)
-            elif imgFormat==b'svg':
+            elif imgFormat == b'svg':
                 BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.SVG)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.SVG)
-            elif imgFormat==b'svgz':
+            elif imgFormat == b'svgz':
                 BCFileManagedFormat.__LIST_BASIC.append(BCFileManagedFormat.SVGZ)
                 BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.SVGZ)
 
@@ -266,13 +265,13 @@ class BCFileManagedFormat(object):
         if Uncompress.FORMAT_7Z in Uncompress.availableFormat():
             BCFileManagedFormat.__LIST_FULL.append(BCFileManagedFormat.CB7)
 
-        BCFileManagedFormat.__LIST_BASIC=sorted(set(BCFileManagedFormat.__LIST_BASIC))
-        BCFileManagedFormat.__LIST_FULL=sorted(set(BCFileManagedFormat.__LIST_FULL))
+        BCFileManagedFormat.__LIST_BASIC = sorted(set(BCFileManagedFormat.__LIST_BASIC))
+        BCFileManagedFormat.__LIST_FULL = sorted(set(BCFileManagedFormat.__LIST_FULL))
 
     @staticmethod
     def format(value):
         if isinstance(value, str):
-            lvalue=value.lower()
+            lvalue = value.lower()
             if lvalue in BCFileManagedFormat.list():
                 return lvalue
             elif lvalue == 'jpg':
@@ -283,7 +282,7 @@ class BCFileManagedFormat(object):
 
     @staticmethod
     def translate(value, short=True):
-        backupFile=False
+        backupFile = False
 
         if value == '' or value == '~':
             return 'Unknown file'
@@ -291,9 +290,9 @@ class BCFileManagedFormat(object):
         if value[0] == '.':
             value = value[1:]
 
-        if reResult:=re.search(f'([^\.]+)({BCFileManagedFormat.backupSuffixRe()})$', value):
+        if reResult := re.search(fr'([^\.]+)({BCFileManagedFormat.backupSuffixRe()})$', value):
             backupFile = True
-            value=reResult.groups()[0]
+            value = reResult.groups()[0]
 
         value = value.upper()
 
@@ -308,7 +307,7 @@ class BCFileManagedFormat(object):
             returned = f'{value} file'
 
         if backupFile:
-            returned+=' (backup)'
+            returned += ' (backup)'
 
         return returned
 
@@ -337,7 +336,7 @@ class BCFileManagedFormat(object):
 
     @staticmethod
     def isExtension(value, extReference, withBackup=False):
-        if value.lower() == f'.{extReference}' or (withBackup and re.match(f"\.{extReference}{BCFileManagedFormat.backupSuffixRe()}$", value)):
+        if value.lower() == f'.{extReference}' or (withBackup and re.match(fr"\.{extReference}{BCFileManagedFormat.backupSuffixRe()}$", value)):
             return True
         return False
 
@@ -370,9 +369,9 @@ class BCFileThumbnailSize(Enum):
 
     def size(self, type=int):
         """return the size as int or QSize"""
-        if type==int:
+        if type == int:
             return self.value
-        elif type==QSize:
+        elif type == QSize:
             return QSize(self.value, self.value)
         else:
             raise EInvalidType("Given `type` must be int or QSize")
@@ -453,8 +452,8 @@ class BCBaseFile(object):
         self._name = os.path.basename(self._fullPathName)
 
         # Need to normalize path
-        if self._name!='..':
-            self._fullPathName=os.path.normpath(self._fullPathName)
+        if self._name != '..':
+            self._fullPathName = os.path.normpath(self._fullPathName)
 
         self._path = os.path.dirname(self._fullPathName)
         if os.path.isdir(self._fullPathName) or os.path.isfile(self._fullPathName):
@@ -464,19 +463,19 @@ class BCBaseFile(object):
         self._format = BCFileManagedFormat.UNKNOWN
         self._tag = {}
         # a unique Id for BCBaseFile object based on file name
-        self.__uuid=BCBaseFile.getUuid(self._fullPathName)
+        self.__uuid = BCBaseFile.getUuid(self._fullPathName)
 
     @staticmethod
     def fullPathNameCmpAsc(f1, f2):
         # compare file for ascending sort
-        if f1.fullPathName()>f2.fullPathName():
+        if f1.fullPathName() > f2.fullPathName():
             return 1
         return -1
 
     @staticmethod
     def fullPathNameCmpDesc(f1, f2):
         # compare file for descending sort
-        if f1.fullPathName()>f2.fullPathName():
+        if f1.fullPathName() > f2.fullPathName():
             return -1
         return 1
 
@@ -554,9 +553,9 @@ class BCBaseFile(object):
             # generate icon from file
             icon = BCFileIcon.get(self._fullPathName)
 
-        if thumbType is None or thumbType==BCBaseFile.THUMBTYPE_IMAGE:
+        if thumbType is None or thumbType == BCBaseFile.THUMBTYPE_IMAGE:
             return icon.pixmap(size.size(QSize)).toImage()
-        elif thumbType==BCBaseFile.THUMBTYPE_ICON:
+        elif thumbType == BCBaseFile.THUMBTYPE_ICON:
             return icon
         else:
             # BCBaseFile.THUMBTYPE_FILENAME
@@ -569,7 +568,7 @@ class BCBaseFile(object):
             # calculate hash on pixmap
             fileHash = hashlib.blake2b(digest_size=32)
             fileHash.update(ptrBits)
-            hash=fileHash.hexdigest()
+            hash = fileHash.hexdigest()
 
             thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(size), hash)
 
@@ -586,7 +585,7 @@ class BCBaseFile(object):
         """Return permission as rwx------ string"""
         if sys.platform == 'linux':
             octalPerm = oct(os.stat(self._fullPathName)[0])[-3:]
-            # https://stackoverflow.com/a/59925828
+            # https://stackoverflow.com/a/59925828
             returned = ""
             letters = [(4, "r"), (2, "w"), (1, "x")]
             for permission in [int(n) for n in f"{octalPerm}"]:
@@ -608,16 +607,16 @@ class BCBaseFile(object):
 
     def hash(self, method):
         """Return hash for file"""
-        if not method in ('md5', 'sha1', 'sha256', 'sha512'):
+        if method not in ('md5', 'sha1', 'sha256', 'sha512'):
             raise EInvalidValue('Given `method` value must be "md5", "sha1", "sha256" or "sha512"')
 
-        if method=='md5':
+        if method == 'md5':
             return '0' * 32
-        elif method=='sha1':
+        elif method == 'sha1':
             return '0' * 40
-        elif method=='sha256':
+        elif method == 'sha256':
             return '0' * 64
-        elif method=='sha512':
+        elif method == 'sha512':
             return '0' * 128
 
     def uuid(self):
@@ -652,7 +651,7 @@ class BCDirectory(BCBaseFile):
 
     def isEmpty(self):
         """Return True if directory is empty, otherwise False"""
-        return len(os.listdir(self._fullPathName))==0
+        return len(os.listdir(self._fullPathName)) == 0
 
 
 class BCMissingFile(BCBaseFile):
@@ -669,13 +668,13 @@ class BCMissingFile(BCBaseFile):
 
         self.__baseName, self.__extension = os.path.splitext(fileName)
 
-        if reResult:=re.match(r'^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
+        if reResult := re.match(r'^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
             # seems to be an extension for a backup file with number
             baseName, originalExtension = os.path.splitext(self.__baseName)
-            self.__extension=f'{originalExtension}{self.__extension}'
+            self.__extension = f'{originalExtension}{self.__extension}'
 
         self.__baseName = os.path.basename(self.__baseName)
-        self.__extension=self.__extension.lower()
+        self.__extension = self.__extension.lower()
 
     def baseName(self):
         return self.__baseName
@@ -757,7 +756,6 @@ class BCFile(BCBaseFile):
 
         BCFile.__INITIALISED = True
 
-
     def __init__(self, fileName, strict=False, bcFileCache=None):
         """Initialise BCFile
 
@@ -774,18 +772,18 @@ class BCFile(BCBaseFile):
         self.__baseName = ''
 
         if not isinstance(bcFileCache, BCFileCache):
-            self.__bcFileCache=BCFileCache.globalInstance()
+            self.__bcFileCache = BCFileCache.globalInstance()
         else:
-            self.__bcFileCache=bcFileCache
+            self.__bcFileCache = bcFileCache
 
         # hash in cache
-        self.__hashCache={
+        self.__hashCache = {
                 'md5': None,
                 'sha1': None,
                 'sha256': None,
                 'sha512': None
             }
-        self.__metadata={}
+        self.__metadata = {}
 
         if not BCFile.__INITIALISED:
             raise EInvalidStatus('BCFile class is not initialised')
@@ -800,7 +798,6 @@ class BCFile(BCBaseFile):
 
     # endregion: miscellaneous -------------------------------------------------
 
-
     # region: initialisation ---------------------------------------------------
 
     def __initFromFileName(self, fileName, strict):
@@ -813,25 +810,25 @@ class BCFile(BCBaseFile):
         If strict is True, check only files for which extension is known
         If strict is False, try to determinate file format even if there's no extension
         """
-        #if os.path.isfile(fileName):
+        # if os.path.isfile(fileName):
         self.__readable = True
 
         self.__baseName, self.__extension = os.path.splitext(fileName)
 
-        if reResult:=re.match(r'^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
+        if reResult := re.match(r'^\.\d+'+Krita.instance().readSetting('', 'backupfilesuffix', '~').replace('.', r'\.'), self.__extension):
             # seems to be an extension for a backup file with number
             baseName, originalExtension = os.path.splitext(self.__baseName)
-            self.__extension=f'{originalExtension}{self.__extension}'
+            self.__extension = f'{originalExtension}{self.__extension}'
 
         self.__baseName = os.path.basename(self.__baseName)
-        self.__extension=self.__extension.lower()
+        self.__extension = self.__extension.lower()
         self.__size = os.path.getsize(self._fullPathName)
 
         if strict and not BCFileManagedFormat.inExtensions(self.__extension, True, False):
             self.__readable = True
             return
         elif BCFileManagedFormat.inExtensions(self.__extension, True, True):
-            # update qHash for file
+            # update qHash for file
             self.__calculateQuickHash()
 
             if self.__readMetaCacheFile():
@@ -860,83 +857,83 @@ class BCFile(BCBaseFile):
                 # in case of Qt readed is able to determinate Krita file, it can't made
                 # distinction between KRA and KRZ
                 # then need to check
-                if self.__extension[1:].lower()==BCFileManagedFormat.KRZ:
+                if self.__extension[1:].lower() == BCFileManagedFormat.KRZ:
                     self._format = BCFileManagedFormat.KRZ
 
             if self._format in BCFileManagedFormat.list(False):
                 # Use image reader as fallback
                 self.__imgSize = imageReader.size()
 
-            cacheData={}
-            #Debug.print("__initFromFileName", self._fullPathName, self._format)
-            if self._format==BCFileManagedFormat.PNG:
-                cacheData=self.__readMetaDataPng(False)
-                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+            cacheData = {}
+            # Debug.print("__initFromFileName", self._fullPathName, self._format)
+            if self._format == BCFileManagedFormat.PNG:
+                cacheData = self.__readMetaDataPng(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width'] != 0 and cacheData['height'] != 0:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
-                    cacheData['width']=self.__imgSize.width()
-                    cacheData['height']=self.__imgSize.height()
+                    cacheData['width'] = self.__imgSize.width()
+                    cacheData['height'] = self.__imgSize.height()
             elif self._format in (BCFileManagedFormat.JPG, BCFileManagedFormat.JPEG):
-                cacheData=self.__readMetaDataJpeg(False)
-                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                cacheData = self.__readMetaDataJpeg(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width'] != 0 and cacheData['height'] != 0:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
-                    cacheData['width']=self.__imgSize.width()
-                    cacheData['height']=self.__imgSize.height()
+                    cacheData['width'] = self.__imgSize.width()
+                    cacheData['height'] = self.__imgSize.height()
             elif self._format in (BCFileManagedFormat.SVG, BCFileManagedFormat.SVGZ):
-                cacheData=self.__readMetaDataSvg(False)
-                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                cacheData = self.__readMetaDataSvg(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width'] != 0 and cacheData['height'] != 0:
                     if isinstance(cacheData['width'], float) or isinstance(cacheData['height'], float):
                         self.__imgSize = QSizeF(cacheData['width'], cacheData['height'])
                     else:
                         self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
-                    cacheData['width']=self.__imgSize.width()
-                    cacheData['height']=self.__imgSize.height()
+                    cacheData['width'] = self.__imgSize.width()
+                    cacheData['height'] = self.__imgSize.height()
             elif self._format in (BCFileManagedFormat.CBZ, BCFileManagedFormat.CBT, BCFileManagedFormat.CBR, BCFileManagedFormat.CB7):
-                cacheData=self.__readMetaDataCbx(False)
-                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                cacheData = self.__readMetaDataCbx(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width'] != 0 and cacheData['height'] != 0:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
                     # not able to read...?
-                    self.__imgSize = QSize(0,0)
-                    cacheData['width']=self.__imgSize.width()
-                    cacheData['height']=self.__imgSize.height()
-            elif self._format==BCFileManagedFormat.GIF:
-                cacheData=self.__readMetaDataGif(False)
-                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    self.__imgSize = QSize(0, 0)
+                    cacheData['width'] = self.__imgSize.width()
+                    cacheData['height'] = self.__imgSize.height()
+            elif self._format == BCFileManagedFormat.GIF:
+                cacheData = self.__readMetaDataGif(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width'] != 0 and cacheData['height'] != 0:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
-                    cacheData['width']=self.__imgSize.width()
-                    cacheData['height']=self.__imgSize.height()
-            elif self._format==BCFileManagedFormat.BMP:
-                cacheData=self.__readMetaDataBmp(False)
-                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    cacheData['width'] = self.__imgSize.width()
+                    cacheData['height'] = self.__imgSize.height()
+            elif self._format == BCFileManagedFormat.BMP:
+                cacheData = self.__readMetaDataBmp(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width'] != 0 and cacheData['height'] != 0:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
-                    cacheData['width']=self.__imgSize.width()
-                    cacheData['height']=self.__imgSize.height()
-            elif self._format==BCFileManagedFormat.TGA:
-                cacheData=self.__readMetaDataTga(False)
-                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    cacheData['width'] = self.__imgSize.width()
+                    cacheData['height'] = self.__imgSize.height()
+            elif self._format == BCFileManagedFormat.TGA:
+                cacheData = self.__readMetaDataTga(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width'] != 0 and cacheData['height'] != 0:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
-                    cacheData['width']=self.__imgSize.width()
-                    cacheData['height']=self.__imgSize.height()
-            elif self._format==BCFileManagedFormat.TIFF:
-                cacheData=self.__readMetaDataTiff(False)
-                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    cacheData['width'] = self.__imgSize.width()
+                    cacheData['height'] = self.__imgSize.height()
+            elif self._format == BCFileManagedFormat.TIFF:
+                cacheData = self.__readMetaDataTiff(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width'] != 0 and cacheData['height'] != 0:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
-                    cacheData['width']=self.__imgSize.width()
-                    cacheData['height']=self.__imgSize.height()
-            elif self._format==BCFileManagedFormat.WEBP:
-                cacheData=self.__readMetaDataWebP(False)
-                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width']!=0 and cacheData['height']!=0:
+                    cacheData['width'] = self.__imgSize.width()
+                    cacheData['height'] = self.__imgSize.height()
+            elif self._format == BCFileManagedFormat.WEBP:
+                cacheData = self.__readMetaDataWebP(False)
+                if cacheData and 'width' in cacheData and 'height' in cacheData and cacheData['width'] != 0 and cacheData['height'] != 0:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                 else:
-                    cacheData['width']=self.__imgSize.width()
-                    cacheData['height']=self.__imgSize.height()
+                    cacheData['width'] = self.__imgSize.width()
+                    cacheData['height'] = self.__imgSize.height()
             elif self._format == BCFileManagedFormat.PSD:
                 cacheData = self.__readMetaDataPsd(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
@@ -948,7 +945,7 @@ class BCFile(BCBaseFile):
             elif self._format == BCFileManagedFormat.KRA or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.KRA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
-                # by qimagereader
+                # by qimagereader
                 cacheData = self.__readMetaDataKra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
@@ -956,7 +953,7 @@ class BCFile(BCBaseFile):
             elif self._format == BCFileManagedFormat.KRZ or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.KRZ, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
-                # by qimagereader
+                # by qimagereader
                 cacheData = self.__readMetaDataKra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
@@ -964,15 +961,15 @@ class BCFile(BCBaseFile):
             elif self._format == BCFileManagedFormat.ORA or BCFileManagedFormat.isExtension(self.__extension, BCFileManagedFormat.ORA, True):
                 # Image reader can't read file...
                 # or some file type (kra, ora) seems to not properly be managed
-                # by qimagereader
+                # by qimagereader
                 cacheData = self.__readMetaDataOra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
                     self._format = BCFileManagedFormat.ORA
             elif self.__extension == '':
                 # don't know file format by ImageReader or extension...
-                # and there's no extension
-                # try Kra..
+                # and there's no extension
+                # try Kra..
                 cacheData = self.__readMetaDataKra(False)
                 if cacheData and 'width' in cacheData and 'height' in cacheData:
                     self.__imgSize = QSize(cacheData['width'], cacheData['height'])
@@ -987,25 +984,24 @@ class BCFile(BCBaseFile):
                         # Unable to determinate format
                         self.__readable = False
 
-            cacheData['format']=self._format
+            cacheData['format'] = self._format
 
             # add some extra metadata information
-            if not self._format in (BCFileManagedFormat.SVG, BCFileManagedFormat.SVGZ):
+            if self._format not in (BCFileManagedFormat.SVG, BCFileManagedFormat.SVGZ):
                 # pixels available only for raster images
-                cacheData[BCFileProperty.IMAGE_PIXELS.value]=self.__imgSize.width()*self.__imgSize.height()
+                cacheData[BCFileProperty.IMAGE_PIXELS.value] = self.__imgSize.width()*self.__imgSize.height()
             else:
-                cacheData[BCFileProperty.IMAGE_PIXELS.value]=None
+                cacheData[BCFileProperty.IMAGE_PIXELS.value] = None
 
-            if self.__imgSize.height()!=0:
-                cacheData[BCFileProperty.IMAGE_RATIO.value]=self.__imgSize.width()/self.__imgSize.height()
+            if self.__imgSize.height() != 0:
+                cacheData[BCFileProperty.IMAGE_RATIO.value] = self.__imgSize.width()/self.__imgSize.height()
             else:
-                cacheData[BCFileProperty.IMAGE_RATIO.value]=0
+                cacheData[BCFileProperty.IMAGE_RATIO.value] = 0
             self.__writeMetaCacheFile(cacheData)
         else:
             self.__readable = False
 
     # endregion: initialisation ------------------------------------------------
-
 
     # region: utils ------------------------------------------------------------
 
@@ -1015,8 +1011,8 @@ class BCFile(BCBaseFile):
         If file exists, load it and return True
         Otherwise return False
         """
-        if self.__bcFileCache and self.__qHash!='':
-            contentAsDict=self.__bcFileCache.getMetadata(self.__qHash)
+        if self.__bcFileCache and self.__qHash != '':
+            contentAsDict = self.__bcFileCache.getMetadata(self.__qHash)
             if contentAsDict:
                 # meta cache file loaded
                 # get values
@@ -1030,13 +1026,12 @@ class BCFile(BCBaseFile):
                     self.__imgSize = QSizeF(contentAsDict['width'], contentAsDict['height'])
                 else:
                     self.__imgSize = QSize(contentAsDict['width'], contentAsDict['height'])
-                self._format=contentAsDict["format"]
-                self.__metadata=contentAsDict
+                self._format = contentAsDict["format"]
+                self.__metadata = contentAsDict
 
                 return True
 
         return False
-
 
     def __writeMetaCacheFile(self, dataAsDict):
         """Calculate meta cache file name
@@ -1044,7 +1039,7 @@ class BCFile(BCBaseFile):
         If file exists, load it and return True
         Otherwise return False
         """
-        self.__metadata=dataAsDict
+        self.__metadata = dataAsDict
 
         if self.__bcFileCache is None:
             return
@@ -1052,14 +1047,14 @@ class BCFile(BCBaseFile):
         try:
             if 'iccProfile' in dataAsDict or 'document.referenceImages.data' in dataAsDict:
                 # exclude extradata from cache (can be heavy data)
-                dataAsDictToPass=copy.copy(dataAsDict)
+                dataAsDictToPass = copy.copy(dataAsDict)
 
                 if 'iccProfile' in dataAsDictToPass:
-                    dataAsDictToPass['iccProfile']=b''
+                    dataAsDictToPass['iccProfile'] = b''
                 if 'document.referenceImages.data' in dataAsDict:
-                    dataAsDictToPass['document.referenceImages.data']=[]
+                    dataAsDictToPass['document.referenceImages.data'] = []
             else:
-                dataAsDictToPass=dataAsDict
+                dataAsDictToPass = dataAsDict
 
             return self.__bcFileCache.setMetadata(self.__qHash, dataAsDictToPass)
         except Exception as e:
@@ -1068,7 +1063,6 @@ class BCFile(BCBaseFile):
             return False
 
         return True
-
 
     def __readICCData(self, iccData):
         """Read an ICC byte array and return ICC profile information
@@ -1185,7 +1179,7 @@ class BCFile(BCBaseFile):
             'iccProfileCopyright': {},
         }
 
-        nbTags=struct.unpack('!I', iccData[128:132])[0]
+        nbTags = struct.unpack('!I', iccData[128:132])[0]
 
         for i in range(nbTags):
             tData = iccData[132+i * 12:132+(i+1)*12]
@@ -1199,21 +1193,20 @@ class BCFile(BCBaseFile):
             if tagId == b'desc':
                 # description (color profile name)
                 if data[0:4] == b'mluc':
-                    returned['iccProfileName']=decode_mluc(data)
+                    returned['iccProfileName'] = decode_mluc(data)
                 elif data[0:4] == b'text':
-                    returned['iccProfileName']=decode_text(data)
+                    returned['iccProfileName'] = decode_text(data)
                 elif data[0:4] == b'desc':
-                    returned['iccProfileName']=decode_desc(data)
+                    returned['iccProfileName'] = decode_desc(data)
             elif tagId == b'cprt':
                 # copyright
                 if data[0:4] == b'mluc':
-                    returned['iccProfileCopyright']=decode_mluc(data)
+                    returned['iccProfileCopyright'] = decode_mluc(data)
                 elif data[0:4] == b'text':
-                    returned['iccProfileCopyright']=decode_text(data)
+                    returned['iccProfileCopyright'] = decode_text(data)
                 elif data[0:4] == b'desc':
-                    returned['iccProfileCopyright']=decode_desc(data)
+                    returned['iccProfileCopyright'] = decode_desc(data)
         return returned
-
 
     def __readArchiveDataFile(self, file, source=None):
         """Read an archive file (.kra, .ora) file and return data from archive
@@ -1234,7 +1227,7 @@ class BCFile(BCBaseFile):
         try:
             archive = zipfile.ZipFile(source, 'r')
         except Exception as e:
-            # can't be read (not exist, not a zip file?)
+            # can't be read (not exist, not a zip file?)
             self.__readable = False
             if re.match(fr"\.(kra|krz|ora)({BCFileManagedFormat.backupSuffixRe()})?$", source):
                 Debug.print('[BCFile.__readArchiveDataFile] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
@@ -1243,7 +1236,7 @@ class BCFile(BCBaseFile):
         try:
             imgfile = archive.open(file)
         except Exception as e:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             self.__readable = False
             archive.close()
             Debug.print('[BCFile.__readArchiveDataFile] Unable to find "{2}" in file {0}: {1}', self._fullPathName, f"{e}", file)
@@ -1252,7 +1245,7 @@ class BCFile(BCBaseFile):
         try:
             data = imgfile.read()
         except Exception as e:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             self.__readable = False
             imgfile.close()
             archive.close()
@@ -1263,7 +1256,6 @@ class BCFile(BCBaseFile):
         archive.close()
 
         return data
-
 
     def __calculateQuickHash(self):
         """Calculate a 'quick' hash on file with SHA256 method
@@ -1280,7 +1272,7 @@ class BCFile(BCBaseFile):
         if self.__readable:
             try:
                 with open(self._fullPathName, "rb") as fileHandle:
-                    # digest = 256bits (32Bytes)
+                    # digest = 256bits (32Bytes)
                     fileHash = hashlib.sha256()
 
                     # file size is the first part of hash (ie: file size changed then ensure that hash is not the same event if 1st/last 8KB of file are the same)
@@ -1301,7 +1293,6 @@ class BCFile(BCBaseFile):
         else:
             self.__qHash = ''
 
-
     def __readKraImage(self):
         """Return Krita file image
 
@@ -1314,11 +1305,10 @@ class BCFile(BCBaseFile):
             # file must exist
             return None
 
-
         try:
             archive = zipfile.ZipFile(self._fullPathName, 'r')
         except Exception as e:
-            # can't be read (not exist, not a zip file?)
+            # can't be read (not exist, not a zip file?)
             self.__readable = False
             Debug.print('[BCFile.__readKraImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
             return None
@@ -1332,14 +1322,14 @@ class BCFile(BCBaseFile):
 
         if not pngFound:
             try:
-                # fallback: try to read preview file
+                # fallback: try to read preview file
                 imgfile = archive.open('preview.png')
                 pngFound = True
             except Exception as e:
                 pngFound = False
 
         if not pngFound:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             self.__readable = False
             archive.close()
             Debug.print('[BCFile.__readKraImage] Unable to find "mergedimage.png" in file {0}', self._fullPathName)
@@ -1348,7 +1338,7 @@ class BCFile(BCBaseFile):
         try:
             image = imgfile.read()
         except Exception as e:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             self.__readable = False
             imgfile.close()
             archive.close()
@@ -1362,13 +1352,12 @@ class BCFile(BCBaseFile):
             returned = QImage()
             returned.loadFromData(image)
         except Exception as e:
-            # can't be read (not png?)
+            # can't be read (not png?)
             self.__readable = False
             Debug.print('[BCFile.__readKraImage] Unable to parse "mergedimage.png" in file {0}: {1}', self._fullPathName, f"{e}")
             return None
 
         return returned
-
 
     def __readOraImage(self):
         """Return OpenRaster file image
@@ -1386,7 +1375,7 @@ class BCFile(BCBaseFile):
         try:
             archive = zipfile.ZipFile(self._fullPathName, 'r')
         except Exception as e:
-            # can't be read (not exist, not a zip file?)
+            # can't be read (not exist, not a zip file?)
             self.__readable = False
             Debug.print('[BCFile.__readOraImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
             return None
@@ -1395,9 +1384,8 @@ class BCFile(BCBaseFile):
             # try to read merged image preview
             imgfile = archive.open('mergedimage.png')
         except Exception as e:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             imgfile = None
-
 
         if imgfile is None:
             # ora file is an old ora file without mergedimage.png
@@ -1405,17 +1393,16 @@ class BCFile(BCBaseFile):
             try:
                 imgfile = archive.open('Thumbnails/thumbnail.png')
             except Exception as e:
-                # can't be read (not exist, not a Kra file?)
+                # can't be read (not exist, not a Kra file?)
                 self.__readable = False
                 archive.close()
                 Debug.print('[BCFile.__readOraImage] Unable to find "thumbnail.png" in file {0}: {1}', self._fullPathName, f"{e}")
                 return None
 
-
         try:
             image = imgfile.read()
         except Exception as e:
-            # can't be read (not exist, not a Kra file?)
+            # can't be read (not exist, not a Kra file?)
             self.__readable = False
             imgfile.close()
             archive.close()
@@ -1429,13 +1416,12 @@ class BCFile(BCBaseFile):
             returned = QImage()
             returned.loadFromData(image)
         except Exception as e:
-            # can't be read (not png?)
+            # can't be read (not png?)
             self.__readable = False
             Debug.print('[BCFile.__readOraImage] Unable to parse "thumbnail.png" in file {0}: {1}', self._fullPathName, f"{e}")
             return None
 
         return returned
-
 
     def __readCbxImage(self):
         """Return CBZ/CBT file image
@@ -1450,7 +1436,7 @@ class BCFile(BCBaseFile):
             try:
                 return QImage(fileName)
             except Exception as e:
-                # can't be read (not exist, not a Kra file?)
+                # can't be read (not exist, not a Kra file?)
                 Debug.print('[BCFile.__readCbxImage] Unable to read extracted file {0}: {1}', fileName, f"{e}")
                 return None
 
@@ -1465,14 +1451,14 @@ class BCFile(BCBaseFile):
                     # - exclude directories
                     # - exclude files for which extension is not JPEG, JPG, PNG
                     # ordered by file name
-                    fileNames=sorted([page.filename for page in archive.infolist() if (not page.is_dir()) and re.search(r"\.(jpeg|jpg|png)$", page.filename, re.I)])
+                    fileNames = sorted([page.filename for page in archive.infolist() if (not page.is_dir()) and re.search(r"\.(jpeg|jpg|png)$", page.filename, re.I)])
 
                     with tempfile.TemporaryDirectory() as tmpDirName:
-                        extractedFileName=archive.extract(fileNames[0], tmpDirName)
+                        extractedFileName = archive.extract(fileNames[0], tmpDirName)
                         return qImage(extractedFileName)
 
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 Debug.print('[BCFile.__readCbxImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
         elif self._format == BCFileManagedFormat.CBT:
@@ -1482,14 +1468,14 @@ class BCFile(BCBaseFile):
                     # - exclude directories
                     # - exclude files for which extension is not JPEG, JPG, PNG
                     # ordered by file name
-                    fileNames=sorted([page.name for page in archive.getmembers() if (not page.isdir()) and re.search(r"\.(jpeg|jpg|png)$", page.name, re.I)])
+                    fileNames = sorted([page.name for page in archive.getmembers() if (not page.isdir()) and re.search(r"\.(jpeg|jpg|png)$", page.name, re.I)])
 
                     with tempfile.TemporaryDirectory() as tmpDirName:
                         archive.extract(fileNames[0], tmpDirName)
                         return qImage(os.path.join(tmpDirName, fileNames[0]))
 
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 Debug.print('[BCFile.__readCbxImage] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
         elif self._format in (BCFileManagedFormat.CBR, BCFileManagedFormat.CB7):
@@ -1498,21 +1484,20 @@ class BCFile(BCBaseFile):
                 # - exclude directories
                 # - exclude files for which extension is not JPEG, JPG, PNG
                 # ordered by file name
-                archiveFiles=Uncompress.getList(self._fullPathName)
-                if isinstance(archiveFiles, list) and len(archiveFiles)>0:
-                    fileNames=sorted([page.name() for page in archiveFiles if (not page.isDirectory()) and re.search(r"\.(jpeg|jpg|png)$", page.name(), re.I)])
+                archiveFiles = Uncompress.getList(self._fullPathName)
+                if isinstance(archiveFiles, list) and len(archiveFiles) > 0:
+                    fileNames = sorted([page.name() for page in archiveFiles if (not page.isDirectory()) and re.search(r"\.(jpeg|jpg|png)$", page.name(), re.I)])
                     with tempfile.TemporaryDirectory() as tmpDirName:
                         # for each page, extract, read image width/height
-                        extractedFileName=Uncompress.extract(self._fullPathName, fileNames[0], tmpDirName)
-                        if not extractedFileName is None:
+                        extractedFileName = Uncompress.extract(self._fullPathName, fileNames[0], tmpDirName)
+                        if extractedFileName is not None:
                             return qImage(extractedFileName)
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
 
         return None
-
 
     def __readMetaDataJpeg(self, fromCache=True, getExtraData=False):
         """
@@ -1540,11 +1525,11 @@ class BCFile(BCBaseFile):
                 returned['id'] = fHandle.read(2)
                 returned['size'] = struct.unpack('!H', fHandle.read(2))[0]
                 returned['data'] = fHandle.read(returned['size'] - 2)
-            except:
-                returned['valid']=False
+            except Exception:
+                returned['valid'] = False
 
             if returned['id'][0] != 0xFF:
-                returned['valid']=False
+                returned['valid'] = False
 
             return returned
 
@@ -1563,7 +1548,7 @@ class BCFile(BCBaseFile):
                 'resolution': ''
             }
 
-            if not markerSegment['data'][0:5] in [b'JFIF\x00', b'JFXX\x00']:
+            if markerSegment['data'][0:5] not in [b'JFIF\x00', b'JFXX\x00']:
                 # not a valid segment
                 return returned
 
@@ -1576,14 +1561,13 @@ class BCFile(BCBaseFile):
                 ppX = float(struct.unpack('!H', markerSegment['data'][8:10])[0])
                 ppY = float(struct.unpack('!H', markerSegment['data'][10:12])[0])
 
-
                 if unit > 0:
                     # unit = 1: ppi
                     if unit == 2:
                         # unit in meter
                         # convert in pixels per inches
-                        ppX*=2.54
-                        ppY*=2.54
+                        ppX *= 2.54
+                        ppY *= 2.54
 
                     returned['resolutionX'] = (ppX, f'{ppX:.3f}ppi')
                     returned['resolutionY'] = (ppY, f'{ppY:.3f}ppi')
@@ -1614,20 +1598,20 @@ class BCFile(BCBaseFile):
             """
             if markerSegment['data'][0:12] == b'ICC_PROFILE\x00':
                 # is an ICC profile
-                if not 'iccProfile' in returned:
+                if 'iccProfile' not in returned:
                     # not yet initialised (first chunk): create empty value
                     returned['iccProfile'] = b''
 
                 chunkNum = int(markerSegment['data'][12])
                 chunkTotal = int(markerSegment['data'][13])
 
-                returned['iccProfile']+=markerSegment['data'][14:]
+                returned['iccProfile'] += markerSegment['data'][14:]
 
                 if chunkNum == chunkTotal:
                     tmp = self.__readICCData(returned['iccProfile'])
-                    if getExtraData==False:
+                    if getExtraData is False:
                         # don't want icc profile data (for performance, memory, ... don't need it)
-                        returned['iccProfile']=b'Y'
+                        returned['iccProfile'] = b'Y'
                     returned.update(tmp)
             return returned
 
@@ -1660,17 +1644,17 @@ class BCFile(BCBaseFile):
                     4: i18n('CMYK')
                 }
 
-            returned={}
+            returned = {}
 
             cType = int(markerSegment['data'][5])
             if cType in __COLOR_TYPE:
-                returned['colorType']=(cType, __COLOR_TYPE[cType])
+                returned['colorType'] = (cType, __COLOR_TYPE[cType])
             else:
-                returned['colorType']=(cType, i18n('Unknown'))
+                returned['colorType'] = (cType, i18n('Unknown'))
 
             return returned
 
-        if getExtraData==False and fromCache and not self.__metadata is None:
+        if getExtraData is False and fromCache and self.__metadata is not None:
             return self.__metadata
 
         # by default
@@ -1681,11 +1665,11 @@ class BCFile(BCBaseFile):
                 'colorType': ('RGB', i18n('RGB'))
             }
 
-        with open(self._fullPathName , 'rb') as fHandler:
+        with open(self._fullPathName, 'rb') as fHandler:
             # check signature (2 bytes)
             bytes = fHandler.read(2)
 
-            # SOI
+            # SOI
             if bytes != b'\xFF\xD8':
                 Debug.print('[BCFile.__readMetaDataJpeg] Invalid header: {0}', bytes)
                 return returned
@@ -1698,13 +1682,12 @@ class BCFile(BCBaseFile):
                     returned.update(decodeChunk_APP2(markerSegment, returned, getExtraData))
                 elif markerSegment['id'] in [b'\xFF\xC0', b'\xFF\xC2']:
                     returned.update(decodeChunk_SOFx(markerSegment))
-                #else:
+                # else:
                 #    Debug.print('[BCFile.__readMetaDataJpeg] markerSegment({0}) size: {1} / data: {2}', markerSegment['id'], markerSegment['size'], markerSegment['data'][0:25])
 
                 markerSegment = readMarkerSegment(fHandler)
 
         return returned
-
 
     def __readMetaDataPng(self, fromCache=True, getExtraData=False):
         """Read metadata from PNG file
@@ -1732,7 +1715,7 @@ class BCFile(BCBaseFile):
                 bytes = fHandle.read(8)
                 returned['size'] = struct.unpack('!I', bytes[0:4])[0]
                 returned['id'] = bytes[4:].decode()
-                if returned['id']!='IDAT':
+                if returned['id'] != 'IDAT':
                     returned['data'] = fHandle.read(returned['size'])
                     # ignore CRC
                     fHandle.seek(4, os.SEEK_CUR)
@@ -1745,7 +1728,7 @@ class BCFile(BCBaseFile):
                     readIDATChunks(fHandle, returned['size']+8)
             except Exception as e:
                 Debug.print("Exception {0}: {1}", self._fullPathName, f"{e}")
-                returned['valid']=False
+                returned['valid'] = False
             return returned
 
         def readIDATChunks(fHandle, chunkSize=8196):
@@ -1755,8 +1738,8 @@ class BCFile(BCBaseFile):
             Skip time using this method (on 20~30 files) is reduced from 68seconds to 1.6s
             """
             while True:
-                currentPosition=fHandle.tell()
-                bufferSize=max(chunkSize*100, 16777216)
+                currentPosition = fHandle.tell()
+                bufferSize = max(chunkSize*100, 16777216)
 
                 # use memory reader to reduce disk read access
                 bytes = BytesRW(fHandle.read(bufferSize))
@@ -1764,22 +1747,22 @@ class BCFile(BCBaseFile):
                 size = bytes.readUInt4()
                 id = bytes.readStr(4)
 
-                while id=='IDAT':
+                while id == 'IDAT':
                     bytes.seek(size+4, os.SEEK_CUR)
 
                     # +12 = +8 (size + header Id) +4 (CRC)
-                    currentPosition+=size+12
+                    currentPosition += size+12
 
                     size = bytes.readUInt4()
                     id = bytes.readStr(4)
 
-                    if bytes.tell()+size>=bufferSize:
+                    if bytes.tell()+size >= bufferSize:
                         # there's still IDAT chunk but data buffer is not
                         # complete and need to work on an another data buffer
-                        id='_next'
+                        id = '_next'
 
                 fHandle.seek(currentPosition, os.SEEK_SET)
-                if id!='_next':
+                if id != '_next':
                     return
 
         def decodeChunk_IHDR(chunk):
@@ -1881,8 +1864,8 @@ class BCFile(BCBaseFile):
             if unit == 1:
                 # unit in meter
                 # convert in pixels per inches
-                ppX*=0.0254
-                ppY*=0.0254
+                ppX *= 0.0254
+                ppY *= 0.0254
 
                 returned['resolutionX'] = (ppX, f'{ppX:.3f}ppi')
                 returned['resolutionY'] = (ppY, f'{ppY:.3f}ppi')
@@ -1899,7 +1882,6 @@ class BCFile(BCBaseFile):
                     returned['resolution'] = f'{ppX:.3f}'
                 else:
                     returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}'
-
 
             return returned
 
@@ -1926,7 +1908,7 @@ class BCFile(BCBaseFile):
                 'compressionLevel': (None, '')
             }
 
-            if len(chunk['data'])>=2:
+            if len(chunk['data']) >= 2:
                 try:
                     level = (chunk['data'][1] & 0b11000000) >> 6
                     returned['compressionLevel'] = (level, __COMPRESSION_LEVEL[level])
@@ -1994,25 +1976,25 @@ class BCFile(BCBaseFile):
             }
 
             for index, character in enumerate(chunk['data'][0:80]):
-                if character==0:
+                if character == 0:
                     break
 
-            index+=2
+            index += 2
 
             zData = chunk['data'][index:]
 
             iccData = zlib.decompress(zData)
 
-            if getExtraData==False:
-                returned['iccProfile']=b'Y'
+            if getExtraData is False:
+                returned['iccProfile'] = b'Y'
             else:
-                returned['iccProfile']=iccData
+                returned['iccProfile'] = iccData
 
             returned.update(self.__readICCData(iccData))
 
             return returned
 
-        if getExtraData==False and fromCache and not self.__metadata is None:
+        if getExtraData is False and fromCache and self.__metadata is not None:
             return self.__metadata
 
         returned = {}
@@ -2026,35 +2008,34 @@ class BCFile(BCBaseFile):
 
             chunk = readChunk(fHandler)
             while chunk['valid']:
-                if chunk['id']=='IHDR':
+                if chunk['id'] == 'IHDR':
                     returned.update(decodeChunk_IHDR(chunk))
-                elif chunk['id']=='pHYs':
+                elif chunk['id'] == 'pHYs':
                     returned.update(decodeChunk_pHYs(chunk))
-                elif chunk['id']=='PLTE':
+                elif chunk['id'] == 'PLTE':
                     returned.update(decodeChunk_PLTE(chunk))
-                elif chunk['id']=='gAMA':
+                elif chunk['id'] == 'gAMA':
                     returned.update(decodeChunk_gAMA(chunk))
-                elif chunk['id']=='sRGB':
+                elif chunk['id'] == 'sRGB':
                     returned.update(decodeChunk_sRGB(chunk))
                     # if sRGB, ignore gamma
                     returned.pop('gamma', None)
-                elif chunk['id']=='iCCP':
+                elif chunk['id'] == 'iCCP':
                     returned.update(decodeChunk_iCCP(chunk, getExtraData))
                     # if icc profile, ignore gamma and sRGB
                     returned.pop('gamma', None)
                     returned.pop('sRGBRendering', None)
-                elif chunk['id']=='IDAT':
+                elif chunk['id'] == 'IDAT':
                     returned.update(decodeChunk_IDAT(chunk))
                     idat1Processed = True
-                elif chunk['id']=='IEND':
+                elif chunk['id'] == 'IEND':
                     break
-                #elif chunk['id']=='IDAT':
+                # elif chunk['id'] == 'IDAT':
                 #    Debug.print('[BCFile.__readMetaDataPng] File: {0} // Chunk: {1}', self._fullPathName, chunk['id'])
 
                 chunk = readChunk(fHandler)
 
         return returned
-
 
     def __readMetaDataGif(self, fromCache=True, getExtraData=False):
         """Read metadata from GIF file
@@ -2075,7 +2056,7 @@ class BCFile(BCBaseFile):
 
         def read_ID(fHandler):
             # read image descriptor
-            returned={
+            returned = {
                 # -1 = no local palette
                 'paletteSize': -1
             }
@@ -2083,11 +2064,11 @@ class BCFile(BCBaseFile):
             data = fHandler.read(9)
             if data[8] & 0b10000000 == 0b10000000:
                 # bit set to 1: there's a local table
-                # calculate local color table size
-                lctSize =  pow(2, (data[8] & 0b00000111) + 1 )
-                returned['paletteSize']=lctSize
-                lctSize*=3
-                # skip color table
+                # calculate local color table size
+                lctSize = pow(2, (data[8] & 0b00000111) + 1)
+                returned['paletteSize'] = lctSize
+                lctSize *= 3
+                # skip color table
                 fHandler.seek(lctSize, 1)
 
             # skip image data content
@@ -2099,7 +2080,7 @@ class BCFile(BCBaseFile):
             # read Graphic Control Extension
             # return only delay in milliseconds
             data = fHandler.read(6)
-            returned=10 * int(struct.unpack('<H', data[2:4])[0])
+            returned = 10 * int(struct.unpack('<H', data[2:4])[0])
             return returned
 
         def read_CE(fHandler):
@@ -2119,9 +2100,9 @@ class BCFile(BCBaseFile):
             fHandler.seek(12, 1)
             skip_subBlock(fHandler)
 
-        # if getExtraData==False and fromCache and not self.__metadata is None:
+        # if getExtraData is False and fromCache and self.__metadata is not None:
         # => no extradata for gif files
-        if fromCache and not self.__metadata is None:
+        if fromCache and self.__metadata is not None:
             return self.__metadata
 
         returned = {
@@ -2140,59 +2121,59 @@ class BCFile(BCBaseFile):
         with open(self._fullPathName, 'rb') as fHandler:
             # check signature (8 bytes)
             bytes = fHandler.read(6)
-            if not bytes in [b'GIF87a', b'GIF89a']:
+            if bytes not in [b'GIF87a', b'GIF89a']:
                 Debug.print('[BCFile.__readMetaDataPng] Invalid header: {0}', bytes)
 
             logicalScreenDescriptor = fHandler.read(7)
 
             if logicalScreenDescriptor[4] & 0b10000000 == 0b10000000:
                 # a global color table follows the logical screen descriptor
-                gctSize = pow(2, (logicalScreenDescriptor[4] & 0b00000111) + 1 )
+                gctSize = pow(2, (logicalScreenDescriptor[4] & 0b00000111) + 1)
                 returned['paletteSize'].append(gctSize)
-                gctSize*=3
+                gctSize *= 3
                 # skip gct
                 fHandler.seek(gctSize, 1)
 
-            gceAllowed=True
+            gceAllowed = True
             while True:
-                blockType=fHandler.read(1)
+                blockType = fHandler.read(1)
 
                 if blockType == b'\x21':
-                    blockType=fHandler.read(1)
-                    if blockType==b'\xF9':
+                    blockType = fHandler.read(1)
+                    if blockType == b'\xF9':
                         # Graphic Control Extension
                         returned['imageDelay'].append(read_GCE(fHandler))
-                        gceAllowed=False
-                    elif blockType==b'\xFE':
+                        gceAllowed = False
+                    elif blockType == b'\xFE':
                         # Comment Extension
                         read_CE(fHandler)
-                    elif blockType==b'\x01':
+                    elif blockType == b'\x01':
                         # Plain Text Extension
                         read_PTE(fHandler)
-                    elif blockType==b'\xFF':
+                    elif blockType == b'\xFF':
                         # Application Extension
                         read_AE(fHandler)
                 elif blockType == b'\x2C':
                     # Image Descriptor
-                    idContent=read_ID(fHandler)
+                    idContent = read_ID(fHandler)
                     if idContent['paletteSize'] > 0:
                         returned['paletteSize'].append(idContent['paletteSize'])
-                    returned['imageCount']+=1
-                    gceAllowed=True
+                    returned['imageCount'] += 1
+                    gceAllowed = True
                 else:
                     break
 
             returned['paletteCount'] = len(returned['paletteSize'])
-            if returned['paletteCount']>0:
+            if returned['paletteCount'] > 0:
                 returned['paletteMin'] = min(returned['paletteSize'])
                 returned['paletteMax'] = max(returned['paletteSize'])
 
-            if len(returned['imageDelay'])>0:
+            if len(returned['imageDelay']) > 0:
                 returned['imageDelayMin'] = min(returned['imageDelay'])
                 returned['imageDelayMax'] = max(returned['imageDelay'])
                 returned['loopDuration'] = sum(returned['imageDelay'])
 
-            if returned['imageCount'] > 1 and (len(returned['imageDelay']) ==0 or max(returned['imageDelay']) == 0):
+            if returned['imageCount'] > 1 and (len(returned['imageDelay']) == 0 or max(returned['imageDelay']) == 0):
                 # need to apply default [arbitrary] delay of 1/10s (100ms)
                 returned['imageDelay'] = [100] * returned['imageCount']
                 returned['imageDelayMin'] = 100
@@ -2201,23 +2182,21 @@ class BCFile(BCBaseFile):
 
         return returned
 
-
     def __readMetaDataWebP(self, fromCache=True, getExtraData=False):
         """Read metadata from GIF file
 
         """
-        # if getExtraData==False and fromCache and not self.__metadata is None:
+        # if getExtraData is False and fromCache and self.__metadata is not None:
         # => no extradata for webp files
-        if fromCache and not self.__metadata is None:
+        if fromCache and self.__metadata is not None:
             return self.__metadata
 
         returned = {
                 'imageCount': 0
             }
         ir = QImageReader(self._fullPathName)
-        returned['imageCount']=ir.imageCount()
+        returned['imageCount'] = ir.imageCount()
         return returned
-
 
     def __readMetaDataPsd(self, fromCache=True, getExtraData=False):
         """Read metadata from PSD file
@@ -2239,7 +2218,7 @@ class BCFile(BCBaseFile):
             }
 
             """
-            bytes =fHandle.read(22)
+            bytes = fHandle.read(22)
 
             __COLOR_TYPE = {
                     0: i18n('Bitmap'),
@@ -2265,9 +2244,9 @@ class BCFile(BCBaseFile):
                 if returned['colorType'] == 3 and returned['colorChannels'] == 4 or returned['colorType'] == 4 and returned['colorChannels'] == 5:
                     withAlpha = ' with Alpha'
 
-                returned['colorType']=(returned['colorType'], __COLOR_TYPE[returned['colorType']] + withAlpha)
+                returned['colorType'] = (returned['colorType'], __COLOR_TYPE[returned['colorType']] + withAlpha)
             else:
-                returned['colorType']=(returned['colorType'], 'Unknown')
+                returned['colorType'] = (returned['colorType'], 'Unknown')
 
             return returned
 
@@ -2279,7 +2258,7 @@ class BCFile(BCBaseFile):
             # color mode data section
             length = struct.unpack('!L', fHandle.read(4))[0]
             if length > 0:
-                # skip color table content
+                # skip color table content
                 fHandle.seek(length)
 
         def read_IRB(fHandle):
@@ -2287,8 +2266,8 @@ class BCFile(BCBaseFile):
 
             return nothing
             """
-            # ==> commented, used for debug and psd file format analysis
-            #__IRB_ID = {
+            # ==> commented, used for debug and psd file format analysis
+            # __IRB_ID = {
             #    0x03E8: "(Obsolete--Photoshop 2.0 only ) Contains five 2-byte values: number of channels, rows, columns, depth, and mode",
             #    0x03E9: "Macintosh print manager print info record",
             #    0x03EA: "Macintosh page format information. No longer read by Photoshop. (Obsolete)",
@@ -2297,9 +2276,11 @@ class BCFile(BCBaseFile):
             #    0x03EE: "Names of the alpha channels as a series of Pascal strings.",
             #    0x03EF: "(Obsolete) See ID 1077DisplayInfo structure. See Appendix A in Photoshop API Guide.pdf.",
             #    0x03F0: "The caption as a Pascal string.",
-            #    0x03F1: "Border information. Contains a fixed number (2 bytes real, 2 bytes fraction) for the border width, and 2 bytes for border units (1 = inches, 2 = cm, 3 = points, 4 = picas, 5 = columns).",
+            #    0x03F1: "Border information. Contains a fixed number (2 bytes real, 2 bytes fraction) for the border width, and 2 bytes for border units
+            #             (1 = inches, 2 = cm, 3 = points, 4 = picas, 5 = columns).",
             #    0x03F2: "Background color. See See Color structure.",
-            #    0x03F3: "Print flags. A series of one-byte boolean values (see Page Setup dialog): labels, crop marks, color bars, registration marks, negative, flip, interpolate, caption, print flags.",
+            #    0x03F3: "Print flags. A series of one-byte boolean values (see Page Setup dialog): labels, crop marks, color bars, registration marks, negative, flip, interpolate,
+            #             caption, print flags.",
             #    0x03F4: "Grayscale and multichannel halftoning information",
             #    0x03F5: "Color halftoning information",
             #    0x03F6: "Duotone halftoning information",
@@ -2324,51 +2305,66 @@ class BCFile(BCBaseFile):
             #    0x040A: "(Photoshop 4.0) Copyright flag. Boolean indicating whether image is copyrighted. Can be set via Property suite or by user in File Info...",
             #    0x040B: "(Photoshop 4.0) URL. Handle of a text string with uniform resource locator. Can be set via Property suite or by user in File Info...",
             #    0x040C: "(Photoshop 5.0) Thumbnail resource (supersedes resource 1033). See See Thumbnail resource format. ",
-            #    0x040D: "(Photoshop 5.0) Global Angle. 4 bytes that contain an integer between 0 and 359, which is the global lighting angle for effects layer. If not present, assumed to be 30.",
+            #    0x040D: "(Photoshop 5.0) Global Angle. 4 bytes that contain an integer between 0 and 359, which is the global lighting angle for effects layer. If not present,
+            #             assumed to be 30.",
             #    0x040E: "(Obsolete) See ID 1073 below. (Photoshop 5.0) Color samplers resource. See See Color samplers resource format.",
-            #    0x040F: "(Photoshop 5.0) ICC Profile. The raw bytes of an ICC (International Color Consortium) format profile. See ICC1v42_2006-05.pdf in the Documentation folder and icProfileHeader.h in Sample Code\Common\Includes . ",
+            #    0x040F: "(Photoshop 5.0) ICC Profile. The raw bytes of an ICC (International Color Consortium) format profile. See ICC1v42_2006-05.pdf in the Documentation folder
+            #             and icProfileHeader.h in Sample Code\Common\Includes . ",
             #    0x0410: "(Photoshop 5.0) Watermark. One byte. ",
             #    0x0411: "(Photoshop 5.0) ICC Untagged Profile. 1 byte that disables any assumed profile handling when opening the file. 1 = intentionally untagged.",
             #    0x0412: "(Photoshop 5.0) Effects visible. 1-byte global flag to show/hide all the effects layer. Only present when they are hidden.",
             #    0x0413: "(Photoshop 5.0) Spot Halftone. 4 bytes for version, 4 bytes for length, and the variable length data.",
-            #    0x0414: "(Photoshop 5.0) Document-specific IDs seed number. 4 bytes: Base value, starting at which layer IDs will be generated (or a greater value if existing IDs already exceed it). Its purpose is to avoid the case where we add layers, flatten, save, open, and then add more layers that end up with the same IDs as the first set.",
+            #    0x0414: "(Photoshop 5.0) Document-specific IDs seed number. 4 bytes: Base value, starting at which layer IDs will be generated (or a greater value if existing IDs
+            #             already exceed it). Its purpose is to avoid the case where we add layers, flatten, save, open, and then add more layers that end up with the same IDs as
+            #             the first set.",
             #    0x0415: "(Photoshop 5.0) Unicode Alpha Names. Unicode string",
             #    0x0416: "(Photoshop 6.0) Indexed Color Table Count. 2 bytes for the number of colors in table that are actually defined",
             #    0x0417: "(Photoshop 6.0) Transparency Index. 2 bytes for the index of transparent color, if any.",
             #    0x0419: "(Photoshop 6.0) Global Altitude. 4 byte entry for altitude",
             #    0x041A: "(Photoshop 6.0) Slices. See See Slices resource format.",
             #    0x041B: "(Photoshop 6.0) Workflow URL. Unicode string",
-            #    0x041C: "(Photoshop 6.0) Jump To XPEP. 2 bytes major version, 2 bytes minor version, 4 bytes count. Following is repeated for count: 4 bytes block size, 4 bytes key, if key = 'jtDd' , then next is a Boolean for the dirty flag; otherwise it's a 4 byte entry for the mod date.",
+            #    0x041C: "(Photoshop 6.0) Jump To XPEP. 2 bytes major version, 2 bytes minor version, 4 bytes count. Following is repeated for count:
+            #             4 bytes block size, 4 bytes key, if key = 'jtDd' , then next is a Boolean for the dirty flag; otherwise it's a 4 byte entry for the mod date.",
             #    0x041D: "(Photoshop 6.0) Alpha Identifiers. 4 bytes of length, followed by 4 bytes each for every alpha identifier.",
             #    0x041E: "(Photoshop 6.0) URL List. 4 byte count of URLs, followed by 4 byte long, 4 byte ID, and Unicode string for each count.",
-            #    0x0421: "(Photoshop 6.0) Version Info. 4 bytes version, 1 byte hasRealMergedData , Unicode string: writer name, Unicode string: reader name, 4 bytes file version.",
+            #    0x0421: "(Photoshop 6.0) Version Info. 4 bytes version, 1 byte hasRealMergedData , Unicode string: writer name, Unicode string: reader name, 4 bytes file version."
             #    0x0422: "(Photoshop 7.0) EXIF data 1. See http://www.kodak.com/global/plugins/acrobat/en/service/digCam/exifStandard2.pdf",
             #    0x0423: "(Photoshop 7.0) EXIF data 3. See http://www.kodak.com/global/plugins/acrobat/en/service/digCam/exifStandard2.pdf",
             #    0x0424: "(Photoshop 7.0) XMP metadata. File info as XML description. See http://www.adobe.com/devnet/xmp/",
             #    0x0425: "(Photoshop 7.0) Caption digest. 16 bytes: RSA Data Security, MD5 message-digest algorithm",
-            #    0x0426: "(Photoshop 7.0) Print scale. 2 bytes style (0 = centered, 1 = size to fit, 2 = user defined). 4 bytes x location (floating point). 4 bytes y location (floating point). 4 bytes scale (floating point)",
-            #    0x0428: "(Photoshop CS) Pixel Aspect Ratio. 4 bytes (version = 1 or 2), 8 bytes double, x / y of a pixel. Version 2, attempting to correct values for NTSC and PAL, previously off by a factor of approx. 5%.",
+            #    0x0426: "(Photoshop 7.0) Print scale. 2 bytes style (0 = centered, 1 = size to fit, 2 = user defined). 4 bytes x location (floating point).
+            #             4 bytes y location (floating point). 4 bytes scale (floating point)",
+            #    0x0428: "(Photoshop CS) Pixel Aspect Ratio. 4 bytes (version = 1 or 2), 8 bytes double, x / y of a pixel. Version 2, attempting to correct values for NTSC and PAL,
+            #             previously off by a factor of approx. 5%.",
             #    0x0429: "(Photoshop CS) Layer Comps. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)",
-            #    0x042A: "(Photoshop CS) Alternate Duotone Colors. 2 bytes (version = 1), 2 bytes count, following is repeated for each count: [ Color: 2 bytes for space followed by 4 * 2 byte color component ], following this is another 2 byte count, usually 256, followed by Lab colors one byte each for L, a, b. This resource is not read or used by Photoshop.",
-            #    0x042B: "(Photoshop CS)Alternate Spot Colors. 2 bytes (version = 1), 2 bytes channel count, following is repeated for each count: 4 bytes channel ID, Color: 2 bytes for space followed by 4 * 2 byte color component. This resource is not read or used by Photoshop.",
+            #    0x042A: "(Photoshop CS) Alternate Duotone Colors. 2 bytes (version = 1), 2 bytes count, following is repeated for each count:
+            #             [Color: 2 bytes for space followed by 4 * 2 byte color component ], following this is another 2 byte count, usually 256, followed by Lab colors one byte
+            #             each for L, a, b. This resource is not read or used by Photoshop.",
+            #    0x042B: "(Photoshop CS)Alternate Spot Colors. 2 bytes (version = 1), 2 bytes channel count, following is repeated for each count:
+            #            4 bytes channel ID, Color: 2 bytes for space followed by 4 * 2 byte color component. This resource is not read or used by Photoshop.",
             #    0x042D: "(Photoshop CS2) Layer Selection ID(s). 2 bytes count, following is repeated for each count: 4 bytes layer ID",
             #    0x042E: "(Photoshop CS2) HDR Toning information",
             #    0x042F: "(Photoshop CS2) Print info",
-            #    0x0430: "(Photoshop CS2) Layer Group(s) Enabled ID. 1 byte for each layer in the document, repeated by length of the resource. NOTE: Layer groups have start and end markers",
+            #    0x0430: "(Photoshop CS2) Layer Group(s) Enabled ID. 1 byte for each layer in the document, repeated by length of the resource.
+            #             NOTE: Layer groups have start and end markers",
             #    0x0431: "(Photoshop CS3) Color samplers resource. Also see ID 1038 for old format. See See Color samplers resource format.",
             #    0x0432: "(Photoshop CS3) Measurement Scale. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)",
             #    0x0433: "(Photoshop CS3) Timeline Information. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)",
             #    0x0434: "(Photoshop CS3) Sheet Disclosure. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)",
             #    0x0435: "(Photoshop CS3) DisplayInfo structure to support floating point clors. Also see ID 1007. See Appendix A in Photoshop API Guide.pdf .",
             #    0x0436: "(Photoshop CS3) Onion Skins. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)",
-            #    0x0438: "(Photoshop CS4) Count Information. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the count in the document. See the Count Tool.",
-            #    0x043A: "(Photoshop CS5) Print Information. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current print settings in the document. The color management options.",
-            #    0x043B: "(Photoshop CS5) Print Style. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current print style in the document. The printing marks, labels, ornaments, etc.",
-            #    0x043C: "(Photoshop CS5) Macintosh NSPrintInfo. Variable OS specific info for Macintosh. NSPrintInfo. It is recommened that you do not interpret or use this data.",
+            #    0x0438: "(Photoshop CS4) Count Information. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the count in the
+            #             document. See the Count Tool.",
+            #    0x043A: "(Photoshop CS5) Print Information. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current print
+            #             settings in the document. The color management options.",
+            #    0x043B: "(Photoshop CS5) Print Style. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current print style in the
+            #             document. The printing marks, labels, ornaments, etc.",
+            #    0x043C: "(Photoshop CS5) Macintosh NSPrintInfo. Variable OS specific info for Macintosh. NSPrintInfo. It is recommened that you do not interpret or use this data."
             #    0x043D: "(Photoshop CS5) Windows DEVMODE. Variable OS specific info for Windows. DEVMODE. It is recommened that you do not interpret or use this data.",
             #    0x043E: "(Photoshop CS6) Auto Save File Path. Unicode string. It is recommened that you do not interpret or use this data.",
             #    0x043F: "(Photoshop CS6) Auto Save Format. Unicode string. It is recommened that you do not interpret or use this data.",
-            #    0x0440: "(Photoshop CC) Path Selection State. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current path selection state.",
+            #    0x0440: "(Photoshop CC) Path Selection State. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current path
+            #             selection state.",
             #    0x0BB7: "Name of clipping path. See See Path resource format.",
             #    0x0BB8: "(Photoshop CC) Origin Path Info. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the origin path data.",
             #    0x1B58: "Image Ready variables. XML representation of variables definition",
@@ -2379,8 +2375,8 @@ class BCFile(BCBaseFile):
             #    0x1B5D: "Image Ready save layer settings",
             #    0x1B5E: "Image Ready version",
             #    0x1F40: "(Photoshop CS3) Lightroom workflow, if present the document is in the middle of a Lightroom workflow.",
-            #    0x2710: "Print flags information. 2 bytes version ( = 1), 1 byte center crop marks, 1 byte ( = 0), 4 bytes bleed width value, 2 bytes bleed width scale."
-            #}
+            #    0x2710: "Print flags information. 2 bytes version (=1), 1 byte center crop marks, 1 byte (=0), 4 bytes bleed width value, 2 bytes bleed width scale."
+            # }
 
             returned = {}
 
@@ -2399,26 +2395,26 @@ class BCFile(BCBaseFile):
                     break
 
                 resId = struct.unpack('!H', fHandle.read(2))[0]
-                # ==> commented, used for debug and psd file format analysis
-                #if resId in __IRB_ID:
+                # ==> commented, used for debug and psd file format analysis
+                # if resId in __IRB_ID:
                 #    Debug.print('[BCFile.__readMetaDataPsd] IRB({0}): {1}', hex(resId), __IRB_ID[resId])
-                #elif resId >= 0x0FA0 and resId <= 0x1387:
-                #    Debug.print('[BCFile.__readMetaDataPsd] IRB({0}): "Plug-In resource(s). Resources added by a plug-in. See the plug-in API found in the SDK documentation"', hex(resId))
-                #elif resId >= 0x07D0 and resId <= 0x0BB6:
+                # elif resId >= 0x0FA0 and resId <= 0x1387:
+                #    Debug.print('[BCFile.__readMetaDataPsd] IRB({0}): "Plug-In resource(s). Resources added by a plug-in. See the plug-in API found in the SDK documentation"',
+                #                hex(resId))
+                # elif resId >= 0x07D0 and resId <= 0x0BB6:
                 #    Debug.print('[BCFile.__readMetaDataPsd] IRB({0}): "Path Information (saved paths). See See Path resource format."', hex(resId))
 
-
                 pStringSize = struct.unpack('B', fHandler.read(1))[0]
-                if pStringSize%2 == 0:
+                if pStringSize % 2 == 0:
                     # odd value
-                    pStringSize+=1
+                    pStringSize += 1
                 # skip name
                 fHandle.seek(pStringSize, 1)
 
                 length = struct.unpack('!I', fHandle.read(4))[0]
-                if length%2 != 0:
+                if length % 2 != 0:
                     # odd value
-                    length+=1
+                    length += 1
 
                 if resId in [0x03ED, 0x040F]:
                     data = fHandle.read(length)
@@ -2438,13 +2434,13 @@ class BCFile(BCBaseFile):
             unit = struct.unpack('!H', data[4:6])[0]
             if unit == 2:
                 # pcm / convert to ppi
-                ppX*=0.0254
+                ppX *= 0.0254
 
             ppY = round(struct.unpack('!I', data[8:12])[0] / 0xFFFF, 2)
             unit = struct.unpack('!H', data[12:14])[0]
             if unit == 2:
                 # pcm / convert to ppi
-                ppY*=0.0254
+                ppY *= 0.0254
 
             returned = {
                 'resolutionX': (ppX, f'{ppX:.3f}ppi'),
@@ -2468,10 +2464,10 @@ class BCFile(BCBaseFile):
                 'iccProfile': b''
             }
 
-            if getExtraData==False:
-                returned['iccProfile']=b'Y'
+            if getExtraData is False:
+                returned['iccProfile'] = b'Y'
             else:
-                returned['iccProfile']=data
+                returned['iccProfile'] = data
             returned.update(self.__readICCData(data))
 
             return returned
@@ -2479,21 +2475,21 @@ class BCFile(BCBaseFile):
         def read_LMI(fHandle):
             """Decode Layer and Mask Information section"""
             # Layer and Mask Information
-            #print(hex(fHandle.tell()))
+            # print(hex(fHandle.tell()))
             length = struct.unpack('!L', fHandle.read(4))[0]
-            #print('lmi length', length)
+            # print('lmi length', length)
             if length > 0:
-                # skip color table content
+                # skip color table content
                 fHandle.seek(length)
 
             return {}
 
-        if getExtraData==False and fromCache and not self.__metadata is None:
+        if getExtraData is False and fromCache and self.__metadata is not None:
             return self.__metadata
 
         returned = {}
 
-        with open(self._fullPathName , 'rb') as fHandler:
+        with open(self._fullPathName, 'rb') as fHandler:
             # check signature (4 bytes)
             bytes = fHandler.read(4)
             if bytes != b'8BPS':
@@ -2503,10 +2499,9 @@ class BCFile(BCBaseFile):
             returned.update(read_header(fHandler))
             read_CMD(fHandler)
             returned.update(read_IRB(fHandler))
-            #returned.update(read_LMI(fHandler))
+            # returned.update(read_LMI(fHandler))
 
         return returned
-
 
     def __readMetaDataXcf(self, fromCache=True, getExtraData=False):
         """Read metadata from XCF file
@@ -2516,32 +2511,30 @@ class BCFile(BCBaseFile):
         """
         def read_header(fHandle):
             # read xcf header
-            __COLOR_TYPE = {
-                    0: i18n('RGB'),
-                    1: i18n('Grayscale'),
-                    2: i18n('Indexed palette')
-                }
+            __COLOR_TYPE = {0: i18n('RGB'),
+                            1: i18n('Grayscale'),
+                            2: i18n('Indexed palette')
+                            }
 
-            __BIT_DEPTH = {
-                      0: i18n("8-bit integer/channel [gamma]"),
-                      1: i18n("16-bit integer/channel [gamma]"),
-                      2: i18n("32-bit integer/channel [linear]"),
-                      3: i18n("16-bit float/channel [linear]"),
-                      4: i18n("32-bit float/channel [linear]"),
+            __BIT_DEPTH = {0: i18n("8-bit integer/channel [gamma]"),
+                           1: i18n("16-bit integer/channel [gamma]"),
+                           2: i18n("32-bit integer/channel [linear]"),
+                           3: i18n("16-bit float/channel [linear]"),
+                           4: i18n("32-bit float/channel [linear]"),
 
-                    100: i18n("8-bit integer/channel [linear]"),
-                    150: i18n("8-bit integer/channel [gamma]"),
-                    200: i18n("16-bit integer/channel [linear]"),
-                    250: i18n("16-bit integer/channel [gamma]"),
-                    300: i18n("32-bit integer/channel [linear]"),
-                    350: i18n("32-bit integer/channel [gamma]"),
-                    500: i18n("16-bit float/channel [linear]"),
-                    550: i18n("16-bit float/channel [gamma]"),
-                    600: i18n("32-bit float/channel [linear]"),
-                    650: i18n("32-bit float/channel [gamma]"),
-                    700: i18n("64-bit float/channel [linear]"),
-                    750: i18n("64-bit float/channel [gamma]")
-                }
+                           100: i18n("8-bit integer/channel [linear]"),
+                           150: i18n("8-bit integer/channel [gamma]"),
+                           200: i18n("16-bit integer/channel [linear]"),
+                           250: i18n("16-bit integer/channel [gamma]"),
+                           300: i18n("32-bit integer/channel [linear]"),
+                           350: i18n("32-bit integer/channel [gamma]"),
+                           500: i18n("16-bit float/channel [linear]"),
+                           550: i18n("16-bit float/channel [gamma]"),
+                           600: i18n("32-bit float/channel [linear]"),
+                           650: i18n("32-bit float/channel [gamma]"),
+                           700: i18n("64-bit float/channel [linear]"),
+                           750: i18n("64-bit float/channel [gamma]")
+                           }
 
             returned = {
                 'width': 0,
@@ -2555,9 +2548,9 @@ class BCFile(BCBaseFile):
             # skip file version
             version = fHandle.read(5)
 
-            returned['width'] = int(struct.unpack('!I', fHandle.read(4) )[0])
-            returned['height'] = int(struct.unpack('!I', fHandle.read(4) )[0])
-            returned['colorType'] = int(struct.unpack('!I', fHandle.read(4) )[0])
+            returned['width'] = int(struct.unpack('!I', fHandle.read(4))[0])
+            returned['height'] = int(struct.unpack('!I', fHandle.read(4))[0])
+            returned['colorType'] = int(struct.unpack('!I', fHandle.read(4))[0])
 
             if returned['colorType'] in __COLOR_TYPE:
                 returned['colorType'] = (returned['colorType'], __COLOR_TYPE[returned['colorType']])
@@ -2566,12 +2559,12 @@ class BCFile(BCBaseFile):
 
             if returned['colorType'][0] == 1:
                 # in gray scale, default GIMP color profile is D65 Linear Grayscale
-                returned['iccProfileName']={'en-US': '- [<i>Default GIMP: D65 Linear Grayscale</i>]'}
+                returned['iccProfileName'] = {'en-US': '- [<i>Default GIMP: D65 Linear Grayscale</i>]'}
 
             if version in [b'file\0', b'v001\0', b'v002\0', b'v003\0']:
                 return returned
 
-            bitDepth = int(struct.unpack('!I', fHandle.read(4) )[0])
+            bitDepth = int(struct.unpack('!I', fHandle.read(4))[0])
             if bitDepth in __BIT_DEPTH:
                 returned['bitDepth'] = (bitDepth, __BIT_DEPTH[bitDepth])
             else:
@@ -2584,12 +2577,12 @@ class BCFile(BCBaseFile):
             returned = {}
 
             while True:
-                id = int(struct.unpack('!I', fHandle.read(4) )[0])
+                id = int(struct.unpack('!I', fHandle.read(4))[0])
 
                 if id == 0:
                     break
 
-                length = int(struct.unpack('!I', fHandle.read(4) )[0])
+                length = int(struct.unpack('!I', fHandle.read(4))[0])
 
                 if id in [0x01, 0x13, 0x15]:
                     bytes = fHandle.read(length)
@@ -2612,7 +2605,7 @@ class BCFile(BCBaseFile):
         def read_imageProperties_01(data):
             # read color map table (#01)
             returned = {
-                'paletteSize': int(struct.unpack('!I', data[0:4] )[0])
+                'paletteSize': int(struct.unpack('!I', data[0:4])[0])
             }
             return returned
 
@@ -2637,41 +2630,38 @@ class BCFile(BCBaseFile):
         def read_imageProperties_15(data, getExtraData):
             # read a parasite (#21)
             # can contains N parasites...
-
             position = 0
-            while position<len(data):
+            while position < len(data):
                 lName = int(struct.unpack('!I', data[position:position+4])[0])
                 if lName == 0:
                     break
 
-                position+=4
+                position += 4
                 name = data[position:position+lName - 1]   # remove trailing 0x00 character
 
-                position+=lName+4 #+4 => ignore flags
-                parasiteSize=int(struct.unpack('!I', data[position:position+4])[0])
-                position+=4
-
+                position += lName+4  # +4 => ignore flags
+                parasiteSize = int(struct.unpack('!I', data[position:position+4])[0])
+                position += 4
 
                 if name == b'icc-profile':
-                    returned['iccProfile']=data[position:position+parasiteSize]
+                    returned['iccProfile'] = data[position:position+parasiteSize]
                     returned.update(self.__readICCData(returned['iccProfile']))
-                    if getExtraData==False:
-                        returned['iccProfile']=b'Y'
+                    if getExtraData is False:
+                        returned['iccProfile'] = b'Y'
                 else:
                     pass
-                    #print(name, 'skip')
+                    # print(name, 'skip')
 
-
-                position+=parasiteSize
+                position += parasiteSize
 
             return {}
 
-        if getExtraData==False and fromCache and not self.__metadata is None:
+        if getExtraData is False and fromCache and self.__metadata is not None:
             return self.__metadata
 
         returned = {}
 
-        with open(self._fullPathName , 'rb') as fHandler:
+        with open(self._fullPathName, 'rb') as fHandler:
             # check signature (8 bytes)
             bytes = fHandler.read(9)
             if bytes != b'gimp xcf ':
@@ -2684,7 +2674,6 @@ class BCFile(BCBaseFile):
 
         return returned
 
-
     def __readMetaDataKra(self, fromCache=True, getExtraData=False):
         """Read metadata from Krita file"""
         def getShapeLayerList():
@@ -2693,7 +2682,7 @@ class BCFile(BCBaseFile):
             try:
                 archive = zipfile.ZipFile(self._fullPathName, 'r')
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return []
@@ -2703,7 +2692,7 @@ class BCFile(BCBaseFile):
             #     simpler to get shapelayer node and then build filename...
             #   - dot '.' is used because don't know how path is returned in windows --------+
             #                                                                                V
-            returned = [file.filename for file in archive.filelist if re.search('\.shapelayer.content\.svg', file.filename)]
+            returned = [file.filename for file in archive.filelist if re.search(r'\.shapelayer.content\.svg', file.filename)]
             archive.close()
 
             return returned
@@ -2714,7 +2703,7 @@ class BCFile(BCBaseFile):
             try:
                 archive = zipfile.ZipFile(self._fullPathName, 'r')
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return []
@@ -2724,7 +2713,7 @@ class BCFile(BCBaseFile):
             #     simpler to get keyframes files and then build filename...
             #   - dot '.' is used because don't know how path is returned in windows --------+
             #                                                                                V
-            returned = [file.filename for file in archive.filelist if re.search('.layers.*keyframes\.xml$', file.filename)]
+            returned = [file.filename for file in archive.filelist if re.search(r'.layers.*keyframes\.xml$', file.filename)]
             archive.close()
 
             return returned
@@ -2735,7 +2724,7 @@ class BCFile(BCBaseFile):
             try:
                 archive = zipfile.ZipFile(self._fullPathName, 'r')
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataKra] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return []
@@ -2745,12 +2734,12 @@ class BCFile(BCBaseFile):
             #     simpler to get shapelayer node and then build filename...
             #   - dot '.' is used because don't know how path is returned in windows ----+
             #                                                                            V
-            returned = [file.filename for file in archive.filelist if re.search('palettes..*\.kpl$', file.filename)]
+            returned = [file.filename for file in archive.filelist if re.search(r'palettes..*\.kpl$', file.filename)]
             archive.close()
 
             return returned
 
-        if getExtraData==False and fromCache and not self.__metadata is None:
+        if getExtraData is False and fromCache and self.__metadata is not None:
             return self.__metadata
 
         returned = {
@@ -2795,10 +2784,10 @@ class BCFile(BCBaseFile):
             'author.contact': [],
         }
 
-        tmpRefImgList=[]
+        tmpRefImgList = []
 
         maindoc = self.__readArchiveDataFile("maindoc.xml")
-        if not maindoc is None:
+        if maindoc is not None:
             # process file
 
             parsed = False
@@ -2806,7 +2795,7 @@ class BCFile(BCBaseFile):
                 xmlDoc = xmlElement.fromstring(maindoc.decode())
                 parsed = True
             except Exception as e:
-                # can't be read (not xml?)
+                # can't be read (not xml?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataKra] Unable to parse "maindoc.xml" in file {0}: {1}', self._fullPathName, f"{e}")
 
@@ -2817,12 +2806,12 @@ class BCFile(BCBaseFile):
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve Krita version in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
-                    returned['width']=int(xmlDoc[0].attrib['width'])
+                    returned['width'] = int(xmlDoc[0].attrib['width'])
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image width in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
-                    returned['height']=int(xmlDoc[0].attrib['height'])
+                    returned['height'] = int(xmlDoc[0].attrib['height'])
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image height in file {0}: {1}', self._fullPathName, f"{e}")
                     return None
@@ -2880,7 +2869,7 @@ class BCFile(BCBaseFile):
                 try:
                     csn = xmlDoc[0].attrib['colorspacename']
 
-                    # RGB
+                    # RGB
                     if csn in ['RGBA', 'RGBAU8']:
                         returned['colorType'] = ('RGBA', 'RGB with Alpha')
                         returned['bitDepth'] = (8, '8-bit integer/channel')
@@ -2894,7 +2883,7 @@ class BCFile(BCBaseFile):
                         returned['colorType'] = ('RGBA', 'RGB with Alpha')
                         returned['bitDepth'] = (32.0, '32-bit float/channel')
 
-                    # CYMK
+                    # CYMK
                     elif csn in ['CMYK', 'CMYKAU8']:
                         returned['colorType'] = ('CMYKA', 'CMYK with Alpha')
                         returned['bitDepth'] = (8, '8-bit integer/channel')
@@ -2954,8 +2943,6 @@ class BCFile(BCBaseFile):
                     elif csn == 'YCBCRF32':
                         returned['colorType'] = ('YCbCr', 'YCbCr with Alpha')
                         returned['bitDepth'] = (32.0, '32-bit float/channel')
-
-
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image colorspacename in file {0}: {1}', self._fullPathName, f"{e}")
 
@@ -2964,42 +2951,38 @@ class BCFile(BCBaseFile):
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve image resolution-x in file {0}: {1}', self._fullPathName, f"{e}")
 
-
                 try:
-                    nodes=xmlDoc.findall(".//{*}layers/{*}layer[@keyframes]")
-                    if len(nodes)>0:
+                    nodes = xmlDoc.findall(".//{*}layers/{*}layer[@keyframes]")
+                    if len(nodes) > 0:
                         # there's some nodes with keyframes
-                        node=xmlDoc.find(".//{*}animation/{*}range")
-                        if not node is None:
+                        node = xmlDoc.find(".//{*}animation/{*}range")
+                        if node is not None:
                             returned['imageFrom'] = int(node.attrib['from'])
                             returned['imageTo'] = int(node.attrib['to'])
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve currentTime in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
-                    node=xmlDoc.find(".//{*}animation/{*}framerate")
-                    if not node is None:
+                    node = xmlDoc.find(".//{*}animation/{*}framerate")
+                    if node is not None:
                         returned['imageDelay'] = int(node.attrib['value'])
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve framerate in file {0}: {1}', self._fullPathName, f"{e}")
 
-
                 try:
-                    returned['document.fileLayers']=[node.attrib['source'] for node in xmlDoc.findall(".//{*}layer[@nodetype='filelayer']")]
+                    returned['document.fileLayers'] = [node.attrib['source'] for node in xmlDoc.findall(".//{*}layer[@nodetype='filelayer']")]
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers "filelayer" in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
-                    returned['document.layerCount']=len(xmlDoc.findall(".//{*}layer"))
+                    returned['document.layerCount'] = len(xmlDoc.findall(".//{*}layer"))
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers in file {0}: {1}', self._fullPathName, f"{e}")
 
-
                 try:
-                    tmpRefImgList=[node.attrib['src'] for node in xmlDoc.findall(".//{*}layer[@nodetype='referenceimages']/{*}referenceimage")]
+                    tmpRefImgList = [node.attrib['src'] for node in xmlDoc.findall(".//{*}layer[@nodetype='referenceimages']/{*}referenceimage")]
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataKra] Unable to retrieve layers "referenceimage" in file {0}: {1}', self._fullPathName, f"{e}")
-
         else:
             # unable to read maindoc??
             # don't try to analyse file more..
@@ -3007,128 +2990,127 @@ class BCFile(BCBaseFile):
             return returned
 
         infoDoc = self.__readArchiveDataFile("documentinfo.xml")
-        if not infoDoc is None:
+        if infoDoc is not None:
             parsed = False
             try:
                 xmlDoc = xmlElement.fromstring(infoDoc.decode())
                 parsed = True
             except Exception as e:
-                # can't be read (not xml?)
+                # can't be read (not xml?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataKra] Unable to parse "documentinfo.xml" in file {0}: {1}', self._fullPathName, f"{e}")
 
             if parsed:
                 node = xmlDoc.find('{*}about/{*}title')
-                if not node is None:
+                if node is not None:
                     returned['about.title'] = strDefault(node.text)
 
                 node = xmlDoc.find('{*}about/{*}subject')
-                if not node is None:
+                if node is not None:
                     returned['about.subject'] = strDefault(node.text)
 
                 node = xmlDoc.find('{*}about/{*}description')
-                if not node is None:
+                if node is not None:
                     if strDefault(node.text) != '':
                         returned['about.description'] = strDefault(node.text)
                     else:
                         # seems to get description ins abstract node?
                         node = xmlDoc.find('{*}about/{*}abstract')
-                        if not node is None:
+                        if node is not None:
                             if strDefault(node.text) != '':
                                 returned['about.description'] = strDefault(node.text)
 
                 node = xmlDoc.find('{*}about/{*}keyword')
-                if not node is None:
+                if node is not None:
                     returned['about.keywords'] = strDefault(node.text)
 
                 node = xmlDoc.find('{*}about/{*}initial-creator')
-                if not node is None:
+                if node is not None:
                     returned['about.creator'] = strDefault(node.text)
 
                 node = xmlDoc.find('{*}about/{*}creation-date')
-                if not node is None:
+                if node is not None:
                     returned['about.creationDate'] = strDefault(node.text).replace('T', ' ')
 
                 node = xmlDoc.find('{*}about/{*}editing-cycles')
-                if not node is None:
+                if node is not None:
                     returned['about.editingCycles'] = intDefault(node.text, 1)
 
                 node = xmlDoc.find('{*}about/{*}editing-time')
-                if not node is None:
+                if node is not None:
                     # in seconds
                     returned['about.editingTime'] = intDefault(node.text)
 
                 node = xmlDoc.find('{*}author/{*}full-name')
-                if not node is None:
+                if node is not None:
                     returned['author.nickName'] = strDefault(node.text)
 
                 node = xmlDoc.find('{*}author/{*}creator-first-name')
-                if not node is None:
+                if node is not None:
                     returned['author.firstName'] = strDefault(node.text)
 
                 node = xmlDoc.find('{*}author/{*}creator-last-name')
-                if not node is None:
+                if node is not None:
                     returned['author.lastName'] = strDefault(node.text)
 
                 node = xmlDoc.find('{*}author/{*}initial')
-                if not node is None:
+                if node is not None:
                     returned['author.initials'] = strDefault(node.text)
 
                 node = xmlDoc.find('{*}author/{*}author-title')
-                if not node is None:
+                if node is not None:
                     returned['author.title'] = strDefault(node.text)
 
                 node = xmlDoc.find('{*}author/{*}position')
-                if not node is None:
+                if node is not None:
                     returned['author.position'] = strDefault(node.text)
 
                 node = xmlDoc.find('{*}author/{*}company')
-                if not node is None:
+                if node is not None:
                     returned['author.company'] = strDefault(node.text)
 
                 nodeList = xmlDoc.findall('{*}author/{*}contact')
-                if not nodeList is None:
+                if nodeList is not None:
                     for node in nodeList:
                         if strDefault(node.text) != '':
                             returned['author.contact'].append({node.attrib['type']: strDefault(node.text)})
 
-
         for filename in getKeyFramesList():
             contentDoc = self.__readArchiveDataFile(filename)
 
-            if not contentDoc is None:
+            if contentDoc is not None:
                 parsed = False
                 try:
                     xmlDoc = xmlElement.fromstring(contentDoc.decode())
                     parsed = True
                 except Exception as e:
-                    # can't be read (not xml?)
+                    # can't be read (not xml?)
                     self.__readable = False
                     Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, f"{e}", filename)
 
                 if parsed:
                     nodes = xmlDoc.findall(".//{*}channel/{*}keyframe[@time]")
-                    returned['imageNbKeyFrames']+=len(nodes)
+                    returned['imageNbKeyFrames'] += len(nodes)
 
                     for node in nodes:
-                        nodeTime=int(node.attrib['time'])
-                        returned['imageMaxKeyFrameTime']=max(returned['imageMaxKeyFrameTime'], nodeTime)
+                        nodeTime = int(node.attrib['time'])
+                        returned['imageMaxKeyFrameTime'] = max(returned['imageMaxKeyFrameTime'], nodeTime)
 
         for filename in getShapeLayerList():
             contentDoc = self.__readArchiveDataFile(filename)
 
-            if not contentDoc is None:
+            if contentDoc is not None:
                 parsed = False
                 try:
                     xmlDoc = xmlElement.fromstring(contentDoc.decode())
                     parsed = True
                 except Exception as e:
-                    # can't be read (not xml?)
+                    # can't be read (not xml?)
                     self.__readable = False
                     Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, f"{e}", filename)
 
                 if parsed:
-                    fontList=[node.attrib['font-family'] for node in xmlDoc.findall('.//*[@font-family]')]
+                    fontList = [node.attrib['font-family'] for node in xmlDoc.findall('.//*[@font-family]')]
 
                     if len(fontList) > 0:
                         returned['document.usedFonts'] = list(set(returned['document.usedFonts'] + fontList))
@@ -3138,7 +3120,7 @@ class BCFile(BCBaseFile):
         for filename in getPaletteList():
             kplFile = self.__readArchiveDataFile(filename)
 
-            if not kplFile is None:
+            if kplFile is not None:
                 # retrieved kpl file is a ZIP archive
                 contentDoc = self.__readArchiveDataFile('colorset.xml', io.BytesIO(kplFile))
 
@@ -3147,13 +3129,13 @@ class BCFile(BCBaseFile):
                     xmlDoc = xmlElement.fromstring(contentDoc.decode())
                     parsed = True
                 except Exception as e:
-                    # can't be read (not xml?)
+                    # can't be read (not xml?)
                     self.__readable = False
                     Debug.print('[BCFile.__readMetaDataKra] Unable to parse "{2}" in file {0}: {1}', self._fullPathName, f"{e}", filename)
 
                 if parsed:
                     try:
-                        returned['document.embeddedPalettes'][xmlDoc.attrib['name']]={
+                        returned['document.embeddedPalettes'][xmlDoc.attrib['name']] = {
                                             'colors':  len(xmlDoc.findall('ColorSetEntry')),
                                             'rows':    int(xmlDoc.attrib['rows']),
                                             'columns': int(xmlDoc.attrib['columns'])
@@ -3162,7 +3144,7 @@ class BCFile(BCBaseFile):
                         Debug.print('[BCFile.__readMetaDataKra] Malformed palette {2} in file {0}: {1}', self._fullPathName, f"{e}", filename)
 
         # load reference image details
-        returned['document.referenceImages.count']=len(tmpRefImgList)
+        returned['document.referenceImages.count'] = len(tmpRefImgList)
         if getExtraData:
             for refImg in tmpRefImgList:
                 if not re.match(r'file://', refImg):
@@ -3177,20 +3159,17 @@ class BCFile(BCBaseFile):
                     if image.load(refImg.replace('file://', '')):
                         returned['document.referenceImages.data'].append(image)
 
-
         # References images are stored in a layer
         # Do not consider it as a layer because reference image layer is not visible in layer tree
-        returned['document.layerCount']-=returned['document.referenceImages.count']
-
+        returned['document.layerCount'] -= returned['document.referenceImages.count']
 
         return returned
 
-
     def __readMetaDataOra(self, fromCache=True, getExtraData=False):
         """Read metadata from Open Raster file"""
-        # if getExtraData==False and fromCache and not self.__metadata is None:
+        # if getExtraData is False and fromCache and self.__metadata is not None:
         # => no extradata for ora files
-        if fromCache and not self.__metadata is None:
+        if fromCache and self.__metadata is not None:
             return self.__metadata
 
         returned = {
@@ -3204,7 +3183,7 @@ class BCFile(BCBaseFile):
         }
 
         maindoc = self.__readArchiveDataFile("stack.xml")
-        if not maindoc is None:
+        if maindoc is not None:
             # process file
 
             parsed = False
@@ -3212,18 +3191,18 @@ class BCFile(BCBaseFile):
                 xmlDoc = xmlElement.fromstring(maindoc.decode())
                 parsed = True
             except Exception as e:
-                # can't be read (not xml?)
+                # can't be read (not xml?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataOra] Unable to parse "stack.xml" in file {0}: {1}', self._fullPathName, f"{e}")
 
             if parsed:
                 try:
-                    returned['width']=int(xmlDoc.attrib['w'])
+                    returned['width'] = int(xmlDoc.attrib['w'])
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image width in file {0}: {1}', self._fullPathName, f"{e}")
 
                 try:
-                    returned['height']=int(xmlDoc.attrib['h'])
+                    returned['height'] = int(xmlDoc.attrib['h'])
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image height in file {0}: {1}', self._fullPathName, f"{e}")
 
@@ -3241,7 +3220,7 @@ class BCFile(BCBaseFile):
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve image resolution-y in file {0}: {1}', self._fullPathName, f"{e}")
 
-                if ppX == 0 and ppY ==0:
+                if ppX == 0 and ppY == 0:
                     # no resolution information
                     returned.pop('resolutionX')
                     returned.pop('resolutionY')
@@ -3252,12 +3231,11 @@ class BCFile(BCBaseFile):
                     returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
 
                 try:
-                    returned['document.layerCount']=len(xmlDoc.findall(".//{*}layer"))
+                    returned['document.layerCount'] = len(xmlDoc.findall(".//{*}layer"))
                 except Exception as e:
                     Debug.print('[BCFile.__readMetaDataOra] Unable to retrieve layers in file {0}: {1}', self._fullPathName, f"{e}")
 
         return returned
-
 
     def __readMetaDataBmp(self, fromCache=True, getExtraData=False):
         """Read metadata from BMP file
@@ -3268,7 +3246,7 @@ class BCFile(BCBaseFile):
                             https://formats.kaitai.io/bmp/
                             https://exiftool.org/TagNames/BMP.html
         """
-        if fromCache and not self.__metadata is None:
+        if fromCache and self.__metadata is not None:
             return self.__metadata
 
         returned = {}
@@ -3276,83 +3254,83 @@ class BCFile(BCBaseFile):
         with open(self._fullPathName, 'rb') as fHandler:
             # check signature (2 bytes)
             bytes = fHandler.read(2)
-            if not bytes in (b'BM', b'BA', b'CI', b'CP', b'IC', b'PT'):
+            if bytes not in (b'BM', b'BA', b'CI', b'CP', b'IC', b'PT'):
                 Debug.print('[BCFile.__readMetaDataBmp] Invalid header: {0}', bytes)
                 return returned
 
             # skip useless data from header
             fHandler.seek(12, os.SEEK_CUR)
 
-            # now in DIB header
+            # now in DIB header
             bytes = fHandler.read(4)
-            dibHeaderSize=struct.unpack('<I', bytes)[0]
+            dibHeaderSize = struct.unpack('<I', bytes)[0]
 
             if dibHeaderSize in (12, 16, 64):
                 # with/height stored on 2bytes each
                 bytes = fHandler.read(2)
-                returned['width']=struct.unpack('<H', bytes)[0]
+                returned['width'] = struct.unpack('<H', bytes)[0]
 
                 # height can be negative?
                 bytes = fHandler.read(2)
-                returned['height']=abs(struct.unpack('<H', bytes)[0])
+                returned['height'] = abs(struct.unpack('<H', bytes)[0])
             else:
                 # with/height stored on 4bytes each
                 bytes = fHandler.read(4)
-                returned['width']=struct.unpack('<I', bytes)[0]
+                returned['width'] = struct.unpack('<I', bytes)[0]
 
                 bytes = fHandler.read(4)
-                returned['height']=struct.unpack('<I', bytes)[0]
+                returned['height'] = struct.unpack('<I', bytes)[0]
 
-                # colorPlane = 1, useless
+                # colorPlane = 1, useless
                 bytes = fHandler.read(2)
 
                 # bits per pixels
                 bytes = fHandler.read(2)
-                bitsPerPixel=struct.unpack('<H', bytes)[0]
+                bitsPerPixel = struct.unpack('<H', bytes)[0]
 
                 # bits per pixels
                 bytes = fHandler.read(4)
-                compressionMethod=struct.unpack('<I', bytes)[0]
+                compressionMethod = struct.unpack('<I', bytes)[0]
 
-                if bitsPerPixel==1:
-                    returned['colorType']=(3, i18n('Indexed palette'))
-                    returned['bitDepth']=(1, i18n("1-bit/pixel"))
-                elif bitsPerPixel==2:
-                    returned['colorType']=(3, i18n('Indexed palette'))
-                    returned['bitDepth']=(2, i18n("2-bit/pixel"))
-                elif bitsPerPixel==4:
-                    returned['colorType']=(3, i18n('Indexed palette'))
-                    returned['bitDepth']=(4, i18n("4-bit/pixel"))
-                elif bitsPerPixel==8:
-                    returned['colorType']=(3, i18n('Indexed palette'))
-                    returned['bitDepth']=(8, i18n("8-bit/pixel"))
-                elif bitsPerPixel==16:
-                    returned['colorType']=(6, i18n('RGB with Alpha'))
-                    returned['bitDepth']=(16, i18n("4-bit/channel"))
-                elif bitsPerPixel==24:
-                    returned['colorType']=(2, i18n('RGB'))
-                    returned['bitDepth']=(24, i18n("8-bit/channel"))
-                elif bitsPerPixel==32:
-                    returned['colorType']=(6, i18n('RGB with Alpha'))
-                    returned['bitDepth']=(32, i18n("8-bit/channel"))
+                if bitsPerPixel == 1:
+                    returned['colorType'] = (3, i18n('Indexed palette'))
+                    returned['bitDepth'] = (1, i18n("1-bit/pixel"))
+                elif bitsPerPixel == 2:
+                    returned['colorType'] = (3, i18n('Indexed palette'))
+                    returned['bitDepth'] = (2, i18n("2-bit/pixel"))
+                elif bitsPerPixel == 4:
+                    returned['colorType'] = (3, i18n('Indexed palette'))
+                    returned['bitDepth'] = (4, i18n("4-bit/pixel"))
+                elif bitsPerPixel == 8:
+                    returned['colorType'] = (3, i18n('Indexed palette'))
+                    returned['bitDepth'] = (8, i18n("8-bit/pixel"))
+                elif bitsPerPixel == 16:
+                    returned['colorType'] = (6, i18n('RGB with Alpha'))
+                    returned['bitDepth'] = (16, i18n("4-bit/channel"))
+                elif bitsPerPixel == 24:
+                    returned['colorType'] = (2, i18n('RGB'))
+                    returned['bitDepth'] = (24, i18n("8-bit/channel"))
+                elif bitsPerPixel == 32:
+                    returned['colorType'] = (6, i18n('RGB with Alpha'))
+                    returned['bitDepth'] = (32, i18n("8-bit/channel"))
 
                 # image data size
                 bytes = fHandler.read(4)
 
                 # Horizontal resolution (pixels per meter)
                 bytes = fHandler.read(4)
-                ppX=struct.unpack('<i', bytes)[0]*0.0254
+                ppX = struct.unpack('<i', bytes)[0]*0.0254
 
                 # Vertical resolution (pixels per meter)
                 bytes = fHandler.read(4)
-                ppY=struct.unpack('<i', bytes)[0]*0.0254
+                ppY = struct.unpack('<i', bytes)[0]*0.0254
 
-                if ppX>0:
+                if ppX > 0:
                     returned['resolutionX'] = (ppX, f'{ppX:.3f}ppi')
-                if ppY>0:
+                if ppY > 0:
                     returned['resolutionY'] = (ppY, f'{ppY:.3f}ppi')
 
-                if ppX>0:
+                if ppX > 0:
                     if ppX == ppY:
                         returned['resolution'] = f'{ppX:.3f}ppi'
                     else:
@@ -3360,30 +3338,29 @@ class BCFile(BCBaseFile):
 
                 # Palette size
                 bytes = fHandler.read(4)
-                paletteSize=struct.unpack('<I', bytes)[0]
-                if paletteSize>0:
-                    returned['paletteSize']=paletteSize
+                paletteSize = struct.unpack('<I', bytes)[0]
+                if paletteSize > 0:
+                    returned['paletteSize'] = paletteSize
 
                 if dibHeaderSize >= 108:
-                    # BITMAPV5HEADER -- get icc profile
+                    # BITMAPV5HEADER -- get icc profile
 
                     # skip useless data from header
                     # 4: important colors
-                    skipSize=4
+                    skipSize = 4
 
-                    if compressionMethod in (3,6) or dibHeaderSize==124:
+                    if compressionMethod in (3, 6) or dibHeaderSize == 124:
                         # not really sure, documentations are not clear about
                         # this format
 
                         # 4: Red channel bit mask
                         # 4: Green channel bit mask
                         # 4: Blue channel bit mask
-                        skipSize+=12
+                        skipSize += 12
 
-                        if dibHeaderSize==124 or bitsPerPixel in (16,32):
+                        if dibHeaderSize == 124 or bitsPerPixel in (16, 32):
                             # 4: Alpha channel bit mask
-                            skipSize+=4
-
+                            skipSize += 4
 
                     fHandler.seek(skipSize, os.SEEK_CUR)
 
@@ -3397,46 +3374,45 @@ class BCFile(BCBaseFile):
                     #       'MBED' => b'DEBM'       Embedded Color Profile
                     colorSpace = fHandler.read(4)
 
-                    skipSize=None
-                    if colorSpace==b'BGRs':
-                        returned['iccProfileName']={'en-gb': 'sRGB built-in'}
-                    elif colorSpace==b'KNIL':
-                        skipSize=48
-                        embedded=False
-                    elif colorSpace==b'DEBM':
-                        skipSize=48
-                        embedded=True
-                    elif colorSpace==b' niW':
-                        returned['iccProfileName']={'en-gb': 'Windows color space'}
+                    skipSize = None
+                    if colorSpace == b'BGRs':
+                        returned['iccProfileName'] = {'en-gb': 'sRGB built-in'}
+                    elif colorSpace == b'KNIL':
+                        skipSize = 48
+                        embedded = False
+                    elif colorSpace == b'DEBM':
+                        skipSize = 48
+                        embedded = True
+                    elif colorSpace == b' niW':
+                        returned['iccProfileName'] = {'en-gb': 'Windows color space'}
 
-                    if not skipSize is None:
+                    if skipSize is not None:
                         fHandler.seek(skipSize, os.SEEK_CUR)
 
-                        bytes=fHandler.read(4)
-                        intent=struct.unpack('<I', bytes)[0]
+                        bytes = fHandler.read(4)
+                        intent = struct.unpack('<I', bytes)[0]
 
-                        bytes=fHandler.read(4)
-                        iccProfileDataPos=struct.unpack('<I', bytes)[0]
+                        bytes = fHandler.read(4)
+                        iccProfileDataPos = struct.unpack('<I', bytes)[0]
 
-                        bytes=fHandler.read(4)
-                        iccProfileDataSize=struct.unpack('<I', bytes)[0]
+                        bytes = fHandler.read(4)
+                        iccProfileDataSize = struct.unpack('<I', bytes)[0]
 
                         fHandler.seek(14+iccProfileDataPos, os.SEEK_SET)
-                        bytes=fHandler.read(iccProfileDataSize)
+                        bytes = fHandler.read(iccProfileDataSize)
 
                         if embedded:
-                            iccNfo=self.__readICCData(bytes)
+                            iccNfo = self.__readICCData(bytes)
                             returned.update(iccNfo)
-                            if getExtraData==False:
-                                returned['iccProfile']=b'Y'
+                            if getExtraData is False:
+                                returned['iccProfile'] = b'Y'
                             else:
-                                returned['iccProfile']=bytes
+                                returned['iccProfile'] = bytes
                         else:
-                            returned['iccProfileName']={'en-gb': 'Linked to external file'}
-                            returned['iccProfileCopyright']={'en-gb': bytes.decode('utf-8', 'ignore')}
+                            returned['iccProfileName'] = {'en-gb': 'Linked to external file'}
+                            returned['iccProfileCopyright'] = {'en-gb': bytes.decode('utf-8', 'ignore')}
 
         return returned
-
 
     def __readMetaDataTga(self, fromCache=True, getExtraData=False):
         """Read metadata from TGA file
@@ -3444,45 +3420,41 @@ class BCFile(BCBaseFile):
         TGA specifications: https://en.wikipedia.org/wiki/Truevision_TGA
                             https://www.dca.fee.unicamp.br/~martino/disciplinas/ea978/tgaffs.pdf
         """
-        if fromCache and not self.__metadata is None:
+        if fromCache and self.__metadata is not None:
             return self.__metadata
         returned = {}
 
-        __COLOR_TYPE = {
-                0: i18n('No image data'),
-                1: i18n('Indexed palette'),
-                2: i18n('RGB'),
-                3: i18n('Grayscale'),
-                9: i18n('Indexed palette'),
-                10: i18n('RGB'),
-                11: i18n('Grayscale'),
-            }
+        __COLOR_TYPE = {0: i18n('No image data'),
+                        1: i18n('Indexed palette'),
+                        2: i18n('RGB'),
+                        3: i18n('Grayscale'),
+                        9: i18n('Indexed palette'),
+                        10: i18n('RGB'),
+                        11: i18n('Grayscale'),
+                        }
 
-        __COMPRESSION_TYPE = {
-                0: i18n('Uncompressed'),
-                1: i18n('Run Length Encoding')
-            }
+        __COMPRESSION_TYPE = {0: i18n('Uncompressed'),
+                              1: i18n('Run Length Encoding')
+                              }
 
-        __BIT_DEPTH = {
-                  8: i18n("8-bit integer/channel"),
-                 16: i18n("16-bit integer/channel"),
-                 24: i18n("24-bit integer/channel"),
-                 32: i18n("32-bit integer/channel")
-            }
-
+        __BIT_DEPTH = {8:  i18n("8-bit integer/channel"),
+                       16: i18n("16-bit integer/channel"),
+                       24: i18n("24-bit integer/channel"),
+                       32: i18n("32-bit integer/channel")
+                       }
 
         with open(self._fullPathName, 'rb') as fHandler:
             # check footer (last 26 bytes of file)
             fHandler.seek(-18, os.SEEK_END)
 
-            extensionAreaOffset=None
+            extensionAreaOffset = None
             signature = fHandler.read(18)
-            if signature==b'TRUEVISION-XFILE.\x00':
+            if signature == b'TRUEVISION-XFILE.\x00':
                 # it's a V2.0 TGA file format
                 fHandler.seek(-26, os.SEEK_END)
 
                 bytes = fHandler.read(4)
-                extensionAreaOffset=struct.unpack('<I', bytes)[0]
+                extensionAreaOffset = struct.unpack('<I', bytes)[0]
 
             # go back to start of file
             # +offset of unused info
@@ -3492,28 +3464,28 @@ class BCFile(BCBaseFile):
             fHandler.seek(2, os.SEEK_SET)
 
             bytes = fHandler.read(1)
-            # 0=no image data
-            # 1=uncompressed, color-map
-            # 2=uncompressed, RGB
-            # 3=uncompressed, B&W (grayscale)
-            # 9=RLE, color-map
-            # 10=RLE, RGB
-            # 11=RLE, B&W (grayscale)
-            imageType=struct.unpack('<B', bytes)[0]
+            # 0 = no image data
+            # 1 = uncompressed, color-map
+            # 2 = uncompressed, RGB
+            # 3 = uncompressed, B&W (grayscale)
+            # 9 = RLE, color-map
+            # 10 = RLE, RGB
+            # 11 = RLE, B&W (grayscale)
+            imageType = struct.unpack('<B', bytes)[0]
 
             if imageType in __COLOR_TYPE:
-                returned['colorType']=(imageType, __COLOR_TYPE[imageType])
+                returned['colorType'] = (imageType, __COLOR_TYPE[imageType])
 
             if imageType in (1, 2, 3):
-                returned['compressionLevel']=(imageType, __COMPRESSION_TYPE[0])
+                returned['compressionLevel'] = (imageType, __COMPRESSION_TYPE[0])
             else:
-                returned['compressionLevel']=(imageType, __COMPRESSION_TYPE[1])
+                returned['compressionLevel'] = (imageType, __COMPRESSION_TYPE[1])
 
             fHandler.seek(2, os.SEEK_CUR)
 
             bytes = fHandler.read(2)
             if imageType in (1, 9):
-                returned['paletteSize']=struct.unpack('<H', bytes)[0]
+                returned['paletteSize'] = struct.unpack('<H', bytes)[0]
 
             # skip unsued header info
             # 1- Color map Entry Size
@@ -3523,19 +3495,19 @@ class BCFile(BCBaseFile):
             fHandler.seek(5, os.SEEK_CUR)
 
             bytes = fHandler.read(2)
-            returned['width']=struct.unpack('<H', bytes)[0]
+            returned['width'] = struct.unpack('<H', bytes)[0]
 
             bytes = fHandler.read(2)
-            returned['height']=struct.unpack('<H', bytes)[0]
+            returned['height'] = struct.unpack('<H', bytes)[0]
 
             bytes = fHandler.read(1)
-            value=struct.unpack('<B', bytes)[0]
+            value = struct.unpack('<B', bytes)[0]
             if value in __BIT_DEPTH:
-                returned['bitDepth']=(value, __BIT_DEPTH[value])
+                returned['bitDepth'] = (value, __BIT_DEPTH[value])
             else:
-                returned['bitDepth']=(value, i18n(f"{value}-bit integer/channel"))
+                returned['bitDepth'] = (value, i18n(f"{value}-bit integer/channel"))
 
-            if not extensionAreaOffset is None:
+            if extensionAreaOffset is not None:
                 # There's an extended area
                 fHandler.seek(extensionAreaOffset, os.SEEK_SET)
 
@@ -3543,16 +3515,15 @@ class BCFile(BCBaseFile):
                 fHandler.seek(478, os.SEEK_CUR)
 
                 bytes = fHandler.read(2)
-                numerator=struct.unpack('<H', bytes)[0]
+                numerator = struct.unpack('<H', bytes)[0]
 
                 bytes = fHandler.read(2)
-                denominator=struct.unpack('<H', bytes)[0]
+                denominator = struct.unpack('<H', bytes)[0]
 
-                if denominator!=0:
-                    returned['gamma']=round(numerator/denominator, 2)
+                if denominator != 0:
+                    returned['gamma'] = round(numerator/denominator, 2)
 
         return returned
-
 
     def __readMetaDataTiff(self, fromCache=True, getExtraData=False):
         """Read metadata from TIFF file
@@ -3564,16 +3535,16 @@ class BCFile(BCBaseFile):
         def getShort(offset, fHandler, byteOrder):
             """Return a TIFF SHORT value (readUInt2)"""
             fHandler.seek(offset, os.SEEK_SET)
-            bytes=fHandler.read(2)
+            bytes = fHandler.read(2)
             return struct.unpack(f'{byteOrder}H', bytes)[0]
 
         def getRational(offset, fHandler, byteOrder):
             """Return a tuple (numerator, denominator)"""
             fHandler.seek(offset, os.SEEK_SET)
-            bytes=fHandler.read(4)
-            numerator=struct.unpack(f'{byteOrder}I', bytes)[0]
-            bytes=fHandler.read(4)
-            denominator=struct.unpack(f'{byteOrder}I', bytes)[0]
+            bytes = fHandler.read(4)
+            numerator = struct.unpack(f'{byteOrder}I', bytes)[0]
+            bytes = fHandler.read(4)
+            denominator = struct.unpack(f'{byteOrder}I', bytes)[0]
             return (numerator, denominator)
 
         def getUndefined(offset, size, fHandler):
@@ -3583,169 +3554,170 @@ class BCFile(BCBaseFile):
 
         def readIFDEntry(reader, fHandler, byteOrder):
             """Read current IFD entry"""
-            tagId=reader.readUInt2()
+            tagId = reader.readUInt2()
             # fieldType     Bytes
             # ------------  ----------------------------------------------------
-            # 1=BYTE        readUShort
-            # 2=ASCII       readPStr('ASCII')
-            # 3=SHORT       readUInt2
-            # 4=LONG        readUInt4
-            # 5=RATIONAL    readUInt4: numerator / readUInt4: denominator
-            # 6=SBYTE       readShort
-            # 7=UNDEFINED   readUShort * nbValues
-            # 8=SSHORT       readInt2
-            # 9=SLONG        readInt4
-            # 10=SRATIONAL   readInt4: numerator / readInt4: denominator
-            # 11=FLOAT      readFloat4
-            # 12=DOUBLE     readFloat8
-            fieldType=reader.readUInt2()
+            # 1 = BYTE        readUShort
+            # 2 = ASCII       readPStr('ASCII')
+            # 3 = SHORT       readUInt2
+            # 4 = LONG        readUInt4
+            # 5 = RATIONAL    readUInt4: numerator / readUInt4: denominator
+            # 6 = SBYTE       readShort
+            # 7 = UNDEFINED   readUShort * nbValues
+            # 8 = SSHORT       readInt2
+            # 9 = SLONG        readInt4
+            # 10 = SRATIONAL   readInt4: numerator / readInt4: denominator
+            # 11 = FLOAT      readFloat4
+            # 12 = DOUBLE     readFloat8
+            fieldType = reader.readUInt2()
 
-            nbValues=reader.readUInt4()
+            nbValues = reader.readUInt4()
 
             # note:
             #   if field type length is more than 4bytes then value is an offset to content
-            value=None
-            if byteOrder=='>':
-                fieldSize=9
+            value = None
+            if byteOrder == '>':
+                fieldSize = 9
 
                 if fieldType in (1, 6):
-                    fieldSize=1
+                    fieldSize = 1
                 elif fieldType in (3, 8):
-                    fieldSize=2
+                    fieldSize = 2
 
-                if (nbValues * fieldSize)<=4:
+                if (nbValues * fieldSize) <= 4:
                     # bigendian need to take care about order
-                    if fieldType==1:
-                        value=reader.readShort()
+                    if fieldType == 1:
+                        value = reader.readShort()
                         reader.seek(3, os.SEEK_CUR)
-                    elif fieldType==3:
-                        value=reader.readUInt2()
+                    elif fieldType == 3:
+                        value = reader.readUInt2()
                         reader.seek(2, os.SEEK_CUR)
-                    elif fieldType==6:
-                        value=reader.readShort()
+                    elif fieldType == 6:
+                        value = reader.readShort()
                         reader.seek(3, os.SEEK_CUR)
-                    elif fieldType==8:
-                        value=reader.readInt2()
+                    elif fieldType == 8:
+                        value = reader.readInt2()
                         reader.seek(2, os.SEEK_CUR)
 
             if value is None:
-                value=reader.readUInt4()
+                value = reader.readUInt4()
 
             # only tagId that are interesting for BuliCommander are analyzed
             # otherwise tagId is ignored
-            if tagId==0x00fe:
+            if tagId == 0x00fe:
                 # NewSubfileType
                 # a 32bits flags
                 # 0000 0000  0000 0000  0000 0000  0000 0000
                 #                                        ||+------ 1 if the image is a reduced-resolution version of another image in this TIFF file; else the bit is 0
                 #                                        |+------- 1 if the image is a single page of a multi-page image (see the PageNumber field description); else the bit is 0
-                #                                        +-------- 1 if the image defines a transparency mask for another image in this TIFF file (The PhotometricInterpretation value must be 4, designating a transparency mask)
+                #                                        +-------- 1 if the image defines a transparency mask for another image in this TIFF file (The PhotometricInterpretation
+                #                                                    value must be 4, designating a transparency mask)
                 # Other flags should be 0
-                #Debug.print(f'  tagId: {tagId:04x} [NewSubfileType] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                # Debug.print(f'  tagId: {tagId:04x} [NewSubfileType] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
                 pass
-            elif tagId==0x00ff:
+            elif tagId == 0x00ff:
                 # SubfileType (deprecated->use of 0x00fe instead)
-                # 1=full-resolution image data
-                # 2=reduced-resolution image data
-                # 3=single page of a multi page document
-                #Debug.print(f'  tagId: {tagId:04x} [SubfileType] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                # 1 = full-resolution image data
+                # 2 = reduced-resolution image data
+                # 3 = single page of a multi page document
+                # Debug.print(f'  tagId: {tagId:04x} [SubfileType] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
                 pass
-            elif tagId==0x0100:
-                returned['width']=value
-            elif tagId==0x0101:
-                returned['height']=value
-            elif tagId==0x0102:
+            elif tagId == 0x0100:
+                returned['width'] = value
+            elif tagId == 0x0101:
+                returned['height'] = value
+            elif tagId == 0x0102:
                 # BitsPerSample
-                #print(f'  tagId: {tagId:04x} [BitsPerSample] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
-                if nbValues==1:
+                # print(f'  tagId: {tagId:04x} [BitsPerSample] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                if nbValues == 1:
                     tmpReturned['bitDepth'] = value
-                elif nbValues==2:
-                    tmpReturned['bitDepth'] = value&0xFFFF
-                elif value>0:
+                elif nbValues == 2:
+                    tmpReturned['bitDepth'] = value & 0xFFFF
+                elif value > 0:
                     # value is an offset
-                    offset=value
+                    offset = value
 
                     # in theory, bitDepth can be different for all channel...
                     # and then need to get values for all channel
                     #
-                    #for index in range(nbValues):
-                    #    value=getShort(offset, fHandler, byteOrder)
+                    # for index in range(nbValues):
+                    #    value = getShort(offset, fHandler, byteOrder)
                     #    print(f'--tagId: {tagId:04x} [BitsPerSample] / index: {index} / value: {value:08x}')
-                    #    offset+=2
+                    #    offset += 2
 
                     # to simplify -as most of file might have the same bitdepth per channel-
                     # just get the first one
                     # (note: it seesm libtiff library doesn't support different value for channels)
-                    value=getShort(offset, fHandler, byteOrder)
+                    value = getShort(offset, fHandler, byteOrder)
                     tmpReturned['bitDepth'] = value
-            elif tagId==0x0103:
+            elif tagId == 0x0103:
                 # Compression
-                #print(f'  tagId: {tagId:04x} [Compression] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                # print(f'  tagId: {tagId:04x} [Compression] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
                 if value in __COMPRESSION_TYPE:
-                    returned['compressionLevel']=(value, __COMPRESSION_TYPE[value])
+                    returned['compressionLevel'] = (value, __COMPRESSION_TYPE[value])
                 else:
-                    returned['compressionLevel']=(value, i18n(f'Unknow compression ({value:08x})'))
-            elif tagId==0x0106:
+                    returned['compressionLevel'] = (value, i18n(f'Unknow compression ({value:08x})'))
+            elif tagId == 0x0106:
                 # PhotometricInterpretation
-                #Debug.print(f'  tagId: {tagId:04x} [PhotometricInterpretation] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                # Debug.print(f'  tagId: {tagId:04x} [PhotometricInterpretation] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
                 if value in __PHOTOMETRIC_INTERPRETATION:
-                    returned['colorType']=(value, __PHOTOMETRIC_INTERPRETATION[value])
+                    returned['colorType'] = (value, __PHOTOMETRIC_INTERPRETATION[value])
                 else:
-                    returned['colorType']=(value, '??')
-            elif tagId==0x0115:
+                    returned['colorType'] = (value, '??')
+            elif tagId == 0x0115:
                 # SamplesPerPixel
                 # Number of component per pixels
-                # 3=RGB
-                # 4=CMYK
+                # 3 = RGB
+                # 4 = CMYK
                 # ==> value is an offset
-                #print(f'  tagId: {tagId:04x} [SamplesPerPixel] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
-                tmpReturned['SamplesPerPixel']=value
-            elif tagId==0x011A:
+                # print(f'  tagId: {tagId:04x} [SamplesPerPixel] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                tmpReturned['SamplesPerPixel'] = value
+            elif tagId == 0x011A:
                 # XResolution
                 # number of pixels per resolution resolution unit (RATIONAL)
                 # ==> value is an offset
-                tmpReturned['XResolution']=getRational(value, fHandler, byteOrder)
-            elif tagId==0x011B:
+                tmpReturned['XResolution'] = getRational(value, fHandler, byteOrder)
+            elif tagId == 0x011B:
                 # YResolution
                 # number of pixels per resolution resolution unit (RATIONAL)
                 # ==> value is an offset
-                tmpReturned['YResolution']=getRational(value, fHandler, byteOrder)
-            elif tagId==0x0128:
+                tmpReturned['YResolution'] = getRational(value, fHandler, byteOrder)
+            elif tagId == 0x0128:
                 # resolution unit
-                # 1=no unit
-                # 2=Inch
-                # 3=Centimer
-                # -- If tagId not defined in IFD, should be considered as 2=Inch
-                tmpReturned['ResolutionUnit']=value
-            elif tagId==0x0140:
+                # 1 = no unit
+                # 2 = Inch
+                # 3 = Centimer
+                # -- If tagId not defined in IFD, should be considered as 2 = Inch
+                tmpReturned['ResolutionUnit'] = value
+            elif tagId == 0x0140:
                 # ColorMap offset?
                 # number of color in palette: 3 * (2**BitsPerSample)
                 # ==> value is an offset?
-                #print(f'  tagId: {tagId:04x} [ColorMap] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
-                returned['paletteSize']=nbValues//3
-            elif tagId==0x02BC:
+                # print(f'  tagId: {tagId:04x} [ColorMap] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                returned['paletteSize'] = nbValues//3
+            elif tagId == 0x02BC:
                 # XMP
                 # ==> value is an offset
-                #Debug.print(f'  tagId: {tagId:04x} [XML] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                # Debug.print(f'  tagId: {tagId:04x} [XML] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
                 pass
-            elif tagId==0x83BB:
+            elif tagId == 0x83BB:
                 # IPTC
-                #   Type=UNDEFINED or BYTE
+                #   Type = UNDEFINED or BYTE
                 # ==> value is an offset
-                #Debug.print(f'  tagId: {tagId:04x} [IPTC] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                # Debug.print(f'  tagId: {tagId:04x} [IPTC] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
                 pass
-            elif tagId==0x8769:
+            elif tagId == 0x8769:
                 # EXIF
-                #   Type=LONG or IFD (https://www.awaresystems.be/imaging/tiff/tifftags/privateifd/exif.html)
+                #   Type = LONG or IFD (https://www.awaresystems.be/imaging/tiff/tifftags/privateifd/exif.html)
                 # ==> value is an offset
-                #Debug.print(f'  tagId: {tagId:04x} [EXIF] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
+                # Debug.print(f'  tagId: {tagId:04x} [EXIF] / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
                 pass
-            elif tagId==0x8773:
+            elif tagId == 0x8773:
                 # ICC profile
-                #   Type=UNDEFINED
+                #   Type = UNDEFINED
                 # ==> value is an offset
                 returned.update(self.__readICCData(getUndefined(value, nbValues, fHandler)))
-            #else:
+            # else:
             #    Debug.print(f'  tagId: {tagId:04x} / fieldType: {fieldType:04x} / nbValues: {nbValues} / value: {value:08x}')
 
         def readIFD(fHandler, byteOrder, ifdNumber):
@@ -3754,17 +3726,17 @@ class BCFile(BCBaseFile):
             # 2-    number of directory entries (N)
             # N*12- entries
             # 4-    offset of next IFD (0 if None)
-            bytes=fHandler.read(2)
-            nbEntries=struct.unpack(f'{byteOrder}H', bytes)[0]
+            bytes = fHandler.read(2)
+            nbEntries = struct.unpack(f'{byteOrder}H', bytes)[0]
 
-            if nbEntries<1:
+            if nbEntries < 1:
                 # not a normal case, should contain at least one entry
                 return 0
 
-            reader=BytesRW(fHandler.read(nbEntries * 12 + 4))
+            reader = BytesRW(fHandler.read(nbEntries * 12 + 4))
             reader.setByteOrder(byteOrder)
 
-            if ifdNumber==1:
+            if ifdNumber == 1:
                 # get documentation information only for first IFD
                 for index in range(nbEntries):
                     # loop over entries
@@ -3773,18 +3745,18 @@ class BCFile(BCBaseFile):
                 reader.seek(nbEntries * 12)
 
             # next IFD offset
-            nextIFDOffest=reader.readUInt4()
-            returned['document.pagesCount']+=1
+            nextIFDOffest = reader.readUInt4()
+            returned['document.pagesCount'] += 1
             return nextIFDOffest
 
-        if fromCache and not self.__metadata is None:
+        if fromCache and self.__metadata is not None:
             return self.__metadata
 
         returned = {
                 'document.pagesCount': 0
             }
         tmpReturned = {
-            'ResolutionUnit': 2 # default resolution unit = inch
+            'ResolutionUnit': 2  # default resolution unit = inch
         }
 
         __COMPRESSION_TYPE = {
@@ -3821,7 +3793,7 @@ class BCFile(BCBaseFile):
                 50002: i18n('JPEG XL'),
             }
 
-        __PHOTOMETRIC_INTERPRETATION={
+        __PHOTOMETRIC_INTERPRETATION = {
                 0: i18n('Grayscale (White is zero)'),
                 1: i18n('Grayscale (Black is zero)'),
                 2: i18n('RGB'),
@@ -3845,11 +3817,11 @@ class BCFile(BCBaseFile):
             # first 2 bytes
             # 'II' => little-endian byte order
             # 'MM' => big-endian byte order
-            byteOrder=reader.readStr(2)
-            if byteOrder=='II':
-                byteOrder='<'
-            elif byteOrder=='MM':
-                byteOrder='>'
+            byteOrder = reader.readStr(2)
+            if byteOrder == 'II':
+                byteOrder = '<'
+            elif byteOrder == 'MM':
+                byteOrder = '>'
             else:
                 # not a TIFF image
                 # Debug.print('KO1', byteOrder)
@@ -3858,47 +3830,46 @@ class BCFile(BCBaseFile):
 
             reader.setByteOrder(byteOrder)
 
-            version=reader.readUInt2()
-            if version!=0x2A:
+            version = reader.readUInt2()
+            if version != 0x2A:
                 # not a TIFF image
                 # Debug.print(f'KO2: {version:04x}')
                 reader.close()
                 return returned
 
             # get offset (from beginning of file) of Image File Directory
-            ifdOffset=reader.readUInt4()
+            ifdOffset = reader.readUInt4()
 
             reader.close()
 
-            if ifdOffset==0:
+            if ifdOffset == 0:
                 # not a TIFF image??
                 # Debug.print('KO3')
                 return returned
 
-            ifdNumber=0
-            while ifdOffset!=0:
+            ifdNumber = 0
+            while ifdOffset != 0:
                 # go to IFD
-                ifdNumber+=1
+                ifdNumber += 1
 
                 fHandler.seek(ifdOffset, os.SEEK_SET)
-                ifdOffset=readIFD(fHandler, byteOrder, ifdNumber)
+                ifdOffset = readIFD(fHandler, byteOrder, ifdNumber)
 
         if 'XResolution' in tmpReturned and 'YResolution' in tmpReturned:
-            ppX=0
-            ppY=0
-            if tmpReturned['XResolution'][1]!=0:
-                ppX=tmpReturned['XResolution'][0]/tmpReturned['XResolution'][1]
-            if tmpReturned['YResolution'][1]!=0:
-                ppY=tmpReturned['YResolution'][0]/tmpReturned['YResolution'][1]
+            ppX = 0
+            ppY = 0
+            if tmpReturned['XResolution'][1] != 0:
+                ppX = tmpReturned['XResolution'][0]/tmpReturned['XResolution'][1]
+            if tmpReturned['YResolution'][1] != 0:
+                ppY = tmpReturned['YResolution'][0]/tmpReturned['YResolution'][1]
 
-            if tmpReturned['ResolutionUnit']==3:
+            if tmpReturned['ResolutionUnit'] == 3:
                 # in centimers
                 # convert to inch
-                ppX=convertSize(ppX, 'cm', 'in')
-                ppY=convertSize(ppY, 'cm', 'in')
+                ppX = convertSize(ppX, 'cm', 'in')
+                ppY = convertSize(ppY, 'cm', 'in')
 
-
-            if tmpReturned['ResolutionUnit']==1:
+            if tmpReturned['ResolutionUnit'] == 1:
                 # no unit
                 returned['resolutionX'] = (ppX, f'{ppX:.3f}')
                 returned['resolutionY'] = (ppY, f'{ppY:.3f}')
@@ -3916,52 +3887,51 @@ class BCFile(BCBaseFile):
                 else:
                     returned['resolution'] = f'{ppX:.3f}x{ppY:.3f}ppi'
 
-        withAlpha=False
+        withAlpha = False
         if returned['colorType'][0] in (0, 1, 3):
-            withAlpha=(tmpReturned['SamplesPerPixel']-1)>0
+            withAlpha = (tmpReturned['SamplesPerPixel']-1) > 0
         elif returned['colorType'][0] in (2, 6, 8, 9, 10):
-            withAlpha=(tmpReturned['SamplesPerPixel']-3)>0
+            withAlpha = (tmpReturned['SamplesPerPixel']-3) > 0
         elif returned['colorType'][0] == 5:
-            withAlpha=(tmpReturned['SamplesPerPixel']-4)>0
+            withAlpha = (tmpReturned['SamplesPerPixel']-4) > 0
 
         if withAlpha:
-            returned['colorType']=(returned['colorType'][0], returned['colorType'][1]+' '+i18n("with Alpha"))
+            returned['colorType'] = (returned['colorType'][0], returned['colorType'][1]+' '+i18n("with Alpha"))
 
         if 'bitDepth' in tmpReturned:
             if returned['colorType'][0] in (0, 1, 3):
-                returned['bitDepth']=(tmpReturned['bitDepth'], f"{tmpReturned['bitDepth']}-bit/pixel")
+                returned['bitDepth'] = (tmpReturned['bitDepth'], f"{tmpReturned['bitDepth']}-bit/pixel")
             elif returned['colorType'][0] in (2, 5, 6, 8, 9, 10):
-                returned['bitDepth']=(tmpReturned['bitDepth'], f"{tmpReturned['bitDepth']}-bit/channel")
+                returned['bitDepth'] = (tmpReturned['bitDepth'], f"{tmpReturned['bitDepth']}-bit/channel")
             else:
-                returned['bitDepth']=(tmpReturned['bitDepth'], f"{tmpReturned['bitDepth']}-bit")
+                returned['bitDepth'] = (tmpReturned['bitDepth'], f"{tmpReturned['bitDepth']}-bit")
 
         return returned
 
-
     def __readMetaDataSvg(self, fromCache=True, getExtraData=False):
         """Read metadata from SVG & SVGZ file"""
-        if getExtraData==False and fromCache and not self.__metadata is None:
+        if getExtraData is False and fromCache and self.__metadata is not None:
             return self.__metadata
 
         returned = {}
 
-        fileContent=''
+        fileContent = ''
         if self._format == BCFileManagedFormat.SVGZ:
             # GZipped SVG file
             try:
                 with gzip.open(self._fullPathName, 'rb') as fHandler:
-                    fileContent=fHandler.read()
+                    fileContent = fHandler.read()
             except Exception as e:
-                # can't be read (not xml?)
+                # can't be read (not xml?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataSvg] Unable to read file {0}: {1}', self._fullPathName, f"{e}")
                 return returned
         else:
             try:
                 with open(self._fullPathName, 'r') as fHandler:
-                    fileContent=fHandler.read()
+                    fileContent = fHandler.read()
             except Exception as e:
-                # can't be read (not xml?)
+                # can't be read (not xml?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataSvg] Unable to read file {0}: {1}', self._fullPathName, f"{e}")
                 return returned
@@ -3969,56 +3939,55 @@ class BCFile(BCBaseFile):
         try:
             xmlDoc = xmlElement.fromstring(fileContent)
         except Exception as e:
-            # can't be read (not xml?)
+            # can't be read (not xml?)
             self.__readable = False
             Debug.print('[BCFile.__readMetaDataSvg] Unable to parse file {0}: {1}', self._fullPathName, f"{e}")
             return returned
 
         try:
             width = xmlDoc.attrib['width']
-            if r:=re.match(r'^(\d*\.\d*)(in|mm|cm|px|pt)?', width):
-                returned['width']=float(r.groups()[0])
-                if not r.groups()[1] is None:
-                    returned['width.unit']=r.groups()[1]
-            elif r:=re.match(r'^(\d+)(in|mm|cm|px|pt)?', width):
-                returned['width']=int(r.groups()[0])
-                if not r.groups()[1] is None:
-                    returned['width.unit']=r.groups()[1]
+            if r := re.match(r'^(\d*\.\d*)(in|mm|cm|px|pt)?', width):
+                returned['width'] = float(r.groups()[0])
+                if r.groups()[1] is not None:
+                    returned['width.unit'] = r.groups()[1]
+            elif r := re.match(r'^(\d+)(in|mm|cm|px|pt)?', width):
+                returned['width'] = int(r.groups()[0])
+                if r.groups()[1] is not None:
+                    returned['width.unit'] = r.groups()[1]
         except Exception as e:
             Debug.print('[BCFile.__readMetaDataSvg] Unable to get `width` in file {0}: {1}', self._fullPathName, f"{e}")
 
         try:
             height = xmlDoc.attrib['height']
-            if r:=re.match(r'^(\d*\.\d*)(in|mm|cm|px|pt)?', height):
-                returned['height']=float(r.groups()[0])
-                if not r.groups()[1] is None:
-                    returned['height.unit']=r.groups()[1]
-            elif r:=re.match(r'^(\d+)(in|mm|cm|px|pt)?', height):
-                returned['height']=int(r.groups()[0])
-                if not r.groups()[1] is None:
-                    returned['height.unit']=r.groups()[1]
+            if r := re.match(r'^(\d*\.\d*)(in|mm|cm|px|pt)?', height):
+                returned['height'] = float(r.groups()[0])
+                if r.groups()[1] is not None:
+                    returned['height.unit'] = r.groups()[1]
+            elif r := re.match(r'^(\d+)(in|mm|cm|px|pt)?', height):
+                returned['height'] = int(r.groups()[0])
+                if r.groups()[1] is not None:
+                    returned['height.unit'] = r.groups()[1]
         except Exception as e:
             Debug.print('[BCFile.__readMetaDataSvg] Unable to get `height` in file {0}: {1}', self._fullPathName, f"{e}")
 
         try:
             viewBox = xmlDoc.attrib['viewBox']
-            returned['viewBox']=[float(v) for v in viewBox.split()]
+            returned['viewBox'] = [float(v) for v in viewBox.split()]
         except Exception as e:
             pass
 
         return returned
 
-
     def __readMetaDataCbx(self, fromCache=True, getExtraData=False):
         """Read metadata from Comic Book file (CBZ, CBT)"""
         def addPage(fileName, tmpFile):
             # read extracted file
-            imageReader=QImageReader(tmpFile)
+            imageReader = QImageReader(tmpFile)
 
             if imageReader.canRead():
                 # can read file content
-                width=imageReader.size().width()
-                height=imageReader.size().height()
+                width = imageReader.size().width()
+                height = imageReader.size().height()
 
                 returned['document.pages'].append({
                     'fileName': fileName,
@@ -4026,12 +3995,12 @@ class BCFile(BCBaseFile):
                     'height': height
                 })
 
-                if width>returned['document.maxWidth']:
-                    returned['document.maxWidth']=width
-                if height>returned['document.maxHeight']:
-                    returned['document.maxHeight']=height
+                if width > returned['document.maxWidth']:
+                    returned['document.maxWidth'] = width
+                if height > returned['document.maxHeight']:
+                    returned['document.maxHeight'] = height
 
-        if getExtraData==False and fromCache and not self.__metadata is None:
+        if getExtraData is False and fromCache and self.__metadata is not None:
             return self.__metadata
 
         returned = {
@@ -4064,16 +4033,16 @@ class BCFile(BCBaseFile):
                     # - exclude directories
                     # - exclude files for which extension is not JPEG, JPG, PNG
                     # ordered by file name
-                    fileNames=sorted([page.filename for page in archive.infolist() if (not page.is_dir()) and re.search(r"\.(jpeg|jpg|png)$", page.filename, re.I)])
+                    fileNames = sorted([page.filename for page in archive.infolist() if (not page.is_dir()) and re.search(r"\.(jpeg|jpg|png)$", page.filename, re.I)])
 
                     for fileName in fileNames:
                         # for each page, extract, read image width/height
                         with tempfile.TemporaryDirectory() as tmpDirName:
-                            extractedFileName=archive.extract(fileName, tmpDirName)
+                            extractedFileName = archive.extract(fileName, tmpDirName)
                             addPage(fileName, extractedFileName)
 
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
@@ -4084,18 +4053,17 @@ class BCFile(BCBaseFile):
                     # - exclude directories
                     # - exclude files for which extension is not JPEG, JPG, PNG
                     # ordered by file name
-                    fileNames=sorted([page.name for page in archive.getmembers() if (not page.isdir()) and re.search(r"\.(jpeg|jpg|png)$", page.name, re.I)])
-
+                    fileNames = sorted([page.name for page in archive.getmembers() if (not page.isdir()) and re.search(r"\.(jpeg|jpg|png)$", page.name, re.I)])
 
                     for fileName in fileNames:
                         # for each page, extract, read image width/height
                         with tempfile.TemporaryDirectory() as tmpDirName:
                             archive.extract(fileName, tmpDirName)
-                            extractedFileName=os.path.join(tmpDirName, fileName)
+                            extractedFileName = os.path.join(tmpDirName, fileName)
                             addPage(fileName, extractedFileName)
 
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
@@ -4105,34 +4073,32 @@ class BCFile(BCBaseFile):
                 # - exclude directories
                 # - exclude files for which extension is not JPEG, JPG, PNG
                 # ordered by file name
-                archiveFiles=Uncompress.getList(self._fullPathName)
-                if isinstance(archiveFiles, list) and len(archiveFiles)>0:
-                    fileNames=sorted([page.name() for page in archiveFiles if (not page.isDirectory()) and re.search(r"\.(jpeg|jpg|png)$", page.name(), re.I)])
+                archiveFiles = Uncompress.getList(self._fullPathName)
+                if isinstance(archiveFiles, list) and len(archiveFiles) > 0:
+                    fileNames = sorted([page.name() for page in archiveFiles if (not page.isDirectory()) and re.search(r"\.(jpeg|jpg|png)$", page.name(), re.I)])
                     with tempfile.TemporaryDirectory() as tmpDirName:
                         if Uncompress.extractAll(self._fullPathName, tmpDirName):
                             # uncompress all files
                             # for 7zip solid archive it's faster than extracting file by file
                             for fileName in fileNames:
                                 # for each page, extract, read image width/height
-                                extractedFileName=os.path.join(tmpDirName, fileName)
+                                extractedFileName = os.path.join(tmpDirName, fileName)
                                 if os.path.isfile(extractedFileName):
                                     addPage(fileName, extractedFileName)
             except Exception as e:
-                # can't be read (not exist, not a zip file?)
+                # can't be read (not exist, not a zip file?)
                 self.__readable = False
                 Debug.print('[BCFile.__readMetaDataCbx] Unable to open file {0}: {1}', self._fullPathName, f"{e}")
                 return None
 
-        returned['document.pagesCount']=len(returned['document.pages'])
-        if returned['document.pagesCount']>0:
-            returned['width']=returned['document.pages'][0]['width']
-            returned['height']=returned['document.pages'][0]['height']
+        returned['document.pagesCount'] = len(returned['document.pages'])
+        if returned['document.pagesCount'] > 0:
+            returned['width'] = returned['document.pages'][0]['width']
+            returned['height'] = returned['document.pages'][0]['height']
 
         return returned
 
-
     # endregion: utils ---------------------------------------------------------
-
 
     # region: getter/setters ---------------------------------------------------
 
@@ -4180,7 +4146,7 @@ class BCFile(BCBaseFile):
     @staticmethod
     def thumbnailCacheCompression(format, size):
         """Return current thumbnail cache compression parameter"""
-        if format== BCFileThumbnailFormat.JPEG:
+        if format == BCFileThumbnailFormat.JPEG:
             if size in [BCFileThumbnailSize.SMALL, BCFileThumbnailSize.MEDIUM]:
                 # on smaller image, jpeg compression artifact are more visible, so reduce compression
                 return 95
@@ -4255,7 +4221,7 @@ class BCFile(BCBaseFile):
         else:
             try:
                 return QImage(self._fullPathName)
-            except:
+            except Exception:
                 return None
 
     def thumbnail(self, size=None, thumbType=BCBaseFile.THUMBTYPE_IMAGE, cache=True):
@@ -4289,7 +4255,7 @@ class BCFile(BCBaseFile):
             # check if thumbnail is cached
             sourceSize = size
 
-            while not sourceSize is None:
+            while sourceSize is not None:
                 thumbnailFile = os.path.join(BCFile.thumbnailCacheDirectory(sourceSize), f'{self.__qHash}')
 
                 if os.path.isfile(thumbnailFile):
@@ -4297,10 +4263,10 @@ class BCFile(BCBaseFile):
                     imageSrc = QImage(thumbnailFile)
 
                     if sourceSize == size:
-                        # the found thumbnail is already to expected size, return it
-                        if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
+                        # the found thumbnail is already to expected size, return it
+                        if thumbType == BCBaseFile.THUMBTYPE_IMAGE:
                             return imageSrc
-                        elif thumbType==BCBaseFile.THUMBTYPE_ICON:
+                        elif thumbType == BCBaseFile.THUMBTYPE_ICON:
                             return QIcon(QPixmap.fromImage(imageSrc))
                         else:
                             # BCBaseFile.THUMBTYPE_FILENAME
@@ -4313,7 +4279,7 @@ class BCFile(BCBaseFile):
         thumbnailImg = None
         if not cache or imageSrc is None:
             # no image cache found
-            # load full image size from file
+            # load full image size from file
             imageSrc = self.image()
             if imageSrc is None or imageSrc.isNull():
                 return None
@@ -4321,7 +4287,7 @@ class BCFile(BCBaseFile):
             if cache:
                 # build all image size in cache, from the biggest to smallest
                 buildSize = BCFileThumbnailSize.HUGE
-                while not buildSize is None:
+                while buildSize is not None:
                     if imageSrc.width() <= buildSize.value or imageSrc.height() <= buildSize.value:
                         # when image is smaller than thumbnail
                         # create a thumbnail bigger than thumbnail o_O'
@@ -4344,10 +4310,10 @@ class BCFile(BCBaseFile):
 
                     buildSize = buildSize.prev()
 
-                if not thumbnailImg is None:
-                    if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
+                if thumbnailImg is not None:
+                    if thumbType == BCBaseFile.THUMBTYPE_IMAGE:
                         return thumbnailImg
-                    elif thumbType==BCBaseFile.THUMBTYPE_ICON:
+                    elif thumbType == BCBaseFile.THUMBTYPE_ICON:
                         return QIcon(QPixmap.fromImage(thumbnailImg))
                     else:
                         # BCBaseFile.THUMBTYPE_FILENAME
@@ -4362,9 +4328,9 @@ class BCFile(BCBaseFile):
 
         if not cache:
             # no need to save thumbnail
-            if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
+            if thumbType == BCBaseFile.THUMBTYPE_IMAGE:
                 return thumbnailImg
-            elif thumbType==BCBaseFile.THUMBTYPE_ICON:
+            elif thumbType == BCBaseFile.THUMBTYPE_ICON:
                 return QIcon(QPixmap.fromImage(thumbnailImg))
             else:
                 # BCBaseFile.THUMBTYPE_FILENAME
@@ -4381,9 +4347,9 @@ class BCFile(BCBaseFile):
             Debug.print('[BCFile.thumbnail] Unable to save thumbnail in cache {0}: {1}', thumbnailFile, f"{e}")
 
         # finally, return thumbnail
-        if thumbType==BCBaseFile.THUMBTYPE_IMAGE:
+        if thumbType == BCBaseFile.THUMBTYPE_IMAGE:
             return thumbnailImg
-        elif thumbType==BCBaseFile.THUMBTYPE_ICON:
+        elif thumbType == BCBaseFile.THUMBTYPE_ICON:
             return QIcon(QPixmap.fromImage(thumbnailImg))
         else:
             # BCBaseFile.THUMBTYPE_FILENAME
@@ -4447,7 +4413,7 @@ class BCFile(BCBaseFile):
 
         Hash is stored in cache
         """
-        if not method in ('md5', 'sha1', 'sha256', 'sha512'):
+        if method not in ('md5', 'sha1', 'sha256', 'sha512'):
             raise EInvalidValue('Given `method` value must be "md5", "sha1", "sha256" or "sha512"')
 
         if os.path.isfile(self._fullPathName):
@@ -4457,7 +4423,7 @@ class BCFile(BCBaseFile):
 
         if self._mdatetime != _mdatetime or self.__hashCache[method] is None:
             # recalculate hash
-            fileHash={
+            fileHash = {
                     'md5': hashlib.md5(),
                     'sha1': hashlib.sha1(),
                     'sha256': hashlib.sha256(),
@@ -4465,12 +4431,12 @@ class BCFile(BCBaseFile):
                 }
 
             with open(self._fullPathName, "rb") as fileHandle:
-                buffer=fileHandle.read(chunkSize)
+                buffer = fileHandle.read(chunkSize)
                 while buffer:
                     fileHash[method].update(buffer)
-                    buffer=fileHandle.read(chunkSize)
+                    buffer = fileHandle.read(chunkSize)
 
-                self.__hashCache[method]=fileHash[method].hexdigest()
+                self.__hashCache[method] = fileHash[method].hexdigest()
 
         return self.__hashCache[method]
 
@@ -4478,11 +4444,12 @@ class BCFile(BCBaseFile):
 
 # ------------------------------------------------------------------------------
 
+
 class BCWorkerCache(Worker):
     """A worker class that allows to work with BCFile and BCFileCache in a WorkerPool"""
 
     def __init__(self, pool, callback, *callbackArgv):
-        self.__dbFileCache=BCFileCache(QUuid.createUuid().toString().strip('{}').replace('-',''))
+        self.__dbFileCache = BCFileCache(QUuid.createUuid().toString().strip('{}').replace('-', ''))
         super(BCWorkerCache, self).__init__(pool, callback, self.__dbFileCache, *callbackArgv)
 
     def startEvent(self):
@@ -4569,11 +4536,11 @@ class BCFileCache(QObject):
     #  but execution time is insignificant
     #
 
-    __BC_CACHE_PATH=''
-    __BC_CACHE_FILE=None
-    __DB_EXPECTED_VERSION=100   #1.00
+    __BC_CACHE_PATH = ''
+    __BC_CACHE_FILE = None
+    __DB_EXPECTED_VERSION = 100   # 1.00
 
-    __GLOBAL_INSTANCE=None
+    __GLOBAL_INSTANCE = None
 
     @staticmethod
     def __setCacheDirectory(bcCachePath=None):
@@ -4604,13 +4571,13 @@ class BCFileCache(QObject):
         """
         BCFileCache.__setCacheDirectory(bcCachePath)
         if BCFileCache.__GLOBAL_INSTANCE is None:
-            BCFileCache.__GLOBAL_INSTANCE=BCFileCache()
+            BCFileCache.__GLOBAL_INSTANCE = BCFileCache()
 
     @staticmethod
     def finalize():
-        if not BCFileCache.__GLOBAL_INSTANCE is None:
+        if BCFileCache.__GLOBAL_INSTANCE is not None:
             BCFileCache.__GLOBAL_INSTANCE.close()
-            BCFileCache.__GLOBAL_INSTANCE=None
+            BCFileCache.__GLOBAL_INSTANCE = None
 
     @staticmethod
     def cacheDirectory():
@@ -4621,7 +4588,7 @@ class BCFileCache(QObject):
     def cacheFile():
         """Return SQlite databse cache file"""
         if BCFileCache.__BC_CACHE_FILE is None:
-            BCFileCache.__BC_CACHE_FILE=os.path.join(BCFileCache.__BC_CACHE_PATH, f'metaDataCache.sqlite')
+            BCFileCache.__BC_CACHE_FILE = os.path.join(BCFileCache.__BC_CACHE_PATH, f'metaDataCache.sqlite')
         return BCFileCache.__BC_CACHE_FILE
 
     @staticmethod
@@ -4638,26 +4605,26 @@ class BCFileCache(QObject):
         """
         super(BCFileCache, self).__init__()
 
-        self.__id=id
+        self.__id = id
 
         if isinstance(id, str):
-            self.__databaseInstance=QSqlDatabase.addDatabase("QSQLITE", f"dbBCFileCache{self.__id}")
+            self.__databaseInstance = QSqlDatabase.addDatabase("QSQLITE", f"dbBCFileCache{self.__id}")
         else:
-            self.__databaseInstance=QSqlDatabase.addDatabase("QSQLITE", f"dbBCFileCache")
+            self.__databaseInstance = QSqlDatabase.addDatabase("QSQLITE", f"dbBCFileCache")
 
         # current database file version
-        self.__db_version=0
+        self.__db_version = 0
         # prepared queries
-        self.__databaseQuerySetMetadata=None
-        self.__databaseQueryGetMetadata=None
-        self.__databaseQuerySetDirectory=None
-        self.__databaseQueryGetDirectory=None
+        self.__databaseQuerySetMetadata = None
+        self.__databaseQueryGetMetadata = None
+        self.__databaseQuerySetDirectory = None
+        self.__databaseQueryGetDirectory = None
 
         # database filename
-        self.__fileName=BCFileCache.cacheFile()
+        self.__fileName = BCFileCache.cacheFile()
 
         # flag to determinate if there's data to flush
-        self.__dataToFlush=False
+        self.__dataToFlush = False
 
         self.__open()
 
@@ -4668,10 +4635,10 @@ class BCFileCache(QObject):
 
         # prepare query that will be used to set metadata in cache
         if self.__id is None:
-            dbSchema=''
+            dbSchema = ''
         else:
-            dbSchema='`tmpDb`.'
-        self.__databaseQuerySetMetadata=QSqlQuery(self.__databaseInstance)
+            dbSchema = '`tmpDb`.'
+        self.__databaseQuerySetMetadata = QSqlQuery(self.__databaseInstance)
         self.__databaseQuerySetMetadata.prepare(f"""
                 INSERT INTO {dbSchema}`metadata` (hash, metadata, fileFormat)
                             VALUES(:hash, :metadata, :fileFormat)
@@ -4680,7 +4647,7 @@ class BCFileCache(QObject):
             """)
 
         # prepare query that will be used to get metadata in cache
-        self.__databaseQueryGetMetadata=QSqlQuery(self.__databaseInstance)
+        self.__databaseQueryGetMetadata = QSqlQuery(self.__databaseInstance)
         self.__databaseQueryGetMetadata.prepare("""
                 SELECT metadata
                 FROM metadata
@@ -4688,7 +4655,7 @@ class BCFileCache(QObject):
             """)
 
         # prepare query that will be used to set cached directories list
-        self.__databaseQuerySetDirectories=QSqlQuery(self.__databaseInstance)
+        self.__databaseQuerySetDirectories = QSqlQuery(self.__databaseInstance)
         self.__databaseQuerySetDirectories.prepare("""
                 INSERT INTO directories (path, timestamp)
                             VALUES(:path, strftime('%s', 'now', 'localtime'))
@@ -4697,7 +4664,7 @@ class BCFileCache(QObject):
             """)
 
         # prepare query that will be used to get cached directories list
-        self.__databaseQueryGetDirectories=QSqlQuery(self.__databaseInstance)
+        self.__databaseQueryGetDirectories = QSqlQuery(self.__databaseInstance)
         self.__databaseQueryGetDirectories.prepare("""
                 SELECT path, timestamp
                 FROM directories
@@ -4705,13 +4672,13 @@ class BCFileCache(QObject):
 
     def __updateDatabaseVersion(self):
         """Update database version"""
-        sqlQuery=QSqlQuery(self.__databaseInstance)
-        upToDate=True
-        version=0
+        sqlQuery = QSqlQuery(self.__databaseInstance)
+        upToDate = True
+        version = 0
 
-        if self.__db_version==0:
+        if self.__db_version == 0:
             # need to create database schema
-            updatedVersion=100
+            updatedVersion = 100
 
             # Create the main metadata table
             #   This table contains image metadata for each file
@@ -4727,8 +4694,9 @@ class BCFileCache(QObject):
                     `metadata` TEXT,
                     `fileFormat` TEXT,
                     PRIMARY KEY(`hash`)
-                )"""):
-                    upToDate=False
+                )
+                    """):
+                upToDate = False
 
             # Create the directories table
             #   path=           directory location
@@ -4738,10 +4706,11 @@ class BCFileCache(QObject):
                     `path` TEXT NOT NULL UNIQUE,
                     `timestamp` REAL,
                     PRIMARY KEY(`path`)
-                )"""):
-                    upToDate=False
+                )
+                    """):
+                upToDate = False
 
-        if upToDate and not self.__id is None:
+        if upToDate and self.__id is not None:
             # create temporary metadata table in an "memory" database if
             # an id has been provided
             if not sqlQuery.exec("""
@@ -4750,17 +4719,18 @@ class BCFileCache(QObject):
                     `metadata` TEXT,
                     `fileFormat` TEXT,
                     PRIMARY KEY(`hash`)
-                )"""):
-                upToDate=False
+                )
+                    """):
+                upToDate = False
 
         if upToDate:
             # all tables has been created!
-            if self.__db_version!=BCFileCache.__DB_EXPECTED_VERSION:
+            if self.__db_version != BCFileCache.__DB_EXPECTED_VERSION:
                 # update version if needed
                 if sqlQuery.exec(f"PRAGMA user_version={updatedVersion}"):
-                    self.__db_version=updatedVersion
+                    self.__db_version = updatedVersion
                 else:
-                    upToDate=False
+                    upToDate = False
 
         if not upToDate:
             # unable to create/update database schema
@@ -4775,24 +4745,24 @@ class BCFileCache(QObject):
         if self.__databaseInstance is None or self.__id is None or not self.__dataToFlush:
             return False
 
-        sqlQuery=QSqlQuery(self.__databaseInstance)
+        sqlQuery = QSqlQuery(self.__databaseInstance)
         # WHERE clause is mandatory to let parser being able to understand the ON CONFLICT statement
         #  https://www.sqlite.org/lang_upsert.html
         #  chapter 2.2 Parsing Ambiguity
-        #sqlQuery.exec("BEGIN IMMEDIATE TRANSACTION")
+        # sqlQuery.exec("BEGIN IMMEDIATE TRANSACTION")
         if sqlQuery.exec("""
-                INSERT INTO metadata (hash, metadata, fileFormat)
-                    SELECT hash, metadata, fileFormat FROM tmpDb.metadata
-                    WHERE true
-                ON CONFLICT(hash)
-                    DO UPDATE SET metadata=excluded.metadata,
-                                  fileFormat=excluded.fileFormat
-            """):
-            self.__dataToFlush=False
-            #sqlQuery.exec("COMMIT TRANSACTION")
+            INSERT INTO metadata (hash, metadata, fileFormat)
+                SELECT hash, metadata, fileFormat FROM tmpDb.metadata
+                WHERE true
+            ON CONFLICT(hash)
+                DO UPDATE SET metadata=excluded.metadata,
+                             fileFormat=excluded.fileFormat
+                """):
+            self.__dataToFlush = False
+            # sqlQuery.exec("COMMIT TRANSACTION")
             sqlQuery.finish()
             return True
-        #sqlQuery.exec("ROLLBACK TRANSACTION")
+        # sqlQuery.exec("ROLLBACK TRANSACTION")
         sqlQuery.finish()
         return False
 
@@ -4800,15 +4770,15 @@ class BCFileCache(QObject):
         """Open database"""
         if self.__databaseInstance is None:
             if isinstance(self.__id, str):
-                self.__databaseInstance=QSqlDatabase.addDatabase("QSQLITE", f"dbBCFileCache{self.__id}")
+                self.__databaseInstance = QSqlDatabase.addDatabase("QSQLITE", f"dbBCFileCache{self.__id}")
             else:
-                self.__databaseInstance=QSqlDatabase.addDatabase("QSQLITE",  "dbBCFileCache")
+                self.__databaseInstance = QSqlDatabase.addDatabase("QSQLITE",  "dbBCFileCache")
 
         self.__databaseInstance.setDatabaseName(self.__fileName)
 
         if self.__databaseInstance.open():
             # database is opened, prepare database
-            sqlQuery=QSqlQuery(self.__databaseInstance)
+            sqlQuery = QSqlQuery(self.__databaseInstance)
 
             # create a temporary database in memory
             # will be used to insert/update cache data in multithread mode
@@ -4816,19 +4786,19 @@ class BCFileCache(QObject):
                 # can't attach memory database??
                 # do not continue
                 self.__databaseInstance.close()
-                self.__databaseInstance=None
+                self.__databaseInstance = None
                 return False
 
             # need to check version
             if sqlQuery.exec("PRAGMA user_version"):
                 while sqlQuery.next():
-                    self.__db_version=sqlQuery.value('user_version')
+                    self.__db_version = sqlQuery.value('user_version')
                     break
 
                 if not self.__updateDatabaseVersion():
                     # database schema is not correct and/or unable to create/update database schema
                     self.__databaseInstance.close()
-                    self.__databaseInstance=None
+                    self.__databaseInstance = None
                     return False
 
             self.__initializeQueries()
@@ -4850,10 +4820,10 @@ class BCFileCache(QObject):
         """Close cache database if open"""
         if self.__databaseInstance:
             self.__flushMemoryDatabase()
-            if not self.__id is None:
+            if self.__id is not None:
                 self.__databaseInstance.exec(f"DETACH DATABASE tmpDb")
             self.__databaseInstance.close()
-            self.__databaseInstance=None
+            self.__databaseInstance = None
 
             if isinstance(self.__id, str):
                 QSqlDatabase.removeDatabase(f"dbBCFileCache{self.__id}")
@@ -4872,22 +4842,22 @@ class BCFileCache(QObject):
             return False
 
         if isinstance(metadata, dict) and 'format' in metadata:
-            fileFormat=metadata['format']
+            fileFormat = metadata['format']
             # convert it to string
             try:
-                metadata=json.dumps(metadata, cls=JsonQObjectEncoder)
+                metadata = json.dumps(metadata, cls=JsonQObjectEncoder)
             except Exception as e:
-                metadata='{isNotValidJson:true}'
+                metadata = '{isNotValidJson:true}'
         else:
-            fileFormat=BCFileManagedFormat.UNKNOWN
-            metadata='{}'
+            fileFormat = BCFileManagedFormat.UNKNOWN
+            metadata = '{}'
 
         self.__databaseQuerySetMetadata.bindValue(":hash", hash)
         self.__databaseQuerySetMetadata.bindValue(":metadata", metadata)
         self.__databaseQuerySetMetadata.bindValue(":fileFormat", fileFormat)
 
         if self.__databaseQuerySetMetadata.exec():
-            self.__dataToFlush=(not self.__id is None)
+            self.__dataToFlush = (self.__id is not None)
             return True
         return False
 
@@ -4917,14 +4887,14 @@ class BCFileCache(QObject):
             return False
 
         if isinstance(directory, list):
-            nbKo=0
-            inTransaction=self.beginTransaction()
+            nbKo = 0
+            inTransaction = self.beginTransaction()
             for path in directory:
                 if not self.setDirectory(path):
-                    nbKo+=1
+                    nbKo += 1
             if inTransaction:
-                return self.commitTransaction() and (nbKo==0)
-        elif isinstance(directory , str):
+                return self.commitTransaction() and (nbKo == 0)
+        elif isinstance(directory, str):
             self.__databaseQuerySetDirectories.bindValue(":path", directory)
             if self.__databaseQuerySetDirectories.exec():
                 return True
@@ -4932,18 +4902,18 @@ class BCFileCache(QObject):
 
     def getDirectory(self):
         """Return list of all directories as a dictionnary
-            key=path
-            value=timestamp (last time directory has been scanned)
+            key = path
+            value = timestamp (last time directory has been scanned)
 
         If database is not opened, return empty list
         """
-        returned={}
+        returned = {}
         if self.__databaseInstance is None:
             return returned
 
         if self.__databaseQueryGetDirectories.exec():
             while self.__databaseQueryGetDirectories.next():
-                returned[self.__databaseQueryGetDirectories.value('path')]=self.__databaseQueryGetDirectories.value('timestamp')
+                returned[self.__databaseQueryGetDirectories.value('path')] = self.__databaseQueryGetDirectories.value('timestamp')
 
         return returned
 
@@ -4952,7 +4922,7 @@ class BCFileCache(QObject):
 
         If an Id is provided, means we're working on memory database, and then ignore transaction action
         """
-        if self.__databaseInstance is None or not self.__databaseInstance.driver().hasFeature(QSqlDriver.Transactions) or not self.__id is None:
+        if self.__databaseInstance is None or not self.__databaseInstance.driver().hasFeature(QSqlDriver.Transactions) or self.__id is not None:
             return False
         return self.__databaseInstance.exec("BEGIN DEFERRED TRANSACTION")
 
@@ -4961,7 +4931,7 @@ class BCFileCache(QObject):
 
         If an Id is provided, means we're working on memory database, and then ignore transaction action
         """
-        if self.__databaseInstance is None or not self.__databaseInstance.driver().hasFeature(QSqlDriver.Transactions) or not self.__id is None:
+        if self.__databaseInstance is None or not self.__databaseInstance.driver().hasFeature(QSqlDriver.Transactions) or self.__id is not None:
             return False
         return self.__databaseInstance.exec("COMMIT TRANSACTION")
 
@@ -4976,41 +4946,41 @@ class BCFileCache(QObject):
 
     def getStats(self):
         """Return statistics about database cache"""
-        returned={
+        returned = {
                 'dbFile': self.__fileName,
                 'dbSize': 0,
                 'nbHash': 0,
                 'nbDir': 0,
             }
-        #print('getStats')
+        # print('getStats')
 
         if os.path.isfile(self.__fileName):
-            returned['dbSize']=os.path.getsize(self.__fileName)
+            returned['dbSize'] = os.path.getsize(self.__fileName)
 
             for ext in ('-shm', '-wal'):
-                fileName=f"{self.__fileName}{ext}"
+                fileName = f"{self.__fileName}{ext}"
                 if os.path.isfile(fileName):
-                    returned['dbSize']+=os.path.getsize(fileName)
+                    returned['dbSize'] += os.path.getsize(fileName)
 
         if self.__databaseInstance is None:
-            #print('getStats: self.__databaseInstance is None')
+            # print('getStats: self.__databaseInstance is None')
             return returned
 
-        query=QSqlQuery(self.__databaseInstance)
+        query = QSqlQuery(self.__databaseInstance)
 
         if query.exec("SELECT count(*) AS nbHash FROM metadata"):
-            #print('getStats: metadata')
+            # print('getStats: metadata')
             while query.next():
-                #print('getStats: metadata - '+f"{query.value('nbHash'}"))
-                returned['nbHash']=int(query.value('nbHash'))
+                # print('getStats: metadata - '+f"{query.value('nbHash'}"))
+                returned['nbHash'] = int(query.value('nbHash'))
 
         if query.exec("SELECT count(*) AS nbDir FROM directories"):
             while query.next():
-                returned['nbDir']=int(query.value('nbDir'))
+                returned['nbDir'] = int(query.value('nbDir'))
 
         query.finish()
 
-        #print('getStats', returned)
+        # print('getStats', returned)
 
         return returned
 
@@ -5019,7 +4989,7 @@ class BCFileCache(QObject):
         if self.__databaseInstance is None:
             return False
 
-        query=QSqlQuery(self.__databaseInstance)
+        query = QSqlQuery(self.__databaseInstance)
 
         self.beginTransaction()
         query.prepare("DELETE FROM metadata")
@@ -5036,7 +5006,6 @@ class BCFileCache(QObject):
         if self.__databaseInstance is None:
             return
 
-
         # to avoid SQL error: "cannot VACUUM - SQL statements in progress Unable to fetch row"
         # need to be seure that all SQL statement are processed
 
@@ -5049,13 +5018,13 @@ class BCFileCache(QObject):
         # - reopen standard connection using __open() method
         self.close()
 
-        tmpDbVacuum=QSqlDatabase.addDatabase("QSQLITE",  "tmpDbVacuum")
+        tmpDbVacuum = QSqlDatabase.addDatabase("QSQLITE",  "tmpDbVacuum")
         tmpDbVacuum.setDatabaseName(self.__fileName)
         tmpDbVacuum.open()
         tmpDbVacuum.exec("VACUUM")
         tmpDbVacuum.exec("PRAGMA wal_checkpoint(TRUNCATE)")
         tmpDbVacuum.close()
-        tmpDbVacuum=QSqlDatabase.removeDatabase("tmpDbVacuum")
+        tmpDbVacuum = QSqlDatabase.removeDatabase("tmpDbVacuum")
 
         self.__open()
 
@@ -5087,7 +5056,7 @@ class BCFileListRuleOperator(object):
         """Operator need:
         - `value`           => value to compare
         - `operator`        => operator to apply, can be
-                                type==REGEX: 'match', 'not match'
+                                type == REGEX: 'match', 'not match'
 
                                     '=', '<>', '<', '>', '<=', '>=', 'in', 'between', 'not in', 'not between'
         - `type`            => comparison type (must be BCFileListRuleOperatorType)
@@ -5144,12 +5113,12 @@ class BCFileListRuleOperator(object):
     def __setOperator(self, value):
         """Set current operator"""
         if self.__type == BCFileListRuleOperatorType.REGEX:
-            if not value is None and value.lower() in ['match', 'not match']:
+            if value is not None and value.lower() in ['match', 'not match']:
                 # in this case, operator is 'match' or 'not match':
                 self.__operator = value.lower()
             else:
                 raise EInvalidValue("Given `operator` must be one of the following value: 'match', 'not match'")
-        elif not value is None and value.lower() in ['=', '<>', '<', '>', '<=', '>=', 'in', 'between', 'not in', 'not between']:
+        elif value is not None and value.lower() in ['=', '<>', '<', '>', '<=', '>=', 'in', 'between', 'not in', 'not between']:
             self.__operator = value.lower()
         elif value == '!=':
             self.__operator = '<>'
@@ -5285,8 +5254,8 @@ class BCFileListRuleOperator(object):
         elif self.__operator == 'not between':
             returned = i18n('is not between {0} and {1}')
         else:
-            # shnould not occurs
-            returned =self.__operator + ' '
+            # should not occurs
+            returned = self.__operator + ' '
 
         value = self.__displayValue
         if isinstance(value, Enum):
@@ -5294,17 +5263,27 @@ class BCFileListRuleOperator(object):
 
         if isinstance(value, list) and self.__operator in ['in', 'not in']:
 
-            if self.__type in [BCFileListRuleOperatorType.STRING, BCFileListRuleOperatorType.ENUM, BCFileListRuleOperatorType.DATE, BCFileListRuleOperatorType.DATETIME]:
-                returned += '["'+ '", "'.join([self.__enumToStr(v) for v in value]) +'"]'
+            if self.__type in [BCFileListRuleOperatorType.STRING,
+                               BCFileListRuleOperatorType.ENUM,
+                               BCFileListRuleOperatorType.DATE,
+                               BCFileListRuleOperatorType.DATETIME]:
+                returned += '["' + '", "'.join([self.__enumToStr(v) for v in value]) + '"]'
             else:
-                returned += '['+ ', '.join([self.__enumToStr(v) for v in value]) +']'
+                returned += '[' + ', '.join([self.__enumToStr(v) for v in value]) + ']'
 
         elif isinstance(value, tuple) and self.__operator in ['between', 'not between']:
-            if self.__type in [BCFileListRuleOperatorType.STRING, BCFileListRuleOperatorType.ENUM, BCFileListRuleOperatorType.DATE, BCFileListRuleOperatorType.DATETIME]:
+            if self.__type in [BCFileListRuleOperatorType.STRING,
+                               BCFileListRuleOperatorType.ENUM,
+                               BCFileListRuleOperatorType.DATE,
+                               BCFileListRuleOperatorType.DATETIME]:
                 returned = returned.format(f'"{self.__enumToStr(value[0])}"', f'"{self.__enumToStr(value[1])}"')
             else:
                 returned = returned.format(value[0], value[1])
-        elif self.__type in [BCFileListRuleOperatorType.STRING, BCFileListRuleOperatorType.ENUM, BCFileListRuleOperatorType.DATE, BCFileListRuleOperatorType.DATETIME, BCFileListRuleOperatorType.REGEX]:
+        elif self.__type in [BCFileListRuleOperatorType.STRING,
+                             BCFileListRuleOperatorType.ENUM,
+                             BCFileListRuleOperatorType.DATE,
+                             BCFileListRuleOperatorType.DATETIME,
+                             BCFileListRuleOperatorType.REGEX]:
             returned += f'"{value}"'
         else:
             returned += f"{value}"
@@ -5316,7 +5295,7 @@ class BCFileListRuleOperator(object):
         if self.__type == BCFileListRuleOperatorType.REGEX:
             if not isinstance(value, str):
                 raise EInvalidType("Given value type must be <str>")
-        elif not self.__type in [BCFileListRuleOperatorType.LIST]:
+        elif self.__type not in [BCFileListRuleOperatorType.LIST]:
             self.__checkValueType(value)
 
         if self.__operator == '=':
@@ -5344,7 +5323,7 @@ class BCFileListRuleOperator(object):
         elif self.__operator == 'not match':
             return (self.__value.search(value) is None)
         else:
-            # should not occurs
+            # should not occurs
             return False
 
 
@@ -5357,7 +5336,7 @@ class BCFileListRuleFile(object):
         self.__path = None
         self.__size = None
         self.__mdatetime = None
-        self.__hash=0
+        self.__hash = 0
         self.__updateHash()
 
         if isinstance(source, BCFileListRuleFile):
@@ -5371,16 +5350,16 @@ class BCFileListRuleFile(object):
 
         returned = []
 
-        if not self.__name is None:
+        if self.__name is not None:
             returned.append(f"{BCFileProperty.FILE_NAME.value} {self.__name.translate(True)}")
 
-        if not self.__path is None:
+        if self.__path is not None:
             returned.append(f"{BCFileProperty.PATH.value} {self.__path.translate(True)}")
 
-        if not self.__size is None:
+        if self.__size is not None:
             returned.append(f"{BCFileProperty.FILE_SIZE.value} {self.__size.translate(True)}")
 
-        if not self.__mdatetime is None:
+        if self.__mdatetime is not None:
             returned.append(f"{BCFileProperty.FILE_DATE.value} {self.__mdatetime.translate(True)}")
 
         return ' and '.join(returned)
@@ -5401,10 +5380,10 @@ class BCFileListRuleFile(object):
 
     def __updateHash(self):
         """Return a hash from rule"""
-        self.__hash=hash((self.__name,
-                          self.__path,
-                          self.__size,
-                          self.__mdatetime))
+        self.__hash = hash((self.__name,
+                            self.__path,
+                            self.__size,
+                            self.__mdatetime))
 
     def translate(self, short=False):
         """Return rule as a human readable string"""
@@ -5413,17 +5392,17 @@ class BCFileListRuleFile(object):
         if short:
             return self.__str__()
 
-        if not self.__name is None:
+        if self.__name is not None:
             returned.append(f"{BCFileProperty.FILE_NAME.translate()} {self.__name.translate()}")
 
-        if not self.__path is None:
+        if self.__path is not None:
             returned.append(f"{BCFileProperty.PATH.translate()} {self.__path.translate()}")
 
-        if not self.__size is None:
+        if self.__size is not None:
             returned.append(f"{BCFileProperty.FILE_SIZE.translate()} {self.__size.translate()}")
 
-        if not self.__mdatetime is None:
-            if self.__mdatetime.type()== BCFileListRuleOperatorType.DATE:
+        if self.__mdatetime is not None:
+            if self.__mdatetime.type() == BCFileListRuleOperatorType.DATE:
                 returned.append(f"{BCFileProperty.FILE_DATE.translate()} {self.__mdatetime.translate()}")
             else:
                 returned.append(f"{i18n('file date/time')} {self.__mdatetime.translate()}")
@@ -5443,18 +5422,18 @@ class BCFileListRuleFile(object):
             displayValue = value[0]
 
             if isinstance(value[0], str):
-                if checkIsRegEx:=re.search('^re(/i)?:(.*)', value[0]):
+                if checkIsRegEx := re.search('^re(/i)?:(.*)', value[0]):
                     # provided as a regular expression
                     displayValue = checkIsRegEx.groups()[1]
 
-                    if not checkIsRegEx.groups()[0] is None:
-                        displayValue=f"(?i)(?:{displayValue})"
+                    if checkIsRegEx.groups()[0] is not None:
+                        displayValue = f"(?i)(?:{displayValue})"
                     value = (re.compile(displayValue), value[1])
                 else:
                     # provided as a wildcard character
-                    # convert to regex
+                    # convert to regex
                     displayValue = value[0]
-                    value = (re.compile( '(?i)(?:^'+value[0].replace('.', r'\.').replace('*', r'.*').replace('?', '.')+'$)'), value[1])
+                    value = (re.compile('(?i)(?:^'+value[0].replace('.', r'\.').replace('*', r'.*').replace('?', '.')+'$)'), value[1])
             elif isinstance(value[0], re.Pattern):
                 displayValue = value[0].pattern
             else:
@@ -5477,18 +5456,18 @@ class BCFileListRuleFile(object):
             displayValue = value[0]
 
             if isinstance(value[0], str):
-                if checkIsRegEx:=re.search('^re(/i)?:(.*)', value[0]):
+                if checkIsRegEx := re.search('^re(/i)?:(.*)', value[0]):
                     # provided as a regular expression
                     displayValue = checkIsRegEx.groups()[1]
 
-                    if not checkIsRegEx.groups()[0] is None:
-                        displayValue=f"(?i)(?:{displayValue})"
+                    if checkIsRegEx.groups()[0] is not None:
+                        displayValue = f"(?i)(?:{displayValue})"
                     value = (re.compile(displayValue), value[1])
                 else:
                     # provided as a wildcard character
-                    # convert to regex
+                    # convert to regex
                     displayValue = value[0]
-                    value = (re.compile( '(?i)(?:^'+value[0].replace('.', r'\.').replace('*', r'.*').replace('?', '.')+'$)'), value[1])
+                    value = (re.compile('(?i)(?:^'+value[0].replace('.', r'\.').replace('*', r'.*').replace('?', '.')+'$)'), value[1])
             elif isinstance(value[0], re.Pattern):
                 displayValue = value[0].pattern
             else:
@@ -5556,16 +5535,16 @@ class BCFileListRuleFile(object):
             # reconvert it to string => YYYY-MM-DD HH:MI:SS
             # and determinate if it's a DATE (HH:MI:SS = 00:00:00) a DATETIME (HH:MI:SS <> 00:00:00)
             if isinstance(value[0], float):
-                if QDateTime.fromMSecsSinceEpoch(1000*value[0]).time().msecsSinceStartOfDay()==0:
+                if QDateTime.fromMSecsSinceEpoch(1000*value[0]).time().msecsSinceStartOfDay() == 0:
                     # hour = 00:00:00
                     ruleType = BCFileListRuleOperatorType.DATE
                 elif value[1] == '<=':
                     value = (value[0]+0.9999, value[1])
             elif isinstance(value[0], tuple):
                 # interval (between)
-                # in this case, always date/time
+                # in this case, always date/time
                 # => fix end hour to 23:59:59.9999 if not already defined
-                if QDateTime.fromMSecsSinceEpoch(1000*value[0]).time().msecsSinceStartOfDay()==0:
+                if QDateTime.fromMSecsSinceEpoch(1000*value[0]).time().msecsSinceStartOfDay() == 0:
                     # hour = 00:00:00
                     value = ((value[0][0], value[0][1] + 86399.9999), value[1])
                 else:
@@ -5577,7 +5556,7 @@ class BCFileListRuleFile(object):
                 ruleType = BCFileListRuleOperatorType.DATE
 
                 for dateItem in value[0]:
-                    if QDateTime.fromMSecsSinceEpoch(1000*value[0]).time().msecsSinceStartOfDay()!=0:
+                    if QDateTime.fromMSecsSinceEpoch(1000*value[0]).time().msecsSinceStartOfDay() != 0:
                         ruleType = BCFileListRuleOperatorType.DATETIME
                         break
 
@@ -5603,36 +5582,36 @@ class BCFileListRuleFile(object):
             return (True, file)
         elif isinstance(file, BCFile):
             # If given `file` is already a BCFile, then use data already available
-            if not self.__name is None:
+            if self.__name is not None:
                 if not self.__name.compare(file.name()):
                     return (False, file)
 
-            if not self.__path is None:
+            if self.__path is not None:
                 if not self.__path.compare(file.path()):
                     return (False, file)
 
-            if not self.__size is None:
+            if self.__size is not None:
                 if not self.__size.compare(file.size()):
                     return (False, file)
 
-            if not self.__mdatetime is None:
+            if self.__mdatetime is not None:
                 if not self.__mdatetime.compare(file.lastModificationDateTime(self.__mdatetime.type() == BCFileListRuleOperatorType.DATE)):
                     return (False, file)
         elif isinstance(file, str):
             # assume it's a valid file name (expanded, normalized)
-            if not self.__name is None:
+            if self.__name is not None:
                 if not self.__name.compare(os.path.basename(file)):
                     return (False, file)
 
-            if not self.__path is None:
+            if self.__path is not None:
                 if not self.__path.compare(os.path.dirname(file)):
                     return (False, file)
 
-            if not self.__size is None:
+            if self.__size is not None:
                 if not self.__size.compare(os.path.getsize(file)):
                     return (False, file)
 
-            if not self.__mdatetime is None:
+            if self.__mdatetime is not None:
                 dateTime = os.path.getmtime(file)
                 if self.__mdatetime.type() == BCFileListRuleOperatorType.DATE:
                     # only date, no date/time
@@ -5659,7 +5638,7 @@ class BCFileListRuleImage(object):
         self.__imageHeight = None
         self.__imageRatio = None
         self.__imagePixels = None
-        self.__hash=0
+        self.__hash = 0
         self.__updateHash()
 
         if isinstance(source, BCFileListRuleImage):
@@ -5674,26 +5653,27 @@ class BCFileListRuleImage(object):
 
         returned = []
 
-        if not self.__format is None:
+        if self.__format is not None:
             returned.append(f"{BCFileProperty.FILE_FORMAT.value} {self.__format.translate(True)}")
 
-        if not self.__imageWidth is None:
+        if self.__imageWidth is not None:
             returned.append(f"{BCFileProperty.IMAGE_WIDTH.value} {self.__imageWidth.translate(True)}")
 
-        if not self.__imageHeight is None:
+        if self.__imageHeight is not None:
             returned.append(f"{BCFileProperty.IMAGE_HEIGHT.value} {self.__imageHeight.translate(True)}")
 
-        if not self.__imageRatio is None:
+        if self.__imageRatio is not None:
             returned.append(f"{BCFileProperty.IMAGE_RATIO.value} {self.__imageRatio.translate(True)}")
 
-        if not self.__imagePixels is None:
+        if self.__imagePixels is not None:
             returned.append(f"{BCFileProperty.IMAGE_PIXELS.value} {self.__imagePixels.translate(True)}")
 
         return ' and '.join(returned)
 
     def __repr__(self):
         """Return rule as string"""
-        return f'<BCFileListRuleImage(format {self.__format}; width {self.__imageWidth}; height {self.__imageHeight}; ratio {self.__imageRatio}; pixels{self.__imagePixels}; hash={self.__hash:016x})>'
+        return (f'<BCFileListRuleImage(format {self.__format}; width {self.__imageWidth}; height {self.__imageHeight}; ratio {self.__imageRatio}; pixels{self.__imagePixels}; '
+                f'hash={self.__hash:016x})>')
 
     def __eq__(self, other):
         """Return if other BCFileListRuleImage is the same than current one"""
@@ -5707,11 +5687,11 @@ class BCFileListRuleImage(object):
 
     def __updateHash(self):
         """Return a hash from rule"""
-        self.__hash=hash((self.__format,
-                          self.__imageWidth,
-                          self.__imageHeight,
-                          self.__imageRatio,
-                          self.__imagePixels))
+        self.__hash = hash((self.__format,
+                            self.__imageWidth,
+                            self.__imageHeight,
+                            self.__imageRatio,
+                            self.__imagePixels))
 
     def translate(self, short=False):
         """Return rule as a human readable string"""
@@ -5878,25 +5858,25 @@ class BCFileListRuleImage(object):
             return (True, file)
         elif isinstance(file, BCFile):
             # If given `file` is already a BCFile, then use data already available
-            if not self.__format is None:
+            if self.__format is not None:
                 if not self.__format.compare(file.format()):
                     return (False, file)
 
-            if not self.__imageWidth is None:
+            if self.__imageWidth is not None:
                 if not self.__imageWidth.compare(file.imageSize().width()):
                     return (False, file)
 
-            if not self.__imageHeight is None:
+            if self.__imageHeight is not None:
                 if not self.__imageHeight.compare(file.imageSize().width()):
                     return (False, file)
 
-            if not self.__imageRatio is None:
-                property=file.getProperty(BCFileProperty.IMAGE_RATIO)
+            if self.__imageRatio is not None:
+                property = file.getProperty(BCFileProperty.IMAGE_RATIO)
                 if property is None or not self.__imageRatio.compare(property):
                     return (False, file)
 
-            if not self.__imagePixels is None:
-                property=file.getProperty(BCFileProperty.IMAGE_PIXELS)
+            if self.__imagePixels is not None:
+                property = file.getProperty(BCFileProperty.IMAGE_PIXELS)
                 if property is None or not self.__imagePixels.compare(property):
                     return (False, file)
         elif isinstance(file, str):
@@ -5919,7 +5899,7 @@ class BCFileListRuleCombination(object):
 
     def __init__(self, operatorType, *items):
         """Initialise combination rule"""
-        if not operatorType in (BCFileListRuleCombination.OPERATOR_NOT,
+        if operatorType not in (BCFileListRuleCombination.OPERATOR_NOT,
                                 BCFileListRuleCombination.OPERATOR_AND,
                                 BCFileListRuleCombination.OPERATOR_OR):
             raise EInvalidValue("Given `operatorType` is not valid")
@@ -5939,7 +5919,7 @@ class BCFileListRuleCombination(object):
 
     def __str__(self):
         """Return rule as string"""
-        returned=[f"{item}" for item in self.__items]
+        returned = [f"{item}" for item in self.__items]
 
         if self.__type == BCFileListRuleCombination.OPERATOR_NOT:
             return f"NOT ({returned[0]})"
@@ -5960,7 +5940,7 @@ class BCFileListRuleCombination(object):
 
     def __updateHash(self):
         """Return a hash from rule"""
-        self.__hash=hash((self.__type, *[hash(item) for item in self.__items]))
+        self.__hash = hash((self.__type, *[hash(item) for item in self.__items]))
         self.__sortRules()
 
     def __sortRules(self):
@@ -5980,15 +5960,15 @@ class BCFileListRuleCombination(object):
             elif isinstance(value, BCFileListRuleImage):
                 return 2
             elif isinstance(value, BCFileListRuleCombination):
-                if value.operatorType()==BCFileListRuleCombination.OPERATOR_NOT:
+                if value.operatorType() == BCFileListRuleCombination.OPERATOR_NOT:
                     return 3
-                elif value.operatorType()==BCFileListRuleCombination.OPERATOR_AND:
+                elif value.operatorType() == BCFileListRuleCombination.OPERATOR_AND:
                     return 4
-                elif value.operatorType()==BCFileListRuleCombination.OPERATOR_OR:
+                elif value.operatorType() == BCFileListRuleCombination.OPERATOR_OR:
                     return 5
             return 6
 
-        self.__itemsSorted=sorted(self.__items, key=sortKey)
+        self.__itemsSorted = sorted(self.__items, key=sortKey)
 
     def translate(self, short=False):
         """Return rule as a human readable string"""
@@ -5998,16 +5978,16 @@ class BCFileListRuleCombination(object):
             return self.__str__()
 
         if self.__type == BCFileListRuleCombination.OPERATOR_NOT:
-            opStr=i18n('not')+'\n'
-            return textwrap.indent(opStr+self.__items[0].translate(short),'  ')
+            opStr = i18n('not')+'\n'
+            return textwrap.indent(opStr+self.__items[0].translate(short), '  ')
         elif self.__type == BCFileListRuleCombination.OPERATOR_AND:
-            opStr=i18n('and')+' '
+            opStr = i18n('and')+' '
         elif self.__type == BCFileListRuleCombination.OPERATOR_OR:
-            opStr=i18n('or')+' '
+            opStr = i18n('or')+' '
 
-        opJoin=f"\n  {opStr}\n"
-        returned=[item.translate(short) for item in self.__itemsSorted]
-        return textwrap.indent(opJoin.join(returned),'  ')
+        opJoin = f"\n  {opStr}\n"
+        returned = [item.translate(short) for item in self.__itemsSorted]
+        return textwrap.indent(opJoin.join(returned), '  ')
 
     def fileMatch(self, file, bcFileCache=None, strict=False):
         """Check if file properties match current rule
@@ -6061,11 +6041,11 @@ class BCFileListRuleCombination(object):
 
     def addRule(self, item):
         """Add a filter rule to combination"""
-        if isinstance(item, BCFileListRuleCombination) and item==self:
+        if isinstance(item, BCFileListRuleCombination) and item == self:
             return
 
         if isinstance(item, (BCFileListRuleCombination, BCFileListRuleFile, BCFileListRuleImage)):
-            if not item in self.__items:
+            if item not in self.__items:
                 self.__items.append(item)
         else:
             raise EInvalidValue("Given `items` must be <BCFileListRuleCombination> or <BCFileListRuleFile> or <BCFileListRuleImage>")
@@ -6182,7 +6162,7 @@ class BCFileListSortRule(object):
         else:
             raise EInvalidType('Given `ascending` must be a valid <bool>')
 
-        self.__hash=0
+        self.__hash = 0
         self.__updateHash()
 
     def __str__(self):
@@ -6208,7 +6188,7 @@ class BCFileListSortRule(object):
 
     def __updateHash(self):
         """UPdate a hash value"""
-        self.__hash=hash((self.__property, self.__ascending))
+        self.__hash = hash((self.__property, self.__ascending))
 
     def translate(self, short=False):
         """Return rule as a human readable string"""
@@ -6307,7 +6287,7 @@ class BCFileList(QObject):
 
         > Used for multiprocessing tasks
         """
-        if not fileName is None:
+        if fileName is not None:
             if len(BCFileList.__MTASKS_RULES) > 0:
                 for rule in BCFileList.__MTASKS_RULES:
                     # Check if file match rule
@@ -6340,15 +6320,15 @@ class BCFileList(QObject):
 
     @staticmethod
     def getBcFileStats(itemIndex, file):
-        returned={}
+        returned = {}
         if file.format() == BCFileManagedFormat.DIRECTORY:
-            returned['nbDir']=1
+            returned['nbDir'] = 1
         elif file.format() == BCFileManagedFormat.UNKNOWN:
-            returned['nbOther']=1
-            returned['sizeOther']=file.size()
+            returned['nbOther'] = 1
+            returned['sizeOther'] = file.size()
         else:
-            returned['nbKra']=1
-            returned['sizeKra']=file.size()
+            returned['nbKra'] = 1
+            returned['sizeKra'] = file.size()
         return returned
 
     def __init__(self):
@@ -6360,24 +6340,24 @@ class BCFileList(QObject):
         self.__pathList = []
         self.__ruleList = []
         self.__sortList = []
-        self.__sortCaseInsensitive=False
+        self.__sortCaseInsensitive = False
 
-        self.__statFiles=None
+        self.__statFiles = None
 
         self.__includeDirectories = False
 
         self.__invalidated = True
 
-        self.__cancelProcess=False
+        self.__cancelProcess = False
 
-        self.__workerPool=WorkerPool()
+        self.__workerPool = WorkerPool()
 
-        self.__progressFilesPctThreshold=0
-        self.__progressFilesPctTracker=0
-        self.__progressFilesPctCurrent=0
-        self.__progressFilesTracker=0
+        self.__progressFilesPctThreshold = 0
+        self.__progressFilesPctTracker = 0
+        self.__progressFilesPctCurrent = 0
+        self.__progressFilesTracker = 0
 
-        self.__massProcess=False
+        self.__massProcess = False
 
     def __invalidate(self):
         self.__invalidated = True
@@ -6386,7 +6366,7 @@ class BCFileList(QObject):
         # if A < B : -1
         #    A > B : 1
         #    A = B : 0
-        if self.__progressFilesPctThreshold>0:
+        if self.__progressFilesPctThreshold > 0:
             self.__progressSorting()
 
         # very long: need to check all sort criteria
@@ -6396,21 +6376,21 @@ class BCFileList(QObject):
 
             if self.__sortCaseInsensitive:
                 if isinstance(pA, str):
-                    pA=pA.lower()
+                    pA = pA.lower()
                 if isinstance(pB, str):
-                    pB=pB.lower()
+                    pB = pB.lower()
 
             # note: directories are always before files
             #       if directories and "..", always first...
-            if fileA.format() == BCFileManagedFormat.DIRECTORY and (fileB.format() != BCFileManagedFormat.DIRECTORY or fileA.name()=='..'):
+            if fileA.format() == BCFileManagedFormat.DIRECTORY and (fileB.format() != BCFileManagedFormat.DIRECTORY or fileA.name() == '..'):
                 return -1
-            elif fileB.format() == BCFileManagedFormat.DIRECTORY and (fileA.format() != BCFileManagedFormat.DIRECTORY or fileB.name()=='..'):
+            elif fileB.format() == BCFileManagedFormat.DIRECTORY and (fileA.format() != BCFileManagedFormat.DIRECTORY or fileB.name() == '..'):
                 return 1
 
             # both are directories OR both are not directories
 
             if pA == pB:
-                # same value, need to compare on next sort key
+                # same value, need to compare on next sort key
                 continue
             elif sortKey.ascending():
                 if pA is None:
@@ -6438,36 +6418,36 @@ class BCFileList(QObject):
 
         Emit signal every 1%
         """
-        self.__progressFilesPctTracker+=1
-        self.__progressFilesTracker+=1
-        if self.__progressFilesPctTracker>=self.__progressFilesPctThreshold:
-            self.__progressFilesPctCurrent+=1
-            self.__progressFilesPctTracker=0
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,self.__progressFilesPctCurrent,self.__progressFilesTracker))
+        self.__progressFilesPctTracker += 1
+        self.__progressFilesTracker += 1
+        if self.__progressFilesPctTracker >= self.__progressFilesPctThreshold:
+            self.__progressFilesPctCurrent += 1
+            self.__progressFilesPctTracker = 0
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE, self.__progressFilesPctCurrent, self.__progressFilesTracker))
 
     def __progressFiltering(self, value):
         """Emit signal during scanning progress
 
         Emit signal every 1%
         """
-        self.__progressFilesPctTracker+=1
-        self.__progressFilesTracker+=1
-        if self.__progressFilesPctTracker>=self.__progressFilesPctThreshold:
-            self.__progressFilesPctCurrent+=1
-            self.__progressFilesPctTracker=0
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_FILTER,self.__progressFilesPctCurrent,self.__progressFilesTracker))
+        self.__progressFilesPctTracker += 1
+        self.__progressFilesTracker += 1
+        if self.__progressFilesPctTracker >= self.__progressFilesPctThreshold:
+            self.__progressFilesPctCurrent += 1
+            self.__progressFilesPctTracker = 0
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_FILTER, self.__progressFilesPctCurrent, self.__progressFilesTracker))
 
     def __progressSorting(self):
         """Emit signal during scanning progress
 
         Emit signal every 1%
         """
-        self.__progressFilesPctTracker+=1
-        self.__progressFilesTracker+=1
-        if self.__progressFilesPctTracker>=self.__progressFilesPctThreshold:
-            self.__progressFilesPctCurrent+=1
-            self.__progressFilesPctTracker=0
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_SORT,self.__progressFilesPctCurrent,self.__progressFilesTracker))
+        self.__progressFilesPctTracker += 1
+        self.__progressFilesTracker += 1
+        if self.__progressFilesPctTracker >= self.__progressFilesPctThreshold:
+            self.__progressFilesPctCurrent += 1
+            self.__progressFilesPctTracker = 0
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_SORT, self.__progressFilesPctCurrent, self.__progressFilesTracker))
 
     def clear(self):
         """Clear everything
@@ -6544,11 +6524,11 @@ class BCFileList(QObject):
                 self.addSearchPaths(path)
         elif isinstance(value, str):
             if not self.inSearchPaths(value):
-                self.__pathList.append( BCFileListPath(value) )
+                self.__pathList.append(BCFileListPath(value))
                 self.__invalidate()
         elif isinstance(value, BCFileListPath):
             if not self.inSearchPaths(value):
-                self.__pathList.append( value )
+                self.__pathList.append(value)
                 self.__invalidate()
         else:
             raise EInvalidType("Given path is not valid")
@@ -6670,26 +6650,26 @@ class BCFileList(QObject):
             fromClause = []
 
             # need to work with translated strings
-            searchStr=i18n('Search files from')+' '
-            andFromStr=i18n("and from")+' '
-            searchAnd='\n'+(' '*(len(searchStr)-len(andFromStr)))+andFromStr
+            searchStr = i18n('Search files from')+' '
+            andFromStr = i18n("and from")+' '
+            searchAnd = '\n'+(' '*(len(searchStr)-len(andFromStr)))+andFromStr
 
-            directoryStr=i18n('directory')
-            clauseIncludingStr="\n" + (' ' * (len(directoryStr) + len(searchAnd))) + "- "
+            directoryStr = i18n('directory')
+            clauseIncludingStr = "\n" + (' ' * (len(directoryStr) + len(searchAnd))) + "- "
 
             for path in self.__pathList:
-                clause=f'{directoryStr} "{path.path()}"'
+                clause = f'{directoryStr} "{path.path()}"'
 
                 if path.recursive():
-                    clause+=clauseIncludingStr+i18n('including sub-directories')
+                    clause += clauseIncludingStr+i18n('including sub-directories')
 
                 if path.hiddenFiles():
-                    clause+=clauseIncludingStr+i18n('including hidden files')
+                    clause += clauseIncludingStr+i18n('including hidden files')
 
                 if path.managedFilesOnly():
-                    clause+=clauseIncludingStr+i18n('looking for managed files only')
+                    clause += clauseIncludingStr+i18n('looking for managed files only')
                     if path.managedFilesBackup():
-                        clause+=f" ({i18n('including backup files')})"
+                        clause += f" ({i18n('including backup files')})"
 
                 fromClause.append(clause)
 
@@ -6705,8 +6685,8 @@ class BCFileList(QObject):
             includes.append(i18n('directories'))
 
         if len(includes) > 0:
-            searchStr=i18n('Including')+' '
-            searchAnd='\n'+(' '*len(searchStr))+i18n("and")+'\n'+(' '*len(searchStr))
+            searchStr = i18n('Including')+' '
+            searchAnd = '\n'+(' '*len(searchStr))+i18n("and")+'\n'+(' '*len(searchStr))
 
             returned.append(searchStr+searchAnd.join(includes))
             returned.append('')
@@ -6718,21 +6698,21 @@ class BCFileList(QObject):
                 whereClause.append(rule.translate())
 
             if len(whereClause):
-                searchStr=i18n('For which')+'\n'
-                searchAnd='\n'+(' '*len(searchStr))+i18n("and")+'\n'+(' '*len(searchStr))
+                searchStr = i18n('For which')+'\n'
+                searchAnd = '\n'+(' '*len(searchStr))+i18n("and")+'\n'+(' '*len(searchStr))
 
                 returned.append(searchStr+searchAnd.join(whereClause))
                 returned.append('')
 
         if len(self.__sortList) > 0:
-            returned.append('Sort result by:\n - '+ '\n - '.join([v.translate() for v in self.__sortList]) )
+            returned.append('Sort result by:\n - ' + '\n - '.join([v.translate() for v in self.__sortList]))
 
         return '\n'.join(returned)
 
     def cancelSearchExecution(self):
         """Cancel current execution"""
         if not self.__cancelProcess:
-            self.__cancelProcess=True
+            self.__cancelProcess = True
             if self.__workerPool:
                 self.__workerPool.stopProcessing()
 
@@ -6764,7 +6744,7 @@ class BCFileList(QObject):
                        ]
 
         if clearResults:
-            # reset current list if asked
+            # reset current list if asked
             self.clearResults(False)
 
         if buildStats:
@@ -6781,7 +6761,7 @@ class BCFileList(QObject):
         Debug.print('BCFileList.execute')
         Debug.print('...........................................')
 
-        # stopwatches are just used to measure execution time performances
+        # stopwatches are just used to measure execution time performances
         managedFilesOnly = None
 
         # nbTotal=counter used to determinate when to process application events
@@ -6790,7 +6770,7 @@ class BCFileList(QObject):
         # same search rule than in BCMainViewTab.__filesDirectoryContentChanged()
         # if updated here, must be updated in BCMainViewTab too
         Stopwatch.start('BCFileList.execute.01-search')
-        # work on a set, faster for searching if a file is already in list
+        # work on a set, faster for searching if a file is already in list
         foundFiles = set()
         foundDirectories = set()
         for processedPath in self.__pathList:
@@ -6836,16 +6816,16 @@ class BCFileList(QObject):
                                 foundDirectories.add(fullPathName)
                                 self.__currentFilesUuid.add(uuid)
 
-                            if nbTotal%1000 == 0:
+                            if nbTotal % 1000 == 0:
                                 if self.__cancelProcess:
-                                    self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+                                    self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL, ))
                                     self.__invalidated = False
                                     return BCFileList.CANCELLED_SEARCH
                                 QApplication.processEvents()
 
                     for name in files:
                         nbTotal += 1
-                        fullPathName=os.path.join(path, name)
+                        fullPathName = os.path.join(path, name)
 
                         if includeHidden or not QFileInfo(name).isHidden():
                             # check if file name match given pattern (if pattern) and is not already in file list
@@ -6856,14 +6836,14 @@ class BCFileList(QObject):
                                     self.__currentFilesUuid.add(uuid)
                                     nbFilesInPath += 1
 
-                        if nbTotal%1000 == 0:
+                        if nbTotal % 1000 == 0:
                             if self.__cancelProcess:
-                                self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+                                self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL, ))
                                 self.__invalidated = False
                                 return BCFileList.CANCELLED_SEARCH
                             QApplication.processEvents()
             elif os.path.isdir(pathName):
-                # return current directory content
+                # return current directory content
                 with os.scandir(pathName) as files:
                     for file in files:
                         nbTotal += 1
@@ -6885,9 +6865,9 @@ class BCFileList(QObject):
                                     foundDirectories.add(fullPathName)
                                     self.__currentFilesUuid.add(uuid)
 
-                        if nbTotal%1000 == 0:
+                        if nbTotal % 1000 == 0:
                             if self.__cancelProcess:
-                                self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+                                self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL, ))
                                 self.__invalidated = False
                                 return BCFileList.CANCELLED_SEARCH
                             QApplication.processEvents()
@@ -6916,8 +6896,8 @@ class BCFileList(QObject):
 
         # ----
         Stopwatch.start('BCFileList.execute.02-filter')
-        # filter files
-        # will apply a filter on foundFiles
+        # filter files
+        # will apply a filter on foundFiles
         # - all files that don't match rule are removed from result
         # - all files that match rule are returned as BCFile in result
 
@@ -6943,7 +6923,7 @@ class BCFileList(QObject):
                 self.__workerPool.signals.processed.disconnect(self.__progressFiltering)
 
             if self.__cancelProcess:
-                self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+                self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL, ))
                 self.__invalidated = False
                 return BCFileList.CANCELLED_SEARCH
         else:
@@ -6957,22 +6937,21 @@ class BCFileList(QObject):
         self.__currentFiles += self.__workerPool.mapNoNone(foundDirectories, BCFileList.getBcDirectory)
         BCFileList.__MTASKS_RULES = []
 
-
         Stopwatch.stop('BCFileList.execute.02-filter')
 
         if self.__cancelProcess:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL, ))
             self.__invalidated = False
             return BCFileList.CANCELLED_SEARCH
 
         if BCFileList.STEPEXECUTED_FILTER_FILES in signals:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_FILTER_FILES, len(self.__currentFiles), Stopwatch.duration("BCFileList.execute.02-filter")))
-        Debug.print('Filter {0} files to {2} files in {1}s', len(foundFiles), Stopwatch.duration("BCFileList.execute.03-filter"), len(self.__currentFiles))
+        Debug.print('Filter {0} files to {2} files in {1}s', len(self.__currentFiles), Stopwatch.duration("BCFileList.execute.02-filter"), len(foundFiles))
 
         # ----
         Stopwatch.start('BCFileList.execute.03-result')
         # build final result
-        #   all files that match selection rules are added to current selected images
+        #   all files that match selection rules are added to current selected images
         self.__currentFilesUuid = set(self.__workerPool.map(self.__currentFiles, BCFileList.getBcFileUuid))
         nb = len(self.__currentFiles)
 
@@ -6984,13 +6963,13 @@ class BCFileList(QObject):
             Stopwatch.start('BCFileList.execute.04-buildStats')
             self.__statFiles = self.__workerPool.aggregate(self.__currentFiles, self.__statFiles, BCFileList.getBcFileStats)
             Stopwatch.stop('BCFileList.execute.04-buildStats')
-            #Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.04-buildStats"))
+            # Debug.print('Build stats in {0}s', Stopwatch.duration("BCFileList.execute.04-buildStats"))
 
         if BCFileList.STEPEXECUTED_BUILD_RESULTS in signals:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_BUILD_RESULTS, Stopwatch.duration("BCFileList.execute.03-result")))
 
         if self.__cancelProcess:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL, ))
             self.__invalidated = False
             return BCFileList.CANCELLED_SEARCH
 
@@ -7009,7 +6988,7 @@ class BCFileList(QObject):
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT_RESULTS, Stopwatch.duration("BCFileList.execute.05-sort")))
 
         if self.__cancelProcess:
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL,))
+            self.stepExecuted.emit((BCFileList.STEPEXECUTED_CANCEL, ))
             self.__invalidated = False
             return BCFileList.CANCELLED_SEARCH
 
@@ -7031,12 +7010,12 @@ class BCFileList(QObject):
     def sortResults(self, caseInsensitive=False, emitSignal=True):
         """Sort current result using current sort rules"""
         if isinstance(caseInsensitive, bool):
-            self.__sortCaseInsensitive=caseInsensitive
+            self.__sortCaseInsensitive = caseInsensitive
 
         if len(self.__sortList) > 0:
             self.__currentFiles = sorted(self.__currentFiles, key=cmp_to_key(self.__sort))
 
-            if emitSignal==True:
+            if emitSignal is False:
                 self.resultsUpdatedSort.emit()
 
     def nbFiles(self):
@@ -7081,14 +7060,14 @@ class BCFileList(QObject):
             elif isinstance(file, BCDirectory):
                 directoriesList.add(file)
 
-        #Debug.print('[BCFileList.setResult] FoundFile: {0}', foundFiles)
+        # Debug.print('[BCFileList.setResult] FoundFile: {0}', foundFiles)
         pool = WorkerPool()
         pool.setWorkerClass(BCWorkerCache)
-        if len(foundFiles)>0:
-            filesList = filesList.union( pool.mapNoNone(foundFiles, BCFileList.getBcFile) )
+        if len(foundFiles) > 0:
+            filesList = filesList.union(pool.mapNoNone(foundFiles, BCFileList.getBcFile))
         pool.setWorkerClass()
-        if len(foundDirectories)>0:
-            directoriesList = directoriesList.union( pool.mapNoNone(foundDirectories, BCFileList.getBcDirectory) )
+        if len(foundDirectories) > 0:
+            directoriesList = directoriesList.union(pool.mapNoNone(foundDirectories, BCFileList.getBcDirectory))
 
         self.addResults(filesList.union(directoriesList))
 
@@ -7109,17 +7088,17 @@ class BCFileList(QObject):
 
         A file already in list is not added
         """
-        currentFilesCount=len(self.__currentFiles)
+        currentFilesCount = len(self.__currentFiles)
 
         if isinstance(files, (list, tuple, set)):
-            added=[]
-            self.__massProcess=True
+            added = []
+            self.__massProcess = True
             for file in files:
                 if self.addResults(file):
                     added.append(file)
-            self.__massProcess=False
-            if len(added)>0:
-                if currentFilesCount==0:
+            self.__massProcess = False
+            if len(added) > 0:
+                if currentFilesCount == 0:
                     # list was empty, then it's a reset
                     self.resultsUpdatedReset.emit()
                 else:
@@ -7130,16 +7109,16 @@ class BCFileList(QObject):
 
         if isinstance(files, str):
             if os.path.isdir():
-                files=BCDirectory(files)
+                files = BCDirectory(files)
             elif os.path.isfile():
-                files=BCFile(files)
+                files = BCFile(files)
             else:
-                files=BCMissingFile(files)
+                files = BCMissingFile(files)
 
         if isinstance(files, BCBaseFile):
             if not files.uuid() in self.__currentFilesUuid:
                 # add only if not already in current results
-                if position<0:
+                if position < 0:
                     self.__currentFiles.append(files)
                 else:
                     self.__currentFiles.insert(files, position)
@@ -7147,7 +7126,7 @@ class BCFileList(QObject):
                 self.__currentFilesUuid.add(files.uuid())
 
                 if not self.__massProcess:
-                    if currentFilesCount==0:
+                    if currentFilesCount == 0:
                         # list was empty, then it's a reset
                         self.resultsUpdatedReset.emit()
                     else:
@@ -7167,13 +7146,13 @@ class BCFileList(QObject):
         - <BCFile> and/or <BCDirectory>
         """
         if isinstance(files, (list, tuple, set)):
-            updated=[]
-            self.__massProcess=True
+            updated = []
+            self.__massProcess = True
             for file in files:
                 if self.updateResults(file):
                     updated.append(file)
-            self.__massProcess=False
-            if len(updated)>0:
+            self.__massProcess = False
+            if len(updated) > 0:
                 # list wasn't empty, then it's an addition
                 self.resultsUpdatedUpdate.emit(updated)
                 return True
@@ -7181,17 +7160,17 @@ class BCFileList(QObject):
 
         if isinstance(files, str):
             if os.path.isdir():
-                files=BCDirectory(files)
+                files = BCDirectory(files)
             elif os.path.isfile():
-                files=BCFile(files)
+                files = BCFile(files)
             else:
-                files=BCMissingFile(files)
+                files = BCMissingFile(files)
 
         if isinstance(files, BCBaseFile):
             if files.uuid() in self.__currentFilesUuid:
                 # update only if in current results
 
-                self.__currentFiles[self.inResults(files.uuid())]=files
+                self.__currentFiles[self.inResults(files.uuid())] = files
 
                 if not self.__massProcess:
                     # list wasn't empty, then it's an addition
@@ -7211,24 +7190,24 @@ class BCFileList(QObject):
         - <BCFile> and/or <BCDirectory>
         """
         if isinstance(files, (list, tuple, set)):
-            removed=[]
-            self.__massProcess=True
+            removed = []
+            self.__massProcess = True
             # first we need to process values given as row number
             # need reverse order to avoid index being broken when removed
-            nbFiles=len(self.__currentFiles)
-            intList=sorted([v for v in files if isinstance(v, int) and (v>=0 and v<nbFiles)], reverse=True)
+            nbFiles = len(self.__currentFiles)
+            intList = sorted([v for v in files if isinstance(v, int) and (v >= 0 and v < nbFiles)], reverse=True)
 
             for index in intList:
                 removed.append(self.__currentFiles.pop(index))
 
-            notIntList=[v for v in files if not isinstance(v, int)]
+            notIntList = [v for v in files if not isinstance(v, int)]
 
             for file in notIntList:
                 if self.removeResults(file):
                     removed.append(file)
-            self.__massProcess=False
-            if len(removed)>0:
-                if len(self.__currentFiles)==0:
+            self.__massProcess = False
+            if len(removed) > 0:
+                if len(self.__currentFiles) == 0:
                     # everything was removed, then it's a reset
                     self.resultsUpdatedReset.emit()
                 else:
@@ -7239,25 +7218,25 @@ class BCFileList(QObject):
 
         if isinstance(files, str):
             if os.path.isdir():
-                files=BCDirectory(files)
+                files = BCDirectory(files)
             elif os.path.isfile():
-                files=BCFile(files)
+                files = BCFile(files)
             else:
-                files=BCMissingFile(files)
+                files = BCMissingFile(files)
 
         if isinstance(files, BCBaseFile):
-            files=files.uuid()
+            files = files.uuid()
 
         if isinstance(files, bytes):
-            index=self.inResults(files)
+            index = self.inResults(files)
 
-            if index>=0:
+            if index >= 0:
                 # remove only if found in current results
-                file=self.__currentFiles.pop(index)
+                file = self.__currentFiles.pop(index)
                 self.__currentFilesUuid.discard(files)
 
                 if not self.__massProcess:
-                    if len(self.__currentFiles)==0:
+                    if len(self.__currentFiles) == 0:
                         # everything was removed, then it's a reset
                         self.resultsUpdatedReset.emit()
                     else:
@@ -7293,19 +7272,19 @@ class BCFileList(QObject):
 
             p=xx.inResults([bcfile0.uuid(), bcfile1, bcfile2])
 
-            If p=[-1,5,-1]
+            If p=[-1, 5, -1]
             It mean that uuid and bcfile2 were not found in results, and bcfile1 was found in position 5
         """
         if isinstance(bcFileUuid, (list, tuple)):
             return [self.inResults(item) for item in bcFileUuid]
 
         if isinstance(bcFileUuid, BCBaseFile):
-            bcFileUuid=bcFileUuid.uuid()
+            bcFileUuid = bcFileUuid.uuid()
 
         if isinstance(bcFileUuid, bytes):
             if bcFileUuid in self.__currentFilesUuid:
                 for index, file in enumerate(self.__currentFiles):
-                    if file.uuid()==bcFileUuid:
+                    if file.uuid() == bcFileUuid:
                         return index
             return -1
         else:
@@ -7336,8 +7315,7 @@ class BCFileIcon(object):
         if fileInfo.fileName() == '..':
             return buildIcon('pktk:goup')
 
-
         return BCFileIcon.__IconProvider.icon(fileInfo)
 
 
-# Debug.setEnabled(True)
+Debug.setEnabled(True)

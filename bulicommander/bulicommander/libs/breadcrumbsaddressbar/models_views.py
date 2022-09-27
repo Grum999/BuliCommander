@@ -9,7 +9,7 @@ from PyQt5.QtCore import (
     )
 
 
-if sys.platform=='win32':
+if sys.platform == 'win32':
     # for windows, implement fcuntion to get drive name
     import ctypes
 
@@ -39,25 +39,25 @@ if sys.platform=='win32':
         rc = kernel32.GetDriveTypeA(
             ctypes.c_wchar_p(drive),
         )
-        if rc==0:
+        if rc == 0:
             # DRIVE_UNKNOWN
             return ''
-        elif rc==1:
+        elif rc == 1:
             # DRIVE_NO_ROOT_DIR
             return ''
-        elif rc==2:
+        elif rc == 2:
             # DRIVE_REMOVABLE
             return i18n('Removable drive')
-        elif rc==3:
+        elif rc == 3:
             # DRIVE_FIXED
             return i18n('Local drive')
-        elif rc==4:
+        elif rc == 4:
             # DRIVE_REMOTE
             return i18n('Network drive')
-        elif rc==5:
+        elif rc == 5:
             # DRIVE_CDROM
             return i18n('CD-ROM drive')
-        elif rc==6:
+        elif rc == 6:
             # DRIVE_RAMDISK
             return i18n('RAM Disk drive')
         else:
@@ -83,7 +83,7 @@ class FilenameModel(QtCore.QStringListModel):
     """
     def __init__(self, filter_=None, fs_engine='qt', icon_provider='internal', breadcrumbs=None):
         super().__init__()
-        self.icon_provider=self.get_icon
+        self.icon_provider = self.get_icon
         self.icons = QtWidgets.QFileIconProvider()
 
         self.current_path = ''
@@ -102,7 +102,7 @@ class FilenameModel(QtCore.QStringListModel):
             # self.setData(index, dat, role)
             return self.icon_provider(super().data(index, Qt.DisplayRole))
         elif role == Qt.DisplayRole:
-            if r:=re.search(r"(?:^([A-Z]:)$|\(([A-Z]:)\)$)", default, re.I):
+            if r := re.search(r"(?:^([A-Z]:)$|\(([A-Z]:)\)$)", default, re.I):
                 return default
             return Path(default).name
 
@@ -120,8 +120,9 @@ class FilenameModel(QtCore.QStringListModel):
                                    if self.filter != 'dirs' or i.is_dir()])
         elif self.fs_engine == 'qt':
             qdir = QtCore.QDir(f"{path}")
-            qdir.setFilter(qdir.NoDotAndDotDot | self.__hiddenPath |
-                (qdir.Dirs if self.filter == 'dirs' else qdir.AllEntries))
+            qdir.setFilter(qdir.NoDotAndDotDot |
+                           self.__hiddenPath |
+                           (qdir.Dirs if self.filter == 'dirs' else qdir.AllEntries))
 
             names = qdir.entryList(sort=QtCore.QDir.DirsFirst |
                                    QtCore.QDir.LocaleAware)
@@ -140,33 +141,33 @@ class FilenameModel(QtCore.QStringListModel):
         return sorted(dirs, key=str.lower) + sorted(files, key=str.lower)
 
     def setPathPrefix(self, prefix, bname=''):
-        if len(prefix)>0 and prefix[0]=='@':
+        if len(prefix) > 0 and prefix[0] == '@':
             # return a list of quick references
             if self.__breadcrumbs is None:
-                quickRefDict=[]
+                quickRefDict = []
             else:
-                quickRefDict=self.__breadcrumbs.quickRefDict()
+                quickRefDict = self.__breadcrumbs.quickRefDict()
 
             self.setStringList([key for key in quickRefDict])
 
             self.current_path = prefix
-        if prefix==f'::{os.path.sep}':
+        if prefix == f'::{os.path.sep}':
             # windows drives
-            drvList=[]
+            drvList = []
             for drv in QDir().drives():
-                volumeName=getVolumeName(drv.absoluteFilePath()).strip()
+                volumeName = getVolumeName(drv.absoluteFilePath()).strip()
 
-                if volumeName!='':
-                    volumeName=f"{volumeName} ({drv.absoluteFilePath().replace('/', '')})"
+                if volumeName != '':
+                    volumeName = f"{volumeName} ({drv.absoluteFilePath().replace('/', '')})"
                 else:
-                    volumeName=drv.absoluteFilePath().replace('/', '')
+                    volumeName = drv.absoluteFilePath().replace('/', '')
 
-                #else:
-                #    volumeType=getVolumeType(drv.absoluteFilePath())
-                #    if volumeType!='':
-                #        volumeName=f" [{volumeType}]"
+                # else:
+                #    volumeType = getVolumeType(drv.absoluteFilePath())
+                #    if volumeType != '':
+                #        volumeName = f" [{volumeType}]"
                 #    else:
-                #        volumeName=f" [{i18n('No label')}]"
+                #        volumeName = f" [{i18n('No label')}]"
 
                 drvList.append(volumeName)
 
@@ -187,12 +188,12 @@ class FilenameModel(QtCore.QStringListModel):
             self.current_path = os.path.join(f"{path}", bname)
 
     def setPathPrefixTextEdited(self, prefix):
-        if len(prefix)>0 and prefix[0]=='@':
-            bname=''
+        if len(prefix) > 0 and prefix[0] == '@':
+            bname = ''
         else:
-            bname=os.path.basename(prefix)
+            bname = os.path.basename(prefix)
 
-        if len(bname)>0 and bname[0] == '.':
+        if len(bname) > 0 and bname[0] == '.':
             lHiddenPath = self.__hiddenPath
             self.__hiddenPath = QDir.Hidden
             self.setPathPrefix(prefix, '.')
@@ -208,7 +209,7 @@ class FilenameModel(QtCore.QStringListModel):
         """Define if hidden path are returned or not"""
         if value != self.hiddenPath():
             self.current_path = ''
-            if value == True:
+            if value is True:
                 self.__hiddenPath = QDir.Hidden
             else:
                 self.__hiddenPath = 0
@@ -240,7 +241,7 @@ class MenuListView(QtWidgets.QMenu):
 
         lv.setIconSize(QtCore.QSize(32, 32))
 
-        fnt=lv.font()
+        fnt = lv.font()
         fnt.setFamily('DejaVu Sans Mono, Consolas, Courier New')
         lv.setFont(fnt)
 

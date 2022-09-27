@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -18,8 +18,6 @@
 # along with this program.
 # If not, see https://www.gnu.org/licenses/
 # -----------------------------------------------------------------------------
-
-
 
 
 # -----------------------------------------------------------------------------
@@ -43,6 +41,7 @@ from .wcolorselector import WColorPicker
 from .wcolorbutton import WColorButton
 from ..pktk import *
 
+
 class WExportOptionsPng(QWidget):
     """A wdiget to manage PNG export options"""
     optionUpdated = Signal()          # when an option is changed from user interface
@@ -64,7 +63,7 @@ class WExportOptionsPng(QWidget):
 
         self.rbStoreAlpha.toggled.connect(self.__transparentColorState)
         self.pbBgColor.colorPicker().setStandardLayout('hsv')
-        self.pbBgColor.colorPicker().setOptionMenu(WColorPicker.OPTION_MENU_ALL&~WColorPicker.OPTION_MENU_ALPHA)
+        self.pbBgColor.colorPicker().setOptionMenu(WColorPicker.OPTION_MENU_ALL & ~WColorPicker.OPTION_MENU_ALPHA)
         self.__transparentColorState(self.rbStoreAlpha.isChecked())
 
         self.hsCompressionLevel.valueChanged.connect(self.__propUpdated)
@@ -90,9 +89,9 @@ class WExportOptionsPng(QWidget):
         If `asInfoObject` is True, return a InfoObject otherwise a dictionary
         """
         if asInfoObject:
-            color=self.pbBgColor.color()
+            color = self.pbBgColor.color()
 
-            returned=InfoObject()
+            returned = InfoObject()
             returned.setProperty('compression', self.hsCompressionLevel.value())
             returned.setProperty('indexed', self.cbIndexed.isChecked())
             returned.setProperty('interlaced', self.cbInterlacing.isChecked())
@@ -101,7 +100,7 @@ class WExportOptionsPng(QWidget):
             returned.setProperty('alpha', self.rbStoreAlpha.isChecked())
             returned.setProperty('transparencyFillcolor', QColor(color))
         else:
-            returned={
+            returned = {
                 'compression': self.hsCompressionLevel.value(),
                 'indexed': self.cbIndexed.isChecked(),
                 'interlaced': self.cbInterlacing.isChecked(),
@@ -120,9 +119,9 @@ class WExportOptionsPng(QWidget):
         If None is provided, default options are set
         """
         def ioProp(property, default):
-            returned=options.property(property)
+            returned = options.property(property)
             if returned is None:
-                returned=default
+                returned = default
             return returned
 
         if options is None:
@@ -151,6 +150,7 @@ class WExportOptionsPng(QWidget):
 
         self.optionChanged.emit()
 
+
 class WExportOptionsJpeg(QWidget):
     """A wdiget to manage JPEG export options"""
     optionUpdated = Signal()          # when an option is changed from user interface
@@ -171,7 +171,7 @@ class WExportOptionsJpeg(QWidget):
         sys.path.pop()
 
         self.pbBgColor.colorPicker().setStandardLayout('hsv')
-        self.pbBgColor.colorPicker().setOptionMenu(WColorPicker.OPTION_MENU_ALL&~WColorPicker.OPTION_MENU_ALPHA)
+        self.pbBgColor.colorPicker().setOptionMenu(WColorPicker.OPTION_MENU_ALL & ~WColorPicker.OPTION_MENU_ALPHA)
 
         self.hsQuality.valueChanged.connect(self.__propUpdated)
         self.hsSmoothing.valueChanged.connect(self.__propUpdated)
@@ -191,9 +191,9 @@ class WExportOptionsJpeg(QWidget):
         If `asInfoObject` is True, return a InfoObject otherwise a dictionary
         """
         if asInfoObject:
-            color=self.pbBgColor.color()
+            color = self.pbBgColor.color()
 
-            returned=InfoObject()
+            returned = InfoObject()
             returned.setProperty('quality', self.hsQuality.value())
             returned.setProperty('smoothing', self.hsSmoothing.value())
             returned.setProperty('subsampling', self.cbxSubsampling.currentIndex())
@@ -202,7 +202,7 @@ class WExportOptionsJpeg(QWidget):
             returned.setProperty('saveProfile', self.cbSaveICCProfile.isChecked())
             returned.setProperty('transparencyFillcolor', QColor(color))
         else:
-            returned={
+            returned = {
                 'quality': self.hsQuality.value(),
                 'smoothing': self.hsSmoothing.value(),
                 'subsampling': self.cbxSubsampling.currentIndex(),
@@ -221,9 +221,9 @@ class WExportOptionsJpeg(QWidget):
         If None is provided, default options are set
         """
         def ioProp(property, default):
-            returned=options.property(property)
+            returned = options.property(property)
             if returned is None:
-                returned=default
+                returned = default
             return returned
 
         if options is None:

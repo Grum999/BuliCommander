@@ -133,7 +133,7 @@ class BCImportDialogBoxCbx(QDialog):
         BCImportCbx.extractTo(self.__file, self.__tmpDirectory.name)
 
         searchRule = BCFileListRuleFile()
-        searchRule.setName(BCFileListRuleOperator(re.compile("\.(png|jpg|jpeg)$", re.I), 'match', BCFileListRuleOperatorType.REGEX))
+        searchRule.setName(BCFileListRuleOperator(re.compile(r"\.(png|jpg|jpeg)$", re.I), 'match', BCFileListRuleOperatorType.REGEX))
 
         self.__filesQuery.addSearchRules(searchRule)
         self.__filesQuery.addSearchPaths(BCFileListPath(self.__tmpDirectory.name, True, False, True, False))

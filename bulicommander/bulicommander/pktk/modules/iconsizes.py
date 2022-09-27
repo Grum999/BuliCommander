@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -25,11 +25,12 @@ from PyQt5.Qt import *
 
 from ..pktk import *
 
+
 class IconSizes(object):
     def __init__(self, values, currentIndex=0):
         if not (isinstance(values, list) or isinstance(values, tuple)):
             raise EInvalidType('Given `values` must be a <list>')
-        self.__values=[value for value in values if isinstance(value, int)]
+        self.__values = [value for value in values if isinstance(value, int)]
 
         if len(self.__values) == 0:
             raise EInvalidValue('Given `values` must be a non empty list of <int>')
@@ -47,7 +48,7 @@ class IconSizes(object):
         return True if current index has been modified, otherwise false
         """
         if self.__index < len(self.__values) - 1:
-            self.__index+=1
+            self.__index += 1
             return True
         return False
 
@@ -57,7 +58,7 @@ class IconSizes(object):
         return True if current index has been modified, otherwise false
         """
         if self.__index > 0:
-            self.__index-=1
+            self.__index -= 1
             return True
         return False
 
@@ -87,7 +88,7 @@ class IconSizes(object):
     def value(self, asQSize=False):
         """Return current value"""
         if asQSize:
-            v=self.__values[self.__index]
+            v = self.__values[self.__index]
             return QSize(v, v)
         return self.__values[self.__index]
 
@@ -102,10 +103,10 @@ class IconSizes(object):
         if value in self.__values:
             self.__index = self.__values.index(value)
         else:
-            self.__index=0
+            self.__index = 0
             for v in self.__values:
                 if v < value:
-                    self.__index+=1
+                    self.__index += 1
                 else:
                     break
         if currentIndex == self.__index:

@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -45,22 +45,22 @@ class GenericKeyValueNode:
 
         """
         # parent is a GenericKeyValueNode
-        if not parent is None and not isinstance(parent, GenericKeyValueNode):
+        if parent is not None and not isinstance(parent, GenericKeyValueNode):
             raise EInvalidType("Given `parent` must be a <GenericKeyValueNode>")
 
-        self.__parent=parent
+        self.__parent = parent
 
         # initialise default values
-        self.__data=(None,None)
+        self.__data = (None, None)
 
         # Initialise node childs
-        self.__childs=[]
+        self.__childs = []
 
         if isinstance(data, dict):
             for key in data:
                 self.__addKeyValue(key, data[key])
         elif isinstance(data, tuple):
-            self.__data=data
+            self.__data = data
 
     def __addKeyValue(self, keyPath, value):
         """Add a key/value pair
@@ -69,8 +69,8 @@ class GenericKeyValueNode:
         """
         if "/" in keyPath:
             # need to build path tree
-            path, key=keyPath.rsplit("/", 1)
-            directory=self.__childFromPath(path)
+            path, key = keyPath.rsplit("/", 1)
+            directory = self.__childFromPath(path)
             directory.addChild(GenericKeyValueNode((key, value), directory))
         else:
             self.addChild(GenericKeyValueNode((keyPath, value), self))
@@ -84,18 +84,18 @@ class GenericKeyValueNode:
         # testA/testB/tesC
 
         if "/" in fullPath:
-            path, key=fullPath.split("/", 1)
+            path, key = fullPath.split("/", 1)
 
-            foundNode=self.__childFromPath(path)
+            foundNode = self.__childFromPath(path)
             if foundNode:
-                # exists, continue to search
+                # exists, continue to search
                 return foundNode.__childFromPath(key)
         else:
             for item in self.__childs:
-                if item.data(GenericKeyValueNode.KEY)==fullPath:
+                if item.data(GenericKeyValueNode.KEY) == fullPath:
                     return item
 
-            item=GenericKeyValueNode((fullPath, None), self)
+            item = GenericKeyValueNode((fullPath, None), self)
             self.addChild(item)
             return item
 
@@ -108,7 +108,7 @@ class GenericKeyValueNode:
 
     def child(self, row):
         """Return child at given position"""
-        if row<0 or row>=len(self.__childs):
+        if row < 0 or row >= len(self.__childs):
             return None
         return self.__childs[row]
 
@@ -125,12 +125,12 @@ class GenericKeyValueNode:
 
     def row(self):
         """Return position is parent's children list"""
-        returned=0
+        returned = 0
         if self.__parent:
-            returned=self.__parent.childRow(self)
-            if returned<0:
+            returned = self.__parent.childRow(self)
+            if returned < 0:
                 # need to check if -1 can be used
-                returned=0
+                returned = 0
         return returned
 
     def childRow(self, node):
@@ -140,7 +140,7 @@ class GenericKeyValueNode:
         """
         try:
             return self.__childs.index(node)
-        except:
+        except Exception:
             return -1
 
     def columnCount(self):
@@ -152,8 +152,8 @@ class GenericKeyValueNode:
 
         Content is managed from model
         """
-        if not key is None:
-            if key in (GenericKeyValueNode.KEY,GenericKeyValueNode.VALUE):
+        if key is not None:
+            if key in (GenericKeyValueNode.KEY, GenericKeyValueNode.VALUE):
                 return self.__data[key]
             else:
                 return None
@@ -169,7 +169,7 @@ class GenericKeyValueNode:
 
         Warning: there's not control about data!!
         """
-        self.__data=(self.__data[0], value)
+        self.__data = (self.__data[0], value)
 
 
 class GenericKeyValueModel(QAbstractItemModel):
@@ -186,7 +186,7 @@ class GenericKeyValueModel(QAbstractItemModel):
         """Initialise data model"""
         super(GenericKeyValueModel, self).__init__(parent)
 
-        self.__rootItem=GenericKeyValueNode()
+        self.__rootItem = GenericKeyValueNode()
 
     def columnCount(self, parent=QModelIndex()):
         """Return total number of column for index"""
@@ -194,13 +194,13 @@ class GenericKeyValueModel(QAbstractItemModel):
 
     def rowCount(self, parent=QModelIndex()):
         """Return total number of rows for index"""
-        if parent.column()>0:
+        if parent.column() > 0:
             return 0
 
         if not parent.isValid():
-            parentItem=self.__rootItem
+            parentItem = self.__rootItem
         else:
-            parentItem=parent.internalPointer()
+            parentItem = parent.internalPointer()
 
         return parentItem.childCount()
 
@@ -209,12 +209,12 @@ class GenericKeyValueModel(QAbstractItemModel):
         if not index.isValid():
             return None
 
-        item=index.internalPointer()
+        item = index.internalPointer()
 
-        if role==Qt.DisplayRole:
-            if index.column()==GenericKeyValueModel.COLNUM_KEY:
+        if role == Qt.DisplayRole:
+            if index.column() == GenericKeyValueModel.COLNUM_KEY:
                 return item.data(GenericKeyValueNode.KEY)
-            elif index.column()==GenericKeyValueModel.COLNUM_VALUE:
+            elif index.column() == GenericKeyValueModel.COLNUM_VALUE:
                 return item.data(GenericKeyValueNode.VALUE)
 
         return None
@@ -227,7 +227,7 @@ class GenericKeyValueModel(QAbstractItemModel):
         if not isinstance(parent, QModelIndex) or not self.hasIndex(row, column, parent):
             return QModelIndex()
 
-        child=None
+        child = None
         if not parent.isValid():
             parentNode = self.__rootItem
         else:
@@ -245,10 +245,10 @@ class GenericKeyValueModel(QAbstractItemModel):
         if not index or not index.isValid():
             return QModelIndex()
 
-        childItem=index.internalPointer()
-        childParent=childItem.parent()
+        childItem = index.internalPointer()
+        childParent = childItem.parent()
 
-        if childParent is None or childParent==self.__rootItem:
+        if childParent is None or childParent == self.__rootItem:
             return QModelIndex()
 
         return self.createIndex(childParent.row(), 0, childParent)
@@ -270,10 +270,10 @@ class GenericKeyValueModel(QAbstractItemModel):
                   +- c      value
         """
         if isinstance(data, dict):
-            self.__data=data
-            self.__rootItem=GenericKeyValueNode(self.__data)
+            self.__data = data
+            self.__rootItem = GenericKeyValueNode(self.__data)
         else:
-            self.__rootItem=GenericKeyValueNode()
+            self.__rootItem = GenericKeyValueNode()
         self.modelReset.emit()
 
 
@@ -283,7 +283,7 @@ class WGenericKeyValueView(QTreeView):
     def __init__(self, parent=None):
         super(WGenericKeyValueView, self).__init__(parent)
 
-        self.__model=GenericKeyValueModel(self)
+        self.__model = GenericKeyValueModel(self)
 
         self.__proxyModel = QSortFilterProxyModel(self)
         self.__proxyModel.setSourceModel(self.__model)

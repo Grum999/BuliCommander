@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2022 - Grum999
 #
@@ -18,8 +18,6 @@
 # along with this program.
 # If not, see https://www.gnu.org/licenses/
 # -----------------------------------------------------------------------------
-
-
 
 
 # -----------------------------------------------------------------------------
@@ -52,18 +50,18 @@ class WFlowLayout(QLayout):
         super(WFlowLayout, self).__init__(parent)
 
         # space between items
-        self.__horizontalSpacing=-1
-        self.__verticalSpacing=-1
+        self.__horizontalSpacing = -1
+        self.__verticalSpacing = -1
 
         # list of items
-        self.__itemList=[]
+        self.__itemList = []
 
         #
-        self.__minHeightCalculated=0
+        self.__minHeightCalculated = 0
 
     def __del__(self):
         """destructor: cleanup items"""
-        while item:=self.takeAt(0):
+        while item := self.takeAt(0):
             del item
 
     def __calculateLayout(self, rect, testOnly):
@@ -71,23 +69,23 @@ class WFlowLayout(QLayout):
 
         It uses contentsMargins() to calculate the area available to the layout items
         """
-        cMargins=self.contentsMargins()
-        left=cMargins.left()
-        top=cMargins.top()
-        right=cMargins.right()
-        bottom=cMargins.bottom()
+        cMargins = self.contentsMargins()
+        left = cMargins.left()
+        top = cMargins.top()
+        right = cMargins.right()
+        bottom = cMargins.bottom()
 
         effectiveRect = rect.adjusted(left, top, -right, -bottom)
         x = effectiveRect.x()
         y = effectiveRect.y()
         lineHeight = 0
 
-        self.__minHeightCalculated=0
+        self.__minHeightCalculated = 0
 
         for item in self.__itemList:
-            maxSize=item.maximumSize()
-            hintSize=item.sizeHint()
-            expandingH=item.expandingDirections()&Qt.Horizontal==Qt.Horizontal
+            maxSize = item.maximumSize()
+            hintSize = item.sizeHint()
+            expandingH = (item.expandingDirections() & Qt.Horizontal) == Qt.Horizontal
 
             widget = item.widget()
 
@@ -107,9 +105,8 @@ class WFlowLayout(QLayout):
                     # a layout..?
                     spaceY = 0
 
-
-            itemWidth=hintSize.width()
-            itemMaxWidth=min(maxSize.width(), effectiveRect.width()) - x
+            itemWidth = hintSize.width()
+            itemMaxWidth = min(maxSize.width(), effectiveRect.width()) - x
 
             nextX = x + itemWidth + spaceX
             if nextX - spaceX > effectiveRect.right() and lineHeight > 0:
@@ -120,7 +117,7 @@ class WFlowLayout(QLayout):
 
                 if expandingH:
                     nextX = x + itemMaxWidth + spaceX
-                    itemMaxWidth=min(maxSize.width(), effectiveRect.width()) - x
+                    itemMaxWidth = min(maxSize.width(), effectiveRect.width()) - x
                 else:
                     nextX = x + itemWidth + spaceX
                 lineHeight = 0
@@ -134,7 +131,7 @@ class WFlowLayout(QLayout):
             x = nextX
             lineHeight = max(lineHeight, hintSize.height())
 
-        self.__minHeightCalculated=y + lineHeight - bottom
+        self.__minHeightCalculated = y + lineHeight - bottom
 
         return y + lineHeight - rect.y() + bottom
 
@@ -144,7 +141,7 @@ class WFlowLayout(QLayout):
         The default spacing for top-level layouts, when the parent is a QWidget, will be determined by querying the style.
         The default spacing for sublayouts, when the parent is a QLayout, will be determined by querying the spacing of the parent layout.
         """
-        parent=self.parent()
+        parent = self.parent()
         if parent is None:
             return -1
         elif parent.isWidgetType():
@@ -154,28 +151,28 @@ class WFlowLayout(QLayout):
 
     def horizontalSpacing(self):
         """Horizontal space between items"""
-        if self.__horizontalSpacing>=0:
+        if self.__horizontalSpacing >= 0:
             return self.__horizontalSpacing
         else:
             return self.__smartSpacing(QStyle.PM_LayoutHorizontalSpacing)
 
     def setHorizontalSpacing(self, value):
         """Set horizontal space between items"""
-        if (value is None or isinstance(value, int)) and self.__horizontalSpacing!=value:
-            self.__horizontalSpacing=value
+        if (value is None or isinstance(value, int)) and self.__horizontalSpacing != value:
+            self.__horizontalSpacing = value
             self.update()
 
     def verticalSpacing(self):
         """Vertical space between items"""
-        if self.__verticalSpacing>=0:
+        if self.__verticalSpacing >= 0:
             return self.__verticalSpacing
         else:
             return self.__smartSpacing(QStyle.PM_LayoutVerticalSpacing)
 
     def setVerticalSpacing(self, value):
         """Set vertical space between items"""
-        if (value is None or isinstance(value, int)) and self.__verticalSpacing!=value:
-            self.__verticalSpacing=value
+        if (value is None or isinstance(value, int)) and self.__verticalSpacing != value:
+            self.__verticalSpacing = value
             self.update()
 
     def count(self):
@@ -184,7 +181,7 @@ class WFlowLayout(QLayout):
 
     def expandingDirections(self):
         """returns the Qt::Orientations in which the layout can make use of more space than its sizeHint()"""
-        return Qt.Vertical|Qt.Horizontal
+        return Qt.Vertical | Qt.Horizontal
 
     def sizeHint(self):
         """Return ideal size for widget"""
@@ -192,15 +189,15 @@ class WFlowLayout(QLayout):
 
     def itemAt(self, index):
         """Return item given by `index` in layout"""
-        if index>=0 and index<len(self.__itemList):
-            returned=self.__itemList[index]
+        if index >= 0 and index < len(self.__itemList):
+            returned = self.__itemList[index]
             return returned
         return None
 
     def takeAt(self, index):
         """Remove item given by `index` from layout and return item"""
-        if index>=0 and index<len(self.__itemList):
-            returned=self.__itemList.pop(index)
+        if index >= 0 and index < len(self.__itemList):
+            returned = self.__itemList.pop(index)
             return returned
         return None
 
@@ -222,7 +219,7 @@ class WFlowLayout(QLayout):
         elif not isinstance(index, int):
             raise EInvalidType("Given `index` must be a <int>")
 
-        if index<0:
+        if index < 0:
             # append
             self.__itemList.append(item)
         else:
@@ -238,7 +235,7 @@ class WFlowLayout(QLayout):
             raise EInvalidType("Given `layout` must be a <QLayout>")
         elif not isinstance(index, int):
             raise EInvalidType("Given `index` must be a <int>")
-        elif hash(layout)==hash(self):
+        elif hash(layout) == hash(self):
             raise EInvalidType("Given `layout` can't be added to itself")
 
         self.insertItem(index, layout)
@@ -254,7 +251,7 @@ class WFlowLayout(QLayout):
             raise EInvalidType("Given `index` must be a <int>")
 
         self.addChildWidget(widget)
-        wi=QWidgetItem(widget)
+        wi = QWidgetItem(widget)
         self.insertItem(index, wi)
 
     def addLayout(self, layout):
@@ -263,13 +260,13 @@ class WFlowLayout(QLayout):
 
     def minimumSize(self):
         """Return minimal size required for layout"""
-        size=QSize(0, self.__minHeightCalculated)
+        size = QSize(0, self.__minHeightCalculated)
         for item in self.__itemList:
-            size=size.expandedTo(item.minimumSize())
+            size = size.expandedTo(item.minimumSize())
 
-        cMargins=self.contentsMargins()
+        cMargins = self.contentsMargins()
 
-        size+=QSize(cMargins.left()+cMargins.right(), cMargins.top()+cMargins.bottom())
+        size += QSize(cMargins.left()+cMargins.right(), cMargins.top()+cMargins.bottom())
         return size
 
     def hasHeightForWidth(self):

@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -21,23 +21,25 @@
 
 import os
 
+
 class EInvalidType(Exception):
     """An invalid type has been provided"""
     pass
 
+
 class EInvalidValue(Exception):
     """An invalid value has been provided"""
     pass
+
 
 class EInvalidStatus(Exception):
     """An invalid status has been detected"""
     pass
 
 
-
 class PkTk:
     __libraries = {}
-    __packageName=''
+    __packageName = ''
 
     PATH = os.path.dirname(__file__)
     PATH_RESOURCES = os.path.join(os.path.dirname(__file__), 'resources')
@@ -57,9 +59,9 @@ class PkTk:
     def setPackageName(package=None):
         """Define current package name for PkTk"""
         if not isinstance(package, str):
-            PkTk.__packageName=''
+            PkTk.__packageName = ''
         else:
-            PkTk.__packageName=package
+            PkTk.__packageName = package
 
     @staticmethod
     def packageName():

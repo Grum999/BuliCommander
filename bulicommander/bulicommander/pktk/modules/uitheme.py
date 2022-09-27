@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 
 
-# Build resources files:
+# Build resources files:
 #   cd .../.../resources
 #   /usr/lib/qt5/bin/rcc --binary -o ./lighttheme_icons.rcc light_icons.qrc
 #   /usr/lib/qt5/bin/rcc --binary -o ./darktheme_icons.rcc dark_icons.qrc
@@ -44,7 +44,9 @@ from PyQt5.QtWidgets import (
 
 from ..pktk import *
 
+
 # -----------------------------------------------------------------------------
+
 class UITheme(object):
     """Manage theme
 
@@ -64,8 +66,8 @@ class UITheme(object):
             }
     }
 
-    __themes={}
-    __kraActiveWindow=None
+    __themes = {}
+    __kraActiveWindow = None
 
     @staticmethod
     def load(rccPath=None, autoReload=True):
@@ -73,16 +75,16 @@ class UITheme(object):
         def initThemeChanged():
             # initialise theme when main window is created
             if UITheme.__kraActiveWindow is None:
-                UITheme.__kraActiveWindow=Krita.instance().activeWindow()
-                if not UITheme.__kraActiveWindow is None:
+                UITheme.__kraActiveWindow = Krita.instance().activeWindow()
+                if UITheme.__kraActiveWindow is not None:
                     UITheme.__kraActiveWindow.themeChanged.connect(UITheme.reloadResources)
 
         if rccPath is None:
             # by default if no path is provided, load default PkTk theme
-            rccPath=PkTk.PATH_RESOURCES
+            rccPath = PkTk.PATH_RESOURCES
 
-        if not rccPath in UITheme.__themes:
-            UITheme.__themes[rccPath]=UITheme(rccPath, autoReload)
+        if rccPath not in UITheme.__themes:
+            UITheme.__themes[rccPath] = UITheme(rccPath, autoReload)
 
         # Initialise connector on theme changed
         initThemeChanged()
@@ -95,28 +97,27 @@ class UITheme(object):
     def reloadResources(clearPixmapCache=None):
         """Reload resources"""
         if clearPixmapCache is None:
-            clearPixmapCache=True
+            clearPixmapCache = True
         for theme in UITheme.__themes:
             if UITheme.__themes[theme].getAutoReload():
                 # reload
                 UITheme.__themes[theme].loadResources(clearPixmapCache)
                 if clearPixmapCache:
-                    clearPixmapCache=False
+                    clearPixmapCache = False
 
     @staticmethod
     def style(name):
         """Return style according to current theme"""
         for theme in UITheme.__themes:
-            # return style from first theme (should be the same for all themes)
+            # return style from first theme (should be the same for all themes)
             return UITheme.__themes[theme].getStyle(name)
 
     @staticmethod
     def theme():
         """Return style according to current theme"""
         for theme in UITheme.__themes:
-            # return style from first theme (should be the same for all themes)
+            # return style from first theme (should be the same for all themes)
             return UITheme.__themes[theme].getTheme()
-
 
     def __init__(self, rccPath, autoReload=True):
         """The given `rccPath` is full path to directory where .rcc files can be found
@@ -132,12 +133,11 @@ class UITheme(object):
         """
         self.__theme = UITheme.DARK_THEME
         self.__registeredResource = None
-        self.__rccPath=rccPath
-        self.__autoReload=autoReload
-        self.__kraActiveWindow=None
+        self.__rccPath = rccPath
+        self.__autoReload = autoReload
+        self.__kraActiveWindow = None
 
         self.loadResources(False)
-
 
     def loadResources(self, clearPixmapCache=True):
         """Load resources for current theme"""
@@ -145,7 +145,7 @@ class UITheme(object):
         if clearPixmapCache:
             QPixmapCache.clear()
 
-        if not self.__registeredResource is None:
+        if self.__registeredResource is not None:
             QResource.unregisterResource(self.__registeredResource)
 
         palette = QApplication.palette()
@@ -163,11 +163,9 @@ class UITheme(object):
         if not QResource.registerResource(self.__registeredResource):
             self.__registeredResource = None
 
-
     def getTheme(self):
         """Return current theme"""
         return self.__theme
-
 
     def getStyle(self, name):
         """Return style according to current theme"""

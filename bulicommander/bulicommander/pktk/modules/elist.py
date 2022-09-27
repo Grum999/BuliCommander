@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -19,6 +19,7 @@
 # If not, see https://www.gnu.org/licenses/
 # -----------------------------------------------------------------------------
 
+
 class EList(object):
     """A EList is a list on which we can use next() and prev() method to get values
 
@@ -34,12 +35,12 @@ class EList(object):
         self.__stack = []
 
     def __repr__(self):
-        returned=[f"<EList({len(self.__list)}, {self.__index})>"]
+        returned = [f"<EList({len(self.__list)}, {self.__index})>"]
         for index, item in enumerate(self.__list):
-            if index==self.__index:
-                prefix='*'
+            if index == self.__index:
+                prefix = '*'
             else:
-                prefix=' '
+                prefix = ' '
             returned.append(f"{prefix}[{index:05}] {self.__list[index]}")
         return "\n".join(returned)
 
@@ -49,7 +50,7 @@ class EList(object):
         If `index` is provided, return value for given index.
         If given index is outside bounds, return 'None'
         """
-        if not index is None:
+        if index is not None:
             if index >= 0 and index < len(self.__list):
                 return self.__list[index]
             return None
@@ -77,7 +78,7 @@ class EList(object):
         """
         if move:
             if self.__index < len(self.__list):
-                self.__index+=1
+                self.__index += 1
                 return self.value()
 
             return None
@@ -93,7 +94,7 @@ class EList(object):
         """
         if move:
             if self.__index > 0:
-                self.__index-=1
+                self.__index -= 1
                 return self.value()
 
             return None
@@ -165,7 +166,7 @@ class EList(object):
 
     def resetIndex(self):
         """Reset index to none"""
-        self.__index=-1
+        self.__index = -1
 
     def pushIndex(self):
         """Push current index in stack"""
@@ -176,10 +177,10 @@ class EList(object):
 
         If stack is empty, does nothing
         """
-        if len(self.__stack)==0:
+        if len(self.__stack) == 0:
             return None
-        self.__index=self.__stack.pop()
+        self.__index = self.__stack.pop()
 
     def resetStack(self):
         """Reset current stack content (action doesn't modify current index)"""
-        self.__stack=[]
+        self.__stack = []

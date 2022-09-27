@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -44,9 +44,9 @@ class HList(QObject):
 
     def __init__(self, items=[], maxItems=25, uniqueItems=True):
         super(HList, self).__init__(None)
-        self.__list=[]
-        self.__maxItems=0
-        self.__uniqueItems=True
+        self.__list = []
+        self.__maxItems = 0
+        self.__uniqueItems = True
         self.setMaxItems(maxItems)
         self.setItems(items)
         self.__setUniqueItems(uniqueItems)
@@ -96,13 +96,13 @@ class HList(QObject):
         if self.__uniqueItems:
             try:
                 position = self.__list.index(value)
-            except:
+            except Exception:
                 # value not found
                 position = None
-        if not position is None:
+        if position is not None:
             self.__list.pop(position)
-        if len(self.__list)>=self.__maxItems:
-            if self.__maxItems>1:
+        if len(self.__list) >= self.__maxItems:
+            if self.__maxItems > 1:
                 self.__list = self.__list[-self.__maxItems+1:]
             else:
                 self.__list = []
@@ -115,11 +115,11 @@ class HList(QObject):
         position = None
         try:
             position = self.__list.index(value)
-        except:
+        except Exception:
             # value not found
             position = None
 
-        if not position is None:
+        if position is not None:
             self.__list.pop(position)
 
         if notifyChange:
@@ -133,7 +133,6 @@ class HList(QObject):
             if notifyChange:
                 self.changed.emit()
         return returned
-
 
     def last(self):
         """Return last value added"""

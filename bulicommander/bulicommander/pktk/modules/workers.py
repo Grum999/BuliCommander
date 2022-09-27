@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -20,10 +20,7 @@
 # -----------------------------------------------------------------------------
 
 
-
-
 # -----------------------------------------------------------------------------
-#from .pktk import PkTk
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -43,10 +40,12 @@ class WorkerSignals(QObject):
     finished = Signal()
     started = Signal()
 
+
 class WorkerPoolSignals(QObject):
     processed = Signal(tuple)           # an item has been processed
     finished = Signal()                 # pool has finished
     started = Signal()                  # pool has started (all workers started)
+
 
 class Worker(QRunnable):
     """"A worker designed to process data from WorkerPool
@@ -60,11 +59,11 @@ class Worker(QRunnable):
         The given `callback` will be executed on each item from pool with given optional `*callbackArgv` arguments
         """
         super(Worker, self).__init__()
-        self.__workerId=QUuid.createUuid().toString()
+        self.__workerId = QUuid.createUuid().toString()
         self.__pool = pool
         self.__callback = callback
         self.__callbackArgv = callbackArgv
-        self.__nbProcessed=0
+        self.__nbProcessed = 0
         self.signals = WorkerSignals()
 
     def id(self):
@@ -92,7 +91,6 @@ class Worker(QRunnable):
         """
         pass
 
-
     def nbProcessed(self):
         """Return number of items processed by worker"""
         return self.__nbProcessed
@@ -103,7 +101,7 @@ class Worker(QRunnable):
 
         If there's no more item to process in list, exit
         """
-        self.__nbProcessed=0
+        self.__nbProcessed = 0
         self.startEvent()
         self.signals.started.emit()
 
@@ -121,11 +119,11 @@ class Worker(QRunnable):
             # So a "null" print allow to do a print, without printing
             print("\0", sep="", end="", flush=True)
 
-            item=self.processEvent(itemIndex, item)
+            item = self.processEvent(itemIndex, item)
 
-            if not self.__callback is None:
+            if self.__callback is not None:
                 result = self.__callback(itemIndex, item, *self.__callbackArgv)
-            self.__nbProcessed+=1
+            self.__nbProcessed += 1
             self.signals.processed.emit((itemIndex, result))
 
         self.stopEvent()
@@ -143,14 +141,14 @@ class WorkerPool(QObject):
     def __init__(self, maxWorkerCount=None):
         super(WorkerPool, self).__init__()
         self.__threadpool = QThreadPool()
-        #self.__threadpool = QThreadPool.globalInstance()
+        # self.__threadpool = QThreadPool.globalInstance()
 
-        if isinstance(maxWorkerCount, int) and maxWorkerCount>=1 and maxWorkerCount<=self.__threadpool.maxThreadCount():
+        if isinstance(maxWorkerCount, int) and maxWorkerCount >= 1 and maxWorkerCount <= self.__threadpool.maxThreadCount():
             self.__maxWorkerCount = maxWorkerCount
         else:
             self.__maxWorkerCount =  self.__threadpool.maxThreadCount()
 
-        self.__mutex=QMutex()
+        self.__mutex = QMutex()
         self.__nbProcessed = 0
         self.__current = 0
         self.__started = 0
@@ -162,28 +160,28 @@ class WorkerPool(QObject):
         self.__dataList = []
         self.__results = []
         self.__mapResults = WorkerPool.__MAP_MODE_OFF
-        self.__workerClass=Worker
+        self.__workerClass = Worker
 
         self.signals = WorkerPoolSignals()
 
     def __onProcessed(self, processedNfo):
         """an item has been processed"""
-        self.__nbProcessed+=1
+        self.__nbProcessed += 1
         if self.__mapResults != WorkerPool.__MAP_MODE_OFF:
             index, item = processedNfo
-            if self.__mapResults == WorkerPool.__MAP_MODE_ALL and not index is None:
+            if self.__mapResults == WorkerPool.__MAP_MODE_ALL and index is not None:
                 self.__results[index] = item
-            elif self.__mapResults == WorkerPool.__MAP_MODE_NONONE and not item is None:
+            elif self.__mapResults == WorkerPool.__MAP_MODE_NONONE and item is not None:
                 self.__results.append(item)
             elif self.__mapResults == WorkerPool.__MAP_MODE_AGGREGATE and isinstance(item, dict):
                 for key in item:
-                    self.__results[key]+=item[key]
+                    self.__results[key] += item[key]
         self.signals.processed.emit((processedNfo[0], processedNfo[1], self.__nbProcessed))
 
     def __onFinished(self):
         """Do something.. ?"""
-        self.__started-=1
-        if self.__allStarted and self.__started==0:
+        self.__started -= 1
+        if self.__allStarted and self.__started == 0:
             for worker in self.__workers:
                 worker.cleanupEvent()
             self.__workers.clear()
@@ -195,9 +193,9 @@ class WorkerPool(QObject):
         if None, set default Worker class
         """
         if workerClass is None:
-            self.__workerClass=Worker
+            self.__workerClass = Worker
         else:
-            self.__workerClass=workerClass
+            self.__workerClass = workerClass
 
     def stopProcessingAsked(self):
         return self.__stopProcess
@@ -210,7 +208,7 @@ class WorkerPool(QObject):
             self.__mutex.unlock()
             return (None, None)
         returnedIndex = self.__current
-        self.__current+=1
+        self.__current += 1
 
         if self.__current >= self.__size:
             self.__current = None
@@ -220,8 +218,8 @@ class WorkerPool(QObject):
 
     def startProcessing(self, dataList, callback, *callbackArgv):
         """Start all current thread execution"""
-        # ensure to stop current processing before creating a new one
-        if self.__stopProcess == True:
+        # ensure to stop current processing before creating a new one
+        if self.__stopProcess is True:
             return
         else:
             self.stopProcessing()
@@ -242,7 +240,6 @@ class WorkerPool(QObject):
             # already initialised by aggregate() method
             self.__results = []
 
-
         # if number of items to process is less than number of possible threads,
         # don't use all threads
         self.__nbWorkers = min(self.__size, self.__maxWorkerCount)
@@ -253,7 +250,7 @@ class WorkerPool(QObject):
         self.__workers.clear()
 
         # for test, force to 1 thread only
-        #self.__nbWorkers = 1
+        # self.__nbWorkers = 1
 
         self.__allStarted = False
         # initialise workers
@@ -265,12 +262,12 @@ class WorkerPool(QObject):
 
         # start workers
         for index in range(self.__nbWorkers):
-            self.__started+=1
+            self.__started += 1
             self.__threadpool.start(self.__workers[index])
 
         self.__allStarted = True
         self.signals.started.emit()
-        if self.__started==0:
+        if self.__started == 0:
             self.__workers.clear()
             self.signals.finished.emit()
             self.__allStarted = False
@@ -286,8 +283,8 @@ class WorkerPool(QObject):
 
     def waitProcessed(self):
         """Wait until all items in pool are processed"""
-        # why self.__threadpool.waitForDone() don't work??
-        while self.__started>0:
+        # why self.__threadpool.waitForDone() don't work??
+        while self.__started > 0:
             Timer.sleep(1)
 
     def map(self, dataList, callback, *callbackArgv):

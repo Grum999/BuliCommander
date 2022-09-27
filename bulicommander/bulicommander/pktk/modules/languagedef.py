@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -38,6 +38,7 @@ from .uitheme import UITheme
 
 from ..pktk import *
 
+
 class LanguageDef:
 
     SEP_PRIMARY_VALUE = '\x01'              # define bounds for <value> and cursor position
@@ -71,12 +72,12 @@ class LanguageDef:
         if not isinstance(text, str):
             raise EInvalidType('Given `text` must be str')
 
-        rePattern=re.compile(re.escape(re.sub('\s+', '\x02', text)).replace('\x02', r'\s+')+'.*')
-        returned=[]
+        rePattern = re.compile(re.escape(re.sub(r'\s+', '\x02', text)).replace('\x02', r'\s+')+'.*')
+        returned = []
         for rule in self.__tokenizer.rules():
-            values=rule.matchText(rePattern, full)
-            if len(values)>0:
-                returned+=values
+            values = rule.matchText(rePattern, full)
+            if len(values) > 0:
+                returned += values
         # return list without any duplicate values
         return list(set(returned))
 

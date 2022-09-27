@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2022 - Grum999
 #
@@ -18,8 +18,6 @@
 # along with this program.
 # If not, see https://www.gnu.org/licenses/
 # -----------------------------------------------------------------------------
-
-
 
 # -----------------------------------------------------------------------------
 # Manage 7Zip and RAR archives files, using installed 7z and unrar tools installed
@@ -42,7 +40,7 @@ from .timeutils import (strToTs, tsToStr)
 from .utils import Debug
 
 # define command line according to OS
-if sys.platform=='win32':
+if sys.platform == 'win32':
     import winreg
 
     def getUnrar():
@@ -51,13 +49,13 @@ if sys.platform=='win32':
             # When installed, WinRAR create this registry key where value "path" can be found
             registryKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\WinRAR.exe", 0, winreg.KEY_READ)
             value, regtype = winreg.QueryValueEx(registryKey, "Path")
-        except:
-            value=None
+        except Exception:
+            value = None
 
         winreg.CloseKey(registryKey)
 
-        if not value is None:
-            value=os.path.join(value, "unrar.exe")
+        if value is not None:
+            value = os.path.join(value, "unrar.exe")
             if os.path.isfile(value):
                 return value
         return None
@@ -68,22 +66,22 @@ if sys.platform=='win32':
             # When installed, WinRAR create this registry key where value "path" can be found
             registryKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\7zFM.exe", 0, winreg.KEY_READ)
             value, regtype = winreg.QueryValueEx(registryKey, "Path")
-        except:
-            value=None
+        except Exception:
+            value = None
 
         winreg.CloseKey(registryKey)
 
-        if not value is None:
-            value=os.path.join(value, "7z.exe")
+        if value is not None:
+            value = os.path.join(value, "7z.exe")
             if os.path.isfile(value):
                 return value
         return None
 
-elif sys.platform=='linux':
+elif sys.platform == 'linux':
     def getUnrar():
         """return unrar executable full path name as string, None if not found"""
         # When installed, unrar should be available in /usr/bin
-        value="/usr/bin/unrar"
+        value = "/usr/bin/unrar"
         if os.path.isfile(value):
             return value
 
@@ -92,7 +90,7 @@ elif sys.platform=='linux':
     def get7z():
         """return 7z executable full path name as string, None if not found"""
         # When installed, unrar should be available in /usr/bin
-        value="/usr/bin/7z"
+        value = "/usr/bin/7z"
         if os.path.isfile(value):
             return value
 
@@ -112,11 +110,11 @@ class UncompressFileInfo:
     """File information from archive"""
 
     def __init__(self, fileName, fileDate, fileTime, fileUncompressedSize, fileCompressedSize, fileIsDir):
-        self.__fileName=fileName
-        self.__fileDateTime=strToTs(f"{fileDate} {fileTime}")
-        self.__fileUncompressedSize=fileUncompressedSize
-        self.__fileCompressedSize=fileCompressedSize
-        self.__fileIsDir=fileIsDir
+        self.__fileName = fileName
+        self.__fileDateTime = strToTs(f"{fileDate} {fileTime}")
+        self.__fileUncompressedSize = fileUncompressedSize
+        self.__fileCompressedSize = fileCompressedSize
+        self.__fileIsDir = fileIsDir
 
     def __repr__(self):
         return f"<UncompressFileInfo('{self.__fileName}', {self.__fileIsDir}, {self.__fileUncompressedSize}>>{self.__fileCompressedSize}, {tsToStr(self.__fileDateTime)})>"
@@ -155,19 +153,19 @@ class Uncompress:
         """Initialize class"""
         if Uncompress.__INITIALISED:
             return
-        Uncompress.__PATH_RAR=getUnrar()
-        Uncompress.__PATH_7Z=get7z()
+        Uncompress.__PATH_RAR = getUnrar()
+        Uncompress.__PATH_7Z = get7z()
         Uncompress.__INITIALISED = True
 
     @staticmethod
     def availableFormat():
         """Return list of available uncompress format"""
-        returned=[]
-        if not Uncompress.__PATH_RAR is None:
+        returned = []
+        if Uncompress.__PATH_RAR is not None:
             returned.append(Uncompress.FORMAT_RAR)
-        if not Uncompress.__PATH_7Z is None:
+        if Uncompress.__PATH_7Z is not None:
             returned.append(Uncompress.FORMAT_7Z)
-            if not Uncompress.FORMAT_RAR in returned:
+            if Uncompress.FORMAT_RAR not in returned:
                 # 7z can read RAR files
                 returned.append(Uncompress.FORMAT_RAR)
         return returned
@@ -178,31 +176,31 @@ class Uncompress:
 
         return None if not possible to manage file format
         """
-        returned=None
+        returned = None
 
         if os.path.isfile(archiveFile):
             with open(archiveFile, 'rb') as fHandler:
-                magicBytes=fHandler.read(6)
+                magicBytes = fHandler.read(6)
 
-                if magicBytes==b'\x37\x7A\xBC\xAF\x27\x1C':
-                    returned=Uncompress.FORMAT_7Z
-                elif magicBytes==b'\x52\x61\x72\x21\x1A\x07':
-                    returned=Uncompress.FORMAT_RAR
+                if magicBytes == b'\x37\x7A\xBC\xAF\x27\x1C':
+                    returned = Uncompress.FORMAT_7Z
+                elif magicBytes == b'\x52\x61\x72\x21\x1A\x07':
+                    returned = Uncompress.FORMAT_RAR
 
             # now file format is known
             # need to check available uncompression tools available to return the best one
-            if returned==Uncompress.FORMAT_7Z:
-                if not Uncompress.__PATH_7Z is None:
+            if returned == Uncompress.FORMAT_7Z:
+                if Uncompress.__PATH_7Z is not None:
                     # 7Zip available, use it
                     return Uncompress.FORMAT_7Z
-                elif not Uncompress.__PATH_RAR is None:
+                elif Uncompress.__PATH_RAR is not None:
                     # 7Zip not available, but RAR is available, use it
                     return Uncompress.FORMAT_RAR
-            elif returned==Uncompress.FORMAT_RAR:
-                if not Uncompress.__PATH_RAR is None:
+            elif returned == Uncompress.FORMAT_RAR:
+                if Uncompress.__PATH_RAR is not None:
                     # Unrar available, use it
                     return Uncompress.FORMAT_RAR
-                elif not Uncompress.__PATH_7Z is None:
+                elif Uncompress.__PATH_7Z is not None:
                     #  Unrar not available, but 7Zip is available, use it
                     return Uncompress.FORMAT_7Z
 
@@ -215,19 +213,19 @@ class Uncompress:
 
         Return None if not possible to read file content
         """
-        returned=[]
-        format=Uncompress.preferredForFileFormat(archiveFile)
+        returned = []
+        format = Uncompress.preferredForFileFormat(archiveFile)
         try:
-            if format==Uncompress.FORMAT_7Z:
-                result=subprocess.run([Uncompress.__PATH_7Z, "l", "-bd", "-spf", archiveFile], capture_output=True)
-                if result.returncode==0:
-                    lines=result.stdout.decode(errors='replace').split(os.linesep)
+            if format == Uncompress.FORMAT_7Z:
+                result = subprocess.run([Uncompress.__PATH_7Z, "l", "-bd", "-spf", archiveFile], capture_output = True)
+                if result.returncode == 0:
+                    lines = result.stdout.decode(errors='replace').split(os.linesep)
                     # Returned example result:
                     #
-                    #2021-03-13 18:17:08 ....A        22296        22187  dir1/file1.jpg
-                    #2021-03-13 18:17:08 D....            0            0  dir1
+                    # 2021-03-13 18:17:08 ....A        22296        22187  dir1/file1.jpg
+                    # 2021-03-13 18:17:08 D....            0            0  dir1
                     for line in lines:
-                        if r:=re.search(r"^(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2}:\d{2})\s([A-Z\.]{5})\s+(\d+)\s+(\d*)\s+(.*)$", line):
+                        if r := re.search(r"^(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2}:\d{2})\s([A-Z\.]{5})\s+(\d+)\s+(\d*)\s+(.*)$", line):
                             # (
                             #   '2021-03-13',               // date
                             #   '18:17:08',                 // time
@@ -236,27 +234,32 @@ class Uncompress:
                             #   '22187',                    // compressed size      => can be empty if SOLID archive
                             #   'dir1/file1.jpg'            // relative path/name
                             # )
-                            properties=list(r.groups())
-                            if properties[4]=='':
-                                properties[4]=None
+                            properties = list(r.groups())
+                            if properties[4] == '':
+                                properties[4] = None
                             else:
-                                properties[4]=int(properties[4])
-                            returned.append(UncompressFileInfo(properties[5], properties[0], properties[1], int(properties[3]), properties[4], properties[3][0]=='D'))
+                                properties[4] = int(properties[4])
+                            returned.append(UncompressFileInfo(properties[5],
+                                                               properties[0],
+                                                               properties[1],
+                                                               int(properties[3]),
+                                                               properties[4],
+                                                               properties[3][0] == 'D'))
 
                     return returned
                 else:
                     # error has occurred?
                     Debug.print('[Uncompress.getList] Unable to execute LIST command: {0}', result.stderr.decode())
-            elif format==Uncompress.FORMAT_RAR:
-                result=subprocess.run([Uncompress.__PATH_RAR, "v", archiveFile], capture_output=True)
-                if result.returncode==0:
-                    lines=result.stdout.decode(errors='replace').split(os.linesep)
+            elif format == Uncompress.FORMAT_RAR:
+                result = subprocess.run([Uncompress.__PATH_RAR, "v", archiveFile], capture_output=True)
+                if result.returncode == 0:
+                    lines = result.stdout.decode(errors='replace').split(os.linesep)
                     # Returned example result:
                     #
                     #   ..A....     22296     22187  99%  2021-03-13 17:17  C1D33145  dir1/file1.jpg
                     #   ...D...         0         0   0%  2021-03-13 17:17  00000000  dir1
                     for line in lines:
-                        if r:=re.search(r"^\s+([A-Z\.]{7})\s+(\d+)\s+(\d+)\s+\d+%\s+(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2})\s+[A-F0-9]{8}\s+(.*)$", line):
+                        if r := re.search(r"^\s+([A-Z\.]{7})\s+(\d+)\s+(\d+)\s+\d+%\s+(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2})\s+[A-F0-9]{8}\s+(.*)$", line):
                             # (
                             #   '..A....',
                             #   '22296',
@@ -265,8 +268,13 @@ class Uncompress:
                             #   '17:17',
                             #   'dir1/file1.jpg'
                             # )
-                            properties=r.groups()
-                            returned.append(UncompressFileInfo(properties[5], properties[3], f"{properties[4]}:00", int(properties[1]), int(properties[2]), properties[0][3]=='D'))
+                            properties = r.groups()
+                            returned.append(UncompressFileInfo(properties[5],
+                                                               properties[3],
+                                                               f"{properties[4]}:00",
+                                                               int(properties[1]),
+                                                               int(properties[2]),
+                                                               properties[0][3] == 'D'))
 
                     return returned
                 else:
@@ -283,19 +291,19 @@ class Uncompress:
 
         Return None if not possible to read file content, otherwise return path within file
         """
-        returned=None
-        format=Uncompress.preferredForFileFormat(archiveFile)
+        returned = None
+        format = Uncompress.preferredForFileFormat(archiveFile)
         try:
-            if format==Uncompress.FORMAT_7Z:
-                result=subprocess.run([Uncompress.__PATH_7Z, "x", archiveFile, "-bd", "-y", f"-o{path}"], capture_output=True)
-            elif format==Uncompress.FORMAT_RAR:
-                if path[-1]!=os.sep:
-                    path+=os.sep
-                result=subprocess.run([Uncompress.__PATH_RAR, "x", "-y", archiveFile, path], capture_output=True)
+            if format == Uncompress.FORMAT_7Z:
+                result = subprocess.run([Uncompress.__PATH_7Z, "x", archiveFile, "-bd", "-y", f"-o{path}"], capture_output=True)
+            elif format == Uncompress.FORMAT_RAR:
+                if path[-1] != os.sep:
+                    path += os.sep
+                result = subprocess.run([Uncompress.__PATH_RAR, "x", "-y", archiveFile, path], capture_output=True)
             else:
                 return None
 
-            if result.returncode==0:
+            if result.returncode == 0:
                 return path
             else:
                 # error has occurred?
@@ -317,13 +325,13 @@ class Uncompress:
         If given `fileName` is <str> return full path/filename of extracted file
         If given `fileName` is a list, return a list of full path/filename extracted files
         """
-        returned=None
-        format=Uncompress.preferredForFileFormat(archiveFile)
+        returned = None
+        format = Uncompress.preferredForFileFormat(archiveFile)
         try:
-            asStr=False
+            asStr = False
             if isinstance(fileName, str):
-                asStr=True
-                fileName=[fileName]
+                asStr = True
+                fileName = [fileName]
 
             if not isinstance(fileName, (list, tuple)):
                 raise EInvalidType("Given `fileName` must be a <str> or a list of <str>")
@@ -333,24 +341,24 @@ class Uncompress:
             if not os.path.isdir(path):
                 raise EInvalidType("Given `path` doesn't exist")
 
-            if format==Uncompress.FORMAT_7Z:
-                result=subprocess.run([Uncompress.__PATH_7Z, "x", archiveFile, "-bd", "-y", f"-o{path}", *fileName], capture_output=True)
-            elif format==Uncompress.FORMAT_RAR:
-                if path[-1]!=os.sep:
-                    path+=os.sep
-                result=subprocess.run([Uncompress.__PATH_RAR, "x", "-y", archiveFile, *fileName, path], capture_output=True)
+            if format == Uncompress.FORMAT_7Z:
+                result = subprocess.run([Uncompress.__PATH_7Z, "x", archiveFile, "-bd", "-y", f"-o{path}", *fileName], capture_output=True)
+            elif format == Uncompress.FORMAT_RAR:
+                if path[-1] != os.sep:
+                    path += os.sep
+                result = subprocess.run([Uncompress.__PATH_RAR, "x", "-y", archiveFile, *fileName, path], capture_output=True)
             else:
                 return None
 
-            if result.returncode==0:
+            if result.returncode == 0:
                 if asStr:
-                    extractedFile=os.path.join(path, fileName[0])
+                    extractedFile = os.path.join(path, fileName[0])
                     if os.path.isfile(extractedFile):
                         return extractedFile
                 else:
-                    extractedFiles=[]
+                    extractedFiles = []
                     for file in fileName:
-                        extractedFile=os.path.join(path, fileName)
+                        extractedFile = os.path.join(path, fileName)
                         if os.path.isfile(extractedFile):
                             extractedFiles.append(extractedFile)
                     return extractedFiles

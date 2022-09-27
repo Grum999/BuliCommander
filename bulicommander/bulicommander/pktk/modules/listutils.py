@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -31,7 +31,7 @@ def flatten(items):
 
     f: [1,2,3,4,5,6,7,8,9,10]
     """
-    returned=[]
+    returned = []
     for item in items:
         if isinstance(item, (list, tuple)):
             returned.extend(flatten(item))
@@ -56,8 +56,8 @@ def rotate(items, shiftValue=1):
     x: [2,3,4,1]
 
     """
-    shiftValue=shiftValue%len(items)
-    if shiftValue==0:
+    shiftValue = shiftValue % len(items)
+    if shiftValue == 0:
         # no rotation...
         return items
     # do rotation
@@ -72,8 +72,8 @@ def unique(items):
     """
     # a faster method could be return list(set(items))
     # but it doesn't work with non-hashable object (like a QColor for example)
-    returned=[]
+    returned = []
     for item in items:
-        if not item in returned:
+        if item not in returned:
             returned.append(item)
     return returned

@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -49,6 +49,7 @@ def tsToStr(value, pattern=None, valueNone=''):
     else:
         return time.strftime(pattern, time.localtime(value))
 
+
 def strToTs(value):
     """Convert a string to timestamp
 
@@ -66,8 +67,8 @@ def strToTs(value):
     if isinstance(value, float) or isinstance(value, int):
         return value
 
-    fmt = re.match("^(\d{4}-\d{2}-\d{2})?\s*(\d{2}:\d{2}:\d{2})?$", value)
-    if not fmt is None:
+    fmt = re.match(r"^(\d{4}-\d{2}-\d{2})?\s*(\d{2}:\d{2}:\d{2})?$", value)
+    if fmt is not None:
         if fmt.group(1) is None:
             value = time.strftime('%Y-%m-%d ') + value
         if fmt.group(2) is None:
@@ -77,14 +78,16 @@ def strToTs(value):
 
     return 0
 
+
 def frToStrTime(nbFrames, frameRate):
     """Convert a number of frame to duration"""
-    returned_ss=int(nbFrames/frameRate)
-    returned_ff=nbFrames - returned_ss * frameRate
-    returned_mn=int(returned_ss/60)
-    returned_ss=returned_ss - returned_mn * 60
+    returned_ss = int(nbFrames/frameRate)
+    returned_ff = nbFrames - returned_ss * frameRate
+    returned_mn = int(returned_ss/60)
+    returned_ss = returned_ss - returned_mn * 60
 
     return f"{returned_mn:02d}:{returned_ss:02d}.{returned_ff:02d}"
+
 
 def secToStrTime(nbSeconds):
     """Convert a number of seconds to duration (Days, H:M:S)"""
@@ -94,7 +97,7 @@ def secToStrTime(nbSeconds):
         nbSeconds = nbSeconds - nbDays * 86400
         returned = f'{nbDays}D, '
 
-    returned+=time.strftime('%H:%M:%S', time.gmtime(nbSeconds))
+    returned += time.strftime('%H:%M:%S', time.gmtime(nbSeconds))
 
     return returned
 
@@ -134,7 +137,7 @@ class Stopwatch(object):
         """
         Stopwatch.__current[name] = {'start': time.time(),
                                      'stop': None
-                                }
+                                     }
 
     @staticmethod
     def stop(name):
@@ -165,8 +168,8 @@ class Stopwatch(object):
         If stopwatch doesn't exist, return None
         If stopwatch is not stopped, return current duration from start time
         """
-        returned=[]
+        returned = []
         for name in Stopwatch.__current:
-            returned.append((name, Stopwatch.duration(name) ))
+            returned.append((name, Stopwatch.duration(name)))
 
         return returned

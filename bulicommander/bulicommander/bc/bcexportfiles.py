@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Buli Commander
 # Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
@@ -115,6 +115,7 @@ from bulicommander.pktk.pktk import (
 #   and generate export from a given source file
 #   - need to provides signals for export steps & progress
 
+
 class BCExportFormat(object):
     EXPORT_FMT_TEXT =           0
     EXPORT_FMT_TEXT_MD =        1
@@ -125,17 +126,16 @@ class BCExportFormat(object):
     EXPORT_FMT_IMG_JPG =        6
 
 
-
 class BCExportFields:
+    # label:        value displayed in listbox
+    # tooltip:      tooltip affected to item in list
+    # data:         data to return in exported result
+    # alignment:    for format that support column alignment, define
+    #               data alignment (0: left / 1: right)
+    # format:       how to format data (use markdown notation)
+    # inList:       visible in selection list or not,
+    # selected:     default status in listbox
     ID = {
-                                                    # label:        value displayed in listbox
-                                                    # tooltip:      tooltip affected to item in list
-                                                    # data:         data to return in exported result
-                                                    # alignment:    for format that support column alignment, define
-                                                    #               data alignment (0: left / 1: right)
-                                                    # format:       how to format data (use markdown notation)
-                                                    # inList:       visible in selection list or not,
-                                                    # selected:     default status in listbox
         'file.thumbnailMD':                         {'label':       i18n('Thumbnail'),
                                                      'toolTip':     i18n('The image thumbnail'),
                                                      'data':        '![](./{extraData[1]}/{os.path.basename(file.thumbnail(extraData[0], BCBaseFile.THUMBTYPE_FILENAME))})',
@@ -143,7 +143,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      False,
                                                      'selected':    True
-                                                    },
+                                                     },
         'file.path':                                {'label':       i18n('Path'),
                                                      'toolTip':     i18n('The file path'),
                                                      'data':        '{file.path()}',
@@ -151,7 +151,7 @@ class BCExportFields:
                                                      'format':      ('`{text}`', ),
                                                      'inList':      True,
                                                      'selected':    True
-                                                    },
+                                                     },
         'file.name':                                {'label':       i18n('File name'),
                                                      'toolTip':     i18n('The file name, including extension'),
                                                      'data':        '{file.name()}',
@@ -159,7 +159,7 @@ class BCExportFields:
                                                      'format':      ('`{text}`', ),
                                                      'inList':      True,
                                                      'selected':    True
-                                                    },
+                                                     },
         'file.baseName':                            {'label':       i18n('File base name'),
                                                      'toolTip':     i18n('The file name, excluding extension'),
                                                      'data':        '{file.baseName() if not isinstance(file, BCDirectory) else file.name()}',
@@ -167,7 +167,7 @@ class BCExportFields:
                                                      'format':      ('`{text}`', ),
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'file.extension':                           {'label':       i18n('File extension'),
                                                      'toolTip':     i18n('The file extension, including dot separator)'),
                                                      'data':        '{file.extension() if not isinstance(file, BCDirectory) else ""}',
@@ -175,7 +175,7 @@ class BCExportFields:
                                                      'format':      ('`{text}`', ),
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'file.fullPathName':                        {'label':       i18n('Full path/file name'),
                                                      'toolTip':     i18n('The complete file name, including path'),
                                                      'data':        '{file.fullPathName()}',
@@ -183,7 +183,7 @@ class BCExportFields:
                                                      'format':      ('`{text}`', ),
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'file.format.short':                        {'label':       i18n('File format (short)'),
                                                      'toolTip':     i18n('The file format (short value)'),
                                                      'data':        '{BCFileManagedFormat.translate(file.format(), True)}',
@@ -191,7 +191,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    True
-                                                    },
+                                                     },
         'file.format.long':                         {'label':       i18n('File format (long)'),
                                                      'toolTip':     i18n('The file format (long value)'),
                                                      'data':        '{BCFileManagedFormat.translate(file.format(), False)}',
@@ -199,7 +199,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'modified.datetime':                        {'label':       i18n('Date/Time'),
                                                      'toolTip':     i18n('File date/time (<span style="font-family:''monospace''"><i>yyyy-mm-dd hh:mi:ss</i></span>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"dt")}',
@@ -207,7 +207,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    True
-                                                    },
+                                                     },
         'modified.date.full':                       {'label':       i18n('Date'),
                                                      'toolTip':     i18n('File date (<span style="font-family:''monospace''"><i>yyyy-mm-dd</i></span>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"d")}',
@@ -215,7 +215,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'modified.date.year':                       {'label':       i18n('Date (year)'),
                                                      'toolTip':     i18n('File date (<i>Year: <span style="font-family:''monospace''">yyyy</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%Y")}',
@@ -223,7 +223,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'modified.date.month':                      {'label':       i18n('Date (month)'),
                                                      'toolTip':     i18n('File date (<i>Month: <span style="font-family:''monospace''">mm</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%m")}',
@@ -231,7 +231,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'modified.date.day':                        {'label':       i18n('Date (day)'),
                                                      'toolTip':     i18n('File date (<i>Month: <span style="font-family:''monospace''">dd</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%d")}',
@@ -239,7 +239,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'modified.time.full':                       {'label':       i18n('Time'),
                                                      'toolTip':     i18n('File time (<span style="font-family:''monospace''"><i>hh:mi:ss</i></span>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"t")}',
@@ -247,7 +247,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'modified.time.hour':                       {'label':       i18n('Time (hour)'),
                                                      'toolTip':     i18n('File time (<i>Hour (H24): <span style="font-family:''monospace''">hh</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%H")}',
@@ -255,7 +255,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'modified.time.minute':                     {'label':       i18n('Time (minutes)'),
                                                      'toolTip':     i18n('File time (<i>Minutes: <span style="font-family:''monospace''">mm</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%M")}',
@@ -263,7 +263,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'modified.time.seconds':                    {'label':       i18n('Date (seconds)'),
                                                      'toolTip':     i18n('File time (<i>Seconds: <span style="font-family:''monospace''">ss</span></i>)'),
                                                      'data':        '{tsToStr(file.lastModificationDateTime(),"%S")}',
@@ -271,7 +271,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'size.bytes':                               {'label':       i18n('Size (bytes)'),
                                                      'toolTip':     i18n('File size in bytes'),
                                                      'data':        '{file.size() if not isinstance(file, BCDirectory) else ""}',
@@ -279,7 +279,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'size.unit.decimal':                        {'label':       i18n('Size (best decimal unit)'),
                                                      'toolTip':     i18n('File size, using the best decimal unit (KB, MB, GB)<br/>Size is rounded to 2 decimals'),
                                                      'data':        '{bytesSizeToStr(file.size(), "auto") if not isinstance(file, BCDirectory) else ""}',
@@ -287,7 +287,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'size.unit.binary':                         {'label':       i18n('Size (best binary unit)'),
                                                      'toolTip':     i18n('File size, using the best binary unit (KiB, MiB, GiB)<br/>Size is rounded to 2 decimals'),
                                                      'data':        '{bytesSizeToStr(file.size(), "autobin") if not isinstance(file, BCDirectory) else ""}',
@@ -295,15 +295,16 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    True
-                                                    },
+                                                     },
         'image.size.full':                          {'label':       i18n('Image size (width x height)'),
                                                      'toolTip':     i18n('The current image size (<span style="font-family:''monospace''"></i>width</i>x<i>height</i></span>)'),
-                                                     'data':        '{BCExportFields.imgSize(file.imageSize().width(), file.imageSize().height()) if not isinstance(file, BCDirectory) else ""}',
+                                                     'data':        '{BCExportFields.imgSize(file.imageSize().width(), file.imageSize().height()) '
+                                                                    'if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    True
-                                                    },
+                                                     },
         'image.size.width':                         {'label':       i18n('Image size (width)'),
                                                      'toolTip':     i18n('The current image size (width)'),
                                                      'data':        '{BCExportFields.numberOrEmpty(file.imageSize().width()) if not isinstance(file, BCDirectory) else ""}',
@@ -311,7 +312,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'image.size.height':                        {'label':       i18n('Image size (height)'),
                                                      'toolTip':     i18n('The current image size (height)'),
                                                      'data':        '{BCExportFields.numberOrEmpty(file.imageSize().height()) if not isinstance(file, BCDirectory) else ""}',
@@ -319,15 +320,16 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'image.ratio.value':                        {'label':       i18n('Image ratio (value)'),
                                                      'toolTip':     i18n('The current image ratio (width/height)<br/>Value is rounded to 4 decimals'),
-                                                     'data':        '{BCExportFields.getRoundedValue(file.getProperty(BCFileProperty.IMAGE_RATIO), 4, False) if not isinstance(file, BCDirectory) else ""}',
+                                                     'data':        '{BCExportFields.getRoundedValue(file.getProperty(BCFileProperty.IMAGE_RATIO), 4, False) '
+                                                                    'if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'image.ratio.type':                         {'label':       i18n('Image ratio (portrait, landscape, square)'),
                                                      'toolTip':     i18n('The current image ratio'),
                                                      'data':        '{ratioOrientation(file.getProperty(BCFileProperty.IMAGE_RATIO)) if not isinstance(file, BCDirectory) else ""}',
@@ -335,15 +337,16 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'image.pixels.count':                       {'label':       i18n('Image pixels'),
                                                      'toolTip':     i18n('The current number of pixels (width * height)'),
-                                                     'data':        '{BCExportFields.numberOrEmpty(file.getProperty(BCFileProperty.IMAGE_PIXELS), False) if not isinstance(file, BCDirectory) else ""}',
+                                                     'data':        '{BCExportFields.numberOrEmpty(file.getProperty(BCFileProperty.IMAGE_PIXELS), False) '
+                                                                    'if not isinstance(file, BCDirectory) else ""}',
                                                      'alignment':   1,
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    },
+                                                     },
         'image.pixels.countMP':                     {'label':       i18n('Image pixels (in Megapixel)'),
                                                      'toolTip':     i18n('The current number of pixels (width * height), in megapixel (MP)<br/>Value is rounded to 2 decimals'),
                                                      'data':        '{megaPixels(file.getProperty(BCFileProperty.IMAGE_PIXELS), 2) if not isinstance(file, BCDirectory) else ""}',
@@ -351,7 +354,7 @@ class BCExportFields:
                                                      'format':      None,
                                                      'inList':      True,
                                                      'selected':    False
-                                                    }
+                                                     }
     }
 
     @staticmethod
@@ -359,7 +362,7 @@ class BCExportFields:
         """return value width x height is number are valid
         Otherwise return empty string
         """
-        if width is None or width<0 or height is None or height<0:
+        if width is None or width < 0 or height is None or height < 0:
             return ""
         return f"{width}x{height}"
 
@@ -368,7 +371,7 @@ class BCExportFields:
         """return value
         If value is None or negative, return empty string
         """
-        if value is None or value<0 or value==0 and not acceptZero:
+        if value is None or value < 0 or value == 0 and not acceptZero:
             return ""
         return value
 
@@ -378,17 +381,15 @@ class BCExportFields:
 
         If value is None or negative, return empty string
         """
-        if value is None or value<0 or value==0 and not acceptZero:
+        if value is None or value < 0 or value == 0 and not acceptZero:
             return ""
         return f"{value:.0{roundDec}f}"
 
 
-
 class BCExportFiles(QObject):
-    exportStart=Signal(int)     # total pages
-    exportEnd=Signal()
-    exportProgress=Signal(int)  # current page
-
+    exportStart = Signal(int)     # total pages
+    exportEnd = Signal()
+    exportProgress = Signal(int)  # current page
 
     # -- Utils -----------------------------------------------------------------
     @staticmethod
@@ -400,7 +401,7 @@ class BCExportFiles(QObject):
         The `formatPdfImgPaperResolution` allows to define target PDF document resolution
         """
         if formatPdfImgPaperResolution is None:
-            formatPdfImgPaperResolution=resolution
+            formatPdfImgPaperResolution = resolution
         if roundValue is None:
             roundValue = BCExportFilesDialogBox.UNITS[toUnit]['marginDec']
         if fromUnit == 'mm':
@@ -435,7 +436,7 @@ class BCExportFiles(QObject):
             if toUnit == 'mm':
                 return round(value * 0.35277777777777775, roundValue)   # 25.4/72
             elif toUnit == 'cm':
-                return round(value * 0.035277777777777775, roundValue)  #2.54/72
+                return round(value * 0.035277777777777775, roundValue)  # 2.54/72
             elif toUnit == 'in':
                 return round(value / 72, roundValue)
             elif toUnit == 'px':
@@ -446,9 +447,9 @@ class BCExportFiles(QObject):
     @staticmethod
     def getPaperSize(paperSize, unit, orientation, resolution=None):
         """Return QSize for given paperSize + unit"""
-        size=BCExportFilesDialogBox.PAPER_SIZES[paperSize][unit]
+        size = BCExportFilesDialogBox.PAPER_SIZES[paperSize][unit]
 
-        if unit == 'px' and not resolution is None:
+        if unit == 'px' and resolution is not None:
             # in this case, unit is in inch
             # need t oconvert to pixels
             size = QSizeF(size.width() * resolution, size.height() * resolution)
@@ -464,17 +465,17 @@ class BCExportFiles(QObject):
         # currently used to share some specific data
         self.__extraData = []
 
-        self.__uiController=uiController
+        self.__uiController = uiController
 
         self.__formatPdfImgPaperResolution = 300
         self.__formatPdfImgPageCurrent = 0
         self.__formatPdfImgPageTotal = 0
         self.__formatPdfImgPixmapResolution = QApplication.primaryScreen().logicalDotsPerInch()
 
-        self.__exportedFileName=""
-        self.__bcName=self.__uiController.bcName()
-        self.__bcVersion=self.__uiController.bcVersion()
-        self.__bcTitle=self.__uiController.bcTitle()
+        self.__exportedFileName = ""
+        self.__bcName = self.__uiController.bcName()
+        self.__bcVersion = self.__uiController.bcVersion()
+        self.__bcTitle = self.__uiController.bcTitle()
 
         if isinstance(filesNfo, list):
             self.__fileNfo = filesNfo
@@ -516,30 +517,31 @@ class BCExportFiles(QObject):
 
     def __buildHtml(self, rows, fontName='DejaVu sans', fontSize=10, fontColor='#000000'):
         """Build a html text from given rows"""
-        htmlP=f"<p style='margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;'>"
-        htmlSpan=f"""<span style="font-family:'{fontName}'; font-size:{fontSize}pt; color:{fontColor};">"""
+        htmlP = f"<p style='margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;'>"
+        htmlSpan = f"""<span style="font-family:'{fontName}'; font-size:{fontSize}pt; color:{fontColor};">"""
 
-        nfoContent=f"</span></p>{htmlP}{htmlSpan}".join(rows)
+        nfoContent = f"</span></p>{htmlP}{htmlSpan}".join(rows)
 
-        return f"<html><head><meta name='qrichtext' content='1'/><style type='text/css'>p, li {{ white-space: nowrap; }}</style></head><body>{htmlP}{htmlSpan}{nfoContent}</span></p></body></html>"
+        return (f"<html><head><meta name='qrichtext' content='1'/><style type='text/css'>p, li {{ white-space: nowrap; }}</style>"
+                f"</head><body>{htmlP}{htmlSpan}{nfoContent}</span></p></body></html>")
 
     def __parsePageNumber(self, text, pageCurrent, pageTotal):
         """Parse given text to replace current/total page number"""
-        if result:=re.search("(?i)\{page:current(?:(:#+))?\}", text):
+        if result := re.search(r"(?i)\{page:current(?:(:#+))?\}", text):
             if not result.groups()[0] is None:
-                replaceHash=result.groups()[0]
+                replaceHash = result.groups()[0]
             else:
-                replaceHash=''
+                replaceHash = ''
 
-            text = re.sub(f"\{{page:current{replaceHash}\}}", f"{pageCurrent:0{max(0, len(replaceHash)-1)}}", text)
+            text = re.sub(fr"\{{page:current{replaceHash}\}}", f"{pageCurrent:0{max(0, len(replaceHash)-1)}}", text)
 
-        if result:=re.search("(?i)\{page:total(?:(:#+))?\}", text):
+        if result := re.search(r"(?i)\{page:total(?:(:#+))?\}", text):
             if not result.groups()[0] is None:
-                replaceHash=result.groups()[0]
+                replaceHash = result.groups()[0]
             else:
-                replaceHash=''
+                replaceHash = ''
 
-            text = re.sub(f"\{{page:total{replaceHash}\}}", f"{pageTotal:0{max(0, len(replaceHash)-1)}}", text)
+            text = re.sub(fr"\{{page:total{replaceHash}\}}", f"{pageTotal:0{max(0, len(replaceHash)-1)}}", text)
 
         return text
 
@@ -548,9 +550,9 @@ class BCExportFiles(QObject):
         returned = text
 
         if source != '':
-            returned = re.sub("(?i)\{source\}",                     source.replace("\\", "\\\\"),                       returned)
+            returned = re.sub(r"(?i)\{source\}",                     source.replace("\\", "\\\\"),                       returned)
         else:
-            returned = re.sub("(?i)\{source}",                      "Current user selection",                           returned)
+            returned = re.sub(r"(?i)\{source}",                      "Current user selection",                           returned)
 
         currentDateTime = time.time()
 
@@ -560,42 +562,42 @@ class BCExportFiles(QObject):
             extName = ''
         else:
             fileName = os.path.basename(self.__exportedFileName)
-            if result:=re.match("(.*)(\.[^\.]*)$", fileName):
+            if result := re.match(r"(.*)(\.[^\.]*)$", fileName):
                 baseName = result.groups()[0]
                 extName = result.groups()[1]
             else:
                 baseName = fileName
                 extName = ''
 
-        returned = re.sub("(?i)\{bc:name\}",                        self.__bcName,                                      returned)
-        returned = re.sub("(?i)\{bc:version\}",                     self.__bcVersion,                                   returned)
-        returned = re.sub("(?i)\{bc:title\}",                       self.__bcTitle,                                     returned)
+        returned = re.sub(r"(?i)\{bc:name\}",                        self.__bcName,                                      returned)
+        returned = re.sub(r"(?i)\{bc:version\}",                     self.__bcVersion,                                   returned)
+        returned = re.sub(r"(?i)\{bc:title\}",                       self.__bcTitle,                                     returned)
 
-        returned = re.sub("(?i)\{date\}",                           tsToStr(currentDateTime, "d" ),                     returned)
-        returned = re.sub("(?i)\{date:yyyy\}",                      tsToStr(currentDateTime, "%Y" ),                    returned)
-        returned = re.sub("(?i)\{date:mm\}",                        tsToStr(currentDateTime, "%m" ),                    returned)
-        returned = re.sub("(?i)\{date:dd\}",                        tsToStr(currentDateTime, "%d" ),                    returned)
+        returned = re.sub(r"(?i)\{date\}",                           tsToStr(currentDateTime, "d"),                      returned)
+        returned = re.sub(r"(?i)\{date:yyyy\}",                      tsToStr(currentDateTime, "%Y"),                     returned)
+        returned = re.sub(r"(?i)\{date:mm\}",                        tsToStr(currentDateTime, "%m"),                     returned)
+        returned = re.sub(r"(?i)\{date:dd\}",                        tsToStr(currentDateTime, "%d"),                     returned)
 
-        returned = re.sub("(?i)\{time\}",                           tsToStr(currentDateTime, "t" ),                     returned)
-        returned = re.sub("(?i)\{time:hh\}",                        tsToStr(currentDateTime, "%H" ),                    returned)
-        returned = re.sub("(?i)\{time:mm\}",                        tsToStr(currentDateTime, "%M" ),                    returned)
-        returned = re.sub("(?i)\{time:ss\}",                        tsToStr(currentDateTime, "%S" ),                    returned)
+        returned = re.sub(r"(?i)\{time\}",                           tsToStr(currentDateTime, "t"),                      returned)
+        returned = re.sub(r"(?i)\{time:hh\}",                        tsToStr(currentDateTime, "%H"),                     returned)
+        returned = re.sub(r"(?i)\{time:mm\}",                        tsToStr(currentDateTime, "%M"),                     returned)
+        returned = re.sub(r"(?i)\{time:ss\}",                        tsToStr(currentDateTime, "%S"),                     returned)
 
-        returned = re.sub("(?i)\{items:total\.count\}",             f"{self.__fileNfo[3]}",                             returned)
-        returned = re.sub("(?i)\{items:directories\.count\}",       f"{self.__fileNfo[3]}",                             returned)
-        returned = re.sub("(?i)\{items:files\.count\}",             f"{self.__fileNfo[3]}",                             returned)
-        returned = re.sub("(?i)\{items:files\.size\}",              f"{self.__fileNfo[3]}",                             returned)
-        returned = re.sub("(?i)\{items:files\.size\(KiB\)\}",       bytesSizeToStr(self.__fileNfo[6], 'autobin'),       returned)
-        returned = re.sub("(?i)\{items:files\.size\(KB\)\}",        bytesSizeToStr(self.__fileNfo[6], 'auto'),          returned)
+        returned = re.sub(r"(?i)\{items:total\.count\}",             f"{self.__fileNfo[3]}",                             returned)
+        returned = re.sub(r"(?i)\{items:directories\.count\}",       f"{self.__fileNfo[3]}",                             returned)
+        returned = re.sub(r"(?i)\{items:files\.count\}",             f"{self.__fileNfo[3]}",                             returned)
+        returned = re.sub(r"(?i)\{items:files\.size\}",              f"{self.__fileNfo[3]}",                             returned)
+        returned = re.sub(r"(?i)\{items:files\.size\(KiB\)\}",       bytesSizeToStr(self.__fileNfo[6], 'autobin'),       returned)
+        returned = re.sub(r"(?i)\{items:files\.size\(KB\)\}",        bytesSizeToStr(self.__fileNfo[6], 'auto'),          returned)
 
         returned = self.__parsePageNumber(returned, currentPage, totalPage)
 
-        returned = re.sub("(?i)\{file:name\}",                      fileName,                                           returned)
-        returned = re.sub("(?i)\{file:baseName\}",                  baseName,                                           returned)
-        returned = re.sub("(?i)\{file:ext\}",                       extName,                                            returned)
+        returned = re.sub(r"(?i)\{file:name\}",                      fileName,                                           returned)
+        returned = re.sub(r"(?i)\{file:baseName\}",                  baseName,                                           returned)
+        returned = re.sub(r"(?i)\{file:ext\}",                       extName,                                            returned)
 
         # for windows need to replace '\' character otherwise raise an exception
-        returned = re.sub("(?i)\{table\}",                          tableContent.replace("\\", "\\\\"),                 returned)
+        returned = re.sub(r"(?i)\{table\}",                          tableContent.replace("\\", "\\\\"),                 returned)
 
         return returned
 
@@ -603,7 +605,7 @@ class BCExportFiles(QObject):
         """Generic method to initialise a TextTable content"""
         returnedTable = TextTable()
 
-        if not title is None:
+        if title is not None:
             returnedTable.setTitle(title)
 
         headerFields = []
@@ -612,7 +614,7 @@ class BCExportFiles(QObject):
         returnedTable.setHeader(headerFields)
 
         maxRows = None
-        if previewLimit>0:
+        if previewLimit > 0:
             maxRows = min(previewLimit, len(items))
 
         # 'extraData' is used in fString from BCExportFields.ID['file.thumbnailMD']['data']
@@ -620,14 +622,14 @@ class BCExportFiles(QObject):
 
         currentRow = 0
         for file in items:
-            currentRow+=1
-            if not maxRows is None and currentRow >= maxRows:
+            currentRow += 1
+            if maxRows is not None and currentRow >= maxRows:
                 break
 
             rowContent = []
             for field in fields:
                 data = BCExportFields.ID[field]['data']
-                rowContent.append( eval(f"f'{data}'") )
+                rowContent.append(eval(f"f'{data}'"))
 
             returnedTable.addRow(rowContent)
 
@@ -640,11 +642,11 @@ class BCExportFiles(QObject):
             ['.file.Name', '*file.path']
             will return ['file.path']
         """
-        returned=[]
+        returned = []
         for fieldId in fields:
-            if fieldId[0]=='*':
+            if fieldId[0] == '*':
                 returned.append(fieldId[1:])
-            elif fieldId[0]!='.':
+            elif fieldId[0] != '.':
                 returned.append(fieldId)
         return returned
 
@@ -665,11 +667,11 @@ class BCExportFiles(QObject):
             painter.translate(position)
             painter.save()
 
-            if not thumbnailBrush is None:
+            if thumbnailBrush is not None:
                 # paint page background
                 painter.setPen(QPen(Qt.NoPen))
                 painter.setBrush(thumbnailBrush)
-                if thumbnailBorderRadius>0:
+                if thumbnailBorderRadius > 0:
                     painter.drawRoundedRect(0, 0, cellSize.width(), cellSize.height(), thumbnailBorderRadius, thumbnailBorderRadius)
                 else:
                     painter.drawRect(0, 0, cellSize.width(), cellSize.height())
@@ -681,54 +683,54 @@ class BCExportFiles(QObject):
             imgPosition = QPoint(cellInnerSpacing, cellInnerSpacing)
             txtPosition = QPoint(cellInnerSpacing, cellInnerSpacing)
 
-            image=file.thumbnail(BCFileThumbnailSize.fromValue(512), BCBaseFile.THUMBTYPE_IMAGE)
+            image = file.thumbnail(BCFileThumbnailSize.fromValue(512), BCBaseFile.THUMBTYPE_IMAGE)
             if isinstance(image, QImage):
                 thumbWidth = floor(pagesInformation['cell.thumbnail.size'].width())
                 thumbHeight = floor(pagesInformation['cell.thumbnail.size'].height())
-                #thumbPixmap = QPixmap.fromImage(image.scaled(pagesInformation['cell.thumbnail.size'], Qt.KeepAspectRatio, Qt.SmoothTransformation))
-                if config.get('thumbnails.image.displayMode', defaultConfig['thumbnails.image.displayMode'])=='fit':
-                    thumbPixmap = QPixmap.fromImage(image.scaled(QSize(thumbWidth,thumbHeight), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                # thumbPixmap = QPixmap.fromImage(image.scaled(pagesInformation['cell.thumbnail.size'], Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                if config.get('thumbnails.image.displayMode', defaultConfig['thumbnails.image.displayMode']) == 'fit':
+                    thumbPixmap = QPixmap.fromImage(image.scaled(QSize(thumbWidth, thumbHeight), Qt.KeepAspectRatio, Qt.SmoothTransformation))
                 else:
                     if image.width() > image.height():
-                        tmpImg=image.scaledToHeight(thumbHeight, Qt.SmoothTransformation)
-                        pX=floor((tmpImg.width() - thumbWidth)/2)
+                        tmpImg = image.scaledToHeight(thumbHeight, Qt.SmoothTransformation)
+                        pX = floor((tmpImg.width() - thumbWidth)/2)
                         thumbPixmap = QPixmap.fromImage(tmpImg.copy(pX, 0, thumbWidth, tmpImg.height()))
                     else:
-                        tmpImg=image.scaledToWidth(thumbWidth, Qt.SmoothTransformation)
-                        pY=floor((tmpImg.height() - thumbHeight)/2)
-                        thumbPixmap = QPixmap.fromImage(tmpImg.copy(0,pY,tmpImg.width(), thumbHeight))
+                        tmpImg = image.scaledToWidth(thumbWidth, Qt.SmoothTransformation)
+                        pY = floor((tmpImg.height() - thumbHeight)/2)
+                        thumbPixmap = QPixmap.fromImage(tmpImg.copy(0, pY, tmpImg.width(), thumbHeight))
             else:
                 thumbPixmap = None
 
             if propertiesPosition == 'left':
                 # left
-                if not thumbPixmap is None:
+                if thumbPixmap is not None:
                     imgPosition.setX(imgPosition.x() +  pagesInformation['cell.text.size'].width() + (pagesInformation['cell.thumbnail.size'].width() - thumbPixmap.width())/2)
                     imgPosition.setY((pagesInformation['cell.global.size'].height() - thumbPixmap.height())/2)
             elif propertiesPosition == 'right':
-                # right
+                # right
                 txtPosition.setX(txtPosition.x() + pagesInformation['cell.thumbnail.size'].width())
-                if not thumbPixmap is None:
+                if thumbPixmap is not None:
                     imgPosition.setX(imgPosition.x()+(pagesInformation['cell.thumbnail.size'].width() - thumbPixmap.width())/2)
                     imgPosition.setY((pagesInformation['cell.global.size'].height() - thumbPixmap.height())/2)
             elif propertiesPosition == 'top':
                 # top
-                if not thumbPixmap is None:
+                if thumbPixmap is not None:
                     imgPosition.setX((pagesInformation['cell.global.size'].width() - thumbPixmap.width())/2)
                     imgPosition.setY(2*cellInnerSpacing+(pagesInformation['cell.thumbnail.size'].height() - thumbPixmap.height())/2)
                 imgPosition.setY(imgPosition.y() + pagesInformation['cell.text.size'].height())
             elif propertiesPosition == 'bottom':
                 # bottom
-                if not thumbPixmap is None:
+                if thumbPixmap is not None:
                     imgPosition.setX((pagesInformation['cell.global.size'].width() - thumbPixmap.width())/2)
                     imgPosition.setY(cellInnerSpacing+(pagesInformation['cell.thumbnail.size'].height() - thumbPixmap.height())/2)
                 txtPosition.setY(txtPosition.y() + cellInnerSpacing + pagesInformation['cell.thumbnail.size'].height())
-            elif not thumbPixmap is None:
+            elif thumbPixmap is not None:
                 # no text
                 imgPosition.setX((pagesInformation['cell.global.size'].width() - thumbPixmap.width())/2)
                 imgPosition.setY((pagesInformation['cell.global.size'].height() - thumbPixmap.height())/2)
 
-            if not thumbPixmap is None:
+            if thumbPixmap is not None:
                 painter.drawPixmap(imgPosition.x(), imgPosition.y(), thumbPixmap)
 
             if propertiesPosition != 'none':
@@ -743,16 +745,19 @@ class BCExportFiles(QObject):
 
                 document = QTextDocument()
                 document.setPageSize(QSizeF(pagesInformation['cell.text.size'].width(), 2*pagesInformation['cell.text.size'].height()))
-                document.setHtml(self.updatePointSize(self.__buildHtml([getData(BCExportFields.ID[fieldName]['data'], file) for fieldName in thumbFields], fontName, fontSize, fontColor)))
+                document.setHtml(self.updatePointSize(self.__buildHtml([getData(BCExportFields.ID[fieldName]['data'], file) for fieldName in thumbFields],
+                                                                       fontName,
+                                                                       fontSize,
+                                                                       fontColor)))
                 document.drawContents(painter)
 
             painter.restore()
 
-            if not thumbnailPen is None:
+            if thumbnailPen is not None:
                 # paint page background
                 painter.setPen(thumbnailPen)
                 painter.setBrush(QBrush(Qt.NoBrush))
-                if thumbnailBorderRadius>0:
+                if thumbnailBorderRadius > 0:
                     painter.drawRoundedRect(0, 0, cellSize.width(), cellSize.height(), thumbnailBorderRadius, thumbnailBorderRadius)
                 else:
                     painter.drawRect(0, 0, cellSize.width(), cellSize.height())
@@ -764,22 +769,34 @@ class BCExportFiles(QObject):
         resolution = config.get('paper.resolution', defaultConfig['paper.resolution'])
 
         # initialise some thumbnail values to avoid to do it each time a thumbnail is drawn
-        thumbnailBorderRadius = BCExportFiles.convertSize(config.get('thumbnails.border.radius', defaultConfig['thumbnails.border.radius']), unit, 'px', resolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)
+        thumbnailBorderRadius = BCExportFiles.convertSize(config.get('thumbnails.border.radius', defaultConfig['thumbnails.border.radius']),
+                                                          unit,
+                                                          'px',
+                                                          resolution,
+                                                          formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)
         thumbnailBrush = None
         thumbnailPen = None
         if config.get('thumbnails.background.active', defaultConfig['thumbnails.background.active']):
-            thumbnailBrush=QBrush(config.get('thumbnails.background.color', defaultConfig['thumbnails.background.color']), Qt.SolidPattern)
+            thumbnailBrush = QBrush(config.get('thumbnails.background.color', defaultConfig['thumbnails.background.color']), Qt.SolidPattern)
 
         thumbnailBorder = None
         if config.get('thumbnails.border.active', defaultConfig['thumbnails.border.active']):
-            thumbnailPen=QPen(config.get('thumbnails.border.color', defaultConfig['thumbnails.border.color']))
+            thumbnailPen = QPen(config.get('thumbnails.border.color', defaultConfig['thumbnails.border.color']))
             thumbnailPen.setJoinStyle(Qt.MiterJoin)
-            thumbnailPen.setWidth(BCExportFiles.convertSize(config.get('thumbnails.border.width', defaultConfig['thumbnails.border.width']), unit, 'px', resolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))
+            thumbnailPen.setWidth(BCExportFiles.convertSize(config.get('thumbnails.border.width', defaultConfig['thumbnails.border.width']),
+                                                            unit,
+                                                            'px',
+                                                            resolution,
+                                                            formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))
 
         # bounds for page (ie: margins)
         pageBounds = cloneRect(pagesInformation['page.global.bounds'])
         insideBounds = cloneRect(pagesInformation['page.inside.bounds'])
-        pageBorderRadius = BCExportFiles.convertSize(config.get('page.border.radius', defaultConfig['page.border.radius']), unit, 'px', resolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)
+        pageBorderRadius = BCExportFiles.convertSize(config.get('page.border.radius', defaultConfig['page.border.radius']),
+                                                     unit,
+                                                     'px',
+                                                     resolution,
+                                                     formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)
 
         brush = QBrush(Qt.NoBrush)
         pen = QPen(Qt.NoPen)
@@ -792,7 +809,7 @@ class BCExportFiles(QObject):
 
             painter.setPen(pen)
             painter.setBrush(brush)
-            if pageBorderRadius>0:
+            if pageBorderRadius > 0:
                 painter.drawRoundedRect(pageBounds, pageBorderRadius, pageBorderRadius)
             else:
                 painter.drawRect(pageBounds)
@@ -821,13 +838,21 @@ class BCExportFiles(QObject):
 
         if pagesInformation['header.height'] > 0:
             # header to draw
-            document.setHtml(self.updatePointSize(self.__parseText(config.get('header.content', defaultConfig['header.content']), '', currentPage, totalPage, source=config.get('source', defaultConfig['source']))))
+            document.setHtml(self.updatePointSize(self.__parseText(config.get('header.content', defaultConfig['header.content']),
+                                                                   '',
+                                                                   currentPage,
+                                                                   totalPage,
+                                                                   source=config.get('source', defaultConfig['source']))))
             document.drawContents(painter)
             painter.translate(QPointF(0, pagesInformation['header.height']))
 
         if currentPage == 1 and pagesInformation['fpNotes.height'] > 0:
             # first page notes to draw
-            document.setHtml(self.updatePointSize(self.__parseText(config.get('firstPageNotes.content', defaultConfig['firstPageNotes.content']), '', currentPage, totalPage, source=config.get('source', defaultConfig['source']))))
+            document.setHtml(self.updatePointSize(self.__parseText(config.get('firstPageNotes.content', defaultConfig['firstPageNotes.content']),
+                                                                   '',
+                                                                   currentPage,
+                                                                   totalPage,
+                                                                   source=config.get('source', defaultConfig['source']))))
             document.drawContents(painter)
             painter.translate(QPointF(0, pagesInformation['fpNotes.height']))
 
@@ -835,7 +860,11 @@ class BCExportFiles(QObject):
             # footer to draw
             painter.resetTransform()
             painter.translate(QPointF(thumbBounds.left(), thumbBounds.bottom() + pagesInformation['cell.thumbnail.outerSpacing']))
-            document.setHtml(self.updatePointSize(self.__parseText(config.get('footer.content', defaultConfig['footer.content']), '', currentPage, totalPage, source=config.get('source', defaultConfig['source']))))
+            document.setHtml(self.updatePointSize(self.__parseText(config.get('footer.content', defaultConfig['footer.content']),
+                                                                   '',
+                                                                   currentPage,
+                                                                   totalPage,
+                                                                   source=config.get('source', defaultConfig['source']))))
             document.drawContents(painter)
 
         # thumbnails
@@ -859,7 +888,7 @@ class BCExportFiles(QObject):
             else:
                 position.setX(position.x() + cellSize.width() + thumbSpacing)
 
-            thumbIndex+=1
+            thumbIndex += 1
 
         painter.resetTransform()
 
@@ -868,11 +897,15 @@ class BCExportFiles(QObject):
             brush.setStyle(Qt.NoBrush)
             pen.setStyle(Qt.SolidLine)
             pen.setColor(config.get('page.border.color', defaultConfig['page.border.color']))
-            pen.setWidth(BCExportFiles.convertSize(config.get('page.border.width', defaultConfig['page.border.width']), unit, 'px', resolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))
+            pen.setWidth(BCExportFiles.convertSize(config.get('page.border.width', defaultConfig['page.border.width']),
+                                                   unit,
+                                                   'px',
+                                                   resolution,
+                                                   formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))
 
             painter.setPen(pen)
             painter.setBrush(brush)
-            if pageBorderRadius>0:
+            if pageBorderRadius > 0:
                 painter.drawRoundedRect(pageBounds, pageBorderRadius, pageBorderRadius)
             else:
                 painter.drawRect(pageBounds)
@@ -926,37 +959,62 @@ class BCExportFiles(QObject):
                 'page.total':                   int
             }
         """
-        fieldsList=config.get('fields', defaultConfig['fields'])
+        fieldsList = config.get('fields', defaultConfig['fields'])
         imageResolution = config.get('paper.resolution', defaultConfig['paper.resolution'])
 
         # calculate bounds within margins
         fromUnit = config.get('paper.unit', defaultConfig['paper.unit'])
         imageBounds = QRect(
-                QPoint(floor(BCExportFiles.convertSize(config.get('margins.left', defaultConfig['margins.left']), fromUnit, 'px', imageResolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)),
-                       floor(BCExportFiles.convertSize(config.get('margins.top', defaultConfig['margins.top']), fromUnit, 'px', imageResolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))),
-                QPoint(floor(imageSize.width() - BCExportFiles.convertSize(config.get('margins.right', defaultConfig['margins.right']), fromUnit, 'px', imageResolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)),
-                       floor(imageSize.height() - BCExportFiles.convertSize(config.get('margins.bottom', defaultConfig['margins.bottom']), fromUnit, 'px', imageResolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)))
+                QPoint(floor(BCExportFiles.convertSize(config.get('margins.left', defaultConfig['margins.left']),
+                                                       fromUnit,
+                                                       'px',
+                                                       imageResolution,
+                                                       formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)),
+                       floor(BCExportFiles.convertSize(config.get('margins.top', defaultConfig['margins.top']),
+                                                       fromUnit,
+                                                       'px',
+                                                       imageResolution,
+                                                       formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))),
+                QPoint(floor(imageSize.width() - BCExportFiles.convertSize(config.get('margins.right', defaultConfig['margins.right']),
+                                                                           fromUnit,
+                                                                           'px',
+                                                                           imageResolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)),
+                       floor(imageSize.height() - BCExportFiles.convertSize(config.get('margins.bottom', defaultConfig['margins.bottom']),
+                                                                            fromUnit,
+                                                                            'px',
+                                                                            imageResolution,
+                                                                            formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)))
             )
 
         insideBounds = cloneRect(imageBounds)
 
-
         if config.get('page.background.active', defaultConfig['page.background.active']) or config.get('page.border.active', defaultConfig['page.border.active']):
-            innerSpace = round(BCExportFiles.convertSize(max(1, config.get('thumbnails.layout.spacing.outer', defaultConfig['thumbnails.layout.spacing.outer']), config.get('page.border.radius', defaultConfig['page.border.radius']), config.get('page.border.width', defaultConfig['page.border.width'])), fromUnit, 'px', imageResolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution), 0)
+            innerSpace = round(BCExportFiles.convertSize(max(1,
+                                                             config.get('thumbnails.layout.spacing.outer', defaultConfig['thumbnails.layout.spacing.outer']),
+                                                             config.get('page.border.radius', defaultConfig['page.border.radius']),
+                                                             config.get('page.border.width', defaultConfig['page.border.width'])),
+                                                         fromUnit,
+                                                         'px',
+                                                         imageResolution,
+                                                         formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution), 0)
 
             insideBounds.setLeft(insideBounds.left() + innerSpace)
             insideBounds.setRight(insideBounds.right() - innerSpace)
             insideBounds.setTop(insideBounds.top() + innerSpace)
             insideBounds.setBottom(insideBounds.bottom() - innerSpace)
 
-        fPageBounds=cloneRect(insideBounds)
-        nPageBounds=cloneRect(insideBounds)
+        fPageBounds = cloneRect(insideBounds)
+        nPageBounds = cloneRect(insideBounds)
 
-        # used to calculate texts sizes...
+        # used to calculate texts sizes...
         document = QTextDocument()
         document.setPageSize(QSizeF(insideBounds.size()))
 
-        thumbnailsOuterSpacing = round(BCExportFiles.convertSize(config.get('thumbnails.layout.spacing.outer', defaultConfig['thumbnails.layout.spacing.outer']), fromUnit, 'px', imageResolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution), 0)
+        thumbnailsOuterSpacing = round(BCExportFiles.convertSize(config.get('thumbnails.layout.spacing.outer', defaultConfig['thumbnails.layout.spacing.outer']),
+                                                                 fromUnit,
+                                                                 'px',
+                                                                 imageResolution,
+                                                                 formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution), 0)
 
         # calculate height for Header
         headerHeight = 0
@@ -978,7 +1036,8 @@ class BCExportFiles(QObject):
 
         # calculate height for first page note
         fpNotesHeight = 0
-        if config.get('firstPageNotes.active', defaultConfig['firstPageNotes.active']) and config.get('firstPageNotes.content', defaultConfig['firstPageNotes.content']).strip() != '':
+        if config.get('firstPageNotes.active', defaultConfig['firstPageNotes.active']) and\
+           config.get('firstPageNotes.content', defaultConfig['firstPageNotes.content']).strip() != '':
             document.setHtml(self.updatePointSize(config.get('firstPageNotes.content', defaultConfig['firstPageNotes.content'])))
             fpNotesHeight = document.size().height() + thumbnailsOuterSpacing
 
@@ -996,7 +1055,11 @@ class BCExportFiles(QObject):
         document.setDefaultFont(QFont(config.get('thumbnails.text.font.name', defaultConfig['thumbnails.text.font.name'])))
         document.setHtml(self.updatePointSize(self.__buildHtml(["X"]*len(fieldsList), fontName, fontSize, fontColor)))
         cellTextHeight = document.size().height()
-        thumbnailsInnerSpacing=BCExportFiles.convertSize(config.get('thumbnails.layout.spacing.inner', defaultConfig['thumbnails.layout.spacing.inner']), fromUnit, 'px', imageResolution, formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)
+        thumbnailsInnerSpacing = BCExportFiles.convertSize(config.get('thumbnails.layout.spacing.inner', defaultConfig['thumbnails.layout.spacing.inner']),
+                                                           fromUnit,
+                                                           'px',
+                                                           imageResolution,
+                                                           formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution)
 
         if propertiesPosition == 'none':
             # no properties to display
@@ -1014,7 +1077,7 @@ class BCExportFiles(QObject):
             # in this case, consider that image size = 50% of cellWidth
             thumbSize = (cellWidth - thumbnailsInnerSpacing*3)//2
 
-            cellTextHeight+=thumbnailsInnerSpacing*2
+            cellTextHeight += thumbnailsInnerSpacing*2
 
             # cell height is the greatest height between thumbnail and text
             cellHeight = max(cellTextHeight, thumbSize + thumbnailsInnerSpacing*2)
@@ -1035,7 +1098,7 @@ class BCExportFiles(QObject):
         # - - calculate number of pages
         # total number of rows to display
         nbRows = ceil(len(config.get('files', defaultConfig['files']))/thumbPerRow)
-        # maximum row per page
+        # maximum row per page
         fpNbRowsMax = (fPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing)
         npNbRowsMax = (nPageBounds.height() + thumbnailsOuterSpacing) / (cellHeight+thumbnailsOuterSpacing)
 
@@ -1056,7 +1119,7 @@ class BCExportFiles(QObject):
         else:
             nbPages = 1 + ceil((nbRows - fpNbRowsMax) / npNbRowsMax)
 
-        returned= {
+        returned = {
             'page.size':                    imageSize,
             'page.global.bounds':           imageBounds,
             'page.inside.bounds':           insideBounds,
@@ -1088,31 +1151,30 @@ class BCExportFiles(QObject):
         """Export content as text"""
         returned = {'exported': False,
                     'message': 'not processed :)'
-                }
-        # define a default configuration, if given config is missing...
-        defaultConfig = {
-                'userDefinedLayout.active': False,
-                'userDefinedLayout.content': '{table}',
+                    }
+        # define a default configuration, if given config is missing...
+        defaultConfig = {'userDefinedLayout.active': False,
+                         'userDefinedLayout.content': '{table}',
 
-                'header.active': True,
+                         'header.active': True,
 
-                'borders.style': TextTableSettingsText.BORDER_BASIC,
+                         'borders.style': TextTableSettingsText.BORDER_BASIC,
 
-                'minimumWidth.active': True,
-                'minimumWidth.value': 80,
+                         'minimumWidth.active': True,
+                         'minimumWidth.value': 80,
 
-                'maximumWidth.active': False,
-                'maximumWidth.value': 120,
+                         'maximumWidth.active': False,
+                         'maximumWidth.value': 120,
 
-                'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
-                'files': [],
-                'source': ''
-            }
+                         'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
+                         'files': [],
+                         'source': ''
+                         }
 
         if not isinstance(config, dict):
             config = defaultConfig
 
-        fieldsList=self.__cleanupField(config.get('fields', defaultConfig['fields']))
+        fieldsList = self.__cleanupField(config.get('fields', defaultConfig['fields']))
 
         tableSettings = TextTableSettingsText()
         tableSettings.setHeaderActive(config.get('header.active', defaultConfig['header.active']))
@@ -1160,18 +1222,17 @@ class BCExportFiles(QObject):
         """Export content as text"""
         returned = {'exported': False,
                     'message': 'not processed :)'
-                }
-        # define a default configuration, if config is missing...
-        defaultConfig = {
-                'header.active': True,
+                    }
+        # define a default configuration, if config is missing...
+        defaultConfig = {'header.active': True,
 
-                'fields.enclosed': False,
-                'fields.separator': ',',
+                         'fields.enclosed': False,
+                         'fields.separator': ',',
 
-                'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
-                'files': [],
-                'source': ''
-            }
+                         'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
+                         'files': [],
+                         'source': ''
+                         }
 
         if not isinstance(config, dict):
             config = defaultConfig
@@ -1182,7 +1243,6 @@ class BCExportFiles(QObject):
         tableSettings.setHeaderActive(config.get('header.active', defaultConfig['header.active']))
         tableSettings.setEnclosedField(config.get('fields.enclosed', defaultConfig['fields.enclosed']))
         tableSettings.setSeparator(config.get('fields.separator', defaultConfig['fields.separator']))
-
 
         try:
             table = self.__getTable(self.__cleanupField(config.get('fields', defaultConfig['fields'])),
@@ -1213,19 +1273,18 @@ class BCExportFiles(QObject):
         """Export content as text"""
         returned = {'exported': False,
                     'message': 'not processed :)'
-                }
-        # define a default configuration, if config is missing...
-        defaultConfig = {
-                'userDefinedLayout.active': False,
-                'userDefinedLayout.content': '{table}',
+                    }
+        # define a default configuration, if config is missing...
+        defaultConfig = {'userDefinedLayout.active': False,
+                         'userDefinedLayout.content': '{table}',
 
-                'thumbnails.included': False,
-                'thumbnails.size': 64,
+                         'thumbnails.included': False,
+                         'thumbnails.size': 64,
 
-                'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
-                'files': [],
-                'source': ''
-            }
+                         'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
+                         'files': [],
+                         'source': ''
+                         }
 
         if not isinstance(config, dict):
             config = defaultConfig
@@ -1235,14 +1294,14 @@ class BCExportFiles(QObject):
         self.exportStart.emit(-1)
 
         if includeThumbnails and target != BCExportFilesDialogBox.CLIPBOARD:
-            targetBaseName=os.path.basename(target)
-            self.__extraData = [BCFileThumbnailSize.fromValue(config.get('thumbnails.size', defaultConfig['thumbnails.size'])), # thumbnail size
-                                f"{targetBaseName}-img" # Relative path to MD file
+            targetBaseName = os.path.basename(target)
+            self.__extraData = [BCFileThumbnailSize.fromValue(config.get('thumbnails.size', defaultConfig['thumbnails.size'])),  # thumbnail size
+                                f"{targetBaseName}-img"  # Relative path to MD file
                                 ]
-            fieldsList=['file.thumbnailMD']
+            fieldsList = ['file.thumbnailMD']
         else:
-            fieldsList=[]
-        fieldsList+=self.__cleanupField(config.get('fields', defaultConfig['fields']))
+            fieldsList = []
+        fieldsList += self.__cleanupField(config.get('fields', defaultConfig['fields']))
 
         tableSettings = TextTableSettingsTextMarkdown()
         tableSettings.setColumnsFormatting([BCExportFields.ID[key]['format'] for key in fieldsList])
@@ -1293,7 +1352,7 @@ class BCExportFiles(QObject):
                 # MD file export is Ok, copy thumnails
                 for file in config.get('files', defaultConfig['files']):
                     try:
-                        thumbnailFileName=file.thumbnail(self.__extraData[0], BCBaseFile.THUMBTYPE_FILENAME)
+                        thumbnailFileName = file.thumbnail(self.__extraData[0], BCBaseFile.THUMBTYPE_FILENAME)
                         if os.path.isfile(thumbnailFileName):
                             shutil.copy2(thumbnailFileName, os.path.join(targetPath, os.path.basename(thumbnailFileName)))
                     except Exception as e:
@@ -1323,55 +1382,54 @@ class BCExportFiles(QObject):
 
         returned = {'exported': False,
                     'message': f'to file <b>{os.path.basename(target)}</b>'
-                }
-        # define a default configuration, if given config is missing...
-        defaultConfig = {
-                'thumbnails.background.active': False,
-                'thumbnails.background.color': QColor("#FFFFFF"),
-                'thumbnails.border.active': False,
-                'thumbnails.border.color': QColor("#000000"),
-                'thumbnails.border.width': 1.0,
-                'thumbnails.border.radius': 0.0,
-                'thumbnails.layout.spacing.inner': 2.0,
-                'thumbnails.image.displayMode': 'fit',
-                'thumbnails.text.position': 'none',
-                'thumbnails.text.font.name': 'DejaVu sans',
-                'thumbnails.text.font.size': 10,
-                'thumbnails.text.font.color': QColor("#000000"),
+                    }
+        # define a default configuration, if given config is missing...
+        defaultConfig = {'thumbnails.background.active': False,
+                         'thumbnails.background.color': QColor("#FFFFFF"),
+                         'thumbnails.border.active': False,
+                         'thumbnails.border.color': QColor("#000000"),
+                         'thumbnails.border.width': 1.0,
+                         'thumbnails.border.radius': 0.0,
+                         'thumbnails.layout.spacing.inner': 2.0,
+                         'thumbnails.image.displayMode': 'fit',
+                         'thumbnails.text.position': 'none',
+                         'thumbnails.text.font.name': 'DejaVu sans',
+                         'thumbnails.text.font.size': 10,
+                         'thumbnails.text.font.color': QColor("#000000"),
 
-                'thumbnails.layout.nbPerRow': 2,
-                'thumbnails.layout.spacing.outer': 5.0,
+                         'thumbnails.layout.nbPerRow': 2,
+                         'thumbnails.layout.spacing.outer': 5.0,
 
-                'page.background.active': False,
-                'page.background.color': QColor("#FFFFFF"),
-                'page.border.active': False,
-                'page.border.color': QColor("#000000"),
-                'page.border.width': 1.0,
-                'page.border.radius': 0.0,
+                         'page.background.active': False,
+                         'page.background.color': QColor("#FFFFFF"),
+                         'page.border.active': False,
+                         'page.border.color': QColor("#000000"),
+                         'page.border.width': 1.0,
+                         'page.border.radius': 0.0,
 
-                'firstPageNotes.active': False,
-                'firstPageNotes.content': "",
-                'footer.active': False,
-                'footer.content': "",
-                'header.active': False,
-                'header.content': "",
-                'margins.bottom': 20.0,
-                'margins.left': 20.0,
-                'margins.right': 20.0,
-                'margins.top': 20.0,
-                'paper.orientation': BCExportFilesDialogBox.ORIENTATION_PORTRAIT, # portrait
-                'paper.size': "A4",
-                'paper.resolution': 300.0,
-                'paper.color.active': False,
-                'paper.color.value': QColor("#FFFFFF"),
-                'paper.unit': "mm",
+                         'firstPageNotes.active': False,
+                         'firstPageNotes.content': "",
+                         'footer.active': False,
+                         'footer.content': "",
+                         'header.active': False,
+                         'header.content': "",
+                         'margins.bottom': 20.0,
+                         'margins.left': 20.0,
+                         'margins.right': 20.0,
+                         'margins.top': 20.0,
+                         'paper.orientation': BCExportFilesDialogBox.ORIENTATION_PORTRAIT,  # portrait
+                         'paper.size': "A4",
+                         'paper.resolution': 300.0,
+                         'paper.color.active': False,
+                         'paper.color.value': QColor("#FFFFFF"),
+                         'paper.unit': "mm",
 
-                'file.openInKrita': True,
+                         'file.openInKrita': True,
 
-                'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
-                'files': [],
-                'source': ''
-            }
+                         'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
+                         'files': [],
+                         'source': ''
+                         }
 
         if not isinstance(config, dict):
             config = defaultConfig
@@ -1406,7 +1464,7 @@ class BCExportFiles(QObject):
         # prepare background layer
         rootNode = kraDocument.rootNode()
         bgNode = rootNode.childNodes()[0]
-        bgNode.setOpacity(255) # it seems that node opactiry is 0% ??? not sure if normal or not, ensure that it's 100%
+        bgNode.setOpacity(255)  # it seems that node opacity is 0% ??? not sure if normal or not, ensure that it's 100%
         if config.get('paper.color.active', defaultConfig['paper.color.active']):
             fillLayer(bgNode, config.get('paper.color.value', defaultConfig['paper.color.value']))
         else:
@@ -1429,7 +1487,7 @@ class BCExportFiles(QObject):
             drawLayer(newPage, pagesInformation, config, defaultConfig, currentPage, totalPage)
             rootNode.addChildNode(newPage, bgNode)
 
-        returned['exported']=kraDocument.save()
+        returned['exported'] = kraDocument.save()
 
         if config.get('file.openInKrita', defaultConfig['file.openInKrita']):
             kraDocument.refreshProjection()
@@ -1443,55 +1501,54 @@ class BCExportFiles(QObject):
         """Export content as (a sequence of) image file (PNG/JPEG)"""
         returned = {'exported': False,
                     'message': f'to file sequence <b>{os.path.basename(target)}</b>'
-                }
-        # define a default configuration, if given config is missing...
-        defaultConfig = {
-                'thumbnails.background.active': False,
-                'thumbnails.background.color': QColor("#FFFFFF"),
-                'thumbnails.border.active': False,
-                'thumbnails.border.color': QColor("#000000"),
-                'thumbnails.border.width': 1.0,
-                'thumbnails.border.radius': 0.0,
-                'thumbnails.layout.spacing.inner': 2.0,
-                'thumbnails.image.displayMode': 'fit',
-                'thumbnails.text.position': 'none',
-                'thumbnails.text.font.name': 'DejaVu sans',
-                'thumbnails.text.font.size': 10,
-                'thumbnails.text.font.color': QColor("#000000"),
+                    }
+        # define a default configuration, if given config is missing...
+        defaultConfig = {'thumbnails.background.active': False,
+                         'thumbnails.background.color': QColor("#FFFFFF"),
+                         'thumbnails.border.active': False,
+                         'thumbnails.border.color': QColor("#000000"),
+                         'thumbnails.border.width': 1.0,
+                         'thumbnails.border.radius': 0.0,
+                         'thumbnails.layout.spacing.inner': 2.0,
+                         'thumbnails.image.displayMode': 'fit',
+                         'thumbnails.text.position': 'none',
+                         'thumbnails.text.font.name': 'DejaVu sans',
+                         'thumbnails.text.font.size': 10,
+                         'thumbnails.text.font.color': QColor("#000000"),
 
-                'thumbnails.layout.nbPerRow': 2,
-                'thumbnails.layout.spacing.outer': 5.0,
+                         'thumbnails.layout.nbPerRow': 2,
+                         'thumbnails.layout.spacing.outer': 5.0,
 
-                'page.background.active': False,
-                'page.background.color': QColor("#FFFFFF"),
-                'page.border.active': False,
-                'page.border.color': QColor("#000000"),
-                'page.border.width': 1.0,
-                'page.border.radius': 0.0,
+                         'page.background.active': False,
+                         'page.background.color': QColor("#FFFFFF"),
+                         'page.border.active': False,
+                         'page.border.color': QColor("#000000"),
+                         'page.border.width': 1.0,
+                         'page.border.radius': 0.0,
 
-                'firstPageNotes.active': False,
-                'firstPageNotes.content': "",
-                'footer.active': False,
-                'footer.content': "",
-                'header.active': False,
-                'header.content': "",
-                'margins.bottom': 20.0,
-                'margins.left': 20.0,
-                'margins.right': 20.0,
-                'margins.top': 20.0,
-                'paper.orientation': BCExportFilesDialogBox.ORIENTATION_PORTRAIT, # portrait
-                'paper.size': "A4",
-                'paper.resolution': 300.0,
-                'paper.color.active': False,
-                'paper.color.value': QColor("#FFFFFF"),
-                'paper.unit': "mm",
+                         'firstPageNotes.active': False,
+                         'firstPageNotes.content': "",
+                         'footer.active': False,
+                         'footer.content': "",
+                         'header.active': False,
+                         'header.content': "",
+                         'margins.bottom': 20.0,
+                         'margins.left': 20.0,
+                         'margins.right': 20.0,
+                         'margins.top': 20.0,
+                         'paper.orientation': BCExportFilesDialogBox.ORIENTATION_PORTRAIT,  # portrait
+                         'paper.size': "A4",
+                         'paper.resolution': 300.0,
+                         'paper.color.active': False,
+                         'paper.color.value': QColor("#FFFFFF"),
+                         'paper.unit': "mm",
 
-                'file.openInKrita': False,
+                         'file.openInKrita': False,
 
-                'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
-                'files': [],
-                'source': ''
-            }
+                         'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
+                         'files': [],
+                         'source': ''
+                         }
 
         if not isinstance(config, dict):
             config = defaultConfig
@@ -1515,12 +1572,12 @@ class BCExportFiles(QObject):
 
         fileName = target
         if totalPage > 1:
-            if re.search("(?i)\{page:current(?::(#+))?\}", target) is None:
+            if re.search(r"(?i)\{page:current(?::(#+))?\}", target) is None:
                 # no counter... add it
-                fileName = re.sub('(\..*)$', r'-{page:current:###}\1', target)
-            returned['message']=f'to file sequence <b>{os.path.basename(fileName)} (sequence: {totalPage} files)</b>'
+                fileName = re.sub(r'(\..*)$', r'-{page:current:###}\1', target)
+            returned['message'] = f'to file sequence <b>{os.path.basename(fileName)} (sequence: {totalPage} files)</b>'
         else:
-            returned['message']=f'to file <b>{os.path.basename(fileName)}</b>'
+            returned['message'] = f'to file <b>{os.path.basename(fileName)}</b>'
 
         isOk = True
         for page in range(totalPage):
@@ -1551,7 +1608,7 @@ class BCExportFiles(QObject):
 
         self.exportEnd.emit()
 
-        returned['exported']=isOk
+        returned['exported'] = isOk
 
         return returned
 
@@ -1559,55 +1616,54 @@ class BCExportFiles(QObject):
         """Export content as PDF document"""
         returned = {'exported': False,
                     'message': f'to file sequence <b>{os.path.basename(target)}</b>'
-                }
-        # define a default configuration, if given config is missing...
-        defaultConfig = {
-                'thumbnails.background.active': False,
-                'thumbnails.background.color': QColor("#FFFFFF"),
-                'thumbnails.border.active': False,
-                'thumbnails.border.color': QColor("#000000"),
-                'thumbnails.border.width': 1.0,
-                'thumbnails.border.radius': 0.0,
-                'thumbnails.layout.spacing.inner': 2.0,
-                'thumbnails.image.displayMode': 'fit',
-                'thumbnails.text.position': 'none',
-                'thumbnails.text.font.name': 'DejaVu sans',
-                'thumbnails.text.font.size': 10,
-                'thumbnails.text.font.color': QColor("#000000"),
+                    }
+        # define a default configuration, if given config is missing...
+        defaultConfig = {'thumbnails.background.active': False,
+                         'thumbnails.background.color': QColor("#FFFFFF"),
+                         'thumbnails.border.active': False,
+                         'thumbnails.border.color': QColor("#000000"),
+                         'thumbnails.border.width': 1.0,
+                         'thumbnails.border.radius': 0.0,
+                         'thumbnails.layout.spacing.inner': 2.0,
+                         'thumbnails.image.displayMode': 'fit',
+                         'thumbnails.text.position': 'none',
+                         'thumbnails.text.font.name': 'DejaVu sans',
+                         'thumbnails.text.font.size': 10,
+                         'thumbnails.text.font.color': QColor("#000000"),
 
-                'thumbnails.layout.nbPerRow': 2,
-                'thumbnails.layout.spacing.outer': 5.0,
+                         'thumbnails.layout.nbPerRow': 2,
+                         'thumbnails.layout.spacing.outer': 5.0,
 
-                'page.background.active': False,
-                'page.background.color': QColor("#FFFFFF"),
-                'page.border.active': False,
-                'page.border.color': QColor("#000000"),
-                'page.border.width': 1.0,
-                'page.border.radius': 0.0,
+                         'page.background.active': False,
+                         'page.background.color': QColor("#FFFFFF"),
+                         'page.border.active': False,
+                         'page.border.color': QColor("#000000"),
+                         'page.border.width': 1.0,
+                         'page.border.radius': 0.0,
 
-                'firstPageNotes.active': False,
-                'firstPageNotes.content': "",
-                'footer.active': False,
-                'footer.content': "",
-                'header.active': False,
-                'header.content': "",
-                'margins.bottom': 20.0,
-                'margins.left': 20.0,
-                'margins.right': 20.0,
-                'margins.top': 20.0,
-                'paper.orientation': BCExportFilesDialogBox.ORIENTATION_PORTRAIT, # portrait
-                'paper.size': "A4",
-                'paper.resolution': 300.0,
-                'paper.color.active': False,
-                'paper.color.value': QColor("#FFFFFF"),
-                'paper.unit': "mm",
+                         'firstPageNotes.active': False,
+                         'firstPageNotes.content': "",
+                         'footer.active': False,
+                         'footer.content': "",
+                         'header.active': False,
+                         'header.content': "",
+                         'margins.bottom': 20.0,
+                         'margins.left': 20.0,
+                         'margins.right': 20.0,
+                         'margins.top': 20.0,
+                         'paper.orientation': BCExportFilesDialogBox.ORIENTATION_PORTRAIT,  # portrait
+                         'paper.size': "A4",
+                         'paper.resolution': 300.0,
+                         'paper.color.active': False,
+                         'paper.color.value': QColor("#FFFFFF"),
+                         'paper.unit': "mm",
 
-                'file.openInKrita': False,
+                         'file.openInKrita': False,
 
-                'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
-                'files': [],
-                'source': ''
-            }
+                         'fields': [key for key in BCExportFields.ID if BCExportFields.ID[key]['selected']],
+                         'files': [],
+                         'source': ''
+                         }
 
         if not isinstance(config, dict):
             config = defaultConfig
@@ -1637,7 +1693,7 @@ class BCExportFiles(QObject):
         printer.setResolution(int(imageResolution))
         printer.setOutputFormat(QPrinter.PdfFormat)
         printer.setPaperSize(imageSize, printerSizeUnit)
-        #printer.setPageSize(imageSize, printerSizeUnit)
+        # printer.setPageSize(imageSize, printerSizeUnit)
         printer.setOutputFileName(target)
         printer.setFullPage(True)
         painter = QPainter(printer)
@@ -1671,24 +1727,24 @@ class BCExportFiles(QObject):
                             QPointF(factor * pagesInformation['page.normal.bounds'].right(),
                                     factor * pagesInformation['page.normal.bounds'].bottom()))
 
-        pagesInformation['header.height']=factor * pagesInformation['header.height']
-        pagesInformation['footer.height']=factor * pagesInformation['footer.height']
-        pagesInformation['fpNotes.height']=factor * pagesInformation['fpNotes.height']
+        pagesInformation['header.height'] = factor * pagesInformation['header.height']
+        pagesInformation['footer.height'] = factor * pagesInformation['footer.height']
+        pagesInformation['fpNotes.height'] = factor * pagesInformation['fpNotes.height']
 
-        pagesInformation['cell.global.size']=QSizeF(
+        pagesInformation['cell.global.size'] = QSizeF(
                             factor * pagesInformation['cell.global.size'].width(),
                             factor * pagesInformation['cell.global.size'].height())
 
-        pagesInformation['cell.thumbnail.size']=QSizeF(
+        pagesInformation['cell.thumbnail.size'] = QSizeF(
                             factor * pagesInformation['cell.thumbnail.size'].width(),
                             factor * pagesInformation['cell.thumbnail.size'].height())
 
-        pagesInformation['cell.text.size']=QSizeF(
+        pagesInformation['cell.text.size'] = QSizeF(
                             factor * pagesInformation['cell.text.size'].width(),
                             factor * pagesInformation['cell.text.size'].height())
 
-        pagesInformation['cell.thumbnail.outerSpacing']=factor * pagesInformation['cell.thumbnail.outerSpacing']
-        pagesInformation['cell.thumbnail.innerSpacing']=factor * pagesInformation['cell.thumbnail.innerSpacing']
+        pagesInformation['cell.thumbnail.outerSpacing'] = factor * pagesInformation['cell.thumbnail.outerSpacing']
+        pagesInformation['cell.thumbnail.innerSpacing'] = factor * pagesInformation['cell.thumbnail.innerSpacing']
 
         totalPage = pagesInformation['page.total']
 
@@ -1712,26 +1768,25 @@ class BCExportFiles(QObject):
 
         self.exportEnd.emit()
 
-        returned['exported']=isOk
+        returned['exported'] = isOk
 
         return returned
-
 
 
 class BCExportFilesDialogBox(QDialog):
     """User interface for export"""
 
     # note: IMPORT/EXPORT results codes identical to NodeEditorScene IMPORT/EXPORT results codes
-    IMPORT_OK=                              0b00000000
-    IMPORT_FILE_NOT_FOUND=                  0b00000001
-    IMPORT_FILE_CANT_READ=                  0b00000010
-    IMPORT_FILE_NOT_JSON=                   0b00000100
-    IMPORT_FILE_INVALID_FORMAT_IDENTIFIER=  0b00001000
-    IMPORT_FILE_MISSING_FORMAT_IDENTIFIER=  0b00010000
-    IMPORT_FILE_MISSING_SCENE_DEFINITION=   0b00100000
+    IMPORT_OK =                              0b00000000
+    IMPORT_FILE_NOT_FOUND =                  0b00000001
+    IMPORT_FILE_CANT_READ =                  0b00000010
+    IMPORT_FILE_NOT_JSON =                   0b00000100
+    IMPORT_FILE_INVALID_FORMAT_IDENTIFIER =  0b00001000
+    IMPORT_FILE_MISSING_FORMAT_IDENTIFIER =  0b00010000
+    IMPORT_FILE_MISSING_SCENE_DEFINITION =   0b00100000
 
-    EXPORT_OK=       0b00000000
-    EXPORT_CANT_SAVE=0b00000001
+    EXPORT_OK =        0b00000000
+    EXPORT_CANT_SAVE = 0b00000001
 
     __PAGE_PERIMETER = 0
     __PAGE_FORMAT = 1
@@ -1754,119 +1809,118 @@ class BCExportFilesDialogBox(QDialog):
 
     # paper size are defined in Portrait mode
     PAPER_SIZES = {
-        'A2': {'mm':QSizeF(420,  594),
-               'cm':QSizeF(42.0, 59.4),
-               'in':QSizeF(16.5, 23.4),
-               'px':QSizeF(16.5, 23.4)
-              },
-        'A3': {'mm':QSizeF(297,  420),
-               'cm':QSizeF(29.7, 42.0),
-               'in':QSizeF(11.7, 16.5),
-               'px':QSizeF(11.7, 16.5)
-              },
-        'A4': {'mm':QSizeF(210, 297),
-               'cm':QSizeF(21.0, 29.7),
-               'in':QSizeF(8.3, 11.7),
-               'px':QSizeF(8.3, 11.7)
-              },
-        'A5': {'mm':QSizeF(148, 210),
-               'cm':QSizeF(14.8, 21.0),
-               'in':QSizeF(5.8, 8.3),
-               'px':QSizeF(5.8, 8.3)
-              },
-        'A6': {'mm':QSizeF(105, 148),
-               'cm':QSizeF(10.5, 14.8),
-               'in':QSizeF(4.1, 5.8),
-               'px':QSizeF(4.1, 5.8)
-              },
+        'A2': {'mm': QSizeF(420,  594),
+               'cm': QSizeF(42.0, 59.4),
+               'in': QSizeF(16.5, 23.4),
+               'px': QSizeF(16.5, 23.4)
+               },
+        'A3': {'mm': QSizeF(297,  420),
+               'cm': QSizeF(29.7, 42.0),
+               'in': QSizeF(11.7, 16.5),
+               'px': QSizeF(11.7, 16.5)
+               },
+        'A4': {'mm': QSizeF(210, 297),
+               'cm': QSizeF(21.0, 29.7),
+               'in': QSizeF(8.3, 11.7),
+               'px': QSizeF(8.3, 11.7)
+               },
+        'A5': {'mm': QSizeF(148, 210),
+               'cm': QSizeF(14.8, 21.0),
+               'in': QSizeF(5.8, 8.3),
+               'px': QSizeF(5.8, 8.3)
+               },
+        'A6': {'mm': QSizeF(105, 148),
+               'cm': QSizeF(10.5, 14.8),
+               'in': QSizeF(4.1, 5.8),
+               'px': QSizeF(4.1, 5.8)
+               },
 
-        'B2 (ISO)': {'mm':QSizeF(500,  707),
-                     'cm':QSizeF(50.0, 70.7),
-                     'in':QSizeF(19.7, 27.8),
-                     'px':QSizeF(19.7, 27.8)
-              },
-        'B3 (ISO)': {'mm':QSizeF(353,  500),
-                     'cm':QSizeF(35.3, 50.0),
-                     'in':QSizeF(13.9, 19.7),
-                     'px':QSizeF(13.9, 19.7)
-              },
-        'B4 (ISO)': {'mm':QSizeF(250, 353),
-                     'cm':QSizeF(25.0, 35.3),
-                     'in':QSizeF(9.8, 13.9),
-                     'px':QSizeF(9.8, 13.9)
-              },
-        'B5 (ISO)': {'mm':QSizeF(176, 250),
-                     'cm':QSizeF(17.6, 25.0),
-                     'in':QSizeF(6.9, 9.8),
-                     'px':QSizeF(6.9, 9.8)
-              },
-        'B6 (ISO)': {'mm':QSizeF(125, 176),
-                     'cm':QSizeF(12.5, 17.6),
-                     'in':QSizeF(4.9, 6.9),
-                     'px':QSizeF(4.9, 6.9)
-              },
+        'B2 (ISO)': {'mm': QSizeF(500,  707),
+                     'cm': QSizeF(50.0, 70.7),
+                     'in': QSizeF(19.7, 27.8),
+                     'px': QSizeF(19.7, 27.8)
+                     },
+        'B3 (ISO)': {'mm': QSizeF(353,  500),
+                     'cm': QSizeF(35.3, 50.0),
+                     'in': QSizeF(13.9, 19.7),
+                     'px': QSizeF(13.9, 19.7)
+                     },
+        'B4 (ISO)': {'mm': QSizeF(250, 353),
+                     'cm': QSizeF(25.0, 35.3),
+                     'in': QSizeF(9.8, 13.9),
+                     'px': QSizeF(9.8, 13.9)
+                     },
+        'B5 (ISO)': {'mm': QSizeF(176, 250),
+                     'cm': QSizeF(17.6, 25.0),
+                     'in': QSizeF(6.9, 9.8),
+                     'px': QSizeF(6.9, 9.8)
+                     },
+        'B6 (ISO)': {'mm': QSizeF(125, 176),
+                     'cm': QSizeF(12.5, 17.6),
+                     'in': QSizeF(4.9, 6.9),
+                     'px': QSizeF(4.9, 6.9)
+                     },
+        'B2 (JIS)': {'mm': QSizeF(515,  728),
+                     'cm': QSizeF(51.5, 72.8),
+                     'in': QSizeF(20.3, 28.7),
+                     'px': QSizeF(20.3, 28.7)
+                     },
+        'B3 (JIS)': {'mm': QSizeF(364,  515),
+                     'cm': QSizeF(36.4, 51.5),
+                     'in': QSizeF(14.3, 20.3),
+                     'px': QSizeF(14.3, 20.3)
+                     },
+        'B4 (JIS)': {'mm': QSizeF(257, 364),
+                     'cm': QSizeF(25.7, 36.4),
+                     'in': QSizeF(10.1, 14.3),
+                     'px': QSizeF(10.1, 14.3)
+                     },
+        'B5 (JIS)': {'mm': QSizeF(182, 257),
+                     'cm': QSizeF(18.2, 25.7),
+                     'in': QSizeF(7.2, 10.1),
+                     'px': QSizeF(7.2, 10.1)
+                     },
+        'B6 (JIS)': {'mm': QSizeF(128, 182),
+                     'cm': QSizeF(12.8, 18.2),
+                     'in': QSizeF(5.0, 7.2),
+                     'px': QSizeF(5.0, 7.2)
+                     },
 
-        'B2 (JIS)': {'mm':QSizeF(515,  728),
-                     'cm':QSizeF(51.5, 72.8),
-                     'in':QSizeF(20.3, 28.7),
-                     'px':QSizeF(20.3, 28.7)
-              },
-        'B3 (JIS)': {'mm':QSizeF(364,  515),
-                     'cm':QSizeF(36.4, 51.5),
-                     'in':QSizeF(14.3, 20.3),
-                     'px':QSizeF(14.3, 20.3)
-              },
-        'B4 (JIS)': {'mm':QSizeF(257, 364),
-                     'cm':QSizeF(25.7, 36.4),
-                     'in':QSizeF(10.1, 14.3),
-                     'px':QSizeF(10.1, 14.3)
-              },
-        'B5 (JIS)': {'mm':QSizeF(182, 257),
-                     'cm':QSizeF(18.2, 25.7),
-                     'in':QSizeF(7.2, 10.1),
-                     'px':QSizeF(7.2, 10.1)
-              },
-        'B6 (JIS)': {'mm':QSizeF(128, 182),
-                     'cm':QSizeF(12.8, 18.2),
-                     'in':QSizeF(5.0, 7.2),
-                     'px':QSizeF(5.0, 7.2)
-              },
-
-        'Letter (US)': {'mm':QSizeF(216, 279),
-                        'cm':QSizeF(21.6, 27.9),
-                        'in':QSizeF(8.5, 11.0),
-                        'px':QSizeF(8.5, 11.0)
-              },
-        'Legal (US)':  {'mm':QSizeF(216, 356),
-                        'cm':QSizeF(21.6, 35.6),
-                     'in':QSizeF(8.5, 14.0),
-                        'px':QSizeF(8.5, 14.0)
-              },
-        'Square (A2)': {'mm':QSizeF(420, 420),
-                        'cm':QSizeF(42.0, 42.0),
-                        'in':QSizeF(16.5, 16.5),
-                        'px':QSizeF(16.5, 16.5)
-              },
-        'Square (A3)': {'mm':QSizeF(297, 297),
-                       'cm':QSizeF(29.7, 29.7),
-                       'in':QSizeF(11.7, 11.7),
-                       'px':QSizeF(11.7, 11.7)
-              },
-        'Square (A4)': {'mm':QSizeF(210, 210),
-                       'cm':QSizeF(21.0, 21.0),
-                       'in':QSizeF(8.3, 8.3),
-                       'px':QSizeF(8.3, 8.3)
-              },
-        'Square (A5)': {'mm':QSizeF(148, 148),
-                       'cm':QSizeF(14.8, 14.8),
-                       'in':QSizeF(5.8, 5.8),
-                       'px':QSizeF(5.8, 5.8)
-              },
-        'Square (A6)': {'mm':QSizeF(105, 105),
-                       'cm':QSizeF(10.5, 10.5),
-                       'in':QSizeF(4.1, 4.1),
-                       'px':QSizeF(4.1, 4.1)
-              }
+        'Letter (US)': {'mm': QSizeF(216, 279),
+                        'cm': QSizeF(21.6, 27.9),
+                        'in': QSizeF(8.5, 11.0),
+                        'px': QSizeF(8.5, 11.0)
+                        },
+        'Legal (US)':  {'mm': QSizeF(216, 356),
+                        'cm': QSizeF(21.6, 35.6),
+                        'in': QSizeF(8.5, 14.0),
+                        'px': QSizeF(8.5, 14.0)
+                        },
+        'Square (A2)': {'mm': QSizeF(420, 420),
+                        'cm': QSizeF(42.0, 42.0),
+                        'in': QSizeF(16.5, 16.5),
+                        'px': QSizeF(16.5, 16.5)
+                        },
+        'Square (A3)': {'mm': QSizeF(297, 297),
+                        'cm': QSizeF(29.7, 29.7),
+                        'in': QSizeF(11.7, 11.7),
+                        'px': QSizeF(11.7, 11.7)
+                        },
+        'Square (A4)': {'mm': QSizeF(210, 210),
+                        'cm': QSizeF(21.0, 21.0),
+                        'in': QSizeF(8.3, 8.3),
+                        'px': QSizeF(8.3, 8.3)
+                        },
+        'Square (A5)': {'mm': QSizeF(148, 148),
+                        'cm': QSizeF(14.8, 14.8),
+                        'in': QSizeF(5.8, 5.8),
+                        'px': QSizeF(5.8, 5.8)
+                        },
+        'Square (A6)': {'mm': QSizeF(105, 105),
+                        'cm': QSizeF(10.5, 10.5),
+                        'in': QSizeF(4.1, 4.1),
+                        'px': QSizeF(4.1, 4.1)
+                        }
     }
     UNITS = {
         'mm': {'label': i18n('Millimeters'),
@@ -1876,7 +1930,7 @@ class BCExportFilesDialogBox(QDialog):
                           BCExportFormat.EXPORT_FMT_IMG_JPG,
                           BCExportFormat.EXPORT_FMT_IMG_PNG,
                           BCExportFormat.EXPORT_FMT_IMG_KRA]
-              },
+               },
         'cm': {'label': i18n('Centimeters'),
                'fmt': '0.2f',
                'marginDec': 2,
@@ -1884,7 +1938,7 @@ class BCExportFilesDialogBox(QDialog):
                           BCExportFormat.EXPORT_FMT_IMG_JPG,
                           BCExportFormat.EXPORT_FMT_IMG_PNG,
                           BCExportFormat.EXPORT_FMT_IMG_KRA]
-              },
+               },
         'in': {'label': i18n('Inches'),
                'fmt': '0.2f',
                'marginDec': 4,
@@ -1892,14 +1946,14 @@ class BCExportFilesDialogBox(QDialog):
                           BCExportFormat.EXPORT_FMT_IMG_JPG,
                           BCExportFormat.EXPORT_FMT_IMG_PNG,
                           BCExportFormat.EXPORT_FMT_IMG_KRA]
-              },
+               },
         'px': {'label': i18n('Pixels'),
                'fmt': '0.0f',
                'marginDec': 0,
                'format': [BCExportFormat.EXPORT_FMT_IMG_JPG,
                           BCExportFormat.EXPORT_FMT_IMG_PNG,
                           BCExportFormat.EXPORT_FMT_IMG_KRA]
-              }
+               }
     }
     IMAGE_RESOLUTIONS = {
         '72dpi': 72.00,
@@ -1916,13 +1970,14 @@ class BCExportFilesDialogBox(QDialog):
     FMT_PROPERTIES = {
             BCExportFormat.EXPORT_FMT_TEXT:         {'label':               i18n('Text'),
                                                      'description':         i18n("Generate a basic text file, without any formatting<br>"
-                                                                                 "This file can be opened in any text editor; use a monospace font is highly recommended for a better readability"),
+                                                                                 "This file can be opened in any text editor; use a monospace font is highly recommended "
+                                                                                 "for a better readability"),
                                                      'panelFormat':         0,
                                                      'clipboard':           True,
                                                      'openInKrita':         False,
                                                      'fileExtension':       'txt',
                                                      'dialogExtensions':    i18n('Text files (*.txt)')
-                                                    },
+                                                     },
             BCExportFormat.EXPORT_FMT_TEXT_CSV:     {'label':               i18n('Text/CSV'),
                                                      'description':         i18n("Generate a CSV file<br>"
                                                                                  "This file can be opened in a spreadsheet software"),
@@ -1931,16 +1986,18 @@ class BCExportFilesDialogBox(QDialog):
                                                      'openInKrita':         False,
                                                      'fileExtension':       'csv',
                                                      'dialogExtensions':    i18n('CSV files (*.csv)')
-                                                    },
+                                                     },
             BCExportFormat.EXPORT_FMT_TEXT_MD:      {'label':               i18n('Text/Markdown'),
-                                                     'description':         i18n("Generate a Markdown file (<a href='https://guides.github.com/features/mastering-markdown'><span style='text-decoration: underline; color:#2980b9;'>GitHub flavored version</span></a>)<br>"
-                                                                                 "This file can be opened in any text editor, but use of a dedicated software to render result is recommended"),
+                                                     'description':         i18n("Generate a Markdown file (<a href='https://guides.github.com/features/mastering-markdown'>"
+                                                                                 "<span style='text-decoration: underline; color:#2980b9;'>GitHub flavored version</span></a>)<br>"
+                                                                                 "This file can be opened in any text editor, but use of a dedicated software to render result "
+                                                                                 "is recommended"),
                                                      'panelFormat':         1,
                                                      'clipboard':           True,
                                                      'openInKrita':         False,
                                                      'fileExtension':       'md',
                                                      'dialogExtensions':    i18n('Markdown files (*.md *.markdown)')
-                                                    },
+                                                     },
             BCExportFormat.EXPORT_FMT_DOC_PDF:      {'label':               i18n('Document/PDF'),
                                                      'description':         i18n("Generate a PDF file<br>"
                                                                                  "Document will contain as many pages as necessary to render complete files list with thumbnails"),
@@ -1949,7 +2006,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'openInKrita':         False,
                                                      'fileExtension':       'pdf',
                                                      'dialogExtensions':    i18n('Portable Document Format (*.pdf)')
-                                                    },
+                                                     },
             BCExportFormat.EXPORT_FMT_IMG_KRA:      {'label':               i18n('Image/Krita'),
                                                      'description':         i18n("Generate a Krita document<br>"
                                                                                  "Document will contain as many layers as necessary to render complete files list with thumbnails"),
@@ -1958,7 +2015,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'openInKrita':         True,
                                                      'fileExtension':       'kra',
                                                      'dialogExtensions':    i18n('Krita image (*.kra)')
-                                                    },
+                                                     },
             BCExportFormat.EXPORT_FMT_IMG_PNG:      {'label':               i18n('Image/PNG'),
                                                      'description':         i18n("Generate a PNG image file<br>"
                                                                                  "Will generate as many PNG files as necessary to render complete files list with thumbnails"),
@@ -1967,7 +2024,7 @@ class BCExportFilesDialogBox(QDialog):
                                                      'openInKrita':         False,
                                                      'fileExtension':       'png',
                                                      'dialogExtensions':    i18n('PNG Image (*.png)')
-                                                    },
+                                                     },
             BCExportFormat.EXPORT_FMT_IMG_JPG:      {'label':               i18n('Image/JPEG'),
                                                      'description':         i18n("Generate a JPEG image file<br>"
                                                                                  "Will generate as many JPEG files as necessary to render complete files list with thumbnails"),
@@ -1976,18 +2033,18 @@ class BCExportFilesDialogBox(QDialog):
                                                      'openInKrita':         False,
                                                      'fileExtension':       'jpeg',
                                                      'dialogExtensions':    i18n('JPEG Image (*.jpeg *.jpg)')
-                                                    }
+                                                     }
         }
 
     def __init__(self, title, uicontroller, options=None, parent=None):
         super(BCExportFilesDialogBox, self).__init__(parent)
 
         # dirty trick...
-        self.__closed=False
+        self.__closed = False
 
         self.__title = title
 
-        self.__exporter=BCExportFiles(uicontroller)
+        self.__exporter = BCExportFiles(uicontroller)
 
         self.__exporter.exportStart.connect(self.__exportStart)
         self.__exporter.exportProgress.connect(self.__exportProgress)
@@ -2007,8 +2064,8 @@ class BCExportFilesDialogBox(QDialog):
         self.__formatPdfImgConfig = None
 
         self.__exportedFileName = ''
-        self.__currentLoadedConfigurationFile=''
-        self.__isModified=False
+        self.__currentLoadedConfigurationFile = ''
+        self.__isModified = False
 
         self.__blockedSlots = True
 
@@ -2017,7 +2074,7 @@ class BCExportFilesDialogBox(QDialog):
         self.__selectedFileNfo = self.__uiController.panel().filesSelected()
 
         self.__hasSavedSettings = BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED)
-        self.__options=options
+        self.__options = options
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcexportfiles.ui')
         PyQt5.uic.loadUi(uiFileName, self)
@@ -2063,7 +2120,7 @@ class BCExportFilesDialogBox(QDialog):
             self.lwPerimeterProperties.clear()
             for field in BCExportFields.ID:
                 if BCExportFields.ID[field]['inList']:
-                    item=self.lwPerimeterProperties.addItem(BCExportFields.ID[field]['label'], field, BCExportFields.ID[field]['selected'])
+                    item = self.lwPerimeterProperties.addItem(BCExportFields.ID[field]['label'], field, BCExportFields.ID[field]['selected'])
                     item.setToolTip(BCExportFields.ID[field]['toolTip'])
 
             # connectors
@@ -2119,7 +2176,7 @@ class BCExportFilesDialogBox(QDialog):
 
             for resolution in BCExportFilesDialogBox.IMAGE_RESOLUTIONS:
                 self.cbxFormatDocImgPaperResolution.addItem(resolution, BCExportFilesDialogBox.IMAGE_RESOLUTIONS[resolution])
-            self.cbxFormatDocImgPaperResolution.setCurrentIndex(3) # 300dpi
+            self.cbxFormatDocImgPaperResolution.setCurrentIndex(3)  # 300dpi
 
             self.cbxFormatDocImgPaperResolution.currentIndexChanged.connect(self.__slotPageFormatDocImgPageSetupResolutionChanged)
             self.cbxFormatDocImgPaperUnit.currentIndexChanged.connect(self.__slotPageFormatDocImgPageSetupUnitChanged)
@@ -2221,9 +2278,9 @@ class BCExportFilesDialogBox(QDialog):
             else:
                 self.pbExport.setText(i18n('Apply'))
 
-            actionSave=QAction(i18n("Save"), self)
+            actionSave = QAction(i18n("Save"), self)
             actionSave.triggered.connect(lambda: self.saveFile())
-            actionSaveAs=QAction(i18n("Save as..."), self)
+            actionSaveAs = QAction(i18n("Save as..."), self)
             actionSaveAs.triggered.connect(lambda: self.saveFile(True))
 
             menuSave = QMenu(self.tbSaveExportDefinition)
@@ -2266,7 +2323,7 @@ class BCExportFilesDialogBox(QDialog):
     def reject(self):
         """Dialog is closed"""
         if self.__allowClose():
-            self.__closed=True
+            self.__closed = True
             self.done(0)
 
     def closeEvent(self, event):
@@ -2277,12 +2334,12 @@ class BCExportFilesDialogBox(QDialog):
 
         self.__saveSettings()
         event.accept()
-        self.__closed=True
+        self.__closed = True
 
     def __exportStart(self, totalPage):
         """Called during export"""
         self.pgbTargetResultExport.setValue(0)
-        if totalPage==-1:
+        if totalPage == -1:
             self.pgbTargetResultExport.setMaximum(0)
         else:
             self.pgbTargetResultExport.setMaximum(totalPage)
@@ -2301,9 +2358,9 @@ class BCExportFilesDialogBox(QDialog):
 
     def __getPath(self):
         """Return path (path file/name or quick ref)"""
-        path=self.__uiController.panel().filesPath()
-        lPath=path.lower()
-        refDict=self.__uiController.quickRefDict()
+        path = self.__uiController.panel().filesPath()
+        lPath = path.lower()
+        refDict = self.__uiController.quickRefDict()
 
         if lPath in refDict:
             return f"{refDict[path][2]}"
@@ -2318,37 +2375,37 @@ class BCExportFilesDialogBox(QDialog):
         if self.__options is None:
             return BCSettings.get(settingKey)
         else:
-            if settingKey==BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME:
-                if not 'exportFileName' in self.__options:
+            if settingKey == BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME:
+                if 'exportFileName' not in self.__options:
                     return BCSettings.get(settingKey)
                 else:
                     return self.__options['exportFileName']
             elif isinstance(settingKey, BCSettingsKey):
                 # in options, there's no config.export prefix; remove it
-                settingKey2=re.sub(r"^config\.export\.filesList\.(textCsv|textMd|text|doc\.pdf|img\.kra|img\.png|img\.jpg)\.", "", settingKey.value)
+                settingKey2 = re.sub(r"^config\.export\.filesList\.(textCsv|textMd|text|doc\.pdf|img\.kra|img\.png|img\.jpg)\.", "", settingKey.value)
             else:
-                settingKey2=settingKey
+                settingKey2 = settingKey
 
-            if not settingKey2 in self.__options['exportConfig']:
+            if settingKey2 not in self.__options['exportConfig']:
                 return BCSettings.get(settingKey)
 
-            if settingKey2=='fields.separator' :
+            if settingKey2 == 'fields.separator':
                 return [',', ';', '\t', '|'].index(self.__options['exportConfig'][settingKey2])
-            elif settingKey2=='thumbnails.size':
-                return [64,128,256,512].index(self.__options['exportConfig'][settingKey2])
+            elif settingKey2 == 'thumbnails.size':
+                return [64, 128, 256, 512].index(self.__options['exportConfig'][settingKey2])
 
             return self.__options['exportConfig'][settingKey2]
 
     # -- Manage page Perimeter -------------------------------------------------
     def __loadDefaultPagePerimeter(self):
         """Load default internal configuration for page perimeter"""
-        # reload default properties list
+        # reload default properties list
         self.swPages.setCurrentIndex(BCExportFilesDialogBox.__PAGE_PERIMETER)
 
         self.lwPerimeterProperties.clear()
         for field in BCExportFields.ID:
             if BCExportFields.ID[field]['inList']:
-                item=self.lwPerimeterProperties.addItem(BCExportFields.ID[field]['label'], field, BCExportFields.ID[field]['selected'])
+                item = self.lwPerimeterProperties.addItem(BCExportFields.ID[field]['label'], field, BCExportFields.ID[field]['selected'])
                 item.setToolTip(BCExportFields.ID[field]['toolTip'])
 
     def __loadSettingsPagePerimeter(self):
@@ -2360,13 +2417,13 @@ class BCExportFilesDialogBox(QDialog):
         # items order in list define sort
         # if some ID are missing in list, by default:
         #   - added in usual order/checked value
-        checkedList=[]
+        checkedList = []
 
         if isinstance(self.__options, dict) and 'exportConfig' in self.__options and 'fields' in self.__options['exportConfig']:
             # options has been provided, use it as settings
             self.swPages.setCurrentIndex(BCExportFilesDialogBox.__PAGE_PERIMETER)
 
-            checkedList=self.__options['exportConfig']['fields']
+            checkedList = self.__options['exportConfig']['fields']
         elif not self.__hasSavedSettings:
             # no saved settings: load default and exit
             self.__loadDefaultPagePerimeter()
@@ -2376,23 +2433,23 @@ class BCExportFilesDialogBox(QDialog):
 
         self.swPages.setCurrentIndex(BCExportFilesDialogBox.__PAGE_PERIMETER)
 
-        checkedListId=[]
+        checkedListId = []
         # add items from settings
         self.lwPerimeterProperties.clear()
         for itemIndex in checkedList:
-            fieldId=itemIndex[1:]
+            fieldId = itemIndex[1:]
             if fieldId in BCExportFields.ID:
                 checkedListId.append(fieldId)
-                item=self.lwPerimeterProperties.addItem(BCExportFields.ID[fieldId]['label'], fieldId, (itemIndex[0]=='*'))
+                item = self.lwPerimeterProperties.addItem(BCExportFields.ID[fieldId]['label'], fieldId, (itemIndex[0] == '*'))
                 item.setToolTip(BCExportFields.ID[fieldId]['toolTip'])
 
         # check all default items idf alaready set from settings or not; add them if not defined from settings
         for fieldId in BCExportFields.ID:
-            if BCExportFields.ID[fieldId]['inList'] and not fieldId in checkedListId:
-                item=self.lwPerimeterProperties.addItem(BCExportFields.ID[fieldId]['label'], fieldId, BCExportFields.ID[fieldId]['selected'])
+            if BCExportFields.ID[fieldId]['inList'] and fieldId not in checkedListId:
+                item = self.lwPerimeterProperties.addItem(BCExportFields.ID[fieldId]['label'], fieldId, BCExportFields.ID[fieldId]['selected'])
                 item.setToolTip(BCExportFields.ID[fieldId]['toolTip'])
 
-    # -- slots
+    # --slots
     def __slotPagePerimeterCheckAll(self):
         # check all properties
         for item in self.lwPerimeterProperties.items(False):
@@ -2406,7 +2463,7 @@ class BCExportFilesDialogBox(QDialog):
         self.__setModified(True)
 
     def __slotPagePerimeterResetFields(self):
-        # reset field list check state
+        # reset field list check state
         self.__loadSettingsPagePerimeter()
         self.__setModified(True)
 
@@ -2421,8 +2478,7 @@ class BCExportFilesDialogBox(QDialog):
         def defaultText():
             # --- TEXT interface ---
             self.cbFormatTextLayoutUserDefined.setChecked(True)
-            self.teFormatTextLayoutUserDefined.setPlainText(
-"""Buli Commander v{bc:version} - File list exporter
+            self.teFormatTextLayoutUserDefined.setPlainText("""Buli Commander v{bc:version} - File list exporter
 --------------------------------------------------------------------------------
 
 Exported from: {source}
@@ -2432,8 +2488,7 @@ Exported at:   {date} {time}
 
 Directories:   {items:directories.count}
 Files:         {items:files.count} ({items:files.size(KiB)})
-"""
-            )
+""")
 
             self.cbFormatTextHeader.setChecked(True)
             self.cbFormatTextBorders.setChecked(True)
@@ -2454,16 +2509,14 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         def defaultTextMd():
             # --- TEXT/MARKDOWN interface ---
             self.cbFormatTextMDLayoutUserDefined.setChecked(True)
-            self.teFormatTextMDLayoutUserDefined.setPlainText(
-"""## Buli Commander *v{bc:version}* - File list exporter
+            self.teFormatTextMDLayoutUserDefined.setPlainText("""## Buli Commander *v{bc:version}* - File list exporter
 
 > Export from | Exported at | Directories | Files
 > -- | -- | -- | --
 > `{source}` | {date} {time} | {items:directories.count} | {items:files.count} *({items:files.size(KiB)})*
 
 {table}
-"""
-            )
+""")
 
             self.cbFormatTextMDIncludeThumbnails.setChecked(False)
             self.cbxFormatTextMDThumbnailsSize.setCurrentIndex(0)
@@ -2481,10 +2534,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             # --- DOC/PDF interface ---
             self.swFormatDocImgRef.setCurrentIndex(0)
             self.lvFormatDocImgRef.setCurrentRow(0)
-            self.cbxFormatDocImgPaperResolution.setCurrentIndex(3)  # 300dpi
-            self.cbxFormatDocImgPaperUnit.setCurrentIndex(0)        # 'mm'
-            self.cbxFormatDocImgPaperSize.setCurrentIndex(2)        # 'A4'
-            self.cbxFormatDocImgPaperOrientation.setCurrentIndex(0) # 'portrait'
+            self.cbxFormatDocImgPaperResolution.setCurrentIndex(3)   # 300dpi
+            self.cbxFormatDocImgPaperUnit.setCurrentIndex(0)         # 'mm'
+            self.cbxFormatDocImgPaperSize.setCurrentIndex(2)         # 'A4'
+            self.cbxFormatDocImgPaperOrientation.setCurrentIndex(0)  # 'portrait'
             self.cbFormatDocImgPaperColor.setChecked(False)
             self.pbFormatDocImgPaperColor.setColor('#FFFFFF')
             self.dsbFormatDocImgMarginsLeft.setValue(20.0)
@@ -2520,9 +2573,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(1.0)
             self.dsbFormatDocImgThumbsBorderRadius.setValue(0.0)
             self.dsbFormatDocImgThumbsSpacingInner.setValue(1.0)
-            self.cbxFormatDocImgThumbMode.setCurrentIndex(0)        # fit
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(0)        # fit
 
-            self.cbxFormatDocImgTextPosition.setCurrentIndex(2)   # right
+            self.cbxFormatDocImgTextPosition.setCurrentIndex(2)     # right
 
             self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont('DejaVu sans'))
             self.dsbFormatDocImgTextFontSize.setValue(10)
@@ -2602,22 +2655,22 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         def defaultDocPdf():
             # --- DOC/PDF interface ---
-            imageResolution=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_RESOLUTION)
-            imageIndex=3
+            imageResolution = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_RESOLUTION)
+            imageIndex = 3
             for itemIndex in range(self.cbxFormatDocImgPaperResolution.count()):
                 if self.cbxFormatDocImgPaperResolution.itemData(itemIndex) == imageResolution:
                     imageIndex = itemIndex
                     break
 
-            paperSize=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE)
-            paperIndex=2
+            paperSize = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE)
+            paperIndex = 2
             for itemIndex in range(self.cbxFormatDocImgPaperSize.count()):
                 if self.cbxFormatDocImgPaperSize.itemData(itemIndex) == paperSize:
                     paperIndex = itemIndex
                     break
 
-            unit=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_UNIT)
-            unitIndex=0
+            unit = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_UNIT)
+            unitIndex = 0
             for itemIndex in range(self.cbxFormatDocImgPaperUnit.count()):
                 if self.cbxFormatDocImgPaperUnit.itemData(itemIndex) == unit:
                     unitIndex = itemIndex
@@ -2664,9 +2717,13 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_WIDTH))
             self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS))
             self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_INNER))
-            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD)))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit', 'crop'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD)))
 
-            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS)))
+            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none',
+                                                              'left',
+                                                              'right',
+                                                              'top',
+                                                              'bottom'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS)))
             self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTNAME)))
             self.dsbFormatDocImgTextFontSize.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTSIZE))
             self.pbFormatDocImgTextFontColor.setColor(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTCOL))
@@ -2684,22 +2741,22 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         def defaultImgKra():
             # --- IMG/KRA interface ---
-            imageResolution=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_RESOLUTION)
-            imageIndex=3
+            imageResolution = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_RESOLUTION)
+            imageIndex = 3
             for itemIndex in range(self.cbxFormatDocImgPaperResolution.count()):
                 if self.cbxFormatDocImgPaperResolution.itemData(itemIndex) == imageResolution:
                     imageIndex = itemIndex
                     break
 
-            paperSize=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE)
-            paperIndex=2
+            paperSize = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE)
+            paperIndex = 2
             for itemIndex in range(self.cbxFormatDocImgPaperSize.count()):
                 if self.cbxFormatDocImgPaperSize.itemData(itemIndex) == paperSize:
                     paperIndex = itemIndex
                     break
 
-            unit=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_UNIT)
-            unitIndex=0
+            unit = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_UNIT)
+            unitIndex = 0
             for itemIndex in range(self.cbxFormatDocImgPaperUnit.count()):
                 if self.cbxFormatDocImgPaperUnit.itemData(itemIndex) == unit:
                     unitIndex = itemIndex
@@ -2746,9 +2803,13 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_WIDTH))
             self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS))
             self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_INNER))
-            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD)))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit', 'crop'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD)))
 
-            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS)))
+            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none',
+                                                              'left',
+                                                              'right',
+                                                              'top',
+                                                              'bottom'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS)))
             self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTNAME)))
             self.dsbFormatDocImgTextFontSize.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTSIZE))
             self.pbFormatDocImgTextFontColor.setColor(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTCOL))
@@ -2757,7 +2818,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.cbTargetResultFileOpen.setChecked(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE))
 
             self.cbxFormatDocImgPreviewMode.setCurrentIndex(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE))
-
 
             self.__updateFormatDocImgPaperSizeList()
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
@@ -2770,22 +2830,22 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         def defaultImgPng():
             # --- IMG/PNG interface ---
-            imageResolution=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_RESOLUTION)
-            imageIndex=3
+            imageResolution = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_RESOLUTION)
+            imageIndex = 3
             for itemIndex in range(self.cbxFormatDocImgPaperResolution.count()):
                 if self.cbxFormatDocImgPaperResolution.itemData(itemIndex) == imageResolution:
                     imageIndex = itemIndex
                     break
 
-            paperSize=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE)
-            paperIndex=2
+            paperSize = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE)
+            paperIndex = 2
             for itemIndex in range(self.cbxFormatDocImgPaperSize.count()):
                 if self.cbxFormatDocImgPaperSize.itemData(itemIndex) == paperSize:
                     paperIndex = itemIndex
                     break
 
-            unit=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_UNIT)
-            unitIndex=0
+            unit = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_UNIT)
+            unitIndex = 0
             for itemIndex in range(self.cbxFormatDocImgPaperUnit.count()):
                 if self.cbxFormatDocImgPaperUnit.itemData(itemIndex) == unit:
                     unitIndex = itemIndex
@@ -2832,9 +2892,13 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_WIDTH))
             self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS))
             self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_INNER))
-            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD)))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit', 'crop'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD)))
 
-            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS)))
+            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none',
+                                                              'left',
+                                                              'right',
+                                                              'top',
+                                                              'bottom'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS)))
             self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME)))
             self.dsbFormatDocImgTextFontSize.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTSIZE))
             self.pbFormatDocImgTextFontColor.setColor(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTCOL))
@@ -2855,22 +2919,22 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         def defaultImgJpg():
             # --- IMG/JPG interface ---
-            imageResolution=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_RESOLUTION)
-            imageIndex=3
+            imageResolution = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_RESOLUTION)
+            imageIndex = 3
             for itemIndex in range(self.cbxFormatDocImgPaperResolution.count()):
                 if self.cbxFormatDocImgPaperResolution.itemData(itemIndex) == imageResolution:
                     imageIndex = itemIndex
                     break
 
-            paperSize=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE)
-            paperIndex=2
+            paperSize = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE)
+            paperIndex = 2
             for itemIndex in range(self.cbxFormatDocImgPaperSize.count()):
                 if self.cbxFormatDocImgPaperSize.itemData(itemIndex) == paperSize:
                     paperIndex = itemIndex
                     break
 
-            unit=self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_UNIT)
-            unitIndex=0
+            unit = self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_UNIT)
+            unitIndex = 0
             for itemIndex in range(self.cbxFormatDocImgPaperUnit.count()):
                 if self.cbxFormatDocImgPaperUnit.itemData(itemIndex) == unit:
                     unitIndex = itemIndex
@@ -2917,9 +2981,14 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.dsbFormatDocImgThumbsBorderWidth.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_WIDTH))
             self.dsbFormatDocImgThumbsBorderRadius.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS))
             self.dsbFormatDocImgThumbsSpacingInner.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_INNER))
-            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit','crop'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD)))
+            self.cbxFormatDocImgThumbMode.setCurrentIndex(['fit',
+                                                           'crop'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD)))
 
-            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none','left','right','top','bottom'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS)))
+            self.cbxFormatDocImgTextPosition.setCurrentIndex(['none',
+                                                              'left',
+                                                              'right',
+                                                              'top',
+                                                              'bottom'].index(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS)))
             self.fcbxFormatDocImgTextFontFamily.setCurrentFont(QFont(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME)))
             self.dsbFormatDocImgTextFontSize.setValue(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTSIZE))
             self.pbFormatDocImgTextFontColor.setColor(self.__getSettings(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTCOL))
@@ -2943,7 +3012,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.cbxFormat.setCurrentIndex(self.__options['exportFormat'])
             self.__slotPageFormatFormatChanged()
 
-            target=None
+            target = None
         elif not self.__hasSavedSettings:
             # no saved settings: load default and exit
             self.__loadDefaultPageFormat(target)
@@ -2980,9 +3049,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         """Update background color for small text edit"""
         color = Qt.white
         if self.cbFormatDocImgPageBgColor.isChecked():
-            color=self.pbFormatDocImgPageBgColor.color()
+            color = self.pbFormatDocImgPageBgColor.color()
         elif self.cbFormatDocImgPaperColor.isChecked():
-            color=self.pbFormatDocImgPaperColor.color()
+            color = self.pbFormatDocImgPaperColor.color()
 
         self.bcsteFormatDocImgHeader.setTextBackgroundColor(color)
         self.bcsteFormatDocImgFooter.setTextBackgroundColor(color)
@@ -2998,27 +3067,27 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         fmtIndex = self.cbxFormat.currentIndex()
 
         for paperSize in BCExportFilesDialogBox.PAPER_SIZES:
-            #if fmtIndex in BCExportFilesDialogBox.UNITS[unit]['format']:
+            # if fmtIndex in BCExportFilesDialogBox.UNITS[unit]['format']:
             self.cbxFormatDocImgPaperSize.addItem(paperSize, paperSize)
 
         for unit in BCExportFilesDialogBox.UNITS:
             if fmtIndex in BCExportFilesDialogBox.UNITS[unit]['format']:
                 self.cbxFormatDocImgPaperUnit.addItem(BCExportFilesDialogBox.UNITS[unit]['label'], unit)
 
-        self.cbxFormatDocImgPaperSize.setCurrentIndex(2) # A4
+        self.cbxFormatDocImgPaperSize.setCurrentIndex(2)  # A4
         self.__blockSlot(wasBlocked)
 
     def __export(self):
         """Export process"""
 
-        if not self.__options is None:
+        if self.__options is not None:
 
             if self.rbTargetResultClipboard.isChecked():
                 exportedFileName = BCExportFilesDialogBox.CLIPBOARD
             else:
                 exportedFileName = self.leTargetResultFile.text()
 
-            self.__options={
+            self.__options = {
                     'exportFormat': self.cbxFormat.currentIndex(),
                     'exportFileName': exportedFileName,
                     'exportConfig': self.__generateConfig(True)
@@ -3033,7 +3102,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             self.__exportedFileName = self.leTargetResultFile.text()
 
             if os.path.exists(self.__exportedFileName):
-                if not WDialogBooleanInput.display(self.__title, i18n(f"Target file <b>{os.path.basename(self.__exportedFileName)}</b> already exist.<br><br>Do you want to override it?")):
+                if not WDialogBooleanInput.display(self.__title, i18n(f"Target file <b>{os.path.basename(self.__exportedFileName)}</b> already exist.<br>"
+                                                                      f"<br>Do you want to override it?")):
                     return
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -3070,7 +3140,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         QApplication.restoreOverrideCursor()
 
-        # exported is a dict
+        # exported is a dict
         # {'exported': bool
         #  'message': string
         # }
@@ -3078,19 +3148,21 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             # export successful, save current settings
             self.__saveSettings()
             BCSysTray.messageInformation(i18n(f"{self.__uiController.bcName()}::Export files list"),
-                                         i18n(f"Export as <i>{BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> format {exported['message']} is finished"))
+                                         i18n(f"Export as <i>{BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> "
+                                              f"format {exported['message']} is finished"))
 
             QApplication.restoreOverrideCursor()
             # and close export window
             self.accept()
         else:
             BCSysTray.messageCritical(i18n(f"{self.__uiController.bcName()}::Export files list"),
-                                      i18n(f"Export as <i>{BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> format {exported['message']} has failed!"))
+                                      i18n(f"Export as <i>{BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['label']}</i> "
+                                           f"format {exported['message']} has failed!"))
 
             QApplication.restoreOverrideCursor()
-            ##### export failed: do not close window, let user try to check/fix the problem
-            ##### DON'T UNCOMMENT! :-)
-            ##### self.reject()
+            # #### export failed: do not close window, let user try to check/fix the problem
+            # #### DON'T UNCOMMENT! :-)
+            # #### self.reject()
 
             self.wToolbar.setEnabled(True)
             self.pbPrevious.setEnabled(True)
@@ -3112,11 +3184,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if orientation is None:
             orientation = self.__formatPdfImgPaperOrientation
 
-        unitFmt=BCExportFilesDialogBox.UNITS[unit]['fmt']
+        unitFmt = BCExportFilesDialogBox.UNITS[unit]['fmt']
 
         for itemIndex in range(self.cbxFormatDocImgPaperSize.count()):
             paperSize = self.cbxFormatDocImgPaperSize.itemData(itemIndex)
-            size=BCExportFiles.getPaperSize(paperSize, unit, self.__formatPdfImgPaperOrientation, self.__formatPdfImgPaperResolution)
+            size = BCExportFiles.getPaperSize(paperSize, unit, self.__formatPdfImgPaperOrientation, self.__formatPdfImgPaperResolution)
 
             self.cbxFormatDocImgPaperSize.setItemText(itemIndex, f"{paperSize} - {size.width():{unitFmt}}x{size.height():{unitFmt}}")
 
@@ -3188,28 +3260,29 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             # Header
             top = 0
             if self.cbFormatDocImgHeader.isChecked() and previewPagesInformation['header.height'] > 0:
-                areaHeight=previewPagesInformation['header.height'] - 2
+                areaHeight = previewPagesInformation['header.height'] - 2
 
-                painter.fillRect( drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight, brush)
-                painter.drawRect( drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight )
+                painter.fillRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight, brush)
+                painter.drawRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight)
 
                 top = previewPagesInformation['header.height']
 
             # ----------------------------------------------------------------------
             # Footer
             if self.cbFormatDocImgFooter.isChecked() and previewPagesInformation['footer.height'] > 0:
-                areaHeight=previewPagesInformation['footer.height'] - 2
+                areaHeight = previewPagesInformation['footer.height'] - 2
 
-                painter.fillRect( drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight, brush)
-                painter.drawRect( drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight )
+                painter.fillRect(drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight, brush)
+                painter.drawRect(drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight)
 
             # ----------------------------------------------------------------------
             # First page layout
-            if (self.cbFormatDocImgFPageNotesPreview.isChecked() or previewPagesInformation['page.total'] == 1) and self.cbFormatDocImgFPageNotes.isChecked() and previewPagesInformation['fpNotes.height'] > 0:
-                areaHeight=previewPagesInformation['fpNotes.height'] - 2
+            if (self.cbFormatDocImgFPageNotesPreview.isChecked() or previewPagesInformation['page.total'] == 1)\
+               and self.cbFormatDocImgFPageNotes.isChecked() and previewPagesInformation['fpNotes.height'] > 0:
+                areaHeight = previewPagesInformation['fpNotes.height'] - 2
 
-                painter.fillRect( drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight, brush)
-                painter.drawRect( drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight )
+                painter.fillRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight, brush)
+                painter.drawRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight)
 
         def getThumbnailCellPixmap(textRows):
             # return a pixmap
@@ -3228,7 +3301,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             setActiveColor(1)
 
             propertiesPosition = previewPagesInformation['cell.thumbnail.propPosition']
-            thumbSize  = previewPagesInformation['cell.thumbnail.size'].height()
+            thumbSize = previewPagesInformation['cell.thumbnail.size'].height()
             textWidth = previewPagesInformation['cell.text.size'].width()
             textHeight = previewPagesInformation['cell.text.size'].height()
             if propertiesPosition == 'left':
@@ -3237,38 +3310,38 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 imgTop = 2
                 textLeft = 2
                 textTop = 2
-                textWidth-=2
-                textHeight-=4
+                textWidth -= 2
+                textHeight -= 4
             elif propertiesPosition == 'right':
-                # right
+                # right
                 imgLeft = 2
                 imgTop = 2
                 textLeft = thumbSize - 1
                 textTop = 2
-                textWidth-=2
-                textHeight-=4
+                textWidth -= 2
+                textHeight -= 4
             elif propertiesPosition == 'top':
                 # top
                 imgLeft = 2
                 imgTop = 2 + textHeight
                 textLeft = 2
                 textTop = 2
-                textWidth-=5
-                textHeight-=4
+                textWidth -= 5
+                textHeight -= 4
             elif propertiesPosition == 'bottom':
                 # bottom
                 imgLeft = 2
                 imgTop = 2
                 textLeft = 2
                 textTop = 2 + thumbSize
-                textWidth-=5
-                textHeight-=4
+                textWidth -= 5
+                textHeight -= 4
             else:
                 imgLeft = 2
                 imgTop = 2
                 textLeft = 0
                 textTop = 0
-                textHeight-=4
+                textHeight -= 4
 
             # cell bounds
             painterThumb.setPen(pen)
@@ -3278,7 +3351,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             painterThumb.setPen(pen)
 
-            # thumb image
+            # thumb image
             painterThumb.drawPixmap(imgLeft, imgTop, buildIcon('pktk:image').pixmap(thumbSize - 5, thumbSize - 5))
 
             painterThumb.setCompositionMode(QPainter.CompositionMode_SourceIn)
@@ -3294,15 +3367,16 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             # texts
             if propertiesPosition != 'none':
-                painterThumb.fillRect( textLeft, textTop, textWidth, textHeight, brush)
-                painterThumb.drawRect( textLeft, textTop, textWidth, textHeight )
+                painterThumb.fillRect(textLeft, textTop, textWidth, textHeight, brush)
+                painterThumb.drawRect(textLeft, textTop, textWidth, textHeight)
 
             painterThumb.end()
 
             return pixmapThumb
 
         def drawLayoutThumbnails():
-            if (self.cbFormatDocImgFPageNotesPreview.isChecked() or previewPagesInformation['page.total'] == 1) and self.cbFormatDocImgFPageNotes.isChecked() and previewPagesInformation['fpNotes.height'] > 0:
+            if (self.cbFormatDocImgFPageNotesPreview.isChecked() or previewPagesInformation['page.total'] == 1)\
+               and self.cbFormatDocImgFPageNotes.isChecked() and previewPagesInformation['fpNotes.height'] > 0:
                 drawingArea = previewPagesInformation['page.first.bounds']
                 nbRows = previewPagesInformation['page.first.nbRowsMax']
             else:
@@ -3318,7 +3392,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 for column in range(thumbPerRow):
                     painter.drawPixmap(drawingArea.left() + offsetLeft, drawingArea.top(), pixmapThumb)
 
-                    offsetLeft+=previewPagesInformation['cell.global.size'].width() + previewPagesInformation['cell.thumbnail.outerSpacing']
+                    offsetLeft += previewPagesInformation['cell.global.size'].width() + previewPagesInformation['cell.thumbnail.outerSpacing']
 
                 drawingArea.setTop(drawingArea.top() + previewPagesInformation['cell.global.size'].height() + previewPagesInformation['cell.thumbnail.outerSpacing'])
 
@@ -3343,11 +3417,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         previewRect = QRect((self.lblFormatDocImgPreview.width() - previewWidth)/2,
                             (self.lblFormatDocImgPreview.height() - previewHeight)/2,
                             previewWidth,
-                            previewHeight
-                        )
+                            previewHeight)
 
         # ----------------------------------------------------------------------
-        # start rendering paper
+        # start rendering paper
         painter = QPainter(self.lblFormatDocImgPreview)
 
         # ----------------------------------------------------------------------
@@ -3370,7 +3443,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         else:
             self.cbFormatDocImgFPageNotesPreview.setVisible(True)
 
-        # start rendering preview
+        # start rendering preview
         if self.cbxFormatDocImgPreviewMode.currentIndex() == BCExportFilesDialogBox.__PREVIEW_MODE_LAYOUT:
             # ----------------------------------------------------------------------
             # Paper white
@@ -3378,10 +3451,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             # ----------------------------------------------------------------------
             # Initialise drawing area rect
-            #drawingArea = QRect(QPoint(previewRect.left() + round(self.dsbFormatDocImgMarginsLeft.value() * ratioPaperPreview, 0),
-            #                           previewRect.top() + round(self.dsbFormatDocImgMarginsTop.value() * ratioPaperPreview, 0)),
-            #                    QPoint(1 + previewRect.right() - round(self.dsbFormatDocImgMarginsRight.value() * ratioPaperPreview, 0),
-            #                           1 + previewRect.bottom() - round(self.dsbFormatDocImgMarginsBottom.value() * ratioPaperPreview, 0)))
+            # drawingArea = QRect(QPoint(previewRect.left() + round(self.dsbFormatDocImgMarginsLeft.value() * ratioPaperPreview, 0),
+            #                            previewRect.top() + round(self.dsbFormatDocImgMarginsTop.value() * ratioPaperPreview, 0)),
+            #                     QPoint(1 + previewRect.right() - round(self.dsbFormatDocImgMarginsRight.value() * ratioPaperPreview, 0),
+            #                            1 + previewRect.bottom() - round(self.dsbFormatDocImgMarginsBottom.value() * ratioPaperPreview, 0)))
             previewPagesInformation['page.global.bounds'] = QRect(
                                 QPoint(previewRect.left() + floor(previewPagesInformation['page.global.bounds'].left() * ratioPaperPreview),
                                        previewRect.top() + floor(previewPagesInformation['page.global.bounds'].top() * ratioPaperPreview)),
@@ -3406,27 +3479,27 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                                 QPoint(previewRect.left() + floor(previewPagesInformation['page.normal.bounds'].right() * ratioPaperPreview),
                                        previewRect.top() + floor(previewPagesInformation['page.normal.bounds'].bottom() * ratioPaperPreview)))
 
-            previewPagesInformation['header.height']=floor(previewPagesInformation['header.height'] * ratioPaperPreview)
-            previewPagesInformation['footer.height']=floor(previewPagesInformation['footer.height'] * ratioPaperPreview)
-            previewPagesInformation['fpNotes.height']=floor(previewPagesInformation['fpNotes.height'] * ratioPaperPreview)
+            previewPagesInformation['header.height'] = floor(previewPagesInformation['header.height'] * ratioPaperPreview)
+            previewPagesInformation['footer.height'] = floor(previewPagesInformation['footer.height'] * ratioPaperPreview)
+            previewPagesInformation['fpNotes.height'] = floor(previewPagesInformation['fpNotes.height'] * ratioPaperPreview)
 
-            previewPagesInformation['cell.global.size']=QSize(
+            previewPagesInformation['cell.global.size'] = QSize(
                                 floor(previewPagesInformation['cell.global.size'].width() * ratioPaperPreview),
                                 floor(previewPagesInformation['cell.global.size'].height() * ratioPaperPreview))
 
-            previewPagesInformation['cell.thumbnail.size']=QSize(
+            previewPagesInformation['cell.thumbnail.size'] = QSize(
                                 floor(previewPagesInformation['cell.thumbnail.size'].width() * ratioPaperPreview),
                                 floor(previewPagesInformation['cell.thumbnail.size'].height() * ratioPaperPreview))
 
-            previewPagesInformation['cell.text.size']=QSize(
+            previewPagesInformation['cell.text.size'] = QSize(
                                 floor(previewPagesInformation['cell.text.size'].width() * ratioPaperPreview),
                                 floor(previewPagesInformation['cell.text.size'].height() * ratioPaperPreview))
 
-            previewPagesInformation['cell.thumbnail.outerSpacing']=floor(previewPagesInformation['cell.thumbnail.outerSpacing'] * ratioPaperPreview)
-            previewPagesInformation['cell.thumbnail.innerSpacing']=floor(previewPagesInformation['cell.thumbnail.innerSpacing'] * ratioPaperPreview)
+            previewPagesInformation['cell.thumbnail.outerSpacing'] = floor(previewPagesInformation['cell.thumbnail.outerSpacing'] * ratioPaperPreview)
+            previewPagesInformation['cell.thumbnail.innerSpacing'] = floor(previewPagesInformation['cell.thumbnail.innerSpacing'] * ratioPaperPreview)
 
             # ----------------------------------------------------------------------
-            # Margins
+            # Margins
             drawLayoutMargins()
 
             # ----------------------------------------------------------------------
@@ -3448,7 +3521,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 self.__formatPdfImgPageCurrent = 1
             else:
                 self.__formatPdfImgPageCurrent = 2
-            self.__formatPdfImgPageTotal=previewPagesInformation['page.total']
+            self.__formatPdfImgPageTotal = previewPagesInformation['page.total']
 
             previewImg = QImage(previewPagesInformation['page.size'].width(), previewPagesInformation['page.size'].height(), QImage.Format_ARGB32)
             previewImg.fill(Qt.transparent)
@@ -3457,11 +3530,18 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             previewPainter = QPainter()
             previewPainter.begin(previewPixmap)
 
-            self.__exporter.drawPage(previewPainter, self.__formatPdfImgPagesInformation, self.__formatPdfImgConfig, self.__formatPdfImgConfig, self.__formatPdfImgPageCurrent, self.__formatPdfImgPageTotal)
+            self.__exporter.drawPage(previewPainter,
+                                     self.__formatPdfImgPagesInformation,
+                                     self.__formatPdfImgConfig,
+                                     self.__formatPdfImgConfig,
+                                     self.__formatPdfImgPageCurrent,
+                                     self.__formatPdfImgPageTotal)
 
             previewPainter.end()
 
-            painter.drawPixmap(previewRect.left(), previewRect.top(), previewPixmap.scaled(previewRect.width(), previewRect.height(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation))
+            painter.drawPixmap(previewRect.left(),
+                               previewRect.top(),
+                               previewPixmap.scaled(previewRect.width(), previewRect.height(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation))
 
         # ----------------------------------------------------------------------
         # finalize rendering paper
@@ -3491,13 +3571,13 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if index is None:
             index = self.cbxFormat.currentIndex()
 
-        if index!=self.cbxFormat.currentIndex():
+        if index != self.cbxFormat.currentIndex():
             self.__setModified(True)
 
         text = BCExportFilesDialogBox.FMT_PROPERTIES[index]['label']
 
         self.lblFormatDescription.setText(BCExportFilesDialogBox.FMT_PROPERTIES[index]['description'])
-        self.lblFormatOptions.setText( i18n(f"Options for <i>{text}</i> format") )
+        self.lblFormatOptions.setText(i18n(f"Options for <i>{text}</i> format"))
         self.swFormatProperties.setCurrentIndex(BCExportFilesDialogBox.FMT_PROPERTIES[index]['panelFormat'])
 
         if index in [BCExportFormat.EXPORT_FMT_DOC_PDF,
@@ -3506,12 +3586,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                      BCExportFormat.EXPORT_FMT_IMG_PNG]:
             if index == BCExportFormat.EXPORT_FMT_DOC_PDF:
                 self.lblFormatDocImgPaperOrImage.setText(i18n('Paper'))
-                #self.lblFormatDocImgPaperResolution.setVisible(False)
-                #self.cbxFormatDocImgPaperResolution.setVisible(False)
+                # self.lblFormatDocImgPaperResolution.setVisible(False)
+                # self.cbxFormatDocImgPaperResolution.setVisible(False)
             else:
                 self.lblFormatDocImgPaperOrImage.setText(i18n('Image'))
-                #self.lblFormatDocImgPaperResolution.setVisible(True)
-                #self.cbxFormatDocImgPaperResolution.setVisible(True)
+                # self.lblFormatDocImgPaperResolution.setVisible(True)
+                # self.cbxFormatDocImgPaperResolution.setVisible(True)
             self.__loadSettingsPageFormat(index)
             self.__initFormatDocImgLists()
             self.__slotPageFormatDocImgPageSetupResolutionChanged()
@@ -3527,7 +3607,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if checked is None:
             checked = self.cbFormatTextLayoutUserDefined.isChecked()
 
-        if checked!=self.cbFormatTextLayoutUserDefined.isChecked():
+        if checked != self.cbFormatTextLayoutUserDefined.isChecked():
             self.__setModified(True)
 
         self.teFormatTextLayoutUserDefined.setEnabled(checked)
@@ -3537,7 +3617,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if checked is None:
             checked = self.cbFormatTextBorders.isChecked()
 
-        if checked!=self.cbFormatTextBorders.isChecked():
+        if checked != self.cbFormatTextBorders.isChecked():
             self.__setModified(True)
 
         if not checked:
@@ -3552,7 +3632,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if checked is None:
             checked = self.cbFormatTextMinWidth.isChecked()
 
-        if checked!=self.cbFormatTextMinWidth.isChecked():
+        if checked != self.cbFormatTextMinWidth.isChecked():
             self.__setModified(True)
 
         self.hsFormatTextMinWidth.setEnabled(checked)
@@ -3563,7 +3643,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if checked is None:
             checked = self.cbFormatTextMaxWidth.isChecked()
 
-        if checked!=self.cbFormatTextMaxWidth.isChecked():
+        if checked != self.cbFormatTextMaxWidth.isChecked():
             self.__setModified(True)
 
         self.hsFormatTextMaxWidth.setEnabled(checked)
@@ -3575,7 +3655,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if value is None:
             value = self.hsFormatTextMinWidth.value()
 
-        if value!=self.hsFormatTextMinWidth.value():
+        if value != self.hsFormatTextMinWidth.value():
             self.__setModified(True)
 
         if value > self.hsFormatTextMaxWidth.value():
@@ -3587,7 +3667,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if value is None:
             value = self.hsFormatTextMaxWidth.value()
 
-        if value!=self.hsFormatTextMaxWidth.value():
+        if value != self.hsFormatTextMaxWidth.value():
             self.__setModified(True)
 
         if value < self.hsFormatTextMinWidth.value():
@@ -3598,7 +3678,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if checked is None:
             checked = self.cbFormatTextMDLayoutUserDefined.isChecked()
 
-        if checked!=self.cbFormatTextMDLayoutUserDefined.isChecked():
+        if checked != self.cbFormatTextMDLayoutUserDefined.isChecked():
             self.__setModified(True)
 
         self.teFormatTextMDLayoutUserDefined.setEnabled(checked)
@@ -3608,7 +3688,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if checked is None:
             checked = self.cbFormatTextMDIncludeThumbnails.isChecked()
 
-        if checked!=self.cbFormatTextMDIncludeThumbnails.isChecked():
+        if checked != self.cbFormatTextMDIncludeThumbnails.isChecked():
             self.__setModified(True)
 
         self.cbxFormatTextMDThumbnailsSize.setEnabled(checked)
@@ -3629,12 +3709,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
     def __slotPageFormatDocImgPageSetupUnitChanged(self, dummy=None):
         """Choice of unit has been modified"""
         self.__setModified(True)
-        unit=self.cbxFormatDocImgPaperUnit.currentData()
+        unit = self.cbxFormatDocImgPaperUnit.currentData()
         if self.__blockedSlots or unit is None:
             return
         self.__blockSlot(True)
 
-        # Temporary set No maximum value to ensure conversion will be proper applied
+        # Temporary set No maximum value to ensure conversion will be proper applied
         self.dsbFormatDocImgMarginsLeft.setMaximum(9999)
         self.dsbFormatDocImgMarginsRight.setMaximum(9999)
         self.dsbFormatDocImgMarginsTop.setMaximum(9999)
@@ -3667,8 +3747,14 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         self.dsbFormatDocImgMarginsRight.setValue(BCExportFiles.convertSize(vMarginRight, self.__formatPdfImgPaperSizeUnit, unit, self.__formatPdfImgPaperResolution))
         self.dsbFormatDocImgMarginsTop.setValue(BCExportFiles.convertSize(vMarginTop, self.__formatPdfImgPaperSizeUnit, unit, self.__formatPdfImgPaperResolution))
         self.dsbFormatDocImgMarginsBottom.setValue(BCExportFiles.convertSize(vMarginBottom, self.__formatPdfImgPaperSizeUnit, unit, self.__formatPdfImgPaperResolution))
-        self.dsbFormatDocImgThumbsSpacingOuter.setValue(BCExportFiles.convertSize(vMarginThumbSpacingOuter, self.__formatPdfImgPaperSizeUnit, unit, self.__formatPdfImgPaperResolution))
-        self.dsbFormatDocImgThumbsSpacingInner.setValue(BCExportFiles.convertSize(vMarginThumbSpacingInner, self.__formatPdfImgPaperSizeUnit, unit, self.__formatPdfImgPaperResolution))
+        self.dsbFormatDocImgThumbsSpacingOuter.setValue(BCExportFiles.convertSize(vMarginThumbSpacingOuter,
+                                                                                  self.__formatPdfImgPaperSizeUnit,
+                                                                                  unit,
+                                                                                  self.__formatPdfImgPaperResolution))
+        self.dsbFormatDocImgThumbsSpacingInner.setValue(BCExportFiles.convertSize(vMarginThumbSpacingInner,
+                                                                                  self.__formatPdfImgPaperSizeUnit,
+                                                                                  unit,
+                                                                                  self.__formatPdfImgPaperResolution))
         self.dsbFormatDocImgPageBorderWidth.setValue(BCExportFiles.convertSize(vPageBorderWidth, self.__formatPdfImgPaperSizeUnit, unit, self.__formatPdfImgPaperResolution))
         self.dsbFormatDocImgPageBorderRadius.setValue(BCExportFiles.convertSize(vPageBorderRadius, self.__formatPdfImgPaperSizeUnit, unit, self.__formatPdfImgPaperResolution))
         self.dsbFormatDocImgThumbsBorderWidth.setValue(BCExportFiles.convertSize(vThumbsBorderWidth, self.__formatPdfImgPaperSizeUnit, unit, self.__formatPdfImgPaperResolution))
@@ -3698,7 +3784,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if self.__formatPdfImgPaperSizeUnit is None or self.cbxFormatDocImgPaperSize.currentData() is None:
             return
 
-        size=BCExportFilesDialogBox.PAPER_SIZES[self.cbxFormatDocImgPaperSize.currentData()][self.__formatPdfImgPaperSizeUnit]
+        size = BCExportFilesDialogBox.PAPER_SIZES[self.cbxFormatDocImgPaperSize.currentData()][self.__formatPdfImgPaperSizeUnit]
 
         if self.__formatPdfImgPaperOrientation == BCExportFilesDialogBox.ORIENTATION_PORTRAIT:
             self.__formatPdfImgPaperSize = QSizeF(size)
@@ -3708,7 +3794,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if self.__formatPdfImgPaperSizeUnit == 'px':
             # in this case, unit is in inch
             # need to convert to pixels
-            self.__formatPdfImgPaperSize = QSizeF(self.__formatPdfImgPaperSize.width() * self.__formatPdfImgPaperResolution, self.__formatPdfImgPaperSize.height() * self.__formatPdfImgPaperResolution)
+            self.__formatPdfImgPaperSize = QSizeF(self.__formatPdfImgPaperSize.width() * self.__formatPdfImgPaperResolution,
+                                                  self.__formatPdfImgPaperSize.height() * self.__formatPdfImgPaperResolution)
 
         if self.__blockedSlots:
             return
@@ -3842,31 +3929,31 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         if self.swPages.currentIndex() == BCExportFilesDialogBox.__PAGE_FORMAT:
             self.__formatPdfImgNbProperties = 0
 
-            self.__formatPdfImgNbProperties=len(self.lwPerimeterProperties.items(True))
+            self.__formatPdfImgNbProperties = len(self.lwPerimeterProperties.items(True))
             self.__updateFormatDocImgConfigurationPreview()
 
         if self.swPages.currentIndex() == BCExportFilesDialogBox.__PAGE_TARGET:
-            # when last page reached, enable/disable clipboard choice according to export format
+            # when last page reached, enable/disable clipboard choice according to export format
 
             if self.leTargetResultFile.text() == '':
                 # no file name defined, get file name from settings
                 fileName = strDefault(self.leTargetResultFile.property('__bcExtension'))
             else:
-                # a name is already set...?
+                # a name is already set...?
                 # update extension
-                if result:=re.match("(.*)(\.[^\.]*)$", self.leTargetResultFile.text()):
+                if result := re.match(r"(.*)(\.[^\.]*)$", self.leTargetResultFile.text()):
                     fileName = f"{result.groups()[0]}.{{ext}}"
                 else:
                     fileName = f"{self.leTargetResultFile.text()}.{{ext}}"
-            fileName=os.path.normpath(fileName)
+            fileName = os.path.normpath(fileName)
 
-            fileOpenAllowed={
+            fileOpenAllowed = {
                     # do not allow option 'open file in krita' from search result
                     'status': (BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['openInKrita'] and self.__options is None),
                     'tooltip': ''
                 }
             if fileOpenAllowed['status']:
-                if self.cbxFormat.currentIndex() in [BCExportFormat.EXPORT_FMT_IMG_JPG, BCExportFormat.EXPORT_FMT_IMG_PNG] and self.__formatPdfImgEstimatedPages>10:
+                if self.cbxFormat.currentIndex() in [BCExportFormat.EXPORT_FMT_IMG_JPG, BCExportFormat.EXPORT_FMT_IMG_PNG] and self.__formatPdfImgEstimatedPages > 10:
                     fileOpenAllowed['tooltip'] = i18n(f'Please be aware that {self.__formatPdfImgEstimatedPages} documents will be opened if option is checked!')
 
             if not fileOpenAllowed['status']:
@@ -3876,16 +3963,16 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 self.cbTargetResultFileOpen.setVisible(True)
                 self.cbTargetResultFileOpen.setToolTip(fileOpenAllowed['tooltip'])
 
-            clipboardAllowed={
+            clipboardAllowed = {
                     'status': BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['clipboard'],
                     'tooltip': ''
                 }
 
             if not clipboardAllowed['status']:
-                clipboardAllowed['tooltip']=i18n("This format doesn't allow export to clipboard")
+                clipboardAllowed['tooltip'] = i18n("This format doesn't allow export to clipboard")
             elif self.cbxFormat.currentIndex() == BCExportFormat.EXPORT_FMT_TEXT_MD and self.cbFormatTextMDIncludeThumbnails.isChecked():
-                clipboardAllowed['status']=False
-                clipboardAllowed['tooltip']=i18n("When option <i>Include thumbnails</i> is checked, Markdown can't be exported to clipboard")
+                clipboardAllowed['status'] = False
+                clipboardAllowed['tooltip'] = i18n("When option <i>Include thumbnails</i> is checked, Markdown can't be exported to clipboard")
 
             if not clipboardAllowed['status']:
                 self.rbTargetResultFile.setChecked(True)
@@ -3895,13 +3982,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             self.rbTargetResultClipboard.setToolTip(clipboardAllowed['tooltip'])
 
-            if fileName==BCExportFilesDialogBox.CLIPBOARD:
+            if fileName == BCExportFilesDialogBox.CLIPBOARD:
                 self.leTargetResultFile.setText('')
                 if clipboardAllowed['status']:
                     self.rbTargetResultClipboard.setChecked(True)
             else:
                 self.leTargetResultFile.setText(fileName.replace('{ext}', BCExportFilesDialogBox.FMT_PROPERTIES[self.cbxFormat.currentIndex()]['fileExtension']))
-
 
         self.__updateBtn()
 
@@ -3910,13 +3996,13 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         # note: enable/disable instead of show/hide, that's less disturbing in the
         #       navigation
 
-        # First page / previous button not enabled
+        # First page / previous button not enabled
         self.pbPrevious.setEnabled(self.swPages.currentIndex() != 0)
 
         if self.swPages.currentIndex() == 0:
-            # first page
+            # first page
             # need to check if, at least, one properties is checked for export :)
-            self.pbNext.setEnabled(len(self.lwPerimeterProperties.items(True))>0)
+            self.pbNext.setEnabled(len(self.lwPerimeterProperties.items(True)) > 0)
         elif self.swPages.currentIndex() == self.swPages.count() - 1:
             # Last page / next button disabled
             self.pbNext.setEnabled(False)
@@ -3938,14 +4024,14 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             return True
         else:
             # otherwise target is valid if a file name is provided
-            # do not check if provided path/filename make sense...
+            # do not check if provided path/filename make sense...
             return (self.leTargetResultFile.text().strip() != '')
 
     def __generateConfig(self, fullFields=False):
         """Generate export config"""
         def getFields(fullFields):
             if fullFields:
-                checkedChar={True:'*', False:'.'}
+                checkedChar = {True: '*', False: '.'}
                 return [f"{checkedChar[item.checked()]}{item.value()}" for item in self.lwPerimeterProperties.items(False)]
             else:
                 return [item.value() for item in self.lwPerimeterProperties.items(True)]
@@ -4008,7 +4094,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                     'userDefinedLayout.content': self.teFormatTextMDLayoutUserDefined.toPlainText(),
 
                     'thumbnails.included': self.cbFormatTextMDIncludeThumbnails.isChecked(),
-                    'thumbnails.size': [64,128,256,512][self.cbxFormatTextMDThumbnailsSize.currentIndex()],
+                    'thumbnails.size': [64, 128, 256, 512][self.cbxFormatTextMDThumbnailsSize.currentIndex()],
 
                     'fields': getFields(fullFields),
                     'files': getFiles(),
@@ -4071,8 +4157,9 @@ Files:         {items:files.count} ({items:files.size(KiB)})
     def __saveSettings(self):
         """Save current export configuration to settings"""
         def __savePagePerimeter():
-            checkedChar={True:'*', False:'.'}
-            BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES, [f"{checkedChar[item.checked()]}{item.value()}" for item in self.lwPerimeterProperties.items(False)])
+            checkedChar = {True: '*', False: '.'}
+            BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES,
+                           [f"{checkedChar[item.checked()]}{item.value()}" for item in self.lwPerimeterProperties.items(False)])
 
         def __savePageFormat():
             BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT, self.cbxFormat.currentIndex())
@@ -4134,7 +4221,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
 
-
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
 
@@ -4143,11 +4229,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
 
-
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
-                #BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_TEXT, self.xxx.value())
+                # BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_TEXT, self.xxx.value())
 
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
@@ -4157,7 +4242,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
 
-                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS, ['none',
+                                                                                            'left',
+                                                                                            'right',
+                                                                                            'top',
+                                                                                            'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
@@ -4187,7 +4276,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
 
-
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
 
@@ -4196,11 +4284,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
 
-
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
-                #BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_TEXT, self.xxx.value())
+                # BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_TEXT, self.xxx.value())
 
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
@@ -4210,7 +4297,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
 
-                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS, ['none',
+                                                                                            'left',
+                                                                                            'right',
+                                                                                            'top',
+                                                                                            'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
@@ -4242,7 +4333,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
 
-
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
 
@@ -4251,11 +4341,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
 
-
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
-                #BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_TEXT, self.xxx.value())
+                # BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_TEXT, self.xxx.value())
 
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
@@ -4265,7 +4354,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
 
-                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS, ['none',
+                                                                                            'left',
+                                                                                            'right',
+                                                                                            'top',
+                                                                                            'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
@@ -4295,7 +4388,6 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FOOTER_CONTENT, self.bcsteFormatDocImgFooter.toHtml())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_FPGNOTES_CONTENT, self.bcsteFormatDocImgFPageNotes.toHtml())
 
-
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_ACTIVE, self.cbFormatDocImgPageBgColor.isChecked())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_COL, self.pbFormatDocImgPageBgColor.color().name(QColor.HexArgb))
 
@@ -4304,11 +4396,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_WIDTH, self.dsbFormatDocImgPageBorderWidth.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_RADIUS, self.dsbFormatDocImgPageBorderRadius.value())
 
-
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_NBPERROW, self.sbFormatDocImgThumbsPerRow.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_OUTER, self.dsbFormatDocImgThumbsSpacingOuter.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_INNER, self.dsbFormatDocImgThumbsSpacingInner.value())
-                #BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_TEXT, self.xxx.value())
+                # BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_TEXT, self.xxx.value())
 
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_ACTIVE, self.cbFormatDocImgThumbsBg.isChecked())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL, self.pbFormatDocImgThumbsBgColor.color().name(QColor.HexArgb))
@@ -4318,7 +4409,11 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BORDER_RADIUS, self.dsbFormatDocImgThumbsBorderRadius.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD, ['fit', 'crop'][self.cbxFormatDocImgThumbMode.currentIndex()])
 
-                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS, ['none', 'left', 'right', 'top', 'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
+                BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS, ['none',
+                                                                                            'left',
+                                                                                            'right',
+                                                                                            'top',
+                                                                                            'bottom'][self.cbxFormatDocImgTextPosition.currentIndex()])
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME, self.fcbxFormatDocImgTextFontFamily.currentFont().family())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTSIZE, self.dsbFormatDocImgTextFontSize.value())
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTCOL, self.pbFormatDocImgTextFontColor.color().name(QColor.HexArgb))
@@ -4331,7 +4426,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         def __savePageTarget():
             fileName = os.path.normpath(self.leTargetResultFile.text())
-            if fileName != '' and (result:=re.match(r"(.*)(\..*)$", fileName)):
+            if fileName != '' and (result := re.match(r"(.*)(\..*)$", fileName)):
                 fileName = f"{result.groups()[0]}.{{ext}}"
                 BCSettings.set(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME, fileName)
 
@@ -4345,15 +4440,15 @@ Files:         {items:files.count} ({items:files.size(KiB)})
     def __newExportDefinition(self):
         """Reset export configuration to default settings"""
         if self.__isModified:
-            if not WDialogBooleanInput.display(i18n(f"{self.__title}::{i18n('New export files list definition')}"), i18n("Current export files list definition has been modified and will be lost, continue?")):
+            if not WDialogBooleanInput.display(i18n(f"{self.__title}::{i18n('New export files list definition')}"),
+                                               i18n("Current export files list definition has been modified and will be lost, continue?")):
                 return False
 
         self.__loadDefaultPagePerimeter()
         self.__loadDefaultPageFormat()
         self.__loadDefaultPageTarget()
-        self.__currentLoadedConfigurationFile=''
+        self.__currentLoadedConfigurationFile = ''
         self.__setModified(False)
-
 
     def __openFile(self, fileName, title):
         """Open & load export files list definition defined by `fileName`"""
@@ -4363,7 +4458,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         try:
             with open(fileName, 'r') as fHandle:
-                jsonAsStr=fHandle.read()
+                jsonAsStr = fHandle.read()
         except Exception as e:
             Debug.print("Can't open/read file {0}: {1}", fileName, f"{e}")
             return BCExportFilesDialogBox.IMPORT_FILE_CANT_READ
@@ -4374,15 +4469,15 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             Debug.print("Can't parse file {0}: {1}", fileName, f"{e}")
             return BCExportFilesDialogBox.IMPORT_FILE_NOT_JSON
 
-        if not "formatIdentifier" in jsonAsDict:
+        if "formatIdentifier" not in jsonAsDict:
             Debug.print("Missing format identifier file {0}", fileName)
             return BCExportFilesDialogBox.IMPORT_FILE_MISSING_FORMAT_IDENTIFIER
 
-        if jsonAsDict["formatIdentifier"]!="bulicommander-export-file-list-definition":
+        if jsonAsDict["formatIdentifier"] != "bulicommander-export-file-list-definition":
             Debug.print("Invalid format identifier file {0}", fileName)
             return BCExportFilesDialogBox.IMPORT_FILE_INVALID_FORMAT_IDENTIFIER
 
-        self.__options=jsonAsDict
+        self.__options = jsonAsDict
 
         self.__loadSettingsPagePerimeter()
         self.__loadSettingsPageFormat()
@@ -4392,12 +4487,12 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         self.rbTargetResultClipboard.setChecked(self.__options['exportClipboard'])
 
         BCSettings.set(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE, fileName)
-        self.__currentLoadedConfigurationFile=fileName
+        self.__currentLoadedConfigurationFile = fileName
         self.__setModified(False)
 
     def __saveFile(self, fileName, description=''):
         """Save export files list definition to defined `fileName`"""
-        toExport={
+        toExport = {
                 'formatIdentifier': "bulicommander-export-file-list-definition",
                 'contentDescription': description,
                 'exportFormat': self.cbxFormat.currentIndex(),
@@ -4408,16 +4503,16 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         # do not save file list!
         toExport['exportConfig'].pop('files')
 
-        returned=BCExportFilesDialogBox.EXPORT_OK
+        returned = BCExportFilesDialogBox.EXPORT_OK
         try:
             with open(fileName, 'w') as fHandle:
                 fHandle.write(json.dumps(toExport, indent=4, sort_keys=True, cls=JsonQObjectEncoder))
         except Exception as e:
             Debug.print("Can't save file {0}: {1}", fileName, f"{e}")
-            returned=BCExportFilesDialogBox.EXPORT_CANT_SAVE
+            returned = BCExportFilesDialogBox.EXPORT_CANT_SAVE
 
         BCSettings.set(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE, fileName)
-        self.__currentLoadedConfigurationFile=fileName
+        self.__currentLoadedConfigurationFile = fileName
         self.__setModified(False)
         self.__updateFileNameLabel()
 
@@ -4425,19 +4520,19 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __updateFileNameLabel(self):
         """Update file name in status bar according to current tab"""
-        modified=''
+        modified = ''
         if self.__isModified:
-            modified=f" ({i18n('modified')})"
+            modified = f" ({i18n('modified')})"
 
-        if self.__currentLoadedConfigurationFile is None or self.__currentLoadedConfigurationFile=='':
+        if self.__currentLoadedConfigurationFile is None or self.__currentLoadedConfigurationFile == '':
             self.lblExportDefinitionFileName.setText(f"")
         else:
             self.lblExportDefinitionFileName.setText(f"{self.__currentLoadedConfigurationFile}{modified}")
 
     def __setModified(self, value):
         """Set if export file list definition has been modified"""
-        if self.__isModified!=value:
-            self.__isModified=value
+        if self.__isModified != value:
+            self.__isModified = value
             self.__updateFileNameLabel()
 
     def options(self):
@@ -4450,74 +4545,72 @@ Files:         {items:files.count} ({items:files.size(KiB)})
         If fileName is None, open dialog box with predefined last opened/saved file
         """
         if fileName is None:
-            fileName=BCSettings.get(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE)
+            fileName = BCSettings.get(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE)
 
         if fileName is None:
-            fileName=''
+            fileName = ''
 
-        title=i18n(f"{self.__title}::{i18n('Open export files list definition')}")
-        extension=i18n("BuliCommander Export Files List (*.bcefl)")
+        title = i18n(f"{self.__title}::{i18n('Open export files list definition')}")
+        extension = i18n("BuliCommander Export Files List (*.bcefl)")
 
         fileName, dummy = QFileDialog.getOpenFileName(self, title, fileName, extension)
 
         if fileName != '':
-            fileName=os.path.normpath(fileName)
+            fileName = os.path.normpath(fileName)
             if not os.path.isfile(fileName):
-                openResult=BCExportFilesDialogBox.IMPORT_FILE_NOT_FOUND
+                openResult = BCExportFilesDialogBox.IMPORT_FILE_NOT_FOUND
             else:
-                openResult=self.__openFile(fileName, title)
+                openResult = self.__openFile(fileName, title)
 
-            if openResult==BCExportFilesDialogBox.IMPORT_OK:
+            if openResult == BCExportFilesDialogBox.IMPORT_OK:
                 return True
-            elif openResult==BCExportFilesDialogBox.IMPORT_FILE_NOT_FOUND:
+            elif openResult == BCExportFilesDialogBox.IMPORT_FILE_NOT_FOUND:
                 WDialogMessage.display(title, "<br>".join(
                     [i18n("<h1>Can't open file!</h1>"),
                      i18n("File not found!"),
-                    ]))
-            elif openResult==BCExportFilesDialogBox.IMPORT_FILE_CANT_READ:
+                     ]))
+            elif openResult == BCExportFilesDialogBox.IMPORT_FILE_CANT_READ:
                 WDialogMessage.display(title, "<br>".join(
                     [i18n("<h1>Can't open file!</h1>"),
                      i18n("File can't be read!"),
-                    ]))
-            elif openResult==BCExportFilesDialogBox.IMPORT_FILE_NOT_JSON:
+                     ]))
+            elif openResult == BCExportFilesDialogBox.IMPORT_FILE_NOT_JSON:
                 WDialogMessage.display(title, "<br>".join(
                     [i18n("<h1>Can't open file!</h1>"),
                      i18n("Invalid file format!"),
-                    ]))
+                     ]))
 
         return False
 
     def saveFile(self, saveAs=False, fileName=None):
         """Save current search to designed file name"""
-        if fileName is None and self.__currentLoadedConfigurationFile!='':
+        if fileName is None and self.__currentLoadedConfigurationFile != '':
             # a file is currently opened
-            fileName=self.__currentLoadedConfigurationFile
+            fileName = self.__currentLoadedConfigurationFile
         else:
-            fileName=BCSettings.get(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE)
-            saveAs=True
+            fileName = BCSettings.get(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE)
+            saveAs = True
 
         if fileName is None:
-            fileName=''
-            saveAs=True
+            fileName = ''
+            saveAs = True
 
-        title=i18n(f"{self.__title}::{i18n('Save export files list definition')}")
-        extension=i18n("BuliCommander Export Files List (*.bcefl)")
+        title = i18n(f"{self.__title}::{i18n('Save export files list definition')}")
+        extension = i18n("BuliCommander Export Files List (*.bcefl)")
 
         if saveAs:
             fileName, dummy = QFileDialog.getSaveFileName(self, title, fileName, extension)
 
         if fileName != '':
-            fileName=os.path.normpath(fileName)
-            saveResult=self.__saveFile(fileName)
+            fileName = os.path.normpath(fileName)
+            saveResult = self.__saveFile(fileName)
 
-            if saveResult==BCExportFilesDialogBox.EXPORT_OK:
+            if saveResult == BCExportFilesDialogBox.EXPORT_OK:
                 return True
-            elif saveResult==BCExportFilesDialogBox.EXPORT_CANT_SAVE:
+            elif saveResult == BCExportFilesDialogBox.EXPORT_CANT_SAVE:
                 WDialogMessage.display(title, i18n("<h1>Can't save file!</h1>"))
 
         return False
-
-
 
     @staticmethod
     def open(title, uicontroller):
@@ -4529,7 +4622,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
     def openAsExportConfig(title, uicontroller, options):
         """Open dialog box"""
         db = BCExportFilesDialogBox(title, uicontroller, options)
-        if db.exec()==QDialog.Accepted:
+        if db.exec() == QDialog.Accepted:
             return db.options()
         else:
             return None

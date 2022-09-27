@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2021 - Grum999
 #
@@ -41,11 +41,11 @@ class QEColor(QColor):
     def __init__(self, value=None):
         super(QEColor, self).__init__(value)
 
-        self.__isNone=(value is None)
+        self.__isNone = (value is None)
 
     def __deepcopy__(self, memo):
         """Used by pickle from copy.deepcopy()"""
-        returned=QEColor()
+        returned = QEColor()
         returned.setNamedColor(self.name())
         returned.setNone(self.__isNone)
         return returned
@@ -55,7 +55,7 @@ class QEColor(QColor):
 
     def setNone(self, value):
         if isinstance(value, bool):
-            self.__isNone=value
+            self.__isNone = value
 
 
 class WColorButton(QToolButton):
@@ -78,16 +78,16 @@ class WColorButton(QToolButton):
         self.__noneColor = False
         self.__havePopupMenu = True
 
-        self.__actionNoColor=QAction(i18n('No color'), self)
+        self.__actionNoColor = QAction(i18n('No color'), self)
         self.__actionNoColor.triggered.connect(self.__setColorNone)
-        self.__actionFromColorPicker=WMenuColorPicker()
+        self.__actionFromColorPicker = WMenuColorPicker()
         self.__actionFromColorPicker.colorPicker().colorUpdated.connect(self.__setColor)
-        self.__menu=QMenu(self)
+        self.__menu = QMenu(self)
         self.__menu.addAction(self.__actionNoColor)
         self.__menu.addAction(self.__actionFromColorPicker)
 
         self.setText("")
-        self.setText=newSetText
+        self.setText = newSetText
         self.setNoneColor(False)
         self.__setPopupMenu()
 
@@ -99,14 +99,14 @@ class WColorButton(QToolButton):
             self.setPopupMode(QToolButton.InstantPopup)
             self.setArrowType(Qt.NoArrow)
             self.setMenu(self.__menu)
-            self.setStyleSheet("""WColorButton::menu-indicator { width: 0; } """ )
+            self.setStyleSheet("""WColorButton::menu-indicator { width: 0; } """)
         else:
             self.setPopupMode(QToolButton.DelayedPopup)
             self.setMenu(None)
 
     def __setColorNone(self):
         """Set current color to None"""
-        self.__color=QEColor()
+        self.__color = QEColor()
         self.__color.setNone(True)
         self.colorChanged.emit(self.__color)
 
@@ -119,11 +119,11 @@ class WColorButton(QToolButton):
         super(WColorButton, self).paintEvent(event)
 
         margin = ceil(self.height()/2)//2
-        margin2 = margin<<1
+        margin2 = margin << 1
         if not self.icon().isNull():
-            rect=QRect(margin, self.height() - margin//2 - 4, self.width() - margin2, margin//2)
+            rect = QRect(margin, self.height() - margin//2 - 4, self.width() - margin2, margin//2)
         else:
-            rect=QRect(margin, margin, self.width() - margin2,  self.height() - margin2)
+            rect = QRect(margin, margin, self.width() - margin2,  self.height() - margin2)
 
         painter = QPainter(self)
         painter.setPen(self.__pen)
@@ -155,7 +155,7 @@ class WColorButton(QToolButton):
         - From palette
         """
         if isinstance(value, bool):
-            self.__noneColor=value
+            self.__noneColor = value
             self.__setPopupMenu()
 
     def popupMenu(self):
@@ -169,7 +169,7 @@ class WColorButton(QToolButton):
         Otherwise color selection method have to be implemented
         """
         if isinstance(value, bool):
-            self.__havePopupMenu=value
+            self.__havePopupMenu = value
             self.__setPopupMenu()
 
     def colorPicker(self):
