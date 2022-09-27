@@ -4895,7 +4895,6 @@ class WNodeEditorView(QGraphicsView):
             # self.centerOn(self.sceneRect().center())
             self.setDragMode(QGraphicsView.NoDrag)
 
-        print("mousePressEvent", self, event)
         super(WNodeEditorView, self).mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
@@ -4909,7 +4908,6 @@ class WNodeEditorView(QGraphicsView):
             self.__cutLine.clear()
             self.unsetCursor()
 
-        print("mouseReleaseEvent", self, event)
         super(WNodeEditorView, self).mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
@@ -4917,7 +4915,6 @@ class WNodeEditorView(QGraphicsView):
         if event.buttons() & Qt.LeftButton == Qt.LeftButton and self.__cutLine.isVisible():
             self.__cutLine.appendPosition(self.mapToScene(event.pos()))
 
-        print("mouseMoveEvent", self, event)
         super(WNodeEditorView, self).mouseMoveEvent(event)
 
     def wheelEvent(self, event):
@@ -5000,7 +4997,6 @@ class WNodeEditorView(QGraphicsView):
     def zoomToFit(self):
         """Zoom to fit scene content"""
         boundingRect = self.__scene.nodesBoundingRect()
-        print("zoomToFit", boundingRect)
         if boundingRect.height() == 0 or boundingRect.width() == 0:
             # nothing in scene?
             return
@@ -5016,7 +5012,6 @@ class WNodeEditorView(QGraphicsView):
         If None, get nodes bounding rect
         Otherwise use given content (QRect/QRectF)
         """
-        print("centerToContent", content)
         if isinstance(content, QRectF):
             boundingRect = content
         elif isinstance(content, QRect):
@@ -5027,7 +5022,6 @@ class WNodeEditorView(QGraphicsView):
 
     def resetZoom(self):
         """reset zoom to 1:1 + center to content"""
-        print("resetZoom")
         self.setZoom(1.0)
         self.centerToContent()
 
