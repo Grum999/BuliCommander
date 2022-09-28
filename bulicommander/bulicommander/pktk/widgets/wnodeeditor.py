@@ -1,29 +1,37 @@
 # -----------------------------------------------------------------------------
 # PyKritaToolKit
-# Copyright (C) 2019-2021 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
+# Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+# Basically inspired from following tutorial
+#   https://www.blenderfreak.com/tutorials/node-editor-tutorial-series
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# First tutorials are really interesting to easily and quickly understand
+# basic stuff ("how to" implement)
+#
+# But quickly rewritten everything according to my own vision of things :-)
+# -----------------------------------------------------------------------------
+# A Krita plugin framework
 # -----------------------------------------------------------------------------
 
-
-# Basically inspired from https://www.blenderfreak.com/tutorials/node-editor-tutorial-series
-# First tutorials are really interesting to easily and quickly understand basic stuff ("how to" implement)
-# but quickly rewritten everything according to my own vision of things :-)
-
+# -----------------------------------------------------------------------------
+# The wnodeeditor module provides a set of classes to easily manage a node
+# editor
+#
+# Main class from this module
+#
+# - WNodeEditorView:
+#       Widget
+#       The main widget to use to get a node editor
+#
+# - NodeEditorScene:
+#       Scene containing nodes; provides all basic methods & signals to manage
+#       nodes graph
+#
+# -----------------------------------------------------------------------------
 
 import math
 import json

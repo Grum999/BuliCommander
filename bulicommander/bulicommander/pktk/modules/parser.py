@@ -1,24 +1,41 @@
 # -----------------------------------------------------------------------------
 # PyKritaToolKit
-# Copyright (C) 2019-2021 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
+# Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+# A Krita plugin framework
 # -----------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------
+# The parser module provides a generic parser and tools needed to
+# define grammar
+# (Works with languagedef + tokenizer modules)
+#
+# Main class from this module
+#
+# - Parser:
+#       The parser (need a tokenizer and a grammar)
+#       Produce an AST (Abstract Syntax Tree) that have to be interpreted
+#       (there's no generic interpreter provided)
+#
+# - ASTItem
+#       Base for AST
+#       (root of AST is an ASTItem, childrens are ASTItem)
+#
+# - GrammarRules
+#       Set of grammar rules that define language
+#
+# - GrammarRule
+#       A single grammar rule definition
+#
+# - GRObject
+#       Base of a grammar object
+#       (all grammar object, GROne, GROptional, ...,  extend this class)
+#
+# -----------------------------------------------------------------------------
 
 # import random#-- for debug only
 import hashlib

@@ -1,25 +1,31 @@
 # -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2022 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+# Based from C++ Qt example:
+#   https://code.qt.io/cgit/qt/qtbase.git/tree/examples/widgets/layouts/flowlayout/flowlayout.cpp?h=5.15
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+#   Original example source code published under BSD License Usage
+#       Copyright (C) 2016 The Qt Company Ltd.
+#       Contact: https://www.qt.io/licensing/
+# -----------------------------------------------------------------------------
+# A Krita plugin framework
 # -----------------------------------------------------------------------------
 
-
+# -----------------------------------------------------------------------------
+# The wflowlayout module provides a 'flow' layout model (usually, used to
+# manage tags list)
+#
+# Main class from this module
+#
+# - WFlowLayout:
+#       Layout
+#       The flow layout
+#
 # -----------------------------------------------------------------------------
 
 from PyQt5.Qt import *
@@ -34,16 +40,8 @@ from PyQt5.QtWidgets import (
 class WFlowLayout(QLayout):
     """A flow layout to manage inline widgets
 
-    based from C++ Qt example:
-        https://code.qt.io/cgit/qt/qtbase.git/tree/examples/widgets/layouts/flowlayout/flowlayout.cpp?h=5.15
-
-        Original example source code published under BSD License Usage
-            Copyright (C) 2016 The Qt Company Ltd.
-            Contact: https://www.qt.io/licensing/
-
     Qt documentation with detailed explanations about flow layout implementation:
         https://doc.qt.io/qt-5/qtwidgets-layouts-flowlayout-example.html
-
     """
 
     def __init__(self, parent=None):

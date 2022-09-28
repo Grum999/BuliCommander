@@ -1,22 +1,26 @@
 # -----------------------------------------------------------------------------
 # Buli Commander
-# Copyright (C) 2022 - Grum999
+# Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
 # -----------------------------------------------------------------------------
 # A Krita plugin designed to manage documents
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# The bcfilenoperation_renamefile_visualformula_editor provides user inrterface
+# to vosulay (nodes graph) build a renaming formula
+#
+# Main classes from this module
+#
+# - BCRenameFileVisualFormulaEditorDialogBox:
+#       User interface to build formula
+#
+# - Other:
+#       Classes used to manage dedicated nodes in graph
+#
 # -----------------------------------------------------------------------------
 
 import PyQt5.uic

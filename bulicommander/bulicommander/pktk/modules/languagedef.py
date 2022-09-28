@@ -1,26 +1,27 @@
 # -----------------------------------------------------------------------------
 # PyKritaToolKit
-# Copyright (C) 2019-2021 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
+# Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+# A Krita plugin framework
 # -----------------------------------------------------------------------------
 
-
-# Buli Script language definition
+# -----------------------------------------------------------------------------
+# The languagedef module provides base class used to defined a language
+# (that can be tokenized and parsed --> tokenizer + parser modules)
+#
+# Main class from this module
+#
+# - LanguageDef:
+#       Base class to use to define language
+#
+# - LanguageDefXML
+#       Basic XML language definition
+#
+# -----------------------------------------------------------------------------
 
 from PyQt5.Qt import *
 from enum import Enum

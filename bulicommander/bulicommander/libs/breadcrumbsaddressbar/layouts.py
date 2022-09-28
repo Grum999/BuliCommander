@@ -1,3 +1,24 @@
+# -----------------------------------------------------------------------------
+# Qt navigation bar with breadcrumbs
+# Andrey Makarov, 2019
+# https://github.com/Winand/breadcrumbsaddressbar
+# -----------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Buli Commander
+# Copyright (C) 2019-2022 - Grum999
+# -----------------------------------------------------------------------------
+# Original widget from Andrey Makarov is published under MIT license and has
+# been heavily modified for BuliCommander needs ^_^'
+#
+# Not possible here to list all technical changes, do a DIFF with original
+# source code if you're interested about detailed modifications :-)
+# ------------------------------------------------------------------------------
+
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import (
         pyqtSignal as Signal,

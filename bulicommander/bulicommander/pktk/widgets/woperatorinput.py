@@ -1,25 +1,52 @@
 # -----------------------------------------------------------------------------
 # PyKritaToolKit
-# Copyright (C) 2019-2021 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
+# Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+# A Krita plugin framework
 # -----------------------------------------------------------------------------
 
-
+# -----------------------------------------------------------------------------
+# The woperatorinput module provides a set of widget to easily manage operator
+# inputs like =, >=, <=, ...
+#
+# Main class from this module
+#
+# - WOperatorBaseInput:
+#       Widget
+#       The base widget used to defined an operator input
+#
+# - WOperatorInputInt:
+#       Widget
+#       Manage input integer widget
+#
+# - WOperatorInputFloat:
+#       Widget
+#       Manage input float widget
+#
+# - WOperatorInputDateTime:
+#       Widget
+#       Manage input date/time widget
+#
+# - WOperatorInputDate:
+#       Widget
+#       Manage input date widget
+#
+# - WOperatorInputTime:
+#       Widget
+#       Manage input time widget
+#
+# - WOperatorInputStr:
+#       Widget
+#       Manage input string widget
+#
+# - WOperatorInputList:
+#       Widget
+#       Manage input list widget
+#
 # -----------------------------------------------------------------------------
 
 import re
@@ -1065,7 +1092,7 @@ class WOperatorInputStr(WOperatorBaseInput):
 
 
 class WOperatorInputList(WOperatorBaseInput):
-    """Search operator for DateTime"""
+    """Search operator for List"""
 
     def _initializeUi(self):
         """Initialise widget

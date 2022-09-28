@@ -1,25 +1,28 @@
 # -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2022 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+# A Krita plugin framework
 # -----------------------------------------------------------------------------
 
-
+# -----------------------------------------------------------------------------
+# The wtaginput module provides an input tag widget manager
+# standard color layer selector
+#
+# Main class from this module
+#
+# - WTagInput:
+#       Widget
+#       The main input widget
+#
+# - WTag:
+#       Widget
+#       A tag widget
+#
 # -----------------------------------------------------------------------------
 
 from PyQt5.Qt import *
@@ -87,7 +90,6 @@ QLabel:disabled {
     color: palette(light);
 }
         """
-
 
     def __init__(self, value, text=None, readOnly=False, parent=None):
         super(WTag, self).__init__(parent)
@@ -165,7 +167,6 @@ QLabel:disabled {
             self.__btRemove.clicked.connect(self.__removeClicked)
             self.__btRemove.setCursor(Qt.PointingHandCursor)
             self.__btRemove.setStyleSheet(WTag.__TOOLBUTTON_CSS)
-
 
 
 class WTagPopupList(QFrame):
