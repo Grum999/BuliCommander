@@ -1,22 +1,26 @@
-#-----------------------------------------------------------------------------
-# Buli Commander
-# Copyright (C) 2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Buli Commander
+# Copyright (C) 2019-2022 - Grum999
+# -----------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
 # -----------------------------------------------------------------------------
 # A Krita plugin designed to manage documents
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# The bcimportanimated module provides classes used to manage import of SVG
+# files (with options not provided by Krita)
+#
+# Main classes from this module
+#
+# - BCImportDialogBoxSvg:
+#       A user interface with options for file import
+#
+# - BCImportSvg
+#       Provides methods to process import
+#
 # -----------------------------------------------------------------------------
 
 
@@ -76,33 +80,33 @@ class BCImportDialogBoxSvg(QDialog):
         self.lblFileName.setElide(Qt.ElideLeft)
 
         # need document unit, default is 'px' if none defined
-        self.__unit='px'
+        self.__unit = 'px'
         self.rbImportOriginalDocSize.setEnabled(True)
         if 'width.unit' in self.__imgNfo:
-            self.__unit=self.__imgNfo['width.unit']
+            self.__unit = self.__imgNfo['width.unit']
         elif 'height.unit' in self.__imgNfo:
-            self.__unit=self.__imgNfo['height.unit']
+            self.__unit = self.__imgNfo['height.unit']
 
         # original size only if in pixels
-        self.rbImportOriginalDocSize.setEnabled(self.__unit=='px')
+        self.rbImportOriginalDocSize.setEnabled(self.__unit == 'px')
 
         # default original/target sizes
-        self.__oSize=None
-        self.__tSize=None
+        self.__oSize = None
+        self.__tSize = None
 
         # define original size
-        if self.__unit=='px':
-            self.__oSize=QSize(int(round(self.__imgNfo['width'], 0)), int(round(self.__imgNfo['height'], 0)))
+        if self.__unit == 'px':
+            self.__oSize = QSize(int(round(self.__imgNfo['width'], 0)), int(round(self.__imgNfo['height'], 0)))
             self.lblSizeOrig.setText(f"{self.__oSize.width()}x{self.__oSize.height()}{self.__unit}")
         else:
             self.lblSizeOrig.setText(f"{self.__imgNfo['width']:.03f}x{self.__imgNfo['height']:.03f}{self.__unit}")
 
         # init ui
-        defaultChoice=BCSettings.get(BCSettingsKey.SESSION_IMPORT_SVG_DEFAULTCHOICE)
-        self.rbImportKritaDefault.setChecked(defaultChoice==0)
-        self.rbImportOriginalDocSize.setChecked(defaultChoice==1)
-        self.rbImportSetDocSize.setChecked(defaultChoice==2)
-        self.rbImportSetDocResolution.setChecked(defaultChoice==3)
+        defaultChoice = BCSettings.get(BCSettingsKey.SESSION_IMPORT_SVG_DEFAULTCHOICE)
+        self.rbImportKritaDefault.setChecked(defaultChoice == 0)
+        self.rbImportOriginalDocSize.setChecked(defaultChoice == 1)
+        self.rbImportSetDocSize.setChecked(defaultChoice == 2)
+        self.rbImportSetDocResolution.setChecked(defaultChoice == 3)
 
         self.rbImportKritaDefault.toggled.connect(self.__updateUi)
         self.rbImportOriginalDocSize.toggled.connect(self.__updateUi)
@@ -129,11 +133,10 @@ class BCImportDialogBoxSvg(QDialog):
 
         self.__updateUi()
 
-        if bcfile.format()==BCFileManagedFormat.SVGZ:
+        if bcfile.format() == BCFileManagedFormat.SVGZ:
             self.rbImportKritaDefault.setEnabled(False)
             if self.rbImportKritaDefault.isChecked():
                 self.rbImportSetDocSize.setChecked(True)
-
 
     def __accept(self):
         """Dialog button "OK" clicked"""
@@ -156,7 +159,6 @@ class BCImportDialogBoxSvg(QDialog):
 
         self.accept()
 
-
     def __updateUi(self):
         """update ui item according to current user choice"""
         self.cbSetDocSizeRef.setEnabled(self.rbImportSetDocSize.isChecked())
@@ -176,25 +178,25 @@ class BCImportDialogBoxSvg(QDialog):
         elif self.rbImportOriginalDocSize.isChecked():
             self.lblSizeTgt.setText(self.lblSizeOrig.text())
         elif self.rbImportSetDocResolution.isChecked():
-            w=int(convertSize(self.__imgNfo['width'], self.__unit, 'px', self.hsSetDocResolution.value(), 0))
-            h=int(convertSize(self.__imgNfo['height'], self.__unit, 'px', self.hsSetDocResolution.value(), 0))
-            self.__tSize=QSize(w, h)
+            w = int(convertSize(self.__imgNfo['width'], self.__unit, 'px', self.hsSetDocResolution.value(), 0))
+            h = int(convertSize(self.__imgNfo['height'], self.__unit, 'px', self.hsSetDocResolution.value(), 0))
+            self.__tSize = QSize(w, h)
             self.lblSizeTgt.setText(f"{w}x{h}px")
         elif self.rbImportSetDocSize.isChecked():
-            if self.cbSetDocSizeRef.currentIndex()==0:
+            if self.cbSetDocSizeRef.currentIndex() == 0:
                 # width as reference, calculate height
-                w=self.hsSetDocSize.value()
-                h=round(w/self.__imgNfo['imageRatio'])
+                w = self.hsSetDocSize.value()
+                h = round(w/self.__imgNfo['imageRatio'])
             else:
                 # height as reference, calculate width
-                h=self.hsSetDocSize.value()
-                w=round(h*self.__imgNfo['imageRatio'])
-            self.__tSize=QSize(w, h)
+                h = self.hsSetDocSize.value()
+                w = round(h*self.__imgNfo['imageRatio'])
+            self.__tSize = QSize(w, h)
             self.lblSizeTgt.setText(f"{w}x{h}px")
 
     def setup(self):
         """Return current selected mode"""
-        defaultResolution=int(Krita.instance().readSetting('', 'preferredVectorImportResolution', "300"))
+        defaultResolution = int(Krita.instance().readSetting('', 'preferredVectorImportResolution', "300"))
         if self.rbImportKritaDefault.isChecked():
             return (BCImportDialogBoxSvg.IMPORT_AS_DEFAULT, None, None, None)
         elif self.rbImportOriginalDocSize.isChecked():
@@ -218,13 +220,12 @@ class BCImportDialogBoxSvg(QDialog):
             return (returned, None, None, None, None)
 
 
-
 class BCImportSvg:
     """Provides function to import SVG files"""
 
-    IMPORT_OK=0
-    IMPORT_KO=1
-    IMPORT_CANCELLED=2
+    IMPORT_OK = 0
+    IMPORT_KO = 1
+    IMPORT_CANCELLED = 2
 
     SUPPORTED_FORMAT = [BCFileManagedFormat.SVG,
                         BCFileManagedFormat.SVGZ]
@@ -249,10 +250,10 @@ class BCImportSvg:
             try:
                 if file.format() == BCFileManagedFormat.SVG:
                     with open(file.fullPathName(), 'r') as fHandle:
-                        svgContent=fHandle.read()
+                        svgContent = fHandle.read()
                 else:
                     with gzip.open(file.fullPathName(), 'rb') as fHandle:
-                        svgContent=fHandle.read().decode()
+                        svgContent = fHandle.read().decode()
 
                 # parse document as XML
                 namespaces = dict([node for _, node in xmlElement.iterparse(StringIO(svgContent), events=['start-ns'])])
@@ -260,25 +261,24 @@ class BCImportSvg:
 
                 # update size to expected pixels size
                 try:
-                    xmlDoc.attrib['width']=f"{size.width()}px"
-                    xmlDoc.attrib['height']=f"{size.height()}px"
-                except:
+                    xmlDoc.attrib['width'] = f"{size.width()}px"
+                    xmlDoc.attrib['height'] = f"{size.height()}px"
+                except Exception:
                     pass
-
 
                 # update svgContent from modified XML document
                 for namespace in namespaces:
-                    if namespace!='svg':
+                    if namespace != 'svg':
                         ET.register_namespace(namespace, namespaces[namespace])
 
-                svgContent=ET.tostring(xmlDoc, encoding="unicode")
+                svgContent = ET.tostring(xmlDoc, encoding="unicode")
 
                 # create new document
-                document=Application.createDocument(size.width(), size.height(), file.baseName(), "RGBA", "U8", "", resolution)
+                document = Application.createDocument(size.width(), size.height(), file.baseName(), "RGBA", "U8", "", resolution)
                 document.setFileName(file.name())
 
                 # Create vector layer and add it to document
-                importedSvgFile=document.createVectorLayer(i18n(f"Imported Layer {file.format()} document"))
+                importedSvgFile = document.createVectorLayer(i18n(f"Imported Layer {file.format()} document"))
                 document.rootNode().addChildNode(importedSvgFile, None)
 
                 # add to document to view: need to do it before adding SVG content to vector layer
@@ -320,18 +320,18 @@ class BCImportSvg:
                     # 5: loop over shape to apply transformation
 
                     # 1--
-                    sr=QRectF(0,0,0,0)
+                    sr = QRectF(0, 0, 0, 0)
                     for shape in importedSvgFile.shapes():
-                        sr=sr.united(shape.boundingBox())
+                        sr = sr.united(shape.boundingBox())
 
                     # 2--
-                    dr=convertRectPtPx(QRect(0,0,size.width(), size.height()), resolution)
+                    dr = convertRectPtPx(QRect(0, 0, size.width(), size.height()), resolution)
 
                     # 3--
-                    ratio=min(dr.width()/sr.width(), dr.height()/sr.height())
+                    ratio = min(dr.width()/sr.width(), dr.height()/sr.height())
 
                     # 4--
-                    t=QTransform()
+                    t = QTransform()
                     t.scale(ratio, ratio)
                     t.translate(-sr.left(), -sr.top())
 

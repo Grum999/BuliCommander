@@ -1,27 +1,23 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
 # Copyright (C) 2019-2022 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+# A Krita plugin framework
 # -----------------------------------------------------------------------------
 
-
-
-
+# -----------------------------------------------------------------------------
+# The wlineedit module provides an extended version of QLineEdit
+#
+# Main class from this module
+#
+# - WLineEdit:
+#       Widget
+#       The main line edit widget
+#
 # -----------------------------------------------------------------------------
 
 from PyQt5.Qt import *
@@ -38,23 +34,24 @@ from ..modules.utils import (
     )
 from ..pktk import *
 
+
 class WLineEdit(QLineEdit):
     """A QLineEdit with signals emitted when focus In/Out changed"""
-    focusIn=Signal()
-    focusOut=Signal()
-    keyPressed=Signal(QKeyEvent, str, str)
+    focusIn = Signal()
+    focusOut = Signal()
+    keyPressed = Signal(QKeyEvent, str, str)
 
     def __init__(self, parent=None):
         super(WLineEdit, self).__init__(parent)
-        self.__regExValue=False
-        self.__regExValid=None
+        self.__regExValue = False
+        self.__regExValid = None
         self.setClearButtonEnabled(True)
         replaceLineEditClearButton(self)
 
     def __checkRegEx(self):
         """Check if current value is a valid regular expression"""
         if self.__regExValue:
-            self.__regExValid=regExIsValid(self.text())
+            self.__regExValid = regExIsValid(self.text())
 
     def focusInEvent(self, event):
         super(WLineEdit, self).focusInEvent(event)
@@ -65,7 +62,7 @@ class WLineEdit(QLineEdit):
         self.focusOut.emit()
 
     def keyPressEvent(self, event):
-        before=self.text()
+        before = self.text()
         super(WLineEdit, self).keyPressEvent(event)
         self.__checkRegEx()
         self.keyPressed.emit(event, self.text(), before)
@@ -88,8 +85,8 @@ class WLineEdit(QLineEdit):
         if not isinstance(value, bool):
             raise EInvalidType("Given `value` must be <bool>")
 
-        if self.__regExValue!=value:
-            self.__regExValue=value
+        if self.__regExValue != value:
+            self.__regExValue = value
             if self.__regExValue:
-                self.__regExValid=None
+                self.__regExValid = None
                 self.__checkRegEx()

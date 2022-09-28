@@ -1,22 +1,27 @@
-#-----------------------------------------------------------------------------
-# Buli Commander
-# Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Buli Commander
+# Copyright (C) 2019-2022 - Grum999
+# -----------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
 # -----------------------------------------------------------------------------
 # A Krita plugin designed to manage documents
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# The bcsettings module provides classes used to manage plugin settings
+# --> this module is a core module for plugin
+#
+# Main classes from this module
+#
+# - BCSettingsDialogBox:
+#       A user interface to manage settings
+#
+# - BCSettings:
+#       Allows to easily manage settings
+#       (read, write, default values, allowed values, ...)
+#
 # -----------------------------------------------------------------------------
 
 from enum import Enum
@@ -503,37 +508,41 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_FILES_NAVBAR_BUTTONS_QUICKFILTER,             True,                       SettingsFmt(bool)),
 
             SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_OVERMINSIZE,         2,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
-            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT,              0,                          SettingsFmt(int, [0,1,2,3])),
-            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS,              [2],                        SettingsFmt(list, [2,5,7,10,11])), # if list is changed, report change in BCViewFilesLv class
+            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_LAYOUT,              0,                          SettingsFmt(int, [0, 1, 2, 3])),
+            SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS,              [2],                        SettingsFmt(list, [2, 5, 7, 10, 11])),  # if list is changed, report change in BCViewFilesLv class
             SettingsRule(BCSettingsKey.CONFIG_PANELVIEW_FILES_MARKERS_MOVETONEXT,           True,                       SettingsFmt(bool)),
 
-            SettingsRule(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE,                             2,                          SettingsFmt(int, [0,1,2,3])),
+            SettingsRule(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE,                             2,                          SettingsFmt(int, [0, 1, 2, 3])),
             SettingsRule(BCSettingsKey.CONFIG_GLB_OS_WINDOWS_ICONMENU,                      False,                      SettingsFmt(bool)),
 
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED,                    False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_PROPERTIES,               [],                         SettingsFmt(list, str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FILENAME,                 '',                         SettingsFmt(str)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT,                   0,                          SettingsFmt(int, [0,1,2,3,4,5,6])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_FORMAT,                   0,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_ACTIVE,          True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_UDLAYOUT_CONTENT,         '',                         SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_HEADER_ACTIVE,            True,                       SettingsFmt(bool)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE,            2,                          SettingsFmt(int, [0,1,2,3])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_BORDERS_STYLE,            2,                          SettingsFmt(int, [0, 1, 2, 3])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_ACTIVE,          True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MINWIDTH_VALUE,           80,                         SettingsFmt(int)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_ACTIVE,          False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXT_MAXWIDTH_VALUE,           120,                        SettingsFmt(int)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_HEADER_ACTIVE,         True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_ENCLOSED,       False,                      SettingsFmt(bool)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR,      0,                          SettingsFmt(int, [0,1,2,3])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTCSV_FIELDS_SEPARATOR,      0,                          SettingsFmt(int, [0, 1, 2, 3])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_ACTIVE,        True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_UDLAYOUT_CONTENT,       '',                         SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_INCLUDED,        True,                       SettingsFmt(bool)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE,            0,                          SettingsFmt(int, [0,1,2,3])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_TXTMD_THUMBS_SIZE,            0,                          SettingsFmt(int, [0, 1, 2, 3])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in'])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00, 96.00, 150.00, 300.00, 600.00, 900.00, 1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm', 'cm', 'in'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2', 'A3', 'A4', 'A5', 'A6', 'B2 (ISO)',
+                                                                                                                                          'B3 (ISO)', 'B4 (ISO)', 'B5 (ISO)', 'B6 (ISO)',
+                                                                                                                                          'B2 (JIS)', 'B3 (JIS)', 'B4 (JIS)', 'B5 (JIS)', 'B6 (JIS)',
+                                                                                                                                          'Letter (US)', 'Legal (US)',
+                                                                                                                                          'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0, 1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAPER_COLOR,           '#ffffff',                  SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_MARGINS_LEFT,          20.0,                       SettingsFmt(float)),
@@ -554,11 +563,11 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BORDER_RADIUS,    0.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_ACTIVE,        False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PAGE_BG_COL,           '#FF000000',                SettingsFmt(str)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_NBPERROW,       2,                          SettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_NBPERROW,       2,                          SettingsFmt(int, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_OUTER,  5.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_INNER,  1.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_SPACING_TEXT,   1.0,                        SettingsFmt(float)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS,        'none',                     SettingsFmt(str, ['none','left','right','top','bottom'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_POS,        'none',                     SettingsFmt(str, ['none', 'left', 'right', 'top', 'bottom'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTNAME,    'DejaVu sans',              SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTSIZE,    10.0,                       SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_TXT_FNTCOL,     '#000000',                  SettingsFmt(str)),
@@ -569,12 +578,16 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_ACTIVE,      False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_BG_COL,         '#FF000000',                SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_THUMBS_IMGMOD,         'fit',                      SettingsFmt(str, ['fit', 'crop'])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE,          0,                          SettingsFmt(int, [0,1])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_DOCPDF_PREVIEW_MODE,          0,                          SettingsFmt(int, [0, 1])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00, 96.00, 150.00, 300.00, 600.00, 900.00, 1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm', 'cm', 'in', 'px'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2', 'A3', 'A4', 'A5', 'A6',
+                                                                                                                                          'B2 (ISO)', 'B3 (ISO)', 'B4 (ISO)', 'B5 (ISO)', 'B6 (ISO)',
+                                                                                                                                          'B2 (JIS)', 'B3 (JIS)', 'B4 (JIS)', 'B5 (JIS)', 'B6 (JIS)',
+                                                                                                                                          'Letter (US)', 'Legal (US)',
+                                                                                                                                          'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0, 1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAPER_COLOR,           '#FFFFFF',                  SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_MARGINS_LEFT,          20.0,                       SettingsFmt(float)),
@@ -595,11 +608,11 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BORDER_RADIUS,    0.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_ACTIVE,        False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PAGE_BG_COL,           '#FF000000',                SettingsFmt(str)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_NBPERROW,       2,                          SettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_NBPERROW,       2,                          SettingsFmt(int, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_OUTER,  5.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_INNER,  1.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_SPACING_TEXT,   1.0,                        SettingsFmt(float)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS,        'none',                     SettingsFmt(str, ['none','left','right','top','bottom'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_POS,        'none',                     SettingsFmt(str, ['none', 'left', 'right', 'top', 'bottom'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTNAME,    'DejaVu sans',              SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTSIZE,    10.0,                       SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_TXT_FNTCOL,     '#000000',                  SettingsFmt(str)),
@@ -611,12 +624,16 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_BG_COL,         '#FF000000',                SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_THUMBS_IMGMOD,         'fit',                      SettingsFmt(str, ['fit', 'crop'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_OPT_OPENFILE,          True,                       SettingsFmt(bool)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE,          0,                          SettingsFmt(int, [0,1])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGKRA_PREVIEW_MODE,          0,                          SettingsFmt(int, [0, 1])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00, 96.00, 150.00, 300.00, 600.00, 900.00, 1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm', 'cm', 'in', 'px'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2', 'A3', 'A4', 'A5', 'A6',
+                                                                                                                                          'B2 (ISO)', 'B3 (ISO)', 'B4 (ISO)', 'B5 (ISO)', 'B6 (ISO)',
+                                                                                                                                          'B2 (JIS)', 'B3 (JIS)', 'B4 (JIS)', 'B5 (JIS)', 'B6 (JIS)',
+                                                                                                                                          'Letter (US)', 'Legal (US)',
+                                                                                                                                          'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0, 1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAPER_COLOR,           '#FFFFFF',                  SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_MARGINS_LEFT,          20.0,                       SettingsFmt(float)),
@@ -637,11 +654,11 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BORDER_RADIUS,    0.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_ACTIVE,        False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PAGE_BG_COL,           '#FF000000',                SettingsFmt(str)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_NBPERROW,       2,                          SettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_NBPERROW,       2,                          SettingsFmt(int, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_OUTER,  5.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_INNER,  1.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_SPACING_TEXT,   1.0,                        SettingsFmt(float)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS,        'none',                     SettingsFmt(str, ['none','left','right','top','bottom'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_POS,        'none',                     SettingsFmt(str, ['none', 'left', 'right', 'top', 'bottom'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTNAME,    'DejaVu sans',              SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTSIZE,    10.0,                       SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_TXT_FNTCOL,     '#000000',                  SettingsFmt(str)),
@@ -653,12 +670,16 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_BG_COL,         '#FF000000',                SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_THUMBS_IMGMOD,         'fit',                      SettingsFmt(str, ['fit', 'crop'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_OPT_OPENFILE,          False,                      SettingsFmt(bool)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE,          0,                          SettingsFmt(int, [0,1])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGJPG_PREVIEW_MODE,          0,                          SettingsFmt(int, [0, 1])),
 
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00,96.00,150.00,300.00,600.00,900.00,1200.00])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm','cm','in', 'px'])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2','A3','A4','A5','A6','B2 (ISO)','B3 (ISO)','B4 (ISO)','B5 (ISO)','B6 (ISO)','B2 (JIS)','B3 (JIS)','B4 (JIS)','B5 (JIS)','B6 (JIS)','Letter (US)','Legal (US)', 'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0,1])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_RESOLUTION,      300.0,                      SettingsFmt(float, [72.00, 96.00, 150.00, 300.00, 600.00, 900.00, 1200.00])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_UNIT,            'mm',                       SettingsFmt(str, ['mm', 'cm', 'in', 'px'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_SIZE,            'A4',                       SettingsFmt(str, ['A2', 'A3', 'A4', 'A5', 'A6',
+                                                                                                                                          'B2 (ISO)', 'B3 (ISO)', 'B4 (ISO)', 'B5 (ISO)', 'B6 (ISO)',
+                                                                                                                                          'B2 (JIS)', 'B3 (JIS)', 'B4 (JIS)', 'B5 (JIS)', 'B6 (JIS)',
+                                                                                                                                          'Letter (US)', 'Legal (US)',
+                                                                                                                                          'Square (A2)', 'Square (A3)', 'Square (A4)', 'Square (A5)', 'Square (A6)'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_ORIENTATION,     0,                          SettingsFmt(int, [0, 1])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR_ACTIVE,    False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAPER_COLOR,           '#FFFFFF',                  SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_MARGINS_LEFT,          20.0,                       SettingsFmt(float)),
@@ -679,11 +700,11 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BORDER_RADIUS,    0.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_ACTIVE,        False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PAGE_BG_COL,           '#FF000000',                SettingsFmt(str)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_NBPERROW,       2,                          SettingsFmt(int, [1,2,3,4,5,6,7,8,9,10,11,12])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_NBPERROW,       2,                          SettingsFmt(int, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_OUTER,  5.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_INNER,  1.0,                        SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_SPACING_TEXT,   1.0,                        SettingsFmt(float)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS,        'none',                     SettingsFmt(str, ['none','left','right','top','bottom'])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_POS,        'none',                     SettingsFmt(str, ['none', 'left', 'right', 'top', 'bottom'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTNAME,    'DejaVu sans',              SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTSIZE,    10.0,                       SettingsFmt(float)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_TXT_FNTCOL,     '#000000',                  SettingsFmt(str)),
@@ -695,15 +716,15 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_BG_COL,         '#FF000000',                SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_THUMBS_IMGMOD,         'fit',                      SettingsFmt(str, ['fit', 'crop'])),
             SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_OPT_OPENFILE,          False,                      SettingsFmt(bool)),
-            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE,          0,                          SettingsFmt(int, [0,1])),
+            SettingsRule(BCSettingsKey.CONFIG_EXPORTFILESLIST_IMGPNG_PREVIEW_MODE,          0,                          SettingsFmt(int, [0, 1])),
 
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_GLB_SAVED,                       False,                      SettingsFmt(bool)),
-            SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_GLB_FORMAT,                      'kra',                      SettingsFmt(str, ['kra','png','jpeg'])),
+            SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_GLB_FORMAT,                      'kra',                      SettingsFmt(str, ['kra', 'png', 'jpeg'])),
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_MODE,                 'sdir',                     SettingsFmt(str, ['sdir', 'ddir'])),
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_GLB_TARGET_FILEPATTERN,          '{file:baseName}.{targetExtension}',
                                                                                                                         SettingsFmt(str)),
 
-            SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_COMPRESSION,         6,                          SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9])),
+            SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_COMPRESSION,         6,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INDEXED,             False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_INTERLACED,          False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_SAVEICCPROFILE,      False,                      SettingsFmt(bool)),
@@ -712,7 +733,7 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGPNG_SAVE_BGCOLOR,             '#FFFFFF',                  SettingsFmt(str)),
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_QUALITY,             85,                         SettingsFmt(int, list(range(0, 101)))),
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SMOOTHING,           15,                         SettingsFmt(int, list(range(0, 101)))),
-            SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SUBSAMPLING,         '4:2:0',                    SettingsFmt(str, ['4:2:0','4:2:2','4:4:0','4:4:4'])),
+            SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SUBSAMPLING,         '4:2:0',                    SettingsFmt(str, ['4:2:0', '4:2:2', '4:4:0', '4:4:4'])),
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_PROGRESSIVE,         True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_OPTIMIZE,            True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_CONVERTFILES_IMGJPG_SAVE_SAVEICCPROFILE,      False,                      SettingsFmt(bool)),
@@ -728,14 +749,14 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_MANAGEDONLY,       True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_BACKUP,            False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_HIDDEN,            False,                      SettingsFmt(bool)),
-            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_LAYOUT,            'top',                      SettingsFmt(str, ['full','top','left','right','bottom'])),
+            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_LAYOUT,            'top',                      SettingsFmt(str, ['full', 'top', 'left', 'right', 'bottom'])),
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_THUMBNAIL,         False,                      SettingsFmt(bool)),
-            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_TV,       1,                          SettingsFmt(int, [0,1,2,3,4,5,6,7,8])),
-            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_LV,       2,                          SettingsFmt(int, [0,1,2,3,4,5])),
-            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_NFOROW,            7,                          SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9])),
-            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_CLIPBOARD_ICONSIZE,      1,                          SettingsFmt(int, [0,1,2,3,4,5,6,7,8])),
+            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_TV,       1,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8])),
+            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_LV,       2,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
+            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_NFOROW,            7,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])),
+            SettingsRule(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_CLIPBOARD_ICONSIZE,      1,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8])),
 
-            SettingsRule(BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_BORDER,             3,                          SettingsFmt(int, [0,1,2,3])),
+            SettingsRule(BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_BORDER,             3,                          SettingsFmt(int, [0, 1, 2, 3])),
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_HEADER,             True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MINWIDTH,           80,                         SettingsFmt(int)),
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH,           120,                        SettingsFmt(int)),
@@ -743,7 +764,9 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_DSESSION_INFO_TOCLIPBOARD_MAXWIDTH_ACTIVE,    False,                      SettingsFmt(bool)),
 
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_GENERAL,                 BCSettingsValues.CLIPBOARD_MODE_ALWAYS,
-                                                                                                                        SettingsFmt(str, [BCSettingsValues.CLIPBOARD_MODE_ALWAYS, BCSettingsValues.CLIPBOARD_MODE_ACTIVE, BCSettingsValues.CLIPBOARD_MODE_MANUAL])),
+                                                                                                                        SettingsFmt(str, [BCSettingsValues.CLIPBOARD_MODE_ALWAYS,
+                                                                                                                                          BCSettingsValues.CLIPBOARD_MODE_ACTIVE,
+                                                                                                                                          BCSettingsValues.CLIPBOARD_MODE_MANUAL])),
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_SYSTRAY,                 True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MAXISZE,                      1024000000,                 SettingsFmt(int)),
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_PERSISTENT,                   False,                      SettingsFmt(bool)),
@@ -751,7 +774,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_URL_PARSE_TEXTHTML,                 True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC,                False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION,                     BCSettingsValues.CLIPBOARD_ACTION_NLAYER,
-                                                                                                                        SettingsFmt(str, [BCSettingsValues.CLIPBOARD_ACTION_NLAYER,BCSettingsValues.CLIPBOARD_ACTION_NDOCUMENT])),
+                                                                                                                        SettingsFmt(str, [BCSettingsValues.CLIPBOARD_ACTION_NLAYER,
+                                                                                                                                          BCSettingsValues.CLIPBOARD_ACTION_NDOCUMENT])),
             SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILEPATH,              [],                         SettingsFmt(list, str)),
             SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILENAME,              [],                         SettingsFmt(list, str)),
             SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILESIZE,              [],                         SettingsFmt(list, str)),
@@ -771,7 +795,7 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_TOOLBARS,                                     [],                         SettingsFmt(list, dict)),
             SettingsRule(BCSettingsKey.SESSION_TOOLBARS,                                    [],                         SettingsFmt(list, dict)),
 
-            SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER,                     3,                          SettingsFmt(int, [0,1,2,3])),
+            SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_BORDER,                     3,                          SettingsFmt(int, [0, 1, 2, 3])),
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_HEADER,                     True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MINWIDTH,                   80,                         SettingsFmt(int)),
             SettingsRule(BCSettingsKey.SESSION_INFO_TOCLIPBOARD_MAXWIDTH,                   120,                        SettingsFmt(int)),
@@ -781,13 +805,19 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_SPLITTER_POSITION,                [1000, 1000],               SettingsFmt(int), SettingsFmt(int)),
             SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_PANEL_SECONDARYVISIBLE,           True,                       SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_PANEL_HIGHLIGHTED,                0,                          SettingsFmt(int, [0, 1])),
-            SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY,                  [-1,-1,-1,-1],              SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY,                  [-1, -1, -1, -1],           SettingsFmt(int),
+                                                                                                                        SettingsFmt(int),
+                                                                                                                        SettingsFmt(int),
+                                                                                                                        SettingsFmt(int)),
             SettingsRule(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED,                 False,                      SettingsFmt(bool)),
 
 
-            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_SPLITTER_POSITION,              [800, 200]  ,               SettingsFmt(int), SettingsFmt(int)),
-            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_TAB_ACTIVE,                     'basic',                    SettingsFmt(str, ['basic','advanced'])),
-            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_GEOMETRY,                [-1,-1,-1,-1],              SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_SPLITTER_POSITION,              [800, 200],                 SettingsFmt(int), SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_TAB_ACTIVE,                     'basic',                    SettingsFmt(str, ['basic', 'advanced'])),
+            SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_GEOMETRY,                [-1, -1, -1, -1],           SettingsFmt(int),
+                                                                                                                        SettingsFmt(int),
+                                                                                                                        SettingsFmt(int),
+                                                                                                                        SettingsFmt(int)),
             SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_WINDOW_MAXIMIZED,               False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_BASIC,                 '',                         SettingsFmt(str)),
             SettingsRule(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_ADVANCED,              '',                         SettingsFmt(str)),
@@ -795,10 +825,16 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.SESSION_EXPORTFILESLIST_LASTFILE,                    '',                         SettingsFmt(str)),
 
             SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_EDITOR_LASTFILE,            '',                         SettingsFmt(str)),
-            SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_EDITOR_WINDOW_GEOMETRY,     [-1, -1, -1, -1],           SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_EDITOR_WINDOW_GEOMETRY,     [-1, -1, -1, -1],           SettingsFmt(int),
+                                                                                                                        SettingsFmt(int),
+                                                                                                                        SettingsFmt(int),
+                                                                                                                        SettingsFmt(int)),
             SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_EDITOR_WINDOW_MAXIMIZED,    False,                      SettingsFmt(bool)),
             SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_VEDITOR_LASTFILE,           '',                         SettingsFmt(str)),
-            SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_VEDITOR_WINDOW_GEOMETRY,    [-1, -1, -1, -1],           SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
+            SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_VEDITOR_WINDOW_GEOMETRY,    [-1, -1, -1, -1],           SettingsFmt(int),
+                                                                                                                        SettingsFmt(int),
+                                                                                                                        SettingsFmt(int),
+                                                                                                                        SettingsFmt(int)),
             SettingsRule(BCSettingsKey.SESSION_MASSRENAMEWINDOW_VEDITOR_WINDOW_MAXIMIZED,   False,                      SettingsFmt(bool)),
 
             SettingsRule(BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY,               True,                       SettingsFmt(bool)),
@@ -810,48 +846,48 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.SESSION_FILES_LASTDOC_O_ITEMS,                       [],                         SettingsFmt(list)),
             SettingsRule(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS,                       [],                         SettingsFmt(list)),
 
-            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_DEFAULTCHOICE,                    0,                          SettingsFmt(int, [0,1,2,3])), # default, org. size, set size, set res.
-            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETSIZE_SELECTED,                 0,                          SettingsFmt(int, [0,1])),     # width, height
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_DEFAULTCHOICE,                    0,                          SettingsFmt(int, [0, 1, 2, 3])),  # default, org. size, set size, set res.
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETSIZE_SELECTED,                 0,                          SettingsFmt(int, [0, 1])),     # width, height
             SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETSIZE_VALUE,                    1000,                       SettingsFmt(int)),
             SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_SETRESOLUTION_RESOLUTION,         300,                        SettingsFmt(int)),
             SettingsRule(BCSettingsKey.SESSION_IMPORT_SVG_IGNOREVIEWBOX,                    False,                      SettingsFmt(bool)),
 
-            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_DEFAULTCHOICE,                    0,                          SettingsFmt(int, [0,1])),           # All, Selection
-            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_LAYERSORDER,                      0,                          SettingsFmt(int, [0,1])),           # first at top, first at bottom
-            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_ALIGNMENT,                        0,                          SettingsFmt(int, [0,1,2,3,4,5,6])), # MC, TL, TR, ML, MR, BL, BR
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_DEFAULTCHOICE,                    0,                          SettingsFmt(int, [0, 1])),                  # All, Selection
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_LAYERSORDER,                      0,                          SettingsFmt(int, [0, 1])),                  # first at top, first at bottom
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_ALIGNMENT,                        0,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6])),   # MC, TL, TR, ML, MR, BL, BR
             SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_PREVIEW_ICONSSIZE,                3,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
         ]
 
         for panelId in panelIds:
-            rules+=[
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_LAYOUT.id(panelId=panelId),             'top',                      SettingsFmt(str, ['full','top','left','right','bottom'])),
+            rules += [
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_LAYOUT.id(panelId=panelId),             'top',                      SettingsFmt(str, ['full', 'top', 'left', 'right', 'bottom'])),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_VIEWMODE.id(panelId=panelId),           0,                          SettingsFmt(int, [0, 1])),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId),        '@home',                    SettingsFmt(str)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId),      False,                      SettingsFmt(bool)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId),        '',                         SettingsFmt(str)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTEROPTIONS.id(panelId=panelId),      0,                          SettingsFmt(int)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId),         [1,True],                   SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]), SettingsFmt(bool)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId),        [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]),
-                                                                                                                                            SettingsFmt(int, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18])),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId),         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId),         [1, True],                   SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]), SettingsFmt(bool)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId),        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId),         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                                                                                                                                             SettingsFmt(int),
                                                                                                                                             SettingsFmt(int),
                                                                                                                                             SettingsFmt(int),
@@ -871,7 +907,7 @@ class BCSettings(Settings):
                                                                                                                                             SettingsFmt(int),
                                                                                                                                             SettingsFmt(int),
                                                                                                                                             SettingsFmt(int)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE.id(panelId=panelId),      [True,False,True,False,False,True,False,True,False,False,True,True,False,False,False,False,False,True,False],
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE.id(panelId=panelId),      [True, False, True, False, False, True, False, True, False, False, True, True, False, False, False, False, False, True, False],
                                                                                                                                             SettingsFmt(bool),
                                                                                                                                             SettingsFmt(bool),
                                                                                                                                             SettingsFmt(bool),
@@ -896,23 +932,38 @@ class BCSettings(Settings):
 
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_IMGSIZEUNIT.id(panelId=panelId),        'mm',                       SettingsFmt(str, ['mm', 'cm', 'in'])),
 
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_LAYOUT.id(panelId=panelId),         'top',                      SettingsFmt(str, ['top','left','right','bottom'])),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSORT.id(panelId=panelId),     [3,False],                  SettingsFmt(int, [0,1,2,3,4,5,6]), SettingsFmt(bool)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNORDER.id(panelId=panelId),    [0,1,2,3,4,5,6],            SettingsFmt(int, [0,1,2,3,4,5,6]), SettingsFmt(int, [0,1,2,3,4,5,6]), SettingsFmt(int, [0,1,2,3,4,5,6]), SettingsFmt(int, [0,1,2,3,4,5,6]), SettingsFmt(int, [0,1,2,3,4,5,6]), SettingsFmt(int, [0,1,2,3,4,5,6]), SettingsFmt(int, [0,1,2,3,4,5,6])),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSIZE.id(panelId=panelId),     [0,0,0,0,0,0,0],            SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int), SettingsFmt(int)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_LAYOUT.id(panelId=panelId),         'top',                      SettingsFmt(str, ['top', 'left', 'right', 'bottom'])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSORT.id(panelId=panelId),     [3, False],                 SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6]), SettingsFmt(bool)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNORDER.id(panelId=panelId),    [0, 1, 2, 3, 4, 5, 6],      SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6]),
+                                                                                                                                            SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_COLUMNSIZE.id(panelId=panelId),     [0, 0, 0, 0, 0, 0, 0],      SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int),
+                                                                                                                                            SettingsFmt(int)),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_CLIPBOARD_ICONSIZE.id(panelId=panelId),       0,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6, 7, 8])),
 
                     SettingsRule(BCSettingsKey.SESSION_PANEL_VIEW_FILES_THUMBNAIL.id(panelId=panelId),          False,                      SettingsFmt(bool)),
 
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId),                'files',                    SettingsFmt(str, ['files','documents','clipboard'])),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId),               'info',                     SettingsFmt(str, ['info','dirtree'])),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId),           'generic',                  SettingsFmt(str, ['generic','image','kra'])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_ACTIVETAB_MAIN.id(panelId=panelId),                'files',                    SettingsFmt(str, ['files', 'documents', 'clipboard'])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES.id(panelId=panelId),               'info',                     SettingsFmt(str, ['info', 'dirtree'])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_ACTIVETAB_FILES_NFO.id(panelId=panelId),           'generic',                  SettingsFmt(str, ['generic', 'image', 'kra'])),
                     SettingsRule(BCSettingsKey.SESSION_PANEL_POSITIONTAB_MAIN.id(panelId=panelId),              ['files', 'documents', 'clipboard'],
-                                                                                                                                            SettingsFmt(str, ['files','documents','clipboard']), SettingsFmt(str, ['files','documents','clipboard']), SettingsFmt(str, ['files','documents','clipboard'])),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_POSITIONTAB_FILES.id(panelId=panelId),             ['info', 'dirtree'],        SettingsFmt(str, ['info','dirtree']), SettingsFmt(str, ['info','dirtree'])),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_SPLITTER_CLIPBOARD_POSITION.id(panelId=panelId),   [1000,1000],                SettingsFmt(int), SettingsFmt(int)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId),       [1000,1000],                SettingsFmt(int), SettingsFmt(int)),
-                    SettingsRule(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId),     [1000,1000],                SettingsFmt(int), SettingsFmt(int)),
+                                                                                                                                            SettingsFmt(str, ['files', 'documents', 'clipboard']),
+                                                                                                                                            SettingsFmt(str, ['files', 'documents', 'clipboard']),
+                                                                                                                                            SettingsFmt(str, ['files', 'documents', 'clipboard'])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_POSITIONTAB_FILES.id(panelId=panelId),             ['info', 'dirtree'],        SettingsFmt(str, ['info', 'dirtree']),
+                                                                                                                                            SettingsFmt(str, ['info', 'dirtree'])),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_SPLITTER_CLIPBOARD_POSITION.id(panelId=panelId),   [1000, 1000],               SettingsFmt(int), SettingsFmt(int)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_SPLITTER_FILES_POSITION.id(panelId=panelId),       [1000, 1000],               SettingsFmt(int), SettingsFmt(int)),
+                    SettingsRule(BCSettingsKey.SESSION_PANEL_SPLITTER_PREVIEW_POSITION.id(panelId=panelId),     [1000, 1000],               SettingsFmt(int), SettingsFmt(int)),
 
                     SettingsRule(BCSettingsKey.SESSION_PANEL_PREVIEW_BACKGROUND.id(panelId=panelId),            4,                          SettingsFmt(int, [0, 1, 2, 3, 4]))
                 ]
@@ -931,7 +982,6 @@ class BCSettingsDialogBox(QDialog):
     CATEGORY_CLIPBOARD = 4
     CATEGORY_TOOLBAR_CONFIG = 5
     CATEGORY_CACHE = 6
-
 
     def __init__(self, title, uicontroller, parent=None):
         super(BCSettingsDialogBox, self).__init__(parent)
@@ -972,11 +1022,10 @@ class BCSettingsDialogBox(QDialog):
 
         self.__initialise()
 
-
     def __initialise(self):
         """Initialise interface"""
         def updateBtn():
-            if self.__uiController.history().length()>0:
+            if self.__uiController.history().length() > 0:
                 self.pbCNHistoryClear.setEnabled(True)
                 self.pbCNHistoryClear.setToolTip(i18n(f'Clear current navigation history ({self.__uiController.history().length()} places in history)'))
             else:
@@ -984,16 +1033,17 @@ class BCSettingsDialogBox(QDialog):
                 self.pbCNHistoryClear.setToolTip(i18n(f'Clear current navigation history (no places in history)'))
 
             nbTotalDoc = len(set((self.__uiController.lastDocumentsOpened().list() + self.__uiController.lastDocumentsSaved().list())))
-            if nbTotalDoc>0:
+            if nbTotalDoc > 0:
                 self.pbCNLastDocumentsClear.setEnabled(True)
                 self.pbCNLastDocumentsClear.setToolTip(i18n(f'Clear list of last opened/saved documents ({nbTotalDoc} documents in list)'))
             else:
                 self.pbCNLastDocumentsClear.setEnabled(False)
                 self.pbCNLastDocumentsClear.setToolTip(i18n(f'Clear list of last opened/saved documents (no document in list)'))
 
-            if len(Krita.instance().recentDocuments())>0:
+            if len(Krita.instance().recentDocuments()) > 0:
                 self.pbCNLastDocumentsReset.setEnabled(True)
-                self.pbCNLastDocumentsReset.setToolTip(i18n(f'Reset list of last opened/saved documents from Krita\'s internal list ({len(Krita.instance().recentDocuments())} documents in list)'))
+                self.pbCNLastDocumentsReset.setToolTip(i18n(f'Reset list of last opened/saved documents from Krita\'s internal list ({len(Krita.instance().recentDocuments())} '
+                                                            f'documents in list)'))
             else:
                 self.pbCNLastDocumentsReset.setEnabled(False)
                 self.pbCNLastDocumentsReset.setToolTip(i18n(f'Reset list of last opened/saved documents from Krita\'s internal list (no document in list)'))
@@ -1001,19 +1051,23 @@ class BCSettingsDialogBox(QDialog):
         @pyqtSlot('QString')
         def setHomeDirSys(action):
             self.bcpbCNUserDefined.setEnabled(False)
+
         @pyqtSlot('QString')
         def setHomeDirUD(action):
             self.bcpbCNUserDefined.setEnabled(True)
+
         @pyqtSlot('QString')
         def historyClear(action):
             if self.__uiController.commandGoHistoryClearUI():
                 self.pbCNHistoryClear.setEnabled(False)
                 updateBtn()
+
         @pyqtSlot('QString')
         def lastDocumentsClear(action):
             if self.__uiController.commandGoLastDocsClearUI():
                 self.pbCNLastDocumentsClear.setEnabled(False)
                 updateBtn()
+
         @pyqtSlot('QString')
         def lastDocumentsReset(action):
             if self.__uiController.commandGoLastDocsResetUI():
@@ -1072,7 +1126,7 @@ class BCSettingsDialogBox(QDialog):
 
         self.cbCGLaunchFromFileMenu.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
 
-        if sys.platform=='win32':
+        if sys.platform == 'win32':
             self.cbCGMiscWindowsMenuIcons.setEnabled(True)
             self.cbCGMiscWindowsMenuIcons.setChecked(BCSettings.get(BCSettingsKey.CONFIG_GLB_OS_WINDOWS_ICONMENU))
         else:
@@ -1156,9 +1210,9 @@ class BCSettingsDialogBox(QDialog):
             self.rbCCModeManual.setChecked(True)
 
         value = BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION)
-        if value==BCSettingsValues.CLIPBOARD_ACTION_NLAYER:
+        if value == BCSettingsValues.CLIPBOARD_ACTION_NLAYER:
             self.rbCCActionPasteAsNewLayer.setChecked(True)
-        elif value==BCSettingsValues.CLIPBOARD_ACTION_NDOCUMENT:
+        elif value == BCSettingsValues.CLIPBOARD_ACTION_NDOCUMENT:
             self.rbCCActionPasteAsNewDocument.setChecked(True)
 
         self.cbCCAsNewDocument.setChecked(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC))
@@ -1177,7 +1231,7 @@ class BCSettingsDialogBox(QDialog):
         elif value == BCSettingsDialogBox.BCViewFilesLv.OPTION_LAYOUT_GRIDINFO_RIGHT:
             self.rbCFNfoGridRight.setChecked(True)
 
-        cpvGridFields={
+        cpvGridFields = {
                 2:  OrderedItem(i18n('File name'), 2, True),
                 5:  OrderedItem(i18n('Image format'), 5, True),
                 7:  OrderedItem(i18n('File date'), 7, True),
@@ -1185,11 +1239,11 @@ class BCSettingsDialogBox(QDialog):
                 11: OrderedItem(i18n('Image dimension'), 11, True)
             }
 
-        gridFieldsIndex=BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS)
-        gridFields=[cpvGridFields[index] for index in gridFieldsIndex]
+        gridFieldsIndex = BCSettings.get(BCSettingsKey.CONFIG_PANELVIEW_FILES_GRIDINFO_FIELDS)
+        gridFields = [cpvGridFields[index] for index in gridFieldsIndex]
         for index in [2, 7, 10, 5, 11]:
-            item=cpvGridFields[index]
-            if not index in gridFieldsIndex:
+            item = cpvGridFields[index]
+            if index not in gridFieldsIndex:
                 item.setCheckState(False)
                 gridFields.append(item)
 
@@ -1206,7 +1260,6 @@ class BCSettingsDialogBox(QDialog):
         self.wToolbarConfiguration.endAvailableActionUpdate()
         self.wToolbarConfiguration.availableActionsExpandAll()
         self.wToolbarConfiguration.toolbarsImport(BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS))
-
 
     def __applySettings(self):
         """Apply current settings"""
@@ -1293,7 +1346,7 @@ class BCSettingsDialogBox(QDialog):
         if self.rbCCActionPasteAsNewLayer.isChecked():
             self.__uiController.commandSettingsClipboardDefaultAction(BCSettingsValues.CLIPBOARD_ACTION_NLAYER)
         else:
-            #self.rbCCActionPasteAsNewDocument.isChecked():
+            # self.rbCCActionPasteAsNewDocument.isChecked():
             self.__uiController.commandSettingsClipboardDefaultAction(BCSettingsValues.CLIPBOARD_ACTION_NDOCUMENT)
 
         self.__uiController.commandSettingsClipboardPasteAsNewDocument(self.cbCCAsNewDocument.isChecked())
@@ -1316,7 +1369,6 @@ class BCSettingsDialogBox(QDialog):
         # --- Toolbars category ----------------------------------------------------------
         self.__uiController.commandSettingsToolbars(self.wToolbarConfiguration.toolbarsExport(), BCSettings.get(BCSettingsKey.SESSION_TOOLBARS))
 
-
     def __replaceOpenDbAlert(self, checked):
         """Tick has been changed for checkbox cbCGLaunchReplaceOpenDbXX<"Overrides Krita 'Open' function">
 
@@ -1334,16 +1386,14 @@ class BCSettingsDialogBox(QDialog):
                     i18n(f"{self.__title}::Override Krita's native ""Open file"" dialog"),
                     i18n(f"Once option is applied, Krita's native <i>Open file</i> dialog will be replaced by <i>Buli Commander</><br><br>"
                          f"If later you want restore original <i>Open file</i> dialog, keep in mind that at this moment you'll need to restart Krita"
-                        )
-                )
+                         )
+                    )
         else:
             # User want to restore native dialog box
             WDialogMessage.display(
                     i18n(f"{self.__title}::Restore Krita's native ""Open file"" dialog"),
-                    i18n(f"Please keep in mind that original <i>Open file</i> dialog will be restored only on next Krita's startup"
-                        )
-                )
-
+                    i18n(f"Please keep in mind that original <i>Open file</i> dialog will be restored only on next Krita's startup")
+                    )
 
     def __categoryChanged(self):
         """Set page according to category"""
@@ -1353,7 +1403,6 @@ class BCSettingsDialogBox(QDialog):
             # calculate cache nb files+size
             self.__calculateCacheSize()
 
-
     def __setCategory(self, value):
         """Set category setting
 
@@ -1361,44 +1410,41 @@ class BCSettingsDialogBox(QDialog):
         """
         self.lvCategory.setCurrentRow(value)
 
-
     def __calculateCacheSize(self):
         """Calculate cache size"""
         nbFiles = 0
         sizeFiles = 0
         for root, dirs, files in os.walk(BCFile.thumbnailCacheDirectory()):
-            sizeFiles+=sum(getsize(join(root, name)) for name in files)
-            nbFiles+=len(files)
+            sizeFiles += sum(getsize(join(root, name)) for name in files)
+            nbFiles += len(files)
 
         if self.rbCGFileUnitBinary.isChecked():
             self.lblCCINbFileAndSize.setText(f'{nbFiles} files, {bytesSizeToStr(sizeFiles, BCSettingsValues.FILE_UNIT_KIB)}')
         else:
             self.lblCCINbFileAndSize.setText(f'{nbFiles} files, {bytesSizeToStr(sizeFiles, BCSettingsValues.FILE_UNIT_KB)}')
 
-        self.pbCCIClearCache.setEnabled(sizeFiles>0)
-
+        self.pbCCIClearCache.setEnabled(sizeFiles > 0)
 
         nbItemsS, sizeItemsS = self.__uiController.clipboard().cacheSizeS(True)
         if self.rbCGFileUnitBinary.isChecked():
             self.lblCCINbItemsAndSizeCS.setText(f'{nbItemsS} items, {bytesSizeToStr(sizeItemsS, BCSettingsValues.FILE_UNIT_KIB)}')
         else:
             self.lblCCINbItemsAndSizeCS.setText(f'{nbItemsS} items, {bytesSizeToStr(sizeItemsS, BCSettingsValues.FILE_UNIT_KB)}')
-        self.pbCCIClearCacheCS.setEnabled(sizeItemsS>0)
+        self.pbCCIClearCacheCS.setEnabled(sizeItemsS > 0)
 
         nbItemsP, sizeItemsP = self.__uiController.clipboard().cacheSizeP()
         if self.rbCGFileUnitBinary.isChecked():
             self.lblCCINbItemsAndSizeCP.setText(f'{nbItemsP} items, {bytesSizeToStr(sizeItemsP, BCSettingsValues.FILE_UNIT_KIB)}')
         else:
             self.lblCCINbItemsAndSizeCP.setText(f'{nbItemsP} items, {bytesSizeToStr(sizeItemsP, BCSettingsValues.FILE_UNIT_KB)}')
-        self.pbCCIClearCacheCP.setEnabled(sizeItemsP>0)
+        self.pbCCIClearCacheCP.setEnabled(sizeItemsP > 0)
 
-        dbStats=BCFileCache.globalInstance().getStats()
+        dbStats = BCFileCache.globalInstance().getStats()
         if self.rbCGFileUnitBinary.isChecked():
             self.lblCCIDbCache.setText(f"{dbStats['nbHash']} images, {bytesSizeToStr(dbStats['dbSize'], BCSettingsValues.FILE_UNIT_KIB)}")
         else:
             self.lblCCIDbCache.setText(f"{dbStats['nbHash']} images, {bytesSizeToStr(dbStats['dbSize'], BCSettingsValues.FILE_UNIT_KB)}")
-        self.pbCCIClearCacheMD.setEnabled(dbStats['nbHash']>0)
-
+        self.pbCCIClearCacheMD.setEnabled(dbStats['nbHash'] > 0)
 
     def __clearCache(self):
         """Clear cache after user confirmation"""
@@ -1412,7 +1458,6 @@ class BCSettingsDialogBox(QDialog):
             BCFileCache.initialise()
             self.__calculateCacheSize()
 
-
     def __clearCacheCS(self):
         """Clear clipboard session cache after user confirmation"""
         if WDialogBooleanInput.display(
@@ -1422,7 +1467,6 @@ class BCSettingsDialogBox(QDialog):
             self.__uiController.clipboard().cacheSessionFlush()
             BCClipboard.initialiseCache()
             self.__calculateCacheSize()
-
 
     def __clearCacheCP(self):
         """Clear clipboard persistent cache after user confirmation"""
@@ -1434,7 +1478,6 @@ class BCSettingsDialogBox(QDialog):
             BCClipboard.initialiseCache()
             self.__calculateCacheSize()
 
-
     def __clearCacheMD(self):
         """Clear metadata cache after user confirmation"""
 
@@ -1444,7 +1487,6 @@ class BCSettingsDialogBox(QDialog):
                 ):
             BCFileCache.globalInstance().clearDbContent()
             self.__calculateCacheSize()
-
 
     @staticmethod
     def open(title, uicontroller):

@@ -1,22 +1,25 @@
-#-----------------------------------------------------------------------------
-# Buli Commander
-# Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Buli Commander
+# Copyright (C) 2019-2022 - Grum999
+# -----------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
 # -----------------------------------------------------------------------------
 # A Krita plugin designed to manage documents
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# The bcsavedview module provides classes used to manage saved views
+#
+# Main classes from this module
+#
+# - BCSavedViewEdit:
+#       A basic user interface to manage views
+#
+# - BCSavedView:
+#       Allows to easily manage views
+#
 # -----------------------------------------------------------------------------
 
 import os
@@ -48,7 +51,7 @@ class BCSavedViewEdit(QDialog):
     def __init__(self, mode, savedView, key='', value=[], refList=None, parent=None):
         super(BCSavedViewEdit, self).__init__(parent)
 
-        if not mode in [BCSavedViewEdit.CREATE,
+        if mode not in [BCSavedViewEdit.CREATE,
                         BCSavedViewEdit.DELETE,
                         BCSavedViewEdit.RENAME,
                         BCSavedViewEdit.CLEAR_CONTENT,
@@ -109,7 +112,7 @@ class BCSavedViewEdit(QDialog):
     def __checkButton(self):
         enabled = True
         if self.ledName.isEnabled():
-            viewName=self.ledName.text().strip()
+            viewName = self.ledName.text().strip()
 
             if viewName == '':
                 enabled = False
@@ -264,9 +267,9 @@ class BCSavedView(QObject):
 
     def __init__(self, items={}):
         super(BCSavedView, self).__init__(None)
-        self.__savedView={}
-        self.__emit=True
-        self.__current=None
+        self.__savedView = {}
+        self.__emit = True
+        self.__current = None
         self.set(items)
 
     def __toKey(self, name):
@@ -291,12 +294,12 @@ class BCSavedView(QObject):
 
         if len(values) > 0:
             nbCreated = 0
-            self.__emit=False
+            self.__emit = False
             for name in values:
                 if self.create(name, values[name]):
-                    nbCreated+=1
+                    nbCreated += 1
 
-            self.__emit=True
+            self.__emit = True
             if nbCreated:
                 self.created.emit('')
 
@@ -310,7 +313,7 @@ class BCSavedView(QObject):
         if name is None:
             name = self.__current
 
-        key=self.__toKey(name)
+        key = self.__toKey(name)
 
         if key in self.__savedView:
             return self.__savedView[key]['value']
@@ -327,14 +330,12 @@ class BCSavedView(QObject):
         if id is None:
             id = self.__current
 
-        key=self.__toKey(id)
+        key = self.__toKey(id)
 
         if key in self.__savedView:
             return self.__savedView[key]['name']
 
         return None
-
-
 
     def viewClear(self, name):
         """Clear view content
@@ -344,12 +345,12 @@ class BCSavedView(QObject):
         if name is None:
             return None
 
-        key=self.__toKey(name)
+        key = self.__toKey(name)
 
         if key in self.__savedView:
             self.__savedView[key] = {'name':    name,
                                      'value':   []
-                                    }
+                                     }
             if self.__emit:
                 self.updated.emit(name)
 
@@ -365,15 +366,15 @@ class BCSavedView(QObject):
         if name is None:
             return returned
 
-        key=self.__toKey(name)
+        key = self.__toKey(name)
 
         if key in self.__savedView:
             for value in values:
-                if not value in self.__savedView[key]['value']:
+                if value not in self.__savedView[key]['value']:
                     self.__savedView[key]['value'].append(value)
-                    returned+=1
+                    returned += 1
 
-            if returned>0 and self.__emit:
+            if returned > 0 and self.__emit:
                 self.updated.emit(name)
 
         return returned
@@ -390,15 +391,15 @@ class BCSavedView(QObject):
         if name is None:
             return returned
 
-        key=self.__toKey(name)
+        key = self.__toKey(name)
 
         if key in self.__savedView:
             for value in values:
                 if value in self.__savedView[key]['value']:
                     self.__savedView[key]['value'].remove(value)
-                    returned+=1
+                    returned += 1
 
-            if returned>0 and self.__emit:
+            if returned > 0 and self.__emit:
                 self.updated.emit(name)
 
         return returned
@@ -415,19 +416,19 @@ class BCSavedView(QObject):
         if not isinstance(value, list):
             raise EInvalidType("Given `value` must be a <list>")
 
-        additionalList=[]
+        additionalList = []
         if isinstance(refList, list) or isinstance(refList, dict):
             additionalList = [self.__toKey(name) for name in refList]
 
-        key=self.__toKey(name)
+        key = self.__toKey(name)
 
         if key in self.__savedView or key in additionalList:
             # view already exist for given name
             return False
 
-        self.__savedView[key]={'name': name,
-                               'value': value
-                              }
+        self.__savedView[key] = {'name': name,
+                                 'value': value
+                                 }
         if self.__emit:
             self.created.emit(name)
 
@@ -444,10 +445,9 @@ class BCSavedView(QObject):
         if not isinstance(name, str):
             raise EInvalidType("Given `name` must be a string")
 
+        key = self.__toKey(name)
 
-        key=self.__toKey(name)
-
-        if not key in self.__savedView:
+        if key not in self.__savedView:
             # view doesn't exist for given name
             return False
 
@@ -471,14 +471,14 @@ class BCSavedView(QObject):
         if not isinstance(newName, str):
             raise EInvalidType("Given `newName` must be a string")
 
-        additionalList=[]
+        additionalList = []
         if isinstance(refList, list) or isinstance(refList, dict):
             additionalList = [self.__toKey(name) for name in refList]
 
-        key=self.__toKey(name)
-        newKey=self.__toKey(newName)
+        key = self.__toKey(name)
+        newKey = self.__toKey(newName)
 
-        if not key in self.__savedView or newKey in self.__savedView or newKey in additionalList:
+        if key not in self.__savedView or newKey in self.__savedView or newKey in additionalList:
             # view already exist for given name
             return False
 
@@ -540,9 +540,9 @@ class BCSavedView(QObject):
 
         return True if current view has been set, otherwise False
         """
-        key=self.__toKey(viewName)
+        key = self.__toKey(viewName)
 
-        if not key in self.__savedView:
+        if key not in self.__savedView:
             self.__current = None
             return False
 
@@ -551,6 +551,6 @@ class BCSavedView(QObject):
 
     def inList(self, viewName):
         """Return True if view exist, otherwise False"""
-        key=self.__toKey(viewName)
+        key = self.__toKey(viewName)
 
         return (key in self.__savedView)

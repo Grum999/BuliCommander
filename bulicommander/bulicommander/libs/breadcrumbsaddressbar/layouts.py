@@ -1,8 +1,30 @@
+# -----------------------------------------------------------------------------
+# Qt navigation bar with breadcrumbs
+# Andrey Makarov, 2019
+# https://github.com/Winand/breadcrumbsaddressbar
+# -----------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Buli Commander
+# Copyright (C) 2019-2022 - Grum999
+# -----------------------------------------------------------------------------
+# Original widget from Andrey Makarov is published under MIT license and has
+# been heavily modified for BuliCommander needs ^_^'
+#
+# Not possible here to list all technical changes, do a DIFF with original
+# source code if you're interested about detailed modifications :-)
+# ------------------------------------------------------------------------------
+
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import (
         pyqtSignal as Signal,
         Qt
     )
+
 
 class LeftHBoxLayout(QtWidgets.QHBoxLayout):
     '''
@@ -33,7 +55,7 @@ class LeftHBoxLayout(QtWidgets.QHBoxLayout):
         "Widget used to fill free space"
         return self[self.count()]
 
-    def setGeometry(self, rc:QtCore.QRect):
+    def setGeometry(self, rc: QtCore.QRect):
         "`rc` - layout's rectangle w/o margins"
         super().setGeometry(rc)  # perform the layout
         min_sp = self.minimal_space()
@@ -84,8 +106,8 @@ class LeftHBoxLayout(QtWidgets.QHBoxLayout):
 
     def widgets(self, state='all'):
         "Iterate over child widgets"
-        for i in range(self.first_visible if state=='visible' else 0,
-                       self.first_visible if state=='hidden' else self.count()
+        for i in range(self.first_visible if state == 'visible' else 0,
+                       self.first_visible if state == 'hidden' else self.count()
                        ):
             yield self[i].widget()
 

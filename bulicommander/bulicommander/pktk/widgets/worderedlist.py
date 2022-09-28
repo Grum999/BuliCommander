@@ -1,27 +1,26 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
-# Copyright (C) 2019-2021 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
+# Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+# A Krita plugin framework
 # -----------------------------------------------------------------------------
 
-
 # -----------------------------------------------------------------------------
-
+# The worderedlist module provides a widget to easily manage ordering rules
+# implementation
+#
+# Main class from this module
+#
+# - WOrderedList:
+#       Widget
+#       A list widget allowing to reorder items + defined ascending/descending
+#       sort order
+#
+# -----------------------------------------------------------------------------
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
@@ -30,6 +29,7 @@ from PyQt5.QtCore import (
 
 from ..modules.imgutils import buildIcon
 from ..pktk import *
+
 
 class OrderedItem(QListWidgetItem):
     """An item to order in a list WOrderedList"""
@@ -42,7 +42,7 @@ class OrderedItem(QListWidgetItem):
         self.setData(OrderedItem.ROLE_SORTASCENDING, ascending)
         self.setFlags(self.flags() | Qt.ItemIsUserCheckable)
 
-        self.__checkable=True
+        self.__checkable = True
         self.setCheckState(checked)
 
     def isSortAscending(self):
@@ -61,18 +61,18 @@ class OrderedItem(QListWidgetItem):
     def setCheckable(self, checkable):
         """Set if current sort is descending"""
         if isinstance(checkable, bool):
-            self.__checkable=checkable
+            self.__checkable = checkable
             if checkable:
                 self.setFlags(self.flags() | Qt.ItemIsUserCheckable)
                 self.setCheckState(self.__checked)
             else:
-                self.__checked=self.checkState()==Qt.Checked
+                self.__checked = self.checkState() == Qt.Checked
                 self.setFlags(self.flags() & ~Qt.ItemIsUserCheckable)
                 self.setData(Qt.CheckStateRole, None)
 
     def checked(self):
         """Return if item is checked"""
-        return self.__checkable and (self.checkState()==Qt.Checked)
+        return self.__checkable and (self.checkState() == Qt.Checked)
 
     def setCheckState(self, value):
         """Set item is checked"""
@@ -94,13 +94,13 @@ class StyledOrderedItemDelegate(QStyledItemDelegate):
         super(StyledOrderedItemDelegate, self).__init__(parent)
         if not isinstance(orderedListWidget, WOrderedList):
             raise EInvalidType("Given `orderedListWidget` must be <WOrderedList>")
-        self.__orderedListWidget=orderedListWidget
+        self.__orderedListWidget = orderedListWidget
 
         # preload icons for performances (even if don't really need for small lists...)
-        self.__iconUpEmpty=buildIcon("pktk:arrow_big_empty_up")
-        self.__iconUpFilled=buildIcon("pktk:arrow_big_filled_up")
-        self.__iconDownEmpty=buildIcon("pktk:arrow_big_empty_down")
-        self.__iconDownFilled=buildIcon("pktk:arrow_big_filled_down")
+        self.__iconUpEmpty = buildIcon("pktk:arrow_big_empty_up")
+        self.__iconUpFilled = buildIcon("pktk:arrow_big_filled_up")
+        self.__iconDownEmpty = buildIcon("pktk:arrow_big_empty_down")
+        self.__iconDownFilled = buildIcon("pktk:arrow_big_filled_down")
 
     def paint(self, painter, option, index):
         """Paint item"""
@@ -108,7 +108,7 @@ class StyledOrderedItemDelegate(QStyledItemDelegate):
             # remove focus style if active
             option.state = option.state & ~QStyle.State_HasFocus
 
-        #if not index.data(Qt.CheckStateRole):
+        # if not index.data(Qt.CheckStateRole):
         #    # when unchecked, text is drawn as disabled state as value is
         #    # not selected
         #    option.state = option.state & ~QStyle.State_Enabled
@@ -116,7 +116,7 @@ class StyledOrderedItemDelegate(QStyledItemDelegate):
         # use default constructor to paint item
         super(StyledOrderedItemDelegate, self).paint(painter, option, index)
 
-        #if self.__orderedListWidget.checkOptionAvailable() and not index.data(Qt.CheckStateRole) or not self.__orderedListWidget.sortOptionAvailable():
+        # if self.__orderedListWidget.checkOptionAvailable() and not index.data(Qt.CheckStateRole) or not self.__orderedListWidget.sortOptionAvailable():
         if not self.__orderedListWidget.sortOptionAvailable():
             # if check option is available and not checked
             # or not sort option available
@@ -131,9 +131,9 @@ class StyledOrderedItemDelegate(QStyledItemDelegate):
 
         # paint background color
         if option.state & QStyle.State_Active:
-            colorGroup=QPalette.Active
+            colorGroup = QPalette.Active
         else:
-            colorGroup=QPalette.Inactive
+            colorGroup = QPalette.Inactive
 
         if (option.state & QStyle.State_Selected) == QStyle.State_Selected:
             painter.fillRect(rect, option.palette.color(colorGroup, QPalette.Highlight))
@@ -187,34 +187,34 @@ class WOrderedList(QListWidget):
 
 
     """
-    itemOrderChanged=Signal()
+    itemOrderChanged = Signal()
 
     def __init__(self, parent=None):
         super(WOrderedList, self).__init__(parent)
 
-        self.__delegate=StyledOrderedItemDelegate(self)
+        self.__delegate = StyledOrderedItemDelegate(self)
 
         self.setItemDelegate(self.__delegate)
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.setUniformItemSizes(True)
 
-        self.__optionSort=True
-        self.__optionCheck=True
-        self.__optionReorder=True
+        self.__optionSort = True
+        self.__optionCheck = True
+        self.__optionReorder = True
 
     def mouseReleaseEvent(self, event):
-        item=self.itemAt(event.pos())
+        item = self.itemAt(event.pos())
 
-        if self.__optionSort and event.button()==Qt.LeftButton and event.modifiers()==Qt.NoModifier and isinstance(item, QListWidgetItem):
+        if self.__optionSort and event.button() == Qt.LeftButton and event.modifiers() == Qt.NoModifier and isinstance(item, QListWidgetItem):
             # if pressed button is not left button, ignore event to not modify order direction
             # if a modifiers is pressed, might be in a selection then ignore event to not modify order direction
             # why item is a "OrderedItem" object but isinstance() only return True for "QListWidgetItem"??
 
             # get current rect for item
-            rect=self.visualItemRect(item)
+            rect = self.visualItemRect(item)
 
-            if event.pos().x()>rect.right() - rect.height():
+            if event.pos().x() > rect.right() - rect.height():
                 # click on right side square (width = height): invert current order direction
                 item.setSortAscending(not item.isSortAscending())
                 return
@@ -233,11 +233,11 @@ class WOrderedList(QListWidget):
     def setSortOptionAvailable(self, value):
         """Set if ascending/descending sort option is available for items"""
         if isinstance(value, bool):
-            self.__optionSort=value
-            model=self.model()
+            self.__optionSort = value
+            model = self.model()
             # need to update each item from model; update() made on QListWidget didn't update anything
             for index in range(self.count()):
-                self.update(model.index(index,0))
+                self.update(model.index(index, 0))
 
     def checkOptionAvailable(self):
         """Return if check/uncheck option is available for items"""
@@ -246,7 +246,7 @@ class WOrderedList(QListWidget):
     def setCheckOptionAvailable(self, value):
         """Set if ascending/descending sort option is available for items"""
         if isinstance(value, bool):
-            self.__optionCheck=value
+            self.__optionCheck = value
             for index in range(self.count()):
                 self.item(index).setCheckable(self.__optionCheck)
 
@@ -257,7 +257,7 @@ class WOrderedList(QListWidget):
     def setReorderOptionAvailable(self, value):
         """Set if ordering items option is available"""
         if isinstance(value, bool):
-            self.__optionReorder=value
+            self.__optionReorder = value
             if self.__optionReorder:
                 self.setDragDropMode(QAbstractItemView.InternalMove)
             else:
@@ -268,7 +268,7 @@ class WOrderedList(QListWidget):
 
         return a <OrderedItem> object
         """
-        item=OrderedItem(label, value, checked, ascending)
+        item = OrderedItem(label, value, checked, ascending)
         QListWidget.addItem(self, item)
         return item
 
@@ -286,7 +286,7 @@ class WOrderedList(QListWidget):
 
         return a <OrderedItem> object
         """
-        item=OrderedItem(label, value, checked, ascending)
+        item = OrderedItem(label, value, checked, ascending)
         QListWidget.addItem(self, row, item)
         return item
 
@@ -298,17 +298,17 @@ class WOrderedList(QListWidget):
         for item in items:
             if isinstance(item, OrderedItem):
                 QListWidget.insertItem(self, row, item)
-                row+=1
+                row += 1
 
     def items(self, checkedOnly=True):
         """Return a list of <OrderedItem> objects
 
         If `checkedOnly` is True, only checked items are returned, otherwise all objects are returned
         """
-        returned=[]
+        returned = []
         for index in range(self.count()):
-            item=self.item(index)
-            if checkedOnly and item.checkState()==Qt.Checked or not checkedOnly:
+            item = self.item(index)
+            if checkedOnly and item.checkState() == Qt.Checked or not checkedOnly:
                 returned.append(item)
         return returned
 

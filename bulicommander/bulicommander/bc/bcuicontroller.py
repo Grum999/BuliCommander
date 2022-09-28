@@ -1,22 +1,25 @@
-#-----------------------------------------------------------------------------
-# Buli Commander
-# Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Buli Commander
+# Copyright (C) 2019-2022 - Grum999
+# -----------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
 # -----------------------------------------------------------------------------
 # A Krita plugin designed to manage documents
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# The bcuicontroller module provides classes is used to centralize everything
+# All actions asked by user are managed from here
+# --> this module is a core module for plugin
+#
+# Main classes from this module
+#
+# - BCUIController:
+#       The main classe that provides high level access to all functionalities
+#       of plugin
+#
 # -----------------------------------------------------------------------------
 
 import os.path
@@ -70,7 +73,7 @@ from .bcmainviewtab import (
         BCMainViewTabTabs
     )
 from .bcmainwindow import BCMainWindow
-from .bcsystray import BCSysTray
+from .bcsystray import BCSysBCUIControllerTray
 from .bcwpathbar import BCWPathBar
 from .bcsettings import (
         BCSettings,
@@ -136,6 +139,8 @@ from bulicommander.pktk.modules.ekrita import (
 from ..libs.breadcrumbsaddressbar.breadcrumbsaddressbar import BreadcrumbsAddressBar
 
 # ------------------------------------------------------------------------------
+
+
 class BCUIController(QObject):
     """The controller provide an access to all BuliCommander functions
     """
@@ -182,7 +187,7 @@ class BCUIController(QObject):
         UITheme.load(os.path.join(os.path.dirname(__file__), 'resources'))
         UITheme.load(os.path.join(os.path.dirname(__file__), 'resources', 'color_icons.rcc'), False)
 
-        self.__systray=BCSysTray(self)
+        self.__systray = BCSysTray(self)
         self.commandSettingsSysTrayMode(BCSettings.get(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE))
         self.commandSettingsShowMenuIcons(BCSettings.get(BCSettingsKey.CONFIG_GLB_OS_WINDOWS_ICONMENU))
 
@@ -211,13 +216,12 @@ class BCUIController(QObject):
         self.commandSettingsOpenFromFileMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
         self.commandSettingsSaveAllFromKritaMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMKRITAMENU))
 
-        menuFile=Krita.instance().activeWindow().qwindow().findChild(QMenu,'file')
+        menuFile = Krita.instance().activeWindow().qwindow().findChild(QMenu, 'file')
         if menuFile:
             menuFile.aboutToShow.connect(self.__kritaMenuFileAboutToShow)
 
         if kritaIsStarting and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP):
             self.start()
-
 
     def start(self):
         if self.__bcStarted:
@@ -230,9 +234,8 @@ class BCUIController(QObject):
 
         self.__bcStarting = True
 
-        # Check if windows are opened and then, connect signal if needed
+        # Check if windows are opened and then, connect signal if needed
         self.__checkKritaWindows()
-
 
         self.__initialised = False
         self.__window = BCMainWindow(self)
@@ -245,7 +248,6 @@ class BCUIController(QObject):
         self.__window.show()
         self.__window.activateWindow()
 
-
     # region: initialisation methods -------------------------------------------
 
     def __initSettings(self):
@@ -257,16 +259,16 @@ class BCUIController(QObject):
             self.bcWindowShown.emit()
             self.updateMenuForPanel()
             self.__clipboardActive()
-            # already initialised, do nothing
+            # already initialised, do nothing
             return
 
         # Here we know we have an active window
         if self.__kraActiveWindow is None:
-            self.__kraActiveWindow=Krita.instance().activeWindow()
+            self.__kraActiveWindow = Krita.instance().activeWindow()
         try:
             # should not occurs as uicontroller is initialised only once, but...
             self.__kraActiveWindow.themeChanged.disconnect(self.__themeChanged)
-        except:
+        except Exception:
             pass
         self.__kraActiveWindow.themeChanged.connect(self.__themeChanged)
 
@@ -398,99 +400,97 @@ class BCUIController(QObject):
         self.updateMenuForPanel()
         self.__clipboardActive()
 
-
     def __extendedOpen(self, file):
         bcfile = BCFile(file)
         if bcfile.format() in BCImportAnimated.SUPPORTED_FORMAT:
             imgNfo = bcfile.getMetaInformation()
             if imgNfo['imageCount'] > 1:
-                dialogTitle=f'{self.__bcName}::Import {bcfile.format()} file'
+                dialogTitle = f'{self.__bcName}::Import {bcfile.format()} file'
                 userChoice = BCImportDialogBoxAnimated.open(dialogTitle, bcfile, self.panel())
 
-                result=BCImportAnimated.IMPORT_KO
+                result = BCImportAnimated.IMPORT_KO
                 if userChoice[0]:
                     if userChoice[1] == BCImportDialogBoxAnimated.IMPORT_AS_FRAMELAYER:
-                        result=BCImportAnimated.importAsFrames(dialogTitle, bcfile, userChoice[2])
+                        result = BCImportAnimated.importAsFrames(dialogTitle, bcfile, userChoice[2])
                     elif userChoice[1] == BCImportDialogBoxAnimated.IMPORT_AS_STACKLAYER:
-                        result=BCImportAnimated.importAsLayers(dialogTitle, bcfile)
+                        result = BCImportAnimated.importAsLayers(dialogTitle, bcfile)
                     elif userChoice[1] == BCImportDialogBoxAnimated.IMPORT_AS_FRAME:
-                        result=BCImportAnimated.importInOneLayer(bcfile, userChoice[2])
-                    #else:
-                    #   krita's import mode=KO
+                        result = BCImportAnimated.importInOneLayer(bcfile, userChoice[2])
+                    # else:
+                    #   krita's import mode = KO
                 else:
                     # cancel
-                    result=BCImportAnimated.IMPORT_CANCELLED
+                    result = BCImportAnimated.IMPORT_CANCELLED
 
-                if result==BCImportAnimated.IMPORT_OK:
+                if result == BCImportAnimated.IMPORT_OK:
                     return BCUIController.__EXTENDED_OPEN_OK
-                elif result==BCImportAnimated.IMPORT_CANCELLED:
+                elif result == BCImportAnimated.IMPORT_CANCELLED:
                     return BCUIController.__EXTENDED_OPEN_CANCEL
         elif bcfile.format() in BCImportSvg.SUPPORTED_FORMAT:
-            dialogTitle=f'{self.__bcName}::Import {bcfile.format()} file'
+            dialogTitle = f'{self.__bcName}::Import {bcfile.format()} file'
             userChoice = BCImportDialogBoxSvg.open(dialogTitle, bcfile, self.panel())
-            result=BCImportAnimated.IMPORT_KO
+            result = BCImportAnimated.IMPORT_KO
             if userChoice[0]:
                 if userChoice[1] in (BCImportDialogBoxSvg.IMPORT_AS_ORIGINAL_SIZE, BCImportDialogBoxSvg.IMPORT_AS_DEFINED_SIZE, BCImportDialogBoxSvg.IMPORT_AS_DEFINED_RESOLUTION):
-                    result=BCImportSvg.importInOneLayer(bcfile, userChoice[2], userChoice[3], userChoice[4])
-                #else:
+                    result = BCImportSvg.importInOneLayer(bcfile, userChoice[2], userChoice[3], userChoice[4])
+                # else:
                 #   krita's import mode=KO
             else:
                 # cancel
-                result=BCImportSvg.IMPORT_CANCELLED
+                result = BCImportSvg.IMPORT_CANCELLED
 
-            if result==BCImportSvg.IMPORT_OK:
+            if result == BCImportSvg.IMPORT_OK:
                 return BCUIController.__EXTENDED_OPEN_OK
-            elif result==BCImportSvg.IMPORT_CANCELLED:
+            elif result == BCImportSvg.IMPORT_CANCELLED:
                 return BCUIController.__EXTENDED_OPEN_CANCEL
         elif bcfile.format() in BCImportCbx.SUPPORTED_FORMAT:
-            dialogTitle=f'{self.__bcName}::Import {bcfile.format()} file'
+            dialogTitle = f'{self.__bcName}::Import {bcfile.format()} file'
             userChoice = BCImportDialogBoxCbx.open(dialogTitle, bcfile, self.panel())
-            result=BCImportCbx.IMPORT_KO
+            result = BCImportCbx.IMPORT_KO
             if userChoice[0]:
-                result=BCImportCbx.importAsLayers(dialogTitle, bcfile, userChoice[1], userChoice[2], userChoice[3], userChoice[4])
+                result = BCImportCbx.importAsLayers(dialogTitle, bcfile, userChoice[1], userChoice[2], userChoice[3], userChoice[4])
             else:
                 # cancel
-                result=BCImportCbx.IMPORT_CANCELLED
+                result = BCImportCbx.IMPORT_CANCELLED
 
-            if result==BCImportCbx.IMPORT_OK:
+            if result == BCImportCbx.IMPORT_OK:
                 return BCUIController.__EXTENDED_OPEN_OK
-            elif result==BCImportCbx.IMPORT_CANCELLED:
+            elif result == BCImportCbx.IMPORT_CANCELLED:
                 return BCUIController.__EXTENDED_OPEN_CANCEL
 
         return BCUIController.__EXTENDED_OPEN_KO
 
-
     def __themeChanged(self):
         """Theme has been changed, reload resources"""
         def buildPixmapList(widget):
-            pixmaps=[]
+            pixmaps = []
             for propertyName in widget.dynamicPropertyNames():
-                pName=bytes(propertyName).decode()
+                pName = bytes(propertyName).decode()
                 if re.match('__bcIcon_', pName):
                     # a reference to resource path has been stored,
                     # reload icon from it
                     if pName == '__bcIcon_normalon':
-                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Normal, QIcon.On) )
+                        pixmaps.append((QPixmap(widget.property(propertyName)), QIcon.Normal, QIcon.On))
                     elif pName == '__bcIcon_normaloff':
-                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Normal, QIcon.Off) )
+                        pixmaps.append((QPixmap(widget.property(propertyName)), QIcon.Normal, QIcon.Off))
                     elif pName == '__bcIcon_disabledon':
-                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Disabled, QIcon.On) )
+                        pixmaps.append((QPixmap(widget.property(propertyName)), QIcon.Disabled, QIcon.On))
                     elif pName == '__bcIcon_disabledoff':
-                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Disabled, QIcon.Off) )
+                        pixmaps.append((QPixmap(widget.property(propertyName)), QIcon.Disabled, QIcon.Off))
                     elif pName == '__bcIcon_activeon':
-                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Active, QIcon.On) )
+                        pixmaps.append((QPixmap(widget.property(propertyName)), QIcon.Active, QIcon.On))
                     elif pName == '__bcIcon_activeoff':
-                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Active, QIcon.Off) )
+                        pixmaps.append((QPixmap(widget.property(propertyName)), QIcon.Active, QIcon.Off))
                     elif pName == '__bcIcon_selectedon':
-                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Selected, QIcon.On) )
+                        pixmaps.append((QPixmap(widget.property(propertyName)), QIcon.Selected, QIcon.On))
                     elif pName == '__bcIcon_selectedoff':
-                        pixmaps.append( (QPixmap(widget.property(propertyName)), QIcon.Selected, QIcon.Off) )
+                        pixmaps.append((QPixmap(widget.property(propertyName)), QIcon.Selected, QIcon.Off))
             return pixmaps
 
         UITheme.reloadResources()
 
-        # need to apply new palette to widgets
-        # otherwise it seems they keep to refer to the old palette...
+        # need to apply new palette to widgets
+        # otherwise it seems they keep to refer to the old palette...
         palette = QApplication.palette()
         widgetList = self.__window.getWidgets()
 
@@ -507,17 +507,16 @@ class BCUIController(QObject):
                 for tabIndex in range(widget.count()):
                     tabWidget = widget.widget(tabIndex)
 
-                    if not widget.tabIcon(tabIndex) is None:
-                        pixmaps=buildPixmapList(tabWidget)
+                    if widget.tabIcon(tabIndex) is not None:
+                        pixmaps = buildPixmapList(tabWidget)
                         if len(pixmaps) > 0:
                             widget.setTabIcon(tabIndex, buildIcon(pixmaps))
 
             # need to do something to relad icons...
             elif hasattr(widget, 'icon'):
-                pixmaps=buildPixmapList(widget)
+                pixmaps = buildPixmapList(widget)
                 if len(pixmaps) > 0:
                     widget.setIcon(buildIcon(pixmaps))
-
 
     def __checkKritaWindows(self):
         """Check if windows signal windowClosed() is already defined and, if not,
@@ -534,10 +533,9 @@ class BCUIController(QObject):
             # but on qwindow() as the qwindow() is always the same
             # and as window is just an instance that wrap the underlied QMainWindow
             # a new object is returned each time windows() list is returned
-            if window.qwindow().property('__bcWindowClosed') != True:
+            if window.qwindow().property('__bcWindowClosed') is not True:
                 window.windowClosed.connect(self.__windowClosed)
                 window.qwindow().setProperty('__bcWindowClosed', True)
-
 
     def __windowClosed(self):
         """A krita window has been closed"""
@@ -548,39 +546,37 @@ class BCUIController(QObject):
         # (maybe, since BC has been opened, new Krita windows has been created...)
         self.__checkKritaWindows()
 
-        if len( Krita.instance().windows()) == 0:
+        if len(Krita.instance().windows()) == 0:
             self.commandQuit()
-
 
     def __overrideOpenKrita(self):
         """Overrides the native "Open" Krita dialogcommand with BuliCommander"""
-        if checkKritaVersion(5,0,0) and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU):
+        if checkKritaVersion(5, 0, 0) and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU):
             # override the native "Open" Krita command with Buli Commander
             # notes:
             #   - once it's applied, to reactivate native Open Dialog file
             #     Krita must be restarted
             #   - deactivated for Krita < 5.0.0 as only krita 5.0.0 is able to initialize BC at startup
-            actionOpen=Krita.instance().action("file_open")
-            if not actionOpen is None:
+            actionOpen = Krita.instance().action("file_open")
+            if actionOpen is not None:
                 actionOpen.disconnect()
-                actionOpen.triggered.connect(lambda checked : self.start())
+                actionOpen.triggered.connect(lambda checked: self.start())
 
-        if checkKritaVersion(5,0,0) and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR):
+        if checkKritaVersion(5, 0, 0) and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR):
             # override the native "Open from welcome screen" Krita command with Buli Commander
             # notes:
             #   - once it's applied, to reactivate native Open Dialog file
             #     Krita must be restarted
             #   - deactivated for Krita < 5.0.0 as only krita 5.0.0 is able to initialize BC at startup
             qWwindow = Krita.instance().activeWindow().qwindow()
-            buttonOpen = qWwindow.findChild(QPushButton,'openFileLink')
-            if not buttonOpen is None:
+            buttonOpen = qWwindow.findChild(QPushButton, 'openFileLink')
+            if buttonOpen is not None:
                 buttonOpen.disconnect()
-                buttonOpen.clicked.connect(lambda checked : self.start())
+                buttonOpen.clicked.connect(lambda checked: self.start())
 
-            labelOpenShortcut = qWwindow.findChild(QLabel,'openFileShortcut')
-            if not buttonOpen is None:
+            labelOpenShortcut = qWwindow.findChild(QLabel, 'openFileShortcut')
+            if buttonOpen is not None:
                 labelOpenShortcut.setText('')
-
 
     def __clipboardActive(self):
         """Determinate, according to options, if clipboard is active or not"""
@@ -599,7 +595,6 @@ class BCUIController(QObject):
         else:
             self.__clipboard.setEnabled(False)
 
-
     def __checkOpenedDocuments(self, displayMessage=False):
         """Check for all opened documents in Krita
 
@@ -607,22 +602,22 @@ class BCUIController(QObject):
 
         Return number of modified document that can be saved
         """
-        modified=0
+        modified = 0
         for view in Krita.instance().views():
             # check documents in visible view only
             if view.visible() and view.document().modified():
-                modified+=1
+                modified += 1
 
         if displayMessage and BCSettings.get(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMBCMSGBAR):
-            if modified>0:
-                if modified==1:
-                    msg=i18n("One file is currently modified")
-                    saveBtn=i18n("Save file")
-                    tooltip=i18n("Save unmodified file")
+            if modified > 0:
+                if modified == 1:
+                    msg = i18n("One file is currently modified")
+                    saveBtn = i18n("Save file")
+                    tooltip = i18n("Save unmodified file")
                 else:
-                    msg=i18n(f"Some files ({modified}) are currently modified")
-                    saveBtn=i18n("Save files")
-                    tooltip=i18n("Save all unmodified files")
+                    msg = i18n(f"Some files ({modified}) are currently modified")
+                    saveBtn = i18n("Save files")
+                    tooltip = i18n("Save all unmodified files")
 
                 self.__window.displayMessageBar(msg,
                                                 WMessageButton(saveBtn, BCUIController.__MSGBAR_DOCMODIFIED_SAVE, tooltip),
@@ -632,13 +627,11 @@ class BCUIController(QObject):
 
         return modified
 
-
     def __manageWindowMsgBarBtnClick(self, value):
         """A message bar button has been clicked"""
-        if value==BCUIController.__MSGBAR_DOCMODIFIED_SAVE:
+        if value == BCUIController.__MSGBAR_DOCMODIFIED_SAVE:
             self.commandFileSaveAll()
             self.__checkOpenedDocuments()
-
 
     def __manageWindowActivated(self):
         """Main window has been activated"""
@@ -646,18 +639,15 @@ class BCUIController(QObject):
             self.__checkOpenedDocuments(True)
         self.updateMenuForPanel()
 
-
     def __manageWindowDeactivated(self):
         """Main window has been deactivated"""
         pass
 
-
     def __kritaMenuFileAboutToShow(self):
         """Krita Menu File is about to be shown"""
-        actionSaveAll=Krita.instance().action('pykrita_bulicommander_saveall')
+        actionSaveAll = Krita.instance().action('pykrita_bulicommander_saveall')
         if actionSaveAll and actionSaveAll.isVisible():
-            actionSaveAll.setEnabled(self.__checkOpenedDocuments()>0)
-
+            actionSaveAll.setEnabled(self.__checkOpenedDocuments() > 0)
 
     # endregion: initialisation methods ----------------------------------------
 
@@ -759,16 +749,16 @@ class BCUIController(QObject):
                     '@file layer filter': (BCWPathBar.QUICKREF_RESERVED_FLAYERFILTERDVIEW, buildIcon("pktk:image"), 'Layer files list')
                     }
 
-        if not self.__bookmark is None and self.__bookmark.length() > 0:
+        if self.__bookmark is not None and self.__bookmark.length() > 0:
             for bookmark in self.__bookmark.list():
-                returned[f'@{bookmark[0].lower()}']=(BCWPathBar.QUICKREF_BOOKMARK, iconBookmark, bookmark[0])
+                returned[f'@{bookmark[0].lower()}'] = (BCWPathBar.QUICKREF_BOOKMARK, iconBookmark, bookmark[0])
 
-        if not self.__savedView is None and self.__savedView.length() > 0:
+        if self.__savedView is not None and self.__savedView.length() > 0:
             for savedView in self.__savedView.list():
                 if not re.match("^searchresult:", savedView[0]):
-                    returned[f'@{savedView[0].lower()}']=(BCWPathBar.QUICKREF_SAVEDVIEW_LIST, iconSavedView, savedView[0])
+                    returned[f'@{savedView[0].lower()}'] = (BCWPathBar.QUICKREF_SAVEDVIEW_LIST, iconSavedView, savedView[0])
                 else:
-                    returned[f'@{savedView[0].lower()}']=(BCWPathBar.QUICKREF_SAVEDVIEW_LIST, iconSearchResult, savedView[0])
+                    returned[f'@{savedView[0].lower()}'] = (BCWPathBar.QUICKREF_SAVEDVIEW_LIST, iconSearchResult, savedView[0])
 
         return returned
 
@@ -777,7 +767,7 @@ class BCUIController(QObject):
 
         Return None if not found
         """
-        refId=refId.lstrip('@').lower()
+        refId = refId.lstrip('@').lower()
 
         if refId == 'home':
             path = ''
@@ -830,7 +820,6 @@ class BCUIController(QObject):
 
     # endregion: getter/setters ------------------------------------------------
 
-
     # region: define commands --------------------------------------------------
 
     def saveSettings(self):
@@ -842,13 +831,13 @@ class BCUIController(QObject):
             # representative of real state
 
             # get current toolbar configuration from settings as dict for which key is toolbar id
-            toolbarSettings={toolbar['id']: toolbar for toolbar in BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS)}
-            toolbarSession=[]
+            toolbarSettings = {toolbar['id']: toolbar for toolbar in BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS)}
+            toolbarSession = []
             # loop over toolbar to update settings: visibility, area, position
             for toolbar in self.__window.toolbarList():
-                id=toolbar.objectName()
+                id = toolbar.objectName()
                 if id in toolbarSettings:
-                    geometry=toolbar.geometry()
+                    geometry = toolbar.geometry()
                     toolbarSession.append({
                             'id': id,
                             'visible': toolbar.isVisible(),
@@ -858,7 +847,6 @@ class BCUIController(QObject):
                         })
             # save toolbars session informations
             BCSettings.set(BCSettingsKey.SESSION_TOOLBARS, toolbarSession)
-
 
         BCSettings.set(BCSettingsKey.CONFIG_SESSION_SAVE, self.__window.actionSettingsSaveSessionOnExit.isChecked())
 
@@ -873,8 +861,9 @@ class BCUIController(QObject):
 
             BCSettings.set(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED, self.__window.isMaximized())
             if not self.__window.isMaximized():
-                # when maximized geometry is full screen geomtry, then do it only if no in maximized
-                BCSettings.set(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY, [self.__window.geometry().x(), self.__window.geometry().y(), self.__window.geometry().width(), self.__window.geometry().height()])
+                # when maximized geometry is full screen geomtry, then do it only if no in maximized
+                BCSettings.set(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY,
+                               [self.__window.geometry().x(), self.__window.geometry().y(), self.__window.geometry().width(), self.__window.geometry().height()])
 
             BCSettings.set(BCSettingsKey.SESSION_PANELS_VIEW_FILES_MANAGEDONLY, self.__window.actionViewShowImageFileOnly.isChecked())
             BCSettings.set(BCSettingsKey.SESSION_PANELS_VIEW_FILES_BACKUP, self.__window.actionViewShowBackupFiles.isChecked())
@@ -887,19 +876,21 @@ class BCUIController(QObject):
                 BCSettings.set(BCSettingsKey.CONFIG_GLB_FILE_UNIT, BCSettingsValues.FILE_UNIT_KIB)
 
             for panelId in self.__window.panels:
-                currentPath=self.__window.panels[panelId].filesPath()
+                currentPath = self.__window.panels[panelId].filesPath()
                 if re.match("@searchresult:", currentPath):
-                    currentPath="@home"
+                    currentPath = "@home"
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_CURRENTPATH.id(panelId=panelId), currentPath)
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_LAYOUT.id(panelId=panelId), self.__window.panels[panelId].filesTabLayout().value)
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_VIEWMODE.id(panelId=panelId), self.__window.panels[panelId].filesTabViewMode())
 
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_THUMBNAIL.id(panelId=panelId), self.__window.panels[panelId].filesViewThumbnail())
 
-                filterText, filterOptions=self.__window.panels[panelId].filesFilter()
+                filterText, filterOptions = self.__window.panels[panelId].filesFilter()
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVISIBLE.id(panelId=panelId), self.__window.panels[panelId].filesFilterVisible())
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTERVALUE.id(panelId=panelId), filterText)
-                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTEROPTIONS.id(panelId=panelId), filterOptions&WSearchInput.OPTION_ALL) # avoid OPTION_FILTER_MARKED_ACTIVE as merkers are not kept accross sessions
+
+                # avoid OPTION_FILTER_MARKED_ACTIVE as merkers are not kept accross sessions
+                BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_FILTEROPTIONS.id(panelId=panelId), filterOptions & WSearchInput.OPTION_ALL)
 
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId), self.__window.panels[panelId].filesColumnSort())
                 BCSettings.set(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId), self.__window.panels[panelId].filesColumnOrder())
@@ -934,7 +925,8 @@ class BCUIController(QObject):
                 BCSettings.set(BCSettingsKey.SESSION_FILES_HISTORY_ITEMS, [])
 
             BCSettings.set(BCSettingsKey.SESSION_FILES_BOOKMARK_ITEMS, self.__bookmark.list())
-            BCSettings.set(BCSettingsKey.SESSION_FILES_SAVEDVIEWS_ITEMS, [savedViewItem for savedViewItem in self.__savedView.list() if not re.match("^searchresult:", savedViewItem[0])] )
+            BCSettings.set(BCSettingsKey.SESSION_FILES_SAVEDVIEWS_ITEMS,
+                           [savedViewItem for savedViewItem in self.__savedView.list() if not re.match("^searchresult:", savedViewItem[0])])
             BCSettings.set(BCSettingsKey.SESSION_FILES_LASTDOC_O_ITEMS, self.__lastDocumentsOpened.list())
             BCSettings.set(BCSettingsKey.SESSION_FILES_LASTDOC_S_ITEMS, self.__lastDocumentsSaved.list())
 
@@ -951,10 +943,10 @@ class BCUIController(QObject):
         """Update menu (enabled/disabled/checked/unchecked) according to current panel"""
         def enableSubMenu(enabled, menu):
             menu.setEnabled(enabled)
-            if len(menu.actions())>0:
+            if len(menu.actions()) > 0:
                 for action in menu.actions():
                     if not action.isSeparator():
-                        if action.menu() and len(action.menu().actions())>0:
+                        if action.menu() and len(action.menu().actions()) > 0:
                             enableSubMenu(enabled, action.menu())
                         else:
                             action.setEnabled(enabled)
@@ -962,13 +954,13 @@ class BCUIController(QObject):
         def buildMenuGoHistory():
             """Build menu history"""
             # remove history entry, only keep "clear history" and "separator"
-            for action in [action for action in self.__window.menuGoHistory.actions() if (action.objectName()=='' and not action.isSeparator())]:
+            for action in [action for action in self.__window.menuGoHistory.actions() if (action.objectName() == '' and not action.isSeparator())]:
                 self.__window.menuGoHistory.removeAction(action)
 
-            if not self.__history is None:
+            if self.__history is not None:
                 self.__history.removeMissing(False, refList=self.quickRefDict())
 
-            if not self.__history is None and self.__history.length() > 0:
+            if self.__history is not None and self.__history.length() > 0:
                 self.__window.actionGoHistoryClearHistory.setEnabled(True)
                 self.__window.actionGoHistoryClearHistory.setText(i18n(f'Clear history ({self.__history.length()})'))
 
@@ -988,18 +980,18 @@ class BCUIController(QObject):
             """Build menu bookmarks"""
             def menuBookmarks_Clicked(panelId, action):
                 # change directory
-                path=action.property('path')
-                if not path is None:
+                path = action.property('path')
+                if path is not None:
                     if os.path.isdir(path):
                         self.commandGoTo(panelId, path)
                     else:
                         name = self.bookmark().nameFromValue(path)
                         self.commandGoBookmarkRemoveUI(name)
 
-            for action in [action for action in self.__window.menuGoBookmark.actions() if (action.objectName()=='' and not action.isSeparator())]:
+            for action in [action for action in self.__window.menuGoBookmark.actions() if (action.objectName() == '' and not action.isSeparator())]:
                 self.__window.menuGoBookmark.removeAction(action)
 
-            if not self.__bookmark is None and self.__bookmark.length() > 0:
+            if self.__bookmark is not None and self.__bookmark.length() > 0:
                 self.__window.actionGoBookmarksClearBookmarks.setEnabled(True)
                 self.__window.actionGoBookmarksClearBookmarks.setText(i18n('Clear bookmarks')+f' ({self.__bookmark.length()})')
 
@@ -1046,10 +1038,10 @@ class BCUIController(QObject):
 
         def buildMenuGoSavedViews():
             """Build menu bookmarks"""
-            for action in [action for action in self.__window.menuGoSavedViews.actions() if (action.objectName()=='' and not (action.isSeparator() or action.menu()))]:
+            for action in [action for action in self.__window.menuGoSavedViews.actions() if (action.objectName() == '' and not (action.isSeparator() or action.menu()))]:
                 self.__window.menuGoSavedViews.removeAction(action)
 
-            for action in [action for action in self.__window.menuGoSavedViewsAddToView.actions() if (action.objectName()=='' and not action.isSeparator())]:
+            for action in [action for action in self.__window.menuGoSavedViewsAddToView.actions() if (action.objectName() == '' and not action.isSeparator())]:
                 self.__window.menuGoSavedViewsAddToView.removeAction(action)
 
             allowAddRemove = False
@@ -1069,9 +1061,10 @@ class BCUIController(QObject):
                     if not re.match("^searchresult:", view[0]):
                         action = buildQAction("pktk:saved_view_file", view[0].replace('&', '&&'), self)
                         action.setFont(self.__fontMono)
-                        action.setStatusTip(i18n(f"Add selected files to view '{view[0].replace('&', '&&')}' (Current files in view: {len(view[1])})" ))
+                        action.setStatusTip(i18n(f"Add selected files to view '{view[0].replace('&', '&&')}' (Current files in view: {len(view[1])})"))
                         action.setProperty('path', f'{view[0]}')
-                        action.triggered.connect(lambda: self.commandGoSavedViewAppend(self.sender().property('path'), [file.fullPathName() for file in self.panel().filesSelected()[0]]))
+                        action.triggered.connect(lambda: self.commandGoSavedViewAppend(self.sender().property('path'),
+                                                                                       [file.fullPathName() for file in self.panel().filesSelected()[0]]))
 
                         if isSavedView and self.__savedView.current(True) == view[0] or not allowAddRemove:
                             action.setEnabled(False)
@@ -1114,68 +1107,68 @@ class BCUIController(QObject):
                 self.__window.actionViewLayoutBottomTop.triggered.disconnect()
                 self.__window.actionViewLayoutRightLeft.triggered.disconnect()
                 self.__window.actionViewLayoutFullMode.triggered.disconnect()
-            except:
+            except Exception:
                 pass
 
-            if self.panel().tabActive()==BCMainViewTabTabs.FILES:
+            if self.panel().tabActive() == BCMainViewTabTabs.FILES:
                 self.__window.actionViewLayoutFullMode.setVisible(True)
-                self.__window.actionViewLayoutFullMode.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.FULL ))
-                self.__window.actionViewLayoutTopBottom.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.TOP ))
-                self.__window.actionViewLayoutLeftRight.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.LEFT ))
-                self.__window.actionViewLayoutBottomTop.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.BOTTOM ))
-                self.__window.actionViewLayoutRightLeft.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.RIGHT ))
+                self.__window.actionViewLayoutFullMode.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.FULL))
+                self.__window.actionViewLayoutTopBottom.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.TOP))
+                self.__window.actionViewLayoutLeftRight.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.LEFT))
+                self.__window.actionViewLayoutBottomTop.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.BOTTOM))
+                self.__window.actionViewLayoutRightLeft.triggered.connect(lambda: self.commandPanelFilesTabLayout(self.panelId(), BCMainViewTabFilesLayout.RIGHT))
 
-                layout=self.panel().filesTabLayout()
+                layout = self.panel().filesTabLayout()
 
-                if self.panel().filesTabViewMode()==BCMainViewTab.VIEWMODE_TV:
+                if self.panel().filesTabViewMode() == BCMainViewTab.VIEWMODE_TV:
                     self.__window.actionViewLayoutViewAsList.setChecked(True)
-                    iconSize=self.panel().filesIconSizeTv()
-                    iconPixelSize=self.panel().filesIconSizeTv(True)
-                    maxIconSize=BCMainViewTab.MAX_ICON_SIZE_FILE_TV
+                    iconSize = self.panel().filesIconSizeTv()
+                    iconPixelSize = self.panel().filesIconSizeTv(True)
+                    maxIconSize = BCMainViewTab.MAX_ICON_SIZE_FILE_TV
                 else:
                     self.__window.actionViewLayoutViewAsGrid.setChecked(True)
-                    iconSize=self.panel().filesIconSizeLv()
-                    iconPixelSize=self.panel().filesIconSizeLv(True)
-                    maxIconSize=BCMainViewTab.MAX_ICON_SIZE_FILE_LV
+                    iconSize = self.panel().filesIconSizeLv()
+                    iconPixelSize = self.panel().filesIconSizeLv(True)
+                    maxIconSize = BCMainViewTab.MAX_ICON_SIZE_FILE_LV
 
                 self.__window.actionViewLayoutViewAsList.setVisible(True)
                 self.__window.actionViewLayoutViewAsGrid.setVisible(True)
                 self.__window.actionViewLayoutIconSize.setVisible(True)
 
-                if layout==BCMainViewTabFilesLayout.FULL:
+                if layout == BCMainViewTabFilesLayout.FULL:
                     self.__window.actionViewLayoutFullMode.setChecked(True)
-                elif layout==BCMainViewTabFilesLayout.TOP:
+                elif layout == BCMainViewTabFilesLayout.TOP:
                     self.__window.actionViewLayoutTopBottom.setChecked(True)
-                elif layout==BCMainViewTabFilesLayout.LEFT:
+                elif layout == BCMainViewTabFilesLayout.LEFT:
                     self.__window.actionViewLayoutLeftRight.setChecked(True)
-                elif layout==BCMainViewTabFilesLayout.BOTTOM:
+                elif layout == BCMainViewTabFilesLayout.BOTTOM:
                     self.__window.actionViewLayoutBottomTop.setChecked(True)
-                elif layout==BCMainViewTabFilesLayout.RIGHT:
+                elif layout == BCMainViewTabFilesLayout.RIGHT:
                     self.__window.actionViewLayoutRightLeft.setChecked(True)
 
-            elif self.panel().tabActive()==BCMainViewTabTabs.CLIPBOARD:
+            elif self.panel().tabActive() == BCMainViewTabTabs.CLIPBOARD:
                 self.__window.actionViewLayoutFullMode.setVisible(False)
-                self.__window.actionViewLayoutTopBottom.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.TOP ))
-                self.__window.actionViewLayoutLeftRight.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.LEFT ))
-                self.__window.actionViewLayoutBottomTop.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.BOTTOM ))
-                self.__window.actionViewLayoutRightLeft.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.RIGHT ))
+                self.__window.actionViewLayoutTopBottom.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.TOP))
+                self.__window.actionViewLayoutLeftRight.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.LEFT))
+                self.__window.actionViewLayoutBottomTop.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.BOTTOM))
+                self.__window.actionViewLayoutRightLeft.triggered.connect(lambda: self.commandPanelClipboardTabLayout(self.panelId(), BCMainViewTabClipboardLayout.RIGHT))
 
-                layout=self.panel().clipboardTabLayout()
-                iconSize=self.panel().clipboardIconSize()
-                iconPixelSize=self.panel().clipboardIconSize(True)
-                maxIconSize=BCMainViewTab.MAX_ICON_SIZE_CLIPBOARD
+                layout = self.panel().clipboardTabLayout()
+                iconSize = self.panel().clipboardIconSize()
+                iconPixelSize = self.panel().clipboardIconSize(True)
+                maxIconSize = BCMainViewTab.MAX_ICON_SIZE_CLIPBOARD
 
                 self.__window.actionViewLayoutViewAsList.setVisible(False)
                 self.__window.actionViewLayoutViewAsGrid.setVisible(False)
                 self.__window.actionViewLayoutIconSize.setVisible(True)
 
-                if layout==BCMainViewTabClipboardLayout.TOP:
+                if layout == BCMainViewTabClipboardLayout.TOP:
                     self.__window.actionViewLayoutTopBottom.setChecked(True)
-                elif layout==BCMainViewTabClipboardLayout.LEFT:
+                elif layout == BCMainViewTabClipboardLayout.LEFT:
                     self.__window.actionViewLayoutLeftRight.setChecked(True)
-                elif layout==BCMainViewTabClipboardLayout.BOTTOM:
+                elif layout == BCMainViewTabClipboardLayout.BOTTOM:
                     self.__window.actionViewLayoutBottomTop.setChecked(True)
-                elif layout==BCMainViewTabClipboardLayout.RIGHT:
+                elif layout == BCMainViewTabClipboardLayout.RIGHT:
                     self.__window.actionViewLayoutRightLeft.setChecked(True)
             else:
                 self.__window.actionViewLayoutViewAsList.setVisible(False)
@@ -1187,7 +1180,7 @@ class BCUIController(QObject):
             self.__window.actionViewLayoutIconSize.slider().setValue(iconSize)
             self.__window.actionViewLayoutIconSize.setLabelText(i18n(f"Thumbnail size: {iconPixelSize}px"))
 
-        #print("updateMenuForPanel", self.panel().tabActive(), self.panelId())
+        # print("updateMenuForPanel", self.panel().tabActive(), self.panelId())
 
         self.__window.actionViewThumbnail.setChecked(self.panel().filesViewThumbnail())
         self.__window.actionViewDisplayQuickFilter.setChecked(self.panel().filesFilterVisible())
@@ -1213,23 +1206,23 @@ class BCUIController(QObject):
             selectionInfo = self.panel().filesSelected()
             markedInfo = self.panel().filesMarked()
 
-            oppositeTargetReady=self.panel(False).targetDirectoryReady()
+            oppositeTargetReady = self.panel(False).targetDirectoryReady()
 
-            self.__window.actionFileSaveAll.setEnabled(self.__checkOpenedDocuments()>0)
-            self.__window.actionFileOpen.setEnabled(selectionInfo[4]>0)
-            self.__window.actionFileOpenAsNewDocument.setEnabled(selectionInfo[4]>0)
-            self.__window.actionFileCopyToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3]>0))
-            self.__window.actionFileMoveToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3]>0))
-            self.__window.actionFileDelete.setEnabled(selectionInfo[3]>0)
+            self.__window.actionFileSaveAll.setEnabled(self.__checkOpenedDocuments() > 0)
+            self.__window.actionFileOpen.setEnabled(selectionInfo[4] > 0)
+            self.__window.actionFileOpenAsNewDocument.setEnabled(selectionInfo[4] > 0)
+            self.__window.actionFileCopyToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3] > 0))
+            self.__window.actionFileMoveToOtherPanel.setEnabled(oppositeTargetReady and (selectionInfo[3] > 0))
+            self.__window.actionFileDelete.setEnabled(selectionInfo[3] > 0)
 
             if Krita.instance().activeDocument():
-                allow=self.panel().filesAllowPasteFilesAsRefimg([item.fullPathName() for item in selectionInfo[0] if isinstance(item, BCFile)])
+                allow = self.panel().filesAllowPasteFilesAsRefimg([item.fullPathName() for item in selectionInfo[0] if isinstance(item, BCFile)])
                 # here need to something
                 # - all files can't be opened as reference image (SVGZ)
                 # - all files can't be opened as file layer (SVGZ)
                 self.__window.actionFileOpenAsImageReference.setEnabled(allow)
-                self.__window.actionFileOpenAsLayer.setEnabled(selectionInfo[4]>0)
-                self.__window.actionFileOpenAsFileLayer.setEnabled(selectionInfo[4]>0)
+                self.__window.actionFileOpenAsLayer.setEnabled(selectionInfo[4] > 0)
+                self.__window.actionFileOpenAsFileLayer.setEnabled(selectionInfo[4] > 0)
             else:
                 self.__window.actionFileOpenAsImageReference.setEnabled(False)
                 self.__window.actionFileOpenAsLayer.setEnabled(False)
@@ -1241,16 +1234,16 @@ class BCUIController(QObject):
             # exclusive or
             #   - one or more directory is selected [1]
             #
-            self.__window.actionFileRename.setEnabled( (selectionInfo[2]>0) ^ (selectionInfo[1]>0))
+            self.__window.actionFileRename.setEnabled((selectionInfo[2] > 0) ^ (selectionInfo[1] > 0))
 
-            self.__window.actionFileCopyToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
-            self.__window.actionFileMoveToOtherPanelNoConfirm.setEnabled(selectionInfo[3]>0)
-            self.__window.actionFileDeleteNoConfirm.setEnabled(selectionInfo[3]>0)
+            self.__window.actionFileCopyToOtherPanelNoConfirm.setEnabled(selectionInfo[3] > 0)
+            self.__window.actionFileMoveToOtherPanelNoConfirm.setEnabled(selectionInfo[3] > 0)
+            self.__window.actionFileDeleteNoConfirm.setEnabled(selectionInfo[3] > 0)
 
             self.__window.actionMenuEditSelectAll.setEnabled(True)
             self.__window.actionMenuEditSelectNone.setEnabled(True)
             self.__window.actionMenuEditSelectInvert.setEnabled(True)
-            self.__window.actionMenuEditSelectMarked.setEnabled(markedInfo[0]>0)
+            self.__window.actionMenuEditSelectMarked.setEnabled(markedInfo[0] > 0)
             self.__window.actionMenuEditSelectMarked.setVisible(True)
 
             self.__window.actionMenuEditMarkUnmark.setEnabled(True)
@@ -1276,7 +1269,7 @@ class BCUIController(QObject):
             buildMenuGoSavedViews()
             buildMenuViewLayout()
 
-            self.__window.actionToolsCopyToClipboard.setEnabled(selectionInfo[3]>0)
+            self.__window.actionToolsCopyToClipboard.setEnabled(selectionInfo[3] > 0)
             self.__window.actionToolsExportFiles.setEnabled(True)
             self.__window.actionToolsConvertFiles.setEnabled(True)
         elif self.panel().tabActive() == BCMainViewTabTabs.CLIPBOARD:
@@ -1301,7 +1294,7 @@ class BCUIController(QObject):
 
             self.__window.actionClipboardCheckContent.setVisible(not self.__clipboard.enabled())
 
-            if self.__clipboard.length()==0:
+            if self.__clipboard.length() == 0:
                 self.__window.actionMenuEditSelectAll.setEnabled(False)
                 self.__window.actionMenuEditSelectNone.setEnabled(False)
                 self.__window.actionMenuEditSelectInvert.setEnabled(False)
@@ -1322,13 +1315,13 @@ class BCUIController(QObject):
             self.__window.actionMenuEditMarkNone.setEnabled(False)
             self.__window.actionMenuEditMarkInvert.setEnabled(False)
 
-            if selectionInfo[1]==1:
+            if selectionInfo[1] == 1:
                 # nb item selected(1)
                 self.__window.actionClipboardPushBack.setEnabled(True)
 
                 if Krita.instance().activeDocument():
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
-                    self.__window.actionClipboardPasteAsRefImage.setEnabled(len([item for item in selectionInfo[0] if item.type()!="BCClipboardItemSvg"])>0)
+                    self.__window.actionClipboardPasteAsRefImage.setEnabled(len([item for item in selectionInfo[0] if item.type() != "BCClipboardItemSvg"]) > 0)
                 else:
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC))
                     self.__window.actionClipboardPasteAsRefImage.setEnabled(False)
@@ -1336,7 +1329,7 @@ class BCUIController(QObject):
                 self.__window.actionClipboardPasteAsNewDocument.setEnabled(True)
                 self.__window.actionClipboardOpen.setEnabled(True)
 
-                if selectionInfo[11]==1:
+                if selectionInfo[11] == 1:
                     # nb item persistent(11)
                     self.__window.actionClipboardSetPersistent.setEnabled(False)
                     self.__window.actionClipboardSetNotPersistent.setEnabled(True)
@@ -1344,24 +1337,24 @@ class BCUIController(QObject):
                     self.__window.actionClipboardSetPersistent.setEnabled(True)
                     self.__window.actionClipboardSetNotPersistent.setEnabled(False)
 
-                if selectionInfo[9]==1:
+                if selectionInfo[9] == 1:
                     # nb item not downloaded(9)
                     self.__window.actionClipboardStartDownload.setEnabled(True)
                     self.__window.actionClipboardStopDownload.setEnabled(False)
-                elif selectionInfo[10]==1:
+                elif selectionInfo[10] == 1:
                     # nb item downloading(10)
                     self.__window.actionClipboardStartDownload.setEnabled(False)
                     self.__window.actionClipboardStopDownload.setEnabled(True)
                 else:
                     self.__window.actionClipboardStartDownload.setEnabled(False)
                     self.__window.actionClipboardStopDownload.setEnabled(False)
-            elif selectionInfo[1]>1:
+            elif selectionInfo[1] > 1:
                 # multiple items selected
                 self.__window.actionClipboardPushBack.setEnabled(True)
 
                 if Krita.instance().activeDocument():
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
-                    self.__window.actionClipboardPasteAsRefImage.setEnabled(len([item for item in selectionInfo[0] if item.type()!="BCClipboardItemSvg"])>0)
+                    self.__window.actionClipboardPasteAsRefImage.setEnabled(len([item for item in selectionInfo[0] if item.type() != "BCClipboardItemSvg"]) > 0)
                 else:
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC))
                     self.__window.actionClipboardPasteAsRefImage.setEnabled(False)
@@ -1369,25 +1362,25 @@ class BCUIController(QObject):
                 self.__window.actionClipboardPasteAsNewDocument.setEnabled(True)
                 self.__window.actionClipboardOpen.setEnabled(True)
 
-                if selectionInfo[11]==0:
+                if selectionInfo[11] == 0:
                     # nb item persistent(11)
                     self.__window.actionClipboardSetPersistent.setEnabled(True)
                     self.__window.actionClipboardSetNotPersistent.setEnabled(False)
-                elif selectionInfo[11]==selectionInfo[1]:
+                elif selectionInfo[11] == selectionInfo[1]:
                     self.__window.actionClipboardSetPersistent.setEnabled(False)
                     self.__window.actionClipboardSetNotPersistent.setEnabled(True)
                 else:
-                    # a mix...
+                    # a mix...
                     self.__window.actionClipboardSetPersistent.setEnabled(True)
                     self.__window.actionClipboardSetNotPersistent.setEnabled(True)
 
-                if selectionInfo[9]==0:
+                if selectionInfo[9] == 0:
                     # nb item not downloaded(9)
                     self.__window.actionClipboardStartDownload.setEnabled(False)
                 else:
                     self.__window.actionClipboardStartDownload.setEnabled(True)
 
-                if selectionInfo[10]==0:
+                if selectionInfo[10] == 0:
                     # nb item downloading(10)
                     self.__window.actionClipboardStopDownload.setEnabled(False)
                 else:
@@ -1447,7 +1440,6 @@ class BCUIController(QObject):
             self.__window.actionMenuEditMarkNone.setEnabled(False)
             self.__window.actionMenuEditMarkInvert.setEnabled(False)
 
-
             self.__window.actionViewThumbnail.setEnabled(False)
             self.__window.actionViewShowImageFileOnly.setEnabled(False)
             self.__window.actionViewShowBackupFiles.setEnabled(False)
@@ -1461,7 +1453,7 @@ class BCUIController(QObject):
 
     def close(self):
         """When window is about to be closed, execute some cleanup/backup/stuff before exiting BuliCommander"""
-        # save current settings
+        # save current settings
         self.saveSettings()
 
         # stop all async processes (thumbnail generating)
@@ -1526,28 +1518,28 @@ class BCUIController(QObject):
         """Save all modified documents"""
 
         # list of document to save
-        documents=[]
+        documents = []
         for view in Krita.instance().views():
             # check documents in visible view only
             if view.visible() and view.document().modified():
                 documents.append(view.document())
 
-        if len(documents)==0:
+        if len(documents) == 0:
             return
 
-        dlgProgress=WDialogProgress.display(i18n(f"{self.__bcName}::Save all files"), i18n("Saving all documents"), True, None, 0, len(documents))
+        dlgProgress = WDialogProgress.display(i18n(f"{self.__bcName}::Save all files"), i18n("Saving all documents"), True, None, 0, len(documents))
 
-        currentPath=''
+        currentPath = ''
         for docNumber, document in enumerate(documents):
             # loop over all documents
             # for new document need to ask for path/filename
             # for existing document, just save it
-            if document.fileName()!="":
+            if document.fileName() != "":
                 document.save()
             else:
-                docFileName, dummy=QFileDialog.getSaveFileName(None, f"{self.__bcName}::Save file", currentPath, i18n("Krita document (*.kra)") )
+                docFileName, dummy = QFileDialog.getSaveFileName(None, f"{self.__bcName}::Save file", currentPath, i18n("Krita document (*.kra)"))
 
-                if docFileName!='':
+                if docFileName != '':
                     document.setFileName(docFileName)
                     document.save()
 
@@ -1556,8 +1548,6 @@ class BCUIController(QObject):
                 break
 
         dlgProgress.hide()
-
-
 
     def commandFileOpen(self, file=None):
         """Open file"""
@@ -1568,8 +1558,8 @@ class BCUIController(QObject):
                 for file in selectionInfo[0]:
                     if isinstance(file, BCFile) and file.readable():
                         if self.commandFileOpen(file.fullPathName()):
-                            nbOpened+=1
-                if nbOpened!=selectionInfo[4]:
+                            nbOpened += 1
+                if nbOpened != selectionInfo[4]:
                     return False
                 else:
                     return True
@@ -1610,8 +1600,8 @@ class BCUIController(QObject):
                 for file in selectionInfo[0]:
                     if isinstance(file, BCFile) and file.readable():
                         if self.commandFileOpenAsNew(file.fullPathName()):
-                            nbOpened+=1
-                if nbOpened!=selectionInfo[4]:
+                            nbOpened += 1
+                if nbOpened != selectionInfo[4]:
                     return False
                 else:
                     return True
@@ -1629,13 +1619,13 @@ class BCUIController(QObject):
             newFileName = None
             if newFileNameFromSettings:
                 if bcFile.format() == BCFileManagedFormat.KRA:
-                    newFileName =BCFileManipulateName.parseFileNameKw(bcFile, BCSettings.get(BCSettingsKey.CONFIG_FILES_NEWFILENAME_KRA))
+                    newFileName = BCFileManipulateName.parseFileNameKw(bcFile, BCSettings.get(BCSettingsKey.CONFIG_FILES_NEWFILENAME_KRA))
                 else:
-                    newFileName =BCFileManipulateName.parseFileNameKw(bcFile, BCSettings.get(BCSettingsKey.CONFIG_FILES_NEWFILENAME_OTHER))
+                    newFileName = BCFileManipulateName.parseFileNameKw(bcFile, BCSettings.get(BCSettingsKey.CONFIG_FILES_NEWFILENAME_OTHER))
 
             if isinstance(newFileName, str):
-                if newFileName != '' and not re.search("\.kra$", newFileName):
-                    newFileName+='.kra'
+                if newFileName != '' and not re.search(r"\.kra$", newFileName):
+                    newFileName += '.kra'
                 elif newFileName.strip() == '':
                     newFileName = None
 
@@ -1667,15 +1657,15 @@ class BCUIController(QObject):
                 for file in selectionInfo[0]:
                     if isinstance(file, BCFile) and file.readable():
                         if self.commandFileOpenAsImageReference(file.fullPathName()):
-                            nbOpened+=1
-                if nbOpened!=selectionInfo[4]:
+                            nbOpened += 1
+                if nbOpened != selectionInfo[4]:
                     return False
                 else:
                     return True
         elif isinstance(file, BCFile) and file.readable():
             return self.commandFileOpenAsImageReference(file.fullPathName())
         elif isinstance(file, str):
-            hash=hashlib.md5()
+            hash = hashlib.md5()
             hash.update(file.encode())
             cbFile = BCClipboardItemFile(hash.hexdigest(), file, saveInCache=False, persistent=False)
             self.commandClipboardPasteAsRefImage(cbFile)
@@ -1693,31 +1683,31 @@ class BCUIController(QObject):
     def commandFileOpenAsLayer(self, file=None):
         """Open file as layer"""
         def importFileAsLayer(file):
-            document=Krita.instance().activeDocument()
+            document = Krita.instance().activeDocument()
 
             if file.format() in (BCFileManagedFormat.SVG, BCFileManagedFormat.SVGZ):
                 if file.format() == BCFileManagedFormat.SVG:
                     try:
                         with open(file.fullPathName(), 'r') as fHandle:
-                            svgContent=fHandle.read()
+                            svgContent = fHandle.read()
                     except Exception as e:
                         return False
                 else:
                     try:
                         with gzip.open(file.fullPathName(), 'rb') as fHandle:
-                            svgContent=fHandle.read().decode()
+                            svgContent = fHandle.read().decode()
                     except Exception as e:
                         return False
 
-                fileName=file.fullPathName()
-                importedFile=document.createVectorLayer(i18n(f"BC - Layer ({fileName})"))
+                fileName = file.fullPathName()
+                importedFile = document.createVectorLayer(i18n(f"BC - Layer ({fileName})"))
                 importedFile.addShapesFromSvg(svgContent)
             else:
-                fileName=file.fullPathName()
-                importedFile=document.createNode(i18n(f"BC - Layer ({fileName})"), "paintlayer")
+                fileName = file.fullPathName()
+                importedFile = document.createNode(i18n(f"BC - Layer ({fileName})"), "paintlayer")
                 EKritaNode.fromQImage(importedFile, file.image())
 
-            activeNode=document.activeNode()
+            activeNode = document.activeNode()
             activeNode.parentNode().addChildNode(importedFile, activeNode)
             return True
 
@@ -1728,8 +1718,8 @@ class BCUIController(QObject):
                 for file in selectionInfo[0]:
                     if isinstance(file, BCFile) and file.readable():
                         if importFileAsLayer(file):
-                            nbOpened+=1
-                if nbOpened!=selectionInfo[4]:
+                            nbOpened += 1
+                if nbOpened != selectionInfo[4]:
                     return False
                 else:
                     return True
@@ -1754,39 +1744,38 @@ class BCUIController(QObject):
         """Open file as file layer"""
         def scaleMode(applyForAll=False):
             if applyForAll:
-                applyForAll=i18n("Apply for all image")
+                applyForAll = i18n("Apply for all image")
             else:
-                applyForAll=None
+                applyForAll = None
 
             return WDialogRadioButtonChoiceInput.display(i18n(f"{self.__bcName}::Open as File layer"),
-                                                            "<h1>Scaling mode</h1><p>Please choose a scaling mode for File layer</p>",
-                                                            choicesValue=[
-                                                                i18n("No scaling"),
-                                                                i18n("Scale to Image Size"),
-                                                                i18n("Adapt to Image Resolution (ppi)")],
-                                                            optionalCheckboxMsg=applyForAll
-                                                        )
+                                                         "<h1>Scaling mode</h1><p>Please choose a scaling mode for File layer</p>",
+                                                         choicesValue=[i18n("No scaling"),
+                                                                       i18n("Scale to Image Size"),
+                                                                       i18n("Adapt to Image Resolution (ppi)")],
+                                                         optionalCheckboxMsg=applyForAll
+                                                         )
 
         if file is None:
             selectionInfo = self.panel().filesSelected()
             if selectionInfo[4] > 0:
-                moreThanOneFile=selectionInfo[4]>1
-                applyToAll=False
+                moreThanOneFile = selectionInfo[4] > 1
+                applyToAll = False
                 nbOpened = 0
                 for file in selectionInfo[0]:
                     if isinstance(file, BCFile) and file.readable():
-                        if applyToAll==False or scalingMode is None:
+                        if applyToAll is False or scalingMode is None:
                             if moreThanOneFile:
-                                scalingMode, applyToAll=scaleMode(moreThanOneFile)
+                                scalingMode, applyToAll = scaleMode(moreThanOneFile)
                             else:
-                                scalingMode=scaleMode(moreThanOneFile)
+                                scalingMode = scaleMode(moreThanOneFile)
 
                         if scalingMode is None and (applyToAll or not moreThanOneFile):
                             return False
 
                         if self.commandFileOpenAsFileLayer(file.fullPathName(), scalingMode):
-                            nbOpened+=1
-                if nbOpened!=selectionInfo[4]:
+                            nbOpened += 1
+                if nbOpened != selectionInfo[4]:
                     return False
                 else:
                     return True
@@ -1794,21 +1783,21 @@ class BCUIController(QObject):
             return self.commandFileOpenAsFileLayer(file.fullPathName(), scalingMode)
         elif isinstance(file, str):
             if scalingMode is None:
-                scalingMode=scaleMode()
+                scalingMode = scaleMode()
 
             if scalingMode is None:
                 # user cancelled action
                 return False
-            elif scalingMode==0:
-                scalingMode="None"
-            elif scalingMode==1:
-                scalingMode="ToImageSize"
-            elif scalingMode==2:
-                scalingMode="ToImagePPI"
+            elif scalingMode == 0:
+                scalingMode = "None"
+            elif scalingMode == 1:
+                scalingMode = "ToImageSize"
+            elif scalingMode == 2:
+                scalingMode = "ToImagePPI"
 
-            fileName=os.path.basename(file)
-            document=Krita.instance().activeDocument()
-            activeNode=document.activeNode()
+            fileName = os.path.basename(file)
+            document = Krita.instance().activeDocument()
+            activeNode = document.activeNode()
             activeNode.parentNode().addChildNode(document.createFileLayer(i18n(f"BC - File layer ({fileName})"), file, scalingMode), activeNode)
 
             return True
@@ -1829,7 +1818,7 @@ class BCUIController(QObject):
         - Image: open it
         - Other files: does nothing
         """
-        #if not isinstance(file, BCBaseFile):
+        # if not isinstance(file, BCBaseFile):
         #    raise EInvalidType('Given `file` must be a <BCBaseFile>')
 
         closeBC = False
@@ -1879,12 +1868,13 @@ class BCUIController(QObject):
             targetPath = self.panel().filesPath()
 
         newPath = BCFileOperationUi.createDir(self.__bcName, targetPath)
-        if not newPath is None:
+        if newPath is not None:
             if not BCFileOperation.createDir(self.__bcName, newPath):
                 WDialogMessage.display(
-                        i18n(f"{self.__bcName}::Create directory"),
-                        "".join([i18n("<h1 class='warning'>Warning!</h1>"),
-                                 i18n(f"""<p>Unable to create directory <span style="font-family:'consolas, monospace'; font-weight:bold; white-space: nowrap;">{newPath}</span></p>""")])
+                    i18n(f"{self.__bcName}::Create directory"),
+                    "".join(
+                        [i18n("<h1 class='warning'>Warning!</h1>"),
+                         i18n(f"""<p>Unable to create directory <span style="font-family:'consolas, monospace'; font-weight:bold; white-space: nowrap;">{newPath}</span></p>""")])
                     )
 
     def commandFileDelete(self, confirm=True):
@@ -1973,7 +1963,7 @@ class BCUIController(QObject):
         """Push back items to clipboard"""
         if items is None:
             selectionInfo = self.panel().clipboardSelected()
-            if selectionInfo[1]>0:
+            if selectionInfo[1] > 0:
                 self.commandClipboardPushBackClipboard(selectionInfo[0])
         else:
             self.__clipboard.pushBackToClipboard(items)
@@ -1987,26 +1977,26 @@ class BCUIController(QObject):
 
         if items is None:
             selectionInfo = self.panel().clipboardSelected()
-            if selectionInfo[1]>0:
+            if selectionInfo[1] > 0:
                 for item in selectionInfo[0]:
                     self.commandClipboardPasteAsNewLayer(item)
         elif isinstance(items, BCClipboardItem):
             if items.type() in ('BCClipboardItemUrl', 'BCClipboardItemFile'):
-                image=QImage(items.fileName())
+                image = QImage(items.fileName())
                 if image:
-                    document=Krita.instance().activeDocument()
-                    activeNode=document.activeNode()
+                    document = Krita.instance().activeDocument()
+                    activeNode = document.activeNode()
 
-                    if items.type()=='BCClipboardItemUrl':
-                        layerName=items.url().url()
+                    if items.type() == 'BCClipboardItemUrl':
+                        layerName = items.url().url()
                     else:
-                        layerName=items.fileName()
+                        layerName = items.fileName()
 
-                    newLayer=document.createNode(i18n(f'Pasted from {layerName}'), 'paintlayer')
+                    newLayer = document.createNode(i18n(f'Pasted from {layerName}'), 'paintlayer')
 
                     EKritaNode.fromQImage(newLayer, image)
 
-                    if activeNode.type()=='grouplayer':
+                    if activeNode.type() == 'grouplayer':
                         activeNode.addChildNode(newLayer, None)
                     else:
                         activeNode.parentNode().addChildNode(newLayer, EKritaNode.above(activeNode))
@@ -2018,11 +2008,14 @@ class BCUIController(QObject):
         """Push back items to clipboard and paste them as new document"""
         if items is None:
             selectionInfo = self.panel().clipboardSelected()
-            if selectionInfo[1]>0:
+            if selectionInfo[1] > 0:
                 for item in selectionInfo[0]:
                     self.commandClipboardPasteAsNewDocument(item)
         elif isinstance(items, BCClipboardItem):
-            if (items.type()=='BCClipboardItemKra' and items.origin()=='application/x-krita-node') or (items.type() in ('BCClipboardItemUrl', 'BCClipboardItemFile', 'BCClipboardItemImg', 'BCClipboardItemSvg')):
+            if (items.type() == 'BCClipboardItemKra' and items.origin() == 'application/x-krita-node') or (items.type() in ('BCClipboardItemUrl',
+                                                                                                                            'BCClipboardItemFile',
+                                                                                                                            'BCClipboardItemImg',
+                                                                                                                            'BCClipboardItemSvg')):
                 self.commandFileOpenAsNew(items.fileName(), False)
             else:
                 # krita selection...
@@ -2033,7 +2026,7 @@ class BCUIController(QObject):
         """Push back items to clipboard and paste them as reference image"""
         if items is None:
             selectionInfo = self.panel().clipboardSelected()
-            if selectionInfo[1]>0:
+            if selectionInfo[1] > 0:
                 for item in selectionInfo[0]:
                     self.commandClipboardPasteAsRefImage(item)
         elif isinstance(items, BCClipboardItem):
@@ -2048,7 +2041,7 @@ class BCUIController(QObject):
         """
         if items is None:
             selectionInfo = self.panel().clipboardSelected()
-            if selectionInfo[1]>0:
+            if selectionInfo[1] > 0:
                 for item in selectionInfo[0]:
                     self.commandClipboardOpen(item)
         elif isinstance(items, BCClipboardItem):
@@ -2061,7 +2054,7 @@ class BCUIController(QObject):
         """Start download for selected items (that can be donwloaded)"""
         if items is None:
             selectionInfo = self.panel().clipboardSelected()
-            if selectionInfo[1]>0:
+            if selectionInfo[1] > 0:
                 self.__clipboard.startDownload(selectionInfo[0])
         elif isinstance(items, BCClipboardItem):
             self.__clipboard.startDownload(items)
@@ -2072,7 +2065,7 @@ class BCUIController(QObject):
         """Stop download for selected items that currently are downloading"""
         if items is None:
             selectionInfo = self.panel().clipboardSelected()
-            if selectionInfo[1]>0:
+            if selectionInfo[1] > 0:
                 self.__clipboard.stopDownload(selectionInfo[0])
         elif isinstance(items, BCClipboardItem):
             self.__clipboard.stopDownload(items)
@@ -2086,7 +2079,7 @@ class BCUIController(QObject):
 
         if item is None:
             selectionInfo = self.panel().clipboardSelected()
-            if selectionInfo[1]>0:
+            if selectionInfo[1] > 0:
                 for panelId in self.__window.panels:
                     self.__window.panels[panelId].clipboardSetAllowRefresh(False)
                 for item in selectionInfo[0]:
@@ -2098,14 +2091,14 @@ class BCUIController(QObject):
 
     def commandViewBringToFront(self):
         """Bring main window to front"""
-        self.__window.setWindowState( (self.__window.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
+        self.__window.setWindowState((self.__window.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
         self.__window.activateWindow()
 
     def commandViewSwapPanels(self):
         """Swap panels positions"""
         if self.__window.actionViewDisplaySecondaryPanel.isChecked():
             self.__window.splitterMainView.insertWidget(0, self.__window.panels[1])
-            self.__window.panels[0],self.__window.panels[1] = self.__window.panels[1],self.__window.panels[0]
+            self.__window.panels[0], self.__window.panels[1] = self.__window.panels[1], self.__window.panels[0]
 
     def commandViewDisplaySecondaryPanel(self, displaySecondary=None):
         """Display/Hide secondary panel
@@ -2118,11 +2111,9 @@ class BCUIController(QObject):
         else:
             self.__window.actionViewDisplaySecondaryPanel.setChecked(displaySecondary)
 
-
         if not displaySecondary:
-            # when hidden, secondary panel width is set to 0, then save current size now
+            # when hidden, secondary panel width is set to 0, then save current size now
             BCSettings.set(BCSettingsKey.SESSION_MAINWINDOW_SPLITTER_POSITION, self.__window.splitterMainView.sizes())
-
 
         self.__window.panels[1].setVisible(displaySecondary)
         self.__window.actionViewSwapPanels.setEnabled(displaySecondary)
@@ -2141,7 +2132,7 @@ class BCUIController(QObject):
         If `highlightedPanel` is 0, left panel is highlighted
         If `highlightedPanel` is 1, right panel is highlighted (if visible)
         """
-        if not highlightedPanel in self.__window.panels:
+        if highlightedPanel not in self.__window.panels:
             raise EInvalidValue('Given `panelIndex` must be 0 or 1')
 
         if not self.__window.actionViewDisplaySecondaryPanel.isChecked():
@@ -2155,7 +2146,7 @@ class BCUIController(QObject):
     def commandViewMainSplitterPosition(self, positions=None):
         """Set the mainwindow splitter position
 
-        Given `positions` is a list [<panel0 size>,<panel1 size>]
+        Given `positions` is a list [<panel0 size>, <panel1 size>]
         If value is None, will define a default 50%-50%
         """
         if positions is None:
@@ -2174,23 +2165,24 @@ class BCUIController(QObject):
             raise EInvalidValue('Given `maximized` must be a <bool>')
 
         if maximized:
-            # store current geometry now because after window is maximized, it's lost
-            BCSettings.set(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY, [self.__window.geometry().x(), self.__window.geometry().y(), self.__window.geometry().width(), self.__window.geometry().height()])
+            # store current geometry now because after window is maximized, it's lost
+            BCSettings.set(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY,
+                           [self.__window.geometry().x(), self.__window.geometry().y(), self.__window.geometry().width(), self.__window.geometry().height()])
             self.__window.showMaximized()
         else:
             self.__window.showNormal()
 
         return maximized
 
-    def commandViewMainWindowGeometry(self, geometry=[-1,-1,-1,-1]):
+    def commandViewMainWindowGeometry(self, geometry=[-1, -1, -1, -1]):
         """Set the window geometry
 
-        Given `geometry` is a list [x,y,width,height] or a QRect()
+        Given `geometry` is a list [x, y, width, height] or a QRect()
         """
         if isinstance(geometry, QRect):
             geometry = [geometry.x(), geometry.y(), geometry.width(), geometry.height()]
 
-        if not isinstance(geometry, list) or len(geometry)!=4:
+        if not isinstance(geometry, list) or len(geometry) != 4:
             raise EInvalidValue('Given `geometry` must be a <list[x,y,w,h]>')
 
         rect = self.__window.geometry()
@@ -2215,7 +2207,7 @@ class BCUIController(QObject):
         """Set current view mode"""
         if panel is None:
             panel = self.panelId()
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         if mode is None or not isinstance(mode, bool):
@@ -2232,7 +2224,7 @@ class BCUIController(QObject):
         """Set current view mode"""
         if panel is None:
             panel = self.panelId()
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         if mode is None or not isinstance(mode, bool):
@@ -2249,10 +2241,10 @@ class BCUIController(QObject):
         """Set current preview view mode"""
         if panel is None:
             panel = self.panelId()
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
-        if not mode in WImageView.backgroundList():
+        if mode not in WImageView.backgroundList():
             mode = WImageView.BG_CHECKER_BOARD
 
         self.__window.panels[panel].setPreviewBackground(mode)
@@ -2320,7 +2312,7 @@ class BCUIController(QObject):
 
     def commandPanelClipboardTabLayout(self, panel, value):
         """Set panel layout"""
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         if isinstance(value, str):
@@ -2332,7 +2324,7 @@ class BCUIController(QObject):
 
     def commandPanelFilesTabViewMode(self, panel, value):
         """Set panel view mode"""
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         self.__window.panels[panel].setFilesTabViewMode(value)
@@ -2341,7 +2333,7 @@ class BCUIController(QObject):
 
     def commandPanelFilesTabLayout(self, panel, value):
         """Set panel layout"""
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         if isinstance(value, str):
@@ -2353,7 +2345,7 @@ class BCUIController(QObject):
 
     def commandPanelFilesTabActive(self, panel, value):
         """Set active tab for files tab for given panel"""
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         if isinstance(value, str):
@@ -2365,7 +2357,7 @@ class BCUIController(QObject):
 
     def commandPanelFilesTabPosition(self, panel, value):
         """Set tabs positions for given panel"""
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         self.__window.panels[panel].setFilesTabOrder(value)
@@ -2374,7 +2366,7 @@ class BCUIController(QObject):
 
     def commandPanelTabActive(self, panel, value):
         """Set active tab for given panel"""
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         if isinstance(value, str):
@@ -2386,7 +2378,7 @@ class BCUIController(QObject):
 
     def commandPanelTabPosition(self, panel, value):
         """Set tabs positions for given panel"""
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         self.__window.panels[panel].setTabOrder(value)
@@ -2395,7 +2387,7 @@ class BCUIController(QObject):
 
     def commandPanelFilesTabNfoActive(self, panel, value):
         """Set active tab for given panel"""
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         if isinstance(value, str):
@@ -2408,10 +2400,10 @@ class BCUIController(QObject):
     def commandPanelFilesTabSplitterClipboardPosition(self, panel, positions=None):
         """Set splitter position for tab clipboard for given panel
 
-        Given `positions` is a list [<panel0 size>,<panel1 size>]
+        Given `positions` is a list [<panel0 size>, <panel1 size>]
         If value is None, will define a default 50%-50%
         """
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].setClipboardTabSplitterPosition(positions)
@@ -2419,10 +2411,10 @@ class BCUIController(QObject):
     def commandPanelFilesTabSplitterFilesPosition(self, panel, positions=None):
         """Set splitter position for tab files for given panel
 
-        Given `positions` is a list [<panel0 size>,<panel1 size>]
+        Given `positions` is a list [<panel0 size>, <panel1 size>]
         If value is None, will define a default 50%-50%
         """
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].setFilesTabSplitterFilesPosition(positions)
@@ -2430,10 +2422,10 @@ class BCUIController(QObject):
     def commandPanelFilesTabSplitterPreviewPosition(self, panel, positions=None):
         """Set splitter position for tab preview for given panel
 
-        Given `positions` is a list [<panel0 size>,<panel1 size>]
+        Given `positions` is a list [<panel0 size>, <panel1 size>]
         If value is None, will define a default 50%-50%
         """
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].setFilesTabSplitterPreviewPosition(positions)
@@ -2443,7 +2435,7 @@ class BCUIController(QObject):
 
         If `force` is True, force to set path even if path already set with given value (do a "refresh")
         """
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         returned = self.__window.panels[panel].setFilesPath(path, force)
@@ -2453,8 +2445,8 @@ class BCUIController(QObject):
     def commandPanelSelectAll(self, panel=None):
         """Select all item"""
         if panel is None:
-            panel=self.__window.highlightedPanel()
-        if not panel in self.__window.panels:
+            panel = self.__window.highlightedPanel()
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].selectAll()
@@ -2462,8 +2454,8 @@ class BCUIController(QObject):
     def commandPanelSelectNone(self, panel=None):
         """Clear selection"""
         if panel is None:
-            panel=self.__window.highlightedPanel()
-        if not panel in self.__window.panels:
+            panel = self.__window.highlightedPanel()
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].selectNone()
@@ -2471,8 +2463,8 @@ class BCUIController(QObject):
     def commandPanelSelectInvert(self, panel=None):
         """Invert selection"""
         if panel is None:
-            panel=self.__window.highlightedPanel()
-        if not panel in self.__window.panels:
+            panel = self.__window.highlightedPanel()
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].selectInvert()
@@ -2480,8 +2472,8 @@ class BCUIController(QObject):
     def commandPanelSelectMarked(self, panel=None):
         """Select marked item"""
         if panel is None:
-            panel=self.__window.highlightedPanel()
-        if not panel in self.__window.panels:
+            panel = self.__window.highlightedPanel()
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].selectMarked()
@@ -2489,8 +2481,8 @@ class BCUIController(QObject):
     def commandPanelMarkUnmark(self, panel=None):
         """mark/unmark current item"""
         if panel is None:
-            panel=self.__window.highlightedPanel()
-        if not panel in self.__window.panels:
+            panel = self.__window.highlightedPanel()
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].markUnmark()
@@ -2498,8 +2490,8 @@ class BCUIController(QObject):
     def commandPanelMarkAll(self, panel=None):
         """mark all items"""
         if panel is None:
-            panel=self.__window.highlightedPanel()
-        if not panel in self.__window.panels:
+            panel = self.__window.highlightedPanel()
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].markAll()
@@ -2507,8 +2499,8 @@ class BCUIController(QObject):
     def commandPanelMarkNone(self, panel=None):
         """unmark all items"""
         if panel is None:
-            panel=self.__window.highlightedPanel()
-        if not panel in self.__window.panels:
+            panel = self.__window.highlightedPanel()
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].markNone()
@@ -2516,8 +2508,8 @@ class BCUIController(QObject):
     def commandPanelMarkInvert(self, panel=None):
         """invert marked items"""
         if panel is None:
-            panel=self.__window.highlightedPanel()
-        if not panel in self.__window.panels:
+            panel = self.__window.highlightedPanel()
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].markInvert()
@@ -2529,21 +2521,21 @@ class BCUIController(QObject):
         If True, display filter
         If False, hide
         """
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].setFilesFilterVisible(visible)
 
     def commandPanelFilterValue(self, panel, value=None):
         """Set current filter text value"""
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].setFilesFilter(value, None)
 
     def commandPanelFilterOptions(self, panel, value=None):
         """Set current filter options"""
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].setFilesFilter(None, value)
@@ -2556,7 +2548,7 @@ class BCUIController(QObject):
                     panel = panelId
                     break
 
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].setFilesPath(path)
@@ -2569,7 +2561,7 @@ class BCUIController(QObject):
                     panel = panelId
                     break
 
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].filesGoToBackPath()
@@ -2582,7 +2574,7 @@ class BCUIController(QObject):
                     panel = panelId
                     break
 
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.__window.panels[panel].filesGoToUpPath()
@@ -2595,7 +2587,7 @@ class BCUIController(QObject):
                     panel = panelId
                     break
 
-        if not panel in self.__window.panels:
+        if panel not in self.__window.panels:
             raise EInvalidValue('Given `panel` is not valid')
 
         return self.commandGoTo(panel, '@home')
@@ -2678,7 +2670,7 @@ class BCUIController(QObject):
             # assume item in list are tuple (or list) (name, list of files/directories)
             dictValues = {}
             for item in values:
-                dictValues[item[0]]=item[1]
+                dictValues[item[0]] = item[1]
             self.__savedView.set(dictValues)
         else:
             raise EInvalidType('Given `values` must be a <dict> or a <list>')
@@ -2779,7 +2771,7 @@ class BCUIController(QObject):
         self.__lastDocumentsSaved.clear()
 
         for fileName in Krita.instance().recentDocuments():
-            if not fileName is None and fileName != '':
+            if fileName is not None and fileName != '':
                 self.__lastDocumentsOpened.append(fileName)
 
     def commandGoLastDocsResetUI(self):
@@ -2890,34 +2882,34 @@ class BCUIController(QObject):
         BCSettings.set(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU, value)
 
         # search for menu 'File'
-        menuFile=Krita.instance().activeWindow().qwindow().findChild(QMenu,'file')
+        menuFile = Krita.instance().activeWindow().qwindow().findChild(QMenu, 'file')
         # search for menu 'Tools>Scripts'
-        menuScripts=Krita.instance().activeWindow().qwindow().findChild(QMenu,'scripts')
+        menuScripts = Krita.instance().activeWindow().qwindow().findChild(QMenu, 'scripts')
 
         # Buli Commander action
-        actionOpenBC=Krita.instance().action('pykrita_bulicommander')
+        actionOpenBC = Krita.instance().action('pykrita_bulicommander')
         actionOpenBC.setIcon(buildIcon([(':/bc/images/normal/bulicommander', QIcon.Normal), (':/bc/images/disabled/bulicommander', QIcon.Disabled)]))
 
         if isinstance(menuFile, QMenu) and isinstance(menuScripts, QMenu):
             if value:
                 # move action to File menu
-                if not actionOpenBC in menuFile.actions():
+                if actionOpenBC not in menuFile.actions():
                     # currently not in menu file action
 
                     # search menu entry following "File>Open recent" menu
-                    referenceMenuFile=None
+                    referenceMenuFile = None
                     for index, action in enumerate(menuFile.actions()):
-                        if action.objectName()=='file_open_recent':
-                            referenceMenuFile=menuFile.actions()[index+1]
+                        if action.objectName() == 'file_open_recent':
+                            referenceMenuFile = menuFile.actions()[index+1]
                             break
 
-                    if not referenceMenuFile is None:
+                    if referenceMenuFile is not None:
                         # move menu entry
                         menuScripts.removeAction(actionOpenBC)
                         menuFile.insertAction(referenceMenuFile, actionOpenBC)
             else:
                 # move action to Tools>Scripts menu
-                if not actionOpenBC in menuScripts.actions():
+                if actionOpenBC not in menuScripts.actions():
                     # currently not in menu scripts action
 
                     # move menu entry
@@ -2929,15 +2921,15 @@ class BCUIController(QObject):
         BCSettings.set(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMKRITAMENU, value)
 
         # search for menu 'File'
-        menuFile=Krita.instance().activeWindow().qwindow().findChild(QMenu,'file')
+        menuFile = Krita.instance().activeWindow().qwindow().findChild(QMenu, 'file')
         # search for menu 'Tools>Scripts'
-        menuScripts=Krita.instance().activeWindow().qwindow().findChild(QMenu,'scripts')
+        menuScripts = Krita.instance().activeWindow().qwindow().findChild(QMenu, 'scripts')
 
         # Buli Commander action
-        actionSaveAll=Krita.instance().action('pykrita_bulicommander_saveall')
+        actionSaveAll = Krita.instance().action('pykrita_bulicommander_saveall')
 
         if isinstance(menuFile, QMenu) and isinstance(menuScripts, QMenu):
-            if not actionSaveAll in menuFile.actions():
+            if actionSaveAll not in menuFile.actions():
                 # define trigger for action, as not yet initialised
                 actionSaveAll.triggered.connect(self.commandFileSaveAll)
                 # define icon...
@@ -2945,13 +2937,13 @@ class BCUIController(QObject):
 
                 # and move action to File menu
                 # search menu entry following "File>Save as..." menu
-                referenceMenuFile=None
+                referenceMenuFile = None
                 for index, action in enumerate(menuFile.actions()):
-                    if action.objectName()=='file_save_as':
-                        referenceMenuFile=menuFile.actions()[index+1]
+                    if action.objectName() == 'file_save_as':
+                        referenceMenuFile = menuFile.actions()[index+1]
                         break
 
-                if not referenceMenuFile is None:
+                if referenceMenuFile is not None:
                     # move menu entry
                     menuScripts.removeAction(actionSaveAll)
                     menuFile.insertAction(referenceMenuFile, actionSaveAll)
@@ -3008,13 +3000,13 @@ class BCUIController(QObject):
             self.__window.panels[panelId].filesSetAllowRefresh(True)
 
             self.__window.panels[panelId].setFilesColumnSort([1, True])
-            self.__window.panels[panelId].setFilesColumnOrder([0,1,2,3,4,5,6,7,8])
-            self.__window.panels[panelId].setFilesColumnSize([0,0,0,0,0,0,0,0,0])
+            self.__window.panels[panelId].setFilesColumnOrder([0, 1, 2, 3, 4, 5, 6, 7, 8])
+            self.__window.panels[panelId].setFilesColumnSize([0, 0, 0, 0, 0, 0, 0, 0, 0])
             self.__window.panels[panelId].setFilesIconSizeTv(BCSettings.get(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_TV))
             self.__window.panels[panelId].setFilesIconSizeLv(BCSettings.get(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_FILES_ICONSIZE_LV))
 
             self.__window.panels[panelId].setClipboardColumnSort([3, False])
-            self.__window.panels[panelId].setClipboardColumnOrder([0,1,2,3,4,5,6])
+            self.__window.panels[panelId].setClipboardColumnOrder([0, 1, 2, 3, 4, 5, 6])
             self.__window.panels[panelId].setClipboardIconSize(BCSettings.get(BCSettingsKey.CONFIG_DSESSION_PANELS_VIEW_CLIPBOARD_ICONSIZE))
 
     def commandSettingsNavBarBtnHome(self, visible=True):
@@ -3098,7 +3090,7 @@ class BCUIController(QObject):
             return (BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS), BCSettings.get(BCSettingsKey.SESSION_TOOLBARS))
         else:
             BCSettings.set(BCSettingsKey.CONFIG_TOOLBARS, config)
-            if not session is None:
+            if session is not None:
                 BCSettings.set(BCSettingsKey.SESSION_TOOLBARS, session)
             self.__window.initToolbar(config, session)
 
@@ -3107,7 +3099,7 @@ class BCUIController(QObject):
 
         Note: only for windows OS
         """
-        if sys.platform=='win32':
+        if sys.platform == 'win32':
             # functionnality available only for windows platform
             if value is None:
                 return BCSettings.get(BCSettingsKey.CONFIG_GLB_OS_WINDOWS_ICONMENU)
@@ -3157,11 +3149,11 @@ class BCUIController(QObject):
         """Copy current selection to clipboard"""
         selectionInfo = self.panel().filesSelected()
         if selectionInfo[3] > 0:
-            uriList=[]
+            uriList = []
             for file in selectionInfo[0]:
                 uriList.append(BCClipboardItemFile('00000000000000000000000000000000', file.fullPathName(), saveInCache=False, persistent=False))
 
-            if len(uriList)>0:
+            if len(uriList) > 0:
                 self.__clipboard.pushBackToClipboard(uriList)
 
     def commandSettingsOpen(self):
@@ -3171,27 +3163,27 @@ class BCUIController(QObject):
 
     def commandSettingsClipboardCacheMode(self, value=None):
         """Define default mode for clipboard"""
-        if not value is None:
+        if value is not None:
             BCSettings.set(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_GENERAL, value)
             self.__clipboardActive()
         return BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_GENERAL)
 
     def commandSettingsClipboardDefaultAction(self, value=None):
         """Define default action (on double-click) for clipboard manager"""
-        if not value is None:
+        if value is not None:
             BCSettings.set(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION, value)
         return BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION)
 
     def commandSettingsClipboardCacheSystrayMode(self, value=None):
         """Define default mode for clipboard"""
-        if not value is None:
+        if value is not None:
             BCSettings.set(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_SYSTRAY, value)
             self.__clipboardActive()
         return BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MODE_SYSTRAY)
 
     def commandSettingsClipboardCacheMaxSize(self, value=None):
         """Define default mode for clipboard"""
-        if not value is None:
+        if value is not None:
             BCSettings.set(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MAXISZE, value)
             BCClipboard.setOptionCacheMaxSize(value)
         return BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_CACHE_MAXISZE)
@@ -3223,9 +3215,9 @@ class BCUIController(QObject):
 
     def commandHelpManagedFilesFormat(self):
         """Display dialog box with list managed files formats"""
-        lines=[f"<tr><td><pre>.{fileFormat}</pre></td><td>{BCFileManagedFormat.translate(fileFormat, False)}</td></tr>" for fileFormat in sorted(BCFileManagedFormat.list())]
+        lines = [f"<tr><td><pre>.{fileFormat}</pre></td><td>{BCFileManagedFormat.translate(fileFormat, False)}</td></tr>" for fileFormat in sorted(BCFileManagedFormat.list())]
 
-        message=f"""
+        message = f"""
             <html>
             <style>
                 pre {{ font-family:DejaVu Sans Mono, Consolas, Courier New; font-weight:bold; }}
@@ -3247,7 +3239,5 @@ class BCUIController(QObject):
             </html>
             """
         WDialogMessage.display(i18n(f"{self.__bcName}::Managed files formats"), message, QSize(960, 700))
-
-
 
     # endregion: define commands -----------------------------------------------

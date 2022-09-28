@@ -1,30 +1,32 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
-# Copyright (C) 2019-2021 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
+# Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+# A Krita plugin framework
 # -----------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------
+# The uitheme module provides a generic class to use to manage current theme
+#
+# Main class from this module
+#
+# - UITheme:
+#       Main class to manage themes
+#       Provide init ans static methods to load theme (icons, colors) according
+#       to current Krita theme
+#
+# -----------------------------------------------------------------------------
 
-# Build resources files:
+# -----------------------------------------------------------------------------
+# Build resources files:
 #   cd .../.../resources
 #   /usr/lib/qt5/bin/rcc --binary -o ./lighttheme_icons.rcc light_icons.qrc
 #   /usr/lib/qt5/bin/rcc --binary -o ./darktheme_icons.rcc dark_icons.qrc
-
+# -----------------------------------------------------------------------------
 
 import krita
 import os
@@ -44,7 +46,9 @@ from PyQt5.QtWidgets import (
 
 from ..pktk import *
 
+
 # -----------------------------------------------------------------------------
+
 class UITheme(object):
     """Manage theme
 
@@ -64,8 +68,8 @@ class UITheme(object):
             }
     }
 
-    __themes={}
-    __kraActiveWindow=None
+    __themes = {}
+    __kraActiveWindow = None
 
     @staticmethod
     def load(rccPath=None, autoReload=True):
@@ -73,16 +77,16 @@ class UITheme(object):
         def initThemeChanged():
             # initialise theme when main window is created
             if UITheme.__kraActiveWindow is None:
-                UITheme.__kraActiveWindow=Krita.instance().activeWindow()
-                if not UITheme.__kraActiveWindow is None:
+                UITheme.__kraActiveWindow = Krita.instance().activeWindow()
+                if UITheme.__kraActiveWindow is not None:
                     UITheme.__kraActiveWindow.themeChanged.connect(UITheme.reloadResources)
 
         if rccPath is None:
             # by default if no path is provided, load default PkTk theme
-            rccPath=PkTk.PATH_RESOURCES
+            rccPath = PkTk.PATH_RESOURCES
 
-        if not rccPath in UITheme.__themes:
-            UITheme.__themes[rccPath]=UITheme(rccPath, autoReload)
+        if rccPath not in UITheme.__themes:
+            UITheme.__themes[rccPath] = UITheme(rccPath, autoReload)
 
         # Initialise connector on theme changed
         initThemeChanged()
@@ -95,28 +99,27 @@ class UITheme(object):
     def reloadResources(clearPixmapCache=None):
         """Reload resources"""
         if clearPixmapCache is None:
-            clearPixmapCache=True
+            clearPixmapCache = True
         for theme in UITheme.__themes:
             if UITheme.__themes[theme].getAutoReload():
                 # reload
                 UITheme.__themes[theme].loadResources(clearPixmapCache)
                 if clearPixmapCache:
-                    clearPixmapCache=False
+                    clearPixmapCache = False
 
     @staticmethod
     def style(name):
         """Return style according to current theme"""
         for theme in UITheme.__themes:
-            # return style from first theme (should be the same for all themes)
+            # return style from first theme (should be the same for all themes)
             return UITheme.__themes[theme].getStyle(name)
 
     @staticmethod
     def theme():
         """Return style according to current theme"""
         for theme in UITheme.__themes:
-            # return style from first theme (should be the same for all themes)
+            # return style from first theme (should be the same for all themes)
             return UITheme.__themes[theme].getTheme()
-
 
     def __init__(self, rccPath, autoReload=True):
         """The given `rccPath` is full path to directory where .rcc files can be found
@@ -132,12 +135,11 @@ class UITheme(object):
         """
         self.__theme = UITheme.DARK_THEME
         self.__registeredResource = None
-        self.__rccPath=rccPath
-        self.__autoReload=autoReload
-        self.__kraActiveWindow=None
+        self.__rccPath = rccPath
+        self.__autoReload = autoReload
+        self.__kraActiveWindow = None
 
         self.loadResources(False)
-
 
     def loadResources(self, clearPixmapCache=True):
         """Load resources for current theme"""
@@ -145,7 +147,7 @@ class UITheme(object):
         if clearPixmapCache:
             QPixmapCache.clear()
 
-        if not self.__registeredResource is None:
+        if self.__registeredResource is not None:
             QResource.unregisterResource(self.__registeredResource)
 
         palette = QApplication.palette()
@@ -163,11 +165,9 @@ class UITheme(object):
         if not QResource.registerResource(self.__registeredResource):
             self.__registeredResource = None
 
-
     def getTheme(self):
         """Return current theme"""
         return self.__theme
-
 
     def getStyle(self, name):
         """Return style according to current theme"""

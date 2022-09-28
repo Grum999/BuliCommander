@@ -1,22 +1,22 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Buli Commander
 # Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
 # -----------------------------------------------------------------------------
 # A Krita plugin designed to manage documents
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# The bciconsize module provides classes used to manage icons size in QListView
+#
+# Main class from this module
+#
+# - BCIconSizes:
+#       Provides basics methods to manage sizes
+#
 # -----------------------------------------------------------------------------
 
 from bulicommander.pktk.pktk import (
@@ -25,11 +25,12 @@ from bulicommander.pktk.pktk import (
         EInvalidStatus
     )
 
+
 class BCIconSizes(object):
     def __init__(self, values, currentIndex=0):
         if not (isinstance(values, list) or isinstance(values, tuple)):
             raise EInvalidType('Given `values` must be a <list>')
-        self.__values=[value for value in values if isinstance(value, int)]
+        self.__values = [value for value in values if isinstance(value, int)]
 
         if len(self.__values) == 0:
             raise EInvalidValue('Given `values` must be a non empty list of <int>')
@@ -47,7 +48,7 @@ class BCIconSizes(object):
         return True if current index has been modified, otherwise false
         """
         if self.__index < len(self.__values) - 1:
-            self.__index+=1
+            self.__index += 1
             return True
         return False
 
@@ -57,7 +58,7 @@ class BCIconSizes(object):
         return True if current index has been modified, otherwise false
         """
         if self.__index > 0:
-            self.__index-=1
+            self.__index -= 1
             return True
         return False
 
@@ -99,10 +100,10 @@ class BCIconSizes(object):
         if value in self.__values:
             self.__index = self.__values.index(value)
         else:
-            self.__index=0
+            self.__index = 0
             for v in self.__values:
                 if v < value:
-                    self.__index+=1
+                    self.__index += 1
                 else:
                     break
         if currentIndex == self.__index:

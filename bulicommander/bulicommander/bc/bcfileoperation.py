@@ -1,24 +1,27 @@
 # -----------------------------------------------------------------------------
 # Buli Commander
-# Copyright (C) 2020 - Grum999
+# Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
 # -----------------------------------------------------------------------------
 # A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------
+# The bcfilenoperation module provides methods to copy/move/rename/delete files
+#
+# Main classes from this module
+#
+# - BCFileOperationUi & BCFileOperationMassRenameUi:
+#       User interface for actions on files
+#
+# - BCFileOperation:
+#       Execute files operation with user information progress, taking in
+#       account user choice for skip/override case, ....
+#
+# -----------------------------------------------------------------------------
 
 from pathlib import Path
 from operator import itemgetter, attrgetter

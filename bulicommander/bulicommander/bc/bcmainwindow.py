@@ -1,27 +1,25 @@
-#-----------------------------------------------------------------------------
-# Buli Commander
-# Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Buli Commander
+# Copyright (C) 2019-2022 - Grum999
+# -----------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
 # -----------------------------------------------------------------------------
 # A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
 
-
-
-
+# -----------------------------------------------------------------------------
+# The bcmainvindow module provides classes used to manage main user interface
+# (the main window)
+# --> this module is a core module for plugin
+#
+# Main classes from this module
+#
+# - BCMainWindow:
+#       The main use interface window :)
+#       Mostly used to manage main window menu entries & toolbars
+#
 # -----------------------------------------------------------------------------
 
 import krita
@@ -56,7 +54,6 @@ from bulicommander.pktk.pktk import (
     )
 
 
-
 # -----------------------------------------------------------------------------
 class BCMainWindow(QMainWindow):
     """Buli Commander main window"""
@@ -81,13 +78,13 @@ class BCMainWindow(QMainWindow):
         self.__uiController = uiController
         self.__eventCallBack = {}
         self.__highlightedPanel = 0
-        self.actionViewLayoutIconSize=None
+        self.actionViewLayoutIconSize = None
         self.panels = {
                 0: self.mainViewTab0,
                 1: self.mainViewTab1
             }
 
-        self.__toolbars=[]
+        self.__toolbars = []
 
         self.__fontMono = QFont()
         self.__fontMono.setPointSize(9)
@@ -108,8 +105,7 @@ class BCMainWindow(QMainWindow):
         for panelId in self.panels:
             self.panels[panelId].setAllowRefresh(False)
 
-
-    #def event(self, event):
+    # def event(self, event):
     #    if event.type() == QEvent.ApplicationPaletteChange:
     #        # ...works...
     #        # or not :)
@@ -145,16 +141,16 @@ class BCMainWindow(QMainWindow):
     def initMenu(self):
         """Initialise actions for menu default menu"""
         def updatePixelSize(value):
-            if self.__uiController.panel().tabActive()==BCMainViewTabTabs.FILES:
-                if self.__uiController.panel().filesTabViewMode()==BCMainViewTab.VIEWMODE_TV:
+            if self.__uiController.panel().tabActive() == BCMainViewTabTabs.FILES:
+                if self.__uiController.panel().filesTabViewMode() == BCMainViewTab.VIEWMODE_TV:
                     self.__uiController.panel().setFilesIconSizeTv(value)
-                    iconPixelSize=self.__uiController.panel().filesIconSizeTv(True)
+                    iconPixelSize = self.__uiController.panel().filesIconSizeTv(True)
                 else:
                     self.__uiController.panel().setFilesIconSizeLv(value)
-                    iconPixelSize=self.__uiController.panel().filesIconSizeLv(True)
-            elif self.__uiController.panel().tabActive()==BCMainViewTabTabs.CLIPBOARD:
+                    iconPixelSize = self.__uiController.panel().filesIconSizeLv(True)
+            elif self.__uiController.panel().tabActive() == BCMainViewTabTabs.CLIPBOARD:
                 self.__uiController.panel().setClipboardIconSize(value)
-                iconPixelSize=self.__uiController.panel().clipboardIconSize(True)
+                iconPixelSize = self.__uiController.panel().clipboardIconSize(True)
             else:
                 return
 
@@ -198,7 +194,7 @@ class BCMainWindow(QMainWindow):
         self.actionMenuEditMarkNone.triggered.connect(self.__menuEditMarkNone_clicked)
         self.actionMenuEditMarkInvert.triggered.connect(self.__menuEditMarkInvert_clicked)
 
-        # Menu GO
+        # Menu GO
         self.actionGoHome.triggered.connect(self.__menuGoHome_clicked)
         self.actionGoUp.triggered.connect(self.__menuGoUp_clicked)
         self.actionGoBack.triggered.connect(self.__menuGoBack_clicked)
@@ -207,12 +203,25 @@ class BCMainWindow(QMainWindow):
 
         self.actionGoBookmarksClearBookmarks.triggered.connect(self.__uiController.commandGoBookmarkClearUI)
         self.actionGoBookmarksAddBookmark.triggered.connect(lambda: self.__uiController.commandGoBookmarkAppendUI(self.__uiController.panel().filesPath()))
-        self.actionGoBookmarksRemoveFromBookmark.triggered.connect(lambda: self.__uiController.commandGoBookmarkRemoveUI(self.__uiController.bookmark().nameFromValue(self.__uiController.panel().filesPath())))
-        self.actionGoBookmarksRenameBookmark.triggered.connect(lambda: self.__uiController.commandGoBookmarkRenameUI(self.__uiController.bookmark().nameFromValue(self.__uiController.panel().filesPath())))
+        self.actionGoBookmarksRemoveFromBookmark.triggered.connect(lambda:
+                                                                   self.__uiController.commandGoBookmarkRemoveUI(
+                                                                       self.__uiController.bookmark().nameFromValue(self.__uiController.panel().filesPath())
+                                                                   ))
+        self.actionGoBookmarksRenameBookmark.triggered.connect(lambda:
+                                                               self.__uiController.commandGoBookmarkRenameUI(
+                                                                   self.__uiController.bookmark().nameFromValue(self.__uiController.panel().filesPath())
+                                                               ))
 
-        self.actionGoSavedViewsAddToViewNewView.triggered.connect(lambda: self.__uiController.commandGoSavedViewCreateUI([file.fullPathName() for file in self.__uiController.panel().filesSelected()[0]]))
+        self.actionGoSavedViewsAddToViewNewView.triggered.connect(lambda:
+                                                                  self.__uiController.commandGoSavedViewCreateUI(
+                                                                      [file.fullPathName() for file in self.__uiController.panel().filesSelected()[0]]
+                                                                  ))
         self.actionGoSavedViewsClearViewContent.triggered.connect(lambda: self.__uiController.commandGoSavedViewClearUI(self.__uiController.savedViews().current(True)))
-        self.actionGoSavedViewsRemoveFromView.triggered.connect(lambda: self.__uiController.commandGoSavedViewRemoveUI(self.__uiController.savedViews().current(True), [file.fullPathName() for file in self.__uiController.panel().filesSelected()[5]]))
+        self.actionGoSavedViewsRemoveFromView.triggered.connect(lambda:
+                                                                self.__uiController.commandGoSavedViewRemoveUI(
+                                                                    self.__uiController.savedViews().current(True),
+                                                                    [file.fullPathName() for file in self.__uiController.panel().filesSelected()[5]]
+                                                                ))
         self.actionGoSavedViewsRenameView.triggered.connect(lambda: self.__uiController.commandGoSavedViewRenameUI(self.__uiController.savedViews().current(True)))
         self.actionGoSavedViewsDeleteView.triggered.connect(lambda: self.__uiController.commandGoSavedViewDeleteUI(self.__uiController.savedViews().current(True)))
 
@@ -230,16 +239,16 @@ class BCMainWindow(QMainWindow):
         self.actionViewSwapPanels.triggered.connect(self.__uiController.commandViewSwapPanels)
 
         # implemented into BCUIController.updateMenuForPanel()
-        #self.actionViewLayoutFullMode.triggered.connect()
-        #self.actionViewLayoutTopBottom.triggered.connect()
-        #self.actionViewLayoutLeftRight.triggered.connect()
-        #self.actionViewLayoutBottomTop.triggered.connect()
-        #self.actionViewLayoutRightLeft.triggered.connect()
+        # self.actionViewLayoutFullMode.triggered.connect()
+        # self.actionViewLayoutTopBottom.triggered.connect()
+        # self.actionViewLayoutLeftRight.triggered.connect()
+        # self.actionViewLayoutBottomTop.triggered.connect()
+        # self.actionViewLayoutRightLeft.triggered.connect()
 
-        self.actionViewLayoutViewAsList.triggered.connect(lambda: self.__uiController.commandPanelFilesTabViewMode(self.__uiController.panelId(), BCMainViewTab.VIEWMODE_TV ))
-        self.actionViewLayoutViewAsGrid.triggered.connect(lambda: self.__uiController.commandPanelFilesTabViewMode(self.__uiController.panelId(), BCMainViewTab.VIEWMODE_LV ))
+        self.actionViewLayoutViewAsList.triggered.connect(lambda: self.__uiController.commandPanelFilesTabViewMode(self.__uiController.panelId(), BCMainViewTab.VIEWMODE_TV))
+        self.actionViewLayoutViewAsGrid.triggered.connect(lambda: self.__uiController.commandPanelFilesTabViewMode(self.__uiController.panelId(), BCMainViewTab.VIEWMODE_LV))
 
-        groupViewLayout=QActionGroup(self)
+        groupViewLayout = QActionGroup(self)
         groupViewLayout.addAction(self.actionViewLayoutFullMode)
         groupViewLayout.addAction(self.actionViewLayoutTopBottom)
         groupViewLayout.addAction(self.actionViewLayoutLeftRight)
@@ -253,11 +262,10 @@ class BCMainWindow(QMainWindow):
         self.actionViewLayoutBottomTop.setData(i18n("Layout:"))
         self.actionViewLayoutRightLeft.setData(i18n("Layout:"))
 
-        groupViewMode=QActionGroup(self)
+        groupViewMode = QActionGroup(self)
         groupViewMode.addAction(self.actionViewLayoutViewAsList)
         groupViewMode.addAction(self.actionViewLayoutViewAsGrid)
         groupViewMode.setExclusive(True)
-
 
         self.actionViewLayoutIconSize = WMenuSlider(i18n("Thumbnail size"), self)
         self.actionViewLayoutIconSize.setText(i18n("Thumbnail size"))
@@ -270,19 +278,19 @@ class BCMainWindow(QMainWindow):
         self.actionViewLayoutIconSize.slider().valueChanged.connect(updatePixelSize)
         self.menuViewLayout.addAction(self.actionViewLayoutIconSize)
 
-        # Menu TOOLS
+        # Menu TOOLS
         self.actionToolsCopyToClipboard.triggered.connect(self.__menuToolsCopyToClipboard_clicked)
         self.actionToolsSearch.triggered.connect(self.__menuToolsSearchFiles_clicked)
         self.actionToolsExportFiles.triggered.connect(self.__menuToolsExportFiles_clicked)
         self.actionToolsConvertFiles.triggered.connect(self.__menuToolsConvertFiles_clicked)
 
-        # Menu SETTINGS
+        # Menu SETTINGS
         self.actionSettingsPreferences.triggered.connect(self.__uiController.commandSettingsOpen)
         self.actionSettingsSaveSessionOnExit.triggered.connect(self.__uiController.commandSettingsSaveSessionOnExit)
         self.actionSettingsResetSessionToDefault.triggered.connect(self.__uiController.commandSettingsResetSessionToDefault)
         self.menuSettingsToolbars.aboutToShow.connect(self.__menuSettingsToolbarsShow)
 
-        # Menu HELP
+        # Menu HELP
         self.actionHelpAboutBC.triggered.connect(self.__uiController.commandHelpAboutBc)
         self.actionHelpManagedFilesFormats.triggered.connect(self.__uiController.commandHelpManagedFilesFormat)
 
@@ -316,15 +324,15 @@ class BCMainWindow(QMainWindow):
 
         for toolbar in self.toolbarList():
             self.removeToolBar(toolbar)
-        self.__toolbars=[]
+        self.__toolbars = []
 
         # sort toolbar by area/position
-        sortedId=[]
-        if not toolbarsSession is None:
+        sortedId = []
+        if toolbarsSession is not None:
             toolbarsSession.sort(key=sortToolbar)
 
-            tmp={toolbarDefinition['id']: toolbarDefinition for toolbarDefinition in toolbarsConfig}
-            toolbarsConfigSorted=[]
+            tmp = {toolbarDefinition['id']: toolbarDefinition for toolbarDefinition in toolbarsConfig}
+            toolbarsConfigSorted = []
             for toolbarId in [toolbarSession['id'] for toolbarSession in toolbarsSession]:
                 if toolbarId in tmp:
                     toolbarsConfigSorted.append(tmp.pop(toolbarId))
@@ -333,7 +341,7 @@ class BCMainWindow(QMainWindow):
                 if toolbarDefinition['id'] in tmp:
                     toolbarsConfigSorted.append(toolbarDefinition)
 
-            toolbarsConfig=toolbarsConfigSorted
+            toolbarsConfig = toolbarsConfigSorted
 
         for toolbarDefinition in toolbarsConfig:
             toolbar = self.addToolBar(toolbarDefinition['label'])
@@ -342,28 +350,28 @@ class BCMainWindow(QMainWindow):
             toolbar.setToolButtonStyle(toolbarDefinition['style'])
             toolbar.setFloatable(False)
             for action in toolbarDefinition['actions']:
-                if action=='ba32b31ff4730cbf42ba0962f981407bcb4e9c58': # separator Id
+                if action == 'ba32b31ff4730cbf42ba0962f981407bcb4e9c58':  # separator Id
                     toolbar.addSeparator()
                 else:
-                    foundAction=self.findChild(QAction, action, Qt.FindChildrenRecursively)
+                    foundAction = self.findChild(QAction, action, Qt.FindChildrenRecursively)
                     if foundAction:
                         toolbar.addAction(foundAction)
             self.__toolbars.append(toolbar)
 
-        if not toolbarsSession is None:
+        if toolbarsSession is not None:
             for toolbarSession in toolbarsSession:
                 for toolbar in self.__toolbars:
-                    if toolbar.objectName()==toolbarSession['id']:
+                    if toolbar.objectName() == toolbarSession['id']:
                         if toolbarSession['break']:
                             self.addToolBarBreak(toolbarSession['area'])
                         self.addToolBar(toolbarSession['area'], toolbar)
-                        geometry=toolbarSession['rect']
+                        geometry = toolbarSession['rect']
                         toolbar.setVisible(toolbarSession['visible'])
                         # not working...?
-                        #toolbar.setGeometry(geometry[0], geometry[1], geometry[2], geometry[3])
+                        # toolbar.setGeometry(geometry[0], geometry[1], geometry[2], geometry[3])
                         break
 
-        self.menuSettingsToolbars.setEnabled(len(self.__toolbars)>0)
+        self.menuSettingsToolbars.setEnabled(len(self.__toolbars) > 0)
         self.setUpdatesEnabled(True)
 
     def toolbarList(self):
@@ -372,7 +380,7 @@ class BCMainWindow(QMainWindow):
 
     def __menuSettingsToolbarsToggled(self, value):
         """A toolbar Sub-menu checkedbox has been changed"""
-        action=self.sender()
+        action = self.sender()
         action.data().setVisible(value)
 
     def __menuSettingsToolbarsShow(self):
@@ -380,15 +388,13 @@ class BCMainWindow(QMainWindow):
         self.menuSettingsToolbars.clear()
 
         for toolbar in self.__toolbars:
-            action=self.menuSettingsToolbars.addAction(toolbar.windowTitle())
+            action = self.menuSettingsToolbars.addAction(toolbar.windowTitle())
             action.setCheckable(True)
             action.setChecked(toolbar.isVisible())
             action.setData(toolbar)
             action.toggled.connect(self.__menuSettingsToolbarsToggled)
 
-
     # endregion: initialisation methods ----------------------------------------
-
 
     # region: define actions method --------------------------------------------
 
@@ -577,14 +583,12 @@ class BCMainWindow(QMainWindow):
 
     # endregion: define actions method -----------------------------------------
 
-
     # region: events- ----------------------------------------------------------
 
     def showEvent(self, event):
         """Event trigerred when dialog is shown
 
            At this time, all widgets are initialised and size/visiblity is known
-
 
            Example
            =======
@@ -596,7 +600,7 @@ class BCMainWindow(QMainWindow):
                 # initialise a dialog from an xml .ui file
                 dlgMain = BCMainWindow.loadUi(uiFileName)
 
-                # execute my_callback_function() when dialog became visible
+                # execute my_callback_function() when dialog became visible
                 dlgMain.dialogShown.connect(my_callback_function)
         """
         super(BCMainWindow, self).showEvent(event)
@@ -608,7 +612,7 @@ class BCMainWindow(QMainWindow):
 
     def closeEvent(self, event):
         """Event executed when window is about to be closed"""
-        #event.ignore()
+        # event.ignore()
         self.__uiController.close()
         event.accept()
 
@@ -631,11 +635,10 @@ class BCMainWindow(QMainWindow):
                         return True
                     return False
 
-
                 # initialise a dialog from an xml .ui file
                 dlgMain = BCMainWindow.loadUi(uiFileName)
 
-                # define callback for widget from ui
+                # define callback for widget from ui
                 dlgMain.setEventCallback(dlgMain.my_widget, my_callback_function)
         """
         if object is None:
@@ -645,9 +648,9 @@ class BCMainWindow(QMainWindow):
         object.installEventFilter(self)
 
     def event(self, event):
-        if event.type()==QEvent.WindowActivate:
+        if event.type() == QEvent.WindowActivate:
             self.dialogActivate.emit()
-        elif event.type()==QEvent.WindowDeactivate:
+        elif event.type() == QEvent.WindowDeactivate:
             self.dialogDeactivate.emit()
 
         return QMainWindow.event(self, event)
@@ -662,7 +665,7 @@ class BCMainWindow(QMainWindow):
 
     def setHighlightedPanel(self, highlightedPanel):
         """Set current highlighted panel"""
-        if not highlightedPanel in self.panels:
+        if highlightedPanel not in self.panels:
             raise EInvalidValue('Given `highlightedPanel` must be 0 or 1')
 
         self.__highlightedPanel = highlightedPanel
@@ -671,10 +674,10 @@ class BCMainWindow(QMainWindow):
     def getWidgets(self):
         """Return a list of ALL widgets"""
         def appendWithSubWidget(parent):
-            list=[parent]
-            if len(parent.children())>0:
+            list = [parent]
+            if len(parent.children()) > 0:
                 for w in parent.children():
-                    list+=appendWithSubWidget(w)
+                    list += appendWithSubWidget(w)
             return list
 
         return appendWithSubWidget(self)

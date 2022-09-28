@@ -1,13 +1,22 @@
-"""
-Qt navigation bar with breadcrumbs
-Andrey Makarov, 2019
-"""
-# ------------------------------------------------------------------------------
-# Grum999 - Bulicommander
+# -----------------------------------------------------------------------------
+# Qt navigation bar with breadcrumbs
+# Andrey Makarov, 2019
+# https://github.com/Winand/breadcrumbsaddressbar
+# -----------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Original widget has been heavily modified for BuliCommander ^_^'
-# Not possible to list all changes, do a DIFF with original source code if
-# interested in modification
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Buli Commander
+# Copyright (C) 2019-2022 - Grum999
+# -----------------------------------------------------------------------------
+# Original widget from Andrey Makarov is published under MIT license and has
+# been heavily modified for BuliCommander needs ^_^'
+#
+# Not possible here to list all technical changes, do a DIFF with original
+# source code if you're interested about detailed modifications :-)
 # ------------------------------------------------------------------------------
 
 from pathlib import Path
@@ -32,6 +41,7 @@ if __package__:  # https://stackoverflow.com/a/28151907
 else:
     from models_views import FilenameModel, MenuListView
     from layouts import LeftHBoxLayout
+
 
 class BreadcrumbsAddressBar(QFrame):
     "Windows Explorer-like address bar"
@@ -65,7 +75,6 @@ class BreadcrumbsAddressBar(QFrame):
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
 
-
         self.font = QFont()
         self.font.setPointSize(9)
         self.font.setFamily('DejaVu Sans Mono, Consolas, Courier New')
@@ -75,7 +84,6 @@ class BreadcrumbsAddressBar(QFrame):
         self.viewName.setFont(self.font)
         self.viewName.hide()
         self.viewName.mousePressEvent = self.viewName_mousePressEvent
-
 
         # Edit presented path textually
         self.line_address = QtWidgets.QLineEdit(self)
@@ -87,7 +95,6 @@ class BreadcrumbsAddressBar(QFrame):
         self.line_address.contextMenuEvent = self.line_address_contextMenuEvent
         self.line_address.setFont(self.font)
         self.line_address.hide()
-
 
         layout.addWidget(self.viewName)
         layout.addWidget(self.line_address)
@@ -147,7 +154,7 @@ class BreadcrumbsAddressBar(QFrame):
         layout.addWidget(self.btn_browse)
 
         # Grum999: remove setMaximumHeight(), consider that sizePolicy of parent will define height
-        #self.setMaximumHeight(self.line_address.height())  # FIXME:
+        # self.setMaximumHeight(self.line_address.height())  # FIXME:
 
         self.ignore_resize = False
         self.path_ = None
@@ -171,21 +178,21 @@ class BreadcrumbsAddressBar(QFrame):
         "Path -> QIcon"
         if isinstance(path, str) and not re.match('^@', path) is None:
             # maybe a saved view or a bookmark
-            path=path.lower()
-            refDict=self.quickRefDict()
+            path = path.lower()
+            refDict = self.quickRefDict()
 
-            if not path in refDict:
+            if path not in refDict:
                 # unable to find icon reference, return none
                 dat = QIcon()
             else:
                 dat = refDict[path][1]
         else:
             if isinstance(path, str):
-                if r:=re.search(r"(?:^([A-Z]:)$|\(([A-Z]:)\)$)", path, re.I):
+                if r := re.search(r"(?:^([A-Z]:)$|\(([A-Z]:)\)$)", path, re.I):
                     if not r.groups()[0] is None:
-                        path=r.groups()[0]
+                        path = r.groups()[0]
                     else:
-                        path=r.groups()[1]
+                        path = r.groups()[1]
 
             fileinfo = QtCore.QFileInfo(f"{path}")
             dat = self.file_ico_prov.icon(fileinfo)
@@ -251,15 +258,15 @@ class BreadcrumbsAddressBar(QFrame):
             child = layout.takeAt(0)
             if child.widget():
                 layout.removeWidget(child.widget())
-                #child.widget().deleteLater()
-                #child.widget().setParent(None)
+                # child.widget().deleteLater()
+                # child.widget().setParent(None)
 
     def _insert_crumb(self, path):
         btn = QtWidgets.QToolButton(self.crumbs_panel)
         btn.setAutoRaise(True)
         btn.setStyleSheet("QToolButton {padding: 0;}")
 
-        if path=='::':
+        if path == '::':
             # for windows, list drives
             hasSubDir = True
             btn.setIcon(buildIcon('pktk:computer_monitor'))
@@ -268,9 +275,9 @@ class BreadcrumbsAddressBar(QFrame):
             # last directory?
             hasSubDir = False
             for item in os.listdir(path):
-                 if os.path.isdir(os.path.join(path, item)):
-                     hasSubDir = True
-                     break
+                if os.path.isdir(os.path.join(path, item)):
+                    hasSubDir = True
+                    break
 
             # FIXME: C:\ has no name. Use rstrip on Windows only?
             # Grum999: for linux, return '/' for root directory
@@ -283,7 +290,7 @@ class BreadcrumbsAddressBar(QFrame):
             btn.setFont(self.font)
         btn.path = path
         if hasSubDir:
-            if path=='::':
+            if path == '::':
                 btn.setPopupMode(btn.InstantPopup)
             else:
                 btn.clicked.connect(self.crumb_clicked)
@@ -311,12 +318,12 @@ class BreadcrumbsAddressBar(QFrame):
 
     def crumb_menuitem_clicked(self, index):
         "SLOT: breadcrumb menu item was clicked"
-        #print("crumb_clicked",  index.data(Qt.EditRole))
-        if r:=re.search(r"(?:^([A-Z]:)$|\(([A-Z]:)\)$)", index.data(Qt.EditRole), re.I):
+        # print("crumb_clicked",  index.data(Qt.EditRole))
+        if r := re.search(r"(?:^([A-Z]:)$|\(([A-Z]:)\)$)", index.data(Qt.EditRole), re.I):
             if not r.groups()[0] is None:
-                path=r.groups()[0]
+                path = r.groups()[0]
             else:
-                path=r.groups()[1]
+                path = r.groups()[1]
             self.set_path(path)
         else:
             self.set_path(index.data(Qt.EditRole))
@@ -343,7 +350,7 @@ class BreadcrumbsAddressBar(QFrame):
         if path is None or path == '':
             try:
                 path = f"{self.sender().path}"
-            except:
+            except Exception:
                 path = '.'
 
         if isinstance(path, str) and not re.match('^@', path) is None:
@@ -353,20 +360,20 @@ class BreadcrumbsAddressBar(QFrame):
             # => accept path if already the same, because target link (@home, @bookmark)
             #    or target content (@view, @history) may have changed
 
-            path=path.lower()
-            refDict=self.quickRefDict()
+            path = path.lower()
+            refDict = self.quickRefDict()
 
-            if not path in refDict:
+            if path not in refDict:
                 emit_err = self.path_error
                 self._cancel_edit()
                 return False
 
-            self.__quickRef=refDict[path]
+            self.__quickRef = refDict[path]
 
             # BCWPathBar.QUICKREF_RESERVED_HOME, BCWPathBar.QUICKREF_BOOKMARK
             if self.__quickRef[0] in (0, 1):
                 # bookmark
-                path=self.getQuickRefPath(path)
+                path = self.getQuickRefPath(path)
                 if path is None:
                     emit_err = self.path_error
                     self._cancel_edit()
@@ -381,7 +388,7 @@ class BreadcrumbsAddressBar(QFrame):
             return True
 
         elif force or f"{path}" != f"{self.path_}":
-            self.__quickRef=None
+            self.__quickRef = None
             path, emit_err = Path(path), None
             try:  # C: -> C:\, folder\..\folder -> folder
                 path = path.resolve()
@@ -401,7 +408,7 @@ class BreadcrumbsAddressBar(QFrame):
                 path = path.parent
                 self._insert_crumb(path)
 
-            if sys.platform=='win32':
+            if sys.platform == 'win32':
                 # windows: add drives list
                 self._insert_crumb('::')
 
@@ -409,7 +416,6 @@ class BreadcrumbsAddressBar(QFrame):
             self.path_selected.emit(path)
             return True
         return False
-
 
     def _cancel_edit(self):
         "Set edit line text back to current path and switch to view mode"
@@ -444,7 +450,7 @@ class BreadcrumbsAddressBar(QFrame):
         else:
             # show reference
             self.line_address.hide()
-            if isinstance(self.path_, str) and self.path_ != '' and self.path_[0] == '@' and not self.__quickRef is None:
+            if isinstance(self.path_, str) and self.path_ != '' and self.path_[0] == '@' and self.__quickRef is not None:
                 if self.__quickRef[0] == 0:
                     # reserved
                     self.viewName.setText(i18n(f"List view <b><i>{self.__quickRef[2]}</i></b>"))
@@ -458,7 +464,7 @@ class BreadcrumbsAddressBar(QFrame):
                 self.viewName.hide()
                 self.crumbs_container.show()
 
-    def crumb_hide_show(self, widget, state:bool):
+    def crumb_hide_show(self, widget, state: bool):
         "SLOT: a breadcrumb is hidden/removed or shown"
         layout = self.crumbs_panel.layout()
         if layout.count_hidden() > 0:
@@ -481,7 +487,8 @@ class BreadcrumbsAddressBar(QFrame):
         """Set current highlighted status"""
         if not isinstance(value, bool):
             raise EInvalidType("Given `value` must be a <bool>")
-        else: #if self.__isHighlighted != value:
+        else:
+            # if self.__isHighlighted != value:
             self.__isHighlighted = value
 
             if self.__isHighlighted:
@@ -556,9 +563,9 @@ if __name__ == '__main__':
             # print(self.b.width())
             # self.b.hide()
             # QtCore.QTimer.singleShot(0, lambda: print(self.b.width()))
-            #def act():
-            #    for i in self.address.crumbs_panel.layout().widgets('hidden'):
-            #        print(i.text())
+            # def act():
+            #     for i in self.address.crumbs_panel.layout().widgets('hidden'):
+            #         print(i.text())
             # self.b.clicked.connect(act)
 
     QtForm(Form)

@@ -1,27 +1,52 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
-# Copyright (C) 2019-2021 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
+# Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+# A Krita plugin framework
 # -----------------------------------------------------------------------------
 
-
-
-
+# -----------------------------------------------------------------------------
+# The woperatorinput module provides a set of widget to easily manage operator
+# inputs like =, >=, <=, ...
+#
+# Main class from this module
+#
+# - WOperatorBaseInput:
+#       Widget
+#       The base widget used to defined an operator input
+#
+# - WOperatorInputInt:
+#       Widget
+#       Manage input integer widget
+#
+# - WOperatorInputFloat:
+#       Widget
+#       Manage input float widget
+#
+# - WOperatorInputDateTime:
+#       Widget
+#       Manage input date/time widget
+#
+# - WOperatorInputDate:
+#       Widget
+#       Manage input date widget
+#
+# - WOperatorInputTime:
+#       Widget
+#       Manage input time widget
+#
+# - WOperatorInputStr:
+#       Widget
+#       Manage input string widget
+#
+# - WOperatorInputList:
+#       Widget
+#       Manage input list widget
+#
 # -----------------------------------------------------------------------------
 
 import re
@@ -40,7 +65,7 @@ from ..modules.imgutils import buildIcon
 from .wtaginput import WTagInput
 
 
-STYLE_DROPDOWN_BUTTON_CALENDAR="""
+STYLE_DROPDOWN_BUTTON_CALENDAR = """
 ::drop-down {
         margin: 0px;
         border: 0px solid rgb(255,0,255);
@@ -61,22 +86,21 @@ STYLE_DROPDOWN_BUTTON_CALENDAR="""
 """
 
 
-
 class WOperatorType:
-    OPERATOR_GT=          '>'
-    OPERATOR_GE=          '>='
-    OPERATOR_LT=          '<'
-    OPERATOR_LE=          '<='
-    OPERATOR_EQ=          '='
-    OPERATOR_NE=          '!='
-    OPERATOR_BETWEEN=     'between'
-    OPERATOR_NOT_BETWEEN= 'not between'
-    OPERATOR_MATCH=       'match'
-    OPERATOR_NOT_MATCH=   'not match'
-    OPERATOR_LIKE=        'like'
-    OPERATOR_NOT_LIKE=    'not like'
-    OPERATOR_IN=          'in'
-    OPERATOR_NOT_IN=      'not in'
+    OPERATOR_GT =          '>'
+    OPERATOR_GE =          '>='
+    OPERATOR_LT =          '<'
+    OPERATOR_LE =          '<='
+    OPERATOR_EQ =          '='
+    OPERATOR_NE =          '!='
+    OPERATOR_BETWEEN =     'between'
+    OPERATOR_NOT_BETWEEN = 'not between'
+    OPERATOR_MATCH =       'match'
+    OPERATOR_NOT_MATCH =   'not match'
+    OPERATOR_LIKE =        'like'
+    OPERATOR_NOT_LIKE =    'not like'
+    OPERATOR_IN =          'in'
+    OPERATOR_NOT_IN =      'not in'
 
 
 class WOperatorCondition:
@@ -103,14 +127,14 @@ class WOperatorCondition:
                 => input: the WOperatorBaseInput instance for which value will be set
         """
         def parsedValue(parameter):
-            if len(parameter)>2:
-                if parameter[0]=='s':
+            if len(parameter) > 2:
+                if parameter[0] == 's':
                     return parameter[2:].replace('^/^/', '//')
-                elif parameter[0]=='i':
+                elif parameter[0] == 'i':
                     return int(parameter[2:])
-                elif parameter[0]=='f':
+                elif parameter[0] == 'f':
                     return float(parameter[2:])
-                elif parameter[0]=='l':
+                elif parameter[0] == 'l':
                     return [parsedValue(v) for v in parameter[2:].split(';;')]
             else:
                 return None
@@ -118,23 +142,23 @@ class WOperatorCondition:
         if not isinstance(value, str):
             raise EInvalidType("Given `value` must be <str>")
 
-        parameters=value.split('//')
-        if len(parameters)<3:
+        parameters = value.split('//')
+        if len(parameters) < 3:
             raise EInvalidValue("Given `value` can't be parsed")
 
-        if len(parameters)==3:
+        if len(parameters) == 3:
             parameters.append(parameters[2])
 
         return WOperatorCondition(parameters[0], parameters[1], parsedValue(parameters[2]), parsedValue(parameters[3]), converter)
 
     def __init__(self, label, operator, value, value2=None, converter=None):
-        self.__label=label
-        self.__operator=operator
-        self.__value=value
-        self.__value2=value2
-        self.__converter=None
+        self.__label = label
+        self.__operator = operator
+        self.__value = value
+        self.__value2 = value2
+        self.__converter = None
         if callable(converter):
-            self.__converter=converter
+            self.__converter = converter
 
     def __toStr(self, value):
         if isinstance(value, str):
@@ -163,8 +187,8 @@ class WOperatorCondition:
 
     def asFmtString(self):
         """Return as formatted string"""
-        returned=[self.__label, self.__operator, self.__toStr(self.__value)]
-        if not self.__value2 is None:
+        returned = [self.__label, self.__operator, self.__toStr(self.__value)]
+        if self.__value2 is not None:
             returned.append(self.__toStr(self.__value2))
 
         return "//".join(returned)
@@ -236,11 +260,11 @@ class WOperatorBaseInput(QWidget):
                 +--------+  +--------+
 
     """
-    operatorChanged=Signal(str)
-    valueChanged=Signal(object)
-    value2Changed=Signal(object)
+    operatorChanged = Signal(str)
+    valueChanged = Signal(object)
+    value2Changed = Signal(object)
 
-    __LABELS={
+    __LABELS = {
             WOperatorType.OPERATOR_GT:          '>',
             WOperatorType.OPERATOR_GE:          '≥',
             WOperatorType.OPERATOR_LT:          '<',
@@ -266,38 +290,38 @@ class WOperatorBaseInput(QWidget):
 
     def __init__(self, parent=None):
         super(WOperatorBaseInput, self).__init__(parent)
-        self._inInit=True
+        self._inInit = True
 
-        self.__predefinedConditionsSubMenu=None
-        self.__predefinedConditions=[]
-        self.__predefinedConditionsLabel=i18n("Predefined conditions")
+        self.__predefinedConditionsSubMenu = None
+        self.__predefinedConditions = []
+        self.__predefinedConditionsLabel = i18n("Predefined conditions")
 
-        self._defaultOperatorList=[]
-        self._checkRangeValue=True
+        self._defaultOperatorList = []
+        self._checkRangeValue = True
 
-        self.__layout=QBoxLayout(QBoxLayout.LeftToRight)
+        self.__layout = QBoxLayout(QBoxLayout.LeftToRight)
         self.__layout.setContentsMargins(0, 0, 0, 0)
         self.__layout.setDirection(QBoxLayout.LeftToRight)
 
-        self._cbOperatorList=QComboBox()
+        self._cbOperatorList = QComboBox()
         self._cbOperatorList.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         self._cbOperatorList.currentIndexChanged.connect(self.__operatorChanged)
 
-        self._input1=QWidget()
-        self._input2=QWidget()
-        self._lblAnd=QLabel(i18n('and'))
+        self._input1 = QWidget()
+        self._input2 = QWidget()
+        self._lblAnd = QLabel(i18n('and'))
         self._lblAnd.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
 
         # initialise UI
         self._initializeUi()
 
         # keep a pointer to original contextMenuEvent method
-        self._input1._contextMenuEvent=self._input1.contextMenuEvent
-        self._input2._contextMenuEvent=self._input2.contextMenuEvent
+        self._input1._contextMenuEvent = self._input1.contextMenuEvent
+        self._input2._contextMenuEvent = self._input2.contextMenuEvent
 
         # define dedicated contextMenuEvent method to manage suffix
-        self._input1.contextMenuEvent=self.__contextMenuEvent1
-        self._input2.contextMenuEvent=self.__contextMenuEvent2
+        self._input1.contextMenuEvent = self.__contextMenuEvent1
+        self._input2.contextMenuEvent = self.__contextMenuEvent2
 
         self.__layout.addWidget(self._cbOperatorList)
         self.__layout.addWidget(self._input1)
@@ -310,15 +334,15 @@ class WOperatorBaseInput(QWidget):
         self.__layout.setAlignment(self._input2, Qt.AlignTop)
 
         self.setLayout(self.__layout)
-        self._inInit=False
+        self._inInit = False
 
     def _initOperator(self, values):
         """Initialise operator combox box from given list"""
-        self._inInit=True
+        self._inInit = True
         self._cbOperatorList.clear()
         for operator in values:
             self._cbOperatorList.addItem(WOperatorBaseInput.__LABELS[operator], operator)
-        self._inInit=False
+        self._inInit = False
 
     def _input1Changed(self, value=None):
         """Value for input1 has changed"""
@@ -330,9 +354,9 @@ class WOperatorBaseInput(QWidget):
 
     def __operatorChanged(self, index):
         """Operator value has been changed"""
-        self._operator=self._cbOperatorList.currentData()
+        self._operator = self._cbOperatorList.currentData()
 
-        input2Visible=(self._operator in [WOperatorType.OPERATOR_BETWEEN, WOperatorType.OPERATOR_NOT_BETWEEN])
+        input2Visible = (self._operator in [WOperatorType.OPERATOR_BETWEEN, WOperatorType.OPERATOR_NOT_BETWEEN])
 
         self._lblAnd.setVisible(input2Visible)
         self._input2.setVisible(input2Visible)
@@ -367,14 +391,14 @@ class WOperatorBaseInput(QWidget):
                 self.setValue(condition.value())
                 self.setValue2(condition.value2())
             else:
-                converter=condition.converter()
+                converter = condition.converter()
 
                 self.setValue(converter(condition.value(), self))
                 self.setValue2(converter(condition.value2(), self))
 
         def executeAction(action):
             if action.data():
-                data=action.data()
+                data = action.data()
                 # data=tuple (function, parameter)
                 data[0](data[1])
 
@@ -422,11 +446,11 @@ class WOperatorBaseInput(QWidget):
 
     def setOperator(self, value):
         """Set current operator"""
-        if value==self._cbOperatorList.currentData():
+        if value == self._cbOperatorList.currentData():
             return
 
         for index in range(self._cbOperatorList.count()):
-            if self._cbOperatorList.itemData(index)==value:
+            if self._cbOperatorList.itemData(index) == value:
                 self._cbOperatorList.setCurrentIndex(index)
 
     def value(self):
@@ -454,7 +478,7 @@ class WOperatorBaseInput(QWidget):
 
     def setOrientation(self, value):
         """Set current layout orientation"""
-        if value==Qt.Horizontal:
+        if value == Qt.Horizontal:
             self.__layout.setDirection(QBoxLayout.LeftToRight)
         else:
             self.__layout.setDirection(QBoxLayout.TopToBottom)
@@ -468,12 +492,12 @@ class WOperatorBaseInput(QWidget):
 
         If `operators` is None or empty list, reset to default operators for widget
         """
-        validList=[]
+        validList = []
         if isinstance(operators, list):
-            validList=[operator for operator in operators if operator in self._defaultOperatorList]
+            validList = [operator for operator in operators if operator in self._defaultOperatorList]
 
-        if operators is None or len(validList)==0:
-            validList=self._defaultOperatorList
+        if operators is None or len(validList) == 0:
+            validList = self._defaultOperatorList
 
         self._initOperator(validList)
         self.setOperator(self._operator)
@@ -492,8 +516,8 @@ class WOperatorBaseInput(QWidget):
 
     def setCheckRangeValues(self, value):
         """Set if range values are checked or not"""
-        if isinstance(value, bool) and value!=self._checkRangeValue:
-            self._checkRangeValue=value
+        if isinstance(value, bool) and value != self._checkRangeValue:
+            self._checkRangeValue = value
             if self._checkRangeValue:
                 self._input1Changed()
 
@@ -509,7 +533,7 @@ class WOperatorBaseInput(QWidget):
 
         Each item is a WOperatorCondition
         """
-        self.__predefinedConditions=[]
+        self.__predefinedConditions = []
         for value in values:
             if isinstance(value, WOperatorCondition):
                 self.__predefinedConditions.append(value)
@@ -521,18 +545,17 @@ class WOperatorBaseInput(QWidget):
     def setPredefinedConditionsLabel(self, value):
         """Set predefined label displayed in menu"""
         if isinstance(value, str):
-            self.__predefinedConditionsLabel=value
-
+            self.__predefinedConditionsLabel = value
 
 
 class WOperatorBaseInputNumber(WOperatorBaseInput):
     """Search operator for Integer"""
-    suffixChanged=Signal(str)
+    suffixChanged = Signal(str)
 
     def __init__(self, parent=None):
         super(WOperatorBaseInputNumber, self).__init__(parent)
-        self._suffixList=[]
-        self._suffixLabel=""
+        self._suffixList = []
+        self._suffixLabel = ""
 
     def _initializeUi(self):
         """Initialise widget
@@ -540,7 +563,7 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
         - Operator list
         - Input widgets
         """
-        self._defaultOperatorList=[
+        self._defaultOperatorList = [
                 WOperatorType.OPERATOR_GT,
                 WOperatorType.OPERATOR_GE,
                 WOperatorType.OPERATOR_LT,
@@ -563,14 +586,14 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
         """Value for input1 has changed"""
         if value:
             self.valueChanged.emit(value)
-        if self._checkRangeValue and self._input1.value()>self._input2.value():
+        if self._checkRangeValue and self._input1.value() > self._input2.value():
             self._input2.setValue(self._input1.value())
 
     def _input2Changed(self, value=None):
         """Value for input2 has changed"""
         if value:
             self.value2Changed.emit(value)
-        if self._checkRangeValue and self._input1.value()>self._input2.value():
+        if self._checkRangeValue and self._input1.value() > self._input2.value():
             self._input1.setValue(self._input2.value())
 
     def _contextMenuEvent(self, input, event):
@@ -578,29 +601,29 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
 
         If suffix list is not empty, add action to select a suffix
         """
-        if len(self._suffixList)==0 and len(self.predefinedConditions())==0:
+        if len(self._suffixList) == 0 and len(self.predefinedConditions()) == 0:
             super(WOperatorBaseInputNumber, self)._contextMenuEvent(input, event)
             return
 
-        menu=super(WOperatorBaseInputNumber, self)._contextMenuEvent(input, event, False)
+        menu = super(WOperatorBaseInputNumber, self)._contextMenuEvent(input, event, False)
 
-        actionStepUp=QAction(i18n('Step up'))
+        actionStepUp = QAction(i18n('Step up'))
         actionStepUp.triggered.connect(input.stepUp)
-        actionStepDown=QAction(i18n('Step down'))
+        actionStepDown = QAction(i18n('Step down'))
         actionStepDown.triggered.connect(input.stepDown)
 
-        if len(self._suffixList)>0:
-            group=QActionGroup(self)
+        if len(self._suffixList) > 0:
+            group = QActionGroup(self)
             group.setExclusive(True)
-            subMenu=QMenu(self._suffixLabel)
+            subMenu = QMenu(self._suffixLabel)
             for suffix in self._suffixList:
-                action=None
+                action = None
                 if isinstance(suffix, str):
-                    action=QAction(suffix)
+                    action = QAction(suffix)
                     action.setData((self.setSuffix, suffix))
                     action.setCheckable(True)
-                elif isinstance(suffix, (tuple, list)) and len(suffix)==2:
-                    action=QAction(suffix[0])
+                elif isinstance(suffix, (tuple, list)) and len(suffix) == 2:
+                    action = QAction(suffix[0])
                     action.setData((self.setSuffix, suffix[1]))
                     action.setCheckable(True)
 
@@ -608,13 +631,13 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
                     group.addAction(action)
                     subMenu.addAction(action)
 
-                    if self._input1.suffix()==action.data()[1]:
+                    if self._input1.suffix() == action.data()[1]:
                         action.setChecked(True)
 
-            fAction=menu.actions()[0]
+            fAction = menu.actions()[0]
             menu.insertMenu(fAction, subMenu)
 
-            if len(self.predefinedConditions())==0:
+            if len(self.predefinedConditions()) == 0:
                 menu.insertSeparator(fAction)
 
         menu.addSeparator()
@@ -628,7 +651,7 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
 
     def setValue(self, value):
         """set current value"""
-        if value!=self._input1.value():
+        if value != self._input1.value():
             self._input1.setValue(value)
 
     def value2(self):
@@ -637,7 +660,7 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
 
     def setValue2(self, value):
         """Set current 2nd value (when 'between' operator)"""
-        if value!=self._input2.value():
+        if value != self._input2.value():
             self._input2.setValue(value)
 
     def minimum(self):
@@ -674,7 +697,7 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
 
     def setSuffixList(self, values):
         """Set suffix list"""
-        self._suffixList=values
+        self._suffixList = values
 
     def suffixLabel(self):
         """Return suffix label"""
@@ -683,7 +706,7 @@ class WOperatorBaseInputNumber(WOperatorBaseInput):
     def setSuffixLabel(self, value):
         """Set suffix label"""
         if isinstance(value, str):
-            self._suffixLabel=value
+            self._suffixLabel = value
 
 
 class WOperatorInputInt(WOperatorBaseInputNumber):
@@ -695,8 +718,8 @@ class WOperatorInputInt(WOperatorBaseInputNumber):
         - Operator list
         - Input widgets
         """
-        self._input1=QSpinBox()
-        self._input2=QSpinBox()
+        self._input1 = QSpinBox()
+        self._input2 = QSpinBox()
         super(WOperatorInputInt, self)._initializeUi()
 
 
@@ -709,8 +732,8 @@ class WOperatorInputFloat(WOperatorBaseInputNumber):
         - Operator list
         - Input widgets
         """
-        self._input1=QDoubleSpinBox()
-        self._input2=QDoubleSpinBox()
+        self._input1 = QDoubleSpinBox()
+        self._input2 = QDoubleSpinBox()
         super(WOperatorInputFloat, self)._initializeUi()
 
     def decimals(self):
@@ -732,7 +755,7 @@ class WOperatorInputDateTime(WOperatorBaseInput):
         - Operator list
         - Input widgets
         """
-        self._defaultOperatorList=[
+        self._defaultOperatorList = [
                 WOperatorType.OPERATOR_GT,
                 WOperatorType.OPERATOR_GE,
                 WOperatorType.OPERATOR_LT,
@@ -745,8 +768,8 @@ class WOperatorInputDateTime(WOperatorBaseInput):
         self._initOperator(self._defaultOperatorList)
         self.setOperator(WOperatorType.OPERATOR_GT)
 
-        self._input1=QDateTimeEdit()
-        self._input2=QDateTimeEdit()
+        self._input1 = QDateTimeEdit()
+        self._input2 = QDateTimeEdit()
 
         self._input1.setCalendarPopup(True)
         self._input2.setCalendarPopup(True)
@@ -764,14 +787,14 @@ class WOperatorInputDateTime(WOperatorBaseInput):
         """Value for input1 has changed"""
         if value:
             self.valueChanged.emit(value.toMSecsSinceEpoch())
-        if self._checkRangeValue and self._input1.dateTime()>self._input2.dateTime():
+        if self._checkRangeValue and self._input1.dateTime() > self._input2.dateTime():
             self._input2.setDateTime(self._input1.dateTime())
 
     def _input2Changed(self, value=None):
         """Value for input2 has changed"""
         if value:
             self.value2Changed.emit(value.toMSecsSinceEpoch())
-        if self._checkRangeValue and self._input1.dateTime()>self._input2.dateTime():
+        if self._checkRangeValue and self._input1.dateTime() > self._input2.dateTime():
             self._input1.setDateTime(self._input2.dateTime())
 
     def value(self):
@@ -784,9 +807,9 @@ class WOperatorInputDateTime(WOperatorBaseInput):
         Can be a time stamp or QDateTime
         """
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value*1000)
+            value = QDateTime.fromMSecsSinceEpoch(value*1000)
 
-        if isinstance(value, QDateTime) and value!=self._input1.dateTime():
+        if isinstance(value, QDateTime) and value != self._input1.dateTime():
             self._input1.setDateTime(value)
 
     def value2(self):
@@ -796,9 +819,9 @@ class WOperatorInputDateTime(WOperatorBaseInput):
     def setValue2(self, value):
         """Set current 2nd value (when 'between' operator)"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value*1000)
+            value = QDateTime.fromMSecsSinceEpoch(value*1000)
 
-        if isinstance(value, QDateTime) and value!=self._input2.dateTime():
+        if isinstance(value, QDateTime) and value != self._input2.dateTime():
             self._input2.setDateTime(value)
 
     def minimum(self):
@@ -808,7 +831,7 @@ class WOperatorInputDateTime(WOperatorBaseInput):
     def setMinimum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value*1000)
+            value = QDateTime.fromMSecsSinceEpoch(value*1000)
 
         if isinstance(value, QDateTime):
             self._input1.setMinimumDateTime(value)
@@ -821,7 +844,7 @@ class WOperatorInputDateTime(WOperatorBaseInput):
     def setMaximum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value*1000)
+            value = QDateTime.fromMSecsSinceEpoch(value*1000)
 
         if isinstance(value, QDateTime):
             self._input1.setMaximumDateTime(value)
@@ -837,7 +860,7 @@ class WOperatorInputDate(WOperatorBaseInput):
         - Operator list
         - Input widgets
         """
-        self._defaultOperatorList=[
+        self._defaultOperatorList = [
                 WOperatorType.OPERATOR_GT,
                 WOperatorType.OPERATOR_GE,
                 WOperatorType.OPERATOR_LT,
@@ -850,8 +873,8 @@ class WOperatorInputDate(WOperatorBaseInput):
         self._initOperator(self._defaultOperatorList)
         self.setOperator(WOperatorType.OPERATOR_GT)
 
-        self._input1=QDateEdit()
-        self._input2=QDateEdit()
+        self._input1 = QDateEdit()
+        self._input2 = QDateEdit()
 
         self._input1.setCalendarPopup(True)
         self._input2.setCalendarPopup(True)
@@ -869,14 +892,14 @@ class WOperatorInputDate(WOperatorBaseInput):
         """Value for input1 has changed"""
         if value:
             self.valueChanged.emit(QDateTime(value).toMSecsSinceEpoch())
-        if self._input1.date()>self._input2.date():
+        if self._input1.date() > self._input2.date():
             self._input2.setDate(self._input1.date())
 
     def _input2Changed(self, value=None):
         """Value for input2 has changed"""
         if value:
             self.value2Changed.emit(QDateTime(value).toMSecsSinceEpoch())
-        if self._input1.date()>self._input2.date():
+        if self._input1.date() > self._input2.date():
             self._input1.setDate(self._input2.date())
 
     def value(self):
@@ -889,9 +912,9 @@ class WOperatorInputDate(WOperatorBaseInput):
         Can be a time stamp or QDateTime
         """
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value*1000).date()
+            value = QDateTime.fromMSecsSinceEpoch(value*1000).date()
 
-        if isinstance(value, QDate) and value!=self._input1.date():
+        if isinstance(value, QDate) and value != self._input1.date():
             self._input1.setDate(value)
 
     def value2(self):
@@ -901,9 +924,9 @@ class WOperatorInputDate(WOperatorBaseInput):
     def setValue2(self, value):
         """Set current 2nd value (when 'between' operator)"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value*1000).date()
+            value = QDateTime.fromMSecsSinceEpoch(value*1000).date()
 
-        if isinstance(value, QDate) and value!=self._input2.date():
+        if isinstance(value, QDate) and value != self._input2.date():
             self._input2.setDate(value)
 
     def minimum(self):
@@ -913,7 +936,7 @@ class WOperatorInputDate(WOperatorBaseInput):
     def setMinimum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value*1000).date()
+            value = QDateTime.fromMSecsSinceEpoch(value*1000).date()
 
         if isinstance(value, QDate):
             self._input1.setMinimumDate(value)
@@ -926,7 +949,7 @@ class WOperatorInputDate(WOperatorBaseInput):
     def setMaximum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QDateTime.fromMSecsSinceEpoch(value*1000).date()
+            value = QDateTime.fromMSecsSinceEpoch(value*1000).date()
 
         if isinstance(value, QDate):
             self._input1.setMaximumDate(value)
@@ -942,7 +965,7 @@ class WOperatorInputTime(WOperatorBaseInput):
         - Operator list
         - Input widgets
         """
-        self._defaultOperatorList=[
+        self._defaultOperatorList = [
                 WOperatorType.OPERATOR_GT,
                 WOperatorType.OPERATOR_GE,
                 WOperatorType.OPERATOR_LT,
@@ -955,8 +978,8 @@ class WOperatorInputTime(WOperatorBaseInput):
         self._initOperator(self._defaultOperatorList)
         self.setOperator(WOperatorType.OPERATOR_GT)
 
-        self._input1=QTimeEdit()
-        self._input2=QTimeEdit()
+        self._input1 = QTimeEdit()
+        self._input2 = QTimeEdit()
 
         self._input1.setDisplayFormat("HH:mm:ss")
         self._input2.setDisplayFormat("HH:mm:ss")
@@ -968,14 +991,14 @@ class WOperatorInputTime(WOperatorBaseInput):
         """Value for input1 has changed"""
         if value:
             self.valueChanged.emit(value.msecsSinceStartOfDay())
-        if self._checkRangeValue and self._input1.time()>self._input2.time():
+        if self._checkRangeValue and self._input1.time() > self._input2.time():
             self._input2.setTime(self._input1.time())
 
     def _input2Changed(self, value=None):
         """Value for input2 has changed"""
         if value:
             self.value2Changed.emit(value.msecsSinceStartOfDay())
-        if self._checkRangeValue and self._input1.time()>self._input2.time():
+        if self._checkRangeValue and self._input1.time() > self._input2.time():
             self._input1.setTime(self._input2.time())
 
     def value(self):
@@ -988,9 +1011,9 @@ class WOperatorInputTime(WOperatorBaseInput):
         Can be a time stamp or QDateTime
         """
         if isinstance(value, (int, float)):
-            value=QTime.fromMSecsSinceStartOfDay(1000*value)
+            value = QTime.fromMSecsSinceStartOfDay(1000*value)
 
-        if isinstance(value, QTime) and value!=self._input1.time():
+        if isinstance(value, QTime) and value != self._input1.time():
             self._input1.setTime(value)
 
     def value2(self):
@@ -1000,9 +1023,9 @@ class WOperatorInputTime(WOperatorBaseInput):
     def setValue2(self, value):
         """Set current 2nd value (when 'between' operator)"""
         if isinstance(value, (int, float)):
-            value=QTime.fromMSecsSinceStartOfDay(1000*value)
+            value = QTime.fromMSecsSinceStartOfDay(1000*value)
 
-        if isinstance(value, QTime) and value!=self._input2.time():
+        if isinstance(value, QTime) and value != self._input2.time():
             self._input2.setTime(value)
 
     def minimum(self):
@@ -1012,7 +1035,7 @@ class WOperatorInputTime(WOperatorBaseInput):
     def setMinimum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QTime.fromMSecsSinceStartOfDay(1000*value)
+            value = QTime.fromMSecsSinceStartOfDay(1000*value)
 
         if isinstance(value, QTime):
             self._input1.setMinimumTime(value)
@@ -1025,7 +1048,7 @@ class WOperatorInputTime(WOperatorBaseInput):
     def setMaximum(self, value):
         """Set minimum value"""
         if isinstance(value, (int, float)):
-            value=QTime.fromMSecsSinceStartOfDay(1000*value)
+            value = QTime.fromMSecsSinceStartOfDay(1000*value)
 
         if isinstance(value, QTime):
             self._input1.setMaximumTime(value)
@@ -1041,7 +1064,7 @@ class WOperatorInputStr(WOperatorBaseInput):
         - Operator list
         - Input widgets
         """
-        self._defaultOperatorList=[
+        self._defaultOperatorList = [
                 WOperatorType.OPERATOR_EQ,
                 WOperatorType.OPERATOR_NE,
                 WOperatorType.OPERATOR_MATCH,
@@ -1052,7 +1075,7 @@ class WOperatorInputStr(WOperatorBaseInput):
         self._initOperator(self._defaultOperatorList)
         self.setOperator(WOperatorType.OPERATOR_EQ)
 
-        self._input1=QLineEdit()
+        self._input1 = QLineEdit()
         self._input1.setClearButtonEnabled(True)
         replaceLineEditClearButton(self._input1)
 
@@ -1064,12 +1087,12 @@ class WOperatorInputStr(WOperatorBaseInput):
 
     def setValue(self, value):
         """set current value"""
-        if value!=self._input1.text():
+        if value != self._input1.text():
             self._input1.setText(value)
 
 
 class WOperatorInputList(WOperatorBaseInput):
-    """Search operator for DateTime"""
+    """Search operator for List"""
 
     def _initializeUi(self):
         """Initialise widget
@@ -1077,19 +1100,19 @@ class WOperatorInputList(WOperatorBaseInput):
         - Operator list
         - Input widgets
         """
-        self._defaultOperatorList=[
+        self._defaultOperatorList = [
                 WOperatorType.OPERATOR_IN,
                 WOperatorType.OPERATOR_NOT_IN
             ]
         self._initOperator(self._defaultOperatorList)
         self.setOperator(WOperatorType.OPERATOR_IN)
 
-        self._input1=WTagInput()
+        self._input1 = WTagInput()
         self._input1.setAcceptNewTags(WTagInput.ACCEPT_NEWTAG_NO)
         self._input1.setAutoSort(True)
         self._input1.lineEdit().setContextMenuPolicy(Qt.NoContextMenu)
 
-        self._input1.tagSelection.connect(lambda: self.valueChanged.emit( self._input1.selectedTags() ))
+        self._input1.tagSelection.connect(lambda: self.valueChanged.emit(self._input1.selectedTags()))
 
     def value(self):
         """Return current value (list of selected tags)"""

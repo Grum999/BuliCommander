@@ -1,27 +1,29 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # PyKritaToolKit
-# Copyright (C) 2019-2021 - Grum999
-#
-# A toolkit to make pykrita plugin coding easier :-)
+# Copyright (C) 2019-2022 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# https://spdx.org/licenses/GPL-3.0-or-later.html
+# -----------------------------------------------------------------------------
+# Based from C++ Qt example:
+#   https://code.qt.io/cgit/qt/qtbase.git/tree/examples/widgets/layouts/flowlayout/flowlayout.cpp?h=5.15
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+#   Original example source code published under BSD License Usage
+#       Copyright (C) 2016 The Qt Company Ltd.
+#       Contact: https://www.qt.io/licensing/
+# -----------------------------------------------------------------------------
+# A Krita plugin framework
 # -----------------------------------------------------------------------------
 
-
-
-
+# -----------------------------------------------------------------------------
+# The wimagepreview module provides widget used to render an image preview
+#
+# Main class from this module
+#
+# - WImageView:
+#       Widget to display image with functions like zoom in/out
+#
 # -----------------------------------------------------------------------------
 
 import PyQt5.uic
@@ -54,7 +56,6 @@ from ..pktk import *
 # -----------------------------------------------------------------------------
 
 
-
 # -----------------------------------------------------------------------------
 
 class WImageGView(QGraphicsView):
@@ -85,10 +86,10 @@ class WImageGView(QGraphicsView):
         self.__imgHandle = None
         self.__imgRectF = None
 
-        self.__minimumZoomFactor=0.01
-        self.__maximumZoomFactor=16.0
+        self.__minimumZoomFactor = 0.01
+        self.__maximumZoomFactor = 16.0
         self.__currentZoomFactor = 1.0
-        self.__zoomStep=0.25
+        self.__zoomStep = 0.25
 
         # default properties
         self.__allowPan = True
@@ -103,37 +104,37 @@ class WImageGView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
 
-        self.viewport().setStyleSheet("background: transparent");
+        self.viewport().setStyleSheet("background: transparent")
 
     def __setZoomFactor(self, value):
         """Set current zoom factor, applying defined min/max allowed values"""
-        if value>self.__maximumZoomFactor:
-            self.__currentZoomFactor=round(self.__maximumZoomFactor, 2)
-        elif value<self.__minimumZoomFactor:
-            self.__currentZoomFactor=round(self.__minimumZoomFactor, 2)
+        if value > self.__maximumZoomFactor:
+            self.__currentZoomFactor = round(self.__maximumZoomFactor, 2)
+        elif value < self.__minimumZoomFactor:
+            self.__currentZoomFactor = round(self.__minimumZoomFactor, 2)
         else:
-            self.__currentZoomFactor=round(value, 2)
+            self.__currentZoomFactor = round(value, 2)
 
     def __calculateZoomStep(self, increasing):
         """Calculate zoom step value"""
         if increasing:
-            if self.__currentZoomFactor<0.1:
-                self.__zoomStep=0.01
-            elif self.__currentZoomFactor<0.25:
-                self.__zoomStep=0.05
-            elif self.__currentZoomFactor<5:
-                self.__zoomStep=0.25
+            if self.__currentZoomFactor < 0.1:
+                self.__zoomStep = 0.01
+            elif self.__currentZoomFactor < 0.25:
+                self.__zoomStep = 0.05
+            elif self.__currentZoomFactor < 5:
+                self.__zoomStep = 0.25
             else:
-                self.__zoomStep=0.5
+                self.__zoomStep = 0.5
         else:
-            if self.__currentZoomFactor<=0.1:
-                self.__zoomStep=0.01
-            elif self.__currentZoomFactor<=0.25:
-                self.__zoomStep=0.05
-            elif self.__currentZoomFactor<=5:
-                self.__zoomStep=0.25
+            if self.__currentZoomFactor <= 0.1:
+                self.__zoomStep = 0.01
+            elif self.__currentZoomFactor <= 0.25:
+                self.__zoomStep = 0.05
+            elif self.__currentZoomFactor <= 5:
+                self.__zoomStep = 0.25
             else:
-                self.__zoomStep=0.5
+                self.__zoomStep = 0.5
 
     def allowZoom(self):
         """Return True if user is allowed to zoom with mouse"""
@@ -179,7 +180,7 @@ class WImageGView(QGraphicsView):
         if isinstance(value, QRect):
             value = QRectF(value)
 
-        oldZoomFactor=self.__currentZoomFactor
+        oldZoomFactor = self.__currentZoomFactor
 
         if isinstance(value, QRectF):
             # QRectF given, zoom to this rect (scene coordinates)
@@ -187,7 +188,7 @@ class WImageGView(QGraphicsView):
 
             self.fitInView(value, Qt.KeepAspectRatio)
 
-            self.__currentZoomFactor=self.transform().m11()
+            self.__currentZoomFactor = self.transform().m11()
             self.resetTransform()
             self.__setZoomFactor(self.__currentZoomFactor)
             self.scale(self.__currentZoomFactor, self.__currentZoomFactor)
@@ -200,7 +201,7 @@ class WImageGView(QGraphicsView):
 
                 sceneRect = self.transform().mapRect(self.__imgRectF)
                 self.__setZoomFactor(min(viewportRect.width() / sceneRect.width(),
-                                               viewportRect.height() / sceneRect.height()))
+                                         viewportRect.height() / sceneRect.height()))
                 self.scale(self.__currentZoomFactor, self.__currentZoomFactor)
             elif value > 0:
                 self.__setZoomFactor(value)
@@ -212,9 +213,9 @@ class WImageGView(QGraphicsView):
         else:
             raise EInvalidType("Given `value` must be a <float> or <QRectF>")
 
-        self.__calculateZoomStep(oldZoomFactor>self.__currentZoomFactor)
+        self.__calculateZoomStep(oldZoomFactor > self.__currentZoomFactor)
 
-        self.zoomChanged.emit(round(self.__currentZoomFactor * 100,2))
+        self.zoomChanged.emit(round(self.__currentZoomFactor * 100, 2))
 
     def minimumZoom(self):
         """Return Minimum zoom that can be applied"""
@@ -225,9 +226,9 @@ class WImageGView(QGraphicsView):
 
         1.00 = 100%
         """
-        if value>0 and value <=1.00:
-            self.__minimumZoomFactor=value
-            if self.__currentZoomFactor<self.__minimumZoomFactor:
+        if value > 0 and value <= 1.00:
+            self.__minimumZoomFactor = value
+            if self.__currentZoomFactor < self.__minimumZoomFactor:
                 self.setZoom(self.__minimumZoomFactor)
 
     def maximumZoom(self):
@@ -239,9 +240,9 @@ class WImageGView(QGraphicsView):
 
         1.00 = 100%
         """
-        if value>=1.00:
-            self.__maximumZoomFactor=value
-            if self.__currentZoomFactor>self.__maximumZoomFactor:
+        if value >= 1.00:
+            self.__maximumZoomFactor = value
+            if self.__currentZoomFactor > self.__maximumZoomFactor:
                 self.setZoom(self.__maximumZoomFactor)
 
     def zoomToFit(self):
@@ -255,11 +256,11 @@ class WImageGView(QGraphicsView):
         Otherwise use given content (QRect/QRectF)
         """
         if isinstance(content, QRectF):
-            boundingRect=content
+            boundingRect = content
         elif isinstance(content, QRect):
-            boundingRect=QRectF(content)
+            boundingRect = QRectF(content)
         else:
-            boundingRect=self.sceneRect()
+            boundingRect = self.sceneRect()
         self.centerOn(boundingRect.center())
 
     def resetZoom(self):
@@ -394,12 +395,11 @@ class WImageGView(QGraphicsView):
                 self.setZoom(self.__currentZoomFactor + self.__zoomStep)
             else:
                 self.__calculateZoomStep(False)
-                if (self.__currentZoomFactor - self.__zoomStep)>0:
+                if (self.__currentZoomFactor - self.__zoomStep) > 0:
                     self.setZoom(self.__currentZoomFactor - self.__zoomStep)
 
-            newPos=event.pos() - self.mapFromScene(self.__mousePos)
+            newPos = event.pos() - self.mapFromScene(self.__mousePos)
             self.translate(newPos.x(), newPos.y())
-
 
 
 class WImageView(QWidget):
@@ -435,24 +435,24 @@ class WImageView(QWidget):
 
         self.__wImgView = WImageGView(self)
         self.__wImgView.setCacheMode(QGraphicsView.CacheBackground)
-        self.__wImgView.leftButtonPressed.connect(lambda x,y: self.leftButtonPressed.emit(x, y))
-        self.__wImgView.rightButtonPressed.connect(lambda x,y: self.rightButtonPressed.emit(x, y))
-        self.__wImgView.leftButtonReleased.connect(lambda x,y: self.leftButtonReleased.emit(x, y))
-        self.__wImgView.rightButtonReleased.connect(lambda x,y: self.rightButtonReleased.emit(x, y))
-        self.__wImgView.leftButtonDoubleClicked.connect(lambda x,y: self.leftButtonDoubleClicked.emit(x, y))
-        self.__wImgView.rightButtonDoubleClicked.connect(lambda x,y: self.rightButtonDoubleClicked.emit(x, y))
+        self.__wImgView.leftButtonPressed.connect(lambda x, y: self.leftButtonPressed.emit(x, y))
+        self.__wImgView.rightButtonPressed.connect(lambda x, y: self.rightButtonPressed.emit(x, y))
+        self.__wImgView.leftButtonReleased.connect(lambda x, y: self.leftButtonReleased.emit(x, y))
+        self.__wImgView.rightButtonReleased.connect(lambda x, y: self.rightButtonReleased.emit(x, y))
+        self.__wImgView.leftButtonDoubleClicked.connect(lambda x, y: self.leftButtonDoubleClicked.emit(x, y))
+        self.__wImgView.rightButtonDoubleClicked.connect(lambda x, y: self.rightButtonDoubleClicked.emit(x, y))
         self.__wImgView.zoomChanged.connect(lambda z: self.zoomChanged.emit(z))
 
-        self.__layout=QVBoxLayout()
+        self.__layout = QVBoxLayout()
         self.__layout.addWidget(self.__wImgView)
-        self.__layout.setContentsMargins(0,0,0,0)
+        self.__layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.__layout)
 
         # default properties
         self.__allowMenu = True
         self.__backgroundType = None
 
-        self.__bgBrush=checkerBoardBrush(32)
+        self.__bgBrush = checkerBoardBrush(32)
 
         self.__actionZoom1x1 = QAction(buildIcon("pktk:zoom_1x1"), i18n('Zoom 1:1'), self)
         self.__actionZoom1x1.triggered.connect(lambda: self.__wImgView.resetZoom())
@@ -553,7 +553,7 @@ class WImageView(QWidget):
         if not isinstance(value, int):
             raise EInvalidType("Given `value` must be a valid <int>")
 
-        if not value in [WImageView.BG_BLACK,
+        if value not in [WImageView.BG_BLACK,
                          WImageView.BG_WHITE,
                          WImageView.BG_NEUTRAL_GRAY,
                          WImageView.BG_TRANSPARENT,
@@ -563,19 +563,19 @@ class WImageView(QWidget):
         if self.__backgroundType != value:
             self.__backgroundType = value
             if self.__backgroundType == WImageView.BG_BLACK:
-                self.__bgBrush=QBrush(Qt.black)
+                self.__bgBrush = QBrush(Qt.black)
                 self.__actionBgBlack.setChecked(True)
             elif self.__backgroundType == WImageView.BG_WHITE:
-                self.__bgBrush=QBrush(Qt.white)
+                self.__bgBrush = QBrush(Qt.white)
                 self.__actionBgWhite.setChecked(True)
             elif self.__backgroundType == WImageView.BG_NEUTRAL_GRAY:
-                self.__bgBrush=QBrush(QColor(128,128,128))
+                self.__bgBrush = QBrush(QColor(128, 128, 128))
                 self.__actionBgNGray.setChecked(True)
             elif self.__backgroundType == WImageView.BG_TRANSPARENT:
-                self.__bgBrush=QBrush(Krita.activeWindow().qwindow().palette().color(QPalette.Mid))
+                self.__bgBrush = QBrush(Krita.activeWindow().qwindow().palette().color(QPalette.Mid))
                 self.__actionBgNone.setChecked(True)
             elif self.__backgroundType == WImageView.BG_CHECKER_BOARD:
-                self.__bgBrush=checkerBoardBrush(32)
+                self.__bgBrush = checkerBoardBrush(32)
                 self.__actionBgCheckerBoard.setChecked(True)
             self.update()
 

@@ -1,23 +1,14 @@
-#-----------------------------------------------------------------------------
-# Buli Commander
-# Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Buli Commander
+# Copyright (C) 2019-2022 - Grum999
+# -----------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
 # -----------------------------------------------------------------------------
 # A Krita plugin designed to manage documents
 # -----------------------------------------------------------------------------
+
 
 import os
 import re
@@ -38,13 +29,12 @@ from PyQt5.Qt import *
 from PyQt5 import QtCore
 from PyQt5.QtCore import (
         pyqtSlot,
-        #QByteArray,
-        #QRect,
-        #QStandardPaths,
+        # QByteArray,
+        # QRect,
+        # QStandardPaths,
         QObject
     )
 from PyQt5.QtGui import (
-        #QColor,
         QImage,
         QPixmap,
         QPolygonF
@@ -68,9 +58,8 @@ from PyQt5.QtWidgets import (
     )
 
 
-
 if __name__ != '__main__':
-     # script is executed from Krita, loaded as a module
+    # script is executed from Krita, loaded as a module
     __PLUGIN_EXEC_FROM__ = 'KRITA'
 
     from .pktk.pktk import (
@@ -115,6 +104,7 @@ REQUIRED_KRITA_VERSION = (5, 0, 0)
 
 PkTk.setPackageName('bulicommander')
 
+
 class BuliCommander(Extension):
 
     def __init__(self, parent):
@@ -127,7 +117,6 @@ class BuliCommander(Extension):
         self.__uiController = None
         self.__isKritaVersionOk = checkKritaVersion(*REQUIRED_KRITA_VERSION)
 
-
     def __initUiController(self, kritaIsStarting=False):
         """Initialise UI controller
 
@@ -137,12 +126,13 @@ class BuliCommander(Extension):
         @pyqtSlot('QString')
         def opened(document):
             # a document has been created: if filename is set, document has been opened
-            # also, need to check if uiController is initialized
+            # also, need to check if uiController is initialized
             # (possible case: document opened before uiController is initialized
             #                 can occurs when BC is opened at startup and user able to open
             #                 a document before/during intiialization)
             if self.__uiController and document.fileName() != '':
                 self.__uiController.commandGoLastDocsOpenedAdd(document.fileName())
+
         @pyqtSlot('QString')
         def saved(fileName):
             # a document has been saved
@@ -160,9 +150,9 @@ class BuliCommander(Extension):
             except Exception as e:
                 pass
 
-            #try:
+            # try:
             #    Krita.instance().notifier().applicationClosing.disconnect()
-            #except Exception as e:
+            # except Exception as e:
             #    pass
 
             # no controller, create it
@@ -171,7 +161,6 @@ class BuliCommander(Extension):
             Krita.instance().notifier().imageSaved.connect(saved)
 
             self.__uiController = BCUIController(PLUGIN_MENU_ENTRY, PLUGIN_VERSION, kritaIsStarting)
-
 
     def setup(self):
         """Is executed at Krita's startup"""
@@ -186,13 +175,11 @@ class BuliCommander(Extension):
         # windowCreated signal has been implemented with krita 5.0.0
         Krita.instance().notifier().windowCreated.connect(windowCreated)
 
-
     def createActions(self, window):
         action = window.createAction(EXTENSION_ID, PLUGIN_MENU_ENTRY, "tools/scripts")
         action.triggered.connect(self.start)
 
         actionSaveAll = window.createAction('pykrita_bulicommander_saveall', i18n('Save All'), "tools/scripts")
-
 
     def start(self):
         """Execute Buli Commander controller"""
@@ -200,8 +187,8 @@ class BuliCommander(Extension):
         # Create dialog box
         if not self.__isKritaVersionOk:
             QMessageBox.information(QWidget(),
-                                      PLUGIN_MENU_ENTRY,
-                                      "At least, Krita version {0} is required to use plugin...".format('.'.join([f"{v}" for v in REQUIRED_KRITA_VERSION]))
+                                    PLUGIN_MENU_ENTRY,
+                                    "At least, Krita version {0} is required to use plugin...".format('.'.join([f"{v}" for v in REQUIRED_KRITA_VERSION]))
                                     )
             return
 
@@ -216,6 +203,6 @@ if __PLUGIN_EXEC_FROM__ == 'SCRIPTER_PLUGIN':
 
     # Disconnect signals if any before assigning new signals
 
-    bc=BuliCommander(Krita.instance())
+    bc = BuliCommander(Krita.instance())
     bc.setup()
     bc.start()

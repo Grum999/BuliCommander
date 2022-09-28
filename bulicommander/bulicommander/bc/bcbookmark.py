@@ -1,22 +1,25 @@
-#-----------------------------------------------------------------------------
-# Buli Commander
-# Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Buli Commander
+# Copyright (C) 2019-2022 - Grum999
+# -----------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
 # -----------------------------------------------------------------------------
 # A Krita plugin designed to manage documents
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# The bcbookmark module provides classes used to manage bookmark
+#
+# Main classes from this module
+#
+# - BCBookmarkEdit:
+#       A basic user interface to manage bookmarks
+#
+# - BCBookmark:
+#       Allows to easily manage bookmarks
+#
 # -----------------------------------------------------------------------------
 
 import os
@@ -46,7 +49,7 @@ class BCBookmarkEdit(QDialog):
     def __init__(self, mode, bookmark, key='', value='', valueName='path', refList=None, parent=None):
         super(BCBookmarkEdit, self).__init__(parent)
 
-        if not mode in [BCBookmarkEdit.APPEND,
+        if mode not in [BCBookmarkEdit.APPEND,
                         BCBookmarkEdit.REMOVE,
                         BCBookmarkEdit.UPDATE,
                         BCBookmarkEdit.RENAME]:
@@ -103,7 +106,7 @@ class BCBookmarkEdit(QDialog):
     def __checkButton(self):
         enabled = True
         if self.ledName.isEnabled():
-            bookmarkName=self.ledName.text().strip()
+            bookmarkName = self.ledName.text().strip()
 
             if bookmarkName == '':
                 enabled = False
@@ -198,7 +201,7 @@ class BCBookmarkEdit(QDialog):
         value = bookmark.valueFromName(name)
         if value is None:
             return (False, None, None)
-        if not newValue is None:
+        if newValue is not None:
             value = newValue
 
         dlg = BCBookmarkEdit(BCBookmarkEdit.UPDATE, bookmark, key=name, value=value)
@@ -253,7 +256,7 @@ class BCBookmark(QObject):
 
     def __init__(self, items=[]):
         super(BCBookmark, self).__init__(None)
-        self.__bookmark={}
+        self.__bookmark = {}
         self.set(items)
 
     def __toKey(self, name):
@@ -272,7 +275,7 @@ class BCBookmark(QObject):
 
         if len(values) > 0:
             for value in values:
-                if not isinstance(value, list) or len(value)!=2:
+                if not isinstance(value, list) or len(value) != 2:
                     raise EInvalidType("Given `value` must be a list[name, path]")
                 self.append(value[BCBookmark.NAME], value[BCBookmark.VALUE])
 
@@ -304,7 +307,7 @@ class BCBookmark(QObject):
         if id is None:
             return None
 
-        key=self.__toKey(id)
+        key = self.__toKey(id)
 
         if key in self.__bookmark:
             return self.__bookmark[key]['name']
@@ -319,7 +322,7 @@ class BCBookmark(QObject):
         if name is None:
             return None
 
-        key=self.__toKey(name)
+        key = self.__toKey(name)
 
         if key in self.__bookmark:
             return self.__bookmark[key]['value']
@@ -343,18 +346,18 @@ class BCBookmark(QObject):
             # bookmark already exist for given value
             return False
 
-        additionalList=[]
+        additionalList = []
         if isinstance(refList, list) or isinstance(refList, dict):
             additionalList = [self.__toKey(name) for name in refList]
 
-        key=self.__toKey(name)
+        key = self.__toKey(name)
 
         if key in self.__bookmark or key in additionalList:
             # bookmark already exist for given name
             return False
 
-        self.__bookmark[key]={'name':  name,
-                              'value': value}
+        self.__bookmark[key] = {'name':  name,
+                                'value': value}
         self.changed.emit()
 
         return True
@@ -368,9 +371,9 @@ class BCBookmark(QObject):
         if not isinstance(name, str):
             raise EInvalidType("Given `name` must be a string")
 
-        key=self.__toKey(name)
+        key = self.__toKey(name)
 
-        if not key in self.__bookmark:
+        if key not in self.__bookmark:
             # bookmark doesn't exist for given name
             return False
 
@@ -393,15 +396,14 @@ class BCBookmark(QObject):
         if not isinstance(newName, str):
             raise EInvalidType("Given `newName` must be a string")
 
-
-        additionalList=[]
+        additionalList = []
         if isinstance(refList, list) or isinstance(refList, dict):
             additionalList = [self.__toKey(name) for name in refList]
 
-        key=self.__toKey(name)
-        newKey=self.__toKey(newName)
+        key = self.__toKey(name)
+        newKey = self.__toKey(newName)
 
-        if not key in self.__bookmark or newName in self.__bookmark or newName in additionalList:
+        if key not in self.__bookmark or newName in self.__bookmark or newName in additionalList:
             # bookmark doesn't exist for given name or alreayd exist for new name
             return False
 
@@ -424,12 +426,12 @@ class BCBookmark(QObject):
         if not isinstance(value, str):
             raise EInvalidType("Given `value` must be a string")
 
-        key=self.__toKey(name)
+        key = self.__toKey(name)
 
-        if not key in self.__bookmark or not self.nameFromValue(value) is None:
+        if key not in self.__bookmark or not self.nameFromValue(value) is None:
             return False
 
-        self.__bookmark[key]['value']=value
+        self.__bookmark[key]['value'] = value
         self.changed.emit()
 
         return True

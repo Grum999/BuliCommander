@@ -1,22 +1,22 @@
-#-----------------------------------------------------------------------------
-# Buli Commander
-# Copyright (C) 2020 - Grum999
 # -----------------------------------------------------------------------------
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Buli Commander
+# Copyright (C) 2019-2022 - Grum999
+# -----------------------------------------------------------------------------
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.
-# If not, see https://www.gnu.org/licenses/
+# https://spdx.org/licenses/GPL-3.0-or-later.html
 # -----------------------------------------------------------------------------
 # A Krita plugin designed to manage documents
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# The bchistory module provides classes used to manage history in bulicommander
+#
+# Main class from this module
+#
+# - BCHistory:
+#       Allows to easily manage history
+#
 # -----------------------------------------------------------------------------
 
 import os
@@ -33,6 +33,7 @@ from bulicommander.pktk.pktk import (
         EInvalidValue
     )
 
+
 class BCHistory(QObject):
     """A BCHistory is a list on which a maximum number of items is defined
 
@@ -46,9 +47,9 @@ class BCHistory(QObject):
 
     def __init__(self, items=[], maxItems=25, uniqueItems=True):
         super(BCHistory, self).__init__(None)
-        self.__list=[]
-        self.__maxItems=0
-        self.__uniqueItems=True
+        self.__list = []
+        self.__maxItems = 0
+        self.__uniqueItems = True
         self.setMaxItems(maxItems)
         self.setItems(items)
         self.__setUniqueItems(uniqueItems)
@@ -97,13 +98,13 @@ class BCHistory(QObject):
         if self.__uniqueItems:
             try:
                 position = self.__list.index(value)
-            except:
+            except Exception:
                 # value not found
                 position = None
-        if not position is None:
+        if position is not None:
             self.__list.pop(position)
-        if len(self.__list)>=self.__maxItems:
-            if self.__maxItems>1:
+        if len(self.__list) >= self.__maxItems:
+            if self.__maxItems > 1:
                 self.__list = self.__list[-self.__maxItems+1:]
             else:
                 self.__list = []
@@ -119,7 +120,6 @@ class BCHistory(QObject):
             if notifyChange:
                 self.changed.emit()
         return returned
-
 
     def last(self):
         """Return last value added"""
@@ -144,15 +144,15 @@ class BCHistory(QObject):
 
     def removeMissing(self, notifyChange=True, refList=None):
         """Remove missing directories from history"""
-        modified=False
-        tmpList=[]
+        modified = False
+        tmpList = []
         for path in self.__list:
             if not path.startswith('@'):
                 if os.path.isdir(path):
                     tmpList.append(path)
                 else:
-                    modified=True
-            elif not refList is None:
+                    modified = True
+            elif refList is not None:
                 if path in refList:
                     tmpList.append(path)
         self.__list = tmpList
