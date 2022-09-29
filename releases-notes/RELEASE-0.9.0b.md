@@ -2,11 +2,23 @@
 
 ## Search engine
 
+### Reduce search execution time duration
 [Feature request #20](https://github.com/Grum999/BuliCommander/issues/20)
 
-### Reduce search excution time duration
-
 Search engine core has been improved to reduce search execution time duration, especially if search is only based on *file properties* (file name, path, date, size)
+
+### Limit results
+[Feature request #14](https://github.com/Grum999/BuliCommander/issues/14)
+
+A new rule has been added to limit number of results provided to output.
+
+![Limit results](./../screenshots/r0-9-0b_search_adv_limit.jpeg)
+
+When number of found files is greater than provided limit, 2 possible actions are available:
+- Do nothing
+- Limit exported result to the first *N<sup>th</sup>* items
+
+In all case, an alert is displayed in console about result.
 
 
 ## File panels
@@ -29,6 +41,7 @@ This ensure for big thumbnail on small view to get a smaller scroll, and for sma
 [Feature request #6](https://github.com/Grum999/BuliCommander/issues/6)
 
 This option allows to replace Krita's "Open file" dialog with Buli Commander.
+
 ![Welcome Screen](./../screenshots/r0-9-0b_welcome_screen-open_file.jpeg)
 
 
@@ -72,11 +85,9 @@ Button `Save files` allows to save all files in one click.
 
 ### Improve mass renaming
 
-[Feature request #8](https://github.com/Grum999/BuliCommander/issues/8)
-
-[Feature request #19](https://github.com/Grum999/BuliCommander/issues/19)
-
 #### Basic editor
+
+[Feature request #8](https://github.com/Grum999/BuliCommander/issues/8)
 
 Mass renaming have been improved:
 
@@ -89,6 +100,8 @@ Mass renaming have been improved:
 
 #### Visual editor
 
+[Feature request #8](https://github.com/Grum999/BuliCommander/issues/8)
+
 A visual editor, using nodes, has been implemented to build formula:
 - Allows to build from scratch, save/load formula
 - Build nodes automatically from formula defined in basic editor
@@ -97,6 +110,8 @@ A visual editor, using nodes, has been implemented to build formula:
 ![Settings](./../screenshots/r0-9-0b_rename-multi02ve.png)
 
 #### Language improvement
+
+[Feature request #19](https://github.com/Grum999/BuliCommander/issues/19)
 
 The function `padding` has been added to language, allowfing to define padded fixed length text.
 

@@ -206,6 +206,7 @@ I think it should be Ok, but...
 
 _[2022-XX-XX] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.9.0b.md)*
 - Improve Search engine - *Reduce search execution time duration*
+- Improve Search engine - *Limit results*
 - Improve File panels - *Grid view mode - Smooth thumbnail scroll*
 - Improve User Interface - *Override Krita Welcome Screen "Open file" dialog*
 - Improve User Interface - *Implement "Save All"*
