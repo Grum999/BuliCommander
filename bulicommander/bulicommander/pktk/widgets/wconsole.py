@@ -470,7 +470,7 @@ class WConsole(QPlainTextEdit):
             fontMetrics = QFontMetrics(doc.defaultFont())
             margins = self.contentsMargins()
 
-            self.setFixedHeight(fontMetrics.lineSpacing() * numberOfRows + (doc.documentMargin() + self.frameWidth()) * 2 + margins.top () + margins.bottom())
+            self.setFixedHeight(fontMetrics.lineSpacing() * numberOfRows + (doc.documentMargin() + self.frameWidth()) * 2 + margins.top() + margins.bottom())
 
     def optionBufferSize(self):
         """Return maximum buffer size for console"""
@@ -500,7 +500,7 @@ class WConsole(QPlainTextEdit):
 
         if isinstance(filteredTypes, list):
             for filteredType in filteredTypes:
-                if isinstance(filteredType, WConsoleType) and not filteredType in self.__optionFilteredTypes:
+                if isinstance(filteredType, WConsoleType) and filteredType not in self.__optionFilteredTypes:
                     self.__optionFilteredTypes.append(filteredType)
 
             self.__updateFilteredTypes()
@@ -517,7 +517,7 @@ class WConsole(QPlainTextEdit):
             current = self.__optionFilteredTypes
             self.__optionFilteredTypes = []
             for filteredType in current:
-                if not filteredType in filteredTypes:
+                if filteredType not in filteredTypes:
                     self.__optionFilteredTypes.append(filteredType)
 
             self.__updateFilteredTypes()

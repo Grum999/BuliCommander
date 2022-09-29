@@ -804,7 +804,7 @@ class BCFile(BCBaseFile):
         If strict is False, try to determinate file format even if there's no extension
         """
         # if os.path.isfile(fileName):
-        self.__readable = True
+        self.__readable = os.access(fileName, os.R_OK)
 
         self.__baseName, self.__extension = os.path.splitext(fileName)
 
@@ -816,6 +816,10 @@ class BCFile(BCBaseFile):
         self.__baseName = os.path.basename(self.__baseName)
         self.__extension = self.__extension.lower()
         self.__size = os.path.getsize(self._fullPathName)
+
+        if not self.__readable:
+            # file can't be read...
+            return
 
         if strict and not BCFileManagedFormat.inExtensions(self.__extension, True, False):
             self.__readable = True
@@ -5608,7 +5612,7 @@ class BCFileListRuleFile(object):
                 dateTime = os.path.getmtime(file)
                 if self.__mdatetime.type() == BCFileListRuleOperatorType.DATE:
                     # only date, no date/time
-                    dateTime = strToTs(tsToStr(self._mdatetime, 'd'))
+                    dateTime = strToTs(tsToStr(dateTime, 'd'))
                 if not self.__mdatetime.compare(dateTime):
                     return (False, file)
 
@@ -6218,7 +6222,6 @@ class BCFileList(QObject):
 
     # activated by default
     STEPEXECUTED_SEARCH_FROM_PATHS = 0b0000000000000100      # search files in path finished
-    STEPEXECUTED_ANALYZE_METADATA =  0b0000000000001000      # read files for metadata finished
     STEPEXECUTED_FILTER_FILES =      0b0000000000010000      # filter files according to rules finished
     STEPEXECUTED_BUILD_RESULTS =     0b0000000000100000      # prepare results
     STEPEXECUTED_SORT_RESULTS =      0b0000000001000000      # sort results
@@ -6226,7 +6229,6 @@ class BCFileList(QObject):
 
     # not activated by default
     STEPEXECUTED_SEARCH_FROM_PATH =  0b0000000000000101      # during path scan, a path has been scanned (scan next directory will start)
-    STEPEXECUTED_PROGRESS_ANALYZE =  0b0000000000001001      # each file analyzed will emit a signal; allows to track analysis progress and update a progress bar for exwample
     STEPEXECUTED_PROGRESS_FILTER =   0b0000000000010001      # each file filtered will emit a signal; allows to track analysis progress and update a progress bar for exwample
     STEPEXECUTED_PROGRESS_SORT =     0b0000000001000001      # each file sorted will emit a signal; allows to track analysis progress and update a progress bar for exwample
     STEPEXECUTED_PROGRESS_OUTPUT =   0b0000000010000001
@@ -6405,18 +6407,6 @@ class BCFileList(QObject):
                     return 1
 
         return 0
-
-    def __progressScanning(self, value):
-        """Emit signal during scanning progress
-
-        Emit signal every 1%
-        """
-        self.__progressFilesPctTracker += 1
-        self.__progressFilesTracker += 1
-        if self.__progressFilesPctTracker >= self.__progressFilesPctThreshold:
-            self.__progressFilesPctCurrent += 1
-            self.__progressFilesPctTracker = 0
-            self.stepExecuted.emit((BCFileList.STEPEXECUTED_PROGRESS_ANALYZE, self.__progressFilesPctCurrent, self.__progressFilesTracker))
 
     def __progressFiltering(self, value):
         """Emit signal during scanning progress
@@ -6729,7 +6719,6 @@ class BCFileList(QObject):
 
         if signals is None:
             signals = [BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
-                       BCFileList.STEPEXECUTED_ANALYZE_METADATA,
                        BCFileList.STEPEXECUTED_FILTER_FILES,
                        BCFileList.STEPEXECUTED_BUILD_RESULTS,
                        BCFileList.STEPEXECUTED_SORT_RESULTS,

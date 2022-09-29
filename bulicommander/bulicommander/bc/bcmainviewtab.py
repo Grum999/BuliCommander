@@ -1069,7 +1069,7 @@ class BCMainViewTab(QFrame):
             self.__filesQuery.clearSortRules()
             self.__filesQuery.searchExecute(True,
                                             True,
-                                            [BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS, BCFileList.STEPEXECUTED_ANALYZE_METADATA, BCFileList.STEPEXECUTED_PROGRESS_ANALYZE])
+                                            [BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS, BCFileList.STEPEXECUTED_FILTER_FILES, BCFileList.STEPEXECUTED_PROGRESS_FILTER])
             self.__filesAddParentDirectory()
             QApplication.restoreOverrideCursor()
 
@@ -2016,15 +2016,15 @@ class BCMainViewTab(QFrame):
         if value[0] == BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS:
             # in this case, value[1] returns number of files to scan
             if value[1] > 500:
-                self.__filesProgressStart(value[1], i18n('Analyzing file %v of %m (%p%)'))
+                self.__filesProgressStart(value[1], i18n('Analyzing&Filter file %v of %m (%p%)'))
             else:
-                self.__filesProgressStart(0, i18n('Analyzing files'))
-        elif value[0] == BCFileList.STEPEXECUTED_ANALYZE_METADATA:
+                self.__filesProgressStart(0, i18n('Analyzing&Filter files'))
+        elif value[0] == BCFileList.STEPEXECUTED_FILTER_FILES:
             # in this case, scanning is finished
             if self.__filesPbVisible:
                 self.__filesProgressStop(False)
                 self.__filesProgressStart(0, i18n('Loading list'))
-        elif value[0] == BCFileList.STEPEXECUTED_PROGRESS_ANALYZE:
+        elif value[0] == BCFileList.STEPEXECUTED_PROGRESS_FILTER:
             # in this case, value[2] give processed index
             if self.__filesPbVisible:
                 self.__filesProgressSetValue(value[2])

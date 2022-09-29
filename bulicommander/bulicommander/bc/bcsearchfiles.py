@@ -129,7 +129,8 @@ class BCSearchFilesDialogBox(QDialog):
     __PANEL_SEARCH_FILEFILTERRULES = 2
     __PANEL_SEARCH_IMGFILTERRULES = 3
     __PANEL_SEARCH_SORTRULES = 4
-    __PANEL_SEARCH_OUTPUTENGINE = 5
+    __PANEL_SEARCH_LIMITRULES = 5
+    __PANEL_SEARCH_OUTPUTENGINE = 6
 
     __TAB_BASIC_SEARCH = 0
     __TAB_ADVANCED_SEARCH = 1
@@ -471,6 +472,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.tbAdvancedAddImgFilter.clicked.connect(self.__advancedAddImgFilterRule)
         self.tbAdvancedAddFilterOperator.clicked.connect(self.__advancedAddFilterRuleOperator)
         self.tbAdvancedAddSortRules.clicked.connect(self.__advancedAddSortRules)
+        self.tbAdvancedAddLimitRules.clicked.connect(self.__advancedAddLimitRules)
         self.tbAdvancedAddOutputEngine.clicked.connect(self.__advancedAddOutputEngine)
         self.tbAdvancedDeleteItems.clicked.connect(self.__advancedDelete)
         self.tbAdvancedZoomToFit.clicked.connect(self.wneAdvancedView.zoomToFit)
@@ -525,6 +527,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.wsffrAdvanced.modified.connect(self.__advancedFileFilterRuleChanged)
         self.wsifrAdvanced.modified.connect(self.__advancedImgFilterRuleChanged)
         self.wssrAdvanced.modified.connect(self.__advancedSortRuleChanged)
+        self.wslrAdvanced.modified.connect(self.__advancedSortListChanged)
         self.wsoeAdvanced.modified.connect(self.__advancedOutputEngineChanged)
 
         self.wsoeAdvanced.setTitle(self.__title)
@@ -540,6 +543,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.wsffpBasic.modified.connect(self.__updateFileNameLabel)
         self.wsifrBasic.modified.connect(self.__updateFileNameLabel)
         self.wssrBasic.modified.connect(self.__updateFileNameLabel)
+        self.wslrBasic.modified.connect(self.__updateFileNameLabel)
 
         self.__basicResetSearch(True)
         self.__advancedResetSearch(True)
@@ -749,6 +753,10 @@ class BCSearchFilesDialogBox(QDialog):
             self.__currentSelectedNodeWidget = selectedNodes[0].widget()
             self.wssrAdvanced.importFromDict(selectedNodes[0].serialize()['widget'])
             self.swAdvancedPanel.setCurrentIndex(BCSearchFilesDialogBox.__PANEL_SEARCH_SORTRULES)
+        elif nbSelectedNodes == 1 and isinstance(selectedNodes[0].widget(), BCNodeWSearchLimitRule):
+            self.__currentSelectedNodeWidget = selectedNodes[0].widget()
+            self.wslrAdvanced.importFromDict(selectedNodes[0].serialize()['widget'])
+            self.swAdvancedPanel.setCurrentIndex(BCSearchFilesDialogBox.__PANEL_SEARCH_LIMITRULES)
         elif nbSelectedNodes == 1 and isinstance(selectedNodes[0].widget(), BCNodeWSearchOutputEngine):
             self.__currentSelectedNodeWidget = selectedNodes[0].widget()
             self.wsoeAdvanced.importFromDict(selectedNodes[0].serialize()['widget'])
@@ -798,6 +806,14 @@ class BCSearchFilesDialogBox(QDialog):
             return
 
         self.__currentSelectedNodeWidget.deserialize(self.wssrAdvanced.exportAsDict()['widget'])
+        self.__scene.setModified(True)
+
+    def __advancedSortListChanged(self):
+        """Something has been modified, update node"""
+        if self.__currentSelectedNodeWidget is None:
+            return
+
+        self.__currentSelectedNodeWidget.deserialize(self.wslrAdvanced.exportAsDict()['widget'])
         self.__scene.setModified(True)
 
     def __advancedOutputEngineChanged(self):
@@ -867,9 +883,17 @@ class BCSearchFilesDialogBox(QDialog):
         """Add a BCNodeWSearchSortRule node"""
         position = self.__advancedCalculateNodePosition()
 
-        nwFilterRuleOperator = BCNodeWSearchSortRule(self.__scene, i18n("Sort rules"))
-        nwFilterRuleOperator.node().setPosition(position)
-        nwFilterRuleOperator.node().setSelected(True, False)
+        nwSortRuleOperator = BCNodeWSearchSortRule(self.__scene, i18n("Sort rules"))
+        nwSortRuleOperator.node().setPosition(position)
+        nwSortRuleOperator.node().setSelected(True, False)
+
+    def __advancedAddLimitRules(self):
+        """Add a BCNodeWSearchLimitRule node"""
+        position = self.__advancedCalculateNodePosition()
+
+        nwLimitRuleOperator = BCNodeWSearchLimitRule(self.__scene, i18n("Limit rules"))
+        nwLimitRuleOperator.node().setPosition(position)
+        nwLimitRuleOperator.node().setSelected(True, False)
 
     def __advancedAddOutputEngine(self):
         """Add a BCNodeWSearchOutputEngine node"""
@@ -898,6 +922,7 @@ class BCSearchFilesDialogBox(QDialog):
         nodeImgFilterRule = self.wsifrBasic.exportAsDict()
         nodeFromPath = self.wsffpBasic.exportAsDict()
         nodeSortRules = self.wssrBasic.exportAsDict()
+        nodeLimitRules = self.wslrBasic.exportAsDict()
 
         filterList = []
         for nodeProperties in [nodeFileFilterRule, nodeImgFilterRule]:
@@ -978,6 +1003,13 @@ class BCSearchFilesDialogBox(QDialog):
                         # Link between [SortRules] and [OutputEngine] is always present and hard-coded
                         "connect": {
                             "from": f"{nodeSortRules['properties']['id']}:OutputSortRule",
+                            "to": f"{nodeLimitRules['properties']['id']}:InputLimitRule",
+                        },
+                      },
+                      {
+                        # Link between [SortRules] and [OutputEngine] is always present and hard-coded
+                        "connect": {
+                            "from": f"{nodeLimitRules['properties']['id']}:OutputLimitRule",
                             "to": f"{idNodeWOutputEngine}:InputResults",
                         }
                       }],
@@ -1015,6 +1047,9 @@ class BCSearchFilesDialogBox(QDialog):
                         },
                         # sort rules is always provided with data from BCWSearchSortRules widget
                         nodeSortRules,
+                        # sort rules is always provided with data from BCWSearchLimitRules widget
+                        # (just ignored if limit value is set to 0)
+                        nodeLimitRules,
                         # search engine is always provided, and hard-coded
                         {
                             "properties": {
@@ -1132,6 +1167,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.wsffpBasic.resetToDefault()
         self.wsifrBasic.resetToDefault()
         self.wssrBasic.resetToDefault()
+        self.wslrBasic.resetToDefault()
 
         self.__currentFileBasic = None
         self.__updateFileNameLabel()
@@ -1161,23 +1197,8 @@ class BCSearchFilesDialogBox(QDialog):
             self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Scan executed in')}# #w#{informations[4]:0.4f}s##lk#)#*""")
 
             self.wcExecutionConsole.appendLine("")
-            self.wcExecutionConsole.appendLine(f"""**{i18n('Analyze files:')}** """)
+            self.wcExecutionConsole.appendLine(f"""**{i18n('Analyze & Filter files:')}** """)
             self.pbProgress.setMaximum(100)
-        elif informations[0] == BCFileList.STEPEXECUTED_PROGRESS_ANALYZE:
-            # 0 => step identifier
-            # 1 => current pct
-            self.pbProgress.setValue(informations[1])
-            self.pbProgress.update()
-            QApplication.processEvents()
-        elif informations[0] == BCFileList.STEPEXECUTED_ANALYZE_METADATA:
-            # 0 => step identifier
-            # 1 => total time duration (in seconds)
-            self.wcExecutionConsole.append(f"""#g#{i18n('OK')}#""")
-            self.wcExecutionConsole.appendLine(f"""&nbsp;*#lk#({i18n('Analysis executed in')}# #w#{informations[1]:0.4f}s##lk#)#*""")
-
-            self.wcExecutionConsole.appendLine("")
-            self.wcExecutionConsole.appendLine(f"""**{i18n('Filter files:')}** """)
-            self.pbProgress.setValue(0)
         elif informations[0] == BCFileList.STEPEXECUTED_PROGRESS_FILTER:
             # 0 => step identifier
             # 1 => current pct
@@ -1292,10 +1313,35 @@ class BCSearchFilesDialogBox(QDialog):
         elif informations[0] == BCFileList.STEPEXECUTED_FINISHED_OUTPUT:
             # 0 => step identifier
             # 1 => total time duration (in seconds)
-            # 2 => output file name (@clipboard if clipboard, @panel:ref if panel output)
+            # 2 => output file name
+            #       (@clipboard if clipboard, @panel:ref if panel output)
+            #       None if export has been cancelled due to limit
             # 3 => total number of pages (-1 if no pages)
+            #       None if export has been cancelled due to limit
             # 4 => output format
-            self.wcExecutionConsole.append(f"""#g#{i18n('OK')}#""")
+            #       None if export has been cancelled due to limit
+            # 5 => limit applied: True or False
+            # 6 => number of files exported
+            # 7 => total number of files
+
+            if informations[5] is True:
+                # a limit has been applied
+                if informations[2] is None:
+                    # nothing exported to due rules
+                    self.wcExecutionConsole.append(f"""#r#{i18n('CANCELLED')}#""")
+                    self.wcExecutionConsole.appendLine(f"""&nbsp;#y#{i18n('Due to limit rule, nothing has been exported:')}#""", WConsoleType.WARNING)
+                    self.wcExecutionConsole.appendLine(f"""&nbsp;- {i18n('Total number of files:')} #c#{informations[7]}#""", WConsoleType.WARNING)
+                    self.wcExecutionConsole.appendLine(f"""&nbsp;- {i18n('Limit number of files:')} #c#{informations[6]}#""", WConsoleType.WARNING)
+                    QApplication.processEvents()
+                    return
+                else:
+                    # exported with limit
+                    self.wcExecutionConsole.append(f"""#g#{i18n('OK')}#""")
+                    self.wcExecutionConsole.appendLine(f"""&nbsp;#y#{i18n('Due to limit rule, reduced number of files has been exported:')}#""", WConsoleType.WARNING)
+                    self.wcExecutionConsole.appendLine(f"""&nbsp;- {i18n('Total number of files:')} #c#{informations[7]}#""", WConsoleType.WARNING)
+                    self.wcExecutionConsole.appendLine(f"""&nbsp;- {i18n('Limit number of files:')} #c#{informations[6]}#""", WConsoleType.WARNING)
+            else:
+                self.wcExecutionConsole.append(f"""#g#{i18n('OK')}#""")
 
             pageName = i18n('Exported pages')
             if informations[4] == BCExportFormat.EXPORT_FMT_IMG_KRA:
@@ -1324,15 +1370,87 @@ class BCSearchFilesDialogBox(QDialog):
             self.__searchInProgress = BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL
 
     def __executeSortAndExport(self, searchRulesAsDict):
-        """Sort results and export
+        """Sort results, limit results, and export
 
         Execute 'output engine' linked to 'search engine'
 
-        Apply 'sort rules' linked to 'search engine' and for which at least,
-        one 'output engine' is linked to
-        Then, for each sort, execute 'output engine' linked to 'search engine'
+            Case 1
+            ------
+                > No Sort filter
+                > No Limit filter
+                > At least One Output Engine
+
+                ┌──────────────┐      ┌──────────────┐
+                │ SearchEngine ├╌╌╌╌╌╌┤ OutputEngine │
+                └──────────────┘      └──────────────┘
+
+            Case 2
+            ------
+                > Sort filter
+                > No Limit filter
+                > At least One Output Engine
+
+                ┌──────────────┐      ┌────────────┐      ┌──────────────┐
+                │ SearchEngine ├╌╌╌╌╌╌┤ SortFilter ├╌╌╌╌╌╌┤ OutputEngine │
+                └──────────────┘      └────────────┘      └──────────────┘
+
+            Case 3 (not useful but can be defined)
+            ------
+                > No Sort filter
+                > Limit filter
+                > At least One Output Engine
+
+                ┌──────────────┐      ┌─────────────┐      ┌──────────────┐
+                │ SearchEngine ├╌╌╌╌╌╌┤ LimitFilter ├╌╌╌╌╌╌┤ OutputEngine │
+                └──────────────┘      └─────────────┘      └──────────────┘
+
+            Case 4a
+            -------
+                > Sort filter
+                > Limit filter
+                > At least One Output Engine
+
+                ┌──────────────┐      ┌────────────┐      ┌─────────────┐      ┌──────────────┐
+                │ SearchEngine ├╌╌╌╌╌╌┤ SortFilter ├╌╌╌╌╌╌┤ LimitFilter ├╌╌╌╌╌╌┤ OutputEngine │
+                └──────────────┘      └────────────┘      └─────────────┘      └──────────────┘
+
+
+            Other possible cases
+            --------------------
+                Many different cases can be built...
+
+                                                                              ┌──────────────┐       ┌ nothing to do
+                                   ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤ OutputEngine │     ╌╌┤ no sort, no limit
+                                   ┊                                          └──────────────┘       └ apply output engine directly from results
+                                   ┊                                          ┌──────────────┐
+                                   ┊                  ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤ OutputEngine │     ╌╌┤ sort + output
+                                   ┊                  ┊                       └──────────────┘
+                ┌──────────────┐   ┊  ┌────────────┐  ┊  ┌─────────────┐      ┌──────────────┐
+                │ SearchEngine ├╌╌╌┼╌╌┤ SortFilter ├╌╌┴╌╌┤ LimitFilter ├╌╌╌╌╌╌┤ OutputEngine │     ╌╌┤ sort + limit + output
+                └──────────────┘   ┊  └────────────┘     └─────────────┘      └──────────────┘
+                                   ┊                     ┌─────────────┐      ┌──────────────┐
+                                   ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤ LimitFilter ├╌╌╌╌╌╌┤ OutputEngine │     ╌╌┤ limit + output
+                                   ┊                     └─────────────┘      └──────────────┘
+                                   ┊  ┌────────────┐     ┌─────────────┐
+                                   ├╌╌┤ SortFilter ├╌╌╌╌╌┤ LimitFilter │                           ╌╌┤ no output: have to be ignored
+                                   ┊  └────────────┘     └─────────────┘
+                                   ┊  ┌────────────┐
+                                   ├╌╌┤ SortFilter │                                               ╌╌┤ no output: have to be ignored
+                                   ┊  └────────────┘
+                                   ┊  ┌─────────────┐
+                                   ╰╌╌┤ LimitFilter │                                              ╌╌┤ no output: have to be ignored
+                                      └─────────────┘
+
+          Also note:
+            - LimitFilter with limit=0 is ignored
+            - LimitFilter for which number of results is greater than limit may not generate
+              output according to limitAction option
+
+        Apply 'sort rules'/'limit rules' for which at least, one 'output engine' is linked to
+
+        Then, for each sort/limit, execute 'output engine'
         """
-        def executeOutputEngine(outputEngineRules):
+        def executeOutputEngine(outputEngineRules, limitRules=None):
             # export current files results
             def exportStart(nbPages):
                 self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_OUTPUT_RESULTS,
@@ -1341,37 +1459,84 @@ class BCSearchFilesDialogBox(QDialog):
                                                     outputEngineRules['documentExportInfo']['exportFormat']])
                 outputEngineRules['documentExportInfo']['exportPages'] = nbPages
 
-            def exportEnd():
+            def exportEnd(limitApplied, limitValue):
                 self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_FINISHED_OUTPUT,
                                                     Stopwatch.duration("executeSortAndExport.export"),
                                                     outputEngineRules['documentExportInfo']['exportFileName'],
                                                     outputEngineRules['documentExportInfo']['exportPages'],
-                                                    outputEngineRules['documentExportInfo']['exportFormat']])
+                                                    outputEngineRules['documentExportInfo']['exportFormat'],
+                                                    limitApplied,
+                                                    limitValue,
+                                                    self.__bcFileList.nbFiles()])
 
             def exportProgress(currentPage):
                 self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_PROGRESS_OUTPUT, currentPage])
+
+            limitApplied = False
+            fileStats = self.__bcFileList.stats()
+
+            filesToProcess = self.__bcFileList.files()
+            if limitRules is not None:
+                if limitRules['limitValue'] > 0 and self.__bcFileList.nbFiles() > limitRules['limitValue']:
+                    limitApplied = True
+                    if limitRules['limitAction'] == 0:
+                        # return nothing
+                        Stopwatch.stop('executeSortAndExport.export')
+
+                        if outputEngineRules['target'] != 'doc':
+                            outputEngineRules['documentExportInfo']['exportFileName'] = f"@panel:{outputEngineRules['target'][0]}"
+                        exportStart(-1)
+
+                        # emit signal with no information (will be interpreted as ,nothing produced)
+                        self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_FINISHED_OUTPUT,
+                                                            Stopwatch.duration("executeSortAndExport.export"),
+                                                            None,
+                                                            None,
+                                                            None,
+                                                            limitApplied,
+                                                            limitRules['limitValue'],
+                                                            self.__bcFileList.nbFiles()])
+                        return
+                    elif limitRules['limitAction'] == 1:
+                        # return truncated list
+                        filesToProcess = filesToProcess[0:limitRules['limitValue']]
+
+                        # need to recalculate statistics
+                        fileStats = {'nbKra': 0,
+                                     'nbOther': 0,
+                                     'sizeKra': 0,
+                                     'sizeOther': 0,
+                                     'nbDir': 0
+                                     }
+
+                        # notes: no need here tom make distinction between kra files and other
+                        for file in filesToProcess:
+                            if isinstance(file, BCDirectory):
+                                fileStats['nbDir'] += 1
+                            else:
+                                fileStats['nbOther'] += 1
+                                fileStats['sizeOther'] += file.size()
+
+            filesNfo = [
+                    [],
+                    fileStats['nbDir'],
+                    fileStats['nbKra'] + fileStats['nbOther'],
+                    fileStats['nbKra'] + fileStats['nbOther'] + fileStats['nbDir'],
+                    fileStats['nbKra'] + fileStats['nbOther'],
+                    [],
+                    fileStats['sizeKra'] + fileStats['sizeOther']
+                ]
 
             if outputEngineRules['target'] == 'doc':
                 # export as a document
                 Stopwatch.start('executeSortAndExport.export')
 
-                fileStats = self.__bcFileList.stats()
-                filesNfo = [
-                        [],
-                        fileStats['nbDir'],
-                        fileStats['nbKra'] + fileStats['nbOther'],
-                        fileStats['nbKra'] + fileStats['nbOther'] + fileStats['nbDir'],
-                        fileStats['nbKra'] + fileStats['nbOther'],
-                        [],
-                        fileStats['sizeKra'] + fileStats['sizeOther']
-                    ]
-
                 exportFiles = BCExportFiles(self.__uiController, filesNfo)
                 exportFiles.exportStart.connect(exportStart)
-                exportFiles.exportEnd.connect(exportEnd)
+                exportFiles.exportEnd.connect(lambda: exportEnd(limitApplied, len(filesToProcess)))
                 exportFiles.exportProgress.connect(exportProgress)
 
-                outputEngineRules['documentExportInfo']['exportConfig']['files'] = self.__bcFileList.files()
+                outputEngineRules['documentExportInfo']['exportConfig']['files'] = filesToProcess
                 outputEngineRules['documentExportInfo']['exportConfig']['source'] = i18n('Search query')
 
                 if outputEngineRules['documentExportInfo']['exportFormat'] == BCExportFormat.EXPORT_FMT_TEXT:
@@ -1416,12 +1581,12 @@ class BCSearchFilesDialogBox(QDialog):
                     searchResultId = 'searchresult:right'
                     panelId = 1
 
-                self.__uiController.savedViews().set({searchResultId: [file.fullPathName() for file in self.__bcFileList.files()]})
+                self.__uiController.savedViews().set({searchResultId: [file.fullPathName() for file in filesToProcess]})
 
                 self.__uiController.commandGoTo(panelId, f"@{searchResultId}")
 
                 Stopwatch.stop('executeSortAndExport.export')
-                exportEnd()
+                exportEnd(limitApplied, len(filesToProcess))
 
         def executeSort(sortRules):
             # prepare and execute sort for file results
@@ -1467,8 +1632,10 @@ class BCSearchFilesDialogBox(QDialog):
         # need to parse dictionary to get references
         nodeSearchEngine = None
         nodeSearchSortRules = {}
+        nodeSearchLimitRules = {}
         nodeSearchOutputEngine = {}
 
+        # quick analysis
         for node in searchRulesAsDict['nodes']:
             if node['widget']['type'] == 'BCNodeWSearchEngine':
                 nodeSearchEngine = node
@@ -1476,42 +1643,118 @@ class BCSearchFilesDialogBox(QDialog):
                 nodeSearchOutputEngine[node['properties']['id']] = node
             elif node['widget']['type'] == 'BCNodeWSearchSortRule':
                 nodeSearchSortRules[node['properties']['id']] = node
+            elif node['widget']['type'] == 'BCNodeWSearchLimitRule':
+                nodeSearchLimitRules[node['properties']['id']] = node
 
-        if nodeSearchEngine is None or (len(nodeSearchSortRules) == 0 and len(nodeSearchOutputEngine) == 0):
-            # nothing to do...
+        if nodeSearchEngine is None or len(nodeSearchOutputEngine) == 0:
+            # no search engine!?
+            # --> nothing to do...
+            #
+            # no output engine!?
+            # --> nothing to do...
             return False
 
+        # list of output engine to process directly from search engine output
+        # --> limit filter, if any, is applied by output engine
+        #                                                                    ┌──────────────┐
+        #                                             ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤ OutputEngine │
+        #                                             ┊                      └──────────────┘
+        #        ┌──────────────┐                     ┊  ┌─────────────┐     ┌──────────────┐
+        #        │ SearchEngine ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┴╌╌┤ LimitFilter ├╌╌╌╌╌┤ OutputEngine │
+        #        └──────────────┘                        └─────────────┘     └──────────────┘
+        #
+        # Each item is stored as a tuple:
+        #   (OutputEngine node, Limit Filter node)
+        #   (OutputEngine node, None) if there's no limit rule
         processOutputEngines = []
+
+        # list of sort engine to process from search engine output
+        # --> limit filter, if any, is applied by output engine
+        #                                                                    ┌──────────────┐
+        #                                             ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤ OutputEngine │
+        #                                             ┊                      └──────────────┘
+        #        ┌──────────────┐     ┌────────────┐  ┊  ┌─────────────┐     ┌──────────────┐
+        #        │ SearchEngine ├╌╌╌╌╌┤ SortFilter ├╌╌┴╌╌┤ LimitFilter ├╌╌╌╌╌┤ OutputEngine │
+        #        └──────────────┘     └────────────┘     └─────────────┘     └──────────────┘
+        #
+        # Each item is stored as a tuple:
+        #   (OutputEngine node, Limit Filter node)
+        #   (OutputEngine node, None) if there's no limit rule
         processSortRules = []
 
-        # rebuild links
+        # a temporary list
+        limitRulesToTakeInAccount = {}
+
+        # rebuild links (1/2)
         #   search engine --> output engine
         #   sort rules --> output engine
+        #   limit rules --> output engine
         for link in searchRulesAsDict['links']:
             linkTo, dummy = link['connect']['to'].split(':')
             linkFrom, dummy = link['connect']['from'].split(':')
 
             if linkTo in nodeSearchOutputEngine:
-                # connection to output engine
+                # connection to output engine, something to process
+
                 if linkFrom in nodeSearchSortRules:
                     # from a sort engine: add sort engine to process list
+                    # sort rules --> output engine
                     if 'outputEngines' not in nodeSearchSortRules[linkFrom]:
                         nodeSearchSortRules[linkFrom]['outputEngines'] = []
-                        processSortRules.append(nodeSearchSortRules[linkFrom])
+                        processSortRules.append((nodeSearchSortRules[linkFrom], None))
                     nodeSearchSortRules[linkFrom]['outputEngines'].append(nodeSearchOutputEngine[linkTo])
+                elif linkFrom in nodeSearchLimitRules:
+                    # from a limit engine: add limit engine to process list
+                    # limit rules --> output engine
+                    #   limit input can be from:
+                    #   - search engine
+                    #   - sort engine
+                    #   then need to refer to input to be able to add it
+                    if linkFrom not in limitRulesToTakeInAccount:
+                        limitRulesToTakeInAccount[linkFrom] = []
+                    limitRulesToTakeInAccount[linkFrom].append(linkTo)
                 elif linkFrom == nodeSearchEngine['properties']['id']:
                     # directly from search engine: add output engine to process list
-                    processOutputEngines.append(nodeSearchOutputEngine[linkTo])
+                    # search engine --> output engine
+                    processOutputEngines.append((nodeSearchOutputEngine[linkTo], None))
 
-        # process direct output engines
-        for outputEngine in processOutputEngines:
+        # rebuild links (2/2)
+        #   search engine --> limit rules [--> output engine]
+        #   sort rules --> limit rules [--> output engine]
+        for link in searchRulesAsDict['links']:
+            linkTo, dummy = link['connect']['to'].split(':')
+            linkFrom, dummy = link['connect']['from'].split(':')
+
+            if linkTo in limitRulesToTakeInAccount:
+                # connection to output limit rule, something to process
+
+                if linkFrom in nodeSearchSortRules:
+                    # from a sort engine: add sort engine to process list
+                    # sort rules --> output engine
+                    if 'outputEngines' not in nodeSearchSortRules[linkFrom]:
+                        nodeSearchSortRules[linkFrom]['outputEngines'] = []
+                        processSortRules.append((nodeSearchSortRules[linkFrom], nodeSearchLimitRules[linkTo]))
+
+                    for outputEngineId in limitRulesToTakeInAccount[linkTo]:
+                        nodeSearchSortRules[linkFrom]['outputEngines'].append(nodeSearchOutputEngine[outputEngineId])
+                elif linkFrom == nodeSearchEngine['properties']['id']:
+                    # directly from search engine: add output engine to process list
+                    # search engine --> output engine
+                    for outputEngineId in limitRulesToTakeInAccount[linkTo]:
+                        processOutputEngines.append((nodeSearchOutputEngine[outputEngineId], nodeSearchLimitRules[linkTo]))
+
+        # process direct output engines (no sort)
+        for outputEngine, limitRule in processOutputEngines:
             if self.__searchInProgress == BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL:
                 self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_CANCEL])
                 return
-            executeOutputEngine(outputEngine['widget']['outputProperties'])
+            if limitRule is None:
+                executeOutputEngine(outputEngine['widget']['outputProperties'])
+            else:
+                executeOutputEngine(outputEngine['widget']['outputProperties'], limitRule['widget']['limitProperties'])
 
         # process sorts, then output engines
-        for sortRule in processSortRules:
+        for sortRule, limitRule in processSortRules:
             # do sort...
             if self.__searchInProgress == BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL:
                 self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_CANCEL])
@@ -1521,7 +1764,10 @@ class BCSearchFilesDialogBox(QDialog):
                 if self.__searchInProgress == BCSearchFilesDialogBox.__SEARCH_IN_PROGRESS_CANCEL:
                     self.__executeSearchProcessSignals([BCFileList.STEPEXECUTED_CANCEL])
                     return
-                executeOutputEngine(outputEngine['widget']['outputProperties'])
+                if limitRule is None:
+                    executeOutputEngine(outputEngine['widget']['outputProperties'])
+                else:
+                    executeOutputEngine(outputEngine['widget']['outputProperties'], limitRule['widget']['limitProperties'])
 
     def __openFileBasic(self, fileName, title):
         """Open basic search file"""
@@ -1557,6 +1803,7 @@ class BCSearchFilesDialogBox(QDialog):
         self.wsffpBasic.resetToDefault()
         self.wsifrBasic.resetToDefault()
         self.wssrBasic.resetToDefault()
+        self.wslrBasic.resetToDefault()
 
         if "nodes" in jsonAsDict:
             for node in jsonAsDict['nodes']:
@@ -1569,6 +1816,8 @@ class BCSearchFilesDialogBox(QDialog):
                         self.wsifrBasic.importFromDict(node["widget"])
                     elif node["widget"]["type"] == "BCNodeWSearchSortRule":
                         self.wssrBasic.importFromDict(node["widget"])
+                    elif node["widget"]["type"] == "BCNodeWSearchLimitRule":
+                        self.wslrBasic.importFromDict(node["widget"])
 
         BCSettings.set(BCSettingsKey.SESSION_SEARCHWINDOW_LASTFILE_BASIC, fileName)
         self.__currentFileBasic = fileName
@@ -1598,7 +1847,8 @@ class BCSearchFilesDialogBox(QDialog):
                         self.wsffpBasic.exportAsDict(True),
                         self.wsffrBasic.exportAsDict(True),
                         self.wsifrBasic.exportAsDict(True),
-                        self.wssrBasic.exportAsDict(True)
+                        self.wssrBasic.exportAsDict(True),
+                        self.wslrBasic.exportAsDict(True),
                     ]
             }
 
@@ -1666,10 +1916,8 @@ class BCSearchFilesDialogBox(QDialog):
             self.__bcFileList.searchExecute(True, True, [
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATHS,
                 BCFileList.STEPEXECUTED_SEARCH_FROM_PATH,
-                BCFileList.STEPEXECUTED_ANALYZE_METADATA,
                 BCFileList.STEPEXECUTED_FILTER_FILES,
                 BCFileList.STEPEXECUTED_BUILD_RESULTS,
-                BCFileList.STEPEXECUTED_PROGRESS_ANALYZE,
                 BCFileList.STEPEXECUTED_PROGRESS_FILTER
             ])
 
@@ -2696,6 +2944,110 @@ class BCWSearchSortRules(BCWSearchWidget):
         self._setModified(False)
 
 
+class BCWSearchLimitRules(BCWSearchWidget):
+    """A widget to define output result limit rules"""
+
+    LIMIT_ACTIONS = {0: i18n('Emit warning and return nothing'),
+                     1: i18n('Emit warning and return result limited to defined number value')
+                     }
+
+    def __init__(self, parent=None):
+        super(BCWSearchLimitRules, self).__init__('bcwsearchlimitrules.ui', parent)
+
+        self._startUpdate()
+        self.__initialise()
+        self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
+
+    def __initialise(self):
+        """Initialise widget interface"""
+        for limitAction in BCWSearchLimitRules.LIMIT_ACTIONS:
+            self.cbActionOnLimit.addItem(BCWSearchLimitRules.LIMIT_ACTIONS[limitAction], limitAction)
+
+        self.sbLimit.valueChanged.connect(lambda v: self._setModified(True))
+        self.cbActionOnLimit.currentIndexChanged.connect(lambda v: self._setModified(True))
+
+    def __setDefaultValues(self):
+        """Initialise default values"""
+        self.sbLimit.setValue(0)
+        self.cbActionOnLimit.setCurrentIndex(0)
+
+    def resetToDefault(self):
+        """Reset to default values"""
+        self._startUpdate()
+        self.__setDefaultValues()
+        self._endUpdate()
+        self._setModified(False)
+
+    def exportAsDict(self, setUnmodified=False):
+        """Export widget configuration as dictionnary"""
+        returned = {
+                "properties": {
+                                "id": QUuid.createUuid().toString(),
+                                "title": i18n("Limit condition")
+                            },
+                "connectors": [
+                            {
+                                "id": "InputLimitRule",
+                                "properties": {
+                                    "direction": NodeEditorConnector.DIRECTION_INPUT,
+                                    "location": NodeEditorConnector.LOCATION_TOP_LEFT
+                                }
+                            },
+                            {
+                                "id": "OutputLimitRule",
+                                "properties": {
+                                    "direction": NodeEditorConnector.DIRECTION_OUTPUT,
+                                    "location": NodeEditorConnector.LOCATION_BOTTOM_RIGHT
+                                }
+                            }
+                        ],
+                "widget": {
+                            "type": "BCNodeWSearchLimitRule",
+                            "limitProperties": {
+                                "limitValue": self.sbLimit.value(),
+                                "limitAction": self.cbActionOnLimit.currentData()
+                            }
+                    }
+            }
+
+        if setUnmodified:
+            self._setModified(False)
+
+        return returned
+
+    def importFromDict(self, dataAsDict):
+        """Import widget configuration from dictionnary
+
+        Note: only "widget" key content is expected for input
+
+        Example of expected dictionary:
+            "widget": {
+                "type": "BCWSearchLimitRules",
+                "limitValue": 1000,
+                "limitAction": 1
+            }
+        """
+        if not isinstance(dataAsDict, dict):
+            raise EInvalidType("Given `dataAsDict` must be a <dict>")
+        elif not ("type" in dataAsDict and dataAsDict["type"] == "BCNodeWSearchLimitRule"):
+            raise EInvalidValue("Given `dataAsDict` must contains key 'type' with value 'BCNodeWSearchLimitRule'")
+
+        self._startUpdate()
+        self.__setDefaultValues()
+
+        if "limitProperties" in dataAsDict and isinstance(dataAsDict['limitProperties'], dict):
+            self.sbLimit.setValue(dataAsDict['limitProperties']['limitValue'])
+            for index in range(self.cbActionOnLimit.count()):
+                if self.cbActionOnLimit.itemData(index) == dataAsDict['limitProperties']['limitAction']:
+                    self.cbActionOnLimit.setCurrentIndex(index)
+                    break
+
+        self._endUpdate()
+        self._setModified(False)
+
+
 class BCWSearchOutputEngine(BCWSearchWidget):
     """A widget to define output engine"""
 
@@ -2900,19 +3252,68 @@ class NodeEditorConnectorFilter(NodeEditorConnector):
 
 
 class NodeEditorConnectorResults(NodeEditorConnector):
-    # a sort connector
+    # a search engine output result connector
     def __init__(self, id=None, direction=0x01, location=0x01, color=None, borderColor=None, borderSize=None, parent=None):
         super(NodeEditorConnectorResults, self).__init__(id, direction, location, color, borderColor, borderSize, parent)
+        if direction == NodeEditorConnector.DIRECTION_INPUT:
+            tooltip = "".join(["<b>",
+                               i18n("Input results"), "</b><br/><br/>",
+                               i18n("Should be connected from an&nbsp;<b>Output results</b>&nbsp;connector of:"),
+                               "<ul><li>",
+                               i18n("a <i>Sort rule</i>"),
+                               "</li><li>",
+                               i18n("a <i>Limit rule</i>"),
+                               "</li><li>",
+                               i18n("a <i>Search engine</i>"),
+                               "</li></ul>"])
+        else:
+            tooltip = "".join(["<b>", i18n(f"Output results"), "</b><br/><br/>",
+                               i18n("Should be connected to an&nbsp;<b>Input results</b>&nbsp;connector of:"),
+                               "<ul><li>",
+                               i18n("a <i>Sort rule</i>"),
+                               "</li><li>",
+                               i18n("a <i>Limit rule</i>"),
+                               "</li><li>",
+                               i18n("a <i>Output engine</i>"),
+                               "</li></ul>"])
+        self.setToolTip(tooltip)
+
+
+class NodeEditorConnectorSResults(NodeEditorConnector):
+    # a sort output result connector
+    def __init__(self, id=None, direction=0x01, location=0x01, color=None, borderColor=None, borderSize=None, parent=None):
+        super(NodeEditorConnectorSResults, self).__init__(id, direction, location, color, borderColor, borderSize, parent)
         if direction == NodeEditorConnector.DIRECTION_INPUT:
             tooltip = "".join(["<b>",
                                i18n("Input results"), "</b><br/><br/>",
                                i18n("Should be connected from an&nbsp;<b>Output results</b>&nbsp;connector of &nbsp;<i>Search engine</i>")])
         else:
             tooltip = "".join(["<b>", i18n(f"Output results"), "</b><br/><br/>",
-                               i18n("Should be connected to an&nbsp;<b>Input results</b>&nbsp;connector of:"), "<ul><li>",
+                               i18n("Should be connected to an&nbsp;<b>Input results</b>&nbsp;connector of:"),
+                               "<ul><li>",
+                               i18n("a <i>Limit rule</i>"),
+                               "</li><li>",
+                               i18n("a <i>Output engine</i>"),
+                               "</li></ul>"])
+        self.setToolTip(tooltip)
+
+
+class NodeEditorConnectorLResults(NodeEditorConnector):
+    # a limit output result connector
+    def __init__(self, id=None, direction=0x01, location=0x01, color=None, borderColor=None, borderSize=None, parent=None):
+        super(NodeEditorConnectorLResults, self).__init__(id, direction, location, color, borderColor, borderSize, parent)
+        if direction == NodeEditorConnector.DIRECTION_INPUT:
+            tooltip = "".join(["<b>",
+                               i18n("Input results"), "</b><br/><br/>",
+                               i18n("Should be connected from an&nbsp;<b>Output results</b>&nbsp;connector of:"),
+                               "<ul><li>",
                                i18n("a <i>Sort rule</i>"),
                                "</li><li>",
-                               i18n("a <i>Output engine</i>")])
+                               i18n("a <i>Output engine</i>"),
+                               "</li></ul>"])
+        else:
+            tooltip = "".join(["<b>", i18n(f"Output results"), "</b><br/><br/>",
+                               i18n("Should be connected to an&nbsp;<b>Input results</b>&nbsp;connector of of &nbsp;<i>Output engine</i>")])
         self.setToolTip(tooltip)
 
 
@@ -3478,8 +3879,8 @@ class BCNodeWSearchSortRule(NodeEditorNodeWidget):
     """A sort source node"""
 
     def __init__(self, scene, title, parent=None):
-        inputSortRuleConnector = NodeEditorConnectorResults('InputSortRule', NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.LOCATION_TOP_LEFT)
-        outputSortRuleConnector = NodeEditorConnectorResults('OutputSortRule', NodeEditorConnector.DIRECTION_OUTPUT, NodeEditorConnector.LOCATION_BOTTOM_RIGHT)
+        inputSortRuleConnector = NodeEditorConnectorSResults('InputSortRule', NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.LOCATION_TOP_LEFT)
+        outputSortRuleConnector = NodeEditorConnectorSResults('OutputSortRule', NodeEditorConnector.DIRECTION_OUTPUT, NodeEditorConnector.LOCATION_BOTTOM_RIGHT)
 
         inputSortRuleConnector.addAcceptedConnectionFrom(NodeEditorConnectorResults)
 
@@ -3543,12 +3944,60 @@ class BCNodeWSearchSortRule(NodeEditorNodeWidget):
                 self.__lblSortedProperties.setToolTip('No properties have been selected to define sort rules')
 
 
+class BCNodeWSearchLimitRule(NodeEditorNodeWidget):
+    """A limit source node"""
+
+    def __init__(self, scene, title, parent=None):
+        inputLimitRuleConnector = NodeEditorConnectorLResults('InputLimitRule', NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.LOCATION_TOP_LEFT)
+        outputLimitRuleConnector = NodeEditorConnectorLResults('OutputLimitRule', NodeEditorConnector.DIRECTION_OUTPUT, NodeEditorConnector.LOCATION_BOTTOM_RIGHT)
+
+        inputLimitRuleConnector.addAcceptedConnectionFrom(NodeEditorConnectorResults)
+        inputLimitRuleConnector.addAcceptedConnectionFrom(NodeEditorConnectorSResults)
+
+        self.__lblLimitValue = QLabel()
+        self.__lblLimitAction = WLabelElide(Qt.ElideRight)
+
+        self.__lblLimitAction.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
+
+        self.__layout = QFormLayout()
+        self.__layout.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.__layout.setContentsMargins(0, 0, 0, 0)
+        self.__layout.addRow(f"<b>{i18n('Limit')}</b>", self.__lblLimitValue)
+        self.__layout.addRow(f"<b>{i18n('When limit reached')}</b>", self.__lblLimitAction)
+
+        data = {
+                "limitProperties": {
+                        "limitValue": 1000,
+                        "limitAction": 0
+                    },
+            }
+
+        super(BCNodeWSearchLimitRule, self).__init__(scene, title, connectors=[inputLimitRuleConnector, outputLimitRuleConnector], data=data, parent=parent)
+
+        self.setLayout(self.__layout)
+        self.setMinimumSize(self.calculateSize(f"{i18n('Case insensitive')}{i18n('Emit warning and return result limited to defined number value')}", 5, self.__layout.spacing()))
+
+    def serialize(self):
+        """Convert current widget node properties to dictionnary"""
+        return copy.deepcopy(self._data)
+
+    def deserialize(self, data):
+        """Convert current given data dictionnary to update widget node properties"""
+        if 'limitProperties' in data:
+            self._data['limitProperties'] = copy.deepcopy(data['limitProperties'])
+
+            self.__lblLimitValue.setText(str(self._data['limitProperties']['limitValue']))
+            self.__lblLimitAction.setText(BCWSearchLimitRules.LIMIT_ACTIONS[self._data['limitProperties']['limitAction']])
+
+
 class BCNodeWSearchOutputEngine(NodeEditorNodeWidget):
     """An output engine node"""
 
     def __init__(self, scene, title, parent=None):
         inputResultsConnector = NodeEditorConnectorResults('InputResults', NodeEditorConnector.DIRECTION_INPUT, NodeEditorConnector.LOCATION_TOP_LEFT)
         inputResultsConnector.addAcceptedConnectionFrom(NodeEditorConnectorResults)
+        inputResultsConnector.addAcceptedConnectionFrom(NodeEditorConnectorSResults)
+        inputResultsConnector.addAcceptedConnectionFrom(NodeEditorConnectorLResults)
 
         data = {
                 "outputProperties": {

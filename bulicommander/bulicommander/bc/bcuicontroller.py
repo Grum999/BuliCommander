@@ -73,7 +73,7 @@ from .bcmainviewtab import (
         BCMainViewTabTabs
     )
 from .bcmainwindow import BCMainWindow
-from .bcsystray import BCSysBCUIControllerTray
+from .bcsystray import BCSysTray
 from .bcwpathbar import BCWPathBar
 from .bcsettings import (
         BCSettings,

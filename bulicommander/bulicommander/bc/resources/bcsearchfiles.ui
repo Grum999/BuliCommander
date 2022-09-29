@@ -179,8 +179,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1774</width>
-            <height>961</height>
+            <width>1760</width>
+            <height>931</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -347,6 +347,32 @@
               </item>
               <item>
                <widget class="BCWSearchSortRules" name="wssrBasic" native="true">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_5">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: palette(light);padding: 6;</string>
+                </property>
+                <property name="text">
+                 <string>Limit result</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="BCWSearchLimitRules" name="wslrBasic" native="true">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -616,6 +642,24 @@
               <width>24</width>
               <height>24</height>
              </size>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="tbAdvancedAddLimitRules">
+            <property name="toolTip">
+             <string>Add limit rules node</string>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+              <normaloff>:/pktk/images/normal/filter_limit</normaloff>
+              <disabledoff>:/pktk/images/disabled/filter_limit</disabledoff>:/pktk/images/normal/filter_limit</iconset>
             </property>
             <property name="autoRaise">
              <bool>true</bool>
@@ -975,6 +1019,26 @@
                   </item>
                  </layout>
                 </widget>
+                <widget class="QWidget" name="pageAdvancedListRules">
+                 <layout class="QVBoxLayout" name="verticalLayout_11">
+                  <item>
+                   <widget class="BCWSearchLimitRules" name="wslrAdvanced" native="true"/>
+                  </item>
+                  <item>
+                   <spacer name="verticalSpacer_7">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
                 <widget class="QWidget" name="pageAdvancedOutputEngine">
                  <layout class="QVBoxLayout" name="verticalLayout_12">
                   <item>
@@ -1196,6 +1260,12 @@
   </customwidget>
   <customwidget>
    <class>BCWSearchOutputEngine</class>
+   <extends>QWidget</extends>
+   <header>bulicommander.bc.bcsearchfiles</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>BCWSearchLimitRules</class>
    <extends>QWidget</extends>
    <header>bulicommander.bc.bcsearchfiles</header>
    <container>1</container>
