@@ -1319,6 +1319,7 @@ class BCUIController(QObject):
                 # nb item selected(1)
                 self.__window.actionClipboardPushBack.setEnabled(selectionInfo[6] == 0)  # if the selected item is KRA node, do not allow the push back to clipboard
                 self.__window.actionClipboardSave.setEnabled(True)
+                self.__window.actionClipboardRemove.setEnabled(True)
 
                 if Krita.instance().activeDocument():
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
@@ -1353,6 +1354,7 @@ class BCUIController(QObject):
                 # multiple items selected
                 self.__window.actionClipboardPushBack.setEnabled(selectionInfo[1] != selectionInfo[6])  # nb total selected items != nb kra selected items
                 self.__window.actionClipboardSave.setEnabled(True)
+                self.__window.actionClipboardRemove.setEnabled(True)
 
                 if Krita.instance().activeDocument():
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(selectionInfo[1] != selectionInfo[6])
@@ -1397,6 +1399,7 @@ class BCUIController(QObject):
                 self.__window.actionClipboardOpen.setEnabled(False)
                 self.__window.actionClipboardSetPersistent.setEnabled(False)
                 self.__window.actionClipboardSetNotPersistent.setEnabled(False)
+                self.__window.actionClipboardRemove.setEnabled(False)
                 self.__window.actionClipboardStartDownload.setEnabled(False)
                 self.__window.actionClipboardStopDownload.setEnabled(False)
 
@@ -2145,6 +2148,28 @@ class BCUIController(QObject):
         elif isinstance(item, BCClipboardItem):
             item.setPersistent(persistent)
 
+    def commandClipboardRemove(self, item=None):
+        """Remove items from clipboard"""
+        if item is None:
+            selectionInfo = self.panel().clipboardSelected()
+            if selectionInfo[1] > 0:
+                self.commandClipboardRemove(selectionInfo[0])
+        elif isinstance(item, BCClipboardItem):
+            self.commandClipboardRemove([item])
+        elif isinstance(item, list):
+            if len(item) > 1:
+                msg = i18n(f"Are you sure you want to remove {len(item)} items from clipboard?")
+            else:
+                msg = i18n("Are you sure you want to remove item from clipboard?")
+
+            if not WDialogBooleanInput.display(self.__bcName, msg):
+                return False
+
+            self.__clipboard.cacheRemoveItems(item)
+
+            for panelId in self.__window.panels:
+                self.__window.panels[panelId].clipboardSetAllowRefresh(True)
+
     def commandViewBringToFront(self):
         """Bring main window to front"""
         self.__window.setWindowState((self.__window.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
@@ -2657,7 +2682,7 @@ class BCUIController(QObject):
         if self.__confirmAction:
             if not WDialogBooleanInput.display(
                                         self.__bcName,
-                                        "Are you sure you want to clear history?"
+                                        i18n("Are you sure you want to clear history?")
                                     ):
                 return False
         self.commandGoHistoryClear()

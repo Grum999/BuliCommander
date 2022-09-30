@@ -204,7 +204,8 @@ _[2022-XX-XX] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-
 - Improve Search engine - *Reduce search execution time duration*
 - Improve Search engine - *Limit results*
 - Improve File panels - *Grid view mode - Smooth thumbnail scroll*
-- Improve Clipboard panels - *Save as*
+- Improve Clipboard panels - *Save item as*
+- Improve Clipboard panels - *Remove item*
 - Improve User Interface - *Override Krita Welcome Screen "Open file" dialog*
 - Improve User Interface - *Implement "Save All"*
 - Improve File management - *Improve mass renaming*
