@@ -1,4 +1,4 @@
-# Buli Commander :: Release 0.9.0b [2022-XX-XX]
+# Buli Commander :: Release 0.9.0b [2022-09-30]
 
 ## Search engine
 
@@ -148,7 +148,7 @@ Some bugs have been fixed
 
 ### Search for condition generate python exception
 
-[Feature request #13](https://github.com/Grum999/BuliCommander/issues/13)
+[Bug fix #13](https://github.com/Grum999/BuliCommander/issues/13)
 
 A right click in time field in search *file filter* condition was generating a python script exception
 
