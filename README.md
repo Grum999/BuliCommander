@@ -200,7 +200,7 @@ Plugin has been tested with:
 > As I'm a little bit lazy and don't have so much time, there's currently no documentation...
 > But detailled releases content provides some kind of documentation for some functionalities, don't hesitate to read them :-)
 
-_[2022-XX-XX] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.9.0b.md)*
+_[2022-09-30] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.9.0b.md)*
 - Improve Search engine - *Reduce search execution time duration*
 - Improve Search engine - *Limit results*
 - Improve File panels - *Grid view mode - Smooth thumbnail scroll*
@@ -210,6 +210,8 @@ _[2022-XX-XX] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-
 - Improve User Interface - *Implement "Save All"*
 - Improve File management - *Improve mass renaming*
 - Fix bug - *Search for condition generate python exception*
+- Review code to follow PEP8 recommendation
+- Migrate to SPDX licenses headers
 
 _[2022-06-13] Version 0.8.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.8.0b.md)*
 - Improve File panels - *Grid View mode - File/Image information*
