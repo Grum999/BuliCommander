@@ -272,6 +272,7 @@
     <addaction name="separator"/>
     <addaction name="actionClipboardSetPersistent"/>
     <addaction name="actionClipboardSetNotPersistent"/>
+    <addaction name="actionClipboardRemove"/>
     <addaction name="separator"/>
     <addaction name="actionClipboardStartDownload"/>
     <addaction name="actionClipboardStopDownload"/>
@@ -1878,6 +1879,21 @@
    </property>
    <property name="statusTip">
     <string>Save image from clipboard cache to slected directory</string>
+   </property>
+  </action>
+  <action name="actionClipboardRemove">
+   <property name="icon">
+    <iconset resource="../../pktk/resources/svg/dark_icons.qrc">
+     <normaloff>:/pktk/images/normal/delete</normaloff>:/pktk/images/normal/delete</iconset>
+   </property>
+   <property name="text">
+    <string>Remove...</string>
+   </property>
+   <property name="statusTip">
+    <string>Remove item from clipboard</string>
+   </property>
+   <property name="whatsThis">
+    <string>Remove item from clipboard</string>
    </property>
   </action>
  </widget>

@@ -2814,6 +2814,7 @@ class BCMainViewTab(QFrame):
                 None,
                 self.__uiController.window().actionClipboardSetPersistent,
                 self.__uiController.window().actionClipboardSetNotPersistent,
+                self.__uiController.window().actionClipboardRemove,
                 None,
                 self.__uiController.window().actionClipboardStartDownload,
                 self.__uiController.window().actionClipboardStopDownload

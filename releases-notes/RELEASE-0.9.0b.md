@@ -36,7 +36,7 @@ This ensure for big thumbnail on small view to get a smaller scroll, and for sma
 
 ## Clipboard panels
 
-### Save as...
+### Save item as
 
 [Feature request #18](https://github.com/Grum999/BuliCommander/issues/18)
 
@@ -45,6 +45,14 @@ Allows to save clipboard content to a given directory.
 > **Note**
 > This function is more a facility to get access to clipboard image on file system without having to open it in Krita
 > File name is built automatically, use rename/mass rename if needed
+
+### Remove item
+
+[Feature request #21](https://github.com/Grum999/BuliCommander/issues/21)
+
+Allows to remove immediately selected items from clipboard:
+- No need for plugin restart with cleanup of non-persistent items
+- Can remove persistent items
 
 
 ## User Interface

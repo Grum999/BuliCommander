@@ -1671,6 +1671,22 @@ class BCClipboard(QObject):
             self.__updateAdd = []
             self.__emitUpdateAdded()
 
+    def cacheRemoveItems(self, items):
+        """Remove given items from cache"""
+        updated = False
+        for item in items:
+            try:
+                os.remove(item.fileName())
+                updated = True
+            except Exception as e:
+                Debug.print('[BCClipboard.cachePersistentFlush] Unable to delete file {0}: {1}', fileName, f"{e}")
+
+        if updated:
+            self.__poolFromCache()
+            self.__updateRemove = []
+            self.__emitUpdateRemoved()
+
+
     def cacheSizeP(self, recalculate=False):
         """Return current cache size as a tuple(nb items, size)"""
         if recalculate:

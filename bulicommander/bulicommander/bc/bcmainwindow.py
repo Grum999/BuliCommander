@@ -180,6 +180,7 @@ class BCMainWindow(QMainWindow):
         self.actionClipboardSave.triggered.connect(self.__menuClipboardSave)
         self.actionClipboardSetPersistent.triggered.connect(self.__menuClipboardSetPersistent)
         self.actionClipboardSetNotPersistent.triggered.connect(self.__menuClipboardSetNotPersistent)
+        self.actionClipboardRemove.triggered.connect(self.__menuClipboardRemove)
         self.actionClipboardStartDownload.triggered.connect(self.__menuClipboardStartDownload)
         self.actionClipboardStopDownload.triggered.connect(self.__menuClipboardStopDownload)
         self.actionClipboardQuit.triggered.connect(self.__uiController.commandQuit)
@@ -497,6 +498,10 @@ class BCMainWindow(QMainWindow):
     def __menuClipboardSetNotPersistent(self):
         """Set clipboard item not persistent"""
         self.__uiController.commandClipboardSetPersistent(None, False)
+
+    def __menuClipboardRemove(self):
+        """Remove selected items from clipboard"""
+        self.__uiController.commandClipboardRemove(None)
 
     def __menuClipboardStartDownload(self):
         """Start download for selected items"""
