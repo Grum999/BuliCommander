@@ -140,6 +140,7 @@ class BCSettingsKey(SettingsKey):
     CONFIG_CLIPBOARD_URL_PARSE_TEXTHTML =                    'config.clipboard.url.parseTextHtml'
     CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC =                   'config.clipboard.paste.mode.asNewDocument'
     CONFIG_CLIPBOARD_DEFAULT_ACTION =                        'config.clipboard.defaultAction'
+    CONFIG_CLIPBOARD_SAVE_LASTDIRECTORY =                    'config.clipboard.save.lastDirectory'
 
     CONFIG_EXPORTFILESLIST_GLB_SAVED =                       'config.export.filesList.global.saved'
     CONFIG_EXPORTFILESLIST_GLB_PROPERTIES =                  'config.export.filesList.global.properties'
@@ -776,6 +777,8 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_DEFAULT_ACTION,                     BCSettingsValues.CLIPBOARD_ACTION_NLAYER,
                                                                                                                         SettingsFmt(str, [BCSettingsValues.CLIPBOARD_ACTION_NLAYER,
                                                                                                                                           BCSettingsValues.CLIPBOARD_ACTION_NDOCUMENT])),
+            SettingsRule(BCSettingsKey.CONFIG_CLIPBOARD_SAVE_LASTDIRECTORY,                 '',                         SettingsFmt(str)),
+
             SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILEPATH,              [],                         SettingsFmt(list, str)),
             SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILENAME,              [],                         SettingsFmt(list, str)),
             SettingsRule(BCSettingsKey.CONFIG_SEARCHFILES_PREDEFINED_FILESIZE,              [],                         SettingsFmt(list, str)),

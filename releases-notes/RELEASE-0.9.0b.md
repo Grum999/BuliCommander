@@ -34,6 +34,19 @@ Improve thumbnail scroll, taking in account:
 This ensure for big thumbnail on small view to get a smaller scroll, and for small thumbnail on a large view, to have bigger scroll.
 
 
+## Clipboard panels
+
+### Save as...
+
+[Feature request #18](https://github.com/Grum999/BuliCommander/issues/18)
+
+Allows to save clipboard content to a given directory.
+
+> **Note**
+> This function is more a facility to get access to clipboard image on file system without having to open it in Krita
+> File name is built automatically, use rename/mass rename if needed
+
+
 ## User Interface
 
 ### Implement *Override Krita Welcome Screen "Open file" dialog*

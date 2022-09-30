@@ -472,7 +472,6 @@ class BCMainViewTab(QFrame):
         self.__clipboardSelectedNbImagesRaster = 0
         self.__clipboardSelectedNbImagesSvg = 0
         self.__clipboardSelectedNbImagesKraNode = 0
-        self.__clipboardSelectedNbImagesKraSelection = 0
         self.__clipboardSelectedNbUrlDownloaded = 0
         self.__clipboardSelectedNbUrlDownloading = 0
         self.__clipboardSelectedNbUrlNotDownloaded = 0
@@ -2621,7 +2620,6 @@ class BCMainViewTab(QFrame):
         self.__clipboardSelectedNbImagesRaster = 0
         self.__clipboardSelectedNbImagesSvg = 0
         self.__clipboardSelectedNbImagesKraNode = 0
-        self.__clipboardSelectedNbImagesKraSelection = 0
         self.__clipboardSelectedNbPersistent = 0
         self.__clipboardSelectedNbUrlDownloaded = 0
         self.__clipboardSelectedNbUrlDownloading = 0
@@ -2646,10 +2644,8 @@ class BCMainViewTab(QFrame):
             elif item.type() == 'BCClipboardItemSvg':
                 self.__clipboardSelectedNbImagesSvg += 1
             elif item.type() == 'BCClipboardItemKra':
-                if item.origin() == 'application/x-krita-node':
+                if item.origin() == 'application/x-krita-node-internal-pointer':
                     self.__clipboardSelectedNbImagesKraNode += 1
-                elif item.origin() == 'application/x-krita-selection':
-                    self.__clipboardSelectedNbImagesKraSelection += 1
 
         self.__clipboardUpdateStats()
         if self.__uiController is not None:
@@ -2747,11 +2743,6 @@ class BCMainViewTab(QFrame):
                 else:
                     statusTextItems.append(f"Krita layers: {stats['kraNodes']}")
 
-                if self.__clipboardSelectedNbImagesKraSelection > 0:
-                    statusTextItems.append(f"Krita selections: {self.__clipboardSelectedNbImagesKraSelection} out of {stats['kraSelection']}")
-                else:
-                    statusTextItems.append(f"Krita selections: {stats['kraSelection']}")
-
                 if self.__clipboardSelectedNbFiles > 0:
                     statusTextItems.append(f"Files: {self.__clipboardSelectedNbFiles} out of {stats['files']}")
                 else:
@@ -2814,6 +2805,7 @@ class BCMainViewTab(QFrame):
                 self.__uiController.window().actionClipboardCheckContent,
                 None,
                 self.__uiController.window().actionClipboardPushBack,
+                self.__uiController.window().actionClipboardSave,
                 None,
                 self.__uiController.window().actionClipboardPasteAsNewLayer,
                 self.__uiController.window().actionClipboardPasteAsNewDocument,
@@ -3850,7 +3842,7 @@ class BCMainViewTab(QFrame):
         [4] nb image (raster)
         [5] nb image (svg)
         [6] nb kra-nodes
-        [7] nb kra-selection
+        [7] 0 (was --> nb kra-selection, can be recycled)
         [8] nb url downloaded
         [9] nb url not downloaded
         [10] nb url downloading
@@ -3863,7 +3855,7 @@ class BCMainViewTab(QFrame):
                 self.__clipboardSelectedNbImagesRaster,
                 self.__clipboardSelectedNbImagesSvg,
                 self.__clipboardSelectedNbImagesKraNode,
-                self.__clipboardSelectedNbImagesKraSelection,
+                0,
                 self.__clipboardSelectedNbUrlDownloaded,
                 self.__clipboardSelectedNbUrlNotDownloaded,
                 self.__clipboardSelectedNbUrlDownloading,

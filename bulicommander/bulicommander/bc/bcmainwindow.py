@@ -177,6 +177,7 @@ class BCMainWindow(QMainWindow):
         self.actionClipboardPasteAsNewDocument.triggered.connect(self.__menuClipboardPasteAsNewDocument)
         self.actionClipboardPasteAsRefImage.triggered.connect(self.__menuClipboardPasteAsRefImage)
         self.actionClipboardOpen.triggered.connect(self.__menuClipboardOpen)
+        self.actionClipboardSave.triggered.connect(self.__menuClipboardSave)
         self.actionClipboardSetPersistent.triggered.connect(self.__menuClipboardSetPersistent)
         self.actionClipboardSetNotPersistent.triggered.connect(self.__menuClipboardSetNotPersistent)
         self.actionClipboardStartDownload.triggered.connect(self.__menuClipboardStartDownload)
@@ -484,6 +485,10 @@ class BCMainWindow(QMainWindow):
     def __menuClipboardOpen(self):
         """Open document"""
         self.__uiController.commandClipboardOpen()
+
+    def __menuClipboardSave(self):
+        """Open document"""
+        self.__uiController.commandClipboardSave()
 
     def __menuClipboardSetPersistent(self):
         """Set clipboard item persistent"""
