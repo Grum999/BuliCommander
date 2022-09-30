@@ -1317,7 +1317,8 @@ class BCUIController(QObject):
 
             if selectionInfo[1] == 1:
                 # nb item selected(1)
-                self.__window.actionClipboardPushBack.setEnabled(True)
+                self.__window.actionClipboardPushBack.setEnabled(selectionInfo[6] == 0)  # if the selected item is KRA node, do not allow the push back to clipboard
+                self.__window.actionClipboardSave.setEnabled(True)
 
                 if Krita.instance().activeDocument():
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
@@ -1350,10 +1351,11 @@ class BCUIController(QObject):
                     self.__window.actionClipboardStopDownload.setEnabled(False)
             elif selectionInfo[1] > 1:
                 # multiple items selected
-                self.__window.actionClipboardPushBack.setEnabled(True)
+                self.__window.actionClipboardPushBack.setEnabled(selectionInfo[1] != selectionInfo[6])  # nb total selected items != nb kra selected items
+                self.__window.actionClipboardSave.setEnabled(True)
 
                 if Krita.instance().activeDocument():
-                    self.__window.actionClipboardPasteAsNewLayer.setEnabled(True)
+                    self.__window.actionClipboardPasteAsNewLayer.setEnabled(selectionInfo[1] != selectionInfo[6])
                     self.__window.actionClipboardPasteAsRefImage.setEnabled(len([item for item in selectionInfo[0] if item.type() != "BCClipboardItemSvg"]) > 0)
                 else:
                     self.__window.actionClipboardPasteAsNewLayer.setEnabled(BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_PASTE_MODE_ASNEWDOC))
@@ -1388,6 +1390,7 @@ class BCUIController(QObject):
             else:
                 # nothing selected
                 self.__window.actionClipboardPushBack.setEnabled(False)
+                self.__window.actionClipboardSave.setEnabled(False)
                 self.__window.actionClipboardPasteAsNewLayer.setEnabled(False)
                 self.__window.actionClipboardPasteAsNewDocument.setEnabled(False)
                 self.__window.actionClipboardPasteAsRefImage.setEnabled(False)
@@ -2000,6 +2003,21 @@ class BCUIController(QObject):
                         activeNode.addChildNode(newLayer, None)
                     else:
                         activeNode.parentNode().addChildNode(newLayer, EKritaNode.above(activeNode))
+            elif items.type() == 'BCClipboardItemKra':
+                activeDocument = Krita.instance().activeDocument()
+
+                if activeDocument is not None:
+                    activeNode = activeDocument.activeNode()
+
+                    if activeNode.type() != 'grouplayer' or activeNode.locked():
+                        activeNode =  activeDocument.rootNode()
+
+                    if activeNode is not None:
+                        clipboardDocument = Krita.instance().openDocument(items.fileName())
+                        if clipboardDocument is not None:
+                            for node in clipboardDocument.rootNode().childNodes():
+                                activeNode.addChildNode(node.clone(), None)
+                        clipboardDocument.close()
             else:
                 self.__clipboard.pushBackToClipboard(items)
                 Krita.instance().action('edit_paste').trigger()
@@ -2012,10 +2030,11 @@ class BCUIController(QObject):
                 for item in selectionInfo[0]:
                     self.commandClipboardPasteAsNewDocument(item)
         elif isinstance(items, BCClipboardItem):
-            if (items.type() == 'BCClipboardItemKra' and items.origin() == 'application/x-krita-node') or (items.type() in ('BCClipboardItemUrl',
-                                                                                                                            'BCClipboardItemFile',
-                                                                                                                            'BCClipboardItemImg',
-                                                                                                                            'BCClipboardItemSvg')):
+            if ((items.type() == 'BCClipboardItemKra' and items.origin() == 'application/x-krita-node-internal-pointer') or
+                (items.type() in ('BCClipboardItemUrl',
+                                  'BCClipboardItemFile',
+                                  'BCClipboardItemImg',
+                                  'BCClipboardItemSvg'))):
                 self.commandFileOpenAsNew(items.fileName(), False)
             else:
                 # krita selection...
@@ -2045,10 +2064,47 @@ class BCUIController(QObject):
                 for item in selectionInfo[0]:
                     self.commandClipboardOpen(item)
         elif isinstance(items, BCClipboardItem):
-            if items.type() == 'BCClipboardItemFile':
+            if items.type() in ('BCClipboardItemFile', 'BCClipboardItemKra'):
                 self.commandFileOpen(items.fileName())
             else:
                 self.commandClipboardPasteAsNewDocument(items)
+
+    def commandClipboardSave(self, items=None, path=None):
+        """Save selected items from clipboard to given path"""
+
+        if items is None:
+            # no items provided, get selected items from clipboard
+            selectionInfo = self.panel().clipboardSelected()
+            if selectionInfo[1] > 0:
+                # there's something to process
+                return self.commandClipboardSave(selectionInfo[0], path)
+            return 0
+        elif isinstance(items, BCClipboardItem):
+            return self.commandClipboardSave([items], path)
+        elif isinstance(items, (list, tuple)):
+            if path is None:
+                path = QFileDialog.getExistingDirectory(self.__window,
+                                                        i18n("Choose target directory"),
+                                                        BCSettings.get(BCSettingsKey.CONFIG_CLIPBOARD_SAVE_LASTDIRECTORY),
+                                                        QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+                if path == '':
+                    # empty path = cancel action
+                    return 0
+            # save path in configuration
+            BCSettings.set(BCSettingsKey.CONFIG_CLIPBOARD_SAVE_LASTDIRECTORY, path)
+
+            # have to process each item
+            returned = 0
+            for item in items:
+                if isinstance(item, BCClipboardItem):
+                    # can process BCClipboardItem items only
+                    if item.saveTo(path):
+                        returned += 1
+
+            return returned
+        else:
+            # don't know what to do...
+            return 0
 
     def commandClipboardStartDownload(self, items=None):
         """Start download for selected items (that can be donwloaded)"""

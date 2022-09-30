@@ -53,6 +53,7 @@ from .bcfile import (
 from .bcdownloader import BCDownloader
 
 from bulicommander.pktk.modules.strutils import bytesSizeToStr
+from bulicommander.pktk.modules.timeutils import tsToStr
 from bulicommander.pktk.modules.utils import Debug
 from bulicommander.pktk.modules.imgutils import (
         buildIcon,
@@ -253,6 +254,14 @@ class BCClipboardItem(QObject):
         returned content is a list of tuple (data, mime-type)
         """
         return None
+
+    def saveTo(self, path):
+        """Save file to given path, using normalized name"""
+        returned = f"{tsToStr(self.__timestamp, '%Y%m%d-%H%M%S')}_"
+        if isinstance(self.__imageSize, QSize):
+            returned += f"{self.__imageSize.width()}x{self.__imageSize.height()}"
+
+        return returned
 
 
 class BCClipboardItemUrl(BCClipboardItem):
@@ -507,6 +516,17 @@ class BCClipboardItemUrl(BCClipboardItem):
 
         return returned
 
+    def saveTo(self, path):
+        """Save file to given path, using normalized name"""
+        # target file name
+        fileName = os.path.join(path, "clipboard-url-"+super(BCClipboardItemUrl, self).saveTo(None)+'.'+self.file().format())
+
+        try:
+            shutil.copy2(self.file().fullPathName(), fileName)
+            return True
+        except Exception:
+            return False
+
 
 class BCClipboardItemFile(BCClipboardItem):
     """A file name stored in clipboard"""
@@ -604,6 +624,17 @@ class BCClipboardItemFile(BCClipboardItem):
                 returned.append((data, QMimeDatabase().mimeTypeForFile(self.fileName()).name(), self.file()))
 
         return returned
+
+    def saveTo(self, path):
+        """Save file to given path, using normalized name"""
+        # target file name
+        fileName = os.path.join(path, "clipboard-file-"+super(BCClipboardItemFile, self).saveTo(None)+'.'+self.file().format())
+
+        try:
+            shutil.copy2(self.file().fullPathName(), fileName)
+            return True
+        except Exception:
+            return False
 
 
 class BCClipboardItemImg(BCClipboardItem):
@@ -717,6 +748,17 @@ class BCClipboardItemImg(BCClipboardItem):
 
         return returned
 
+    def saveTo(self, path):
+        """Save file to given path, using normalized name"""
+        # target file name
+        fileName = os.path.join(path, "clipboard-bitmap-"+super(BCClipboardItemImg, self).saveTo(None)+'.'+self.file().format())
+
+        try:
+            shutil.copy2(self.file().fullPathName(), fileName)
+            return True
+        except Exception:
+            return False
+
 
 class BCClipboardItemSvg(BCClipboardItem):
     """A SVG image stored in clipboard"""
@@ -805,13 +847,24 @@ class BCClipboardItemSvg(BCClipboardItem):
         if os.path.exists(imgCacheFileName):
             self.setFile(imgCacheFileName)
 
+    def saveTo(self, path):
+        """Save file to given path, using normalized name"""
+        # target file name
+        fileName = os.path.join(path, "clipboard-vector-"+super(BCClipboardItemSvg, self).saveTo(None)+'.'+self.file().format())
+
+        try:
+            shutil.copy2(self.file().fullPathName(), fileName)
+            return True
+        except Exception:
+            return False
+
 
 class BCClipboardItemKra(BCClipboardItem):
-    """A SVG image stored in clipboard"""
+    """A KRA image stored in clipboard"""
 
     @staticmethod
     def new(hash, options):
-        """Create a new SVG item from options
+        """Create a new KRA item from options
 
         options is a dictionnary with the following key:
             "origin"
@@ -895,13 +948,8 @@ class BCClipboardItemKra(BCClipboardItem):
         """Push item back into clipboard"""
         returned = []
 
-        if os.path.exists(self.fileName()):
-            data = None
-            with open(self.fileName(), 'rb') as fHandle:
-                data = fHandle.read()
-
-            if data:
-                returned.append((data, self.origin()))
+        # format has changed (Krita 5.1.0? -- https://bugs.kde.org/show_bug.cgi?id=456450)
+        # it's not possible anymore to push back in clipboard nodes data
 
         fileName = os.path.join(self.cachePath(), f'{self.hash()}.png')
         if os.path.exists(fileName):
@@ -911,6 +959,17 @@ class BCClipboardItemKra(BCClipboardItem):
                 returned.append((data, 'image/png'))
 
         return returned
+
+    def saveTo(self, path):
+        """Save file to given path, using normalized name"""
+        # target file name
+        fileName = os.path.join(path, "clipboard-kritaNode-"+super(BCClipboardItemKra, self).saveTo(None)+'.kra')
+
+        try:
+            shutil.copy2(self.fileName(), fileName)
+            return True
+        except Exception:
+            return False
 
 
 class BCClipboard(QObject):
@@ -1077,16 +1136,16 @@ class BCClipboard(QObject):
         self.__clipboard = QGuiApplication.clipboard()
 
         # regular expressions used to parse HTML and find urls
-        self.__reHtmlImg = QRegularExpression(r'(?im)<img(?:\s.*\s|\s+)(?:src="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg|webp|kra)[^"]*?)"|'
+        self.__reHtmlImg = QRegularExpression(r'(?im)<img(?:\s.*\s|\s+)(?:src="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg|webp|kra|krz|ora|psd|xcf|bmp)[^"]*?)"|'
                                               r'src=\'(?<url2>https?:\/\/[^\']+?\.(?:jpeg|jpg|png|gif|svg|webp|kra)[^\']*?)\')[^>]*?>')
-        self.__reHtmlLink = QRegularExpression(r'(?im)<a(?:\s.*\s|\s+)(?:href="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg|webp|kra)[^"]*?)"|'
+        self.__reHtmlLink = QRegularExpression(r'(?im)<a(?:\s.*\s|\s+)(?:href="(?<url1>https?:\/\/[^"]+?\.(?:jpeg|jpg|png|gif|svg|webp|kra|krz|ora|psd|xcf|bmp)[^"]*?)"|'
                                                r'href=\'(?<url2>https?:\/\/[^\']+?\.(?:jpeg|jpg|png|gif|svg|webp|kra)[^\']*?)\')[^>]*?>')
 
         # regular expression used to parse PLAIN TEXT and find urls
-        self.__reTextUrl = QRegularExpression(r'(?im)(["\'])?(?<url>https?:\/\/[^\s]+\.(?:jpeg|jpg|png|svg|gif|webp|kra)(?:\?[^\s]*)?)\1?.*')
+        self.__reTextUrl = QRegularExpression(r'(?im)(["\'])?(?<url>https?:\/\/[^\s]+\.(?:jpeg|jpg|png|svg|gif|webp|kra|krz|ora|psd|xcf|bmp)(?:\?[^\s]*)?)\1?.*')
 
         # regular expression used to parse FILE path/name
-        self.__reTextFile = QRegularExpression(r'(?i)\.(?:jpeg|jpg|png|svg|gif|webp|kra)$')
+        self.__reTextFile = QRegularExpression(r'(?i)\.(?:jpeg|jpg|png|svg|gif|webp|kra|krz|ora|psd|xcf|bmp)$')
 
         self.__totalCacheSizeP = 0
         self.__totalCacheSizeS = 0
@@ -1257,7 +1316,7 @@ class BCClipboard(QObject):
             elif self.__pool[hash].type() == 'BCClipboardItemSvg':
                 self.__stats['images'] += 1
             elif self.__pool[hash].type() == 'BCClipboardItemKra':
-                if self.__pool[hash].origin() == 'application/x-krita-node':
+                if self.__pool[hash].origin() == 'application/x-krita-node-internal-pointer':
                     self.__stats['kraNodes'] += 1
                 else:
                     self.__stats['kraSelection'] += 1
@@ -1332,7 +1391,6 @@ class BCClipboard(QObject):
 
         Given image is a QImage
         """
-
         hashValue = self.__getHash(rawData)
 
         if self.__inPool(hashValue):
@@ -1449,12 +1507,30 @@ class BCClipboard(QObject):
                     self.__emitUpdateAdded()
                     return
 
-        if image and clipboardMimeContent.hasFormat('application/x-krita-node'):
-            rawData = clipboardMimeContent.data('application/x-krita-node')
-            updated = self.__addPoolKraImage(rawData, image, 'application/x-krita-node')
-        elif image and clipboardMimeContent.hasFormat('application/x-krita-selection'):
-            rawData = clipboardMimeContent.data('application/x-krita-selection')
-            updated = self.__addPoolKraImage(rawData, image, 'application/x-krita-selection')
+        if image and clipboardMimeContent.hasFormat('application/x-krita-node-internal-pointer'):
+            # format has changed (Krita 5.1.0? -- https://bugs.kde.org/show_bug.cgi?id=456450)
+            #
+            # Now clipboard contain instead of 'application/x-krita-node' & 'application/x-krita-selection':
+            # - 'application/x-krita-node-internal-pointer'
+            #       a string like
+            #       ```
+            #       <!DOCTYPE krita_internal_node_pointer>
+            #       <pointer image_pointer_value="0" application_pid="62288" force_copy="1">
+            #        <node pointer_value="94473789714800"/>
+            #       </pointer>
+            #       ```
+            # - 'application/zip'
+            #       a KRA file
+            # rawData = clipboardMimeContent.data('application/x-krita-node-internal-pointer')
+            # print(rawData, QCoreApplication.applicationPid())
+            # only thing that can be done is to store the zip data
+            # pushback to clipboard isn't possible anymore and only 'save as' / 'open' command would be available
+            # for krita data
+            zipData = clipboardMimeContent.data('application/zip')
+            updated = self.__addPoolKraImage(zipData, image, 'application/x-krita-node-internal-pointer')
+        # elif image and clipboardMimeContent.hasFormat('application/x-krita-layer-style'):
+        #    rawData = clipboardMimeContent.data('application/x-krita-layer-style')
+        # --> currently crash, ignore it
         elif clipboardMimeContent.hasHtml():
             rawData = clipboardMimeContent.html()
             if rawData:
@@ -1793,10 +1869,10 @@ class BCClipboardModel(QAbstractTableModel):
                     elif item.type() == 'BCClipboardItemSvg':
                         return i18n('Image (Vector)')
                     elif item.type() == 'BCClipboardItemKra':
-                        if item.origin() == 'application/x-krita-selection':
-                            return i18n('Krita selection')
-                        elif item.origin() == 'application/x-krita-node':
+                        if item.origin() == 'application/x-krita-node-internal-pointer':
                             return i18n('Krita layer')
+                        else:
+                            return i18n('Krita data')
                     else:
                         return i18n('Invalid')
                 elif column == BCClipboardModel.COLNUM_DATE:

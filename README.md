@@ -189,11 +189,7 @@ Settings allows:
 
 ### Tested platforms
 Plugin has been tested with:
-- Krita 5.0.6 (appimage) on Linux Debian 10
-- Krita 5.0.6 on Windows 10
-
-Currently don't kwow if plugin works MacOs.
-I think it should be Ok, but...
+- Krita 5.1.1 (appimage) on Linux Debian 10
 
 
 ## Plugin's life
@@ -208,6 +204,7 @@ _[2022-XX-XX] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-
 - Improve Search engine - *Reduce search execution time duration*
 - Improve Search engine - *Limit results*
 - Improve File panels - *Grid view mode - Smooth thumbnail scroll*
+- Improve Clipboard panels - *Save as*
 - Improve User Interface - *Override Krita Welcome Screen "Open file" dialog*
 - Improve User Interface - *Implement "Save All"*
 - Improve File management - *Improve mass renaming*
