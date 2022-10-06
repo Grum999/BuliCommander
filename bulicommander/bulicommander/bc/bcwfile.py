@@ -200,7 +200,8 @@ class BCFileModel(QAbstractTableModel):
                                    BCFileModel.COLNUM_IMAGE_PIXELS,
                                    BCFileModel.COLNUM_IMAGE_PIXELSMP)
 
-        self.__iconPool = WorkerPool()
+        # do not use all possible thread
+        self.__iconPool = WorkerPool(0.6)
         self.__iconPool.signals.started.connect(self.__updateIconsStarted)
         self.__iconPool.signals.processed.connect(self.__updateIconsProcessed)
         self.__iconPool.signals.finished.connect(self.__updateIconsFinished)

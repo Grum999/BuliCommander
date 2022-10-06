@@ -15,6 +15,7 @@
 # -----------------------------------------------------------------------------
 
 import locale
+import time
 import re
 import sys
 import os
@@ -513,8 +514,9 @@ class JsonQObjectDecoder(json.JSONDecoder):
 # ------------------------------------------------------------------------------
 
 class Debug(object):
-    """Display debug info to console if debug is enabled"""
+    """Provides some static methods to simplify debug"""
     __enabled = False
+    __stopwatches = {}
 
     @staticmethod
     def print(value, *argv):
@@ -535,3 +537,88 @@ class Debug(object):
     def setEnabled(value):
         """set Debug enabled or not"""
         Debug.__enabled = value
+
+    @staticmethod
+    def print(value, *argv):
+        """Print value to console, using argv for formatting"""
+        if Debug.__enabled and isinstance(value, str):
+            sys.stdout = sys.__stdout__
+            if len(argv) > 0:
+                print('DEBUG:', value.format(*argv))
+            else:
+                print('DEBUG:', value)
+
+    @staticmethod
+    def swPrint(pattern=None):
+        """Print stopwatch results"""
+        if Debug.__enabled:
+            for name, duration in Debug.swList(pattern):
+                Debug.print(f"{name}: {duration:.8f}")
+
+    @staticmethod
+    def swReset(reKey=None):
+        """Reset all Stopwatches"""
+        if Debug.__enabled:
+            if reKey is None:
+                Debug.__stopwatches = {}
+                Debug.swStart('<GlobalRef>', False)
+            else:
+                for key in list(Debug.__stopwatches.keys()):
+                    if re.search(reKey, key):
+                        Debug.__stopwatches.pop(key)
+
+    @staticmethod
+    def swStart(name, printStart=True):
+        """Start a stopwatch
+
+        If stopwatch already exist, restart from now
+        """
+        if Debug.__enabled:
+            if printStart:
+                Debug.print(f">> Start: {name}")
+            Debug.__stopwatches[name] = {'start': time.time(),
+                                         'stop': None
+                                         }
+
+    @staticmethod
+    def swStop(name, printStop=True):
+        """Stop a stopwatch
+
+        If stopwatch doesn't exist or is already stopped, do nothing
+        """
+        if Debug.__enabled:
+            if name in Debug.__stopwatches and Debug.__stopwatches[name]['stop'] is None:
+                Debug.__stopwatches[name]['stop'] = time.time()
+            if printStop:
+                Debug.print(f"<< Stop:  {name} -- ({Debug.swDuration(name):.8f}  @+{Debug.swDuration('<GlobalRef>'):.8f})")
+
+    @staticmethod
+    def swDuration(name):
+        """Return stopwatch duration, in seconds
+
+        If stopwatch doesn't exist, return None
+        If stopwatch is not stopped, return current duration from start time
+        """
+        if Debug.__enabled:
+            if name in Debug.__stopwatches:
+                if Debug.__stopwatches[name]['stop'] is None:
+                    return time.time() - Debug.__stopwatches[name]['start']
+                else:
+                    return Debug.__stopwatches[name]['stop'] - Debug.__stopwatches[name]['start']
+        return 0
+
+    @staticmethod
+    def swList(pattern=None):
+        """Return all stopwatch durations with a list of tuple(key, duration in seconds)
+
+        If stopwatch doesn't exist, return None
+        If stopwatch is not stopped, return current duration from start time
+        """
+        if Debug.__enabled:
+            if isinstance(pattern, str):
+                return [(name, Debug.swDuration(name)) for name in sorted(Debug.__stopwatches.keys()) if re.match(pattern, name)]
+            else:
+                return [(name, Debug.swDuration(name)) for name in sorted(Debug.__stopwatches.keys())]
+        else:
+            return []
+
