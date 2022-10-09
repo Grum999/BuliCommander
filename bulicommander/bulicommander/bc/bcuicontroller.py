@@ -210,8 +210,7 @@ class BCUIController(QObject):
         self.__clipboard = BCClipboard(False)
 
         # overrides native Krita Open dialog...
-        self.commandSettingsOpenOverrideKritaMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU))
-        self.commandSettingsOpenOverrideKritaWScr(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR))
+        self.__overrideOpenKrita()
         # add action to file menu
         self.commandSettingsOpenFromFileMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
         self.commandSettingsSaveAllFromKritaMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_SAVEALL_FROMKRITAMENU))
@@ -277,20 +276,24 @@ class BCUIController(QObject):
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesSetAllowRefresh(False)
 
-        self.commandSettingsFileDefaultActionKra(BCSettings.get(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_KRA))
-        self.commandSettingsFileDefaultActionOther(BCSettings.get(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_OTHER))
-        self.commandSettingsFileNewFileNameKra(BCSettings.get(BCSettingsKey.CONFIG_FILES_NEWFILENAME_KRA))
-        self.commandSettingsFileNewFileNameOther(BCSettings.get(BCSettingsKey.CONFIG_FILES_NEWFILENAME_OTHER))
-        self.commandSettingsFileUnit(BCSettings.get(BCSettingsKey.CONFIG_GLB_FILE_UNIT))
+        # -- not needed here
+        # self.commandSettingsFileDefaultActionKra(BCSettings.get(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_KRA))
+        # self.commandSettingsFileDefaultActionOther(BCSettings.get(BCSettingsKey.CONFIG_FILES_DEFAULTACTION_OTHER))
+        # self.commandSettingsFileNewFileNameKra(BCSettings.get(BCSettingsKey.CONFIG_FILES_NEWFILENAME_KRA))
+        # self.commandSettingsFileNewFileNameOther(BCSettings.get(BCSettingsKey.CONFIG_FILES_NEWFILENAME_OTHER))
+        # self.commandSettingsFileUnit(BCSettings.get(BCSettingsKey.CONFIG_GLB_FILE_UNIT))
+        setBytesSizeToStrUnit(BCSettings.get(BCSettingsKey.CONFIG_GLB_FILE_UNIT))
+
         self.commandSettingsHistoryMaxSize(BCSettings.get(BCSettingsKey.CONFIG_FILES_HISTORY_MAXITEMS))
         self.commandSettingsHistoryKeepOnExit(BCSettings.get(BCSettingsKey.CONFIG_FILES_HISTORY_KEEPONEXIT))
         self.commandSettingsLastDocsMaxSize(BCSettings.get(BCSettingsKey.CONFIG_FILES_LASTDOC_MAXITEMS))
         self.commandSettingsSaveSessionOnExit(BCSettings.get(BCSettingsKey.CONFIG_SESSION_SAVE))
         self.commandSettingsSysTrayMode(BCSettings.get(BCSettingsKey.CONFIG_GLB_SYSTRAY_MODE))
         self.commandSettingsOpenAtStartup(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_ATSTARTUP))
-        self.commandSettingsOpenOverrideKritaMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU))
-        self.commandSettingsOpenOverrideKritaWScr(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR))
-        self.commandSettingsOpenFromFileMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
+        # -- not needed as already loaded during plugin initialisation
+        # self.commandSettingsOpenOverrideKritaMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU))
+        # self.commandSettingsOpenOverrideKritaWScr(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR))
+        # self.commandSettingsOpenFromFileMenu(BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_FROMKRITAMENU))
 
         self.commandViewMainWindowGeometry(BCSettings.get(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_GEOMETRY))
         self.commandViewMainWindowMaximized(BCSettings.get(BCSettingsKey.SESSION_MAINWINDOW_WINDOW_MAXIMIZED))
@@ -371,10 +374,10 @@ class BCUIController(QObject):
 
             self.commandPanelPreviewBackground(panelId, BCSettings.get(BCSettingsKey.SESSION_PANEL_PREVIEW_BACKGROUND.id(panelId=panelId)))
 
+            self.__window.panels[panelId].setFilesColumnVisible(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE.id(panelId=panelId)))
             self.__window.panels[panelId].setFilesColumnSort(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSORT.id(panelId=panelId)))
             self.__window.panels[panelId].setFilesColumnOrder(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNORDER.id(panelId=panelId)))
             self.__window.panels[panelId].setFilesColumnSize(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNSIZE.id(panelId=panelId)))
-            self.__window.panels[panelId].setFilesColumnVisible(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_COLUMNVISIBLE.id(panelId=panelId)))
             self.__window.panels[panelId].setFilesIconSizeTv(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_TV.id(panelId=panelId)))
             self.__window.panels[panelId].setFilesIconSizeLv(BCSettings.get(BCSettingsKey.SESSION_PANEL_VIEW_FILES_ICONSIZE_LV.id(panelId=panelId)))
 
@@ -551,7 +554,7 @@ class BCUIController(QObject):
 
     def __overrideOpenKrita(self):
         """Overrides the native "Open" Krita dialogcommand with BuliCommander"""
-        if checkKritaVersion(5, 0, 0) and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU):
+        if BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAMENU):
             # override the native "Open" Krita command with Buli Commander
             # notes:
             #   - once it's applied, to reactivate native Open Dialog file
@@ -562,7 +565,7 @@ class BCUIController(QObject):
                 actionOpen.disconnect()
                 actionOpen.triggered.connect(lambda checked: self.start())
 
-        if checkKritaVersion(5, 0, 0) and BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR):
+        if BCSettings.get(BCSettingsKey.CONFIG_GLB_OPEN_OVERRIDEKRITAWSCR):
             # override the native "Open from welcome screen" Krita command with Buli Commander
             # notes:
             #   - once it's applied, to reactivate native Open Dialog file

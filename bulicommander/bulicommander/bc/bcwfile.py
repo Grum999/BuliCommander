@@ -765,35 +765,42 @@ class BCViewFilesTv(QTreeView):
 
     def resizeColumns(self, fixedOnly=True):
         """Resize columns to content"""
+        def resizeIfVisible(column):
+            if column in self.__visibleColumns:
+                self.resizeColumnToContents(column)
+
+        self.setUpdatesEnabled(False)
+
         if not fixedOnly and self.__model.rowCount() > 1:
             # greater than 1 ==> if only '..' item don't change column width
-            self.resizeColumnToContents(BCFileModel.COLNUM_FILE_PATH)
-            self.resizeColumnToContents(BCFileModel.COLNUM_FILE_NAME)
-            self.resizeColumnToContents(BCFileModel.COLNUM_FILE_BASENAME)
-            self.resizeColumnToContents(BCFileModel.COLNUM_FILE_EXTENSION)
+            resizeIfVisible(BCFileModel.COLNUM_FILE_PATH)
+            resizeIfVisible(BCFileModel.COLNUM_FILE_NAME)
+            resizeIfVisible(BCFileModel.COLNUM_FILE_BASENAME)
+            resizeIfVisible(BCFileModel.COLNUM_FILE_EXTENSION)
 
-        self.resizeColumnToContents(BCFileModel.COLNUM_ICON)
+        resizeIfVisible(BCFileModel.COLNUM_ICON)
 
-        self.resizeColumnToContents(BCFileModel.COLNUM_FILE_FORMAT_SHORT)
-        self.resizeColumnToContents(BCFileModel.COLNUM_FILE_FORMAT_LONG)
+        resizeIfVisible(BCFileModel.COLNUM_FILE_FORMAT_SHORT)
+        resizeIfVisible(BCFileModel.COLNUM_FILE_FORMAT_LONG)
 
-        self.resizeColumnToContents(BCFileModel.COLNUM_FILE_DATETIME)
-        self.resizeColumnToContents(BCFileModel.COLNUM_FILE_DATE)
-        self.resizeColumnToContents(BCFileModel.COLNUM_FILE_TIME)
+        resizeIfVisible(BCFileModel.COLNUM_FILE_DATETIME)
+        resizeIfVisible(BCFileModel.COLNUM_FILE_DATE)
+        resizeIfVisible(BCFileModel.COLNUM_FILE_TIME)
 
-        self.resizeColumnToContents(BCFileModel.COLNUM_FILE_SIZE)
+        resizeIfVisible(BCFileModel.COLNUM_FILE_SIZE)
 
-        self.resizeColumnToContents(BCFileModel.COLNUM_IMAGE_SIZE)
-        self.resizeColumnToContents(BCFileModel.COLNUM_IMAGE_WIDTH)
-        self.resizeColumnToContents(BCFileModel.COLNUM_IMAGE_HEIGHT)
+        resizeIfVisible(BCFileModel.COLNUM_IMAGE_SIZE)
+        resizeIfVisible(BCFileModel.COLNUM_IMAGE_WIDTH)
+        resizeIfVisible(BCFileModel.COLNUM_IMAGE_HEIGHT)
 
-        self.resizeColumnToContents(BCFileModel.COLNUM_IMAGE_RATIO)
-        self.resizeColumnToContents(BCFileModel.COLNUM_IMAGE_ORIENTATION)
+        resizeIfVisible(BCFileModel.COLNUM_IMAGE_RATIO)
+        resizeIfVisible(BCFileModel.COLNUM_IMAGE_ORIENTATION)
 
-        self.resizeColumnToContents(BCFileModel.COLNUM_IMAGE_PIXELS)
-        self.resizeColumnToContents(BCFileModel.COLNUM_IMAGE_PIXELSMP)
+        resizeIfVisible(BCFileModel.COLNUM_IMAGE_PIXELS)
+        resizeIfVisible(BCFileModel.COLNUM_IMAGE_PIXELSMP)
 
-        self.resizeColumnToContents(BCFileModel.COLNUM_FULLNFO)
+        resizeIfVisible(BCFileModel.COLNUM_FULLNFO)
+        self.setUpdatesEnabled(True)
 
     def filterModel(self):
         """Return proxy filter model"""

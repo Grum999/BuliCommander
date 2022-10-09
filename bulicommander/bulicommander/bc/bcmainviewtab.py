@@ -979,10 +979,8 @@ class BCMainViewTab(QFrame):
             return
 
         if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
-            self.treeViewFiles.setShowPath(False)
             totalSpace, usedSpace, freeSpace = shutil.disk_usage(self.filesPath())
         else:
-            self.treeViewFiles.setShowPath(True)
             totalSpace, usedSpace, freeSpace = (-1, -1, -1)
 
         self.__filesCurrentStats = {
@@ -1017,7 +1015,12 @@ class BCMainViewTab(QFrame):
         self.__filesUpdateStats()
         self.__filesApplyFilter(None, None)
 
-        self.treeViewFiles.resizeColumns(True)
+        if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
+            # implies resize columns
+            self.treeViewFiles.setShowPath(False)
+        else:
+            # implies resize columns
+            self.treeViewFiles.setShowPath(True)
 
     def __filesRefresh(self):
         """update file list with current path"""
