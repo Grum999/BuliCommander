@@ -180,6 +180,8 @@ class BCUIController(QObject):
 
         self.__confirmAction = True
 
+        self.__toolbarsTmpSession = None
+
         BCSettings.load()
 
         UITheme.load()
@@ -391,7 +393,8 @@ class BCUIController(QObject):
         self.__window.initMenu()
 
         # toolbar settings MUST be initialized after menu :-)
-        self.commandSettingsToolbars(BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS), BCSettings.get(BCSettingsKey.SESSION_TOOLBARS))
+        self.__toolbarsTmpSession = BCSettings.get(BCSettingsKey.SESSION_TOOLBARS)
+        self.commandSettingsToolbars(BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS), self.__toolbarsTmpSession)
 
         for panelId in self.__window.panels:
             self.__window.panels[panelId].filesSetAllowRefresh(True)
@@ -652,6 +655,30 @@ class BCUIController(QObject):
         if actionSaveAll and actionSaveAll.isVisible():
             actionSaveAll.setEnabled(self.__checkOpenedDocuments() > 0)
 
+    def __updateToolbarTmpSession(self):
+        """Update current toolbar temporary session variable from current toolbars state"""
+        if self.__bcStarted:
+            # update toolbars session only if self.__bcStarted is True (BC is started)
+            # if not True this means main window is closed and then, toolbar are not visible
+            # in this case we don't want to save toolbar status/visiblity are they're not
+            # representative of real state
+
+            # get current toolbar configuration from settings as dict for which key is toolbar id
+            toolbarSettings = {toolbar['id']: toolbar for toolbar in BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS)}
+            self.__toolbarsTmpSession = []
+            # loop over toolbar to update settings: visibility, area, position
+            for toolbar in self.__window.toolbarList():
+                id = toolbar.objectName()
+                if id in toolbarSettings:
+                    geometry = toolbar.geometry()
+                    self.__toolbarsTmpSession.append({
+                            'id': id,
+                            'visible': toolbar.isVisible(),
+                            'area': self.__window.toolBarArea(toolbar),
+                            'break': self.__window.toolBarBreak(toolbar),
+                            'rect': [geometry.left(), geometry.top(), geometry.width(), geometry.height()]
+                        })
+
     # endregion: initialisation methods ----------------------------------------
 
     # region: getter/setters ---------------------------------------------------
@@ -827,29 +854,11 @@ class BCUIController(QObject):
 
     def saveSettings(self):
         """Save the current settings"""
-        if self.__bcStarted:
-            # save toolbars settings only if self.__bcStarted is True (BC is started)
-            # if not True this means main window is closed and then, toolbar are not visible
-            # in this case we don't want to save toolbar status/visiblity are they're not
-            # representative of real state
-
-            # get current toolbar configuration from settings as dict for which key is toolbar id
-            toolbarSettings = {toolbar['id']: toolbar for toolbar in BCSettings.get(BCSettingsKey.CONFIG_TOOLBARS)}
-            toolbarSession = []
-            # loop over toolbar to update settings: visibility, area, position
-            for toolbar in self.__window.toolbarList():
-                id = toolbar.objectName()
-                if id in toolbarSettings:
-                    geometry = toolbar.geometry()
-                    toolbarSession.append({
-                            'id': id,
-                            'visible': toolbar.isVisible(),
-                            'area': self.__window.toolBarArea(toolbar),
-                            'break': self.__window.toolBarBreak(toolbar),
-                            'rect': [geometry.left(), geometry.top(), geometry.width(), geometry.height()]
-                        })
+        if BCSettings.get(BCSettingsKey.CONFIG_SESSION_SAVE):
+            # save toolbars session settings only if saving session is ON
+            self.__updateToolbarTmpSession()
             # save toolbars session informations
-            BCSettings.set(BCSettingsKey.SESSION_TOOLBARS, toolbarSession)
+            BCSettings.set(BCSettingsKey.SESSION_TOOLBARS, self.__toolbarsTmpSession)
 
         BCSettings.set(BCSettingsKey.CONFIG_SESSION_SAVE, self.__window.actionSettingsSaveSessionOnExit.isChecked())
 
@@ -3176,7 +3185,8 @@ class BCUIController(QObject):
             BCSettings.set(BCSettingsKey.CONFIG_TOOLBARS, config)
             if session is not None:
                 BCSettings.set(BCSettingsKey.SESSION_TOOLBARS, session)
-            self.__window.initToolbar(config, session)
+                self.__toolbarsTmpSession = session
+            self.__window.initToolbar(config, self.__toolbarsTmpSession)
 
     def commandSettingsShowMenuIcons(self, value=None):
         """Show/hide menu icons
@@ -3242,6 +3252,7 @@ class BCUIController(QObject):
 
     def commandSettingsOpen(self):
         """Open dialog box settings"""
+        self.__updateToolbarTmpSession()
         if BCSettingsDialogBox.open(f'{self.__bcName}::Settings', self):
             self.saveSettings()
 

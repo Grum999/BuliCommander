@@ -201,7 +201,8 @@ Plugin has been tested with:
 > But detailled releases content provides some kind of documentation for some functionalities, don't hesitate to read them :-)
 
 _[2022-10-09] Version 0.9.1b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.9.1b.md)*
-- Improve performances - *Reduce initialization time & folder analysis*
+- Improve Main interface - *Reduce initialization time & folder analysis*
+- Fix bug Main interface - *Toolbars are hidden*
 
 
 _[2022-09-30] Version 0.9.0b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.9.0b.md)*

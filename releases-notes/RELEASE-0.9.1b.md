@@ -1,6 +1,8 @@
 # Buli Commander :: Release 0.9.1b [2022-10-09]
 
-## Improve performances
+# Improvement
+
+## Main interface
 
 ### Reduce initialization time & folder analysis
 [Feature request #23](https://github.com/Grum999/BuliCommander/issues/23)
@@ -24,3 +26,13 @@ Test on 14250 files, 110GB
 
 Plugin initialization: reduced from ~2.28s to 0.85s
 
+
+
+# Fix bug
+
+## Main interface - *Toolbars are hidden*
+[Bug #24](https://github.com/Grum999/BuliCommander/issues/24)
+
+When open and validate settings, toolbar configration (position, visibility) are not kept if session was not saved.
+
+Now problem is fixed
