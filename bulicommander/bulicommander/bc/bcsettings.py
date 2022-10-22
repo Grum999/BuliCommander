@@ -1370,7 +1370,7 @@ class BCSettingsDialogBox(QDialog):
         self.__uiController.commandSettingsFilesNfoGridPropertiesFields([item.value() for item in self.lwCFNfoGridFields.items()])
 
         # --- Toolbars category ----------------------------------------------------------
-        self.__uiController.commandSettingsToolbars(self.wToolbarConfiguration.toolbarsExport(), BCSettings.get(BCSettingsKey.SESSION_TOOLBARS))
+        self.__uiController.commandSettingsToolbars(self.wToolbarConfiguration.toolbarsExport(), None)
 
     def __replaceOpenDbAlert(self, checked):
         """Tick has been changed for checkbox cbCGLaunchReplaceOpenDbXX<"Overrides Krita 'Open' function">

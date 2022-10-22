@@ -24,6 +24,8 @@
 #
 # -----------------------------------------------------------------------------
 
+import re
+
 from PyQt5.Qt import *
 from PyQt5.QtCore import (
         pyqtSignal as Signal,
@@ -147,6 +149,8 @@ class WorkerPool(QObject):
 
         if isinstance(maxWorkerCount, int) and maxWorkerCount >= 1 and maxWorkerCount <= self.__threadpool.maxThreadCount():
             self.__maxWorkerCount = maxWorkerCount
+        elif isinstance(maxWorkerCount, float) and maxWorkerCount > 0 and maxWorkerCount <= 1:
+            self.__maxWorkerCount = int(self.__threadpool.maxThreadCount() * maxWorkerCount)
         else:
             self.__maxWorkerCount =  self.__threadpool.maxThreadCount()
 
@@ -156,13 +160,14 @@ class WorkerPool(QObject):
         self.__started = 0
         self.__allStarted = False
         self.__size = 0
-        self.__nbWorkers = self.__threadpool.maxThreadCount()
+        self.__nbWorkers = self.__maxWorkerCount
         self.__workers = []
         self.__stopProcess = False
         self.__dataList = []
         self.__results = []
         self.__mapResults = WorkerPool.__MAP_MODE_OFF
         self.__workerClass = Worker
+        self.__id = QUuid.createUuid().toString()
 
         self.signals = WorkerPoolSignals()
 

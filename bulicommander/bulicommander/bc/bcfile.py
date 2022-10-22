@@ -6345,7 +6345,8 @@ class BCFileList(QObject):
 
         self.__cancelProcess = False
 
-        self.__workerPool = WorkerPool()
+        # use at maximum, 1 workers for analysis&filter
+        self.__workerPool = WorkerPool(1)
 
         self.__progressFilesPctThreshold = 0
         self.__progressFilesPctTracker = 0
@@ -6938,7 +6939,6 @@ class BCFileList(QObject):
         nb = len(self.__currentFiles)
 
         # Debug.print('Add {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.03-result"))
-
         Stopwatch.stop('BCFileList.execute.03-result')
 
         if buildStats:
@@ -6966,6 +6966,7 @@ class BCFileList(QObject):
             self.__progressFilesPctThreshold = 0
         self.sortResults(None, (BCFileList.STEPEXECUTED_UPDATESORT in signals))
         Stopwatch.stop('BCFileList.execute.05-sort')
+
         if BCFileList.STEPEXECUTED_SORT_RESULTS in signals:
             self.stepExecuted.emit((BCFileList.STEPEXECUTED_SORT_RESULTS, Stopwatch.duration("BCFileList.execute.05-sort")))
 
@@ -6976,10 +6977,10 @@ class BCFileList(QObject):
 
         # Debug.print('Sort {0} files to result in {1}s', nb, Stopwatch.duration("BCFileList.execute.05-sort"))
         # Debug.print('Selected {0} of {1} file to result in {2}s', nb, nbTotal, Stopwatch.duration("BCFileList.execute.99-global"))
-
         Stopwatch.stop('BCFileList.execute.99-global')
 
-        dummy = list(map(Debug.print, [f"{d[0]}: {d[1]:.4f}" for d in Stopwatch.list()]))
+        if Debug.enabled():
+            dummy = list(map(Debug.print, [f"{d[0]}: {d[1]:.8f}" for d in Stopwatch.list(r'BCFileList\.execute\.')]))
         Debug.print('===========================================')
 
         self.__invalidated = False

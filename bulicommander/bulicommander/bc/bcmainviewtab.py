@@ -939,30 +939,33 @@ class BCMainViewTab(QFrame):
                 ])
 
         # when sort is applied, we want to keep current selected items
-        # disabled selection signals (avoid flickering)
-        self.__filesModelIgnoreSelectionSignals = True
-        # get current selected files uuid
-        selectedUuid = [selectedIndex.data(BCFileModel.ROLE_FILE).uuid() for selectedIndex in self.treeViewFiles.selectionModel().selectedRows()]
-        # disable treeview update t oavoid flickering effect
-        self.treeViewFiles.setUpdatesEnabled(False)
-        self.listViewFiles.setUpdatesEnabled(False)
-        # clear current selection
-        self.treeViewFiles.selectionModel().clearSelection()
-        # do sort (selection will be lost)
-        self.__filesQuery.sortResults()
-        # find current index in model for (previously selected) uuid
-        # need to do conversion with proxymodel
-        positions = [self.treeViewFiles.model().mapFromSource(index) for index in self.__filesModelTv.indexUuid(selectedUuid)]
-        # rebuild selection
-        selection = QItemSelection()
-        for position in positions:
-            selection.select(position, position)
-        self.treeViewFiles.selectionModel().select(selection, QItemSelectionModel.Select | QItemSelectionModel.Rows)
-        self.__filesModelIgnoreSelectionSignals = False
+        if len(self.treeViewFiles.selectionModel().selectedRows()) > 0:
+            # disabled selection signals (avoid flickering)
+            self.__filesModelIgnoreSelectionSignals = True
+            # get current selected files uuid
+            selectedUuid = [selectedIndex.data(BCFileModel.ROLE_FILE).uuid() for selectedIndex in self.treeViewFiles.selectionModel().selectedRows()]
+            # disable treeview update to avoid flickering effect
+            self.treeViewFiles.setUpdatesEnabled(False)
+            self.listViewFiles.setUpdatesEnabled(False)
+            # clear current selection
+            self.treeViewFiles.selectionModel().clearSelection()
+            # do sort (selection will be lost)
+            self.__filesQuery.sortResults()
+            # find current index in model for (previously selected) uuid
+            # need to do conversion with proxymodel
+            positions = [self.treeViewFiles.model().mapFromSource(index) for index in self.__filesModelTv.indexUuid(selectedUuid)]
+            # rebuild selection
+            selection = QItemSelection()
+            for position in positions:
+                selection.select(position, position)
+            self.treeViewFiles.selectionModel().select(selection, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+            self.__filesModelIgnoreSelectionSignals = False
 
-        self.treeViewFiles.setUpdatesEnabled(self.stackFiles.currentIndex() == BCMainViewTab.VIEWMODE_TV)
-        self.listViewFiles.setUpdatesEnabled(self.stackFiles.currentIndex() == BCMainViewTab.VIEWMODE_LV)
-        self.__filesSelectionChanged()
+            self.treeViewFiles.setUpdatesEnabled(self.stackFiles.currentIndex() == BCMainViewTab.VIEWMODE_TV)
+            self.listViewFiles.setUpdatesEnabled(self.stackFiles.currentIndex() == BCMainViewTab.VIEWMODE_LV)
+            self.__filesSelectionChanged()
+        else:
+            self.__filesQuery.sortResults()
         self.__filesUpdate()
 
     def __filesAddParentDirectory(self):
@@ -976,10 +979,8 @@ class BCMainViewTab(QFrame):
             return
 
         if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
-            self.treeViewFiles.setShowPath(False)
             totalSpace, usedSpace, freeSpace = shutil.disk_usage(self.filesPath())
         else:
-            self.treeViewFiles.setShowPath(True)
             totalSpace, usedSpace, freeSpace = (-1, -1, -1)
 
         self.__filesCurrentStats = {
@@ -1014,7 +1015,12 @@ class BCMainViewTab(QFrame):
         self.__filesUpdateStats()
         self.__filesApplyFilter(None, None)
 
-        self.treeViewFiles.resizeColumns(True)
+        if self.framePathBar.mode() == BCWPathBar.MODE_PATH:
+            # implies resize columns
+            self.treeViewFiles.setShowPath(False)
+        else:
+            # implies resize columns
+            self.treeViewFiles.setShowPath(True)
 
     def __filesRefresh(self):
         """update file list with current path"""
@@ -1053,7 +1059,7 @@ class BCMainViewTab(QFrame):
                         break
                 # define path as new location
                 self.setFilesPath(path)
-                # and exit (as now, content has laready been refreshed with new path)
+                # and exit (as now, content has already been refreshed with new path)
                 return
 
             # MODE_PATH
