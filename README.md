@@ -166,7 +166,7 @@ Here a list of main functionalities:
 ## Download, Install & Execute
 
 ### Download
-+ **[ZIP ARCHIVE - v0.9.0b](https://github.com/Grum999/BuliCommander/releases/download/0.9.0b/bulicommander.zip)**
++ **[ZIP ARCHIVE - v0.9.1b](https://github.com/Grum999/BuliCommander/releases/download/0.9.1b/bulicommander.zip)**
 + **[SOURCE](https://github.com/Grum999/BuliCommander)**
 
 
@@ -200,7 +200,7 @@ Plugin has been tested with:
 > As I'm a little bit lazy and don't have so much time, there's currently no documentation...
 > But detailled releases content provides some kind of documentation for some functionalities, don't hesitate to read them :-)
 
-_[2022-10-09] Version 0.9.1b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.9.1b.md)*
+_[2022-10-22] Version 0.9.1b_ *[>> Show detailed release content <<](./releases-notes/RELEASE-0.9.1b.md)*
 - Improve Main interface - *Reduce initialization time & folder analysis*
 - Fix bug Main interface - *Toolbars are hidden*
 
