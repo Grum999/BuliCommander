@@ -21,6 +21,9 @@ import sys
 import os
 import json
 import base64
+from enum import Enum
+from types import FunctionType
+
 
 import xml.etree.ElementTree as ET
 
@@ -196,7 +199,12 @@ def loadXmlUi(fileName, parent):
 
 def cloneRect(rect):
     """Clone a QRect"""
-    return QRect(rect.left(), rect.top(), rect.width(), rect.height())
+    if isinstance(rect, QRect):
+        return QRect(rect.left(), rect.top(), rect.width(), rect.height())
+    elif isinstance(rect, QRectF):
+        return QRectF(rect.left(), rect.top(), rect.width(), rect.height())
+    else:
+        raise EInvalidType('Given `rect` must be a <QRect> or <QRectF>')
 
 
 def regExIsValid(regex):
@@ -389,6 +397,20 @@ def replaceLineEditClearButton(lineEdit):
     toolButton = lineEdit.findChild(QToolButton)
     if toolButton:
         toolButton.setIcon(buildIcon("pktk:edit_text_clear"))
+
+
+def extendEnum(enumClass, extendedValues):
+    """Return a new class as an extension of enumClass with extended value (dict)"""
+    currentNames = {item.name: item.value for item in enumClass}
+    currentNames.update(extendedValues)
+
+    returned = Enum(enumClass.__name__, currentNames)
+
+    for fName, fType in enumClass.__dict__.items():
+        if type(fType) == FunctionType and not re.match('_[a-z0-9_]+_$', fName):
+            setattr(returned, fName, enumClass.__dict__[fName])
+
+    return returned
 
 
 # ------------------------------------------------------------------------------

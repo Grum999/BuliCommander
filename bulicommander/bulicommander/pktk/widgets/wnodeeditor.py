@@ -1621,9 +1621,8 @@ class NodeEditorNode(QObject):
         self.__nbBottomRight = 0
 
         # need a big size value for initialisation
-        # let
-        self.__minSizeUserDefined = QSize(9999, 9999)
-        self.__minSizeCalculated = QSize(self.__minSizeUserDefined)
+        self.__minSizeUserDefined = QSizeF(9999, 9999)
+        self.__minSizeCalculated = QSizeF(self.__minSizeUserDefined)
 
         # add connectors to node, if some given
         for connector in connectors:
@@ -1747,10 +1746,10 @@ class NodeEditorNode(QObject):
                 nbBottomRight += 1
                 offsetPositionBottomRight += connectorRadius
 
-        self.__minSizeCalculated = QSize(2*self.__connectorSpace+max(offsetPositionTopLeft+offsetPositionTopRight+maxPositionTopLeft+maxPositionTopRight,
-                                                                     offsetPositionBottomLeft+offsetPositionBottomRight+maxPositionBottomLeft+maxPositionBottomRight),
-                                         2*self.__connectorSpace+max(offsetPositionLeftTop+offsetPositionLeftBottom+maxPositionLeftTop+maxPositionLeftBottom,
-                                                                     offsetPositionRightTop+offsetPositionRightBottom+maxPositionRightTop+maxPositionRightBottom))
+        self.__minSizeCalculated = QSizeF(2*self.__connectorSpace+max(offsetPositionTopLeft+offsetPositionTopRight+maxPositionTopLeft+maxPositionTopRight,
+                                                                      offsetPositionBottomLeft+offsetPositionBottomRight+maxPositionBottomLeft+maxPositionBottomRight),
+                                          2*self.__connectorSpace+max(offsetPositionLeftTop+offsetPositionLeftBottom+maxPositionLeftTop+maxPositionLeftBottom,
+                                                                      offsetPositionRightTop+offsetPositionRightBottom+maxPositionRightTop+maxPositionRightBottom))
         self.__updateMinSize()
 
     def __defaultSceneNodeTitleColorChanged(self, value):
@@ -2240,8 +2239,8 @@ class NodeEditorNode(QObject):
 
     def setMinimumSize(self, value):
         """Set minimum size for node"""
-        if (value is None or isinstance(value, QSize)) and self.__minSizeUserDefined != value:
-            self.__minSizeUserDefined = QSize(value)
+        if (value is None or isinstance(value, QSizeF)) and self.__minSizeUserDefined != value:
+            self.__minSizeUserDefined = QSizeF(value)
             self.__updateMinSize()
 
     def borderSize(self):
@@ -2461,7 +2460,7 @@ class NodeEditorNode(QObject):
                     if 'height' in geometry['minSizeUserDefined'] and isinstance(geometry['minSizeUserDefined']['height'], (int, float)):
                         minHeight = geometry['minSizeUserDefined']['height']
 
-                    self.setMinimumSize(QSize(minWidth, minHeight))
+                    self.setMinimumSize(QSizeF(minWidth, minHeight))
 
                 if 'position' in geometry and isinstance(geometry['position'], dict):
                     positionX = self.position().x()
@@ -3494,13 +3493,16 @@ class NodeEditorNodeWidget(QWidget):
         if fontMetrics is None:
             fontMetrics = self.fontMetrics()
             self._rowHeight = fontMetrics.height()
-        return QSize(fontMetrics.horizontalAdvance(text), (self._rowHeight+spacing)*numberOfRows+spacing)
+        return QSizeF(fontMetrics.horizontalAdvance(text), (self._rowHeight+spacing)*numberOfRows+spacing)
 
     def setMinimumSize(self, size):
         """Set minimum size for widget
 
         This means to calculate parent node size
         """
+        if isinstance(size, QSize):
+            size = QSizeF(size)
+
         # default minimum size
         size = size.expandedTo(self.calculateSize(self.__node.title(), 1))
 
@@ -3596,7 +3598,7 @@ class NodeEditorGrTitleButton(QGraphicsWidget):
         super(NodeEditorGrTitleButton, self).__init__(parent)
 
         self.__node = node
-        self.__size = QSize()
+        self.__size = QSizeF()
         self.__icon = buildIcon(name)
         self.__pixmap = None
         self.__color = self.__node.titleColor()
@@ -3606,7 +3608,7 @@ class NodeEditorGrTitleButton(QGraphicsWidget):
 
         self.setAcceptHoverEvents(True)
         self.setCursor(Qt.PointingHandCursor)
-        self.setSize(QSize(32, 32))
+        self.setSize(QSizeF(32, 32))
 
     def mousePressEvent(self, event):
         """Button clicked"""
@@ -3633,14 +3635,14 @@ class NodeEditorGrTitleButton(QGraphicsWidget):
         if self.__bgBrush.style() != Qt.NoBrush:
             painter.setBrush(self.__bgBrush)
             painter.setPen(QPen(Qt.NoPen))
-            painter.drawRoundedRect(0, 0, self.__size.width(), self.__size.height(), self.__bgRadius, self.__bgRadius)
+            painter.drawRoundedRect(QRectF(0, 0, self.__size.width(), self.__size.height()), self.__bgRadius, self.__bgRadius)
 
         painter.drawPixmap(0, 0, self.__pixmap)
 
     def updateColor(self, color=None):
         if isinstance(color, QColor):
             self.__color = color
-        self.__pixmap = paintOpaqueAsColor(self.__icon.pixmap(self.__size), self.__color)
+        self.__pixmap = paintOpaqueAsColor(self.__icon.pixmap(self.__size.toSize()), self.__color)
 
     def setSize(self, size):
         """Set size for close button"""
@@ -4011,7 +4013,7 @@ class NodeEditorGrNode(QGraphicsItem):
 
         # curent node size
         self.__size = None
-        self.__minSize = QSize()
+        self.__minSize = QSizeF()
 
         # define title rendering properties
         self.__titleTextColor = palette.color(QPalette.BrightText)
@@ -4034,10 +4036,10 @@ class NodeEditorGrNode(QGraphicsItem):
         self.__proxyWidget = None
 
         self.__borderPen = QPen(self.__titleBgColor)
-        self.__borderPen.setWidth(self.__borderSize)
+        self.__borderPen.setWidthF(self.__borderSize)
         self.__borderPen.setJoinStyle(Qt.MiterJoin)
         self.__borderPenSelected = QPen(self.__titleBgColorSelected)
-        self.__borderPenSelected.setWidth(self.__borderSize)
+        self.__borderPenSelected.setWidthF(self.__borderSize)
         self.__borderPenSelected.setJoinStyle(Qt.MiterJoin)
 
         # define window rendering properties
@@ -4051,9 +4053,9 @@ class NodeEditorGrNode(QGraphicsItem):
         self.__titleText = ''
         self.__titleColor = self.__titleTextColor
         self.__titleFont = QApplication.font()
-        self.__titleFontMetrics = QFontMetrics(self.__titleFont, )
-        self.__titleTextBounds = QRect()
-        self.__titleSize = QSize()
+        self.__titleFontMetrics = QFontMetricsF(self.__titleFont)
+        self.__titleTextBounds = QRectF()
+        self.__titleSize = QSizeF()
 
         # define close button
         self.__itemTitleCloseButton = NodeEditorGrTitleButton('pktk:close', self.__node, self)
@@ -4164,8 +4166,8 @@ class NodeEditorGrNode(QGraphicsItem):
         """Border size has been modified"""
         if self.__borderSize != value:
             self.__borderSize = value
-            self.__borderPen.setWidth(self.__borderSize)
-            self.__borderPenSelected.setWidth(self.__borderSize)
+            self.__borderPen.setWidthF(self.__borderSize)
+            self.__borderPenSelected.setWidthF(self.__borderSize)
 
             if self.__borderSize == 0:
                 self.__borderPen.setStyle(Qt.NoPen)
@@ -4220,12 +4222,12 @@ class NodeEditorGrNode(QGraphicsItem):
         #
 
         # calculate title bounds from text + font metrics
-        self.__titleTextBounds = self.__titleFontMetrics.boundingRect(QRect(0, 0, 800, 100), 0, self.__titleText)
+        self.__titleTextBounds = self.__titleFontMetrics.boundingRect(QRectF(0, 0, 800, 100), 0, self.__titleText)
 
         if self.__itemTitleCloseButton.isVisible():
             # button size: width=height=title text height
             buttonSize = self.__titleTextBounds.height()
-            self.__itemTitleCloseButton.setSize(QSize(buttonSize, buttonSize))
+            self.__itemTitleCloseButton.setSize(QSizeF(buttonSize, buttonSize))
         else:
             # there's no button
             buttonSize = 0
@@ -4243,7 +4245,7 @@ class NodeEditorGrNode(QGraphicsItem):
         # calculate minimal expected width
         calculatedWidth = self.__titleTextBounds.width()+padding2+buttonSize+minSpace
 
-        self.__titleSize = QSize(max(calculatedWidth, self.__minSize.width()), self.__titleTextBounds.height()+padding2)
+        self.__titleSize = QSizeF(max(calculatedWidth, self.__minSize.width()), self.__titleTextBounds.height()+padding2)
         self.__size = self.__titleSize.expandedTo(self.__minSize)
 
         # self.__titleTextBounds.moveTo(padding, padding)
@@ -4289,7 +4291,7 @@ class NodeEditorGrNode(QGraphicsItem):
 
     def setMinimumSize(self, value):
         """set minimum size for node"""
-        if isinstance(value, QSize) and value != self.__minSize:
+        if isinstance(value, QSizeF) and value != self.__minSize:
             self.__minSize = value
             self.__updateSize()
             self.update()
@@ -4402,7 +4404,7 @@ class NodeEditorGrConnector(QGraphicsItem):
         self.__boundingRect = QRectF()
 
         self.__borderPen = QPen(self.__borderColor)
-        self.__borderPen.setWidth(self.__borderSize)
+        self.__borderPen.setWidthF(self.__borderSize)
 
         # bg properties for connector
         self.__brush = QBrush(self.__color)
@@ -4502,7 +4504,7 @@ class NodeEditorGrConnector(QGraphicsItem):
     def __updateBorderSize(self, value):
         """Update border size value"""
         self.__borderSize = value
-        self.__borderPen.setWidth(self.__borderSize)
+        self.__borderPen.setWidthF(self.__borderSize)
         if self.__borderSize == 0:
             self.__borderPen.setStyle(Qt.NoPen)
         else:
@@ -4562,10 +4564,10 @@ class NodeEditorGrLink(QGraphicsPathItem):
         self.__borderColorSelected = palette.color(QPalette.Highlight)
 
         self.__borderPen = QPen(self.__borderColor)
-        self.__borderPen.setWidth(self.__borderSize)
+        self.__borderPen.setWidthF(self.__borderSize)
         self.__borderPen.setJoinStyle(Qt.MiterJoin)
         self.__borderPenSelected = QPen(self.__borderColorSelected)
-        self.__borderPenSelected.setWidth(self.__borderSize)
+        self.__borderPenSelected.setWidthF(self.__borderSize)
         self.__borderPenSelected.setJoinStyle(Qt.MiterJoin)
 
         # link properties
@@ -4696,8 +4698,8 @@ class NodeEditorGrLink(QGraphicsPathItem):
     def __sizeUpdated(self, value):
         """Size has been updated"""
         self.__borderSize = value
-        self.__borderPen.setWidth(self.__borderSize)
-        self.__borderPenSelected.setWidth(self.__borderSize)
+        self.__borderPen.setWidthF(self.__borderSize)
+        self.__borderPenSelected.setWidthF(self.__borderSize)
         self.update()
 
     def itemChange(self, change, value):
@@ -4754,7 +4756,7 @@ class NodeEditorGrCutLine(QGraphicsItem):
         self.__lineStyle = Qt.DashLine
 
         self.__pen = QPen(self.__lineColor)
-        self.__pen.setWidth(self.__lineSize)
+        self.__pen.setWidthF(self.__lineSize)
         self.__pen.setStyle(self.__lineStyle)
 
         # link properties
@@ -4790,7 +4792,7 @@ class NodeEditorGrCutLine(QGraphicsItem):
         """Update line width"""
         if isinstance(value, (int, float)):
             self.__lineSize = float(value)
-            self.__pen.setWidth(self.__lineSize)
+            self.__pen.setWidthF(self.__lineSize)
 
     def style(self):
         """Return line style"""

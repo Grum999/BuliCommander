@@ -574,7 +574,7 @@ class TokenizerRule(object):
 
     def __setType(self, value):
         """Set current type for rule"""
-        if isinstance(value, TokenType):
+        if isinstance(value, Enum):
             self.__type = value
         else:
             self.__error.append("Given type must be a valid <TokenType>")

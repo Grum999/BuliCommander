@@ -1196,7 +1196,7 @@ class BCFileOperation(object):
             BCFileOperation.__PROGRESS_currentBytes += fileSize
 
             if BCFileOperation.__PROGRESS_totalBytes > 0:
-                nbBytes = 10000*BCFileOperation.__PROGRESS_currentBytes / BCFileOperation.__PROGRESS_totalBytes
+                nbBytes = round(10000*BCFileOperation.__PROGRESS_currentBytes / BCFileOperation.__PROGRESS_totalBytes)
             else:
                 nbBytes = 0
 

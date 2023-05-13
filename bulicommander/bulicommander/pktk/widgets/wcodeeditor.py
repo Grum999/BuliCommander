@@ -1276,7 +1276,7 @@ class WCodeEditor(QPlainTextEdit):
             fontMetrics = QFontMetrics(doc.defaultFont())
             margins = self.contentsMargins()
 
-            self.setFixedHeight(fontMetrics.lineSpacing() * numberOfRows + (doc.documentMargin() + self.frameWidth()) * 2 + margins.top() + margins.bottom())
+            self.setFixedHeight(round(fontMetrics.lineSpacing() * numberOfRows + (doc.documentMargin() + self.frameWidth()) * 2 + margins.top() + margins.bottom()))
 
     def cursorPosition(self, fromZero=False):
         """Return current cursor position information

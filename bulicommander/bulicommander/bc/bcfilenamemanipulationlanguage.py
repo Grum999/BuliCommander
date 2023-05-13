@@ -74,6 +74,7 @@ from bulicommander.pktk.modules.parser import (
     )
 from bulicommander.pktk.modules.timeutils import tsToStr
 from bulicommander.pktk.modules.utils import (
+        extendEnum,
         Debug,
         regExIsValid
     )
@@ -89,15 +90,15 @@ from bulicommander.pktk.pktk import (
 class BCFileManipulateNameLanguageDef(LanguageDef):
     """Language definition to manipulate file names"""
 
-    class ITokenType(TokenType, Enum):
-        STRING = ('String', 'A STRING value')
-        KW = ('Keyword', 'A keyword return a STRING value')
-        FUNCO_STR = ('String function', 'A FUNCTION for which returned result is a STRING')
-        FUNCO_INT = ('Number function', 'A FUNCTION for which returned result is an INTEGER')
-        FUNCC = ('Function terminator', 'Define end of function')
-        SEPARATOR = ('Separator', 'A separator for functions arguments')
-        NUMBER = ('Number', 'A NUMBER value')
-        TEXT = ('Text', 'A TEXT value')
+    ITokenType = extendEnum(TokenType, {'STRING': ('String', 'A STRING value'),
+                                        'KW': ('Keyword', 'A keyword return a STRING value'),
+                                        'FUNCO_STR': ('String function', 'A FUNCTION for which returned result is a STRING'),
+                                        'FUNCO_INT': ('Number function', 'A FUNCTION for which returned result is an INTEGER'),
+                                        'FUNCC': ('Function terminator', 'Define end of function'),
+                                        'SEPARATOR': ('Separator', 'A separator for functions arguments'),
+                                        'NUMBER': ('Number', 'A NUMBER value'),
+                                        'TEXT': ('Text', 'A TEXT value')
+                                        })
 
     def __init__(self):
         super(BCFileManipulateNameLanguageDef, self).__init__([
