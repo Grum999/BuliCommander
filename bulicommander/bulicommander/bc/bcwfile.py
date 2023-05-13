@@ -766,7 +766,7 @@ class BCViewFilesTv(QTreeView):
     def resizeColumns(self, fixedOnly=True):
         """Resize columns to content"""
         def resizeIfVisible(column):
-            if column in self.__visibleColumns:
+            if self.__visibleColumns[column]:
                 self.resizeColumnToContents(column)
 
         self.setUpdatesEnabled(False)
