@@ -2092,6 +2092,7 @@ class BCExportFilesDialogBox(QDialog):
 
         self.__hasSavedSettings = BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED)
         self.__options = options
+        self.__openAsExportConfig = options is not None
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcexportfiles.ui')
         PyQt5.uic.loadUi(uiFileName, self)
@@ -3096,9 +3097,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __export(self):
         """Export process"""
-
-        if self.__options is not None:
-
+        if self.__openAsExportConfig:
             if self.rbTargetResultClipboard.isChecked():
                 exportedFileName = BCExportFilesDialogBox.CLIPBOARD
             else:
@@ -4636,7 +4635,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     @staticmethod
     def openAsExportConfig(title, uicontroller, options):
-        """Open dialog box"""
+        """Open dialog box for export configuration mode only"""
         db = BCExportFilesDialogBox(title, uicontroller, options)
         if db.exec() == QDialog.Accepted:
             return db.options()
