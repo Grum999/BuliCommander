@@ -584,14 +584,6 @@ class BCFileOperationMassRenameUi(QDialog):
         self.__currentLoadedConfigurationFile = ''
         self.__setModified(False)
 
-    def accept(self):
-        """Close dialog box"""
-        self.close()
-
-    def reject(self):
-        """Close dialog box"""
-        self.close()
-
     def closeEvent(self, event):
         """Dialog is closed"""
         self.__saveSettings()
