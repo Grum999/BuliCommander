@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1179</width>
-    <height>185</height>
+    <height>190</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -98,6 +98,10 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>leNewFileName</tabstop>
+  <tabstop>leCurrentPathFileName</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
