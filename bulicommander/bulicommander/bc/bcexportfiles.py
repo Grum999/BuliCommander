@@ -765,9 +765,9 @@ class BCExportFiles(QObject):
                 painter.setPen(thumbnailPen)
                 painter.setBrush(QBrush(Qt.NoBrush))
                 if thumbnailBorderRadius > 0:
-                    painter.drawRoundedRect(0, 0, cellSize.width(), cellSize.height(), thumbnailBorderRadius, thumbnailBorderRadius)
+                    painter.drawRoundedRect(QRectF(0, 0, cellSize.width(), cellSize.height()), thumbnailBorderRadius, thumbnailBorderRadius)
                 else:
-                    painter.drawRect(0, 0, cellSize.width(), cellSize.height())
+                    painter.drawRect(QRectF(0, 0, cellSize.width(), cellSize.height()))
                 painter.setPen(QPen(Qt.NoPen))
 
         painter.setRenderHint(QPainter.Antialiasing)
@@ -3279,8 +3279,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             if self.cbFormatDocImgHeader.isChecked() and previewPagesInformation['header.height'] > 0:
                 areaHeight = previewPagesInformation['header.height'] - 2
 
-                painter.fillRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight, brush)
-                painter.drawRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight)
+                painter.fillRect(QRectF(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight), brush)
+                painter.drawRect(QRectF(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight))
 
                 top = previewPagesInformation['header.height']
 
@@ -3289,8 +3289,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             if self.cbFormatDocImgFooter.isChecked() and previewPagesInformation['footer.height'] > 0:
                 areaHeight = previewPagesInformation['footer.height'] - 2
 
-                painter.fillRect(drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight, brush)
-                painter.drawRect(drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight)
+                painter.fillRect(QRectF(drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight), brush)
+                painter.drawRect(QRectF(drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight))
 
             # ----------------------------------------------------------------------
             # First page layout
@@ -3298,8 +3298,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                and self.cbFormatDocImgFPageNotes.isChecked() and previewPagesInformation['fpNotes.height'] > 0:
                 areaHeight = previewPagesInformation['fpNotes.height'] - 2
 
-                painter.fillRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight, brush)
-                painter.drawRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight)
+                painter.fillRect(QRectF(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight), brush)
+                painter.drawRect(QRectF(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight))
 
         def getThumbnailCellPixmap(textRows):
             # return a pixmap
@@ -3362,21 +3362,21 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             # cell bounds
             painterThumb.setPen(pen)
-            painterThumb.drawRect(0, 0, previewPagesInformation['cell.global.size'].width() - 1, previewPagesInformation['cell.global.size'].height() - 1)
+            painterThumb.drawRect(QRectF(0, 0, previewPagesInformation['cell.global.size'].width() - 1, previewPagesInformation['cell.global.size'].height() - 1))
 
             setActiveColor(2)
 
             painterThumb.setPen(pen)
 
             # thumb image
-            painterThumb.drawPixmap(imgLeft, imgTop, buildIcon('pktk:image').pixmap(thumbSize - 5, thumbSize - 5))
+            painterThumb.drawPixmap(QPointF(imgLeft, imgTop), buildIcon('pktk:image').pixmap(thumbSize - 5, thumbSize - 5))
 
             painterThumb.setCompositionMode(QPainter.CompositionMode_SourceIn)
-            painterThumb.fillRect(imgLeft, imgTop, thumbSize - 5, thumbSize - 5, brush)
+            painterThumb.fillRect(QRectF(imgLeft, imgTop, thumbSize - 5, thumbSize - 5), brush)
 
             # thumbnail bounds
             painterThumb.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            painterThumb.drawRect(imgLeft, imgTop, thumbSize - 5, thumbSize - 5)
+            painterThumb.drawRect(QRectF(imgLeft, imgTop, thumbSize - 5, thumbSize - 5))
 
             pen.setStyle(Qt.SolidLine)
             brush.setStyle(Qt.DiagCrossPattern)
@@ -3384,8 +3384,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             # texts
             if propertiesPosition != 'none':
-                painterThumb.fillRect(textLeft, textTop, textWidth, textHeight, brush)
-                painterThumb.drawRect(textLeft, textTop, textWidth, textHeight)
+                painterThumb.fillRect(QRectF(textLeft, textTop, textWidth, textHeight), brush)
+                painterThumb.drawRect(QRectF(textLeft, textTop, textWidth, textHeight))
 
             painterThumb.end()
 
@@ -3407,7 +3407,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             for rowNumber in range(nbRows):
                 offsetLeft = 0
                 for column in range(thumbPerRow):
-                    painter.drawPixmap(drawingArea.left() + offsetLeft, drawingArea.top(), pixmapThumb)
+                    painter.drawPixmap(QPointF(drawingArea.left() + offsetLeft, drawingArea.top()), pixmapThumb)
 
                     offsetLeft += previewPagesInformation['cell.global.size'].width() + previewPagesInformation['cell.thumbnail.outerSpacing']
 
