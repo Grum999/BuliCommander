@@ -21,9 +21,6 @@ import sys
 import os
 import json
 import base64
-from enum import Enum
-from types import FunctionType
-
 
 import xml.etree.ElementTree as ET
 
@@ -399,20 +396,6 @@ def replaceLineEditClearButton(lineEdit):
         toolButton.setIcon(buildIcon("pktk:edit_text_clear"))
 
 
-def extendEnum(enumClass, extendedValues):
-    """Return a new class as an extension of enumClass with extended value (dict)"""
-    currentNames = {item.name: item.value for item in enumClass}
-    currentNames.update(extendedValues)
-
-    returned = Enum(enumClass.__name__, currentNames)
-
-    for fName, fType in enumClass.__dict__.items():
-        if type(fType) == FunctionType and not re.match('_[a-z0-9_]+_$', fName):
-            setattr(returned, fName, enumClass.__dict__[fName])
-
-    return returned
-
-
 # ------------------------------------------------------------------------------
 
 class JsonQObjectEncoder(json.JSONEncoder):
@@ -543,16 +526,6 @@ class Debug(object):
     def setEnabled(value):
         """set Debug enabled or not"""
         Debug.__enabled = value
-
-    @staticmethod
-    def print(value, *argv):
-        """Print value to console, using argv for formatting"""
-        if Debug.__enabled and isinstance(value, str):
-            sys.stdout = sys.__stdout__
-            if len(argv) > 0:
-                print('DEBUG:', value.format(*argv))
-            else:
-                print('DEBUG:', value)
 
     @staticmethod
     def swPrint(pattern=None):

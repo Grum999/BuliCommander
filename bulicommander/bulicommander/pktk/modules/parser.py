@@ -171,7 +171,7 @@ class Parser:
 
         self.__ignoredTokens = []
         for token in tokens:
-            if not isinstance(token, Enum):
+            if not isinstance(token, TokenType):
                 raise EInvalidType("Given `tokens` items must be <TokenType>")
             self.__ignoredTokens.append(token)
 
@@ -1345,7 +1345,7 @@ class GRToken(GRObject):
     def __init__(self, tokenType, *possibleValues):
         super(GRToken, self).__init__()
 
-        if not isinstance(tokenType, Enum):
+        if not isinstance(tokenType, TokenType):
             raise EInvalidType(f'Given `tokenType` must be <TokenType>: {tokenType} ({type(tokenType)})')
 
         self.__tokenType = tokenType

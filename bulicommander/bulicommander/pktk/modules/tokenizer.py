@@ -29,8 +29,6 @@
 #
 # -----------------------------------------------------------------------------
 
-from enum import Enum
-
 import hashlib
 import re
 import time
@@ -40,8 +38,9 @@ from .elist import EList
 from .uitheme import UITheme
 from ..pktk import *
 
+from .extendableenum import ExtendableEnum
 
-class TokenType(Enum):
+class TokenType(ExtendableEnum):
     # some default token type
     UNKNOWN = ('Unknown', 'This value is not know in grammar and might not be interpreted')
     NEWLINE = ('New line', 'A line feed')
@@ -574,7 +573,7 @@ class TokenizerRule(object):
 
     def __setType(self, value):
         """Set current type for rule"""
-        if isinstance(value, Enum):
+        if isinstance(value, TokenType):
             self.__type = value
         else:
             self.__error.append("Given type must be a valid <TokenType>")

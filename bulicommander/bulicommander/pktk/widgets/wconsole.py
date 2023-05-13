@@ -354,13 +354,13 @@ class WConsole(QPlainTextEdit):
 
                 if colorLevel != WConsoleType.NORMAL:
                     color = QColor(self.__typeColors[colorLevel])
-                    center = QPoint(dx, top+dx)
+                    center = QPointF(dx, top+dx)
                     painter.setBrush(QBrush(color))
                     painter.drawEllipse(center, radius, radius)
 
                     h = bottom - center.y() - dy
                     if h > dy:
-                        painter.drawRoundedRect(dx-2, center.y(), 4, h, 2, 2)
+                        painter.drawRoundedRect(QRectF(dx-2, center.y(), 4, h), 2, 2)
 
                     color.setAlpha(WConsole.__TYPE_COLOR_ALPHA)
                     painter.fillRect(QRectF(rect.left(), top, rect.width(), self.blockBoundingRect(block).height()), QBrush(color))
