@@ -1181,7 +1181,7 @@ class BCNodeWFunction(NodeEditorNodeWidget):
         # add some additional space
         # current node editor implementation have a problem to determinate/apply size properly... ?
         size.setWidth(size.width()+40)
-        size.setHeight(size.height()+self.__layout.spacing()+self.node().padding())
+        size.setHeight(round(size.height()+self.__layout.spacing()+self.node().padding()))
 
         for inputConnector in inputConnectors:
             if inputConnector.id() != 'value' or (inputConnector.id() == 'value' and not hasValue):

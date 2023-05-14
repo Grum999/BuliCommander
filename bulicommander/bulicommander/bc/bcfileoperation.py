@@ -584,14 +584,6 @@ class BCFileOperationMassRenameUi(QDialog):
         self.__currentLoadedConfigurationFile = ''
         self.__setModified(False)
 
-    def accept(self):
-        """Close dialog box"""
-        self.close()
-
-    def reject(self):
-        """Close dialog box"""
-        self.close()
-
     def closeEvent(self, event):
         """Dialog is closed"""
         self.__saveSettings()
@@ -1196,7 +1188,7 @@ class BCFileOperation(object):
             BCFileOperation.__PROGRESS_currentBytes += fileSize
 
             if BCFileOperation.__PROGRESS_totalBytes > 0:
-                nbBytes = 10000*BCFileOperation.__PROGRESS_currentBytes / BCFileOperation.__PROGRESS_totalBytes
+                nbBytes = round(10000*BCFileOperation.__PROGRESS_currentBytes / BCFileOperation.__PROGRESS_totalBytes)
             else:
                 nbBytes = 0
 

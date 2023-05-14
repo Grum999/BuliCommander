@@ -766,7 +766,7 @@ class BCViewFilesTv(QTreeView):
     def resizeColumns(self, fixedOnly=True):
         """Resize columns to content"""
         def resizeIfVisible(column):
-            if column in self.__visibleColumns:
+            if self.__visibleColumns[column]:
                 self.resizeColumnToContents(column)
 
         self.setUpdatesEnabled(False)
@@ -1205,7 +1205,7 @@ class BCViewFilesLv(QListView):
     def __updateScrollBarSensitivity(self):
         """Update scrollbar sensitivity"""
         index = self.__iconSize.index()
-        sStep = round((self.__iconSize.value()/(1+index))*((1+index/2)*self.viewport().height()/1024), 0)
+        sStep = round((self.__iconSize.value()/(1+index))*((1+index/2)*self.viewport().height()/1024))
         self.verticalScrollBar().setSingleStep(sStep)
 
     def resizeEvent(self, event):

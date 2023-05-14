@@ -171,6 +171,8 @@ class BCImportAnimated(object):
 
                     groupLayer = document.createGroupLayer('Frames')
 
+                    document.rootNode().addChildNode(groupLayer, None)
+
                     dlgBox.updateMessage(f"{i18n('Extract frames')}...<br>", False)
                     isCancelled = False
                     nbZ = len(f"{imgReaderAnimated.frameCount()}")
@@ -180,7 +182,6 @@ class BCImportAnimated(object):
                             document.waitForDone()
                             document.close()
                             dlgBox.close()
-                            Timer.sleep(5000)
                             return BCImportAnimated.IMPORT_CANCELLED
                         imgReaderAnimated.jumpToFrame(frameNumber)
 
@@ -189,8 +190,6 @@ class BCImportAnimated(object):
 
                         groupLayer.addChildNode(frameLayer, None)
                         # imgReaderAnimated.jumpToNextFrame()
-
-                    document.rootNode().addChildNode(groupLayer, None)
 
                     dlgBox.updateMessage(f"{i18n('Frames extracted')}: <i>{imgReaderAnimated.frameCount()}</i><br>", False)
                     dlgBox.setCancelButtonEnabled(False)
@@ -220,6 +219,7 @@ class BCImportAnimated(object):
 
         if file.format() in BCImportAnimated.SUPPORTED_FORMAT:
             imgNfo = file.getMetaInformation()
+            isOk = False
             if imgNfo['imageCount'] > 1:
                 try:
                     dlgBox = WDialogProgress.display(dialogTitle,
@@ -261,17 +261,20 @@ class BCImportAnimated(object):
 
                             fileNames.append(fileName)
 
-                    dlgBox.updateMessage(f"{i18n('Frames extracted')}: <i>{frameNumber}</i><br>", False)
-                    dlgBox.setCancelButtonEnabled(False)
-                    dlgBox.setInfinite()
-                    dlgBox.updateMessage(f"{i18n('Import frames')}...", False)
-                    document.importAnimation(fileNames, 0, keyFrameStep)
-                    document.refreshProjection()
+                        dlgBox.updateMessage(f"{i18n('Frames extracted')}: <i>{frameNumber}</i><br>", False)
+                        dlgBox.setCancelButtonEnabled(False)
+                        dlgBox.setInfinite()
+                        dlgBox.updateMessage(f"{i18n('Import frames')}...", False)
+                        isOk = document.importAnimation(fileNames, 0, keyFrameStep)
+                        document.refreshProjection()
 
-                    view = Krita.instance().activeWindow().addView(document)
-                    Krita.instance().activeWindow().showView(view)
+                    if isOk:
+                        view = Krita.instance().activeWindow().addView(document)
+                        Krita.instance().activeWindow().showView(view)
+                        dlgBox.close()
+                        return BCImportAnimated.IMPORT_OK
+
                     dlgBox.close()
-                    return BCImportAnimated.IMPORT_OK
                 except Exception as e:
                     Debug.print('[BCImportAnimated.importAsFrames] Unable to read animated file {0}: {1}', file.fullPathName(), e)
 

@@ -89,7 +89,7 @@ from bulicommander.pktk.pktk import (
 class BCFileManipulateNameLanguageDef(LanguageDef):
     """Language definition to manipulate file names"""
 
-    class ITokenType(TokenType, Enum):
+    class ITokenType(TokenType):
         STRING = ('String', 'A STRING value')
         KW = ('Keyword', 'A keyword return a STRING value')
         FUNCO_STR = ('String function', 'A FUNCTION for which returned result is a STRING')
@@ -98,6 +98,7 @@ class BCFileManipulateNameLanguageDef(LanguageDef):
         SEPARATOR = ('Separator', 'A separator for functions arguments')
         NUMBER = ('Number', 'A NUMBER value')
         TEXT = ('Text', 'A TEXT value')
+
 
     def __init__(self):
         super(BCFileManipulateNameLanguageDef, self).__init__([
@@ -1014,11 +1015,11 @@ class BCFileManipulateName(object):
             if isDir:
                 fileList = [int(rr.groups()[0])
                             for foundFile in
-                            os.listdir(targetPath) if os.path.isdir(os.path.join(targetPath, foundFile)) and (rr:=re.search(regEx, foundFile))]
+                            os.listdir(targetPath) if os.path.isdir(os.path.join(targetPath, foundFile)) and (rr := re.search(regEx, foundFile))]
             else:
                 fileList = [int(rr.groups()[0])
                             for foundFile in
-                            os.listdir(targetPath) if os.path.isfile(os.path.join(targetPath, foundFile)) and (rr:=re.search(regEx, foundFile))]
+                            os.listdir(targetPath) if os.path.isfile(os.path.join(targetPath, foundFile)) and (rr := re.search(regEx, foundFile))]
             if len(fileList) == 0:
                 nbFiles = 1
             else:
@@ -1641,11 +1642,11 @@ class BCFileManipulateName(object):
                         if isinstance(file, BCDirectory):
                             fileList = [int(rr.groups()[0])
                                         for foundFile in
-                                        os.listdir(targetPath) if os.path.isdir(os.path.join(targetPath, foundFile)) and (rr:=re.search(regEx, foundFile))]
+                                        os.listdir(targetPath) if os.path.isdir(os.path.join(targetPath, foundFile)) and (rr := re.search(regEx, foundFile))]
                         else:
                             fileList = [int(rr.groups()[0])
                                         for foundFile in
-                                        os.listdir(targetPath) if os.path.isfile(os.path.join(targetPath, foundFile)) and (rr:=re.search(regEx, foundFile))]
+                                        os.listdir(targetPath) if os.path.isfile(os.path.join(targetPath, foundFile)) and (rr := re.search(regEx, foundFile))]
 
                         if len(fileList) == 0:
                             nbFiles = 1

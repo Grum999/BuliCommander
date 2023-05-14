@@ -446,11 +446,14 @@ class BCExportFiles(QObject):
             elif toUnit == 'px':
                 return round(resolution * BCExportFiles.convertSize(value, fromUnit, 'in', formatPdfImgPaperResolution)/72, roundValue)
         # all other combination are not valid, return initial value
+        if roundValue == 0:
+            # ensure to return an integer in this case
+            value = int(value)
         return value
 
     @staticmethod
     def getPaperSize(paperSize, unit, orientation, resolution=None):
-        """Return QSize for given paperSize + unit"""
+        """Return QSizeF for given paperSize + unit"""
         size = BCExportFilesDialogBox.PAPER_SIZES[paperSize][unit]
 
         if unit == 'px' and resolution is not None:
@@ -459,7 +462,7 @@ class BCExportFiles(QObject):
             size = QSizeF(size.width() * resolution, size.height() * resolution)
 
         if orientation == BCExportFilesDialogBox.ORIENTATION_LANDSCAPE:
-            return QSize(size.height(), size.width())
+            return QSizeF(size.height(), size.width())
         return size
 
     def __init__(self, uiController, filesNfo=None, parent=None):
@@ -676,16 +679,16 @@ class BCExportFiles(QObject):
                 painter.setPen(QPen(Qt.NoPen))
                 painter.setBrush(thumbnailBrush)
                 if thumbnailBorderRadius > 0:
-                    painter.drawRoundedRect(0, 0, cellSize.width(), cellSize.height(), thumbnailBorderRadius, thumbnailBorderRadius)
+                    painter.drawRoundedRect(QRectF(0, 0, cellSize.width(), cellSize.height()), thumbnailBorderRadius, thumbnailBorderRadius)
                 else:
-                    painter.drawRect(0, 0, cellSize.width(), cellSize.height())
+                    painter.drawRect(QRectF(0, 0, cellSize.width(), cellSize.height()))
                 painter.setBrush(QBrush(Qt.NoBrush))
 
             propertiesPosition = pagesInformation['cell.thumbnail.propPosition']
             cellInnerSpacing = pagesInformation['cell.thumbnail.innerSpacing']
 
-            imgPosition = QPoint(cellInnerSpacing, cellInnerSpacing)
-            txtPosition = QPoint(cellInnerSpacing, cellInnerSpacing)
+            imgPosition = QPointF(cellInnerSpacing, cellInnerSpacing)
+            txtPosition = QPointF(cellInnerSpacing, cellInnerSpacing)
 
             image = file.thumbnail(BCFileThumbnailSize.fromValue(512), BCBaseFile.THUMBTYPE_IMAGE)
             if isinstance(image, QImage):
@@ -735,7 +738,7 @@ class BCExportFiles(QObject):
                 imgPosition.setY((pagesInformation['cell.global.size'].height() - thumbPixmap.height())/2)
 
             if thumbPixmap is not None:
-                painter.drawPixmap(imgPosition.x(), imgPosition.y(), thumbPixmap)
+                painter.drawPixmap(imgPosition, thumbPixmap)
 
             if propertiesPosition != 'none':
                 # text
@@ -762,9 +765,9 @@ class BCExportFiles(QObject):
                 painter.setPen(thumbnailPen)
                 painter.setBrush(QBrush(Qt.NoBrush))
                 if thumbnailBorderRadius > 0:
-                    painter.drawRoundedRect(0, 0, cellSize.width(), cellSize.height(), thumbnailBorderRadius, thumbnailBorderRadius)
+                    painter.drawRoundedRect(QRectF(0, 0, cellSize.width(), cellSize.height()), thumbnailBorderRadius, thumbnailBorderRadius)
                 else:
-                    painter.drawRect(0, 0, cellSize.width(), cellSize.height())
+                    painter.drawRect(QRectF(0, 0, cellSize.width(), cellSize.height()))
                 painter.setPen(QPen(Qt.NoPen))
 
         painter.setRenderHint(QPainter.Antialiasing)
@@ -787,11 +790,11 @@ class BCExportFiles(QObject):
         if config.get('thumbnails.border.active', defaultConfig['thumbnails.border.active']):
             thumbnailPen = QPen(config.get('thumbnails.border.color', defaultConfig['thumbnails.border.color']))
             thumbnailPen.setJoinStyle(Qt.MiterJoin)
-            thumbnailPen.setWidth(BCExportFiles.convertSize(config.get('thumbnails.border.width', defaultConfig['thumbnails.border.width']),
-                                                            unit,
-                                                            'px',
-                                                            resolution,
-                                                            formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))
+            thumbnailPen.setWidthF(BCExportFiles.convertSize(config.get('thumbnails.border.width', defaultConfig['thumbnails.border.width']),
+                                                             unit,
+                                                             'px',
+                                                             resolution,
+                                                             formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))
 
         # bounds for page (ie: margins)
         pageBounds = cloneRect(pagesInformation['page.global.bounds'])
@@ -901,11 +904,11 @@ class BCExportFiles(QObject):
             brush.setStyle(Qt.NoBrush)
             pen.setStyle(Qt.SolidLine)
             pen.setColor(config.get('page.border.color', defaultConfig['page.border.color']))
-            pen.setWidth(BCExportFiles.convertSize(config.get('page.border.width', defaultConfig['page.border.width']),
-                                                   unit,
-                                                   'px',
-                                                   resolution,
-                                                   formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))
+            pen.setWidthF(BCExportFiles.convertSize(config.get('page.border.width', defaultConfig['page.border.width']),
+                                                    unit,
+                                                    'px',
+                                                    resolution,
+                                                    formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))
 
             painter.setPen(pen)
             painter.setBrush(brush)
@@ -1000,7 +1003,7 @@ class BCExportFiles(QObject):
                                                          fromUnit,
                                                          'px',
                                                          imageResolution,
-                                                         formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution), 0)
+                                                         formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))
 
             insideBounds.setLeft(insideBounds.left() + innerSpace)
             insideBounds.setRight(insideBounds.right() - innerSpace)
@@ -1018,13 +1021,13 @@ class BCExportFiles(QObject):
                                                                  fromUnit,
                                                                  'px',
                                                                  imageResolution,
-                                                                 formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution), 0)
+                                                                 formatPdfImgPaperResolution=self.__formatPdfImgPaperResolution))
 
         # calculate height for Header
         headerHeight = 0
         if config.get('header.active', defaultConfig['header.active']) and config.get('header.content', defaultConfig['header.content']).strip() != '':
             document.setHtml(self.updatePointSize(config.get('header.content', defaultConfig['header.content'])))
-            headerHeight = document.size().height() + thumbnailsOuterSpacing
+            headerHeight = round(document.size().height() + thumbnailsOuterSpacing)
 
             fPageBounds.setTop(fPageBounds.top() + headerHeight)
             nPageBounds.setTop(nPageBounds.top() + headerHeight)
@@ -1033,7 +1036,7 @@ class BCExportFiles(QObject):
         footerHeight = 0
         if config.get('footer.active', defaultConfig['footer.active']) and config.get('footer.content', defaultConfig['footer.content']).strip() != '':
             document.setHtml(self.updatePointSize(config.get('footer.content', defaultConfig['footer.content'])))
-            footerHeight = document.size().height() + thumbnailsOuterSpacing
+            footerHeight = round(document.size().height() + thumbnailsOuterSpacing)
 
             fPageBounds.setBottom(fPageBounds.bottom() - footerHeight)
             nPageBounds.setBottom(nPageBounds.bottom() - footerHeight)
@@ -1043,14 +1046,14 @@ class BCExportFiles(QObject):
         if config.get('firstPageNotes.active', defaultConfig['firstPageNotes.active']) and\
            config.get('firstPageNotes.content', defaultConfig['firstPageNotes.content']).strip() != '':
             document.setHtml(self.updatePointSize(config.get('firstPageNotes.content', defaultConfig['firstPageNotes.content'])))
-            fpNotesHeight = document.size().height() + thumbnailsOuterSpacing
+            fpNotesHeight = round(document.size().height() + thumbnailsOuterSpacing)
 
             fPageBounds.setTop(fPageBounds.top() + fpNotesHeight)
 
         # calculate bounds for a thumbnail
         thumbPerRow = config.get('thumbnails.layout.nbPerRow', defaultConfig['thumbnails.layout.nbPerRow'])
         propertiesPosition = config.get('thumbnails.text.position', defaultConfig['thumbnails.text.position'])
-        cellWidth = int(round((insideBounds.width() - thumbnailsOuterSpacing * (thumbPerRow - 1))/thumbPerRow, 0))
+        cellWidth = round((insideBounds.width() - thumbnailsOuterSpacing * (thumbPerRow - 1))/thumbPerRow)
 
         fontName = config.get('thumbnails.text.font.name', defaultConfig['thumbnails.text.font.name'])
         fontSize = config.get('thumbnails.text.font.size', defaultConfig['thumbnails.text.font.size'])
@@ -1058,7 +1061,7 @@ class BCExportFiles(QObject):
 
         document.setDefaultFont(QFont(config.get('thumbnails.text.font.name', defaultConfig['thumbnails.text.font.name'])))
         document.setHtml(self.updatePointSize(self.__buildHtml(["X"]*len(fieldsList), fontName, fontSize, fontColor)))
-        cellTextHeight = document.size().height()
+        cellTextHeight = round(document.size().height())
         thumbnailsInnerSpacing = BCExportFiles.convertSize(config.get('thumbnails.layout.spacing.inner', defaultConfig['thumbnails.layout.spacing.inner']),
                                                            fromUnit,
                                                            'px',
@@ -1122,6 +1125,16 @@ class BCExportFiles(QObject):
             nbPages = 1
         else:
             nbPages = 1 + ceil((nbRows - fpNbRowsMax) / npNbRowsMax)
+
+        # round here (avoid to put round everywhere...
+        # note:
+        #   round(x) => integer
+        #   round(x, 0) => float
+        cellWidth = round(cellWidth)
+        cellHeight = round(cellHeight)
+        thumbSize = round(thumbSize)
+        cellTextWidth = round(cellTextWidth)
+        cellTextHeight = round(cellTextHeight)
 
         returned = {
             'page.size':                    imageSize,
@@ -1453,7 +1466,7 @@ class BCExportFiles(QObject):
         imageSize = BCExportFiles.getPaperSize(config.get('paper.size', defaultConfig['paper.size']),
                                                'px',
                                                config.get('paper.orientation', defaultConfig['paper.orientation']),
-                                               imageResolution)
+                                               imageResolution).toSize()
 
         kraDocument = Krita.instance().createDocument(imageSize.width(),
                                                       imageSize.height(),
@@ -1565,7 +1578,7 @@ class BCExportFiles(QObject):
         imageSize = BCExportFiles.getPaperSize(config.get('paper.size', defaultConfig['paper.size']),
                                                'px',
                                                config.get('paper.orientation', defaultConfig['paper.orientation']),
-                                               imageResolution)
+                                               imageResolution).toSize()
 
         # calculate pages informations
         pagesInformation = self.getPagesInformation(imageSize, config, defaultConfig)
@@ -2079,6 +2092,7 @@ class BCExportFilesDialogBox(QDialog):
 
         self.__hasSavedSettings = BCSettings.get(BCSettingsKey.CONFIG_EXPORTFILESLIST_GLB_SAVED)
         self.__options = options
+        self.__openAsExportConfig = options is not None
 
         uiFileName = os.path.join(os.path.dirname(__file__), 'resources', 'bcexportfiles.ui')
         PyQt5.uic.loadUi(uiFileName, self)
@@ -3083,9 +3097,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     def __export(self):
         """Export process"""
-
-        if self.__options is not None:
-
+        if self.__openAsExportConfig:
             if self.rbTargetResultClipboard.isChecked():
                 exportedFileName = BCExportFilesDialogBox.CLIPBOARD
             else:
@@ -3242,10 +3254,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             drawingArea = previewPagesInformation['page.global.bounds']
 
-            painter.drawLine(drawingArea.left(), previewRect.top(), drawingArea.left(), previewRect.bottom())
-            painter.drawLine(drawingArea.right(), previewRect.top(), drawingArea.right(), previewRect.bottom())
-            painter.drawLine(previewRect.left(), drawingArea.top(), previewRect.right(), drawingArea.top())
-            painter.drawLine(previewRect.left(), drawingArea.bottom(), previewRect.right(), drawingArea.bottom())
+            painter.drawLine(QPointF(drawingArea.left(), previewRect.top()), QPointF(drawingArea.left(), previewRect.bottom()))
+            painter.drawLine(QPointF(drawingArea.right(), previewRect.top()), QPointF(drawingArea.right(), previewRect.bottom()))
+            painter.drawLine(QPointF(previewRect.left(), drawingArea.top()), QPointF(previewRect.right(), drawingArea.top()))
+            painter.drawLine(QPointF(previewRect.left(), drawingArea.bottom()), QPointF(previewRect.right(), drawingArea.bottom()))
 
             drawingArea.setLeft(drawingArea.left() + 2)
             drawingArea.setRight(drawingArea.right() - 3)
@@ -3266,8 +3278,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             if self.cbFormatDocImgHeader.isChecked() and previewPagesInformation['header.height'] > 0:
                 areaHeight = previewPagesInformation['header.height'] - 2
 
-                painter.fillRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight, brush)
-                painter.drawRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight)
+                painter.fillRect(QRectF(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight), brush)
+                painter.drawRect(QRectF(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight))
 
                 top = previewPagesInformation['header.height']
 
@@ -3276,8 +3288,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             if self.cbFormatDocImgFooter.isChecked() and previewPagesInformation['footer.height'] > 0:
                 areaHeight = previewPagesInformation['footer.height'] - 2
 
-                painter.fillRect(drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight, brush)
-                painter.drawRect(drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight)
+                painter.fillRect(QRectF(drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight), brush)
+                painter.drawRect(QRectF(drawingArea.left(), drawingArea.bottom() - areaHeight, drawingArea.width(), areaHeight))
 
             # ----------------------------------------------------------------------
             # First page layout
@@ -3285,8 +3297,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                and self.cbFormatDocImgFPageNotes.isChecked() and previewPagesInformation['fpNotes.height'] > 0:
                 areaHeight = previewPagesInformation['fpNotes.height'] - 2
 
-                painter.fillRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight, brush)
-                painter.drawRect(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight)
+                painter.fillRect(QRectF(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight), brush)
+                painter.drawRect(QRectF(drawingArea.left(), top + drawingArea.top(), drawingArea.width(), areaHeight))
 
         def getThumbnailCellPixmap(textRows):
             # return a pixmap
@@ -3349,21 +3361,21 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             # cell bounds
             painterThumb.setPen(pen)
-            painterThumb.drawRect(0, 0, previewPagesInformation['cell.global.size'].width() - 1, previewPagesInformation['cell.global.size'].height() - 1)
+            painterThumb.drawRect(QRectF(0, 0, previewPagesInformation['cell.global.size'].width() - 1, previewPagesInformation['cell.global.size'].height() - 1))
 
             setActiveColor(2)
 
             painterThumb.setPen(pen)
 
             # thumb image
-            painterThumb.drawPixmap(imgLeft, imgTop, buildIcon('pktk:image').pixmap(thumbSize - 5, thumbSize - 5))
+            painterThumb.drawPixmap(QPointF(imgLeft, imgTop), buildIcon('pktk:image').pixmap(thumbSize - 5, thumbSize - 5))
 
             painterThumb.setCompositionMode(QPainter.CompositionMode_SourceIn)
-            painterThumb.fillRect(imgLeft, imgTop, thumbSize - 5, thumbSize - 5, brush)
+            painterThumb.fillRect(QRectF(imgLeft, imgTop, thumbSize - 5, thumbSize - 5), brush)
 
             # thumbnail bounds
             painterThumb.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            painterThumb.drawRect(imgLeft, imgTop, thumbSize - 5, thumbSize - 5)
+            painterThumb.drawRect(QRectF(imgLeft, imgTop, thumbSize - 5, thumbSize - 5))
 
             pen.setStyle(Qt.SolidLine)
             brush.setStyle(Qt.DiagCrossPattern)
@@ -3371,8 +3383,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             # texts
             if propertiesPosition != 'none':
-                painterThumb.fillRect(textLeft, textTop, textWidth, textHeight, brush)
-                painterThumb.drawRect(textLeft, textTop, textWidth, textHeight)
+                painterThumb.fillRect(QRectF(textLeft, textTop, textWidth, textHeight), brush)
+                painterThumb.drawRect(QRectF(textLeft, textTop, textWidth, textHeight))
 
             painterThumb.end()
 
@@ -3394,7 +3406,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
             for rowNumber in range(nbRows):
                 offsetLeft = 0
                 for column in range(thumbPerRow):
-                    painter.drawPixmap(drawingArea.left() + offsetLeft, drawingArea.top(), pixmapThumb)
+                    painter.drawPixmap(QPointF(drawingArea.left() + offsetLeft, drawingArea.top()), pixmapThumb)
 
                     offsetLeft += previewPagesInformation['cell.global.size'].width() + previewPagesInformation['cell.thumbnail.outerSpacing']
 
@@ -3418,10 +3430,10 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             ratioPaperPreview = previewWidth / self.__formatPdfImgPagesInformation['page.size'].width()
 
-        previewRect = QRect((self.lblFormatDocImgPreview.width() - previewWidth)/2,
-                            (self.lblFormatDocImgPreview.height() - previewHeight)/2,
-                            previewWidth,
-                            previewHeight)
+        previewRect = QRectF((self.lblFormatDocImgPreview.width() - previewWidth)/2,
+                             (self.lblFormatDocImgPreview.height() - previewHeight)/2,
+                             previewWidth,
+                             previewHeight)
 
         # ----------------------------------------------------------------------
         # start rendering paper
@@ -3438,7 +3450,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
         # ----------------------------------------------------------------------
         # paper shadow
-        painter.fillRect(previewRect.left() + shadowOffset, previewRect.top() + shadowOffset, previewRect.width(), previewRect.height(), QColor(0x202020))
+        painter.fillRect(QRectF(previewRect.left() + shadowOffset, previewRect.top() + shadowOffset, previewRect.width(), previewRect.height()), QColor(0x202020))
 
         previewPagesInformation = self.__formatPdfImgPagesInformation.copy()
 
@@ -3455,33 +3467,33 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             # ----------------------------------------------------------------------
             # Initialise drawing area rect
-            # drawingArea = QRect(QPoint(previewRect.left() + round(self.dsbFormatDocImgMarginsLeft.value() * ratioPaperPreview, 0),
-            #                            previewRect.top() + round(self.dsbFormatDocImgMarginsTop.value() * ratioPaperPreview, 0)),
-            #                     QPoint(1 + previewRect.right() - round(self.dsbFormatDocImgMarginsRight.value() * ratioPaperPreview, 0),
-            #                            1 + previewRect.bottom() - round(self.dsbFormatDocImgMarginsBottom.value() * ratioPaperPreview, 0)))
+            # drawingArea = QRect(QPoint(previewRect.left() + round(self.dsbFormatDocImgMarginsLeft.value() * ratioPaperPreview),
+            #                            previewRect.top() + round(self.dsbFormatDocImgMarginsTop.value() * ratioPaperPreview)),
+            #                     QPoint(1 + previewRect.right() - round(self.dsbFormatDocImgMarginsRight.value() * ratioPaperPreview),
+            #                            1 + previewRect.bottom() - round(self.dsbFormatDocImgMarginsBottom.value() * ratioPaperPreview)))
             previewPagesInformation['page.global.bounds'] = QRect(
-                                QPoint(previewRect.left() + floor(previewPagesInformation['page.global.bounds'].left() * ratioPaperPreview),
-                                       previewRect.top() + floor(previewPagesInformation['page.global.bounds'].top() * ratioPaperPreview)),
-                                QPoint(previewRect.left() + floor(previewPagesInformation['page.global.bounds'].right() * ratioPaperPreview),
-                                       previewRect.top() + floor(previewPagesInformation['page.global.bounds'].bottom() * ratioPaperPreview)))
+                                QPoint(floor(previewRect.left() + previewPagesInformation['page.global.bounds'].left() * ratioPaperPreview),
+                                       floor(previewRect.top() + previewPagesInformation['page.global.bounds'].top() * ratioPaperPreview)),
+                                QPoint(floor(previewRect.left() + previewPagesInformation['page.global.bounds'].right() * ratioPaperPreview),
+                                       floor(previewRect.top() + previewPagesInformation['page.global.bounds'].bottom() * ratioPaperPreview)))
 
             previewPagesInformation['page.inside.bounds'] = QRect(
-                                QPoint(previewRect.left() + 2 + floor(previewPagesInformation['page.inside.bounds'].left() * ratioPaperPreview),
-                                       previewRect.top() + 2 + floor(previewPagesInformation['page.inside.bounds'].top() * ratioPaperPreview)),
-                                QPoint(previewRect.left() + floor(previewPagesInformation['page.inside.bounds'].right() * ratioPaperPreview),
-                                       previewRect.top() + floor(previewPagesInformation['page.inside.bounds'].bottom() * ratioPaperPreview)))
+                                QPoint(floor(previewRect.left() + 2 + previewPagesInformation['page.inside.bounds'].left() * ratioPaperPreview),
+                                       floor(previewRect.top() + 2 + previewPagesInformation['page.inside.bounds'].top() * ratioPaperPreview)),
+                                QPoint(floor(previewRect.left() + previewPagesInformation['page.inside.bounds'].right() * ratioPaperPreview),
+                                       floor(previewRect.top() + previewPagesInformation['page.inside.bounds'].bottom() * ratioPaperPreview)))
 
             previewPagesInformation['page.first.bounds'] = QRect(
-                                QPoint(previewRect.left() + 2 + floor(previewPagesInformation['page.first.bounds'].left() * ratioPaperPreview),
-                                       previewRect.top() + 2 + floor(previewPagesInformation['page.first.bounds'].top() * ratioPaperPreview)),
-                                QPoint(previewRect.left() + floor(previewPagesInformation['page.first.bounds'].right() * ratioPaperPreview),
-                                       previewRect.top() + floor(previewPagesInformation['page.first.bounds'].bottom() * ratioPaperPreview)))
+                                QPoint(floor(previewRect.left() + 2 + previewPagesInformation['page.first.bounds'].left() * ratioPaperPreview),
+                                       floor(previewRect.top() + 2 + previewPagesInformation['page.first.bounds'].top() * ratioPaperPreview)),
+                                QPoint(floor(previewRect.left() + previewPagesInformation['page.first.bounds'].right() * ratioPaperPreview),
+                                       floor(previewRect.top() + previewPagesInformation['page.first.bounds'].bottom() * ratioPaperPreview)))
 
             previewPagesInformation['page.normal.bounds'] = QRect(
-                                QPoint(previewRect.left() + 2 + floor(previewPagesInformation['page.normal.bounds'].left() * ratioPaperPreview),
-                                       previewRect.top() + 2 + floor(previewPagesInformation['page.normal.bounds'].top() * ratioPaperPreview)),
-                                QPoint(previewRect.left() + floor(previewPagesInformation['page.normal.bounds'].right() * ratioPaperPreview),
-                                       previewRect.top() + floor(previewPagesInformation['page.normal.bounds'].bottom() * ratioPaperPreview)))
+                                QPoint(floor(previewRect.left() + 2 + previewPagesInformation['page.normal.bounds'].left() * ratioPaperPreview),
+                                       floor(previewRect.top() + 2 + previewPagesInformation['page.normal.bounds'].top() * ratioPaperPreview)),
+                                QPoint(floor(previewRect.left() + previewPagesInformation['page.normal.bounds'].right() * ratioPaperPreview),
+                                       floor(previewRect.top() + previewPagesInformation['page.normal.bounds'].bottom() * ratioPaperPreview)))
 
             previewPagesInformation['header.height'] = floor(previewPagesInformation['header.height'] * ratioPaperPreview)
             previewPagesInformation['footer.height'] = floor(previewPagesInformation['footer.height'] * ratioPaperPreview)
@@ -3527,7 +3539,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
                 self.__formatPdfImgPageCurrent = 2
             self.__formatPdfImgPageTotal = previewPagesInformation['page.total']
 
-            previewImg = QImage(previewPagesInformation['page.size'].width(), previewPagesInformation['page.size'].height(), QImage.Format_ARGB32)
+            previewImg = QImage(round(previewPagesInformation['page.size'].width()), round(previewPagesInformation['page.size'].height()), QImage.Format_ARGB32)
             previewImg.fill(Qt.transparent)
             previewPixmap = QPixmap.fromImage(previewImg)
 
@@ -3543,9 +3555,8 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
             previewPainter.end()
 
-            painter.drawPixmap(previewRect.left(),
-                               previewRect.top(),
-                               previewPixmap.scaled(previewRect.width(), previewRect.height(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation))
+            painter.drawPixmap(previewRect.topLeft(),
+                               previewPixmap.scaled(previewRect.size().toSize(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation))
 
         # ----------------------------------------------------------------------
         # finalize rendering paper
@@ -4624,7 +4635,7 @@ Files:         {items:files.count} ({items:files.size(KiB)})
 
     @staticmethod
     def openAsExportConfig(title, uicontroller, options):
-        """Open dialog box"""
+        """Open dialog box for export configuration mode only"""
         db = BCExportFilesDialogBox(title, uicontroller, options)
         if db.exec() == QDialog.Accepted:
             return db.options()

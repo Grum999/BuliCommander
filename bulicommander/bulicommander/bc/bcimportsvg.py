@@ -10,7 +10,7 @@
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
-# The bcimportanimated module provides classes used to manage import of SVG
+# The bcimportsvg module provides classes used to manage import of SVG
 # files (with options not provided by Krita)
 #
 # Main classes from this module
