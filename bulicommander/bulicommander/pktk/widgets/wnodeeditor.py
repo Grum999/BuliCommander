@@ -124,7 +124,7 @@ class NodeEditorScene(QObject):
     defaultNodeSelectedBgColorChanged = Signal(QColor)       # default background color value for selected nodes has been modified
     defaultNodeBorderRadiusChanged = Signal(float)           # default border radius value for nodes has been modified
     defaultNodeBorderSizeChanged = Signal(float)             # default border size value for nodes has been modified
-    defaultNodePaddingChanged = Signal(int)                  # default padding value for nodes has been modified
+    defaultNodePaddingChanged = Signal(float)                # default padding value for nodes has been modified
 
     defaultConnectorRadiusChanged = Signal(float)            # default radius value for connectors has been modified
     defaultConnectorBorderSizeChanged = Signal(float)        # default border size value for connectors has been modified
@@ -269,6 +269,18 @@ class NodeEditorScene(QObject):
 
         # define default scene size to 10000x10000 pixels
         self.setSize(QSize(10000, 10000))
+
+    def __repr__(self):
+        """String reprensentation of scene"""
+        returned = (f"<NodeEditorScene(Size:         ({self.__size.width()}, {self.__size.height()}),\n"
+                    f"                 Links:        {len(self.__links)},\n"
+                    f"                 Nodes:        {len(self.__nodes)} [")
+        if len(self.__nodes) > 0:
+            for node in self.__nodes:
+                returned += ("\n"+str(node)).replace("\n", "\n                               ")
+
+        returned += "])>"
+        return returned
 
     def __checkSelection(self):
         """Check current selected items"""
@@ -1493,7 +1505,7 @@ class NodeEditorNode(QObject):
     nodeSelectedBgColorChanged = Signal(QColor)                                   # node background color (when node is selected) has been changed
     borderRadiusChanged = Signal(float)                                           # border radius has been changed
     borderSizeChanged = Signal(float)                                             # border size has been changed
-    paddingChanged = Signal(int)                                                  # padding value has been changed
+    paddingChanged = Signal(float)                                                # padding value has been changed
 
     selectionChanged = Signal(bool)                                               # node selection state has been changed: boolean True=Selected/False=Unselected
     positionChanged = Signal(QPointF)                                             # node position has been modified: position as QPointF
@@ -1649,7 +1661,10 @@ class NodeEditorNode(QObject):
         self.__scene.addNode(self)
 
     def __repr__(self):
-        return f"<NodeEditorNode({self.__id}, '{self.__title}')>"
+        return (f"<NodeEditorNode({self.__id}, '{self.__title}',\n"
+                f"                Position:     ({self.__grItem.pos().x()}, {self.__grItem.pos().y()}),\n"
+                f"                Size:         ({self.__grItem.size().width()}, {self.__grItem.size().height()}),\n"
+                f"                BoundingRect: ({self.__grItem.boundingRect()}))> ")
 
     def __updateCloseButtonVisibility(self, value):
         """Update close button visibility"""
@@ -2107,9 +2122,8 @@ class NodeEditorNode(QObject):
 
         self.__widget = widget
         self.__widget.outputUpdated.connect(self.__outputUpdated)
-        # force graphic item update
+        # force graphic item update (value -1 will refresh GrNode without changing padding value - weird implemented trick :-))
         self.paddingChanged.emit(-1)
-        self.paddingChanged.emit(self.padding())
 
     def titleColor(self):
         """Return color for title text (unselected node)"""
@@ -4182,7 +4196,8 @@ class NodeEditorGrNode(QGraphicsItem):
     def __updatePadding(self, value):
         """Border size has been modified"""
         if self.__padding != value:
-            self.__padding = value
+            if value >= 0:
+                self.__padding = value
             self.__updateSize()
             self.__updateWidgetGeometry()
             self.update()
@@ -4871,6 +4886,11 @@ class WNodeEditorView(QGraphicsView):
         self.__zoomStep = 0.25
         self.setMouseTracking(True)
         self.setCacheMode(QGraphicsView.CacheBackground)
+
+    def __repr__(self):
+        """String reprensentation of scene view"""
+        return (f"<WNodeEditorView(Zoom factor:  {self.__currentZoomFactor}\n"
+                f"                 BoundingRect: {self.__scene.nodesBoundingRect()})>")
 
     def __scenePropertyChanged(self, value):
         """A property has been changed"""
