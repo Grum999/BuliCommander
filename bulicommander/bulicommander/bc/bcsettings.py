@@ -59,6 +59,7 @@ from bulicommander.pktk.modules.utils import (
     )
 from bulicommander.pktk.modules.imgutils import buildIcon
 from bulicommander.pktk.modules.strutils import bytesSizeToStr
+from bulicommander.pktk.modules.ekrita import EKritaResizeMethods
 from bulicommander.pktk.modules.settings import (
                         Settings,
                         SettingsFmt,
@@ -422,6 +423,9 @@ class BCSettingsKey(SettingsKey):
     SESSION_IMPORT_CBX_LAYERSORDER =                         'session.import.cbx.layersOrder'
     SESSION_IMPORT_CBX_ALIGNMENT =                           'session.import.cbx.alignment'
     SESSION_IMPORT_CBX_PREVIEW_ICONSSIZE =                   'session.import.cbx.pagesIconSize'
+
+    SESSION_IMPORT_ASFILELAYER_DEFAULTCHOICE =               'session.import.asFileLayer.defaultChoice'
+    SESSION_IMPORT_ASFILELAYER_METHOD =                      'session.import.asFileLayer.method'
 
     SESSION_PANEL_VIEW_FILES_LAYOUT =                        'session.panels.panel-{panelId}.view.files.layout'
     SESSION_PANEL_VIEW_FILES_VIEWMODE =                      'session.panels.panel-{panelId}.view.files.viewMode'
@@ -859,6 +863,9 @@ class BCSettings(Settings):
             SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_LAYERSORDER,                      0,                          SettingsFmt(int, [0, 1])),                  # first at top, first at bottom
             SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_ALIGNMENT,                        0,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5, 6])),   # MC, TL, TR, ML, MR, BL, BR
             SettingsRule(BCSettingsKey.SESSION_IMPORT_CBX_PREVIEW_ICONSSIZE,                3,                          SettingsFmt(int, [0, 1, 2, 3, 4, 5])),
+
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_ASFILELAYER_DEFAULTCHOICE,            0,                          SettingsFmt(int, [0, 1, 2])),                                   # None, Scale to doc size, scale to doc resolution
+            SettingsRule(BCSettingsKey.SESSION_IMPORT_ASFILELAYER_METHOD,                   "Bicubic",                  SettingsFmt(str, EKritaResizeMethods.resizeMethodIdList())),    # first at top, first at bottom
         ]
 
         for panelId in panelIds:

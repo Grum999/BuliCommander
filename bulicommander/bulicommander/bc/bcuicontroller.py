@@ -94,6 +94,7 @@ from .bcimportcbx import (
         BCImportDialogBoxCbx,
         BCImportCbx
     )
+from .bcimportasfilelayer import BCImportDialogBoxAsFileLayer
 from .bcsavedview import BCSavedView
 
 from bulicommander.pktk.modules.uitheme import UITheme
@@ -1758,40 +1759,25 @@ class BCUIController(QObject):
             return True
         return False
 
-    def commandFileOpenAsFileLayer(self, file=None, scalingMode=None):
+    def commandFileOpenAsFileLayer(self, file=None, scalingMode=None, scalingMethod=None):
         """Open file as file layer"""
-        def scaleMode(applyForAll=False):
-            if applyForAll:
-                applyForAll = i18n("Apply for all image")
-            else:
-                applyForAll = None
-
-            return WDialogRadioButtonChoiceInput.display(i18n(f"{self.__bcName}::Open as File layer"),
-                                                         "<h1>Scaling mode</h1><p>Please choose a scaling mode for File layer</p>",
-                                                         choicesValue=[i18n("No scaling"),
-                                                                       i18n("Scale to Image Size"),
-                                                                       i18n("Adapt to Image Resolution (ppi)")],
-                                                         optionalCheckboxMsg=applyForAll
-                                                         )
-
         if file is None:
             selectionInfo = self.panel().filesSelected()
             if selectionInfo[4] > 0:
                 moreThanOneFile = selectionInfo[4] > 1
                 applyToAll = False
+                execute = True
                 nbOpened = 0
                 for file in selectionInfo[0]:
                     if isinstance(file, BCFile) and file.readable():
                         if applyToAll is False or scalingMode is None:
-                            if moreThanOneFile:
-                                scalingMode, applyToAll = scaleMode(moreThanOneFile)
-                            else:
-                                scalingMode = scaleMode(moreThanOneFile)
+                            execute, scalingMode, scalingMethod, applyToAll = BCImportDialogBoxAsFileLayer.open(i18n(f"{self.__bcName}::Open as File layer"), file, moreThanOneFile)
 
-                        if scalingMode is None and (applyToAll or not moreThanOneFile):
+                        if not execute and (applyToAll or not moreThanOneFile):
+                            # cancel operation if 'applyToApply is checked' or if only one file to process
                             return False
 
-                        if self.commandFileOpenAsFileLayer(file.fullPathName(), scalingMode):
+                        if self.commandFileOpenAsFileLayer(file.fullPathName(), scalingMode, scalingMethod):
                             nbOpened += 1
                 if nbOpened != selectionInfo[4]:
                     return False
@@ -1801,22 +1787,18 @@ class BCUIController(QObject):
             return self.commandFileOpenAsFileLayer(file.fullPathName(), scalingMode)
         elif isinstance(file, str):
             if scalingMode is None:
-                scalingMode = scaleMode()
+                execute, scalingMode, scalingMethod, applyToAll = BCImportDialogBoxAsFileLayer.open(i18n(f"{self.__bcName}::Open as File layer"), file, False)
+                if not execute:
+                    return False
 
             if scalingMode is None:
                 # user cancelled action
                 return False
-            elif scalingMode == 0:
-                scalingMode = "None"
-            elif scalingMode == 1:
-                scalingMode = "ToImageSize"
-            elif scalingMode == 2:
-                scalingMode = "ToImagePPI"
 
             fileName = os.path.basename(file)
             document = Krita.instance().activeDocument()
             activeNode = document.activeNode()
-            activeNode.parentNode().addChildNode(document.createFileLayer(i18n(f"BC - File layer ({fileName})"), file, scalingMode), activeNode)
+            activeNode.parentNode().addChildNode(document.createFileLayer(i18n(f"BC - File layer ({fileName})"), file, scalingMode, scalingMethod), activeNode)
 
             return True
         else:
