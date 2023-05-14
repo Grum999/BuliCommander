@@ -212,7 +212,7 @@ class EKritaBrushPreset:
                 # from krita 5.2 (5.1.5?), name has been changed; if working on previous version, try with original name
                 widget = window.findChild(QWidget, 'ResourceChooser')
 
-                EKritaBrushPreset.__presetChooserWidget = widget.findChild(QListView, 'ResourceItemview')
+            EKritaBrushPreset.__presetChooserWidget = widget.findChild(QListView, 'ResourceItemview')
 
         return EKritaBrushPreset.__presetChooserWidget
 
