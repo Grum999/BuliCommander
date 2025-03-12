@@ -1,5 +1,9 @@
 # Buli Commander
 
+> Note: has been moved on Codeberg
+> 
+> https://codeberg.org/Grum999/BuliCommander
+
 An [orthodox file manager](https://en.wikipedia.org/wiki/File_manager#Orthodox_file_managers) plugin for [Krita](https://krita.org).
 
 
